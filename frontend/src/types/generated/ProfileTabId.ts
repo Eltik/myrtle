@@ -6,4 +6,4 @@
  * before layouts existed: a layout that omits a tab gets it back in this
  * position's turn, visible.
  */
-export type ProfileTabId = "showcase" | "stats" | "score" | "roster" | "plans" | "inventory" | "enemies" | "optimizer";
+export type ProfileTabId = "showcase" | "stats" | "score" | "roster" | "plans" | "inventory" | "enemies" | "optimizer" | "lookback";

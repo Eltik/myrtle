@@ -27,6 +27,30 @@ export const messages = {
         text: "{rarity} star",
         description: "Accessible name of one star-rating toggle, e.g. '5 star'. It reads as a rating, not a count, so it stays singular.",
     },
+    "randomizer.ops.source": {
+        text: "Source",
+        description: "Heading over the toggles that narrow the pool by how an operator is obtained.",
+    },
+    "randomizer.ops.source.aria": {
+        text: "Operator source",
+        description: "Accessible name of the group of source toggles.",
+    },
+    "randomizer.ops.source.any": {
+        text: "Any",
+        description: "Source toggle: every operator, however it is obtained.",
+    },
+    "randomizer.ops.source.gachaless": {
+        text: "Gachaless",
+        description: "Source toggle: operators a player can get without headhunting (the game's paid gacha), that is welfare operators plus the ones in the recruitment pool. 'Gachaless' is the community's name for an account that never headhunts.",
+    },
+    "randomizer.ops.source.welfare": {
+        text: "Welfare",
+        description: "Source toggle: operators the game gives away (event rewards, certificate shops, Integrated Strategies, credit store, story).",
+    },
+    "randomizer.ops.source.recruitment": {
+        text: "Recruitment",
+        description: "Source toggle: operators that recruitment (the free permit-based draw with tags, not headhunting) can give.",
+    },
     "randomizer.ops.squadSize": {
         text: "Squad size · {size}",
         description: "Heading over the squad-size slider, with the current value after a middle dot.",

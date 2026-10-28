@@ -6,6 +6,7 @@ use uuid::Uuid;
 use crate::app::error::ApiError;
 use crate::app::extractors::auth::RoleCheckedUser;
 use crate::app::routes::{StatusOk, ok_status};
+use crate::app::services::content_audit;
 use crate::app::services::tier_list::find_and_authorize;
 use crate::app::services::tier_list::invalidate_detail;
 use crate::app::state::AppState;
@@ -13,9 +14,14 @@ use crate::app::validation::{
     TIER_DESCRIPTION_MAX, TIER_NAME_MAX, validate_hex_color, validate_length, validate_opt_length,
 };
 use crate::core::auth::permissions::Permission;
+use crate::database::models::content_audit::{
+    AuditTierRef, AuditTierRename, ContentAuditAction, ContentAuditDetails,
+};
 use crate::database::models::tier_list::Tier;
 use crate::database::queries::tier_lists::create_tier;
 use crate::database::queries::tier_lists::delete_tier;
+use crate::database::queries::tier_lists::get_placements;
+use crate::database::queries::tier_lists::get_tiers;
 use crate::database::queries::tier_lists::update_tier;
 
 #[derive(Deserialize, utoipa::ToSchema)]
@@ -83,7 +89,44 @@ pub async fn create(
     )
     .await?;
     invalidate_detail(&state, &slug).await;
+    let details = ContentAuditDetails {
+        tiers_added: Some(vec![tier_ref(&tier)]),
+        ..Default::default()
+    };
+    content_audit::record(
+        &state,
+        content_audit::tier_list_entry(&list, user_id, ContentAuditAction::Edit, details),
+    )
+    .await;
     Ok(Json(tier))
+}
+
+fn tier_ref(tier: &Tier) -> AuditTierRef {
+    AuditTierRef {
+        id: tier.id,
+        name: tier.name.clone(),
+    }
+}
+
+/// What an update changed, as an `edit` row's details. The editor reorders
+/// by parking a tier at `10000 + i` and settling it, two requests the run
+/// folds into one reorder.
+fn tier_update_details(before: &Tier, after: &Tier) -> ContentAuditDetails {
+    let changed = |yes: bool| yes.then(|| vec![tier_ref(after)]);
+    ContentAuditDetails {
+        tiers_renamed: (before.name != after.name).then(|| {
+            vec![AuditTierRename {
+                id: after.id,
+                from: before.name.clone(),
+                to: after.name.clone(),
+            }]
+        }),
+        tiers_reordered: changed(before.display_order != after.display_order),
+        tiers_restyled: changed(
+            before.color != after.color || before.description != after.description,
+        ),
+        ..Default::default()
+    }
 }
 
 /// Rename, recolour or reorder a tier.
@@ -122,6 +165,10 @@ pub async fn update(
 
     let user_id: Uuid = auth.user_uuid()?;
     let list = find_and_authorize(&state, &slug, user_id, auth.role, Permission::Edit).await?;
+    let before = get_tiers(&state.db, list.id)
+        .await?
+        .into_iter()
+        .find(|t| t.id == tier_id);
 
     // `tier_id` comes from the request and the permission was checked against
     // `slug`, so the write is scoped to `list.id`: a tier on another list is
@@ -138,6 +185,18 @@ pub async fn update(
     .await?
     .ok_or(ApiError::NotFound)?;
     invalidate_detail(&state, &slug).await;
+    if let Some(before) = before {
+        content_audit::record(
+            &state,
+            content_audit::tier_list_entry(
+                &list,
+                user_id,
+                ContentAuditAction::Edit,
+                tier_update_details(&before, &tier),
+            ),
+        )
+        .await;
+    }
     Ok(Json(tier))
 }
 
@@ -171,10 +230,30 @@ pub async fn delete(
 ) -> Result<Json<StatusOk>, ApiError> {
     let user_id: Uuid = auth.user_uuid()?;
     let list = find_and_authorize(&state, &slug, user_id, auth.role, Permission::Admin).await?;
+    let before = get_tiers(&state.db, list.id)
+        .await?
+        .into_iter()
+        .find(|t| t.id == tier_id);
+    let dropped = match &before {
+        Some(tier) => get_placements(&state.db, tier.id).await?.len(),
+        None => 0,
+    };
 
     if !delete_tier(&state.db, list.id, tier_id).await? {
         return Err(ApiError::NotFound);
     }
     invalidate_detail(&state, &slug).await;
+    if let Some(tier) = before {
+        let details = ContentAuditDetails {
+            tiers_deleted: Some(vec![tier_ref(&tier)]),
+            entries_dropped: (dropped > 0).then(|| content_audit::count_of(dropped)),
+            ..Default::default()
+        };
+        content_audit::record(
+            &state,
+            content_audit::tier_list_entry(&list, user_id, ContentAuditAction::Edit, details),
+        )
+        .await;
+    }
     Ok(ok_status())
 }

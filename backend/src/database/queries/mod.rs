@@ -1,6 +1,7 @@
 pub mod account_deletion;
 pub mod admin_users;
 pub mod building;
+pub mod content_audit;
 pub mod enemies;
 pub mod gacha;
 pub mod game_credentials;
@@ -9,6 +10,7 @@ pub mod i18n;
 pub mod item_leaderboard;
 pub mod items;
 pub mod like;
+pub mod lookback;
 pub mod medal_ownership;
 pub mod medals;
 pub mod music;

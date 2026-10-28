@@ -72,10 +72,12 @@ enum Endpoint {
     BaseLayout,
     MaxLevelCost,
     Showcase,
+    Lookback,
+    LookbackCurrent,
 }
 
 impl Endpoint {
-    const ALL: [Self; 12] = [
+    const ALL: [Self; 14] = [
         Self::Checkin,
         Self::UserSkins,
         Self::Score,
@@ -88,6 +90,8 @@ impl Endpoint {
         Self::BaseLayout,
         Self::MaxLevelCost,
         Self::Showcase,
+        Self::Lookback,
+        Self::LookbackCurrent,
     ];
 
     /// The tabs a visitor needs visible: owned skins are roster data the
@@ -103,6 +107,10 @@ impl Endpoint {
             Self::Enemies => &[ProfileTabId::Enemies],
             Self::BaseLayout | Self::MaxLevelCost => &[ProfileTabId::Optimizer],
             Self::Showcase => &[ProfileTabId::Showcase],
+            // A snapshot is roster data, so both tabs gate it.
+            Self::Lookback | Self::LookbackCurrent => {
+                &[ProfileTabId::Lookback, ProfileTabId::Roster]
+            }
         }
     }
 }
@@ -153,6 +161,12 @@ async fn hit(state: &AppState, ep: Endpoint, uid: &str, viewer: Option<&AuthUser
             .await
             .into_response(),
         Endpoint::Showcase => routes::user::get_user_showcase(s, auth, query("/", uid))
+            .await
+            .into_response(),
+        Endpoint::Lookback => routes::lookback::overview(s, auth, query("/", uid))
+            .await
+            .into_response(),
+        Endpoint::LookbackCurrent => routes::lookback::current(s, auth, query("/", uid))
             .await
             .into_response(),
     };
@@ -629,7 +643,8 @@ async fn check_tab_gates(
             "roster",
             "plans",
             "enemies",
-            "optimizer"
+            "optimizer",
+            "lookback"
         ]
     );
     assert_eq!(stored["tabs"][1]["visible"], json!(false));
@@ -795,7 +810,8 @@ async fn check_listings(
             ProfileTabId::Showcase
             | ProfileTabId::Stats
             | ProfileTabId::Plans
-            | ProfileTabId::Optimizer => {}
+            | ProfileTabId::Optimizer
+            | ProfileTabId::Lookback => {}
         }
         println!("{private:?} private listings: {got:?}");
         if got != want {

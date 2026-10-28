@@ -354,6 +354,7 @@ pub async fn update_settings(
     public_profile: Option<bool>,
     store_gacha: Option<bool>,
     share_stats: Option<bool>,
+    public_gacha: Option<bool>,
     profile_layout: Option<Option<ProfileLayoutPatch>>,
 ) -> Result<(), ApiError> {
     // Shape is already normalized; what each block and the background point
@@ -372,6 +373,7 @@ pub async fn update_settings(
         public_profile,
         store_gacha,
         share_stats,
+        public_gacha,
         profile_layout,
     )
     .await?;

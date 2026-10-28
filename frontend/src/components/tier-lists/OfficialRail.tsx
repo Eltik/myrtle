@@ -8,9 +8,10 @@ interface IOfficialRailProps {
     lists: ITierListBrowseItem[];
     onOpen: (slug: string) => void;
     onViewAll: () => void;
+    onAuthorClick?: (author: { id: string; name: string }) => void;
 }
 
-export function OfficialRail({ lists, onOpen, onViewAll }: IOfficialRailProps) {
+export function OfficialRail({ lists, onOpen, onViewAll, onAuthorClick }: IOfficialRailProps) {
     const t: TypedT<typeof messages> = useT("tierLists");
     if (lists.length === 0) return null;
 
@@ -31,7 +32,7 @@ export function OfficialRail({ lists, onOpen, onViewAll }: IOfficialRailProps) {
                 <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-3 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                     {lists.map((tl) => (
                         <div key={tl.id} className="w-70 shrink-0 snap-start">
-                            <BrowseCard tl={tl} onOpen={onOpen} />
+                            <BrowseCard tl={tl} onOpen={onOpen} onAuthorClick={onAuthorClick} />
                         </div>
                     ))}
                 </div>

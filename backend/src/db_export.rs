@@ -52,6 +52,7 @@ pub const TABLES: &[&str] = &[
     "grids",
     "user_squads",
     "user_game_squads",
+    "user_lookback_snapshots",
     "siren_albums",
     "siren_songs",
     "music_likes",
@@ -77,6 +78,7 @@ pub const TABLES: &[&str] = &[
     "operator_module_choice_stats",
     "operator_module_level_stats",
     "medal_ownership_stats",
+    "content_audit_log",
     "audit_log",
 ];
 
@@ -94,6 +96,7 @@ pub const SERIAL_COLUMNS: &[(&str, &str)] = &[
     ("operator_notes_audit_log", "id"),
     ("leaderboard_snapshots", "id"),
     ("ui_message_audit_log", "id"),
+    ("content_audit_log", "id"),
     ("audit_log", "id"),
     ("music_history", "id"),
     ("music_stat_events", "id"),

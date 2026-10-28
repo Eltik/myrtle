@@ -20,4 +20,13 @@ export type EconomySeat = {
     respawn: number;
     base_respawn: number;
     respawn_cuts: Array<Cut>;
+    /**
+     * Seconds of the first redeploy, when a cut applies to it only (the
+     * Horncare Set trait's "First Redeployment Time reduced by 35%").
+     */
+    first_respawn: number | null;
+    /**
+     * The cuts on top of `respawn_cuts` that `first_respawn` takes.
+     */
+    first_respawn_cuts: Array<Cut>;
 };

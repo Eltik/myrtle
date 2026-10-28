@@ -51,4 +51,11 @@ export type UserProfile = {
      * the visible tabs and nulls the header numbers the owner hid.
      */
     profile_layout: ProfileLayout | null;
+    /**
+     * Whether visitors may read the pull history (`user_settings.public_gacha`,
+     * opt-in): the profile shows its Pulls tab while this is true. Not a
+     * column of `v_user_profile`, so every row read from the view has `None`
+     * and only `/get-user` fills it, from a fresh read of the switch.
+     */
+    public_gacha?: boolean;
 };

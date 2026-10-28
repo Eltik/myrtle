@@ -75,6 +75,34 @@ export const messages = {
         text: "Open public view in new tab",
         description: "Accessible name of the button that opens the list's public page in another tab.",
     },
+    "edit.hero.autosave": {
+        text: "Auto-save",
+        description: "Label of the switch that saves edits automatically a few seconds after the author stops editing.",
+    },
+    "edit.hero.autosaveHint": {
+        text: "Saves a few seconds after you stop editing. Saved changes are live for anyone viewing the list.",
+        description: "Small note under the auto-save switch. Saving updates the public page right away, which is why the switch starts off.",
+    },
+    "edit.hero.autosaveSaving": {
+        text: "Saving",
+        description: "Auto-save status while a save is running. Rendered uppercase.",
+    },
+    "edit.hero.autosaveSaved": {
+        text: "Saved",
+        description: "Auto-save status after the last automatic save succeeded. Rendered uppercase.",
+    },
+    "edit.hero.autosaveFailed": {
+        text: "Save failed",
+        description: "Auto-save status after an automatic save failed; auto-save waits until the author retries. Rendered uppercase.",
+    },
+    "edit.hero.autosaveRetry": {
+        text: "Retry",
+        description: "Button next to the failed auto-save status that tries the save again.",
+    },
+    "edit.hero.autosaveConflict": {
+        text: "Auto-save paused: this list changed in another tab or by another editor. Reload to get the latest version, or save to keep yours.",
+        description: "Shown when auto-save found the list on the server differs from the one this editor loaded, so it stopped instead of overwriting.",
+    },
 } satisfies MessageMap;
 
 export const { keys } = defineMessages({ namespace, messages });

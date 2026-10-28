@@ -14,7 +14,7 @@ use backend::core::squad::rules::SkillRules;
 use backend::core::squad::types::Unlock;
 use backend::core::squad::types::{
     CoverageOp, CoverageRow, CoverageRowKey, CutKind, EconomyNoteKind, EconomySeat,
-    HandoffLeftOutReason, ReadinessFlagKind, SUPPORT_SEAT, SourceKind, SquadAnalysis,
+    HandoffLeftOutReason, NoteStat, ReadinessFlagKind, SUPPORT_SEAT, SourceKind, SquadAnalysis,
     SquadAnalyzeRequest, SquadMemberBuild, SynergyCond, SynergyGroup, SynergyItem, SynergyReason,
     SynergyTargetKind, ThemeKind,
 };
@@ -296,7 +296,7 @@ fn reference_squad() {
 }
 
 #[test]
-fn zima_cuts_vanguards_not_herself() {
+fn zima_cuts_vanguards_and_herself() {
     let data = common::load_game_data();
     let a = analyze(
         data,
@@ -305,22 +305,20 @@ fn zima_cuts_vanguards_not_herself() {
             m("char_151_myrtle", 2, 70, 0, 0, 7, 0, None, 1),
         ]),
     );
-    // Zima "Spearheader": `cost` -1 to "All [Vanguard] Operators" in the squad.
+    // Zima "Spearheader": `cost` -1 to "All [Vanguard] Operators" in the squad,
+    // herself included: at Elite 1 the talent is her own "DP Cost -1", and her
+    // module's "further reduces the DP Cost of this unit by 1" adds to it.
     let myrtle = eco(&a, "char_151_myrtle");
     assert!(myrtle.cuts.iter().any(|c| c.kind == CutKind::Squad
         && c.from_seat == Some(0)
         && (c.amount + 1.0).abs() < 1e-9));
     assert_eq!(myrtle.cost, myrtle.base_cost - 1);
     let zima = eco(&a, "char_115_headbr");
-    assert!(
-        zima.cuts.is_empty(),
-        "Zima does not cut herself: {:?}",
-        zima.cuts
-    );
+    assert_eq!(zima.cost, zima.base_cost - 1, "{:?}", zima.cuts);
 }
 
 #[test]
-fn silverash_leader_cuts_others_redeploy() {
+fn silverash_leader_cuts_everyones_redeploy() {
     let data = common::load_game_data();
     let a = analyze(
         data,
@@ -339,8 +337,10 @@ fn silverash_leader_cuts_others_redeploy() {
     assert!((cut.ratio.expect("ratio") + 0.12).abs() < 1e-6);
     // 70 s base times (1 - 0.12).
     assert!((myrtle.respawn - 61.6).abs() < 1e-3);
+    // "all allied units" is him too: 70 - 4 (potential) times 0.88.
     let sa = eco(&a, "char_172_svrash");
-    assert!(sa.respawn_cuts.iter().all(|c| c.kind != CutKind::Squad));
+    assert!(sa.respawn_cuts.iter().any(|c| c.kind == CutKind::Squad));
+    assert!((sa.respawn - 66.0 * 0.88).abs() < 1e-3, "{}", sa.respawn);
 }
 
 #[test]
@@ -820,6 +820,19 @@ fn census_lines(a: &SquadAnalysis) -> Vec<String> {
                 .map(|c| (c.kind, c.amount, c.ratio))
                 .collect::<Vec<_>>()
         ));
+    }
+    for s in a.economy.seats.iter().filter(|s| s.first_respawn.is_some()) {
+        out.push(format!(
+            "eco first respawn {:.3} {:?}",
+            s.first_respawn.unwrap_or_default(),
+            s.first_respawn_cuts
+                .iter()
+                .map(|c| (c.kind, c.amount, c.ratio))
+                .collect::<Vec<_>>()
+        ));
+    }
+    if a.economy.dp_lower_limit != 0 {
+        out.push(format!("eco floor {}", a.economy.dp_lower_limit));
     }
     for d in &a.economy.sources {
         out.push(format!(
@@ -1311,4 +1324,176 @@ fn titi_reaches_minos_and_sargon() {
     // Seats: Pallas (Minos) 1, Estelle (Sargon) 2.
     assert!(item.to.contains(&1), "{:?}", item.to);
     assert!(item.to.contains(&2), "{:?}", item.to);
+}
+
+#[test]
+fn ines_first_redeploy_is_its_own_figure() {
+    let data = common::load_game_data();
+    let a = analyze(
+        data,
+        &req(vec![m(
+            "char_4087_ines",
+            2,
+            90,
+            0,
+            0,
+            7,
+            3,
+            Some("uniequip_002_ines"),
+            3,
+        )]),
+    );
+    // Horncare Set trait line "First Redeployment Time reduced by 35%",
+    // `respawn_time` -0.35, on the 35 s key frame: only the first redeploy.
+    let ines = eco(&a, "char_4087_ines");
+    assert!((ines.respawn - 35.0).abs() < 1e-6);
+    let first = ines.first_respawn.expect("a first-redeploy figure");
+    assert!((first - 22.75).abs() < 1e-3, "{first}");
+    assert_eq!(ines.first_respawn_cuts.len(), 1);
+    assert_eq!(ines.first_respawn_cuts[0].kind, CutKind::Trait);
+    // Without the module: no first-redeploy figure.
+    let a = analyze(
+        data,
+        &req(vec![m("char_4087_ines", 2, 90, 0, 0, 7, 3, None, 1)]),
+    );
+    assert!(eco(&a, "char_4087_ines").first_respawn.is_none());
+}
+
+#[test]
+fn skill_bench_cost_cuts_are_noted_with_their_cut() {
+    let data = common::load_game_data();
+    let a = analyze(
+        data,
+        &req(vec![
+            m("char_4199_makiri", 2, 90, 0, 1, 7, 3, None, 1),
+            m("char_1045_svash2", 2, 90, 0, 1, 7, 3, None, 1),
+            m("char_101_sora", 2, 80, 0, 0, 7, 0, None, 1),
+        ]),
+    );
+    let skill_note = |id: &str| {
+        a.economy
+            .notes
+            .iter()
+            .find(|n| n.kind == EconomyNoteKind::SkillActive && n.char_id == id)
+            .unwrap_or_else(|| panic!("{id} skill note"))
+    };
+    // Matsukiri S2 `cost_decrease` -1 to Defenders and Supporters waiting.
+    let mk = skill_note("char_4199_makiri");
+    assert_eq!(mk.amount, Some(-1.0));
+    assert_eq!(mk.stat, Some(NoteStat::Cost));
+    // SilverAsh the Reignfrost S2 "-{cost} DP Cost", `cost` 11.
+    assert_eq!(skill_note("char_1045_svash2").amount, Some(-11.0));
+    // Skill-active: no seat's starting cost moves.
+    let sora = eco(&a, "char_101_sora");
+    assert!(sora.cuts.iter().all(|c| c.kind != CutKind::Squad));
+    // S2's DP Cost cut is not DP gained.
+    assert!(
+        a.economy
+            .sources
+            .iter()
+            .all(|s| s.char_id != "char_1045_svash2")
+    );
+}
+
+#[test]
+fn closure_lowers_the_dp_floor_for_everyone() {
+    let data = common::load_game_data();
+    let mut r = req(vec![
+        m("char_4228_closur", 2, 80, 2, 0, 7, 3, None, 1),
+        m("char_101_sora", 2, 80, 0, 0, 7, 0, None, 1),
+        m("char_124_kroos", 1, 55, 0, 0, 7, 0, None, 1),
+        m("char_4136_phonor", 0, 1, 0, 0, 1, 0, None, 1),
+    ]);
+    r.start_dp = 0;
+    let a = analyze(data, &r);
+    // "DP lower limit reduced by 4" at potential 3: `cost` -4 is the DP floor,
+    // not a DP Cost, and it is the whole squad's, Rhodes Island or not.
+    assert_eq!(a.economy.dp_lower_limit, -4);
+    for id in ["char_101_sora", "char_124_kroos", "char_4136_phonor"] {
+        let s = eco(&a, id);
+        assert!(
+            s.cuts.iter().all(|c| c.kind != CutKind::Squad),
+            "{id}: {:?}",
+            s.cuts
+        );
+        assert_eq!(s.cost, s.base_cost, "{id}");
+    }
+    // PhonoR-0 costs 3; with 0 DP on hand it deploys at -3, within the floor.
+    assert_eq!(eco(&a, "char_4136_phonor").cost, 3);
+    assert_eq!(a.economy.openers, 1);
+    assert!(
+        a.economy
+            .counted
+            .iter()
+            .any(|n| n.kind == EconomyNoteKind::DpFloor && n.amount == Some(-4.0))
+    );
+    // The ATK half still reaches Rhodes Island only.
+    let item = syn(&a, "char_4228_closur", "Scheduler, Max Settings!").expect("item");
+    assert_eq!(item.target.kind, SynergyTargetKind::Faction);
+    assert!(item.to.contains(&2) && item.to.contains(&3));
+    assert!(!item.to.contains(&1));
+}
+
+#[test]
+fn kazimierz_squad_reaches_each_other() {
+    let data = common::load_game_data();
+    let a = analyze(
+        data,
+        &req(vec![
+            m("char_237_gravel", 2, 80, 0, 0, 7, 3, Some("uniequip_002_gravel"), 3),
+            m("char_4064_mlynar", 2, 90, 0, 0, 7, 3, None, 1),
+            m("char_1014_nearl2", 2, 90, 0, 1, 7, 3, None, 1),
+        ]),
+    );
+    let reaches = |id: &str, name: &str, to: &[i32]| {
+        let i = syn(&a, id, name).unwrap_or_else(|| panic!("{id} {name}"));
+        assert_eq!(i.target.kind, SynergyTargetKind::Faction, "{name}");
+        assert_eq!(i.target.value.as_deref(), Some("kazimierz"), "{name}");
+        let mut got = i.to.clone();
+        got.sort_unstable();
+        assert_eq!(got, to, "{name}");
+        assert_ne!(i.group, SynergyGroup::Check, "{name}");
+        i
+    };
+    // Gravel's module talent (a named part with `talent_index` -1).
+    reaches("char_237_gravel", "Battlefield Vassal", &[1, 2]);
+    // "When any Kazimierz Operator is attacked".
+    reaches("char_4064_mlynar", "Unmoved", &[0, 2]);
+    // "If the previously deployed Operator is from Kazimierz".
+    reaches("char_1014_nearl2", "Brave the Darkness", &[0, 1]);
+    // S2 "If the previously deployed Operator is from Kazimierz".
+    let s2 = reaches("char_1014_nearl2", "Night-Scouring Gleam", &[0, 1]);
+    assert_eq!(s2.source.kind, SourceKind::Skill);
+    assert_eq!(s2.cond, SynergyCond::Skill);
+}
+
+#[test]
+fn silverash_leader_and_module_cut_his_own_redeploy() {
+    let data = common::load_game_data();
+    // Potential 3: "Redeployment Time -4 sec" puts the key frame's 70 s at 66.
+    let a = analyze(
+        data,
+        &req(vec![m("char_172_svrash", 2, 90, 2, 2, 7, 3, None, 1)]),
+    );
+    // "all allied units' Redeployment Time -10%" reaches him too.
+    assert!((eco(&a, "char_172_svrash").respawn - 59.4).abs() < 1e-3);
+    let a = analyze(
+        data,
+        &req(vec![m(
+            "char_172_svrash",
+            2,
+            90,
+            2,
+            2,
+            7,
+            3,
+            Some("uniequip_002_svrash"),
+            3,
+        )]),
+    );
+    // Stage 3 adds "SilverAsh and other allies in the 8 surrounding tiles gain
+    // an additional -10%": 66 x 0.9 x 0.9.
+    let sa = eco(&a, "char_172_svrash");
+    assert!((sa.respawn - 53.46).abs() < 1e-3, "{}", sa.respawn);
+    assert_eq!(sa.respawn_cuts.len(), 3, "{:?}", sa.respawn_cuts);
 }

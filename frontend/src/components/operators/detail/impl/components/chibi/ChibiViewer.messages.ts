@@ -27,9 +27,37 @@ export const messages = {
         text: "Down",
         description: "Sprite set: the knocked-out sprite.",
     },
-    "chibi.animation": {
-        text: "Animation",
-        description: "Prompt in the select that picks which clip plays. The clip names come from the animation files and are not translated.",
+    "chibi.meta": {
+        text: "Spine {version} · {bones, plural, one {# bone} other {# bones}}",
+        description: "Line under the viewer heading about the loaded animation file, shown in capitals, e.g. 'SPINE 3.8.99 · 259 BONES'. 'Spine' is the animation format's name; {version} its version number; bones are the skeleton's joints.",
+    },
+    "chibi.stage": {
+        text: "Animation stage",
+        description: "Accessible name of the area where the sprite plays, which can be dragged to pan and zoomed.",
+    },
+    "chibi.loop": {
+        text: "Loop",
+        description: "Toggle under the viewer: repeat the clip instead of stopping on its last frame.",
+    },
+    "chibi.loopHint": {
+        text: "Repeat the clip",
+        description: "Tooltip of the Loop toggle.",
+    },
+    "chibi.chain": {
+        text: "Chain",
+        description: "Toggle under the viewer: when a clip ends, play the next one in the list (useful for skill begin, loop and end clips).",
+    },
+    "chibi.chainHint": {
+        text: "Play the next clip in the list when this one ends",
+        description: "Tooltip of the Chain toggle.",
+    },
+    "chibi.speed": {
+        text: "Playback speed",
+        description: "Accessible name of the group of speed buttons under the viewer.",
+    },
+    "chibi.speedOption": {
+        text: "{speed}×",
+        description: "One playback speed, e.g. '0.5×' for half speed.",
     },
     "chibi.error.noData": {
         text: "No spine data available",

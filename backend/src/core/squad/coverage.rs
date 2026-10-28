@@ -396,7 +396,7 @@ fn seat_hits(ctx: &Ctx<'_>, s: &Seat<'_>, economy: &Economy) -> Vec<(CoverageRow
     // ---- stats
     let eco = economy.seats.iter().find(|e| e.seat == s.seat);
     if let Some(e) = eco {
-        if e.cost <= economy.start_dp {
+        if e.cost <= economy.start_dp - economy.dp_lower_limit {
             hits.push((R::Openers, SourceRef::bare(SourceKind::Stats)));
         }
         if e.respawn <= FAST_REDEPLOY_SECS {

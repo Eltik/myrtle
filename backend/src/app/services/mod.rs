@@ -1,6 +1,7 @@
 pub mod archives;
 pub mod auth;
 pub mod base_planner;
+pub mod content_audit;
 pub mod dps;
 pub mod dps_retention;
 pub mod event_banner;
@@ -12,6 +13,7 @@ pub mod improvements;
 pub mod item_leaderboard;
 pub mod leaderboard;
 pub mod level;
+pub mod lookback;
 pub mod max_level;
 pub mod music;
 pub mod operator_notes;

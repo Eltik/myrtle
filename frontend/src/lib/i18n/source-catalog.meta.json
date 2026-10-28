@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-10-25T13:57:20.122Z",
+    "generatedAt": "2026-10-28T02:40:59.834Z",
     "entries": [
         {
             "key": "admin.home.access.everyList",
@@ -1328,11 +1328,366 @@
             "placeholders": []
         },
         {
+            "key": "admin.system.audit.action.create",
+            "namespace": "admin",
+            "source_text": "Created",
+            "description": "Badge on a tier list or grid history row: it was created.",
+            "placeholders": []
+        },
+        {
+            "key": "admin.system.audit.action.delete",
+            "namespace": "admin",
+            "source_text": "Deleted",
+            "description": "Badge on a tier list or grid history row: it was deleted.",
+            "placeholders": []
+        },
+        {
+            "key": "admin.system.audit.action.edit",
+            "namespace": "admin",
+            "source_text": "Edited",
+            "description": "Badge on a tier list or grid history row: it was edited.",
+            "placeholders": []
+        },
+        {
+            "key": "admin.system.audit.action.flair",
+            "namespace": "admin",
+            "source_text": "Flair",
+            "description": "Badge on a tier list history row: its flair was set or cleared.",
+            "placeholders": []
+        },
+        {
+            "key": "admin.system.audit.action.fork",
+            "namespace": "admin",
+            "source_text": "Forked",
+            "description": "Badge on a grid history row: it was made from another grid as a template.",
+            "placeholders": []
+        },
+        {
+            "key": "admin.system.audit.action.grant",
+            "namespace": "admin",
+            "source_text": "Access given",
+            "description": "Badge on a tier list history row: someone was given edit access.",
+            "placeholders": []
+        },
+        {
+            "key": "admin.system.audit.action.publish",
+            "namespace": "admin",
+            "source_text": "Published",
+            "description": "Badge on a tier list history row: a version was published.",
+            "placeholders": []
+        },
+        {
+            "key": "admin.system.audit.action.revoke",
+            "namespace": "admin",
+            "source_text": "Access removed",
+            "description": "Badge on a tier list history row: someone's edit access was removed.",
+            "placeholders": []
+        },
+        {
+            "key": "admin.system.audit.action.visibility",
+            "namespace": "admin",
+            "source_text": "Visibility",
+            "description": "Badge on a tier list history row: it was shown in or hidden from the public index.",
+            "placeholders": []
+        },
+        {
+            "key": "admin.system.audit.actor.clear",
+            "namespace": "admin",
+            "source_text": "Show everyone",
+            "description": "Button that removes the person filter.",
+            "placeholders": []
+        },
+        {
             "key": "admin.system.audit.actor.deleted",
             "namespace": "admin",
             "source_text": "Deleted account",
             "description": "Shown in the Who column when the account that made the edit no longer exists.",
             "placeholders": []
+        },
+        {
+            "key": "admin.system.audit.actor.empty",
+            "namespace": "admin",
+            "source_text": "No one matches",
+            "description": "Shown in the person filter's menu when the search finds no account.",
+            "placeholders": []
+        },
+        {
+            "key": "admin.system.audit.actor.label",
+            "namespace": "admin",
+            "source_text": "Filter by person",
+            "description": "Accessible name of the box that limits the edit history to one person's edits.",
+            "placeholders": []
+        },
+        {
+            "key": "admin.system.audit.actor.only",
+            "namespace": "admin",
+            "source_text": "Only {name}",
+            "description": "Button beside a person in the edit history that shows only their edits. {name} is their nickname.",
+            "placeholders": [
+                "name"
+            ]
+        },
+        {
+            "key": "admin.system.audit.actor.placeholder",
+            "namespace": "admin",
+            "source_text": "Anyone",
+            "description": "Placeholder in the person filter when no one is picked. Keep it short.",
+            "placeholders": []
+        },
+        {
+            "key": "admin.system.audit.change.cells",
+            "namespace": "admin",
+            "source_text": "{count, plural, one {changed # cell} other {changed # cells}}",
+            "description": "Summary clause: grid cells whose pick or label changed.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "admin.system.audit.change.community",
+            "namespace": "admin",
+            "source_text": "community list",
+            "description": "Summary of a tier list creation: it is a player's own list.",
+            "placeholders": []
+        },
+        {
+            "key": "admin.system.audit.change.deleted",
+            "namespace": "admin",
+            "source_text": "{tiers, plural, one {# tier} other {# tiers}}, {entries, plural, one {# entry} other {# entries}}",
+            "description": "Summary of a tier list deletion: what went with it.",
+            "placeholders": [
+                "entries",
+                "tiers"
+            ]
+        },
+        {
+            "key": "admin.system.audit.change.description",
+            "namespace": "admin",
+            "source_text": "edited the description",
+            "description": "Summary clause: the description changed.",
+            "placeholders": []
+        },
+        {
+            "key": "admin.system.audit.change.entriesAdded",
+            "namespace": "admin",
+            "source_text": "{count, plural, one {added # entry} other {added # entries}}",
+            "description": "Summary clause: operators or other entries placed on the list.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "admin.system.audit.change.entriesMoved",
+            "namespace": "admin",
+            "source_text": "{count, plural, one {moved # entry} other {moved # entries}}",
+            "description": "Summary clause: entries moved to another tier.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "admin.system.audit.change.entriesRemoved",
+            "namespace": "admin",
+            "source_text": "{count, plural, one {removed # entry} other {removed # entries}}",
+            "description": "Summary clause: entries taken off the list.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "admin.system.audit.change.entriesReordered",
+            "namespace": "admin",
+            "source_text": "{count, plural, one {reordered # entry} other {reordered # entries}} within tiers",
+            "description": "Summary clause: entries moved within the tier they were in.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "admin.system.audit.change.flair",
+            "namespace": "admin",
+            "source_text": "set to {label}",
+            "description": "Summary of a flair change. {label} is the flair's name.",
+            "placeholders": [
+                "label"
+            ]
+        },
+        {
+            "key": "admin.system.audit.change.flairCleared",
+            "namespace": "admin",
+            "source_text": "cleared",
+            "description": "Summary of a flair change that removed the flair.",
+            "placeholders": []
+        },
+        {
+            "key": "admin.system.audit.change.forkedFrom",
+            "namespace": "admin",
+            "source_text": "from {title}",
+            "description": "Summary of a grid fork. {title} is the grid it was copied from.",
+            "placeholders": [
+                "title"
+            ]
+        },
+        {
+            "key": "admin.system.audit.change.hidden",
+            "namespace": "admin",
+            "source_text": "hidden from the index",
+            "description": "Summary clause: the list or grid no longer appears in the public index (a direct link still works).",
+            "placeholders": []
+        },
+        {
+            "key": "admin.system.audit.change.kinds",
+            "namespace": "admin",
+            "source_text": "{count, plural, one {now offers # kind} other {now offers # kinds}}",
+            "description": "Summary clause: the kinds of thing the tier list editor offers (operators, enemies...) changed.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "admin.system.audit.change.moreRenames",
+            "namespace": "admin",
+            "source_text": "{count, plural, one {# more tier renamed} other {# more tiers renamed}}",
+            "description": "Summary clause after the first few tier renames.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "admin.system.audit.change.notesEdited",
+            "namespace": "admin",
+            "source_text": "{count, plural, one {edited # entry note} other {edited # entry notes}}",
+            "description": "Summary clause: the note attached to an entry changed.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "admin.system.audit.change.official",
+            "namespace": "admin",
+            "source_text": "official list",
+            "description": "Summary of a tier list creation: it is one of the site's official lists.",
+            "placeholders": []
+        },
+        {
+            "key": "admin.system.audit.change.permission",
+            "namespace": "admin",
+            "source_text": "{level} access for {name}",
+            "description": "Summary of a grant or revoke. {level} is the access level (Edit, Publish...), {name} the person's nickname.",
+            "placeholders": [
+                "level",
+                "name"
+            ]
+        },
+        {
+            "key": "admin.system.audit.change.published",
+            "namespace": "admin",
+            "source_text": "version {version}",
+            "description": "Summary of a publish: the version number it created.",
+            "placeholders": [
+                "version"
+            ]
+        },
+        {
+            "key": "admin.system.audit.change.publishedWith",
+            "namespace": "admin",
+            "source_text": "version {version}: {changelog}",
+            "description": "Summary of a publish with its changelog. {changelog} is the publisher's own text.",
+            "placeholders": [
+                "changelog",
+                "version"
+            ]
+        },
+        {
+            "key": "admin.system.audit.change.renamed",
+            "namespace": "admin",
+            "source_text": "renamed from {from}",
+            "description": "Summary clause: the tier list or grid was renamed. {from} is its old name; the new one is shown beside it.",
+            "placeholders": [
+                "from"
+            ]
+        },
+        {
+            "key": "admin.system.audit.change.shown",
+            "namespace": "admin",
+            "source_text": "shown in the index",
+            "description": "Summary clause: the list or grid now appears in the public index.",
+            "placeholders": []
+        },
+        {
+            "key": "admin.system.audit.change.size",
+            "namespace": "admin",
+            "source_text": "resized to {size}",
+            "description": "Summary clause: a grid's size changed. {size} reads like 4x5 (rows x columns).",
+            "placeholders": [
+                "size"
+            ]
+        },
+        {
+            "key": "admin.system.audit.change.someone",
+            "namespace": "admin",
+            "source_text": "a deleted account",
+            "description": "Stands in for {name} in a grant summary when that account no longer exists.",
+            "placeholders": []
+        },
+        {
+            "key": "admin.system.audit.change.tierRenamed",
+            "namespace": "admin",
+            "source_text": "renamed tier {from} → {to}",
+            "description": "Summary clause: a tier was renamed. Keep the arrow.",
+            "placeholders": [
+                "from",
+                "to"
+            ]
+        },
+        {
+            "key": "admin.system.audit.change.tiersAdded",
+            "namespace": "admin",
+            "source_text": "{count, plural, one {added tier {names}} other {added tiers {names}}}",
+            "description": "Summary clause: tiers added. {names} is a comma-separated list of tier names.",
+            "placeholders": [
+                "count",
+                "names"
+            ]
+        },
+        {
+            "key": "admin.system.audit.change.tiersDeleted",
+            "namespace": "admin",
+            "source_text": "{count, plural, one {deleted tier {names}} other {deleted tiers {names}}}",
+            "description": "Summary clause: tiers deleted. {names} is a comma-separated list of tier names.",
+            "placeholders": [
+                "count",
+                "names"
+            ]
+        },
+        {
+            "key": "admin.system.audit.change.tiersDeletedWith",
+            "namespace": "admin",
+            "source_text": "{count, plural, one {deleted tier {names}} other {deleted tiers {names}}} with {dropped, plural, one {# entry} other {# entries}}",
+            "description": "Summary clause: tiers deleted together with the entries in them. {names} is a comma-separated list of tier names.",
+            "placeholders": [
+                "count",
+                "dropped",
+                "names"
+            ]
+        },
+        {
+            "key": "admin.system.audit.change.tiersReordered",
+            "namespace": "admin",
+            "source_text": "{count, plural, one {reordered # tier} other {reordered # tiers}}",
+            "description": "Summary clause: tiers moved up or down the list.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "admin.system.audit.change.tiersRestyled",
+            "namespace": "admin",
+            "source_text": "restyled {names}",
+            "description": "Summary clause: a tier's colour or description changed. {names} is a comma-separated list of tier names.",
+            "placeholders": [
+                "names"
+            ]
         },
         {
             "key": "admin.system.audit.count",
@@ -1348,7 +1703,7 @@
         {
             "key": "admin.system.audit.empty.desc",
             "namespace": "admin",
-            "source_text": "Operator note and translation edits show up here as soon as someone saves one.",
+            "source_text": "Operator note, translation, tier list and grid edits show up here as soon as someone saves one.",
             "description": "Empty state body in the edit history when nothing has been logged.",
             "placeholders": []
         },
@@ -1358,6 +1713,15 @@
             "source_text": "No edits yet",
             "description": "Empty state title in the edit history when nothing has been logged.",
             "placeholders": []
+        },
+        {
+            "key": "admin.system.audit.error.content",
+            "namespace": "admin",
+            "source_text": "Couldn't load the tier list and grid history: {message}",
+            "description": "Error line in the edit history; {message} explains what went wrong.",
+            "placeholders": [
+                "message"
+            ]
         },
         {
             "key": "admin.system.audit.error.notes",
@@ -1375,6 +1739,15 @@
             "description": "Error line in the edit history; {message} explains what went wrong.",
             "placeholders": [
                 "message"
+            ]
+        },
+        {
+            "key": "admin.system.audit.events",
+            "namespace": "admin",
+            "source_text": "{count, plural, one {# save} other {# saves}}",
+            "description": "Beside a row that sums a sitting of edits: how many saves it covers.",
+            "placeholders": [
+                "count"
             ]
         },
         {
@@ -1504,6 +1877,13 @@
             "placeholders": []
         },
         {
+            "key": "admin.system.audit.source.content",
+            "namespace": "admin",
+            "source_text": "Tier lists & grids",
+            "description": "Edit history filter: show only what people did to tier lists and grids (created, edited, published, hid, deleted...).",
+            "placeholders": []
+        },
+        {
             "key": "admin.system.audit.source.notes",
             "namespace": "admin",
             "source_text": "Operator notes",
@@ -1518,6 +1898,45 @@
             "placeholders": []
         },
         {
+            "key": "admin.system.audit.target.chip",
+            "namespace": "admin",
+            "source_text": "History of {name}",
+            "description": "Chip above the edit history while it shows one tier list or grid. {name} is the list or grid's name.",
+            "placeholders": [
+                "name"
+            ]
+        },
+        {
+            "key": "admin.system.audit.target.clear",
+            "namespace": "admin",
+            "source_text": "Show every list and grid",
+            "description": "Accessible name of the button that removes the one-list filter.",
+            "placeholders": []
+        },
+        {
+            "key": "admin.system.audit.target.only",
+            "namespace": "admin",
+            "source_text": "Only this one",
+            "description": "Button beside a tier list or grid in the edit history that shows only its history.",
+            "placeholders": []
+        },
+        {
+            "key": "admin.system.audit.target.owner",
+            "namespace": "admin",
+            "source_text": "owned by {name}",
+            "description": "Under a tier list or grid in the edit history, when the person who acted is not its owner (a moderator or a granted editor). {name} is the owner's nickname.",
+            "placeholders": [
+                "name"
+            ]
+        },
+        {
+            "key": "admin.system.audit.target.ownerGone",
+            "namespace": "admin",
+            "source_text": "owned by a deleted account",
+            "description": "Under a tier list or grid in the edit history, when its owner's account no longer exists.",
+            "placeholders": []
+        },
+        {
             "key": "admin.system.audit.target.translation",
             "namespace": "admin",
             "source_text": "{language} · {key}",
@@ -1526,6 +1945,41 @@
                 "key",
                 "language"
             ]
+        },
+        {
+            "key": "admin.system.audit.target.unknown",
+            "namespace": "admin",
+            "source_text": "this item",
+            "description": "Stands in for a tier list or grid's name in the filter chip before its history has loaded.",
+            "placeholders": []
+        },
+        {
+            "key": "admin.system.audit.targetKind.all",
+            "namespace": "admin",
+            "source_text": "Lists and grids",
+            "description": "Type picker option: show tier list and grid actions.",
+            "placeholders": []
+        },
+        {
+            "key": "admin.system.audit.targetKind.grid",
+            "namespace": "admin",
+            "source_text": "Grids",
+            "description": "Type picker option: show only grid actions.",
+            "placeholders": []
+        },
+        {
+            "key": "admin.system.audit.targetKind.label",
+            "namespace": "admin",
+            "source_text": "Filter by type",
+            "description": "Accessible name of the picker that limits the tier list and grid history to one type.",
+            "placeholders": []
+        },
+        {
+            "key": "admin.system.audit.targetKind.tier_list",
+            "namespace": "admin",
+            "source_text": "Tier lists",
+            "description": "Type picker option: show only tier list actions.",
+            "placeholders": []
         },
         {
             "key": "admin.system.audit.th.change",
@@ -1565,7 +2019,7 @@
         {
             "key": "admin.system.audit.untracked",
             "namespace": "admin",
-            "source_text": "Role, grant and publish changes aren't logged yet.",
+            "source_text": "Role changes aren't logged yet.",
             "description": "Note in the edit history toolbar saying which kinds of change it does not record.",
             "placeholders": []
         },
@@ -8589,6 +9043,31 @@
             "placeholders": []
         },
         {
+            "key": "common.frameSnapshot.heading",
+            "namespace": "common",
+            "source_text": "Transparent PNG",
+            "description": "Heading of the menu that picks the saved frame's size. The image has no background. 'PNG' is a file format and stays as-is.",
+            "placeholders": []
+        },
+        {
+            "key": "common.frameSnapshot.option",
+            "namespace": "common",
+            "source_text": "{scale}x · {width} × {height}",
+            "description": "One size option in the save-frame menu, e.g. '2x · 640 × 480'. {scale} is the zoom factor, {width} and {height} the image size in pixels.",
+            "placeholders": [
+                "height",
+                "scale",
+                "width"
+            ]
+        },
+        {
+            "key": "common.frameSnapshot.save",
+            "namespace": "common",
+            "source_text": "Save frame as PNG",
+            "description": "Accessible name and tooltip of the button beside the playback controls that saves the animation frame on screen as an image. 'PNG' is a file format and stays as-is.",
+            "placeholders": []
+        },
+        {
             "key": "common.frameStepper.back",
             "namespace": "common",
             "source_text": "Back one frame (,)",
@@ -8619,13 +9098,21 @@
         {
             "key": "common.frameStepper.readout",
             "namespace": "common",
-            "source_text": "Frame {frame}/{total} · {seconds}s",
-            "description": "Live position readout beside the playback buttons. {frame} is the current frame counting from 1, {total} the frames in the clip, {seconds} the time into the clip with two decimals. 's' is seconds.",
+            "source_text": "{frame} / {total} F · {seconds} / {duration} s",
+            "description": "Live position readout beside the playback buttons, e.g. '55 / 180 F · 1.83 / 6.00 s'. {frame} is the current frame counting from 1, {total} the frames in the clip, {seconds} the time into the clip and {duration} its length, both with two decimals. 'F' abbreviates frames and 's' seconds; use this language's short forms.",
             "placeholders": [
+                "duration",
                 "frame",
                 "seconds",
                 "total"
             ]
+        },
+        {
+            "key": "common.frameStepper.scrub",
+            "namespace": "common",
+            "source_text": "Frame",
+            "description": "Accessible name of the slider under the animation that drags playback to any frame of the clip.",
+            "placeholders": []
         },
         {
             "key": "common.gamedataServer.choose",
@@ -11768,6 +12255,43 @@
             "placeholders": []
         },
         {
+            "key": "gacha.history.filter.clear",
+            "namespace": "gacha",
+            "source_text": "Show every banner",
+            "description": "Button that removes every banner from the filter, showing the whole history again.",
+            "placeholders": []
+        },
+        {
+            "key": "gacha.history.filter.label",
+            "namespace": "gacha",
+            "source_text": "Banners",
+            "description": "Label of the field that limits the pull history to some banners. A banner is one headhunting event the player pulled on.",
+            "placeholders": []
+        },
+        {
+            "key": "gacha.history.filter.noMatches",
+            "namespace": "gacha",
+            "source_text": "No banner matches",
+            "description": "Shown in the banner filter's menu when the typed text matches no banner the player pulled on.",
+            "placeholders": []
+        },
+        {
+            "key": "gacha.history.filter.placeholder",
+            "namespace": "gacha",
+            "source_text": "Every banner",
+            "description": "Placeholder of the banner filter while no banner is chosen, meaning the whole history is shown.",
+            "placeholders": []
+        },
+        {
+            "key": "gacha.history.filter.pulls",
+            "namespace": "gacha",
+            "source_text": "{count, plural, one {# pull} other {# pulls}}",
+            "description": "How many pulls the player made on one banner, shown beside its name in the banner filter's menu.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
             "key": "gacha.history.header.blurb",
             "namespace": "gacha",
             "source_text": "Pull counts, current pity, your most-pulled operators, and a full history across every banner type.",
@@ -12016,6 +12540,48 @@
             ]
         },
         {
+            "key": "gacha.history.public.label",
+            "namespace": "gacha",
+            "source_text": "Public pull history",
+            "description": "Label of the switch that lets anyone who opens the player's profile, or a link they shared, see their pull history.",
+            "placeholders": []
+        },
+        {
+            "key": "gacha.history.public.off",
+            "namespace": "gacha",
+            "source_text": "Only you can see your pulls.",
+            "description": "Caption under the public pull history switch while it is off, the default.",
+            "placeholders": []
+        },
+        {
+            "key": "gacha.history.public.on",
+            "namespace": "gacha",
+            "source_text": "Anyone with your profile link can see your pulls.",
+            "description": "Caption under the public pull history switch while it is on.",
+            "placeholders": []
+        },
+        {
+            "key": "gacha.history.public.saveFailed",
+            "namespace": "gacha",
+            "source_text": "Couldn't change who can see your pulls",
+            "description": "Toast title when saving the public pull history switch failed. The toast body says why.",
+            "placeholders": []
+        },
+        {
+            "key": "gacha.history.public.savedOff",
+            "namespace": "gacha",
+            "source_text": "Your pull history is private",
+            "description": "Toast title after the player turned the public pull history switch off.",
+            "placeholders": []
+        },
+        {
+            "key": "gacha.history.public.savedOn",
+            "namespace": "gacha",
+            "source_text": "Your pull history is public",
+            "description": "Toast title after the player turned the public pull history switch on.",
+            "placeholders": []
+        },
+        {
             "key": "gacha.history.refresh",
             "namespace": "gacha",
             "source_text": "Refresh records",
@@ -12071,6 +12637,85 @@
             "namespace": "gacha",
             "source_text": "Refreshing…",
             "description": "The refresh button's label while the fetch is in flight. Keep the single-character ellipsis.",
+            "placeholders": []
+        },
+        {
+            "key": "gacha.history.share.action",
+            "namespace": "gacha",
+            "source_text": "Share",
+            "description": "Button that copies a link to the player's pull history, limited to the banners chosen in the filter, for others to open.",
+            "placeholders": []
+        },
+        {
+            "key": "gacha.history.share.cancel",
+            "namespace": "gacha",
+            "source_text": "Cancel",
+            "description": "Button that closes the share dialog without changing anything.",
+            "placeholders": []
+        },
+        {
+            "key": "gacha.history.share.copiedAll",
+            "namespace": "gacha",
+            "source_text": "Link to your pull history copied",
+            "description": "Toast title after the share link was copied with no banner filter, so it shows the whole history.",
+            "placeholders": []
+        },
+        {
+            "key": "gacha.history.share.copiedSome",
+            "namespace": "gacha",
+            "source_text": "{count, plural, one {Link to # banner's pulls copied} other {Link to # banners' pulls copied}}",
+            "description": "Toast title after the share link was copied with a banner filter; {count} is how many banners the link shows.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "gacha.history.share.copyFailed",
+            "namespace": "gacha",
+            "source_text": "Couldn't copy the link",
+            "description": "Toast title when the browser refused to put the share link on the clipboard.",
+            "placeholders": []
+        },
+        {
+            "key": "gacha.history.share.private.body",
+            "namespace": "gacha",
+            "source_text": "Your pull history is private, so a shared link would open only for you. Making it public lets anyone with the link, or anyone visiting your profile, see your pulls and the banners you pulled on. You can make it private again at any time, here or in Settings.",
+            "description": "Body of the dialog shown when the player presses Share while their pull history is private. 'Settings' names the site's settings page.",
+            "placeholders": []
+        },
+        {
+            "key": "gacha.history.share.private.confirm",
+            "namespace": "gacha",
+            "source_text": "Make public and copy link",
+            "description": "Button in the share dialog that turns the public pull history switch on, then copies the link.",
+            "placeholders": []
+        },
+        {
+            "key": "gacha.history.share.private.title",
+            "namespace": "gacha",
+            "source_text": "Make your pull history public?",
+            "description": "Title of the dialog shown when the player presses Share while their pull history is private.",
+            "placeholders": []
+        },
+        {
+            "key": "gacha.history.share.profilePrivate.action",
+            "namespace": "gacha",
+            "source_text": "Open Settings",
+            "description": "Link in the share dialog to the settings page, where the profile can be made public.",
+            "placeholders": []
+        },
+        {
+            "key": "gacha.history.share.profilePrivate.body",
+            "namespace": "gacha",
+            "source_text": "Shared pull history opens only on a public profile. Make your profile public in Settings, under Privacy, then share again.",
+            "description": "Body of the dialog shown when the player presses Share while their profile is private. 'Settings' and 'Privacy' name the site's settings page and its section.",
+            "placeholders": []
+        },
+        {
+            "key": "gacha.history.share.profilePrivate.title",
+            "namespace": "gacha",
+            "source_text": "Your profile is private",
+            "description": "Title of the dialog shown when the player presses Share while their whole profile is private, so no shared link can open.",
             "placeholders": []
         },
         {
@@ -20678,10 +21323,17 @@
             ]
         },
         {
-            "key": "operators.chibi.animation",
+            "key": "operators.chibi.chain",
             "namespace": "operators",
-            "source_text": "Animation",
-            "description": "Prompt in the select that picks which clip plays. The clip names come from the animation files and are not translated.",
+            "source_text": "Chain",
+            "description": "Toggle under the viewer: when a clip ends, play the next one in the list (useful for skill begin, loop and end clips).",
+            "placeholders": []
+        },
+        {
+            "key": "operators.chibi.chainHint",
+            "namespace": "operators",
+            "source_text": "Play the next clip in the list when this one ends",
+            "description": "Tooltip of the Chain toggle.",
             "placeholders": []
         },
         {
@@ -20703,6 +21355,53 @@
             "namespace": "operators",
             "source_text": "This browser has WebGL turned off, so the animation can't play",
             "description": "Shown in the viewer when the browser cannot create a WebGL renderer (hardware acceleration off or the GPU unavailable). 'WebGL' is a technical name and stays as-is.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.chibi.loop",
+            "namespace": "operators",
+            "source_text": "Loop",
+            "description": "Toggle under the viewer: repeat the clip instead of stopping on its last frame.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.chibi.loopHint",
+            "namespace": "operators",
+            "source_text": "Repeat the clip",
+            "description": "Tooltip of the Loop toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.chibi.meta",
+            "namespace": "operators",
+            "source_text": "Spine {version} · {bones, plural, one {# bone} other {# bones}}",
+            "description": "Line under the viewer heading about the loaded animation file, shown in capitals, e.g. 'SPINE 3.8.99 · 259 BONES'. 'Spine' is the animation format's name; {version} its version number; bones are the skeleton's joints.",
+            "placeholders": [
+                "bones",
+                "version"
+            ]
+        },
+        {
+            "key": "operators.chibi.speed",
+            "namespace": "operators",
+            "source_text": "Playback speed",
+            "description": "Accessible name of the group of speed buttons under the viewer.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.chibi.speedOption",
+            "namespace": "operators",
+            "source_text": "{speed}×",
+            "description": "One playback speed, e.g. '0.5×' for half speed.",
+            "placeholders": [
+                "speed"
+            ]
+        },
+        {
+            "key": "operators.chibi.stage",
+            "namespace": "operators",
+            "source_text": "Animation stage",
+            "description": "Accessible name of the area where the sprite plays, which can be dragged to pan and zoomed.",
             "placeholders": []
         },
         {
@@ -20748,24 +21447,103 @@
             "placeholders": []
         },
         {
-            "key": "operators.chibiExport.button",
+            "key": "operators.chibiClips.count",
             "namespace": "operators",
-            "source_text": "Export",
-            "description": "Button that opens the sprite-recording options.",
+            "source_text": "{count}",
+            "description": "Number of clips, shown as a small badge beside the list heading.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "operators.chibiClips.event",
+            "namespace": "operators",
+            "source_text": "{name} · {seconds} s",
+            "description": "One event in the marker's tooltip: its name from the animation file and when it fires, e.g. 'OnAttack · 0.33 s'.",
+            "placeholders": [
+                "name",
+                "seconds"
+            ]
+        },
+        {
+            "key": "operators.chibiClips.events",
+            "namespace": "operators",
+            "source_text": "{count, plural, one {# event} other {# events}}",
+            "description": "Accessible name of the marker showing how many timed events (hit, sound or effect cues) a clip fires.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "operators.chibiClips.frames",
+            "namespace": "operators",
+            "source_text": "{count} F",
+            "description": "A clip's length in frames, e.g. '180 F'. 'F' abbreviates frames; use this language's short form.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "operators.chibiClips.group.attack",
+            "namespace": "operators",
+            "source_text": "Attack",
+            "description": "Clip group: normal attacks.",
             "placeholders": []
         },
         {
-            "key": "operators.chibiExport.downloadGif",
+            "key": "operators.chibiClips.group.idle",
             "namespace": "operators",
-            "source_text": "Download GIF",
-            "description": "Button that renders and saves the animation as a GIF.",
+            "source_text": "Idle",
+            "description": "Clip group: standing, resting and dormitory loops.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.chibiClips.group.move",
+            "namespace": "operators",
+            "source_text": "Move & entry",
+            "description": "Clip group: walking clips and the deployment entrance ('Start').",
+            "placeholders": []
+        },
+        {
+            "key": "operators.chibiClips.group.other",
+            "namespace": "operators",
+            "source_text": "Other",
+            "description": "Clip group: everything else, such as the defeat clip.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.chibiClips.group.skill",
+            "namespace": "operators",
+            "source_text": "Skill",
+            "description": "Clip group: skill clips, in play order (begin, loop, idle, end).",
+            "placeholders": []
+        },
+        {
+            "key": "operators.chibiClips.title",
+            "namespace": "operators",
+            "source_text": "Animations",
+            "description": "Heading of the sprite viewer's list of animation clips.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.chibiExport.backgroundNote",
+            "namespace": "operators",
+            "source_text": "Recordings use the viewer's backdrop. On the checkerboard a GIF stays see-through and a video gets a dark fill. PNG is always see-through.",
+            "description": "Caption in the export settings explaining which background each format gets. 'GIF' and 'PNG' are file formats.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.chibiExport.cancel",
+            "namespace": "operators",
+            "source_text": "Cancel recording",
+            "description": "Accessible name of the button that stops a recording in progress.",
             "placeholders": []
         },
         {
             "key": "operators.chibiExport.downloadMp4",
             "namespace": "operators",
             "source_text": "Download MP4",
-            "description": "Button that renders and saves the animation as an MP4 video.",
+            "description": "Button in the export settings that records the clip as an MP4 video, for players without WebM. 'MP4' is a file format.",
             "placeholders": []
         },
         {
@@ -20781,69 +21559,183 @@
             "key": "operators.chibiExport.frameRate",
             "namespace": "operators",
             "source_text": "Frame Rate",
-            "description": "Field label over the frames-per-second select.",
+            "description": "Label over the frames-per-second choices.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.chibiExport.gif",
+            "namespace": "operators",
+            "source_text": "GIF",
+            "description": "Button that records the animation as a GIF. A file format name; keep as-is.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.chibiExport.gif2x",
+            "namespace": "operators",
+            "source_text": "GIF 2x",
+            "description": "Button that records the animation as a GIF at twice the size. '2x' means double size.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.chibiExport.gif2xHint",
+            "namespace": "operators",
+            "source_text": "Record the clip as a GIF at double size",
+            "description": "Tooltip of the GIF 2x button.",
             "placeholders": []
         },
         {
             "key": "operators.chibiExport.gifFpsNote",
             "namespace": "operators",
-            "source_text": "GIFs play at {gifFps} FPS (format limit); MP4 uses the full {fps} FPS.",
-            "description": "Caption warning that the GIF format cannot hit the chosen frame rate. 'GIF' and 'MP4' are file formats and stay as-is.",
+            "source_text": "GIFs play at {gifFps} FPS (format limit); videos use the full {fps} FPS.",
+            "description": "Caption warning that the GIF format cannot hit the chosen frame rate. 'GIF' is a file format and stays as-is.",
             "placeholders": [
                 "fps",
                 "gifFps"
             ]
         },
         {
-            "key": "operators.chibiExport.gifOptions",
+            "key": "operators.chibiExport.gifHint",
             "namespace": "operators",
-            "source_text": "GIF Options",
-            "description": "Divider over the settings that only affect GIF output.",
+            "source_text": "Record the clip as a GIF",
+            "description": "Tooltip of the GIF button.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.chibiExport.label",
+            "namespace": "operators",
+            "source_text": "Export",
+            "description": "Label in front of the sprite viewer's row of save buttons.",
             "placeholders": []
         },
         {
             "key": "operators.chibiExport.loopCount",
             "namespace": "operators",
-            "source_text": "Loop Count",
-            "description": "Field label over the select for how many times the animation repeats in the recording.",
+            "source_text": "Video loops",
+            "description": "Label over the choices for how many times the clip repeats in a recorded video.",
             "placeholders": []
         },
         {
             "key": "operators.chibiExport.loops",
             "namespace": "operators",
-            "source_text": "{count, plural, one {# loop} other {# loops}}",
-            "description": "One loop-count option, e.g. '3 loops'.",
+            "source_text": "{count}×",
+            "description": "One loop-count option, e.g. '3×' for three repeats.",
             "placeholders": [
                 "count"
             ]
         },
         {
-            "key": "operators.chibiExport.mp4Options",
+            "key": "operators.chibiExport.png",
             "namespace": "operators",
-            "source_text": "MP4 Options",
-            "description": "Divider over the settings that only affect MP4 output.",
+            "source_text": "PNG",
+            "description": "Button that saves the frame on screen as an image. A file format name; keep as-is.",
             "placeholders": []
         },
         {
-            "key": "operators.chibiExport.resolution",
+            "key": "operators.chibiExport.settings",
             "namespace": "operators",
-            "source_text": "Resolution",
-            "description": "Field label over the output-size select. Its options are pixel dimensions.",
+            "source_text": "Export settings",
+            "description": "Accessible name and heading of the popover with the recording options.",
             "placeholders": []
         },
         {
-            "key": "operators.chibiExport.title",
+            "key": "operators.chibiExport.webm",
             "namespace": "operators",
-            "source_text": "Export Settings",
-            "description": "Heading of the recording-options popover.",
+            "source_text": "WebM",
+            "description": "Button that records the animation as a WebM video. A file format name; keep as-is.",
             "placeholders": []
         },
         {
-            "key": "operators.chibiExport.transparentBg",
+            "key": "operators.chibiExport.webmHint",
             "namespace": "operators",
-            "source_text": "Transparent Background",
-            "description": "Switch label: leave the background see-through instead of filling it.",
+            "source_text": "Record the clip as a WebM video",
+            "description": "Tooltip of the WebM button.",
             "placeholders": []
+        },
+        {
+            "key": "operators.chibiStage.background",
+            "namespace": "operators",
+            "source_text": "Background",
+            "description": "Accessible name of the group of colour swatches that set the viewer's backdrop. It only changes the view: saved PNGs stay see-through.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.chibiStage.bg.black",
+            "namespace": "operators",
+            "source_text": "Black",
+            "description": "Backdrop swatch: solid black.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.chibiStage.bg.checker",
+            "namespace": "operators",
+            "source_text": "Transparent",
+            "description": "Backdrop swatch: a checkerboard that shows where the image is see-through.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.chibiStage.bg.custom",
+            "namespace": "operators",
+            "source_text": "Custom colour",
+            "description": "Backdrop swatch that opens a colour picker.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.chibiStage.bg.white",
+            "namespace": "operators",
+            "source_text": "White",
+            "description": "Backdrop swatch: solid white.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.chibiStage.exitFullscreen",
+            "namespace": "operators",
+            "source_text": "Exit fullscreen",
+            "description": "The same button while the viewer fills the screen.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.chibiStage.fit",
+            "namespace": "operators",
+            "source_text": "Fit to view",
+            "description": "Button on the sprite viewer that zooms and centres so the whole animation fills the stage.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.chibiStage.flip",
+            "namespace": "operators",
+            "source_text": "Flip horizontally",
+            "description": "Toggle button on the sprite viewer that mirrors the character left to right. Exports follow it.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.chibiStage.fullscreen",
+            "namespace": "operators",
+            "source_text": "Fullscreen",
+            "description": "Button on the sprite viewer that fills the screen with it.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.chibiStage.grid",
+            "namespace": "operators",
+            "source_text": "Show grid",
+            "description": "Toggle button on the sprite viewer that draws guide lines behind the character, with the ground and centre lines stronger.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.chibiStage.hint",
+            "namespace": "operators",
+            "source_text": "Drag to pan · Ctrl + scroll to zoom · Double-click to reset",
+            "description": "Small help line in the corner of the sprite viewer. 'Ctrl' is the keyboard key; keep the usual name for it in this language.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.chibiStage.zoom",
+            "namespace": "operators",
+            "source_text": "{percent}%",
+            "description": "Zoom readout under the viewer's tool buttons, e.g. '150%'.",
+            "placeholders": [
+                "percent"
+            ]
         },
         {
             "key": "operators.chips.active",
@@ -24567,6 +25459,29 @@
             "namespace": "settings",
             "source_text": "Show on leaderboards",
             "description": "Label of the switch that opts into public rankings.",
+            "placeholders": []
+        },
+        {
+            "key": "settings.privacy.publicGacha.column",
+            "namespace": "settings",
+            "source_text": "public_gacha",
+            "description": "Database column name substituted into privacy.publicGacha.desc as {column}, shown in monospace. Leave it exactly as it is.",
+            "placeholders": []
+        },
+        {
+            "key": "settings.privacy.publicGacha.desc",
+            "namespace": "settings",
+            "source_text": "Shows your stored pulls on your profile's Pulls tab and through the links you share from Gacha → History. Off by default, and only on a public profile. Backed by {column}.",
+            "description": "Caption under the public pull history switch. 'Gacha → History' names a menu path in this site's own navigation; {column} is a database column name in monospace, movable wherever the sentence needs it.",
+            "placeholders": [
+                "column"
+            ]
+        },
+        {
+            "key": "settings.privacy.publicGacha.title",
+            "namespace": "settings",
+            "source_text": "Public pull history",
+            "description": "Label of the switch that lets visitors see the player's pull history on their profile and through links they share. 'Pull' is one draw on a headhunting banner.",
             "placeholders": []
         },
         {
@@ -32159,6 +33074,59 @@
             "placeholders": []
         },
         {
+            "key": "tierLists.browse.author.empty",
+            "namespace": "tierLists",
+            "source_text": "No player matches",
+            "description": "Shown in the author filter's menu when the search finds no one.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.browse.author.label",
+            "namespace": "tierLists",
+            "source_text": "Filter by author",
+            "description": "Accessible name of the box on the tier list index that shows only one player's lists.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.browse.author.lists",
+            "namespace": "tierLists",
+            "source_text": "{count, plural, one {# list} other {# lists}}",
+            "description": "Beside a player in the author filter: how many public tier lists they have.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "tierLists.browse.author.placeholder",
+            "namespace": "tierLists",
+            "source_text": "Any author",
+            "description": "Placeholder in the author filter when no one is picked. Keep it short: the box is narrow.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.browse.author.searching",
+            "namespace": "tierLists",
+            "source_text": "Searching…",
+            "description": "Shown in the author filter's menu while players are being looked up.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.browse.author.unknown",
+            "namespace": "tierLists",
+            "source_text": "Selected player",
+            "description": "Stands in for the author's name in the filter when a shared link names a player with no public lists.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.browse.card.byAuthor",
+            "namespace": "tierLists",
+            "source_text": "Show only lists by {name}",
+            "description": "Tooltip on the author's name on a tier list card: clicking it filters the index to that author.",
+            "placeholders": [
+                "name"
+            ]
+        },
+        {
             "key": "tierLists.browse.card.emptyDraft",
             "namespace": "tierLists",
             "source_text": "Empty draft",
@@ -33433,6 +34401,43 @@
             ]
         },
         {
+            "key": "tierLists.edit.draft.body",
+            "namespace": "tierLists",
+            "source_text": "This browser kept edits to this list that were never saved. Last edit: {when}.",
+            "description": "Banner body. {when} is when the edits were last made, as a relative time such as '5 min ago' or a date.",
+            "placeholders": [
+                "when"
+            ]
+        },
+        {
+            "key": "tierLists.edit.draft.discard",
+            "namespace": "tierLists",
+            "source_text": "Discard",
+            "description": "Button that throws the kept edits away.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.draft.diverged",
+            "namespace": "tierLists",
+            "source_text": "The list has been saved since then. Restoring puts your older edits back, and saving them would overwrite what changed.",
+            "description": "Extra warning in the banner when the list on the server changed after these edits were kept.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.draft.restore",
+            "namespace": "tierLists",
+            "source_text": "Restore",
+            "description": "Button that loads the kept edits back into the editor. Nothing is saved until the author saves.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.draft.title",
+            "namespace": "tierLists",
+            "source_text": "Restore unsaved changes?",
+            "description": "Heading of the banner offering edits this browser kept from an editing session that ended before they were saved.",
+            "placeholders": []
+        },
+        {
             "key": "tierLists.edit.forbidden.action",
             "namespace": "tierLists",
             "source_text": "View public page",
@@ -33465,6 +34470,55 @@
             "namespace": "tierLists",
             "source_text": "All saved",
             "description": "Heading of the same panel when there is nothing left to save. Rendered uppercase.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.hero.autosave",
+            "namespace": "tierLists",
+            "source_text": "Auto-save",
+            "description": "Label of the switch that saves edits automatically a few seconds after the author stops editing.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.hero.autosaveConflict",
+            "namespace": "tierLists",
+            "source_text": "Auto-save paused: this list changed in another tab or by another editor. Reload to get the latest version, or save to keep yours.",
+            "description": "Shown when auto-save found the list on the server differs from the one this editor loaded, so it stopped instead of overwriting.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.hero.autosaveFailed",
+            "namespace": "tierLists",
+            "source_text": "Save failed",
+            "description": "Auto-save status after an automatic save failed; auto-save waits until the author retries. Rendered uppercase.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.hero.autosaveHint",
+            "namespace": "tierLists",
+            "source_text": "Saves a few seconds after you stop editing. Saved changes are live for anyone viewing the list.",
+            "description": "Small note under the auto-save switch. Saving updates the public page right away, which is why the switch starts off.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.hero.autosaveRetry",
+            "namespace": "tierLists",
+            "source_text": "Retry",
+            "description": "Button next to the failed auto-save status that tries the save again.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.hero.autosaveSaved",
+            "namespace": "tierLists",
+            "source_text": "Saved",
+            "description": "Auto-save status after the last automatic save succeeded. Rendered uppercase.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.hero.autosaveSaving",
+            "namespace": "tierLists",
+            "source_text": "Saving",
+            "description": "Auto-save status while a save is running. Rendered uppercase.",
             "placeholders": []
         },
         {
@@ -35269,6 +36323,27 @@
                 "noted",
                 "rarity"
             ]
+        },
+        {
+            "key": "tierLists.edit.toast.autosaveConflictBody",
+            "namespace": "tierLists",
+            "source_text": "This list changed in another tab or by another editor. Nothing was overwritten.",
+            "description": "Toast body when auto-save stopped instead of writing over a newer version of the list.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.toast.autosaveConflictTitle",
+            "namespace": "tierLists",
+            "source_text": "Auto-save paused",
+            "description": "Toast title when auto-save stopped because the list changed somewhere else.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.toast.autosaveFailedTitle",
+            "namespace": "tierLists",
+            "source_text": "Auto-save failed",
+            "description": "Toast title when an automatic save failed. Auto-save then waits until the author retries or saves.",
+            "placeholders": []
         },
         {
             "key": "tierLists.edit.toast.flairClearedBody",
@@ -38358,6 +39433,13 @@
             "namespace": "tools",
             "source_text": "Talent active",
             "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'TalentUp'). Short; shown beside a toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.calc.cond.talentAttackSpeed",
+            "namespace": "tools",
+            "source_text": "Talent attack speed bonus",
+            "description": "Label of a calculator switch for an operator's conditional damage or healing bonus (engine names: 'talentASPD'). Short; shown beside a toggle.",
             "placeholders": []
         },
         {
@@ -43628,6 +44710,48 @@
             "placeholders": []
         },
         {
+            "key": "tools.randomizer.ops.source",
+            "namespace": "tools",
+            "source_text": "Source",
+            "description": "Heading over the toggles that narrow the pool by how an operator is obtained.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.randomizer.ops.source.any",
+            "namespace": "tools",
+            "source_text": "Any",
+            "description": "Source toggle: every operator, however it is obtained.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.randomizer.ops.source.aria",
+            "namespace": "tools",
+            "source_text": "Operator source",
+            "description": "Accessible name of the group of source toggles.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.randomizer.ops.source.gachaless",
+            "namespace": "tools",
+            "source_text": "Gachaless",
+            "description": "Source toggle: operators a player can get without headhunting (the game's paid gacha), that is welfare operators plus the ones in the recruitment pool. 'Gachaless' is the community's name for an account that never headhunts.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.randomizer.ops.source.recruitment",
+            "namespace": "tools",
+            "source_text": "Recruitment",
+            "description": "Source toggle: operators that recruitment (the free permit-based draw with tags, not headhunting) can give.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.randomizer.ops.source.welfare",
+            "namespace": "tools",
+            "source_text": "Welfare",
+            "description": "Source toggle: operators the game gives away (event rewards, certificate shops, Integrated Strategies, credit store, story).",
+            "placeholders": []
+        },
+        {
             "key": "tools.randomizer.ops.squadSize",
             "namespace": "tools",
             "source_text": "Squad size · {size}",
@@ -48721,6 +49845,15 @@
             ]
         },
         {
+            "key": "tools.squad.analysis.economy.cut.trait",
+            "namespace": "tools",
+            "source_text": "Trait {amount}",
+            "description": "A redeploy cut from the operator's trait. {amount} is signed, e.g. -35%.",
+            "placeholders": [
+                "amount"
+            ]
+        },
+        {
             "key": "tools.squad.analysis.economy.footer.page",
             "namespace": "tools",
             "source_text": "Pick a stage to use its own starting DP and deploy limit.",
@@ -48774,6 +49907,24 @@
             "placeholders": []
         },
         {
+            "key": "tools.squad.analysis.economy.note.change.cost",
+            "namespace": "tools",
+            "source_text": "DP Cost {amount}",
+            "description": "The DP cost change a footnote is about. {amount} is signed, e.g. -1.",
+            "placeholders": [
+                "amount"
+            ]
+        },
+        {
+            "key": "tools.squad.analysis.economy.note.change.respawn",
+            "namespace": "tools",
+            "source_text": "Redeploy {amount}",
+            "description": "The redeploy time change a footnote is about. {amount} is signed, e.g. -10% or -5.",
+            "placeholders": [
+                "amount"
+            ]
+        },
+        {
             "key": "tools.squad.analysis.economy.note.conditional",
             "namespace": "tools",
             "source_text": "{name}, {talent}: only works when its condition is met, so it is left out of the numbers.",
@@ -48789,6 +49940,17 @@
             "source_text": "{name}'s {talent} is counted in the costs.",
             "description": "Footnote: a squad talent that lowers deployment costs is in the numbers above.",
             "placeholders": [
+                "name",
+                "talent"
+            ]
+        },
+        {
+            "key": "tools.squad.analysis.economy.note.dp_floor",
+            "namespace": "tools",
+            "source_text": "{name}'s {talent} is counted: DP can go down to {amount}, so the ladder lights up every operator that fits on credit.",
+            "description": "Footnote: a squad talent lowers the DP floor below zero (DP debt). {amount} is the lowest DP, e.g. -4.",
+            "placeholders": [
+                "amount",
                 "name",
                 "talent"
             ]
@@ -48844,6 +50006,16 @@
             ]
         },
         {
+            "key": "tools.squad.analysis.economy.note.skill_active",
+            "namespace": "tools",
+            "source_text": "{name}, {talent}: works while the skill is in use, so it is left out of the numbers.",
+            "description": "Footnote. {name} is the operator, {talent} the skill.",
+            "placeholders": [
+                "name",
+                "talent"
+            ]
+        },
+        {
             "key": "tools.squad.analysis.economy.note.sp_bonus",
             "namespace": "tools",
             "source_text": "{name}'s {talent} is counted: +{amount} starting SP.",
@@ -48852,6 +50024,16 @@
                 "amount",
                 "name",
                 "talent"
+            ]
+        },
+        {
+            "key": "tools.squad.analysis.economy.note.withChange",
+            "namespace": "tools",
+            "source_text": "{sentence} ({change})",
+            "description": "A footnote followed by the cost or redeploy change it is about, in brackets. Keep the order unless your language needs otherwise.",
+            "placeholders": [
+                "change",
+                "sentence"
             ]
         },
         {
@@ -48876,6 +50058,16 @@
             "placeholders": [
                 "amount",
                 "name"
+            ]
+        },
+        {
+            "key": "tools.squad.analysis.economy.redeploy.first",
+            "namespace": "tools",
+            "source_text": "{name}: first {value}s",
+            "description": "Small line under the redeploy times: an operator whose first redeploy only is shorter. {name} is the operator, {value} the seconds.",
+            "placeholders": [
+                "name",
+                "value"
             ]
         },
         {
@@ -49035,6 +50227,16 @@
             "namespace": "tools",
             "source_text": "+{amount} from {name}",
             "description": "Small line under the starting DP: a talent in the squad adds DP at the start. {name} is the operator's name.",
+            "placeholders": [
+                "amount",
+                "name"
+            ]
+        },
+        {
+            "key": "tools.squad.analysis.economy.startDp.floor",
+            "namespace": "tools",
+            "source_text": "DP can go down to {amount} ({name})",
+            "description": "Small line under the starting DP: a talent in the squad lets DP drop below zero, so operators can be deployed on credit. {amount} is the lowest DP, e.g. -4. {name} is the operator.",
             "placeholders": [
                 "amount",
                 "name"
@@ -50963,6 +52165,41 @@
             "placeholders": []
         },
         {
+            "key": "tools.squad.picker.source",
+            "namespace": "tools",
+            "source_text": "Source",
+            "description": "Accessible name of the menu in the operator picker that narrows the list by how an operator is obtained.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.squad.picker.source.any",
+            "namespace": "tools",
+            "source_text": "Any source",
+            "description": "Source filter option: every operator, however it is obtained.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.squad.picker.source.gachaless",
+            "namespace": "tools",
+            "source_text": "Gachaless",
+            "description": "Source filter option: operators a player can get without headhunting (the game's paid gacha), that is welfare operators plus the ones in the recruitment pool. 'Gachaless' is the community's name for an account that never headhunts.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.squad.picker.source.recruitment",
+            "namespace": "tools",
+            "source_text": "Recruitment",
+            "description": "Source filter option: operators that recruitment (the free permit-based draw with tags, not headhunting) can give.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.squad.picker.source.welfare",
+            "namespace": "tools",
+            "source_text": "Welfare",
+            "description": "Source filter option: operators the game gives away (event rewards, certificate shops, Integrated Strategies, credit store, story), the same wording as the roster's source filter.",
+            "placeholders": []
+        },
+        {
             "key": "tools.squad.picker.stars",
             "namespace": "tools",
             "source_text": "{rarity}★",
@@ -52695,6 +53932,233 @@
             "namespace": "user",
             "source_text": "View profile",
             "description": "Button that opens the signed-in player's own profile page.",
+            "placeholders": []
+        },
+        {
+            "key": "user.lookback.compare.event",
+            "namespace": "user",
+            "source_text": "{event} ({date})",
+            "description": "Picker entry for a snapshot opened by an event launch. {event} is the event's name, {date} the launch date.",
+            "placeholders": [
+                "date",
+                "event"
+            ]
+        },
+        {
+            "key": "user.lookback.compare.from",
+            "namespace": "user",
+            "source_text": "From",
+            "description": "Label of the picker for the earlier snapshot of the comparison.",
+            "placeholders": []
+        },
+        {
+            "key": "user.lookback.compare.grade",
+            "namespace": "user",
+            "source_text": "Grade {from} → {to}",
+            "description": "Chip comparing the account grade letter at the two snapshots.",
+            "placeholders": [
+                "from",
+                "to"
+            ]
+        },
+        {
+            "key": "user.lookback.compare.now",
+            "namespace": "user",
+            "source_text": "Now (last sync)",
+            "description": "Picker entry for the account as of its latest sync rather than a stored snapshot.",
+            "placeholders": []
+        },
+        {
+            "key": "user.lookback.compare.title",
+            "namespace": "user",
+            "source_text": "Compare",
+            "description": "Card title over the comparison of two snapshots.",
+            "placeholders": []
+        },
+        {
+            "key": "user.lookback.compare.to",
+            "namespace": "user",
+            "source_text": "To",
+            "description": "Label of the picker for the later snapshot of the comparison.",
+            "placeholders": []
+        },
+        {
+            "key": "user.lookback.compare.week",
+            "namespace": "user",
+            "source_text": "Week of {date}",
+            "description": "Picker entry for a snapshot that no event launch opened: one per week. {date} is the week's Monday.",
+            "placeholders": [
+                "date"
+            ]
+        },
+        {
+            "key": "user.lookback.diff.elite2",
+            "namespace": "user",
+            "source_text": "New Elite 2",
+            "description": "Heading of the list of operators promoted to Elite 2 between the two snapshots.",
+            "placeholders": []
+        },
+        {
+            "key": "user.lookback.diff.gained",
+            "namespace": "user",
+            "source_text": "Operators gained",
+            "description": "Heading of the list of operators obtained between the two snapshots.",
+            "placeholders": []
+        },
+        {
+            "key": "user.lookback.diff.masteries",
+            "namespace": "user",
+            "source_text": "Masteries",
+            "description": "Heading of the list of skill masteries raised between the two snapshots.",
+            "placeholders": []
+        },
+        {
+            "key": "user.lookback.diff.mastery",
+            "namespace": "user",
+            "source_text": "S{skill} M{from} → M{to}",
+            "description": "One mastery change. {skill} is the 1-based skill number, {from} and {to} the mastery ranks (0 to 3).",
+            "placeholders": [
+                "from",
+                "skill",
+                "to"
+            ]
+        },
+        {
+            "key": "user.lookback.diff.module",
+            "namespace": "user",
+            "source_text": "Stage {from} → {to}",
+            "description": "One module upgrade between two stages (1 to 3).",
+            "placeholders": [
+                "from",
+                "to"
+            ]
+        },
+        {
+            "key": "user.lookback.diff.moduleNew",
+            "namespace": "user",
+            "source_text": "Unlocked, stage {to}",
+            "description": "One module unlocked between the snapshots, now at stage {to} (1 to 3).",
+            "placeholders": [
+                "to"
+            ]
+        },
+        {
+            "key": "user.lookback.diff.modules",
+            "namespace": "user",
+            "source_text": "Modules",
+            "description": "Heading of the list of modules unlocked or upgraded between the two snapshots.",
+            "placeholders": []
+        },
+        {
+            "key": "user.lookback.diff.none",
+            "namespace": "user",
+            "source_text": "Nothing new",
+            "description": "Shown under a diff heading when nothing in that category changed.",
+            "placeholders": []
+        },
+        {
+            "key": "user.lookback.diff.same",
+            "namespace": "user",
+            "source_text": "Pick two different points to compare.",
+            "description": "Shown when both pickers name the same snapshot.",
+            "placeholders": []
+        },
+        {
+            "key": "user.lookback.empty",
+            "namespace": "user",
+            "source_text": "No snapshot yet. One is taken on the first sync after each event launch.",
+            "description": "Shown when the account has no snapshot yet. A snapshot is recorded automatically when the account syncs.",
+            "placeholders": []
+        },
+        {
+            "key": "user.lookback.loading",
+            "namespace": "user",
+            "source_text": "Loading snapshots…",
+            "description": "Placeholder while the account's snapshots load. Keep the single-character ellipsis.",
+            "placeholders": []
+        },
+        {
+            "key": "user.lookback.metric.elite2",
+            "namespace": "user",
+            "source_text": "Elite 2",
+            "description": "Chart metric chip and delta tile: operators promoted to Elite 2.",
+            "placeholders": []
+        },
+        {
+            "key": "user.lookback.metric.mastery3",
+            "namespace": "user",
+            "source_text": "Mastery 3",
+            "description": "Chart metric chip and delta tile: skills at Mastery 3 (counted per skill, not per operator).",
+            "placeholders": []
+        },
+        {
+            "key": "user.lookback.metric.max_level",
+            "namespace": "user",
+            "source_text": "Max level",
+            "description": "Chart metric chip and delta tile: operators at the level cap of their current promotion.",
+            "placeholders": []
+        },
+        {
+            "key": "user.lookback.metric.modules",
+            "namespace": "user",
+            "source_text": "Modules",
+            "description": "Chart metric chip and delta tile: unlocked modules.",
+            "placeholders": []
+        },
+        {
+            "key": "user.lookback.metric.operators",
+            "namespace": "user",
+            "source_text": "Operators",
+            "description": "Chart metric chip and delta tile: operators owned.",
+            "placeholders": []
+        },
+        {
+            "key": "user.lookback.metric.skins",
+            "namespace": "user",
+            "source_text": "Skins",
+            "description": "Chart metric chip and delta tile: non-default outfits owned.",
+            "placeholders": []
+        },
+        {
+            "key": "user.lookback.private",
+            "namespace": "user",
+            "source_text": "This player keeps their roster history private.",
+            "description": "Shown on the Lookback tab when the player hid their Roster tab, whose data the snapshots are.",
+            "placeholders": []
+        },
+        {
+            "key": "user.lookback.reconstructed.note",
+            "namespace": "user",
+            "source_text": "The dashed line reaches back before snapshots began: it is rebuilt from the date each operator was obtained. It shows ownership only, since builds before the first snapshot were never recorded.",
+            "description": "Note under the chart explaining the reconstructed ownership line.",
+            "placeholders": []
+        },
+        {
+            "key": "user.lookback.series.now",
+            "namespace": "user",
+            "source_text": "Now",
+            "description": "Tooltip label of the chart's last point: the roster as of its latest sync.",
+            "placeholders": []
+        },
+        {
+            "key": "user.lookback.series.reconstructed",
+            "namespace": "user",
+            "source_text": "Owned, rebuilt from obtain dates",
+            "description": "Legend entry for the dashed line: operators owned over time, worked out from the date each operator was obtained.",
+            "placeholders": []
+        },
+        {
+            "key": "user.lookback.series.recorded",
+            "namespace": "user",
+            "source_text": "Snapshots",
+            "description": "Legend entry for the solid line: counts recorded at each snapshot.",
+            "placeholders": []
+        },
+        {
+            "key": "user.lookback.timeline.title",
+            "namespace": "user",
+            "source_text": "Over time",
+            "description": "Card title over the chart of the account's counts (operators, Elite 2 and so on) across its snapshots.",
             "placeholders": []
         },
         {
@@ -56399,6 +57863,55 @@
             "placeholders": []
         },
         {
+            "key": "user.profile.pulls.empty",
+            "namespace": "user",
+            "source_text": "No pulls recorded yet.",
+            "description": "Shown on a Pulls tab when the player has no stored pulls.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.pulls.emptyFiltered",
+            "namespace": "user",
+            "source_text": "No pulls on the chosen banners.",
+            "description": "Shown on a Pulls tab when the banner filter matches none of the player's pulls.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.pulls.historyLink",
+            "namespace": "user",
+            "source_text": "Open pull history",
+            "description": "Link from the owner's Pulls tab to their full pull-history page, where pulls are synced.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.pulls.loadFailed",
+            "namespace": "user",
+            "source_text": "Couldn't load the pull history.",
+            "description": "Shown on a Pulls tab when the pulls failed to load; followed by the reason.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.pulls.ownerEmpty",
+            "namespace": "user",
+            "source_text": "Sync your pulls on the history page to fill this tab.",
+            "description": "Shown on the owner's own Pulls tab when they have no stored pulls; followed by a link to the pull-history page.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.pulls.ownerPrivate",
+            "namespace": "user",
+            "source_text": "Only you can see this tab. Visitors see it once your pull history is public.",
+            "description": "Note on the owner's own Pulls tab while their pull history is private, the default.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.pulls.private",
+            "namespace": "user",
+            "source_text": "This player's pull history is private.",
+            "description": "Shown on another player's Pulls tab when their pull history cannot be read (they made it private since the page loaded).",
+            "placeholders": []
+        },
+        {
             "key": "user.profile.roster.aria",
             "namespace": "user",
             "source_text": "Operator roster",
@@ -56473,6 +57986,22 @@
             "source_text": "No skills found.",
             "description": "Shown in place of the skill list when the game data has none.",
             "placeholders": []
+        },
+        {
+            "key": "user.profile.roster.card.obtained",
+            "namespace": "user",
+            "source_text": "Obtained",
+            "description": "Row label on the detailed operator card, beside the date the account obtained this operator.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.roster.card.obtainedOn",
+            "namespace": "user",
+            "source_text": "Obtained {date}",
+            "description": "Tooltip on the small date under a compact card's name, shown when the roster is sorted by obtained date. {date} is a localized date such as 'Mar 4, 2024'.",
+            "placeholders": [
+                "date"
+            ]
         },
         {
             "key": "user.profile.roster.card.potential",
@@ -58778,6 +60307,13 @@
             "placeholders": []
         },
         {
+            "key": "user.profile.tab.lookback",
+            "namespace": "user",
+            "source_text": "Lookback",
+            "description": "Profile tab: snapshots of how built the account was at each event launch, and how it changed between them.",
+            "placeholders": []
+        },
+        {
             "key": "user.profile.tab.optimizer",
             "namespace": "user",
             "source_text": "Optimizer",
@@ -58789,6 +60325,13 @@
             "namespace": "user",
             "source_text": "Plans",
             "description": "Profile tab: the account's public upgrade plans.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.tab.pulls",
+            "namespace": "user",
+            "source_text": "Pulls",
+            "description": "Profile tab: the account's gacha pull history, shown to visitors only when the player made it public. A pull is one draw on a headhunting banner.",
             "placeholders": []
         },
         {

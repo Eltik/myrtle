@@ -16,7 +16,10 @@
 //!   than N", "cost N or less DP"); "the next Operator"; a class word (the EN
 //!   `GachaTags` names of the profession tags, singular or plural, bracketed or
 //!   not); a bracketed name (a recruitment tag name is a Tag, else a faction);
-//!   "all X Operators" where X is a `handbook_team_table` name; the Melee and
+//!   "all X Operators" where X is a `handbook_team_table` name; a team table
+//!   name with no brackets before "Operator(s)" or "member(s)" or after
+//!   "from" ("any Kazimierz Operator", "Ave Mujica members", "is from
+//!   Kazimierz"); the Melee and
 //!   Ranged tag names; an everyone phrase (`EVERYONE`). A bracket followed by
 //!   "enemies" names enemies and is skipped.
 //! * conditions: `SQUAD_WORDS` -> Squad, `NEAR_WORDS` -> Near, `SKILL_WORDS` ->
@@ -79,6 +82,8 @@ pub const POSITION_TAG_IDS: [(&str, i32); 2] = [("MELEE", MELEE_TAG_ID), ("RANGE
 static RANDOM_UNIT_RE: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(r"an allied unit within range (?:gains|receives?)").expect("random unit regex")
 });
+static PLACEHOLDER_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"\{[^{}]*\}").expect("placeholder regex"));
 static BRACKET_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"\[([^\]]+)\]").expect("bracket regex"));
 static ALL_X_OPS_RE: LazyLock<Regex> = LazyLock::new(|| {
@@ -145,6 +150,9 @@ pub struct Vocab {
     position_re: Option<Regex>,
     /// Normalized `handbook_team_table` name -> power id.
     factions: Vec<(String, String)>,
+    /// A team table name, as the table writes it, naming allies without
+    /// brackets (`unbracketed_faction`).
+    faction_re: Option<Regex>,
 }
 
 fn word_alternation(words: &[String]) -> String {
@@ -198,6 +206,22 @@ impl Vocab {
             .collect();
         factions.sort();
         factions.dedup();
+        let faction_words: Vec<String> = data
+            .factions
+            .values()
+            .filter(|t| !t.power_id.is_empty() && t.power_id != "none")
+            .map(|t| t.power_name.clone())
+            .filter(|n| !n.is_empty())
+            .collect();
+        let faction_re = (!faction_words.is_empty())
+            .then(|| {
+                let names = word_alternation(&faction_words);
+                Regex::new(&format!(
+                    r"\bfrom\s+'?({names})'?(?:[^\p{{L}}\p{{N}}]|$)|(?:^|[^\p{{L}}\p{{N}}])'?({names})'?\s+(?:[Oo]perators?|[Mm]embers?)\b"
+                ))
+                .ok()
+            })
+            .flatten();
         Self {
             classes,
             class_re,
@@ -211,6 +235,7 @@ impl Vocab {
             positions,
             position_re,
             factions,
+            faction_re,
         }
     }
 
@@ -382,37 +407,7 @@ pub fn parse_target(raw: &str, vocab: &Vocab) -> Option<Target> {
         if let Some(id) = vocab.tag_ids.get(&name.to_lowercase()) {
             return Some(Target::new(K::Tag, Some(id.to_string()), name));
         }
-        let mut powers = vocab.powers(&name);
-        if let Some(first) = powers.first().cloned() {
-            // Brackets joined by "and"/"or"/"," name one target: Titi's
-            // "Deployed [Minos] and [Sargon] Operators" reaches both.
-            let mut label = name;
-            let mut end = whole.end();
-            for next in BRACKET_RE.captures_iter(&p[end..]) {
-                let at = next.get(0).expect("group 0");
-                let between = p[end..end + at.start()].trim().to_lowercase();
-                if !matches!(
-                    between.as_str(),
-                    "and" | "or" | "," | ", and" | ", or" | "/" | "&"
-                ) {
-                    break;
-                }
-                let more = vocab.powers(next[1].trim());
-                if more.is_empty() {
-                    break;
-                }
-                for m in more {
-                    if !powers.contains(&m) {
-                        powers.push(m);
-                    }
-                }
-                let sep = p[end..end + at.start()].trim();
-                let gap = if sep.starts_with(',') { "" } else { " " };
-                label = format!("{label}{gap}{sep} {}", next[1].trim());
-                end += at.end();
-            }
-            let mut t = Target::new(K::Faction, Some(first), label);
-            t.powers = powers;
+        if let Some(t) = bracket_faction(&p, whole.end(), &name, vocab) {
             return Some(t);
         }
         // An unresolved bracket names allies only when "Operator" follows it;
@@ -422,14 +417,8 @@ pub fn parse_target(raw: &str, vocab: &Vocab) -> Option<Target> {
             return Some(Target::new(K::Unknown, Some(name.clone()), name));
         }
     }
-    for c in ALL_X_OPS_RE.captures_iter(&p) {
-        let name = c[1].trim().to_string();
-        let powers = vocab.powers(&name);
-        if let Some(first) = powers.first() {
-            let mut t = Target::new(K::Faction, Some(first.clone()), name);
-            t.powers = powers;
-            return Some(t);
-        }
+    if let Some(t) = all_x_operators(&p, vocab).or_else(|| unbracketed_faction(&p, vocab)) {
+        return Some(t);
     }
     if let Some(c) = vocab.position_re.as_ref().and_then(|re| {
         re.captures(&p)
@@ -454,6 +443,107 @@ pub fn parse_target(raw: &str, vocab: &Vocab) -> Option<Target> {
     everyone.map(|phrase| Target::new(K::Everyone, None, (*phrase).to_string()))
 }
 
+/// The faction a bracketed name at `end` (the byte after its `]`) names, with
+/// the brackets joined to it by "and"/"or"/",", which name one target:
+/// Titi's "Deployed [Minos] and [Sargon] Operators" reaches both. `None`
+/// when no team table name matches.
+fn bracket_faction(p: &str, end: usize, name: &str, vocab: &Vocab) -> Option<Target> {
+    let mut powers = vocab.powers(name);
+    let first = powers.first().cloned()?;
+    let mut label = name.to_string();
+    let mut end = end;
+    for next in BRACKET_RE.captures_iter(&p[end..]) {
+        let at = next.get(0).expect("group 0");
+        let between = p[end..end + at.start()].trim().to_lowercase();
+        if !matches!(
+            between.as_str(),
+            "and" | "or" | "," | ", and" | ", or" | "/" | "&"
+        ) {
+            break;
+        }
+        let more = vocab.powers(next[1].trim());
+        if more.is_empty() {
+            break;
+        }
+        for m in more {
+            if !powers.contains(&m) {
+                powers.push(m);
+            }
+        }
+        let sep = p[end..end + at.start()].trim();
+        let gap = if sep.starts_with(',') { "" } else { " " };
+        label = format!("{label}{gap}{sep} {}", next[1].trim());
+        end += at.end();
+    }
+    let mut t = Target::new(SynergyTargetKind::Faction, Some(first), label);
+    t.powers = powers;
+    Some(t)
+}
+
+/// "all X Operators" where X is a team table name.
+fn all_x_operators(p: &str, vocab: &Vocab) -> Option<Target> {
+    ALL_X_OPS_RE.captures_iter(p).find_map(|c| {
+        let name = c[1].trim().to_string();
+        let powers = vocab.powers(&name);
+        let first = powers.first()?.clone();
+        let mut t = Target::new(SynergyTargetKind::Faction, Some(first), name);
+        t.powers = powers;
+        Some(t)
+    })
+}
+
+/// A team table name with no brackets that names allies: before
+/// "Operator(s)" or "member(s)" ("When any Kazimierz Operator is attacked",
+/// Mlynar; "all 'Kazimierz' Operators", Flametail; "Ave Mujica members") or
+/// after "from" ("If the previously deployed Operator is from Kazimierz",
+/// Nearl the Radiant Knight). The word after the name keeps an operator's
+/// own name out ("Vina Victoria and her summons"). After "a random" the game
+/// picks the receiver (Insider's "a random Laterano Operator").
+fn unbracketed_faction(p: &str, vocab: &Vocab) -> Option<Target> {
+    let re = vocab.faction_re.as_ref()?;
+    re.captures_iter(p).find_map(|c| {
+        let m = c.get(1).or_else(|| c.get(2))?;
+        let powers = vocab.powers(m.as_str());
+        let first = powers.first()?.clone();
+        let mut t = Target::new(
+            SynergyTargetKind::Faction,
+            Some(first),
+            m.as_str().to_string(),
+        );
+        t.powers = powers;
+        t.unseen = p[..m.start()]
+            .trim_end_matches('\'')
+            .trim_end()
+            .to_lowercase()
+            .ends_with("a random");
+        Some(t)
+    })
+}
+
+/// The ally faction a text names, bracketed or not, whatever else it names
+/// (a class word or an everyone phrase first does not hide it). The Synergy
+/// panel reads skills this way only: "If the previously deployed Operator is
+/// from Kazimierz", Nearl the Radiant Knight S2.
+pub fn parse_faction(raw: &str, vocab: &Vocab) -> Option<Target> {
+    // Skill templates keep their placeholders, whose `[a]` / `[b]` parts are
+    // no bracketed names (`{amgoat_s_1[a].attack_speed}`).
+    let p = PLACEHOLDER_RE.replace_all(&plain(raw), "").into_owned();
+    for c in BRACKET_RE.captures_iter(&p) {
+        let whole = c.get(0).expect("group 0");
+        if p[whole.end()..]
+            .trim_start()
+            .to_lowercase()
+            .starts_with("enem")
+        {
+            continue;
+        }
+        if let Some(t) = bracket_faction(&p, whole.end(), c[1].trim(), vocab) {
+            return Some(t);
+        }
+    }
+    all_x_operators(&p, vocab).or_else(|| unbracketed_faction(&p, vocab))
+}
+
 /// When the effect works, from the description's wording.
 pub fn parse_cond(raw: &str) -> SynergyCond {
     let lower = lower_plain(raw);
@@ -471,9 +561,16 @@ pub fn parse_cond(raw: &str) -> SynergyCond {
 /// A count the text requires: `(count, counts_giver)`. "at least one more"
 /// counts others only; "4 [X] Operators in the squad" counts the giver when the
 /// giver fits.
+/// A count of enemies or of Block ("3 or more enemies nearby", "Melee allies
+/// with 3 or more Block") is no count of allies and is skipped.
 pub fn parse_need(raw: &str) -> Option<(i32, bool)> {
     let p = plain(raw);
-    let c = NEED_RE.captures(&p)?;
+    let c = NEED_RE.captures_iter(&p).find(|c| {
+        let after = p[c.get(0).map_or(0, |m| m.end())..]
+            .trim_start()
+            .to_lowercase();
+        !after.starts_with("block") && !after.starts_with("enem")
+    })?;
     if let Some(n) = c.get(1) {
         return Some((word_num(n.as_str())?, c.get(2).is_none()));
     }

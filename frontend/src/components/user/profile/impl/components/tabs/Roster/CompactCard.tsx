@@ -1,10 +1,10 @@
 import { eliteIcon, potentialIcon } from "#/components/operators/detail/impl/assets";
 import { RARITY_COLORS } from "#/components/operators/list/impl/constants";
 import { Dialog, DialogTrigger } from "#/components/ui/dialog";
-import { useT } from "#/lib/i18n";
+import { useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import type { messages } from "./CompactCard.messages";
-import { isMaxed, MAX_LEVEL_BY_RARITY, moduleBadgeLetter, moduleIconURL, ownedAvatar, parseOperatorName, specializedIcon } from "./helpers.card";
+import { isMaxed, MAX_LEVEL_BY_RARITY, moduleBadgeLetter, moduleIconURL, OBTAINED_DATE, obtainedDate, ownedAvatar, parseOperatorName, specializedIcon } from "./helpers.card";
 import type { messages as cardMessages } from "./helpers.card.messages";
 import { OperatorDialog } from "./OperatorDialog";
 import type { IOwnedEntry } from "./types";
@@ -15,10 +15,15 @@ type CompactT = TypedT<typeof messages & typeof cardMessages>;
 interface ICompactCardProps {
     entry: IOwnedEntry;
     lastRef?: ((node: HTMLElement | null) => void) | null;
+    /** Print the obtained date under the name; the roster turns it on when sorted by obtained. */
+    showObtained?: boolean;
 }
 
-export function CompactCard({ entry, lastRef }: ICompactCardProps) {
+export function CompactCard({ entry, lastRef, showObtained = false }: ICompactCardProps) {
     const t: CompactT = useT("user");
+    const f = useFormatters();
+    const obtained = showObtained ? obtainedDate(entry) : null;
+    const obtainedLabel = obtained ? f.date(obtained, OBTAINED_DATE) : null;
     const op = entry.static;
     const star = entry.rarity;
     const rarityColor = RARITY_COLORS[star] ?? "#ffffff";
@@ -76,6 +81,13 @@ export function CompactCard({ entry, lastRef }: ICompactCardProps) {
                                 {displayName}
                             </span>
                         </div>
+                        {/* A fixed-height line on every card while the sort is on, empty when the
+                            account has no date, so portraits in a row still line up. */}
+                        {showObtained && (
+                            <div className="ml-px h-3 truncate text-[0.5625rem] text-muted-foreground tabular-nums leading-3" title={obtainedLabel ? t("profile.roster.card.obtainedOn", { date: obtainedLabel }) : undefined}>
+                                {obtainedLabel}
+                            </div>
+                        )}
 
                         <div
                             /* The portrait follows the TRACK, which follows the grid. A fixed

@@ -7,6 +7,7 @@ use crate::app::error::ApiError;
 use crate::app::extractors::auth::{AuthUser, RoleCheckedUser};
 use crate::app::routes::{StatusOk, ok_status};
 use crate::app::services;
+use crate::app::services::content_audit;
 use crate::app::services::tier_list::check_permission;
 use crate::app::services::tier_list::get_by_slug;
 use crate::app::services::tier_list::invalidate_detail;
@@ -16,11 +17,14 @@ use crate::app::validation::{
     LIST_DESCRIPTION_MAX, LIST_NAME_MAX, validate_length, validate_opt_length,
 };
 use crate::core::auth::permissions::Permission;
+use crate::database::models::content_audit::{ContentAuditAction, ContentAuditDetails};
 use crate::database::models::tier_list::{EntityKind, TierList, TierListType};
 use crate::database::queries::tier_lists::delete_list;
 use crate::database::queries::tier_lists::find_all_active;
 use crate::database::queries::tier_lists::find_by_user;
 use crate::database::queries::tier_lists::find_favorited_by_user;
+use crate::database::queries::tier_lists::get_placements_for_tiers;
+use crate::database::queries::tier_lists::get_tiers;
 
 fn validate_list_body(name: &str, description: Option<&str>) -> Result<(), ApiError> {
     validate_length("list name", name, LIST_NAME_MAX)?;
@@ -76,6 +80,8 @@ pub async fn list(State(state): State<AppState>) -> Result<Json<Vec<TierList>>, 
 #[derive(Deserialize)]
 pub struct ListDetailsQuery {
     pub limit: Option<i64>,
+    /// Only this account's lists (its id, a UUID).
+    pub author: Option<Uuid>,
     pub server: Option<crate::core::hypergryph::constants::Server>,
 }
 
@@ -86,6 +92,7 @@ pub struct ListDetailsQuery {
     tag = "tier-lists",
     params(
         ("limit" = Option<i64>, Query, description = "Maximum lists to return."),
+        ("author" = Option<String>, Query, description = "Account id (UUID): only lists that account created. Unlisted lists are left out as they are without it."),
         ("server" = Option<String>, Query, description = "Game server whose data resolves each placement's `entity`. Defaults to the deployment's default server.")
     ),
     responses(
@@ -101,7 +108,7 @@ pub async fn list_details(
 ) -> Result<Json<Vec<services::tier_list::TierListDetail>>, ApiError> {
     let limit = params.limit.unwrap_or(60).clamp(1, 200);
     let server = params.server.unwrap_or(state.default_server);
-    let details = services::tier_list::list_details(&state, limit, server).await?;
+    let details = services::tier_list::list_details(&state, limit, params.author, server).await?;
     Ok(Json(details))
 }
 
@@ -230,8 +237,25 @@ pub async fn delete(
     let list = super::load_tier_list(&state, &slug).await?;
     // Owner check is inside check_permission; Admin level covers delete.
     check_permission(&state, &list, user_id, auth.role, Permission::Admin).await?;
+    // Counted before the cascade takes them, for the audit row.
+    let tier_ids: Vec<Uuid> = get_tiers(&state.db, list.id)
+        .await?
+        .iter()
+        .map(|t| t.id)
+        .collect();
+    let entries = get_placements_for_tiers(&state.db, &tier_ids).await?.len();
     delete_list(&state.db, list.id).await?;
     invalidate_detail(&state, &slug).await;
+    let details = ContentAuditDetails {
+        tiers: Some(content_audit::count_of(tier_ids.len())),
+        entries: Some(content_audit::count_of(entries)),
+        ..Default::default()
+    };
+    content_audit::record(
+        &state,
+        content_audit::tier_list_entry(&list, user_id, ContentAuditAction::Delete, details),
+    )
+    .await;
     Ok(ok_status())
 }
 

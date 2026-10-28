@@ -571,13 +571,14 @@ pub struct TranslationAuditResponse {
 pub async fn get_global_audit_log(
     state: &AppState,
     locale: Option<&str>,
+    actor: Option<Uuid>,
     limit: i64,
     before: Option<chrono::DateTime<chrono::Utc>>,
 ) -> Result<TranslationAuditResponse, ApiError> {
     let capped = limit.clamp(1, 500);
     let (rows, total) = tokio::try_join!(
-        queries::get_audit_log_global(&state.db, locale, capped, before),
-        queries::count_audit_log(&state.db, locale),
+        queries::get_audit_log_global(&state.db, locale, actor, capped, before),
+        queries::count_audit_log(&state.db, locale, actor),
     )?;
 
     let entries = rows

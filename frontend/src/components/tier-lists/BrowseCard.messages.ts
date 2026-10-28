@@ -31,6 +31,10 @@ export const messages = {
         text: "{count} views in the last 24h",
         description: "Tooltip on a trending card's recent view count.",
     },
+    "browse.card.byAuthor": {
+        text: "Show only lists by {name}",
+        description: "Tooltip on the author's name on a tier list card: clicking it filters the index to that author.",
+    },
 } satisfies MessageMap;
 
 export const { keys } = defineMessages({ namespace, messages });

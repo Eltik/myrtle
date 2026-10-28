@@ -88,6 +88,7 @@ pub async fn update_settings(
     public_profile: Option<bool>,
     store_gacha: Option<bool>,
     share_stats: Option<bool>,
+    public_gacha: Option<bool>,
     profile_layout: Option<Option<ProfileLayoutPatch>>,
 ) -> Result<(), sqlx::Error> {
     let touch_layout = profile_layout.is_some();
@@ -99,6 +100,7 @@ pub async fn update_settings(
     sqlx::query(
         "UPDATE user_settings SET public_profile = COALESCE($2, public_profile), \
          store_gacha = COALESCE($3, store_gacha), share_stats = COALESCE($4, share_stats), \
+         public_gacha = COALESCE($8, public_gacha), \
          profile_layout = CASE WHEN NOT $5 THEN profile_layout \
              WHEN $6::jsonb IS NULL THEN NULL \
              ELSE NULLIF((COALESCE(profile_layout, '{}'::jsonb) || $6::jsonb) - $7::text[], \
@@ -112,6 +114,7 @@ pub async fn update_settings(
     .bind(touch_layout)
     .bind(patch.as_ref().map(|p| Json(p.merge_json())))
     .bind(removed)
+    .bind(public_gacha)
     .execute(pool)
     .await?;
     Ok(())

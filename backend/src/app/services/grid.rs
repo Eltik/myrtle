@@ -18,6 +18,7 @@ use ts_rs::TS;
 use uuid::Uuid;
 
 use crate::app::error::ApiError;
+use crate::app::services::content_audit;
 use crate::app::services::tier_entity::{self, EntitySummary, FacetValue, StoryCatalogues};
 use crate::app::services::tier_list::{generate_slug, loaded_sources};
 use crate::app::state::AppState;
@@ -26,8 +27,12 @@ use crate::core::auth::permissions::GlobalRole;
 use crate::core::gamedata::assets::AssetIndex;
 use crate::core::gamedata::types::GameData;
 use crate::core::hypergryph::constants::Server;
+use crate::database::models::content_audit::{
+    ContentAuditAction, ContentAuditDetails, ContentTargetKind,
+};
 use crate::database::models::grid::{GridDocument, GridRow, StoredCell};
 use crate::database::models::tier_list::EntityKind;
+use crate::database::queries::content_audit::NewContentAudit;
 use crate::database::queries::grids as queries;
 use crate::database::queries::grids::ListOrder;
 
@@ -251,7 +256,60 @@ pub async fn create(
     let doc = checked(input)?;
     validate_entities(state, &doc.cells, &[]).await?;
     let slug = insert_capped(state, &doc, user_id, None).await?;
-    get(state, &slug, server, Some((user_id, role))).await
+    let grid = get(state, &slug, server, Some((user_id, role))).await?;
+    let entry = audit_entry(
+        &grid,
+        user_id,
+        ContentAuditAction::Create,
+        ContentAuditDetails::default(),
+    );
+    content_audit::record(state, entry).await;
+    Ok(grid)
+}
+
+/// An audit entry about a grid as served.
+fn audit_entry(
+    grid: &Grid,
+    actor_id: Uuid,
+    action: ContentAuditAction,
+    details: ContentAuditDetails,
+) -> NewContentAudit<'_> {
+    NewContentAudit {
+        actor_id,
+        target_kind: ContentTargetKind::Grid,
+        target_id: grid.id,
+        target_name: &grid.title,
+        target_slug: Some(&grid.slug),
+        owner_id: Some(grid.owner.id),
+        subject_id: None,
+        action,
+        details,
+    }
+}
+
+/// What a save changed, as an `edit` row's details.
+fn update_details(before: &GridRow, after: &GridDocument) -> ContentAuditDetails {
+    let old = &before.cells.0;
+    let cells_changed = (0..old.len().max(after.cells.len()))
+        .filter(|&i| old.get(i) != after.cells.get(i))
+        .count();
+    let kinds = before.kinds();
+    ContentAuditDetails {
+        renamed_from: (before.title != after.title).then(|| before.title.clone()),
+        description_changed: (before.description != after.description).then_some(true),
+        listed: (before.is_listed != after.is_listed).then_some(after.is_listed),
+        size: (before.rows != after.rows || before.cols != after.cols)
+            .then(|| format!("{}x{}", after.rows, after.cols)),
+        kinds: (kinds != after.entity_kinds).then(|| {
+            after
+                .entity_kinds
+                .iter()
+                .map(|k| k.as_str().to_owned())
+                .collect()
+        }),
+        cells_changed: (cells_changed > 0).then(|| content_audit::count_of(cells_changed)),
+        ..Default::default()
+    }
 }
 
 /// Replace the grid's document. A pick the stored grid already holds is kept
@@ -270,7 +328,15 @@ pub async fn update(
     check_locked_kinds(&row, &doc.entity_kinds)?;
     validate_entities(state, &doc.cells, &row.cells.0).await?;
     queries::update(&state.db, row.id, &doc).await?;
-    get(state, slug, server, Some((user_id, role))).await
+    let grid = get(state, slug, server, Some((user_id, role))).await?;
+    let entry = audit_entry(
+        &grid,
+        user_id,
+        ContentAuditAction::Edit,
+        update_details(&row, &doc),
+    );
+    content_audit::record(state, entry).await;
+    Ok(grid)
 }
 
 pub async fn delete(
@@ -281,6 +347,18 @@ pub async fn delete(
 ) -> Result<(), ApiError> {
     let row = load_editable(state, slug, user_id, role).await?;
     queries::delete(&state.db, row.id).await?;
+    let entry = NewContentAudit {
+        actor_id: user_id,
+        target_kind: ContentTargetKind::Grid,
+        target_id: row.id,
+        target_name: &row.title,
+        target_slug: Some(&row.slug),
+        owner_id: Some(row.created_by),
+        subject_id: None,
+        action: ContentAuditAction::Delete,
+        details: ContentAuditDetails::default(),
+    };
+    content_audit::record(state, entry).await;
     Ok(())
 }
 
@@ -296,7 +374,17 @@ pub async fn fork(
     let source = load(state, slug).await?;
     let doc = template_of(&source);
     let new_slug = insert_capped(state, &doc, user_id, Some(source.id)).await?;
-    get(state, &new_slug, server, Some((user_id, role))).await
+    let grid = get(state, &new_slug, server, Some((user_id, role))).await?;
+    let details = ContentAuditDetails {
+        forked_from: Some(source.title.clone()),
+        ..Default::default()
+    };
+    content_audit::record(
+        state,
+        audit_entry(&grid, user_id, ContentAuditAction::Fork, details),
+    )
+    .await;
+    Ok(grid)
 }
 
 async fn load(state: &AppState, slug: &str) -> Result<GridRow, ApiError> {

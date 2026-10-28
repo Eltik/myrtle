@@ -28,6 +28,7 @@ import type { PullTimingData } from "#/types/generated/PullTimingData";
 import type { RarityRate } from "#/types/generated/RarityRate";
 import type { WeightUpChar } from "#/types/generated/WeightUpChar";
 import { parseError } from "./_shared";
+import { optionalSiteToken } from "./_shared.server";
 import { DEFAULT_GAMEDATA_SERVER, type GamedataServer, gamedataKey, gamedataPath, isGamedataServer, resolveGamedataServer } from "./gamedata";
 
 export type IBanner = GachaPoolClient;
@@ -374,6 +375,35 @@ export function gachaStoredRecordsQueryOptions(bearerToken?: string) {
     return queryOptions({
         queryKey: ["gacha", "stored-records", bearerToken ? "auth" : "anon"],
         queryFn: () => getGachaStoredRecordsFn({ data: { bearerToken } }),
+        staleTime: 60 * 1000,
+        gcTime: 5 * 60 * 1000,
+    });
+}
+
+/**
+ * A player's stored pulls (`/gacha/public-records`), grouped as `/gacha/stored-records`
+ * groups the caller's own, from the banners in `pools` only (every banner when empty).
+ * `null` when the caller may not read them: a private profile, an owner who has not made
+ * their pull history public (`public_gacha`), or no such player. The site token rides
+ * along, so the owner reads their own whatever the switch says.
+ */
+export const getUserGachaRecordsFn = createServerFn({ method: "GET" })
+    .inputValidator((data: { uid: string; pools: readonly string[] }) => data)
+    .handler(async ({ data: { uid, pools } }) => {
+        const params = new URLSearchParams({ uid });
+        if (pools.length > 0) params.set("pools", pools.join(","));
+        const res = await backendFetch(`/gacha/public-records?${params.toString()}`, { bearerToken: optionalSiteToken() });
+        if (!res.ok) {
+            if (res.status === 403 || res.status === 404) return null;
+            throw await parseError(res);
+        }
+        return (await res.json()) as IGachaRecords;
+    });
+
+export function userGachaRecordsQueryOptions(uid: string, pools: readonly string[]) {
+    return queryOptions({
+        queryKey: ["gacha", "public-records", uid, pools.join(",")],
+        queryFn: () => getUserGachaRecordsFn({ data: { uid, pools } }),
         staleTime: 60 * 1000,
         gcTime: 5 * 60 * 1000,
     });

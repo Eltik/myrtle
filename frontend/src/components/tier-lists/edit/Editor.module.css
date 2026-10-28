@@ -76,13 +76,19 @@
     overflow: hidden;
     font-family: var(--font-sans);
     font-weight: 800;
-    font-size: clamp(15px, 1.4vw, 18px);
     line-height: 1.15;
     letter-spacing: -0.005em;
     text-wrap: balance;
     word-break: normal;
-    overflow-wrap: break-word;
     transition: filter 160ms ease;
+}
+
+.labelText {
+    min-width: 0;
+    max-width: 100%;
+    font-size: calc(clamp(15px, 1.4vw, 18px) * var(--fit-scale, 1));
+    text-align: center;
+    overflow-wrap: anywhere;
 }
 
 @media (min-width: 640px) {

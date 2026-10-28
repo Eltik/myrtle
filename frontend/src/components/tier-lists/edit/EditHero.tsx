@@ -6,12 +6,24 @@ import { Button } from "#/components/ui/button";
 import { Field, FieldLabel } from "#/components/ui/field";
 import { Input } from "#/components/ui/input";
 import { Kicker } from "#/components/ui/kicker";
+import { Label } from "#/components/ui/label";
 import { MarkdownEditor } from "#/components/ui/markdown-editor";
+import { Switch } from "#/components/ui/switch";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { LIST_DESCRIPTION_MAX as DESC_MAX, LIST_NAME_MAX as TITLE_MAX } from "../shared";
 import type { messages } from "./EditHero.messages";
 import type { IPendingChange } from "./state";
+
+/** Where auto-save stands. `failed` and `conflict` hold it until the author acts. */
+export type AutosaveStatus = "idle" | "saving" | "saved" | "failed" | "conflict";
+
+interface IAutosaveControls {
+    enabled: boolean;
+    status: AutosaveStatus;
+    onToggle: (next: boolean) => void;
+    onRetry: () => void;
+}
 
 interface IEditHeroProps {
     slug: string;
@@ -26,12 +38,14 @@ interface IEditHeroProps {
     saving: boolean;
     saveError: string | null;
     saveProgress: { step: number; total: number; label: string } | null;
+    autosave: IAutosaveControls;
 }
 
-export function EditHero({ slug, title, description, onTitleChange, onDescriptionChange, onSave, onReset, onAddTier, pendingChanges, saving, saveError, saveProgress }: IEditHeroProps) {
+export function EditHero({ slug, title, description, onTitleChange, onDescriptionChange, onSave, onReset, onAddTier, pendingChanges, saving, saveError, saveProgress, autosave }: IEditHeroProps) {
     const t: TypedT<typeof messages> = useT("tierLists");
     const titleId = useId();
     const descId = useId();
+    const autosaveHintId = useId();
     const isDirty = pendingChanges.length > 0;
     const trimmedTitle = title.trim();
     const titleValid = trimmedTitle.length > 0;
@@ -136,13 +150,27 @@ export function EditHero({ slug, title, description, onTitleChange, onDescriptio
                         </div>
 
                         <div className="flex flex-wrap items-center gap-1.5">
-                            <Button type="button" onClick={onSave} disabled={!isDirty || saving || !titleValid} loading={saving} className="flex-1">
+                            <Button type="button" onClick={onSave} disabled={!isDirty || saving || !titleValid} loading={saving && autosave.status !== "saving"} className="flex-1">
                                 <CheckIcon />
                                 {t("edit.hero.save")}
                             </Button>
                             <Button type="button" variant="outline" onClick={onReset} disabled={!isDirty || saving} size="icon" aria-label={t("edit.hero.discard")}>
                                 <RotateCcwIcon />
                             </Button>
+                        </div>
+
+                        <div className="rounded-xl border border-border bg-card px-3 py-2">
+                            <div className="flex items-center justify-between gap-2">
+                                <Label className="flex cursor-pointer items-center gap-2 font-medium font-sans text-[12.5px] text-foreground">
+                                    <Switch checked={autosave.enabled} onCheckedChange={autosave.onToggle} aria-describedby={autosaveHintId} />
+                                    {t("edit.hero.autosave")}
+                                </Label>
+                                {autosave.enabled && <AutosaveBadge status={autosave.status} isDirty={isDirty} onRetry={autosave.onRetry} t={t} />}
+                            </div>
+                            <p id={autosaveHintId} className="mt-1 font-sans text-[11.5px] text-muted-foreground">
+                                {t("edit.hero.autosaveHint")}
+                            </p>
+                            {autosave.enabled && autosave.status === "conflict" && <output className="mt-1.5 block rounded-md border border-border bg-muted/50 px-2 py-1.5 font-sans text-[11.5px] text-foreground">{t("edit.hero.autosaveConflict")}</output>}
                         </div>
 
                         <div className="flex flex-wrap items-center gap-1.5">
@@ -159,4 +187,38 @@ export function EditHero({ slug, title, description, onTitleChange, onDescriptio
             </div>
         </header>
     );
+}
+
+interface IAutosaveBadgeProps {
+    status: AutosaveStatus;
+    isDirty: boolean;
+    onRetry: () => void;
+    t: TypedT<typeof messages>;
+}
+
+/** The auto-save state in a word, beside the switch. Nothing while it waits for the next save. */
+function AutosaveBadge({ status, isDirty, onRetry, t }: IAutosaveBadgeProps) {
+    const label = "font-bold font-mono text-[10.5px] uppercase tracking-[0.14em]";
+    if (status === "saving") {
+        return <output className={`${label} text-muted-foreground`}>{t("edit.hero.autosaveSaving")}</output>;
+    }
+    if (status === "saved" && !isDirty) {
+        return (
+            <output className={`${label} flex items-center gap-1 text-muted-foreground`}>
+                <CheckIcon className="h-3 w-3 text-primary" aria-hidden="true" />
+                {t("edit.hero.autosaveSaved")}
+            </output>
+        );
+    }
+    if (status === "failed") {
+        return (
+            <output className="flex items-center gap-1.5">
+                <span className={`${label} text-destructive-foreground`}>{t("edit.hero.autosaveFailed")}</span>
+                <Button type="button" variant="outline" size="xs" onClick={onRetry}>
+                    {t("edit.hero.autosaveRetry")}
+                </Button>
+            </output>
+        );
+    }
+    return null;
 }

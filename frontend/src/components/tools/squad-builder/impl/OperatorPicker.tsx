@@ -1,3 +1,4 @@
+import { useQuery } from "@tanstack/react-query";
 import { X } from "lucide-react";
 import * as React from "react";
 import { ClassIcon, SubProfessionIcon } from "#/components/operators/list/impl/components/Icons";
@@ -11,8 +12,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#
 import { Switch } from "#/components/ui/switch";
 import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
-import { useFormatters, useT } from "#/lib/i18n";
+import { recruitmentDataQueryOptions } from "#/lib/api/recruitment";
+import { useFormatters, useGamedataServer, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
+import { ACQUISITION_FILTERS, type AcquisitionFilter, matchesAcquisition, needsRecruitPool } from "#/lib/operators/acquisition";
 import { searchAndRank } from "#/lib/search/fuzzy";
 import { archetypeLabel, cn, getAvatarById, professionLabel, rarityStarColor } from "#/lib/utils";
 import type { IOperatorIndexEntry } from "#/types/operators";
@@ -66,6 +69,7 @@ export function OperatorPicker({ seat, operators, roster, seated, onPick, onClos
     const [cls, setCls] = React.useState<string>("all");
     const [branch, setBranch] = React.useState<string>("all");
     const [rarity, setRarity] = React.useState<string>("all");
+    const [source, setSource] = React.useState<AcquisitionFilter>("any");
     const [sort, setSort] = React.useState<SortKey>("rarity");
     const searchRef = React.useRef<HTMLInputElement>(null);
     const gridRef = React.useRef<HTMLUListElement>(null);
@@ -96,6 +100,11 @@ export function OperatorPicker({ seat, operators, roster, seated, onPick, onClos
         return [...seen].map(([id, label]) => ({ id, label })).sort((a, b) => collator.compare(a.label, b.label));
     }, [operators, cls, collator]);
 
+    // The recruitment pool loads only once a filter reads it; until it lands, "Gachaless" shows the welfare operators alone.
+    const server = useGamedataServer();
+    const { data: recruitment } = useQuery({ ...recruitmentDataQueryOptions(server), enabled: needsRecruitPool(source) });
+    const recruitable = React.useMemo(() => new Set((recruitment?.operators ?? []).map((op) => op.id)), [recruitment]);
+
     const pool = React.useMemo(() => {
         const professions = new Set<string>(PROFESSION_ORDER);
         return operators.filter((op) => {
@@ -106,9 +115,10 @@ export function OperatorPicker({ seat, operators, roster, seated, onPick, onClos
             if (cls !== "all" && op.profession !== cls) return false;
             if (branch !== "all" && op.subProfessionId !== branch) return false;
             if (rarity !== "all" && op.rarity !== Number(rarity)) return false;
+            if (!matchesAcquisition(op, source, recruitable)) return false;
             return true;
         });
-    }, [operators, roster, ownedFilter, cls, branch, rarity]);
+    }, [operators, roster, ownedFilter, cls, branch, rarity, source, recruitable]);
 
     const shown = React.useMemo(() => {
         if (query.trim()) {
@@ -215,18 +225,20 @@ export function OperatorPicker({ seat, operators, roster, seated, onPick, onClos
         onClose();
     };
 
-    const filtersActive = query.trim() !== "" || cls !== "all" || branch !== "all" || rarity !== "all";
+    const filtersActive = query.trim() !== "" || cls !== "all" || branch !== "all" || rarity !== "all" || source !== "any";
     const clearFilters = () => {
         setQuery("");
         setCls("all");
         setBranch("all");
         setRarity("all");
+        setSource("any");
         searchRef.current?.focus();
     };
 
     const title = isSupport ? t("squad.picker.supportTitle") : t("squad.picker.title", { seat: seat + 1 });
     const sortLabels: Record<SortKey, string> = { rarity: t("squad.picker.sort.rarity"), name: t("squad.picker.sort.name"), cost: t("squad.picker.sort.cost"), level: t("squad.picker.sort.level") };
     const sortLabel = (s: SortKey) => sortLabels[s];
+    const sourceLabels: Record<AcquisitionFilter, string> = { any: t("squad.picker.source.any"), gachaless: t("squad.picker.source.gachaless"), welfare: t("squad.picker.source.welfare"), recruitment: t("squad.picker.source.recruitment") };
 
     return (
         <section aria-label={title} onKeyDown={onSectionKeyDown} className="rounded-xl border border-border bg-card">
@@ -302,6 +314,18 @@ export function OperatorPicker({ seat, operators, roster, seated, onPick, onClos
                             </ToggleGroupItem>
                         ))}
                     </ToggleGroup>
+                    <Select value={source} onValueChange={(v) => v && setSource(v as AcquisitionFilter)}>
+                        <SelectTrigger size="sm" className="w-auto min-w-36" aria-label={t("squad.picker.source")}>
+                            <SelectValue>{(v: string | null) => sourceLabels[(v as AcquisitionFilter | null) ?? "any"]}</SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                            {ACQUISITION_FILTERS.map((f) => (
+                                <SelectItem key={f} value={f}>
+                                    {sourceLabels[f]}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
                     {branches.length > 1 && (
                         <Select value={branch} onValueChange={(v) => v && setBranch(v)}>
                             <SelectTrigger size="sm" className="w-auto min-w-44" aria-label={t("squad.picker.branch")}>

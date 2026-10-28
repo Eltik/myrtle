@@ -16,9 +16,16 @@ interface IBrowseCardProps {
     size?: "default" | "trending";
     rank?: number;
     onOpen?: (slug: string) => void;
+    /** Show only this author's lists. Absent, the author's name is plain text. */
+    onAuthorClick?: (author: { id: string; name: string }) => void;
 }
 
-export default function BrowseCard({ tl, size = "default", rank, onOpen }: IBrowseCardProps) {
+/**
+ * One list in the index. The title link is stretched over the whole card, so
+ * the card opens the list while the author's name, sitting above that link,
+ * stays its own button: a button inside a link is not valid HTML.
+ */
+export default function BrowseCard({ tl, size = "default", rank, onOpen, onAuthorClick }: IBrowseCardProps) {
     const t: TypedT<typeof messages> = useT("tierLists");
     const f = useFormatters();
     const rows = buildThumbRows(tl);
@@ -26,9 +33,10 @@ export default function BrowseCard({ tl, size = "default", rank, onOpen }: IBrow
     const trending = size === "trending";
     const hasOps = rows.some((r) => r.operators.length > 0);
     const showCornerRibbon = trending || typeof rank === "number";
+    const authorId = tl.author.id;
 
     return (
-        <Link to="/tier-lists/$id" params={{ id: tl.slug }} className={`${styles.card} group`} aria-labelledby={`tl-${tl.id}-title`} onClick={() => onOpen?.(tl.slug)}>
+        <article className={`${styles.card} group`} aria-labelledby={`tl-${tl.id}-title`}>
             <div className={styles.thumb} data-rows={hasOps ? rows.length : 0}>
                 {showCornerRibbon && (
                     <span className={styles.cornerRibbon}>
@@ -62,7 +70,9 @@ export default function BrowseCard({ tl, size = "default", rank, onOpen }: IBrow
 
             <div className="flex flex-1 flex-col gap-2 px-3.5 pt-3 pb-3">
                 <h3 id={`tl-${tl.id}-title`} className={`m-0 font-sans font-semibold text-foreground leading-snug tracking-tight transition-colors group-hover:text-primary ${trending ? "line-clamp-2 text-[16px]" : "line-clamp-1 text-[15px]"}`} title={tl.title}>
-                    {tl.title}
+                    <Link to="/tier-lists/$id" params={{ id: tl.slug }} className={styles.cardLink} onClick={() => onOpen?.(tl.slug)}>
+                        {tl.title}
+                    </Link>
                 </h3>
 
                 <div className="flex min-w-0 items-center gap-2 font-sans text-[11px] text-muted-foreground tabular-nums leading-none">
@@ -71,18 +81,30 @@ export default function BrowseCard({ tl, size = "default", rank, onOpen }: IBrow
                             {tl.author.avatarId && <AvatarImage src={getAvatarById(tl.author.avatarId)} alt="" />}
                             <AvatarFallback>{tl.author.name.charAt(0).toUpperCase()}</AvatarFallback>
                         </Avatar>
-                        <span className="min-w-0 truncate font-medium font-sans text-[11.5px] text-foreground">{tl.author.name}</span>
+                        {onAuthorClick && authorId ? (
+                            <button
+                                type="button"
+                                onClick={() => onAuthorClick({ id: authorId, name: tl.author.name })}
+                                title={t("browse.card.byAuthor", { name: tl.author.name })}
+                                className="relative z-[2] min-w-0 cursor-pointer truncate rounded-sm font-medium font-sans text-[11.5px] text-foreground underline-offset-2 hover:text-primary hover:underline focus-visible:outline-2 focus-visible:outline-ring"
+                            >
+                                {tl.author.name}
+                            </button>
+                        ) : (
+                            <span className="min-w-0 truncate font-medium font-sans text-[11.5px] text-foreground">{tl.author.name}</span>
+                        )}
                         <span className="shrink-0 opacity-50">·</span>
                         <span className="shrink-0 text-[10.5px]">{tl.updated}</span>
                     </span>
 
-                    <span className="ml-auto flex shrink-0 items-center gap-2.5">
+                    {/* Above the stretched link, so the counts keep their tooltips. */}
+                    <span className="relative z-[2] ml-auto flex shrink-0 items-center gap-2.5">
                         <CardStat kind="views" value={f.compact(tl.views)} title={t("browse.card.views", { count: f.number(tl.views) })} />
                         <CardStat kind="favorites" value={f.compact(tl.favorites)} title={t("browse.card.favorites", { count: f.number(tl.favorites) })} />
                         {trending && tl.views24h > 0 && <CardStat kind="views24h" value={f.compact(tl.views24h)} title={t("browse.card.views24h", { count: f.number(tl.views24h) })} />}
                     </span>
                 </div>
             </div>
-        </Link>
+        </article>
     );
 }

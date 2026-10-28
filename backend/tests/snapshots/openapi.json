@@ -23,6 +23,102 @@
     }
   ],
   "paths": {
+    "/api/admin/content-audit": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Who created, edited, published, hid, flaired, shared or deleted which tier\nlist or grid, newest first.",
+        "description": "A run of edits by one account on one target within 15 minutes is one row,\nits `details` the sum of the run and `event_count` the requests in it.\nTier list admin or super-admin.",
+        "operationId": "content_audit_log",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Page size. Defaults to 100, clamped to 1..=500.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "before",
+            "in": "query",
+            "description": "RFC 3339 timestamp: only rows last touched strictly earlier, for paging.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "actor",
+            "in": "query",
+            "description": "Account id (UUID): only that account's actions.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "target_kind",
+            "in": "query",
+            "description": "`tier_list` or `grid`.",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/ContentTargetKind"
+            }
+          },
+          {
+            "name": "target_id",
+            "in": "query",
+            "description": "Tier list or grid id (UUID): only rows about it.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Audit rows, newest first.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContentAuditResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": []
+          },
+          {
+            "service_key": []
+          }
+        ]
+      }
+    },
     "/api/admin/i18n/audit": {
       "get": {
         "tags": [
@@ -35,6 +131,15 @@
             "name": "locale",
             "in": "query",
             "description": "Restrict to one locale.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "actor",
+            "in": "query",
+            "description": "Account id (UUID): only that account's edits.",
             "required": false,
             "schema": {
               "type": "string"
@@ -3735,6 +3840,72 @@
         ]
       }
     },
+    "/api/gacha/public-records": {
+      "get": {
+        "tags": [
+          "gacha"
+        ],
+        "summary": "A player's stored pulls, grouped as `/gacha/stored-records` groups the\ncaller's own, optionally limited to some banners: the profile's Pulls tab\nand the links the history page's Share button copies.",
+        "description": "Two gates, the owner passing both: the profile must be public (403\notherwise, as for every tab's data), and the owner must have opted in to\na public pull history (`public_gacha`, off by default; 403 otherwise).\nAn unknown `uid` is 404. The records carry no account identifier beyond\nthe `uid` the caller already named.",
+        "operationId": "public_records",
+        "parameters": [
+          {
+            "name": "uid",
+            "in": "query",
+            "description": "Player to read.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "pools",
+            "in": "query",
+            "description": "Comma-separated banner (pool) ids, such as `LIMITED_EN_40_0_4,SINGLE_EN_40_0_1`, to keep only those banners' pulls. Absent or empty is every banner. At most 64 ids of letters, digits and `_`.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The player's pulls, newest first, grouped by banner type.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GachaRecordsDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": []
+          },
+          {}
+        ]
+      }
+    },
     "/api/gacha/settings": {
       "get": {
         "tags": [
@@ -4036,7 +4207,7 @@
           "player"
         ],
         "summary": "A player's profile. `UserProfile` carries currency, sanity, subscription\nexpiry, last-online time and the account's role, so the `uid` goes through\nthe shared privacy gate: the caller's own profile or a public one, 403\notherwise.",
-        "description": "Never gated by tab: the row feeds the page header, which every visible tab\nsits under. A visitor gets the layout with the private tabs left out, no\n`total_score` or `grade` while the Score tab is private, as\n`/get-user-score` refuses that tab's data to them, and `null` for every\nheader number the owner hid (`profile_layout.header.hidden`).",
+        "description": "Never gated by tab: the row feeds the page header, which every visible tab\nsits under. A visitor gets the layout with the private tabs left out, no\n`total_score` or `grade` while the Score tab is private, as\n`/get-user-score` refuses that tab's data to them, and `null` for every\nheader number the owner hid (`profile_layout.header.hidden`).\n\n`public_gacha` says whether visitors may read the pull history\n(`/gacha/public-records`), so the page knows whether to show its Pulls tab.",
         "operationId": "get_user",
         "parameters": [
           {
@@ -6107,6 +6278,184 @@
             "$ref": "#/components/responses/ServiceUnavailable"
           }
         }
+      }
+    },
+    "/api/lookback": {
+      "get": {
+        "tags": [
+          "player"
+        ],
+        "summary": "The account's Lookback timeline: one snapshot per event launch, each with\nits headline counts, and the owned-operator count rebuilt from obtain times.\nRuns the shared privacy gate, then needs the Lookback and Roster tabs\nvisible to a visitor.",
+        "operationId": "overview",
+        "parameters": [
+          {
+            "name": "uid",
+            "in": "query",
+            "description": "Player to read. Omitted means the caller's own account, which then requires a token.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Snapshots oldest first, and the reconstructed ownership line.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LookbackOverview"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": []
+          },
+          {}
+        ]
+      }
+    },
+    "/api/lookback/current": {
+      "get": {
+        "tags": [
+          "player"
+        ],
+        "summary": "The roster as of its last sync, in a snapshot's shape: what the timeline\ndiffs a snapshot against for \"since then\". Same gate as `/lookback`.",
+        "operationId": "current",
+        "parameters": [
+          {
+            "name": "uid",
+            "in": "query",
+            "description": "Player to read. Omitted means the caller's own account, which then requires a token.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The live counts and operators.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LookbackBuild"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": []
+          },
+          {}
+        ]
+      }
+    },
+    "/api/lookback/snapshots/{id}": {
+      "get": {
+        "tags": [
+          "player"
+        ],
+        "summary": "One snapshot's whole build: every operator's promotion, level, potential,\nskill rank, masteries and modules as of that period's first sync. Same gate\nas `/lookback`.",
+        "operationId": "snapshot",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The snapshot's `id` from `/lookback`: its period start in Unix seconds.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "uid",
+            "in": "query",
+            "description": "Player to read. Omitted means the caller's own account, which then requires a token.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The snapshot's counts and operators.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LookbackBuild"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": []
+          },
+          {}
+        ]
       }
     },
     "/api/maintenance": {
@@ -10827,6 +11176,15 @@
             "schema": {
               "type": "integer",
               "format": "int64"
+            }
+          },
+          {
+            "name": "author",
+            "in": "query",
+            "description": "Account id (UUID): only lists that account created. Unlisted lists are left out as they are without it.",
+            "required": false,
+            "schema": {
+              "type": "string"
             }
           },
           {
@@ -18264,6 +18622,44 @@
           }
         }
       },
+      "AuditTierRef": {
+        "type": "object",
+        "description": "One tier, by id and its name at the time.",
+        "required": [
+          "id",
+          "name"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "AuditTierRename": {
+        "type": "object",
+        "description": "A tier's name before and after a run of edits.",
+        "required": [
+          "id",
+          "from",
+          "to"
+        ],
+        "properties": {
+          "from": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "to": {
+            "type": "string"
+          }
+        }
+      },
       "AutoName": {
         "type": "object",
         "required": [
@@ -19535,6 +19931,370 @@
           }
         }
       },
+      "ContentAuditAction": {
+        "type": "string",
+        "description": "What was done. `Edit` rows coalesce (see `services::content_audit`);\nevery other action is one row.",
+        "enum": [
+          "create",
+          "fork",
+          "edit",
+          "publish",
+          "visibility",
+          "flair",
+          "grant",
+          "revoke",
+          "delete"
+        ]
+      },
+      "ContentAuditDetails": {
+        "type": "object",
+        "description": "What one row records, every field optional so the stored JSON holds only\nwhat happened. An `edit` row accumulates: sets of entries and tiers are\ndeduplicated (moving one operator five times is one entry moved), renames\nkeep the first `from` and the last `to`.\n\nEntries are `kind:id` strings (`operator:char_002_amiya`).",
+        "properties": {
+          "cells_changed": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "Grid `edit`: cells whose label or pick changed, summed over the run.",
+            "minimum": 0
+          },
+          "changelog": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "description_changed": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "entries": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "minimum": 0
+          },
+          "entries_added": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "entries_dropped": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "Placements removed with a deleted tier.",
+            "minimum": 0
+          },
+          "entries_moved": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "description": "Moved to another tier."
+          },
+          "entries_removed": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "entries_reordered": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "description": "Moved within their tier."
+          },
+          "flair": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`flair`: the flair's label, absent when it was cleared."
+          },
+          "forked_from": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`fork`: the source grid's title."
+          },
+          "kinds": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "description": "`edit`: the kinds the editor offers, after the change."
+          },
+          "list_type": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`create`: the tier list's type."
+          },
+          "listed": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "`visibility`, or a grid `edit` that changed its listing: listed after."
+          },
+          "notes_edited": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "description": "A placement's note changed."
+          },
+          "permission": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`grant` / `revoke`: the permission level."
+          },
+          "renamed_from": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`edit`: the name before the run's first rename; the row's\n`target_name` is the name after."
+          },
+          "size": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Grid `edit`: `rows x cols` after a resize."
+          },
+          "tiers": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "`delete`: how many tiers and placements went with it.",
+            "minimum": 0
+          },
+          "tiers_added": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/AuditTierRef"
+            }
+          },
+          "tiers_deleted": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/AuditTierRef"
+            }
+          },
+          "tiers_renamed": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/AuditTierRename"
+            }
+          },
+          "tiers_reordered": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/AuditTierRef"
+            }
+          },
+          "tiers_restyled": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/AuditTierRef"
+            },
+            "description": "Colour or description changed."
+          },
+          "version": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "`publish`: the new version number."
+          }
+        }
+      },
+      "ContentAuditEntry": {
+        "type": "object",
+        "description": "One row of the content audit feed.",
+        "required": [
+          "id",
+          "action",
+          "target_kind",
+          "target_id",
+          "target_name",
+          "actor",
+          "details",
+          "event_count",
+          "first_at",
+          "changed_at"
+        ],
+        "properties": {
+          "action": {
+            "$ref": "#/components/schemas/ContentAuditAction"
+          },
+          "actor": {
+            "$ref": "#/components/schemas/AuditLogActor"
+          },
+          "changed_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "details": {
+            "$ref": "#/components/schemas/ContentAuditDetails"
+          },
+          "event_count": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Requests folded into this row; 1 for anything but a coalesced edit."
+          },
+          "first_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "owner": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ContentAuditPerson",
+                "description": "The target's owner at the time; differs from `actor` when staff acted\non someone else's content. `None` when unknown or since deleted."
+              }
+            ]
+          },
+          "subject": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ContentAuditPerson",
+                "description": "`grant` / `revoke`: the account the grant was about."
+              }
+            ]
+          },
+          "target_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "target_kind": {
+            "$ref": "#/components/schemas/ContentTargetKind"
+          },
+          "target_name": {
+            "type": "string",
+            "description": "The name when the row was last written. The target may be renamed or\ngone since."
+          },
+          "target_slug": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "ContentAuditPerson": {
+        "type": "object",
+        "description": "An account a row names besides its actor. `uid` and `nickname` are `None`\nonce the account is gone.",
+        "required": [
+          "user_id"
+        ],
+        "properties": {
+          "nickname": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "uid": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "user_id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "ContentAuditResponse": {
+        "type": "object",
+        "required": [
+          "entries",
+          "total"
+        ],
+        "properties": {
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContentAuditEntry"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "ContentTargetKind": {
+        "type": "string",
+        "description": "What a `content_audit_log` row is about.",
+        "enum": [
+          "tier_list",
+          "grid"
+        ]
+      },
       "CoverageGroup": {
         "type": "object",
         "required": [
@@ -19751,6 +20511,7 @@
           "potential",
           "talent",
           "module",
+          "trait",
           "squad"
         ]
       },
@@ -20215,7 +20976,7 @@
       },
       "DpsMetrics": {
         "type": "object",
-        "description": "The three damage numbers for one share of the targets. Same snake_case names\nas the top level of [`DpsResult`], so one client type reads both.",
+        "description": "The three damage numbers for one share of the targets. Same `snake_case` names\nas the top level of [`DpsResult`], so one client type reads both.",
         "required": [
           "skill_dps",
           "total_damage",
@@ -20238,7 +20999,7 @@
       },
       "DpsResult": {
         "type": "object",
-        "description": "One operator configuration's damage.\n\nThe three snake_case fields are the original response and keep their names\nand meaning. Every field after them is optional, camelCase, and present\nonly when the request asked for the behaviour that produces it.",
+        "description": "One operator configuration's damage.\n\nThe three `snake_case` fields are the original response and keep their names\nand meaning. Every field after them is optional, camelCase, and present\nonly when the request asked for the behaviour that produces it.",
         "required": [
           "skill_dps",
           "total_damage",
@@ -20460,6 +21221,7 @@
           "total",
           "cheapest",
           "cheapest_count",
+          "dp_lower_limit",
           "openers",
           "sources",
           "counted",
@@ -20489,6 +21251,11 @@
             ],
             "format": "int32"
           },
+          "dp_lower_limit": {
+            "type": "integer",
+            "format": "int32",
+            "description": "The lowest DP the squad may drop to when deploying: 0, or below with a\nsquad talent that lowers the DP Lower Limit (Closure's \"Scheduler, Max\nSettings!\" `cost` -4 makes it -4). A seat deploys once DP minus its\n`cost` stays at or above it."
+          },
           "notes": {
             "type": "array",
             "items": {
@@ -20499,7 +21266,7 @@
           "openers": {
             "type": "integer",
             "format": "int32",
-            "description": "Seats whose `cost` is at or under `start_dp`."
+            "description": "Seats whose `cost` is at or under `start_dp - dp_lower_limit`."
           },
           "seats": {
             "type": "array",
@@ -20587,9 +21354,28 @@
           "name": {
             "type": "string"
           },
+          "ratio": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double",
+            "description": "The change as a ratio (-0.1 = -10%) for a scaling redeploy change."
+          },
           "seat": {
             "type": "integer",
             "format": "int32"
+          },
+          "stat": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/NoteStat",
+                "description": "The number the note's change is to, when it is a cost or redeploy\nchange the page can print beside the note."
+              }
+            ]
           }
         }
       },
@@ -20603,7 +21389,9 @@
           "sp_bonus",
           "redeploy_cut",
           "cost_cut",
-          "drain"
+          "drain",
+          "skill_active",
+          "dp_floor"
         ]
       },
       "EconomySeat": {
@@ -20617,7 +21405,8 @@
           "cuts",
           "respawn",
           "base_respawn",
-          "respawn_cuts"
+          "respawn_cuts",
+          "first_respawn_cuts"
         ],
         "properties": {
           "base_cost": {
@@ -20642,6 +21431,21 @@
             "items": {
               "$ref": "#/components/schemas/Cut"
             }
+          },
+          "first_respawn": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double",
+            "description": "Seconds of the first redeploy, when a cut applies to it only (the\nHorncare Set trait's \"First Redeployment Time reduced by 35%\")."
+          },
+          "first_respawn_cuts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Cut"
+            },
+            "description": "The cuts on top of `respawn_cuts` that `first_respawn` takes."
           },
           "respawn": {
             "type": "number",
@@ -23552,6 +24356,254 @@
           }
         }
       },
+      "LookbackBuild": {
+        "type": "object",
+        "description": "A whole snapshot: the counts and every operator's build.",
+        "required": [
+          "taken_at",
+          "summary",
+          "operators"
+        ],
+        "properties": {
+          "operators": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LookbackOperator"
+            }
+          },
+          "summary": {
+            "$ref": "#/components/schemas/LookbackSummary"
+          },
+          "taken_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the build was read: the snapshot's sync, or now for the live build."
+          }
+        }
+      },
+      "LookbackModule": {
+        "type": "object",
+        "description": "One unlocked module of a [`LookbackOperator`].",
+        "required": [
+          "module_id",
+          "stage"
+        ],
+        "properties": {
+          "module_id": {
+            "type": "string"
+          },
+          "stage": {
+            "type": "integer",
+            "format": "int32",
+            "description": "1 to 3."
+          }
+        }
+      },
+      "LookbackOperator": {
+        "type": "object",
+        "description": "One operator's build in a snapshot.",
+        "required": [
+          "operator_id",
+          "elite",
+          "level",
+          "potential",
+          "skill_level",
+          "masteries",
+          "modules"
+        ],
+        "properties": {
+          "elite": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "level": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "masteries": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "description": "Mastery per skill, by skill index. Empty when no skill is mastered."
+          },
+          "modules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LookbackModule"
+            }
+          },
+          "operator_id": {
+            "type": "string"
+          },
+          "potential": {
+            "type": "integer",
+            "format": "int32",
+            "description": "0-based (0 = potential 1)."
+          },
+          "skill_level": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "LookbackOverview": {
+        "type": "object",
+        "description": "`GET /lookback`: the timeline.",
+        "required": [
+          "snapshots",
+          "ownership"
+        ],
+        "properties": {
+          "ownership": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OwnershipPoint"
+            },
+            "description": "One point per day an operator was obtained, oldest first. Reconstructed,\nnot recorded: it counts today's roster by obtain time, and every Amiya\nform carries the base Amiya's time."
+          },
+          "snapshots": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LookbackSnapshot"
+            },
+            "description": "Oldest first."
+          }
+        }
+      },
+      "LookbackSnapshot": {
+        "type": "object",
+        "description": "One snapshot on the timeline, without its build.",
+        "required": [
+          "id",
+          "period_start",
+          "taken_at",
+          "summary"
+        ],
+        "properties": {
+          "activity_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The event whose launch opened the period; `None` for a week period."
+          },
+          "activity_name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "That event's name in the account server's game text, as of the snapshot."
+          },
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "description": "`period_start` in Unix seconds: the snapshot's key on its account, and\nthe `{id}` of `/lookback/snapshots/{id}`."
+          },
+          "period_start": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/LookbackSummary"
+          },
+          "taken_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the sync that wrote it ran: the first sync of the period."
+          }
+        }
+      },
+      "LookbackSummary": {
+        "type": "object",
+        "description": "The headline counts of one snapshot, `user_lookback_snapshots.summary`.\nEvery field defaults, so a row written before a field existed still reads.",
+        "properties": {
+          "elite2": {
+            "type": "integer",
+            "format": "int32",
+            "default": 0,
+            "minimum": 0
+          },
+          "grade": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "default": null
+          },
+          "masteries": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Mastery ranks over every skill: an M3 counts 3.",
+            "default": 0,
+            "minimum": 0
+          },
+          "mastery3": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Skills at Mastery 3.",
+            "default": 0,
+            "minimum": 0
+          },
+          "max_level": {
+            "type": "integer",
+            "format": "int32",
+            "description": "At the level cap of their current promotion. An operator missing from\nthe server's game data is not counted.",
+            "default": 0,
+            "minimum": 0
+          },
+          "max_potential": {
+            "type": "integer",
+            "format": "int32",
+            "description": "At potential 6.",
+            "default": 0,
+            "minimum": 0
+          },
+          "module_stage3": {
+            "type": "integer",
+            "format": "int32",
+            "default": 0,
+            "minimum": 0
+          },
+          "modules": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Unlocked modules, the default badge excluded.",
+            "default": 0,
+            "minimum": 0
+          },
+          "operators": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Owned operators, one per Amiya form, as `user_operators` counts them.",
+            "default": 0,
+            "minimum": 0
+          },
+          "skill_level7": {
+            "type": "integer",
+            "format": "int32",
+            "default": 0,
+            "minimum": 0
+          },
+          "skins": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Non-default skins owned.",
+            "default": 0,
+            "minimum": 0
+          },
+          "total_score": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double",
+            "description": "`user_scores` as of the snapshot: the grade that ran on that sync, or\nthe previous one when it missed its budget. `None` when never graded.",
+            "default": null
+          }
+        }
+      },
       "MaintenancePhase": {
         "type": "string",
         "description": "Where a maintenance window stands.",
@@ -24705,6 +25757,14 @@
           }
         }
       },
+      "NoteStat": {
+        "type": "string",
+        "description": "Which number a note's change is to.",
+        "enum": [
+          "cost",
+          "respawn"
+        ]
+      },
       "ObtainChannel": {
         "type": "string",
         "description": "An operator's `itemObtainApproach` category.",
@@ -25609,6 +26669,26 @@
           }
         }
       },
+      "OwnershipPoint": {
+        "type": "object",
+        "description": "The count of operators owned at the end of one UTC day, rebuilt from their\nobtain times. Ownership only: builds before the first snapshot are lost.",
+        "required": [
+          "ts",
+          "count"
+        ],
+        "properties": {
+          "count": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "ts": {
+            "type": "integer",
+            "format": "int64",
+            "description": "00:00 UTC of the day, Unix seconds."
+          }
+        }
+      },
       "PlaceType": {
         "type": "string",
         "enum": [
@@ -26355,7 +27435,8 @@
           "plans",
           "inventory",
           "enemies",
-          "optimizer"
+          "optimizer",
+          "lookback"
         ]
       },
       "PublishRequest": {
@@ -33738,6 +34819,13 @@
               }
             ]
           },
+          "public_gacha": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "Visitors may read the pull history (`GET /gacha/public-records`).\nStored off until the owner turns it on."
+          },
           "public_profile": {
             "type": [
               "boolean",
@@ -34084,6 +35172,13 @@
                 "description": "The owner's tab order and visibility, showcase, header art and header\nnumbers, normalized on read. `None` when they never customized, which\nthe client renders exactly as before layouts existed. A visitor\nreceives [`UserProfile::hide_private`]'s projection, which lists only\nthe visible tabs and nulls the header numbers the owner hid."
               }
             ]
+          },
+          "public_gacha": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "Whether visitors may read the pull history (`user_settings.public_gacha`,\nopt-in): the profile shows its Pulls tab while this is true. Not a\ncolumn of `v_user_profile`, so every row read from the view has `None`\nand only `/get-user` fills it, from a fresh read of the switch."
           },
           "public_profile": {
             "type": [

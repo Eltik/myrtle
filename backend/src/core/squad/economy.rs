@@ -7,7 +7,10 @@
 //! `respawn_time`, `value`, `runtime_cost` and `sp`; the module rank's
 //! `attribute_blackboard` `cost` and `respawn_time`; the trait blackboard `cost`
 //! and `interval`; the chosen skill's blackboard `cost`, `value`, `interval`
-//! and its `sp_data`. Who a squad talent reaches comes from `targets`.
+//! and its `sp_data`, and the keys its text prints as a DP Cost change; a
+//! hidden module talent part's `respawn_time`; a trait's `respawn_time` when
+//! its text speaks of the first redeployment. Who a squad talent reaches
+//! comes from `targets`.
 
 use std::collections::HashMap;
 
@@ -17,7 +20,7 @@ use super::index::{StatScale, TalentText, TextFacts};
 use super::targets::fits;
 use super::types::{
     Cut, CutKind, DpSource, Economy, EconomyBonus, EconomyNote, EconomyNoteKind, EconomySeat,
-    SourceKind, SourceRef, SquadAnalyzeRequest, SynergyCond,
+    NoteStat, SourceKind, SourceRef, SquadAnalyzeRequest, SynergyCond,
 };
 
 /// The economy plus each seat's final cost, which the synergy panel needs for
@@ -165,6 +168,32 @@ fn note(kind: EconomyNoteKind, s: &Seat<'_>, name: &str, amount: Option<f64>) ->
         char_id: s.char_id.clone(),
         name: name.to_string(),
         amount,
+        stat: None,
+        ratio: None,
+    }
+}
+
+/// A note about a DP Cost change of `amount` DP.
+fn cost_note(kind: EconomyNoteKind, s: &Seat<'_>, name: &str, amount: f64) -> EconomyNote {
+    EconomyNote {
+        stat: Some(NoteStat::Cost),
+        ..note(kind, s, name, Some(amount))
+    }
+}
+
+/// A note about the redeploy change `v` (a blackboard value), with its ratio
+/// read the way `respawn_change` reads it.
+fn respawn_note(
+    kind: EconomyNoteKind,
+    s: &Seat<'_>,
+    name: &str,
+    v: f64,
+    text: Option<&TalentText>,
+) -> EconomyNote {
+    EconomyNote {
+        stat: Some(NoteStat::Respawn),
+        ratio: respawn_change(v, text).1,
+        ..note(kind, s, name, Some(v))
     }
 }
 
@@ -192,6 +221,7 @@ pub fn compute(ctx: &Ctx<'_>, seats: &[Seat<'_>], req: &SquadAnalyzeRequest) -> 
     let mut counted: Vec<EconomyNote> = Vec::new();
     let mut start_bonus: Vec<EconomyBonus> = Vec::new();
     let mut sources: Vec<DpSource> = Vec::new();
+    let mut dp_lower_limit = 0.0;
 
     // Own cuts first: potential, own talents, module.
     for s in seats {
@@ -267,6 +297,38 @@ pub fn compute(ctx: &Ctx<'_>, seats: &[Seat<'_>], req: &SquadAnalyzeRequest) -> 
             }
         }
 
+        // A hidden module part's redeploy change that a talent's text prints
+        // for the holder itself: SilverAsh's Snow Realm Fowlcare Kit stage 3
+        // `respawn_time` -0.1, "SilverAsh and other allies in the 8
+        // surrounding tiles gain an additional -10% Redeployment Time". The
+        // allies around him depend on placement and are left out.
+        for hb in &s.hidden_boards {
+            let Some(v) = bb(hb, "respawn_time").filter(|v| *v != 0.0) else {
+                continue;
+            };
+            let owner = s.talents.iter().find_map(|t| {
+                let tt = ctx.facts(&t.key)?.talent.as_ref()?;
+                Some((t, tt.own_redeploy_scale(v)?))
+            });
+            if let Some((t, scale)) = owner {
+                let change = match scale {
+                    StatScale::Flat => (v, None),
+                    StatScale::Ratio if v < 0.0 => (0.0, Some(v)),
+                    StatScale::Ratio => (0.0, Some(v - 1.0)),
+                };
+                respawn_cuts.push(cut(CutKind::Talent, Some(t.name.clone()), None, change));
+            }
+        }
+
+        // A trait redeploy change for the first redeployment only: its own
+        // figure, never the redeploy time every later retreat waits.
+        let mut first_respawn_cuts = Vec::new();
+        if ctx.trait_facts(s).is_some_and(|f| f.first_redeploy)
+            && let Some(v) = bb(&s.trait_board, "respawn_time").filter(|v| *v != 0.0)
+        {
+            first_respawn_cuts.push(cut(CutKind::Trait, None, None, respawn_change(v, None)));
+        }
+
         rows.push(EconomySeat {
             seat: s.seat,
             char_id: s.char_id.clone(),
@@ -277,6 +339,8 @@ pub fn compute(ctx: &Ctx<'_>, seats: &[Seat<'_>], req: &SquadAnalyzeRequest) -> 
             respawn: 0.0,
             base_respawn,
             respawn_cuts,
+            first_respawn: None,
+            first_respawn_cuts,
         });
     }
 
@@ -318,10 +382,21 @@ pub fn compute(ctx: &Ctx<'_>, seats: &[Seat<'_>], req: &SquadAnalyzeRequest) -> 
                 } else {
                     EconomyNoteKind::Conditional
                 };
-                notes.push(note(kind, g, &t.name, Some(v)));
+                notes.push(cost_note(kind, g, &t.name, v));
             }
             if let Some(v) = bb(&t.board, "runtime_cost").filter(|v| *v < 0.0) {
-                notes.push(note(EconomyNoteKind::FirstDeploy, g, &t.name, Some(v)));
+                notes.push(cost_note(EconomyNoteKind::FirstDeploy, g, &t.name, v));
+            }
+            // The DP Lower Limit (Closure): how far DP may drop for the whole
+            // squad, whoever the rest of the talent names. No DP Cost changes.
+            let floor = bb(&t.board, "cost").filter(|c| *c < 0.0 && tt.lowers_dp_floor);
+            if let Some(c) = floor {
+                if cond == SynergyCond::Squad {
+                    dp_lower_limit += c;
+                    counted.push(note(EconomyNoteKind::DpFloor, g, &t.name, Some(c)));
+                } else {
+                    notes.push(note(EconomyNoteKind::OnceDeployed, g, &t.name, Some(c)));
+                }
             }
             if is_self(tt) {
                 continue;
@@ -331,9 +406,13 @@ pub fn compute(ctx: &Ctx<'_>, seats: &[Seat<'_>], req: &SquadAnalyzeRequest) -> 
             let Some(target) = tt.target.as_ref().filter(|t| !t.unseen) else {
                 continue;
             };
+            // The holder is a receiver when it fits: "all [Vanguard]
+            // Operators" cuts Zima's own cost (her module's "further reduces
+            // the DP Cost of this unit" counts on it), and "all allied units"
+            // reaches SilverAsh ("SilverAsh and other allies ... gain an
+            // additional -10%").
             let receivers: Vec<i32> = seats
                 .iter()
-                .filter(|r| r.seat != g.seat)
                 .filter(|r| {
                     fits(
                         target,
@@ -345,7 +424,7 @@ pub fn compute(ctx: &Ctx<'_>, seats: &[Seat<'_>], req: &SquadAnalyzeRequest) -> 
                 .map(|r| r.seat)
                 .collect();
 
-            if let Some(c) = bb(&t.board, "cost").filter(|c| *c < 0.0) {
+            if let Some(c) = bb(&t.board, "cost").filter(|c| *c < 0.0 && floor.is_none()) {
                 if cond == SynergyCond::Squad {
                     let given = cut(
                         CutKind::Squad,
@@ -355,10 +434,10 @@ pub fn compute(ctx: &Ctx<'_>, seats: &[Seat<'_>], req: &SquadAnalyzeRequest) -> 
                     );
                     give_cut(&mut rows, &receivers, |r| &mut r.cuts, &given);
                     if !receivers.is_empty() {
-                        counted.push(note(EconomyNoteKind::CostCut, g, &t.name, Some(c)));
+                        counted.push(cost_note(EconomyNoteKind::CostCut, g, &t.name, c));
                     }
                 } else {
-                    notes.push(note(EconomyNoteKind::OnceDeployed, g, &t.name, Some(c)));
+                    notes.push(cost_note(EconomyNoteKind::OnceDeployed, g, &t.name, c));
                 }
             }
             if let Some(v) = bb(&t.board, "respawn_time").filter(|v| *v != 0.0) {
@@ -371,7 +450,13 @@ pub fn compute(ctx: &Ctx<'_>, seats: &[Seat<'_>], req: &SquadAnalyzeRequest) -> 
                     );
                     give_cut(&mut rows, &receivers, |r| &mut r.respawn_cuts, &given);
                     if !receivers.is_empty() {
-                        counted.push(note(EconomyNoteKind::RedeployCut, g, &t.name, Some(v)));
+                        counted.push(respawn_note(
+                            EconomyNoteKind::RedeployCut,
+                            g,
+                            &t.name,
+                            v,
+                            Some(tt),
+                        ));
                     }
                 } else {
                     let kind = if cond == SynergyCond::Field {
@@ -379,7 +464,7 @@ pub fn compute(ctx: &Ctx<'_>, seats: &[Seat<'_>], req: &SquadAnalyzeRequest) -> 
                     } else {
                         EconomyNoteKind::Conditional
                     };
-                    notes.push(note(kind, g, &t.name, Some(v)));
+                    notes.push(respawn_note(kind, g, &t.name, v, Some(tt)));
                 }
             }
             // Starting SP for a squad's skills (Bagpipe "Martial Tradition":
@@ -418,6 +503,28 @@ pub fn compute(ctx: &Ctx<'_>, seats: &[Seat<'_>], req: &SquadAnalyzeRequest) -> 
             // deployed; the note carries DP per second.
             let interval = if interval > 0.0 { interval } else { 1.0 };
             notes.push(note(EconomyNoteKind::Drain, s, "", Some(c / interval)));
+        }
+        // A skill that cuts other units' DP Cost while in use (Matsukiri S2
+        // "DP cost of all Defender and Supporter Operators in the Deployment
+        // Waiting Zone -1"): listed with its cut, not in the starting costs.
+        if let Some(sk) = &s.skill
+            && let Some(f) = ctx.facts(&sk.key)
+        {
+            for (key, minus) in &f.dp_cost_cut {
+                let Some((_, v)) = sk.board.iter().find(|(k, _)| k.eq_ignore_ascii_case(key))
+                else {
+                    continue;
+                };
+                let amount = if *minus { -v } else { *v };
+                if amount < 0.0 {
+                    notes.push(cost_note(
+                        EconomyNoteKind::SkillActive,
+                        s,
+                        &sk.level.name,
+                        amount,
+                    ));
+                }
+            }
         }
         if let Some(sk) = &s.skill
             && let Some(amount) = skill_dp(&sk.board, ctx.facts(&sk.key))
@@ -484,6 +591,15 @@ pub fn compute(ctx: &Ctx<'_>, seats: &[Seat<'_>], req: &SquadAnalyzeRequest) -> 
     for r in &mut rows {
         r.cost = cost_after(r.base_cost, &r.cuts);
         r.respawn = apply(r.base_respawn, &r.respawn_cuts);
+        if !r.first_respawn_cuts.is_empty() {
+            let all: Vec<Cut> = r
+                .respawn_cuts
+                .iter()
+                .chain(&r.first_respawn_cuts)
+                .cloned()
+                .collect();
+            r.first_respawn = Some(apply(r.base_respawn, &all));
+        }
         cost_by_seat.insert(r.seat, r.cost);
     }
     rows.sort_by_key(|r| (r.cost, r.seat));
@@ -495,7 +611,13 @@ pub fn compute(ctx: &Ctx<'_>, seats: &[Seat<'_>], req: &SquadAnalyzeRequest) -> 
         usize::try_from(n.max(0)).unwrap_or(0).min(rows.len())
     });
     let cheapest = rows.iter().take(take).map(|r| r.cost).sum();
-    let openers = i32::try_from(rows.iter().filter(|r| r.cost <= start_dp).count()).unwrap_or(0);
+    let dp_lower_limit = dp_lower_limit.trunc() as i32;
+    let openers = i32::try_from(
+        rows.iter()
+            .filter(|r| r.cost <= start_dp - dp_lower_limit)
+            .count(),
+    )
+    .unwrap_or(0);
 
     EconomyOut {
         economy: Economy {
@@ -507,6 +629,7 @@ pub fn compute(ctx: &Ctx<'_>, seats: &[Seat<'_>], req: &SquadAnalyzeRequest) -> 
             cheapest,
             cheapest_count: i32::try_from(take).unwrap_or(0),
             deploy_limit: req.deploy_limit,
+            dp_lower_limit,
             openers,
             sources,
             counted,

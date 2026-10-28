@@ -1,7 +1,7 @@
 import { createFileRoute, stripSearchParams } from "@tanstack/react-router";
 import { Browse } from "#/components/tier-lists/Browse";
 import { SORT_OPTIONS, type TierListSort, type TierListType } from "#/components/tier-lists/FilterToolbar.constants";
-import { browseTierListsQueryOptions, tierListFlairsQueryOptions } from "#/lib/api/tier-lists";
+import { browseTierListsQueryOptions, isAccountId, tierListFlairsQueryOptions } from "#/lib/api/tier-lists";
 import { metaT } from "#/lib/meta";
 import { defaultOgURL } from "#/lib/og";
 import { seo } from "#/lib/seo";
@@ -11,6 +11,8 @@ interface ITierListsSearch {
     sort: TierListSort;
     q: string;
     flair: string[];
+    /** An account id: only that player's listed lists. */
+    author?: string;
 }
 
 const DEFAULTS: ITierListsSearch = { type: "all", sort: "recent", q: "", flair: [] };
@@ -33,8 +35,10 @@ function parseFlair(input: unknown): string[] {
 
 export const Route = createFileRoute("/tier-lists")({
     component: RouteComponent,
-    loader: async ({ context }) => {
-        await Promise.all([context.queryClient.ensureQueryData(browseTierListsQueryOptions(context.i18n.gamedataServer)), context.queryClient.ensureQueryData(tierListFlairsQueryOptions())]);
+    loaderDeps: ({ search }) => ({ author: search.author }),
+    loader: async ({ context, deps }) => {
+        const server = context.i18n.gamedataServer;
+        await Promise.all([context.queryClient.ensureQueryData(browseTierListsQueryOptions(server)), deps.author ? context.queryClient.ensureQueryData(browseTierListsQueryOptions(server, deps.author)) : null, context.queryClient.ensureQueryData(tierListFlairsQueryOptions())]);
     },
     validateSearch: (search: Record<string, unknown>): ITierListsSearch => {
         const typeRaw = typeof search.type === "string" ? (search.type as TierListType) : "all";
@@ -43,7 +47,8 @@ export const Route = createFileRoute("/tier-lists")({
         const sort: TierListSort = VALID_SORTS.has(sortRaw) ? sortRaw : "recent";
         const q = typeof search.q === "string" ? search.q : "";
         const flair = parseFlair(search.flair);
-        return { type, sort, q, flair };
+        const author = typeof search.author === "string" && isAccountId(search.author) ? search.author.toLowerCase() : undefined;
+        return { type, sort, q, flair, author };
     },
     search: { middlewares: [stripSearchParams(DEFAULTS)] },
     head: ({ match }) => {

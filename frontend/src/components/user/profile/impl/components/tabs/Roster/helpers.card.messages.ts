@@ -137,6 +137,14 @@ export const messages = {
         text: "{star} Star",
         description: "Alt text of the rarity stars. Always written in this one form, whatever the count.",
     },
+    "profile.roster.card.obtained": {
+        text: "Obtained",
+        description: "Row label on the detailed operator card, beside the date the account obtained this operator.",
+    },
+    "profile.roster.card.obtainedOn": {
+        text: "Obtained {date}",
+        description: "Tooltip on the small date under a compact card's name, shown when the roster is sorted by obtained date. {date} is a localized date such as 'Mar 4, 2024'.",
+    },
 } satisfies MessageMap;
 
 // `dynamic`: the `gap.*` keys are returned by `operatorMissing` on a plain

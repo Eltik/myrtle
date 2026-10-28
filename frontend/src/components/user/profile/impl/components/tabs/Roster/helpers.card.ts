@@ -11,6 +11,14 @@ import type { IOwnedEntry } from "./types";
 /** The `t` these labels need, narrowed to the keys they can render. */
 export type CardT = TypedT<typeof cardMessages>;
 
+/** The day an operator joined the account, as the cards print it; the dialog adds the time. */
+export const OBTAINED_DATE: Intl.DateTimeFormatOptions = { year: "numeric", month: "short", day: "numeric" };
+
+/** `obtained_at` (unix seconds) as a Date, or null when the account has no record (null or 0). */
+export function obtainedDate(entry: Pick<IRosterEntry, "obtained_at">): Date | null {
+    return entry.obtained_at ? new Date(entry.obtained_at * 1000) : null;
+}
+
 /** The build ceilings the completeness score reads, all served by `/operators/index`. */
 export type IOperatorBuildCeilings = Pick<IOperatorIndexEntry, "phaseMaxLevels" | "skillCount" | "potentialRankCount" | "modules">;
 

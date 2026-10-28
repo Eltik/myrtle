@@ -34,6 +34,10 @@ interface IFilterToolbarProps {
     onQueryChange: (next: string) => void;
     onFlairToggle: (code: string) => void;
     onClearFlairs: () => void;
+    /** The author picker, placed before the search box. */
+    authorFilter?: React.ReactNode;
+    /** An author is picked: counts as an active filter for the results line. */
+    authorActive?: boolean;
 }
 
 const BASE_TYPE_TABS: Array<{ value: TierListType; labelKey: FilterToolbarMessageKey }> = [
@@ -47,12 +51,12 @@ const BASE_TYPE_TABS: Array<{ value: TierListType; labelKey: FilterToolbarMessag
 const CONTENT_WIDTH = "1080px";
 const FADE_MASK = `linear-gradient(to right, transparent, #000 max(0px, (100vw - ${CONTENT_WIDTH}) / 2), #000 min(100vw, (100vw + ${CONTENT_WIDTH}) / 2), transparent)`;
 
-export function FilterToolbar({ type, sort, query, selectedFlairs, flairOptions, resultCount, totalCount, showFavoritesTab, onTypeChange, onSortChange, onQueryChange, onFlairToggle, onClearFlairs }: IFilterToolbarProps) {
+export function FilterToolbar({ type, sort, query, selectedFlairs, flairOptions, resultCount, totalCount, showFavoritesTab, onTypeChange, onSortChange, onQueryChange, onFlairToggle, onClearFlairs, authorFilter, authorActive = false }: IFilterToolbarProps) {
     const t: FilterToolbarT = useT("tierLists");
     const rt: FilterToolbarRichT = useRichT("tierLists");
     const typeTabs = showFavoritesTab ? [...BASE_TYPE_TABS, { value: "favorites" as const, labelKey: "browse.type.favorites" as const }] : BASE_TYPE_TABS;
     const activeSort = SORT_OPTIONS.find((s) => s.value === sort) ?? SORT_OPTIONS[0];
-    const hasActiveFilters = selectedFlairs.length > 0 || query.length > 0 || type !== "all" || sort !== "recent";
+    const hasActiveFilters = selectedFlairs.length > 0 || query.length > 0 || type !== "all" || sort !== "recent" || authorActive;
     const isDesktop = useMediaQuery("sm");
     const [flairsOpenOverride, setFlairsOpenOverride] = useState<boolean | null>(null);
     const flairsOpen = flairsOpenOverride ?? isDesktop;
@@ -133,7 +137,9 @@ export function FilterToolbar({ type, sort, query, selectedFlairs, flairOptions,
                         </button>
                     )}
 
-                    <div className="relative min-w-0 flex-1 sm:ml-auto sm:w-72 sm:max-w-72 sm:flex-none">
+                    {authorFilter ? <div className="order-last w-full sm:order-none sm:ml-auto sm:w-auto">{authorFilter}</div> : null}
+
+                    <div className={cn("relative min-w-0 flex-1 sm:w-72 sm:max-w-72 sm:flex-none", !authorFilter && "sm:ml-auto")}>
                         <span aria-hidden="true" className="pointer-events-none absolute inset-y-0 left-2.5 z-10 flex items-center text-black dark:text-muted-foreground">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5" aria-hidden="true">
                                 <circle cx="11" cy="11" r="8" />

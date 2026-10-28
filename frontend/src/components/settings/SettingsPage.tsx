@@ -36,6 +36,8 @@ function initialSettings(user: IUserProfile | null): IUpdateUserSettingsInput {
         public_profile: user?.public_profile ?? true,
         store_gacha: user?.store_gacha ?? true,
         share_stats: user?.share_stats ?? true,
+        // Opt-in: only a profile read that says `true` is on.
+        public_gacha: user?.public_gacha === true,
     };
 }
 

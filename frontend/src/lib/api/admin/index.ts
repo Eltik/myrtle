@@ -1,3 +1,4 @@
+export * from "./content-audit";
 export * from "./health";
 export * from "./operator-notes";
 export * from "./permissions";

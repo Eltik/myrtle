@@ -10,7 +10,7 @@
 //! `gacha_records`, `operator_plans`, `plan_groups` (and `plan_group_members`
 //! under both), `plan_presets`, `release_plans`, `grids`, `tier_list_favorites`,
 //! `tier_list_permissions` held by the user, `translation_permissions` held by
-//! the user, `ui_message_audit_log` rows the user wrote,
+//! the user, `ui_message_audit_log` and `content_audit_log` rows the user wrote,
 //! `leaderboard_snapshot_entries`, and the music library's `music_likes`,
 //! `music_history` and `music_playlists` (with `music_playlist_tracks` under
 //! it).
@@ -20,7 +20,9 @@
 //! `tier_list_versions.published_by`, `tier_list_view_events.user_id`,
 //! `music_stat_events.user_id` (a listen still counts for the track),
 //! `translation_permissions.granted_by`, `ui_messages.updated_by`,
-//! `ui_documents.updated_by` and `gamedata_overrides.updated_by`.
+//! `ui_documents.updated_by`, `gamedata_overrides.updated_by` and
+//! `content_audit_log.owner_id` / `subject_id` (a moderator's row about the
+//! user's list or grant stays, without the name).
 //!
 //! Done by hand below, before or after that statement:
 //!

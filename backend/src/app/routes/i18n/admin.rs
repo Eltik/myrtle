@@ -320,6 +320,9 @@ pub async fn progress(
 pub struct AuditQuery {
     #[serde(default)]
     pub locale: Option<String>,
+    /// Only this account's edits.
+    #[serde(default)]
+    pub actor: Option<uuid::Uuid>,
     #[serde(default)]
     pub limit: Option<i64>,
     #[serde(default)]
@@ -334,6 +337,7 @@ pub struct AuditQuery {
     tag = "i18n-admin",
     params(
         ("locale" = Option<String>, Query, description = "Restrict to one locale."),
+        ("actor" = Option<String>, Query, description = "Account id (UUID): only that account's edits."),
         ("limit" = Option<i64>, Query, description = "Maximum entries to return."),
         ("before" = Option<String>, Query, description = "RFC 3339 timestamp; keep entries strictly older than this. Page by passing the oldest timestamp you have seen.")
     ),
@@ -357,6 +361,7 @@ pub async fn audit_log(
     let response = service::get_global_audit_log(
         &state,
         params.locale.as_deref(),
+        params.actor,
         params.limit.unwrap_or(100),
         params.before,
     )

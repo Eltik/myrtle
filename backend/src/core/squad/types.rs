@@ -202,7 +202,12 @@ pub struct Economy {
     pub cheapest: i32,
     pub cheapest_count: i32,
     pub deploy_limit: Option<i32>,
-    /// Seats whose `cost` is at or under `start_dp`.
+    /// The lowest DP the squad may drop to when deploying: 0, or below with a
+    /// squad talent that lowers the DP Lower Limit (Closure's "Scheduler, Max
+    /// Settings!" `cost` -4 makes it -4). A seat deploys once DP minus its
+    /// `cost` stays at or above it.
+    pub dp_lower_limit: i32,
+    /// Seats whose `cost` is at or under `start_dp - dp_lower_limit`.
     pub openers: i32,
     pub sources: Vec<DpSource>,
     /// Squad-wide effects that changed a number above (an SP bonus that moved a
@@ -238,6 +243,11 @@ pub struct EconomySeat {
     pub respawn: f64,
     pub base_respawn: f64,
     pub respawn_cuts: Vec<Cut>,
+    /// Seconds of the first redeploy, when a cut applies to it only (the
+    /// Horncare Set trait's "First Redeployment Time reduced by 35%").
+    pub first_respawn: Option<f64>,
+    /// The cuts on top of `respawn_cuts` that `first_respawn` takes.
+    pub first_respawn_cuts: Vec<Cut>,
 }
 
 #[derive(TS, ToSchema)]
@@ -251,6 +261,8 @@ pub enum CutKind {
     Talent,
     /// The seat's module attribute blackboard.
     Module,
+    /// The seat's trait (a module's trait line included).
+    Trait,
     /// Another seat's squad talent.
     Squad,
 }
@@ -317,6 +329,22 @@ pub enum EconomyNoteKind {
     CostCut,
     /// The trait drains DP while deployed (Merchants).
     Drain,
+    /// Works while the giver's skill is in use, so it is not in the numbers.
+    SkillActive,
+    /// A squad talent lowered the DP Lower Limit (`Economy::dp_lower_limit`).
+    DpFloor,
+}
+
+/// Which number a note's change is to.
+#[derive(TS, ToSchema)]
+#[ts(export)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum NoteStat {
+    /// DP Cost; `amount` in DP.
+    Cost,
+    /// Redeploy time; `amount` in seconds, or `ratio` when it scales.
+    Respawn,
 }
 
 #[derive(TS, ToSchema)]
@@ -328,6 +356,11 @@ pub struct EconomyNote {
     pub char_id: String,
     pub name: String,
     pub amount: Option<f64>,
+    /// The number the note's change is to, when it is a cost or redeploy
+    /// change the page can print beside the note.
+    pub stat: Option<NoteStat>,
+    /// The change as a ratio (-0.1 = -10%) for a scaling redeploy change.
+    pub ratio: Option<f64>,
 }
 
 // ----------------------------------------------------------------- synergy

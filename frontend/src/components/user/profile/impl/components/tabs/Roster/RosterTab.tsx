@@ -145,7 +145,7 @@ export function RosterTab({ roster, operatorsIndex, operatorsStatic }: IRosterTa
                             const ref = i === visible.length - 1 ? lastRef : null;
                             const key = entry.isOwned ? entry.operator_id : `unowned-${entry.operator_id}`;
                             if (!entry.isOwned) return <UnownedCard key={key} entry={entry} viewMode={viewMode} lastRef={ref} />;
-                            return viewMode === "detailed" ? <DetailedCard key={key} entry={entry} lastRef={ref} /> : <CompactCard key={key} entry={entry} lastRef={ref} />;
+                            return viewMode === "detailed" ? <DetailedCard key={key} entry={entry} lastRef={ref} /> : <CompactCard key={key} entry={entry} lastRef={ref} showObtained={sortBy === "obtained"} />;
                         })}
                     </div>
                     {displayCount < totalCount && <p className="py-4 text-center text-muted-foreground text-sm">{t("profile.roster.showing", { shown: displayCount, total: totalCount })}</p>}

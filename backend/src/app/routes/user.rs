@@ -13,6 +13,7 @@ use crate::core::hypergryph::constants::Server;
 use crate::database::models::profile_layout::ProfileTabId;
 use crate::database::models::score::UserScore;
 use crate::database::models::user::{UserCheckin, UserProfile};
+use crate::database::queries::gacha::public_history_enabled;
 use crate::database::queries::score::get_score_by_uid;
 use crate::database::queries::users::{find_by_id, get_checkin_by_uid, update_role};
 
@@ -31,6 +32,9 @@ pub struct GetUserParams {
 /// `total_score` or `grade` while the Score tab is private, as
 /// `/get-user-score` refuses that tab's data to them, and `null` for every
 /// header number the owner hid (`profile_layout.header.hidden`).
+///
+/// `public_gacha` says whether visitors may read the pull history
+/// (`/gacha/public-records`), so the page knows whether to show its Pulls tab.
 #[utoipa::path(
     get,
     path = "/get-user",
@@ -59,6 +63,8 @@ pub async fn get_user(
     // fresh read, not the row cached for up to 10 minutes: a tab made private
     // since the cache filled is private now.
     profile.profile_layout = gate.profile_layout;
+    // Fresh for the same reason: the switch is not in the cached view row.
+    profile.public_gacha = Some(public_history_enabled(&state.db, gate.id).await?);
     // Projected per caller after the cache read: the cached row is the owner's.
     if !own {
         profile.hide_private();

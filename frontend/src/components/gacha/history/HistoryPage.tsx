@@ -1,23 +1,20 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { Lock, RefreshCw } from "lucide-react";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { toastManager } from "#/components/ui/toast";
 import { useAuth } from "#/hooks/use-auth";
-import { bannersQueryOptions, deriveClientGachaRecords, fetchMyGachaRecordsFn, type IBanner, myGachaStoredRecordsQueryOptions, pullsGamedataServer } from "#/lib/api/gacha";
-import { operatorsIndexQueryOptions } from "#/lib/api/operators";
+import { fetchMyGachaRecordsFn, myGachaStoredRecordsQueryOptions } from "#/lib/api/gacha";
 import { authActions } from "#/lib/auth/store";
-import { type TypedRichT, useGamedataServer, useRichT, useT } from "#/lib/i18n";
+import { type TypedRichT, useRichT, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import type { IOperatorIndexEntry } from "#/types/operators";
 import type { messages } from "./HistoryPage.messages";
-import { BannerBreakdown } from "./impl/BannerBreakdown";
-import { BannerHistory } from "./impl/BannerHistory";
-import { HistoryKpiStrip } from "./impl/HistoryKpiStrip";
+import { BannerFilter } from "./impl/BannerFilter";
+import { bannerOptions, filterRecordsByPools } from "./impl/banner-filter";
+import { HistoryBody, hasAnyPull, useBannersById } from "./impl/HistoryBody";
 import styles from "./impl/HistoryPage.module.css";
-import { PityPanel } from "./impl/PityPanel";
+import { PublicHistorySwitch, ShareHistoryButton } from "./impl/ShareHistory";
 import { gachaStorageOff } from "./impl/storage-gate";
-import { TopOperators } from "./impl/TopOperators";
 
 function UnauthenticatedState() {
     const t: TypedT<typeof messages> = useT("gacha");
@@ -65,11 +62,10 @@ export function HistoryPage() {
     const storageOff = gachaStorageOff(user);
 
     const recordsQuery = useQuery(myGachaStoredRecordsQueryOptions(isAuthenticated));
-    const server = useGamedataServer();
-    const operatorsQuery = useQuery(operatorsIndexQueryOptions(server));
-    // Operator names follow the reader's text pick; banners follow the account the pulls came from,
-    // since pool ids only resolve in that server's table.
-    const bannersQuery = useQuery(bannersQueryOptions(pullsGamedataServer(user?.server)));
+    const bannersById = useBannersById(user?.server);
+    // The banners the page is limited to; empty is every banner. Filtered here, from the
+    // records already loaded, so picking a banner costs no request.
+    const [pools, setPools] = useState<string[]>([]);
 
     const refreshMutation = useMutation({
         mutationFn: () => fetchMyGachaRecordsFn(),
@@ -92,24 +88,12 @@ export function HistoryPage() {
         },
     });
 
-    const operatorsById = useMemo(() => {
-        const map = new Map<string, IOperatorIndexEntry>();
-        for (const entry of operatorsQuery.data ?? []) map.set(entry.id, entry);
-        return map;
-    }, [operatorsQuery.data]);
-
-    const bannersById = useMemo(() => {
-        const map = new Map<string, IBanner>();
-        for (const b of bannersQuery.data ?? []) map.set(b.gachaPoolId, b);
-        return map;
-    }, [bannersQuery.data]);
-
     const isLoading = recordsQuery.isLoading;
     const rawRecords = recordsQuery.data ?? null;
+    const options = useMemo(() => bannerOptions(rawRecords, bannersById), [rawRecords, bannersById]);
+    const records = useMemo(() => (rawRecords ? filterRecordsByPools(rawRecords, pools) : null), [rawRecords, pools]);
 
-    const records = useMemo(() => (rawRecords ? deriveClientGachaRecords(rawRecords) : null), [rawRecords]);
-
-    const hasRecords = records != null && (records.limited.total > 0 || records.linkage.total > 0 || records.regular.total > 0 || records.special.total > 0 || records.boot.total > 0);
+    const hasRecords = hasAnyPull(rawRecords);
 
     return (
         <>
@@ -152,16 +136,17 @@ export function HistoryPage() {
                     <NoDataState />
                 ) : (
                     <>
-                        <HistoryKpiStrip records={records} isLoading={isLoading} />
+                        {user ? (
+                            <div className="flex flex-col gap-3 rounded-[14px] border border-border bg-card px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
+                                <BannerFilter options={options} value={pools} onChange={setPools} disabled={isLoading} />
+                                <div className="flex flex-wrap items-center gap-3 sm:gap-4">
+                                    <PublicHistorySwitch user={user} />
+                                    <ShareHistoryButton user={user} pools={pools} />
+                                </div>
+                            </div>
+                        ) : null}
 
-                        <PityPanel records={records} bannersById={bannersById} isLoading={isLoading} />
-
-                        <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.3fr_1fr]">
-                            <TopOperators records={records} operatorsById={operatorsById} isLoading={isLoading} />
-                            <BannerBreakdown records={records} bannersById={bannersById} operatorsById={operatorsById} isLoading={isLoading} />
-                        </div>
-
-                        <BannerHistory records={records} operatorsById={operatorsById} bannersById={bannersById} isLoading={isLoading} />
+                        <HistoryBody records={records} bannersById={bannersById} isLoading={isLoading} filtered={pools.length > 0} />
                     </>
                 )}
             </section>

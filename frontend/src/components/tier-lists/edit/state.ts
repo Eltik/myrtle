@@ -10,7 +10,7 @@ export type EditStateT = TypedT<typeof stateMessages>;
 const DRAFT_PREFIX = "draft_";
 
 let _draftCounter = 0;
-function nextDraftId(): string {
+export function nextDraftId(): string {
     _draftCounter += 1;
     return `${DRAFT_PREFIX}${Date.now().toString(36)}_${_draftCounter}`;
 }

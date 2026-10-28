@@ -203,6 +203,10 @@ export const messages = {
         text: "Translations",
         description: "Edit history filter: show only edits to translated site text.",
     },
+    "system.audit.source.content": {
+        text: "Tier lists & grids",
+        description: "Edit history filter: show only what people did to tier lists and grids (created, edited, published, hid, deleted...).",
+    },
     "system.audit.search.placeholder": {
         text: "Search edits",
         description: "Placeholder in the edit history search box. Keep it short: the box is narrow. It searches people, operators, translation keys and changed text.",
@@ -244,7 +248,7 @@ export const messages = {
         description: "Field badge on a translation edit: the translated text itself.",
     },
     "system.audit.untracked": {
-        text: "Role, grant and publish changes aren't logged yet.",
+        text: "Role changes aren't logged yet.",
         description: "Note in the edit history toolbar saying which kinds of change it does not record.",
     },
     "system.audit.th.when": {
@@ -300,7 +304,7 @@ export const messages = {
         description: "Empty state title in the edit history when nothing has been logged.",
     },
     "system.audit.empty.desc": {
-        text: "Operator note and translation edits show up here as soon as someone saves one.",
+        text: "Operator note, translation, tier list and grid edits show up here as soon as someone saves one.",
         description: "Empty state body in the edit history when nothing has been logged.",
     },
     "system.audit.noMatch.title": {
@@ -322,6 +326,226 @@ export const messages = {
     "system.audit.retry": {
         text: "Try again",
         description: "Button beside an edit history error that retries the request.",
+    },
+    "system.audit.error.content": {
+        text: "Couldn't load the tier list and grid history: {message}",
+        description: "Error line in the edit history; {message} explains what went wrong.",
+    },
+    "system.audit.targetKind.label": {
+        text: "Filter by type",
+        description: "Accessible name of the picker that limits the tier list and grid history to one type.",
+    },
+    "system.audit.targetKind.all": {
+        text: "Lists and grids",
+        description: "Type picker option: show tier list and grid actions.",
+    },
+    "system.audit.targetKind.tier_list": {
+        text: "Tier lists",
+        description: "Type picker option: show only tier list actions.",
+    },
+    "system.audit.targetKind.grid": {
+        text: "Grids",
+        description: "Type picker option: show only grid actions.",
+    },
+    "system.audit.actor.label": {
+        text: "Filter by person",
+        description: "Accessible name of the box that limits the edit history to one person's edits.",
+    },
+    "system.audit.actor.placeholder": {
+        text: "Anyone",
+        description: "Placeholder in the person filter when no one is picked. Keep it short.",
+    },
+    "system.audit.actor.empty": {
+        text: "No one matches",
+        description: "Shown in the person filter's menu when the search finds no account.",
+    },
+    "system.audit.actor.clear": {
+        text: "Show everyone",
+        description: "Button that removes the person filter.",
+    },
+    "system.audit.actor.only": {
+        text: "Only {name}",
+        description: "Button beside a person in the edit history that shows only their edits. {name} is their nickname.",
+    },
+    "system.audit.target.only": {
+        text: "Only this one",
+        description: "Button beside a tier list or grid in the edit history that shows only its history.",
+    },
+    "system.audit.target.chip": {
+        text: "History of {name}",
+        description: "Chip above the edit history while it shows one tier list or grid. {name} is the list or grid's name.",
+    },
+    "system.audit.target.clear": {
+        text: "Show every list and grid",
+        description: "Accessible name of the button that removes the one-list filter.",
+    },
+    "system.audit.target.unknown": {
+        text: "this item",
+        description: "Stands in for a tier list or grid's name in the filter chip before its history has loaded.",
+    },
+    "system.audit.target.owner": {
+        text: "owned by {name}",
+        description: "Under a tier list or grid in the edit history, when the person who acted is not its owner (a moderator or a granted editor). {name} is the owner's nickname.",
+    },
+    "system.audit.target.ownerGone": {
+        text: "owned by a deleted account",
+        description: "Under a tier list or grid in the edit history, when its owner's account no longer exists.",
+    },
+    "system.audit.events": {
+        text: "{count, plural, one {# save} other {# saves}}",
+        description: "Beside a row that sums a sitting of edits: how many saves it covers.",
+    },
+    "system.audit.action.create": {
+        text: "Created",
+        description: "Badge on a tier list or grid history row: it was created.",
+    },
+    "system.audit.action.fork": {
+        text: "Forked",
+        description: "Badge on a grid history row: it was made from another grid as a template.",
+    },
+    "system.audit.action.edit": {
+        text: "Edited",
+        description: "Badge on a tier list or grid history row: it was edited.",
+    },
+    "system.audit.action.publish": {
+        text: "Published",
+        description: "Badge on a tier list history row: a version was published.",
+    },
+    "system.audit.action.visibility": {
+        text: "Visibility",
+        description: "Badge on a tier list history row: it was shown in or hidden from the public index.",
+    },
+    "system.audit.action.flair": {
+        text: "Flair",
+        description: "Badge on a tier list history row: its flair was set or cleared.",
+    },
+    "system.audit.action.grant": {
+        text: "Access given",
+        description: "Badge on a tier list history row: someone was given edit access.",
+    },
+    "system.audit.action.revoke": {
+        text: "Access removed",
+        description: "Badge on a tier list history row: someone's edit access was removed.",
+    },
+    "system.audit.action.delete": {
+        text: "Deleted",
+        description: "Badge on a tier list or grid history row: it was deleted.",
+    },
+    "system.audit.change.official": {
+        text: "official list",
+        description: "Summary of a tier list creation: it is one of the site's official lists.",
+    },
+    "system.audit.change.community": {
+        text: "community list",
+        description: "Summary of a tier list creation: it is a player's own list.",
+    },
+    "system.audit.change.forkedFrom": {
+        text: "from {title}",
+        description: "Summary of a grid fork. {title} is the grid it was copied from.",
+    },
+    "system.audit.change.renamed": {
+        text: "renamed from {from}",
+        description: "Summary clause: the tier list or grid was renamed. {from} is its old name; the new one is shown beside it.",
+    },
+    "system.audit.change.description": {
+        text: "edited the description",
+        description: "Summary clause: the description changed.",
+    },
+    "system.audit.change.kinds": {
+        text: "{count, plural, one {now offers # kind} other {now offers # kinds}}",
+        description: "Summary clause: the kinds of thing the tier list editor offers (operators, enemies...) changed.",
+    },
+    "system.audit.change.shown": {
+        text: "shown in the index",
+        description: "Summary clause: the list or grid now appears in the public index.",
+    },
+    "system.audit.change.hidden": {
+        text: "hidden from the index",
+        description: "Summary clause: the list or grid no longer appears in the public index (a direct link still works).",
+    },
+    "system.audit.change.size": {
+        text: "resized to {size}",
+        description: "Summary clause: a grid's size changed. {size} reads like 4x5 (rows x columns).",
+    },
+    "system.audit.change.cells": {
+        text: "{count, plural, one {changed # cell} other {changed # cells}}",
+        description: "Summary clause: grid cells whose pick or label changed.",
+    },
+    "system.audit.change.tiersAdded": {
+        text: "{count, plural, one {added tier {names}} other {added tiers {names}}}",
+        description: "Summary clause: tiers added. {names} is a comma-separated list of tier names.",
+    },
+    "system.audit.change.tierRenamed": {
+        text: "renamed tier {from} → {to}",
+        description: "Summary clause: a tier was renamed. Keep the arrow.",
+    },
+    "system.audit.change.moreRenames": {
+        text: "{count, plural, one {# more tier renamed} other {# more tiers renamed}}",
+        description: "Summary clause after the first few tier renames.",
+    },
+    "system.audit.change.tiersReordered": {
+        text: "{count, plural, one {reordered # tier} other {reordered # tiers}}",
+        description: "Summary clause: tiers moved up or down the list.",
+    },
+    "system.audit.change.tiersRestyled": {
+        text: "restyled {names}",
+        description: "Summary clause: a tier's colour or description changed. {names} is a comma-separated list of tier names.",
+    },
+    "system.audit.change.tiersDeleted": {
+        text: "{count, plural, one {deleted tier {names}} other {deleted tiers {names}}}",
+        description: "Summary clause: tiers deleted. {names} is a comma-separated list of tier names.",
+    },
+    "system.audit.change.tiersDeletedWith": {
+        text: "{count, plural, one {deleted tier {names}} other {deleted tiers {names}}} with {dropped, plural, one {# entry} other {# entries}}",
+        description: "Summary clause: tiers deleted together with the entries in them. {names} is a comma-separated list of tier names.",
+    },
+    "system.audit.change.entriesAdded": {
+        text: "{count, plural, one {added # entry} other {added # entries}}",
+        description: "Summary clause: operators or other entries placed on the list.",
+    },
+    "system.audit.change.entriesMoved": {
+        text: "{count, plural, one {moved # entry} other {moved # entries}}",
+        description: "Summary clause: entries moved to another tier.",
+    },
+    "system.audit.change.entriesReordered": {
+        text: "{count, plural, one {reordered # entry} other {reordered # entries}} within tiers",
+        description: "Summary clause: entries moved within the tier they were in.",
+    },
+    "system.audit.change.entriesRemoved": {
+        text: "{count, plural, one {removed # entry} other {removed # entries}}",
+        description: "Summary clause: entries taken off the list.",
+    },
+    "system.audit.change.notesEdited": {
+        text: "{count, plural, one {edited # entry note} other {edited # entry notes}}",
+        description: "Summary clause: the note attached to an entry changed.",
+    },
+    "system.audit.change.published": {
+        text: "version {version}",
+        description: "Summary of a publish: the version number it created.",
+    },
+    "system.audit.change.publishedWith": {
+        text: "version {version}: {changelog}",
+        description: "Summary of a publish with its changelog. {changelog} is the publisher's own text.",
+    },
+    "system.audit.change.flair": {
+        text: "set to {label}",
+        description: "Summary of a flair change. {label} is the flair's name.",
+    },
+    "system.audit.change.flairCleared": {
+        text: "cleared",
+        description: "Summary of a flair change that removed the flair.",
+    },
+    "system.audit.change.permission": {
+        text: "{level} access for {name}",
+        description: "Summary of a grant or revoke. {level} is the access level (Edit, Publish...), {name} the person's nickname.",
+    },
+    "system.audit.change.someone": {
+        text: "a deleted account",
+        description: "Stands in for {name} in a grant summary when that account no longer exists.",
+    },
+    "system.audit.change.deleted": {
+        text: "{tiers, plural, one {# tier} other {# tiers}}, {entries, plural, one {# entry} other {# entries}}",
+        description: "Summary of a tier list deletion: what went with it.",
     },
 
     "system.languages.title": {

@@ -462,6 +462,14 @@ pub async fn refresh(
                 "the grade did not finish inside the budget; it continues in the background and user_scores updates when it does"
             ),
         }
+
+        // After the grade, so the period's snapshot carries the score this sync
+        // produced (the previous one when the grade missed its budget). One
+        // primary-key probe once the period has its snapshot. A failure loses
+        // only this period's snapshot, never the sync.
+        if let Err(e) = crate::app::services::lookback::record(state, user.id, server).await {
+            tracing::error!(uid = %user_id, error = ?e, "the lookback snapshot failed; the roster sync stands");
+        }
     }
 
     state.mark_ownership_dirty();

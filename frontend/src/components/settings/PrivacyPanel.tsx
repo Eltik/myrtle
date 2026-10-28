@@ -43,6 +43,12 @@ export function PrivacyPanel({ settings, onChange, saving }: IPrivacyPanelProps)
                         control={<Switch checked={settings.share_stats} onCheckedChange={(v) => onChange({ ...settings, share_stats: v })} disabled={saving} />}
                     />
                     <SettingRow layout="inline" title={t("privacy.gacha.title")} description={rt("privacy.gacha.desc", { column: <Mono>{t("privacy.gacha.column")}</Mono> })} control={<Switch checked={settings.store_gacha} onCheckedChange={(v) => onChange({ ...settings, store_gacha: v })} disabled={saving} />} />
+                    <SettingRow
+                        layout="inline"
+                        title={t("privacy.publicGacha.title")}
+                        description={rt("privacy.publicGacha.desc", { column: <Mono>{t("privacy.publicGacha.column")}</Mono> })}
+                        control={<Switch checked={settings.public_gacha} onCheckedChange={(v) => onChange({ ...settings, public_gacha: v })} disabled={saving} />}
+                    />
                 </CardContent>
             </Card>
         </div>

@@ -8,6 +8,7 @@ import { browseTierListsQueryOptions, favoritedTierListsQueryOptions, type ITier
 import { useGamedataServer, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { Route } from "#/routes/tier-lists";
+import { AuthorFilter } from "./AuthorFilter";
 import type { messages } from "./Browse.messages";
 import BrowseCard from "./BrowseCard";
 import { FilterToolbar, type IFlairOption } from "./FilterToolbar";
@@ -36,10 +37,14 @@ export function Browse() {
 
     const gamedataServer = useGamedataServer();
     const browseQuery = useQuery(browseTierListsQueryOptions(gamedataServer));
+    // One author's lists come from the server, so an author past the index's
+    // newest 200 still shows in full. The index stays loaded for the picker.
+    const authorQuery = useQuery({ ...browseTierListsQueryOptions(gamedataServer, search.author), enabled: Boolean(search.author) });
     const favoritesQuery = useQuery(favoritedTierListsQueryOptions(authed, gamedataServer));
     const viewingFavorites = authed && search.type === "favorites";
+    const byAuthor = Boolean(search.author);
 
-    const { data, isLoading, isError, refetch, isFetching } = viewingFavorites ? favoritesQuery : browseQuery;
+    const { data, isLoading, isError, refetch, isFetching } = viewingFavorites ? favoritesQuery : byAuthor ? authorQuery : browseQuery;
     const { data: flairCatalog } = useQuery(tierListFlairsQueryOptions());
     const allLists = useMemo<ITierListBrowseItem[]>(() => data ?? [], [data]);
 
@@ -107,12 +112,13 @@ export function Browse() {
 
     const filtered = useMemo(() => {
         return allLists.filter((list) => {
+            if (byAuthor && list.author.id !== search.author) return false;
             if (!viewingFavorites && search.type !== "all" && list.listType !== search.type) return false;
             if (search.flair.length > 0 && (!list.flairCode || !search.flair.includes(list.flairCode))) return false;
             if (!matchesBrowseQuery(list, debouncedQuery)) return false;
             return true;
         });
-    }, [allLists, search.type, search.flair, debouncedQuery, viewingFavorites]);
+    }, [allLists, search.type, search.flair, search.author, byAuthor, debouncedQuery, viewingFavorites]);
 
     const sorted = useMemo(() => sortBrowseItems(filtered, search.sort), [filtered, search.sort]);
     const visible = useMemo(() => sorted.slice(0, visibleCount), [sorted, visibleCount]);
@@ -127,6 +133,13 @@ export function Browse() {
     };
 
     const clearFlairs = () => navigate({ search: { ...search, flair: [] }, replace: true, resetScroll: false });
+
+    // Pushes rather than replaces: picking an author is a place the back button should return from.
+    const setAuthor = (author: { id: string } | null) => navigate({ search: { ...search, author: author?.id }, resetScroll: false });
+    const showAuthor = (author: { id: string }) => {
+        setAuthor(author);
+        scrollToGrid();
+    };
 
     const clearAllFilters = () => {
         setInputQuery("");
@@ -145,10 +158,11 @@ export function Browse() {
         <main className="min-h-dvh pb-24">
             <Hero total={allLists.length} canCreate={Boolean(user)} />
 
-            {!isLoading && !isError && !viewingFavorites && (
+            {!isLoading && !isError && !viewingFavorites && !byAuthor && (
                 <OfficialRail
                     lists={officialFeatured}
                     onOpen={handleOpen}
+                    onAuthorClick={showAuthor}
                     onViewAll={() => {
                         setType("official");
                         scrollToGrid();
@@ -174,6 +188,8 @@ export function Browse() {
                     onQueryChange={setInputQuery}
                     onFlairToggle={toggleFlair}
                     onClearFlairs={clearFlairs}
+                    authorFilter={<AuthorFilter lists={browseQuery.data ?? []} value={search.author ?? ""} onChange={setAuthor} />}
+                    authorActive={byAuthor}
                 />
 
                 <div className="mt-5">
@@ -220,7 +236,7 @@ export function Browse() {
                         <>
                             <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
                                 {visible.map((tl) => (
-                                    <BrowseCard key={tl.id} tl={tl} onOpen={handleOpen} />
+                                    <BrowseCard key={tl.id} tl={tl} onOpen={handleOpen} onAuthorClick={showAuthor} />
                                 ))}
                             </div>
 

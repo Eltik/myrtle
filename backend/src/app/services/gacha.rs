@@ -6,8 +6,8 @@ use crate::core::hypergryph::yostar::AccountPortalSession;
 use crate::database::models::gacha::{GachaRecord, GachaStats};
 use crate::database::queries::gacha;
 use crate::database::queries::gacha::BatchOutcome;
-use crate::database::queries::gacha::get_all_for_user;
 use crate::database::queries::gacha::get_by_char_for_user;
+use crate::database::queries::gacha::get_for_user_in_pools;
 use crate::database::queries::gacha::get_history_filtered;
 use crate::database::queries::gacha::get_or_create_settings;
 use crate::database::queries::gacha::insert_batch;
@@ -825,7 +825,18 @@ pub async fn get_stored_records(
     state: &AppState,
     user_id: Uuid,
 ) -> Result<GachaRecordsDto, ApiError> {
-    let rows = get_all_for_user(&state.db, user_id).await?;
+    get_stored_records_in_pools(state, user_id, None).await
+}
+
+/// [`get_stored_records`] limited to the banners in `pools`, every banner
+/// when `None`: what `/gacha/public-records` serves a visitor. The grouping
+/// is a single pass over at most one account's pulls, so it stays inline.
+pub async fn get_stored_records_in_pools(
+    state: &AppState,
+    user_id: Uuid,
+    pools: Option<&[String]>,
+) -> Result<GachaRecordsDto, ApiError> {
+    let rows = get_for_user_in_pools(&state.db, user_id, pools).await?;
 
     let mut limited = Vec::new();
     let mut regular = Vec::new();

@@ -6,19 +6,39 @@ use uuid::Uuid;
 use crate::app::error::ApiError;
 use crate::app::extractors::auth::RoleCheckedUser;
 use crate::app::routes::{StatusOk, ok_status};
+use crate::app::services::content_audit;
 use crate::app::services::tier_list::find_and_authorize;
 use crate::app::services::tier_list::invalidate_detail;
 use crate::app::services::tier_list::validate_entity;
 use crate::app::state::AppState;
 use crate::app::validation::{PLACEMENT_DESCRIPTION_MAX, validate_opt_length};
 use crate::core::auth::permissions::Permission;
-use crate::database::models::tier_list::{EntityKind, EntityRef, TierPlacement};
+use crate::database::models::content_audit::{ContentAuditAction, ContentAuditDetails};
+use crate::database::models::tier_list::{EntityKind, EntityRef, TierList, TierPlacement};
 use crate::database::queries::tier_lists::add_placement;
 use crate::database::queries::tier_lists::get_placements;
 use crate::database::queries::tier_lists::get_tiers;
 use crate::database::queries::tier_lists::move_placement;
 use crate::database::queries::tier_lists::remove_placement;
 use crate::database::queries::tier_lists::set_placement_description;
+
+/// One placement change, as an `edit` row: `field` picks which set of
+/// [`ContentAuditDetails`] the entry joins.
+async fn audit_entry(
+    state: &AppState,
+    list: &TierList,
+    user_id: Uuid,
+    entity: EntityRef<'_>,
+    field: fn(&mut ContentAuditDetails) -> &mut Option<Vec<String>>,
+) {
+    let mut details = ContentAuditDetails::default();
+    *field(&mut details) = Some(vec![content_audit::entry_key(entity)]);
+    content_audit::record(
+        state,
+        content_audit::tier_list_entry(list, user_id, ContentAuditAction::Edit, details),
+    )
+    .await;
+}
 
 #[derive(Deserialize, utoipa::ToSchema)]
 pub struct AddPlacementRequest {
@@ -88,6 +108,7 @@ pub async fn add(
     .await?
     .ok_or(ApiError::NotFound)?;
     invalidate_detail(&state, &slug).await;
+    audit_entry(&state, &list, user_id, entity, |d| &mut d.entries_added).await;
     Ok(Json(placement))
 }
 
@@ -135,15 +156,13 @@ pub async fn update_description(
     let user_id: Uuid = auth.user_uuid()?;
     let list = find_and_authorize(&state, &slug, user_id, auth.role, Permission::Edit).await?;
 
-    let placement = set_placement_description(
-        &state.db,
-        list.id,
-        EntityRef { kind, id: &id },
-        body.description.as_deref(),
-    )
-    .await?
-    .ok_or(ApiError::NotFound)?;
+    let entity = EntityRef { kind, id: &id };
+    let placement =
+        set_placement_description(&state.db, list.id, entity, body.description.as_deref())
+            .await?
+            .ok_or(ApiError::NotFound)?;
     invalidate_detail(&state, &slug).await;
+    audit_entry(&state, &list, user_id, entity, |d| &mut d.notes_edited).await;
     Ok(Json(placement))
 }
 
@@ -187,6 +206,7 @@ pub async fn remove(
         if placements.iter().any(|p| p.entity() == entity) {
             remove_placement(&state.db, list.id, tier.id, entity).await?;
             invalidate_detail(&state, &slug).await;
+            audit_entry(&state, &list, user_id, entity, |d| &mut d.entries_removed).await;
             break;
         }
     }
@@ -254,6 +274,11 @@ pub async fn move_to(
                 ApiError::BadRequest("destination tier is not on this tier list".into())
             })?;
             invalidate_detail(&state, &slug).await;
+            if tier.id == body.new_tier_id {
+                audit_entry(&state, &list, user_id, entity, |d| &mut d.entries_reordered).await;
+            } else {
+                audit_entry(&state, &list, user_id, entity, |d| &mut d.entries_moved).await;
+            }
             return Ok(Json(result));
         }
     }

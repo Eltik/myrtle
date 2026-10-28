@@ -381,6 +381,9 @@ pub struct UpdateSettingsRequest {
     pub public_profile: Option<bool>,
     pub store_gacha: Option<bool>,
     pub share_stats: Option<bool>,
+    /// Visitors may read the pull history (`GET /gacha/public-records`).
+    /// Stored off until the owner turns it on.
+    pub public_gacha: Option<bool>,
     /// Absent leaves the saved layout alone, `null` resets it to the default
     /// (today's order, every tab visible, no showcase, no background, every
     /// header number shown). An object sets the keys it carries and keeps the
@@ -440,6 +443,7 @@ pub async fn update_settings(
         body.public_profile,
         body.store_gacha,
         body.share_stats,
+        body.public_gacha,
         body.profile_layout,
     )
     .await?;

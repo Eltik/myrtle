@@ -6,6 +6,7 @@ import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
+import { ACQUISITION_FILTERS, type AcquisitionFilter } from "#/lib/operators/acquisition";
 import type { OperatorProfession, OperatorRarity } from "#/types/operators";
 import { ALL_CLASSES, ALL_RARITIES, CLASS_LABEL } from "../constants";
 import { type ITierFilterState, UNRANKED_TIER_ID } from "../tier-filter";
@@ -52,6 +53,17 @@ export function OperatorFiltersPanel({ settings, onChange, hasProfile, tierFilte
                 </ToggleGroup>
             </FieldGroup>
 
+            <FieldGroup label={t("randomizer.ops.source")}>
+                {/* One source at a time; pressing the active one again keeps it rather than leaving none. */}
+                <ToggleGroup aria-label={t("randomizer.ops.source.aria")} value={[settings.acquisition]} onValueChange={(next) => next[0] && onChange({ acquisition: next[0] as AcquisitionFilter })} variant="outline" className="flex-wrap">
+                    {ACQUISITION_FILTERS.map((f) => (
+                        <ToggleGroupItem key={f} value={f} className={CHIP_CLASS}>
+                            <span className="text-[12px]">{sourceLabel(t, f)}</span>
+                        </ToggleGroupItem>
+                    ))}
+                </ToggleGroup>
+            </FieldGroup>
+
             <FieldGroup label={t("randomizer.ops.squadSize", { size: settings.squadSize })}>
                 <div className="flex items-center gap-3">
                     <Slider
@@ -79,6 +91,11 @@ export function OperatorFiltersPanel({ settings, onChange, hasProfile, tierFilte
             <TierListField settings={settings} onChange={onChange} tierFilter={tierFilter} />
         </div>
     );
+}
+
+function sourceLabel(t: TypedT<typeof messages>, filter: AcquisitionFilter): string {
+    const labels: Record<AcquisitionFilter, string> = { any: t("randomizer.ops.source.any"), gachaless: t("randomizer.ops.source.gachaless"), welfare: t("randomizer.ops.source.welfare"), recruitment: t("randomizer.ops.source.recruitment") };
+    return labels[filter];
 }
 
 function TierListField({ settings, onChange, tierFilter }: Pick<IOperatorFiltersPanelProps, "settings" | "onChange" | "tierFilter">): React.ReactElement {

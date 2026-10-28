@@ -31,6 +31,18 @@ export const messages = {
         text: "Save failed",
         description: "Toast title when writing the editor's changes failed.",
     },
+    "edit.toast.autosaveFailedTitle": {
+        text: "Auto-save failed",
+        description: "Toast title when an automatic save failed. Auto-save then waits until the author retries or saves.",
+    },
+    "edit.toast.autosaveConflictTitle": {
+        text: "Auto-save paused",
+        description: "Toast title when auto-save stopped because the list changed somewhere else.",
+    },
+    "edit.toast.autosaveConflictBody": {
+        text: "This list changed in another tab or by another editor. Nothing was overwritten.",
+        description: "Toast body when auto-save stopped instead of writing over a newer version of the list.",
+    },
     "edit.toast.flairSetTitle": {
         text: "Flair updated",
         description: "Toast title after the list's topic tag was changed.",

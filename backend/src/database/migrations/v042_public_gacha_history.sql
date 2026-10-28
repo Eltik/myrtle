@@ -1,0 +1,23 @@
+--
+-- A player may let visitors read their stored pull history: the profile's
+-- Pulls tab and the links the history page shares, both served by
+-- `GET /gacha/public-records`.
+--
+-- Opt-in. The column defaults to false and every existing row takes that
+-- default, so no pull history becomes readable by anyone but its owner until
+-- the owner turns the switch on (Settings > Privacy, or the history page).
+-- A player with no `user_settings` row reads as off too
+-- (`queries::gacha::public_history_enabled`).
+--
+-- It is a second gate behind `public_profile`, not instead of it: a private
+-- profile stays private whatever this says, as every other tab's data does.
+-- Not a `profile_layout` tab, because a layout that omits a tab (and a NULL
+-- layout) shows it, and this one must start hidden.
+--
+-- Not added to `v_user_profile`: `/get-user` reads the switch itself
+-- (`UserProfile::public_gacha`), so this migration replaces no view and a
+-- later migration that rebuilds the view need not carry the column.
+--
+-- Named v042: the unmerged `trevor` branch ships v039 and v040.
+--
+ALTER TABLE user_settings ADD COLUMN public_gacha boolean NOT NULL DEFAULT false;

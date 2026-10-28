@@ -1,9 +1,10 @@
 import { ArrowUpRight } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { ClassIcon } from "#/components/operators/list/impl/components/Icons";
 import { Dialog, DialogPopup } from "#/components/ui/dialog";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "#/components/ui/preview-card";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
+import { useFitText } from "#/hooks/use-fit-text";
 import type { ITierEntryFull } from "#/lib/api/tier-lists";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -42,6 +43,8 @@ export function TierRow({ tier, index }: ITierRowProps) {
     const hasDescription = Boolean(tier.description?.trim());
 
     const [dialogOpen, setDialogOpen] = useState(false);
+    const glyphRef = useRef<HTMLSpanElement>(null);
+    useFitText(glyphRef, tier.name);
 
     const openDialog = () => setDialogOpen(true);
 
@@ -59,7 +62,9 @@ export function TierRow({ tier, index }: ITierRowProps) {
                 <HoverCardTrigger
                     render={
                         <button type="button" onClick={openDialog} className={styles.tierLabel} id={labelledById} data-size={tierLabelSize(tier.name)} aria-label={hasDescription ? t("detail.tier.labelWithDescription", { name: tier.name, description: tier.description }) : t("detail.tier.label", { name: tier.name })}>
-                            <span className={styles.tierLabelGlyph}>{tier.name}</span>
+                            <span ref={glyphRef} className={styles.tierLabelGlyph}>
+                                {tier.name}
+                            </span>
                         </button>
                     }
                 />

@@ -8,11 +8,12 @@ import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
 import type { messages } from "./frame-stepper.messages";
 
-/** Where the clip is: `frame` counts from 0, `seconds` is the time into the clip. */
+/** Where the clip is: `frame` counts from 0, `seconds` is the time into the clip of `duration` seconds. */
 export interface IFramePosition {
     frame: number;
     total: number;
     seconds: number;
+    duration: number;
 }
 
 interface IFrameStepperProps {
@@ -28,6 +29,13 @@ interface IFrameStepperProps {
     getPosition: () => IFramePosition | null;
     /** The viewer. `,` and `.` step only while the pointer is over it or focus is inside it. */
     scopeRef: React.RefObject<HTMLElement | null>;
+    /**
+     * Jump to a frame (0-based). Given, a full-width scrubber sits over the buttons; like
+     * `onStep` it is called after playback is paused.
+     */
+    onSeek?: (frame: number) => void;
+    /** Further controls (loop, speed) at the end of the button row. */
+    children?: React.ReactNode;
     disabled?: boolean;
     className?: string;
 }
@@ -37,13 +45,16 @@ interface IFrameStepperProps {
  * `.` shortcuts video players use. Every sprite viewer mounts this one so the
  * controls and keys read the same everywhere.
  */
-export function FrameStepper({ paused, onPausedChange, onStep, getPosition, scopeRef, disabled, className }: IFrameStepperProps): React.ReactElement {
+export function FrameStepper({ paused, onPausedChange, onStep, getPosition, scopeRef, onSeek, children, disabled, className }: IFrameStepperProps): React.ReactElement {
     const t: TypedT<typeof messages> = useT("common");
     const readoutRef = useRef<HTMLSpanElement>(null);
+    const scrubberRef = useRef<HTMLInputElement>(null);
+    // While the pointer holds the scrubber its value is the user's, not the clip's.
+    const scrubbingRef = useRef(false);
 
     // Latest props for the listeners below, so they bind once per scope.
-    const latest = useRef({ paused, onPausedChange, onStep, getPosition, disabled, t });
-    latest.current = { paused, onPausedChange, onStep, getPosition, disabled, t };
+    const latest = useRef({ paused, onPausedChange, onStep, getPosition, onSeek, disabled, t });
+    latest.current = { paused, onPausedChange, onStep, getPosition, onSeek, disabled, t };
 
     const step = (direction: -1 | 1) => {
         const { paused, onPausedChange, onStep, disabled } = latest.current;
@@ -53,6 +64,13 @@ export function FrameStepper({ paused, onPausedChange, onStep, getPosition, scop
     };
     const stepRef = useRef(step);
     stepRef.current = step;
+
+    const seek = (frame: number) => {
+        const { paused, onPausedChange, onSeek, disabled } = latest.current;
+        if (disabled || !onSeek) return;
+        if (!paused) onPausedChange(true);
+        onSeek(frame);
+    };
 
     useEffect(() => {
         const scope = scopeRef.current;
@@ -88,10 +106,17 @@ export function FrameStepper({ paused, onPausedChange, onStep, getPosition, scop
         const loop = () => {
             const { getPosition, t } = latest.current;
             const pos = getPosition();
-            const text = pos ? t("frameStepper.readout", { frame: pos.frame + 1, total: pos.total, seconds: pos.seconds.toFixed(2) }) : "";
+            const text = pos ? t("frameStepper.readout", { frame: pos.frame + 1, total: pos.total, seconds: pos.seconds.toFixed(2), duration: pos.duration.toFixed(2) }) : "";
             if (text !== shown && readoutRef.current) {
                 readoutRef.current.textContent = text;
                 shown = text;
+            }
+            const scrubber = scrubberRef.current;
+            if (scrubber && !scrubbingRef.current) {
+                const max = String(Math.max(0, (pos?.total ?? 1) - 1));
+                const value = String(pos?.frame ?? 0);
+                if (scrubber.max !== max) scrubber.max = max;
+                if (scrubber.value !== value) scrubber.value = value;
             }
             raf = requestAnimationFrame(loop);
         };
@@ -99,8 +124,8 @@ export function FrameStepper({ paused, onPausedChange, onStep, getPosition, scop
         return () => cancelAnimationFrame(raf);
     }, []);
 
-    return (
-        <div className={cn("flex items-center gap-1 pointer-coarse:gap-4", className)}>
+    const buttons = (
+        <div className="flex flex-wrap items-center gap-1 pointer-coarse:gap-4">
             <ControlButton disabled={disabled} label={t("frameStepper.back")} onClick={() => step(-1)}>
                 <StepBackIcon />
             </ControlButton>
@@ -111,6 +136,36 @@ export function FrameStepper({ paused, onPausedChange, onStep, getPosition, scop
                 <StepForwardIcon />
             </ControlButton>
             <span className="ml-1 text-muted-foreground text-xs tabular-nums" ref={readoutRef} />
+            {children && <div className="ml-auto flex flex-wrap items-center gap-1">{children}</div>}
+        </div>
+    );
+
+    if (!onSeek) return <div className={className}>{buttons}</div>;
+
+    return (
+        <div className={cn("flex flex-col gap-1.5", className)}>
+            <input
+                aria-label={t("frameStepper.scrub")}
+                className="h-4 w-full cursor-pointer accent-primary disabled:cursor-default disabled:opacity-64"
+                defaultValue={0}
+                disabled={disabled}
+                max={0}
+                min={0}
+                onInput={(event) => seek(Number(event.currentTarget.value))}
+                onPointerCancel={() => {
+                    scrubbingRef.current = false;
+                }}
+                onPointerDown={() => {
+                    scrubbingRef.current = true;
+                }}
+                onPointerUp={() => {
+                    scrubbingRef.current = false;
+                }}
+                ref={scrubberRef}
+                step={1}
+                type="range"
+            />
+            {buttons}
         </div>
     );
 }

@@ -33,14 +33,18 @@ pub async fn find_all_active(
     }
 }
 
+/// The newest listed lists, or only `author`'s. Unlisted lists stay out
+/// either way: the index never shows them, whoever asks.
 pub async fn find_all_active_limited(
     pool: &PgPool,
     limit: i64,
+    author: Option<Uuid>,
 ) -> Result<Vec<TierList>, sqlx::Error> {
     sqlx::query_as::<_, TierList>(
-        "SELECT * FROM tier_lists WHERE is_active = true AND is_listed = true ORDER BY updated_at DESC LIMIT $1",
+        "SELECT * FROM tier_lists WHERE is_active = true AND is_listed = true AND ($2::uuid IS NULL OR created_by = $2) ORDER BY updated_at DESC LIMIT $1",
     )
     .bind(limit)
+    .bind(author)
     .fetch_all(pool)
     .await
 }

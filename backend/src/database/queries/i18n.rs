@@ -381,6 +381,7 @@ pub async fn get_audit_log(
 pub async fn get_audit_log_global(
     pool: &PgPool,
     locale: Option<&str>,
+    actor: Option<Uuid>,
     limit: i64,
     before: Option<chrono::DateTime<chrono::Utc>>,
 ) -> Result<Vec<UiMessageAuditEntryWithContext>, sqlx::Error> {
@@ -402,33 +403,42 @@ pub async fn get_audit_log_global(
         FROM ui_message_audit_log a
         LEFT JOIN users u ON u.id = a.changed_by
         WHERE ($1::varchar IS NULL OR a.locale = $1)
+          AND ($2::uuid IS NULL OR a.changed_by = $2)
     ";
 
     if let Some(before) = before {
         sqlx::query_as::<_, UiMessageAuditEntryWithContext>(&format!(
-            "{SELECT} AND a.changed_at < $2 ORDER BY a.changed_at DESC LIMIT $3"
+            "{SELECT} AND a.changed_at < $3 ORDER BY a.changed_at DESC LIMIT $4"
         ))
         .bind(locale)
+        .bind(actor)
         .bind(before)
         .bind(limit)
         .fetch_all(pool)
         .await
     } else {
         sqlx::query_as::<_, UiMessageAuditEntryWithContext>(&format!(
-            "{SELECT} ORDER BY a.changed_at DESC LIMIT $2"
+            "{SELECT} ORDER BY a.changed_at DESC LIMIT $3"
         ))
         .bind(locale)
+        .bind(actor)
         .bind(limit)
         .fetch_all(pool)
         .await
     }
 }
 
-pub async fn count_audit_log(pool: &PgPool, locale: Option<&str>) -> Result<i64, sqlx::Error> {
+/// Rows in the translation log, narrowed like [`get_audit_log_global`].
+pub async fn count_audit_log(
+    pool: &PgPool,
+    locale: Option<&str>,
+    actor: Option<Uuid>,
+) -> Result<i64, sqlx::Error> {
     let (count,): (i64,) = sqlx::query_as(
-        "SELECT COUNT(*) FROM ui_message_audit_log WHERE ($1::varchar IS NULL OR locale = $1)",
+        "SELECT COUNT(*) FROM ui_message_audit_log WHERE ($1::varchar IS NULL OR locale = $1) AND ($2::uuid IS NULL OR changed_by = $2)",
     )
     .bind(locale)
+    .bind(actor)
     .fetch_one(pool)
     .await?;
     Ok(count)

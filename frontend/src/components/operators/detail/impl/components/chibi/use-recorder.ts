@@ -14,7 +14,8 @@ interface IUseRecorderOptions {
 interface IUseRecorderReturn {
     isRecording: boolean;
     progress: number;
-    startRecording: (format: ExportFormat, settings?: Partial<IExportSettings>) => Promise<void>;
+    /** `filename` is the saved file's name without its extension. */
+    startRecording: (format: ExportFormat, settings?: Partial<IExportSettings>, filename?: string) => Promise<void>;
     cancelRecording: () => void;
 }
 
@@ -37,7 +38,7 @@ export function useRecorder({ appRef, spineRef, selectedAnimation, recordingRef 
     }, []);
 
     const startRecording = useCallback(
-        async (format: ExportFormat, settings?: Partial<IExportSettings>) => {
+        async (format: ExportFormat, settings?: Partial<IExportSettings>, filename?: string) => {
             if (abortControllerRef.current) return;
 
             const app = appRef.current;
@@ -77,6 +78,7 @@ export function useRecorder({ appRef, spineRef, selectedAnimation, recordingRef 
                     animationName,
                     format,
                     settings,
+                    filename,
                     onProgress,
                     signal: controller.signal,
                 });

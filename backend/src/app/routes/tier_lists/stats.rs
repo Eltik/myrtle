@@ -17,11 +17,13 @@ use crate::app::error::ApiError;
 use crate::app::extractors::auth::MaybeAuthUser;
 use crate::app::extractors::auth::{AuthUser, RoleCheckedUser};
 use crate::app::routes::{StatusOk, ok_status};
+use crate::app::services::content_audit;
 use crate::app::services::tier_list::check_permission;
 use crate::app::services::tier_list::invalidate_detail;
 use crate::app::state::AppState;
 use crate::app::validation::validate_hex_color;
 use crate::core::auth::permissions::Permission;
+use crate::database::models::content_audit::{ContentAuditAction, ContentAuditDetails};
 use crate::database::models::tier_list::{TierListFlair, TierListStats};
 use crate::database::queries::tier_lists as queries;
 use crate::database::queries::tier_lists::add_favorite;
@@ -322,6 +324,21 @@ pub async fn set_flair(
     check_permission(&state, &list, user_id, auth.role, Permission::Edit).await?;
     queries::set_flair(&state.db, list.id, body.flair_id).await?;
     invalidate_detail(&state, &slug).await;
+    if list.flair_id != body.flair_id {
+        let flair = match body.flair_id {
+            Some(id) => queries::get_flair_by_id(&state.db, id).await?,
+            None => None,
+        };
+        let details = ContentAuditDetails {
+            flair: flair.map(|f| f.label),
+            ..Default::default()
+        };
+        content_audit::record(
+            &state,
+            content_audit::tier_list_entry(&list, user_id, ContentAuditAction::Flair, details),
+        )
+        .await;
+    }
     Ok(ok_status())
 }
 
@@ -382,6 +399,17 @@ pub async fn set_visibility(
     check_permission(&state, &list, user_id, auth.role, Permission::Edit).await?;
     queries::set_visibility(&state.db, list.id, body.is_listed).await?;
     invalidate_detail(&state, &slug).await;
+    if list.is_listed != body.is_listed {
+        let details = ContentAuditDetails {
+            listed: Some(body.is_listed),
+            ..Default::default()
+        };
+        content_audit::record(
+            &state,
+            content_audit::tier_list_entry(&list, user_id, ContentAuditAction::Visibility, details),
+        )
+        .await;
+    }
     Ok(Json(VisibilityState {
         is_listed: body.is_listed,
     }))

@@ -97,3 +97,24 @@ describe("E2 rule, 6★ only", () => {
         expect(selectAvailableOperators(pool, { ...owned, e2SixStarOnly: true }, roster)).toEqual(selectAvailableOperators(pool, owned, roster));
     });
 });
+
+describe("selectAvailableOperators source filter", () => {
+    const pool = [
+        { id: "char_102_texas", rarity: 5, profession: "PIONEER", obtainChannel: "headhunting" },
+        { id: "char_103_angel", rarity: 6, profession: "SNIPER", obtainChannel: "headhunting" },
+        { id: "char_4226_veen", rarity: 6, profession: "SUPPORT", obtainChannel: "event" },
+    ] as IRandomizerOperator[];
+    const recruitable = new Set(["char_102_texas"]);
+    const draw = (acquisition: IRandomizerSettings["acquisition"]) => selectAvailableOperators(pool, { ...DEFAULT_SETTINGS, acquisition }, buildRosterIndex(null), null, recruitable).map((o) => o.id);
+
+    it("is off by default", () => {
+        expect(DEFAULT_SETTINGS.acquisition).toBe("any");
+        expect(draw("any")).toHaveLength(3);
+    });
+
+    it("gachaless draws welfare plus the recruitment pool, never a headhunting-only operator", () => {
+        expect(draw("gachaless")).toEqual(["char_102_texas", "char_4226_veen"]);
+        expect(draw("welfare")).toEqual(["char_4226_veen"]);
+        expect(draw("recruitment")).toEqual(["char_102_texas"]);
+    });
+});

@@ -1,160 +1,138 @@
-import { Download, Settings2, X } from "lucide-react";
+import { Settings2, X } from "lucide-react";
+import type React from "react";
 import { useState } from "react";
 import { Button } from "#/components/ui/button";
-import { Label } from "#/components/ui/label";
+import { FrameSnapshot } from "#/components/ui/frame-snapshot";
 import { Popover, PopoverContent, PopoverTrigger } from "#/components/ui/popover";
 import { Progress } from "#/components/ui/progress";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
 import { Separator } from "#/components/ui/separator";
-import { Switch } from "#/components/ui/switch";
+import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import { DEFAULT_EXPORT_SETTINGS, EXPORT_FPS_OPTIONS, EXPORT_LOOP_OPTIONS, EXPORT_SCALE_OPTIONS, type IExportSettings } from "./constants";
+import { EXPORT_FPS_OPTIONS, EXPORT_LOOP_OPTIONS } from "./constants";
 import type { messages } from "./download-button.messages";
-import { computeExportLayout, effectiveGifFps, type IAnimationBounds } from "./helpers";
+import { effectiveGifFps } from "./helpers";
 import type { ExportFormat } from "./recorder";
 
-interface IDownloadButtonProps {
-    isRecording: boolean;
-    progress: number;
-    disabled: boolean;
-    animationBounds: IAnimationBounds | null;
-    onDownload: (format: ExportFormat, settings?: Partial<IExportSettings>) => void;
-    onCancel: () => void;
+export interface IRecordOptions {
+    /** 1 for the standard size, 2 for double. */
+    scale: number;
+    fps: number;
+    loopCount: number;
 }
 
-export function DownloadButton({ isRecording, progress, disabled, animationBounds, onDownload, onCancel }: IDownloadButtonProps) {
+interface IExportGroupProps {
+    disabled: boolean;
+    isRecording: boolean;
+    progress: number;
+    onCancel: () => void;
+    onRecord: (format: ExportFormat, options: IRecordOptions) => void;
+    /** The PNG menu's sizes and save, as {@link FrameSnapshot} takes them. */
+    pngSizeOf: (scale: number) => { width: number; height: number } | null;
+    onSavePng: (scale: number) => void;
+    onOpenPng: () => void;
+}
+
+const DEFAULT_FPS = 60;
+const DEFAULT_LOOPS = 3;
+
+function RecordButton({ label, hint, disabled, onClick }: { label: string; hint: string; disabled: boolean; onClick: () => void }): React.ReactElement {
+    return (
+        <Tooltip>
+            <TooltipTrigger render={<Button disabled={disabled} onClick={onClick} size="xs" variant="outline" />}>{label}</TooltipTrigger>
+            <TooltipPopup>{hint}</TooltipPopup>
+        </Tooltip>
+    );
+}
+
+/**
+ * The viewer's save row: the frame on screen as PNG, the clip as WebM or GIF (standard or
+ * double size), and a settings popover for frame rate, video loops and the MP4 fallback.
+ * While a recording runs, its progress and a cancel button take the row's place.
+ */
+export function ExportGroup({ disabled, isRecording, progress, onCancel, onRecord, pngSizeOf, onSavePng, onOpenPng }: IExportGroupProps): React.ReactElement {
     const t: TypedT<typeof messages> = useT("operators");
-    const [settings, setSettings] = useState<IExportSettings>(DEFAULT_EXPORT_SETTINGS);
+    const [fps, setFps] = useState(DEFAULT_FPS);
+    const [loopCount, setLoopCount] = useState(DEFAULT_LOOPS);
     const [open, setOpen] = useState(false);
-
-    const handleDownload = (format: ExportFormat) => {
-        setOpen(false);
-        onDownload(format, settings);
-    };
-
-    const resolutionLabel = (scale: number) => {
-        const { width, height } = computeExportLayout(animationBounds, scale);
-        return `${width}x${height}`;
-    };
-
-    const gifFps = Math.round(effectiveGifFps(settings.fps) * 10) / 10;
+    const gifFps = Math.round(effectiveGifFps(fps) * 10) / 10;
+    const record = (format: ExportFormat, scale = 1) => onRecord(format, { scale, fps, loopCount });
+    // A popup portalled to <body> is invisible while the viewer is fullscreen.
+    const fullscreen = typeof document !== "undefined" ? (document.fullscreenElement as HTMLElement | null) : null;
 
     if (isRecording) {
         return (
             <div className="flex items-center gap-2">
-                <div className="flex min-w-30 items-center gap-2">
+                <span className="text-muted-foreground text-xs">{t("chibiExport.label")}</span>
+                <div className="flex min-w-30 flex-1 items-center gap-2">
                     <Progress className="h-2 w-full" value={progress} />
                     <span className="text-muted-foreground text-xs tabular-nums">{Math.round(progress)}%</span>
                 </div>
-                <Button className="h-8 w-8 p-0" onClick={onCancel} size="icon" variant="ghost">
-                    <X className="h-3.5 w-3.5" />
+                <Button aria-label={t("chibiExport.cancel")} onClick={onCancel} size="icon-xs" variant="ghost">
+                    <X />
                 </Button>
             </div>
         );
     }
 
     return (
-        <Popover onOpenChange={setOpen} open={open}>
-            <PopoverTrigger
-                render={
-                    <Button className="h-8 gap-1.5 px-2 text-xs" disabled={disabled} size="sm" variant="outline">
-                        <Download className="h-3.5 w-3.5" />
-                        {t("chibiExport.button")}
-                    </Button>
-                }
-            />
-            <PopoverContent align="end" className="w-64">
-                <div className="grid gap-4">
-                    <div className="flex items-center gap-2">
-                        <Settings2 className="h-4 w-4" />
-                        <h4 className="font-medium text-sm">{t("chibiExport.title")}</h4>
-                    </div>
-
-                    <div className="grid gap-3">
-                        <div className="grid gap-1.5">
-                            <Label className="text-xs" htmlFor="resolution">
-                                {t("chibiExport.resolution")}
-                            </Label>
-                            <Select onValueChange={(v) => setSettings((s) => ({ ...s, scale: Number.parseFloat(v ?? "") }))} value={String(settings.scale)}>
-                                <SelectTrigger className="h-8 text-xs" id="resolution">
-                                    <SelectValue>{resolutionLabel(settings.scale)}</SelectValue>
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {EXPORT_SCALE_OPTIONS.map((opt) => (
-                                        <SelectItem key={opt.value} value={String(opt.value)}>
-                                            {resolutionLabel(opt.value)}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-
-                        <div className="grid gap-1.5">
-                            <Label className="text-xs" htmlFor="fps">
-                                {t("chibiExport.frameRate")}
-                            </Label>
-                            <Select onValueChange={(v) => setSettings((s) => ({ ...s, fps: Number.parseInt(v ?? "", 10) }))} value={String(settings.fps)}>
-                                <SelectTrigger className="h-8 text-xs" id="fps">
-                                    <SelectValue>{t("chibiExport.fps", { fps: settings.fps })}</SelectValue>
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {EXPORT_FPS_OPTIONS.map((fps) => (
-                                        <SelectItem key={fps} value={String(fps)}>
-                                            {t("chibiExport.fps", { fps })}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            {gifFps !== settings.fps && <p className="text-[11px] text-muted-foreground leading-snug">{t("chibiExport.gifFpsNote", { gifFps, fps: settings.fps })}</p>}
-                        </div>
-
-                        <Separator />
-
-                        <div className="text-muted-foreground text-xs">{t("chibiExport.gifOptions")}</div>
-
-                        <div className="flex items-center justify-between">
-                            <Label className="text-xs" htmlFor="transparent">
-                                {t("chibiExport.transparentBg")}
-                            </Label>
-                            <Switch checked={settings.transparentBg} id="transparent" onCheckedChange={(checked) => setSettings((s) => ({ ...s, transparentBg: checked }))} />
-                        </div>
-
-                        <Separator />
-
-                        <div className="text-muted-foreground text-xs">{t("chibiExport.mp4Options")}</div>
-
-                        <div className="grid gap-1.5">
-                            <Label className="text-xs" htmlFor="loops">
-                                {t("chibiExport.loopCount")}
-                            </Label>
-                            <Select onValueChange={(v) => setSettings((s) => ({ ...s, loopCount: Number.parseInt(v ?? "", 10) }))} value={String(settings.loopCount)}>
-                                <SelectTrigger className="h-8 text-xs" id="loops">
-                                    <SelectValue>{t("chibiExport.loops", { count: settings.loopCount })}</SelectValue>
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {EXPORT_LOOP_OPTIONS.map((count) => (
-                                        <SelectItem key={count} value={String(count)}>
-                                            {t("chibiExport.loops", { count })}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                    </div>
-
-                    <Separator />
-
-                    <div className="grid grid-cols-2 gap-2">
-                        <Button className="h-8 text-xs" onClick={() => handleDownload("gif")} size="sm" variant="outline">
-                            {t("chibiExport.downloadGif")}
+        <div className="flex flex-wrap items-center gap-1">
+            <span className="mr-1 text-muted-foreground text-xs">{t("chibiExport.label")}</span>
+            <FrameSnapshot disabled={disabled} onOpen={onOpenPng} onSave={onSavePng} sizeOf={pngSizeOf}>
+                {t("chibiExport.png")}
+            </FrameSnapshot>
+            <RecordButton disabled={disabled} hint={t("chibiExport.webmHint")} label={t("chibiExport.webm")} onClick={() => record("webm")} />
+            <RecordButton disabled={disabled} hint={t("chibiExport.gifHint")} label={t("chibiExport.gif")} onClick={() => record("gif")} />
+            <RecordButton disabled={disabled} hint={t("chibiExport.gif2xHint")} label={t("chibiExport.gif2x")} onClick={() => record("gif", 2)} />
+            <Popover onOpenChange={setOpen} open={open}>
+                <PopoverTrigger
+                    render={
+                        <Button aria-label={t("chibiExport.settings")} disabled={disabled} size="icon-xs" variant="ghost">
+                            <Settings2 />
                         </Button>
-                        <Button className="h-8 text-xs" onClick={() => handleDownload("mp4")} size="sm">
+                    }
+                />
+                <PopoverContent align="end" className="w-72" portalProps={{ container: fullscreen ?? undefined }}>
+                    <div className="grid gap-3">
+                        <h4 className="m-0 font-medium text-sm">{t("chibiExport.settings")}</h4>
+                        <div className="grid gap-1.5">
+                            <span className="text-xs">{t("chibiExport.frameRate")}</span>
+                            <ToggleGroup aria-label={t("chibiExport.frameRate")} className="flex-wrap" onValueChange={(next) => next[0] && setFps(Number(next[0]))} size="sm" value={[String(fps)]} variant="outline">
+                                {EXPORT_FPS_OPTIONS.map((option) => (
+                                    <ToggleGroupItem className="text-xs" key={option} value={String(option)}>
+                                        {t("chibiExport.fps", { fps: option })}
+                                    </ToggleGroupItem>
+                                ))}
+                            </ToggleGroup>
+                            {gifFps !== fps && <p className="m-0 text-[11px] text-muted-foreground leading-snug">{t("chibiExport.gifFpsNote", { gifFps, fps })}</p>}
+                        </div>
+                        <div className="grid gap-1.5">
+                            <span className="text-xs">{t("chibiExport.loopCount")}</span>
+                            <ToggleGroup aria-label={t("chibiExport.loopCount")} onValueChange={(next) => next[0] && setLoopCount(Number(next[0]))} size="sm" value={[String(loopCount)]} variant="outline">
+                                {EXPORT_LOOP_OPTIONS.map((option) => (
+                                    <ToggleGroupItem className="text-xs" key={option} value={String(option)}>
+                                        {t("chibiExport.loops", { count: option })}
+                                    </ToggleGroupItem>
+                                ))}
+                            </ToggleGroup>
+                        </div>
+                        <p className="m-0 text-[11px] text-muted-foreground leading-snug">{t("chibiExport.backgroundNote")}</p>
+                        <Separator />
+                        <Button
+                            className="text-xs"
+                            onClick={() => {
+                                setOpen(false);
+                                record("mp4");
+                            }}
+                            size="sm"
+                            variant="outline"
+                        >
                             {t("chibiExport.downloadMp4")}
                         </Button>
                     </div>
-                </div>
-            </PopoverContent>
-        </Popover>
+                </PopoverContent>
+            </Popover>
+        </div>
     );
 }

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { ProfileLayout } from "#/types/generated/ProfileLayout";
 import { defaultLayout, isDefaultLayout, moveEntry, moveTab, normalizeLayout, resolveActiveTab, shownTabs, tabMemory, tabsForSave, toggleTab } from "./layout";
-import { TAB_IDS, type TabId } from "./types";
+import { TAB_IDS, type LayoutTabId as TabId } from "./types";
 
 /**
  * The tab bar before layouts existed, copied from the `tabs` memo in
@@ -10,6 +10,12 @@ import { TAB_IDS, type TabId } from "./types";
  * visitor; the owner alone also sees the Showcase tab ahead of it.
  */
 const BEFORE_LAYOUTS: TabId[] = ["stats", "score", "roster", "plans", "inventory", "enemies", "optimizer"];
+
+/** Every tab added since, in the order the canonical layout appends them. */
+const ADDED_SINCE: TabId[] = ["lookback"];
+
+/** The NULL-layout bar today: the old one, then the tabs added since. */
+const NO_LAYOUT: TabId[] = [...BEFORE_LAYOUTS, ...ADDED_SINCE];
 
 function layout(...tabs: [TabId, boolean][]): ProfileLayout {
     return { tabs: tabs.map(([id, visible]) => ({ id, visible })) };
@@ -27,10 +33,10 @@ function visitorPayload(stored: ProfileLayout): ProfileLayout {
 
 describe("no layout (the kill switch)", () => {
     it("shows a visitor every tab in the old order, and the owner the same behind Showcase", () => {
-        expect(shownTabs(null, false)).toEqual(BEFORE_LAYOUTS);
+        expect(shownTabs(null, false)).toEqual(NO_LAYOUT);
         // The owner alone sees the (empty) Showcase tab, where they set it up.
-        expect(shownTabs(null, true)).toEqual(["showcase", ...BEFORE_LAYOUTS]);
-        expect(TAB_IDS).toEqual(["showcase", ...BEFORE_LAYOUTS]);
+        expect(shownTabs(null, true)).toEqual(["showcase", ...NO_LAYOUT]);
+        expect(TAB_IDS).toEqual(["showcase", ...NO_LAYOUT]);
     });
 
     it("keeps the remembered tab for everyone, as the page always did", () => {
@@ -55,11 +61,11 @@ describe("a customized layout", () => {
     const asVisitor = visitorPayload(stored);
 
     it("orders the bar by the layout and hides private tabs from a visitor", () => {
-        expect(shownTabs(asVisitor, false)).toEqual(["roster", "score", "inventory", "enemies", "optimizer"]);
+        expect(shownTabs(asVisitor, false)).toEqual(["roster", "score", "inventory", "enemies", "optimizer", "lookback"]);
     });
 
     it("shows the owner every tab, private ones included, in layout order", () => {
-        expect(shownTabs(asOwner, true)).toEqual(["showcase", "roster", "stats", "score", "plans", "inventory", "enemies", "optimizer"]);
+        expect(shownTabs(asOwner, true)).toEqual(["showcase", "roster", "stats", "score", "plans", "inventory", "enemies", "optimizer", "lookback"]);
     });
 
     it("opens a visitor on the owner's first visible tab, not the remembered one", () => {
@@ -81,7 +87,7 @@ describe("a customized layout", () => {
     });
 
     it("has no active tab when every tab is private", () => {
-        const none = visitorPayload(layout(...BEFORE_LAYOUTS.map((id): [TabId, boolean] => [id, false])));
+        const none = visitorPayload(layout(...NO_LAYOUT.map((id): [TabId, boolean] => [id, false])));
         // Showcase is visible but empty, so it is no tab to a visitor either.
         expect(none.tabs).toEqual([{ id: "showcase", visible: true }]);
         expect(shownTabs(none, false)).toEqual([]);
@@ -91,13 +97,13 @@ describe("a customized layout", () => {
     it("never brings back a tab the visitor payload leaves out", () => {
         // Private tabs are absent from a visitor's layout, not flagged; re-normalizing
         // it client-side would append them as visible.
-        expect(asVisitor.tabs.map((t) => t.id)).toEqual(["showcase", "roster", "score", "inventory", "enemies", "optimizer"]);
+        expect(asVisitor.tabs.map((t) => t.id)).toEqual(["showcase", "roster", "score", "inventory", "enemies", "optimizer", "lookback"]);
         expect(shownTabs(asVisitor, false)).not.toContain("stats");
         expect(shownTabs(asVisitor, false)).not.toContain("plans");
     });
 
     it("hides a flagged tab from a visitor even in an owner-shaped payload", () => {
-        expect(shownTabs(asOwner, false)).toEqual(["roster", "score", "inventory", "enemies", "optimizer"]);
+        expect(shownTabs(asOwner, false)).toEqual(["roster", "score", "inventory", "enemies", "optimizer", "lookback"]);
     });
 });
 
@@ -109,7 +115,7 @@ describe("normalizeLayout", () => {
             { id: "plans", visible: true },
         ]);
         // A missing Showcase goes first, as the backend places it; the rest are appended.
-        expect(tabs).toEqual([{ id: "showcase", visible: true }, { id: "plans", visible: false }, ...BEFORE_LAYOUTS.filter((id) => id !== "plans").map((id) => ({ id, visible: true }))]);
+        expect(tabs).toEqual([{ id: "showcase", visible: true }, { id: "plans", visible: false }, ...NO_LAYOUT.filter((id) => id !== "plans").map((id) => ({ id, visible: true }))]);
     });
 
     it("turns an empty or missing list into the default", () => {
@@ -121,10 +127,10 @@ describe("normalizeLayout", () => {
 describe("editing", () => {
     it("moves a tab and clamps at the ends", () => {
         const tabs = defaultLayout();
-        expect(moveTab(tabs, 1, 1).map((t) => t.id)).toEqual(["showcase", "score", "stats", "roster", "plans", "inventory", "enemies", "optimizer"]);
-        expect(moveTab(tabs, 7, -7).map((t) => t.id)).toEqual(["optimizer", "showcase", "stats", "score", "roster", "plans", "inventory", "enemies"]);
+        expect(moveTab(tabs, 1, 1).map((t) => t.id)).toEqual(["showcase", "score", "stats", "roster", "plans", "inventory", "enemies", "optimizer", "lookback"]);
+        expect(moveTab(tabs, 7, -7).map((t) => t.id)).toEqual(["optimizer", "showcase", "stats", "score", "roster", "plans", "inventory", "enemies", "lookback"]);
         expect(moveTab(tabs, 0, -1)).toEqual(tabs);
-        expect(moveTab(tabs, 7, 3)).toEqual(tabs);
+        expect(moveTab(tabs, 8, 3)).toEqual(tabs);
     });
 
     it("says where a moved entry lands, and null when nothing moves", () => {

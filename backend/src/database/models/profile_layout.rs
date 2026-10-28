@@ -24,11 +24,14 @@ pub enum ProfileTabId {
     Inventory,
     Enemies,
     Optimizer,
+    /// Snapshots of the account's build over time. Its data is roster data,
+    /// so its endpoints also need the Roster tab visible to a visitor.
+    Lookback,
 }
 
 impl ProfileTabId {
     /// Every tab, in canonical order.
-    pub const ALL: [Self; 8] = [
+    pub const ALL: [Self; 9] = [
         Self::Showcase,
         Self::Stats,
         Self::Score,
@@ -37,6 +40,7 @@ impl ProfileTabId {
         Self::Inventory,
         Self::Enemies,
         Self::Optimizer,
+        Self::Lookback,
     ];
 
     /// The wire id, as the client and the stored jsonb spell it.
@@ -50,6 +54,7 @@ impl ProfileTabId {
             Self::Inventory => "inventory",
             Self::Enemies => "enemies",
             Self::Optimizer => "optimizer",
+            Self::Lookback => "lookback",
         }
     }
 
@@ -903,7 +908,7 @@ mod tests {
             .collect()
     }
 
-    const CANONICAL: [(&str, bool); 8] = [
+    const CANONICAL: [(&str, bool); 9] = [
         ("showcase", true),
         ("stats", true),
         ("score", true),
@@ -912,6 +917,7 @@ mod tests {
         ("inventory", true),
         ("enemies", true),
         ("optimizer", true),
+        ("lookback", true),
     ];
 
     #[test]
@@ -954,6 +960,7 @@ mod tests {
                 ("inventory", true),
                 ("enemies", true),
                 ("optimizer", true),
+                ("lookback", true),
             ]
         );
     }
@@ -1001,6 +1008,7 @@ mod tests {
                 ("roster", true),
                 ("plans", true),
                 ("enemies", true),
+                ("lookback", true),
             ]
         );
     }
@@ -1072,6 +1080,7 @@ mod tests {
                 ("inventory", true),
                 ("enemies", true),
                 ("optimizer", true),
+                ("lookback", true),
             ]
         );
         assert!(!layout.is_visible(ProfileTabId::Stats));

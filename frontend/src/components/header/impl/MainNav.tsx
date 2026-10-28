@@ -32,6 +32,11 @@ const SECTION_LABEL = "px-3 pt-2 pb-1.5 font-medium font-mono text-[10.5px] text
 interface IMainNavProps extends React.ComponentProps<"nav"> {
     items: INavItem[];
     onOpenCommand?: () => void;
+    /**
+     * The nav does not fit the header row. It stays laid out, out of flow and
+     * invisible, so the header can keep measuring its natural width.
+     */
+    collapsed?: boolean;
 }
 
 function HoverDropdown({ item, isActive, onOpenCommand }: { item: INavItem; isActive: boolean; onOpenCommand?: () => void }) {
@@ -120,12 +125,12 @@ function HoverDropdown({ item, isActive, onOpenCommand }: { item: INavItem; isAc
     );
 }
 
-export function MainNav({ items, className, onOpenCommand, ...props }: IMainNavProps) {
+export function MainNav({ items, className, onOpenCommand, collapsed = false, ...props }: IMainNavProps) {
     const router = useRouterState();
     const pathname = router.location.pathname;
 
     return (
-        <nav className={cn("hidden items-center gap-1 lg:flex", className)} {...props}>
+        <nav className={cn("hidden shrink-0 items-center gap-1 lg:flex", collapsed && "pointer-events-none invisible absolute top-0 left-0", className)} aria-hidden={collapsed || undefined} {...props}>
             {items.map((item) => {
                 const selfActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
                 const childActive = item.items?.some((c) => pathname === c.href || (c.href !== "/" && pathname.startsWith(c.href))) ?? false;

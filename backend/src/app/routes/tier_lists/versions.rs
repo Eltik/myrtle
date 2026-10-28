@@ -5,6 +5,7 @@ use uuid::Uuid;
 
 use crate::app::error::ApiError;
 use crate::app::extractors::auth::RoleCheckedUser;
+use crate::app::services::content_audit;
 use crate::app::services::tier_entity::StoryCatalogues;
 use crate::app::services::tier_list::find_and_authorize;
 use crate::app::services::tier_list::invalidate_detail;
@@ -14,6 +15,7 @@ use crate::app::services::tier_list::{
 };
 use crate::app::state::AppState;
 use crate::core::auth::permissions::Permission;
+use crate::database::models::content_audit::{ContentAuditAction, ContentAuditDetails};
 use crate::database::models::tier_list::TierListVersion;
 use crate::database::queries::tier_lists::create_version;
 use crate::database::queries::tier_lists::get_versions;
@@ -77,6 +79,9 @@ pub async fn list(
     Ok(Json(versions))
 }
 
+/// Characters of a changelog the audit row keeps; the version holds it whole.
+const CHANGELOG_AUDIT_MAX: usize = 280;
+
 #[derive(Deserialize, utoipa::ToSchema)]
 pub struct PublishRequest {
     pub changelog: Option<String>,
@@ -130,5 +135,20 @@ pub async fn publish(
     )
     .await?;
     invalidate_detail(&state, &slug).await;
+    let details = ContentAuditDetails {
+        version: Some(next_version),
+        changelog: body
+            .changelog
+            .as_deref()
+            .map(str::trim)
+            .filter(|c| !c.is_empty())
+            .map(|c| c.chars().take(CHANGELOG_AUDIT_MAX).collect()),
+        ..Default::default()
+    };
+    content_audit::record(
+        &state,
+        content_audit::tier_list_entry(&list, user_id, ContentAuditAction::Publish, details),
+    )
+    .await;
     Ok(Json(version))
 }

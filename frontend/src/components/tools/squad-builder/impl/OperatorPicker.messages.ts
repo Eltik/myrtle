@@ -47,6 +47,26 @@ export const messages = {
         text: "All branches",
         description: "Branch filter option that shows every branch of the chosen class.",
     },
+    "squad.picker.source": {
+        text: "Source",
+        description: "Accessible name of the menu in the operator picker that narrows the list by how an operator is obtained.",
+    },
+    "squad.picker.source.any": {
+        text: "Any source",
+        description: "Source filter option: every operator, however it is obtained.",
+    },
+    "squad.picker.source.gachaless": {
+        text: "Gachaless",
+        description: "Source filter option: operators a player can get without headhunting (the game's paid gacha), that is welfare operators plus the ones in the recruitment pool. 'Gachaless' is the community's name for an account that never headhunts.",
+    },
+    "squad.picker.source.welfare": {
+        text: "Welfare",
+        description: "Source filter option: operators the game gives away (event rewards, certificate shops, Integrated Strategies, credit store, story), the same wording as the roster's source filter.",
+    },
+    "squad.picker.source.recruitment": {
+        text: "Recruitment",
+        description: "Source filter option: operators that recruitment (the free permit-based draw with tags, not headhunting) can give.",
+    },
     "squad.picker.sort": {
         text: "Sort",
         description: "Accessible name of the sort menu in the operator picker.",

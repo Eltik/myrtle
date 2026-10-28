@@ -6,13 +6,35 @@ use uuid::Uuid;
 use crate::app::error::ApiError;
 use crate::app::extractors::auth::{AuthUser, RoleCheckedUser};
 use crate::app::routes::{StatusOk, ok_status};
+use crate::app::services::content_audit;
 use crate::app::state::AppState;
-use crate::database::models::tier_list::{GrantedTierList, TierListGrant, TierListPermission};
+use crate::database::models::content_audit::{ContentAuditAction, ContentAuditDetails};
+use crate::database::models::tier_list::{
+    GrantedTierList, TierList, TierListGrant, TierListPermission,
+};
 use crate::database::queries::tier_lists::get_all_grants;
 use crate::database::queries::tier_lists::get_granted_lists;
 use crate::database::queries::tier_lists::get_permissions;
 use crate::database::queries::tier_lists::grant_permission;
 use crate::database::queries::tier_lists::revoke_permission;
+
+/// A grant or revoke on `list` about `subject`, as an audit row.
+async fn audit_grant(
+    state: &AppState,
+    list: &TierList,
+    actor_id: Uuid,
+    subject: Uuid,
+    action: ContentAuditAction,
+    permission: &str,
+) {
+    let details = ContentAuditDetails {
+        permission: Some(permission.to_owned()),
+        ..Default::default()
+    };
+    let mut entry = content_audit::tier_list_entry(list, actor_id, action, details);
+    entry.subject_id = Some(subject);
+    content_audit::record(state, entry).await;
+}
 
 /// Who may edit this list.
 ///
@@ -100,6 +122,15 @@ pub async fn grant(
         granter_id,
     )
     .await?;
+    audit_grant(
+        &state,
+        &tier_list,
+        granter_id,
+        body.user_id,
+        ContentAuditAction::Grant,
+        &body.permission,
+    )
+    .await;
     Ok(ok_status())
 }
 
@@ -138,6 +169,18 @@ pub async fn revoke(
     let tier_list = super::load_tier_list(&state, &slug).await?;
 
     revoke_permission(&state.db, tier_list.id, target_user_id, &permission).await?;
+    // A service-key call has no account to name, so it is not audited.
+    if let Ok(actor_id) = auth.user_uuid() {
+        audit_grant(
+            &state,
+            &tier_list,
+            actor_id,
+            target_user_id,
+            ContentAuditAction::Revoke,
+            &permission,
+        )
+        .await;
+    }
     Ok(ok_status())
 }
 

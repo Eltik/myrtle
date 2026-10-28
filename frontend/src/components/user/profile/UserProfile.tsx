@@ -1,7 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
-import { useParams } from "@tanstack/react-router";
+import { useNavigate, useParams, useSearch } from "@tanstack/react-router";
 import { SlidersHorizontalIcon } from "lucide-react";
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { parseBannerParam } from "#/components/gacha/history/impl/banner-filter";
 import { Button } from "#/components/ui/button";
 import { Skeleton } from "#/components/ui/skeleton";
 import { useAuth } from "#/hooks/use-auth";
@@ -22,7 +23,7 @@ import { rosterAccess } from "./impl/components/tabs/Showcase/favourites";
 import { StatsTab } from "./impl/components/tabs/Stats/StatsTab";
 import { DynamicArtProvider } from "./impl/dynamic-art";
 import { type IHeaderDraft, previewHeader } from "./impl/header";
-import { resolveActiveTab, shownTabs, tabMemory } from "./impl/layout";
+import { resolveActiveTab, shownTabs, tabMemory, withPullsTab } from "./impl/layout";
 import { isTabId, type TabId } from "./impl/types";
 import type { messages } from "./UserProfile.messages";
 
@@ -43,15 +44,19 @@ const SKELETON_GRID_IDS = Array.from({ length: 20 }, (_, i) => `grid-${i}`);
 // their dependencies (recharts via the Score history card, above all) stay out of it.
 const loadEnemiesTab = () => import("./impl/components/tabs/Enemies/EnemiesTab");
 const loadItemsTab = () => import("./impl/components/tabs/Items/ItemsTab");
+const loadLookbackTab = () => import("./impl/components/tabs/Lookback/LookbackTab");
 const loadOptimizerTab = () => import("./impl/components/tabs/Optimizer/OptimizerTab");
 const loadPlansTab = () => import("./impl/components/tabs/Plans/PlansTab");
+const loadPullsTab = () => import("./impl/components/tabs/Pulls/PullsTab");
 const loadRosterTab = () => import("./impl/components/tabs/Roster/RosterTab");
 const loadScoreTab = () => import("./impl/components/tabs/Score/ScoreTab");
 const loadShowcaseTab = () => import("./impl/components/tabs/Showcase/ShowcaseTab");
 const EnemiesTab = lazy(() => loadEnemiesTab().then((m) => ({ default: m.EnemiesTab })));
 const ItemsTab = lazy(() => loadItemsTab().then((m) => ({ default: m.ItemsTab })));
+const LookbackTab = lazy(() => loadLookbackTab().then((m) => ({ default: m.LookbackTab })));
 const OptimizerTab = lazy(() => loadOptimizerTab().then((m) => ({ default: m.OptimizerTab })));
 const PlansTab = lazy(() => loadPlansTab().then((m) => ({ default: m.PlansTab })));
+const PullsTab = lazy(() => loadPullsTab().then((m) => ({ default: m.PullsTab })));
 const RosterTab = lazy(() => loadRosterTab().then((m) => ({ default: m.RosterTab })));
 const ScoreTab = lazy(() => loadScoreTab().then((m) => ({ default: m.ScoreTab })));
 const ShowcaseTab = lazy(() => loadShowcaseTab().then((m) => ({ default: m.ShowcaseTab })));
@@ -61,8 +66,10 @@ const BackgroundEditor = lazy(() => import("./impl/background-editor/BackgroundE
 const TAB_CHUNKS: Partial<Record<TabId, () => Promise<unknown>>> = {
     enemies: loadEnemiesTab,
     inventory: loadItemsTab,
+    lookback: loadLookbackTab,
     optimizer: loadOptimizerTab,
     plans: loadPlansTab,
+    pulls: loadPullsTab,
     roster: loadRosterTab,
     score: loadScoreTab,
     showcase: loadShowcaseTab,
@@ -162,6 +169,8 @@ export function UserProfile() {
     const t: TypedT<typeof messages> = useT("user");
     const lt: TypedT<typeof layoutMessages> = useT("user");
     const { id } = useParams({ from: "/user/$id" });
+    const search = useSearch({ from: "/user/$id" });
+    const navigate = useNavigate({ from: "/user/$id" });
     const { user } = useAuth();
     // Survives leaving the page, so going away from Roster and back does not reset to Stats.
     // Stored per browser, not per profile: the tab is a way of reading a profile.
@@ -188,9 +197,20 @@ export function UserProfile() {
     const layout = data?.profile_layout ?? null;
     const isOwner = Boolean(user && data && user.id === data.id);
     const memory = tabMemory(layout, isOwner);
-    const shown = useMemo(() => shownTabs(layout, isOwner), [layout, isOwner]);
-    const activeTab = resolveActiveTab(shown, memory, storedTab, pickedTab);
-    const setActiveTab = memory === "stored" ? setStoredTab : setPickedTab;
+    const shown = useMemo(() => withPullsTab(shownTabs(layout, isOwner), isOwner, data?.public_gacha), [layout, isOwner, data?.public_gacha]);
+    // A link's `?tab=` wins while it stays in the address bar; picking another tab drops it.
+    const linkedTab = search.tab && shown.includes(search.tab) ? search.tab : null;
+    const activeTab = linkedTab ?? resolveActiveTab(shown, memory, storedTab, pickedTab);
+    const pickTab = memory === "stored" ? setStoredTab : setPickedTab;
+    const setActiveTab = useCallback(
+        (tab: TabId) => {
+            pickTab(tab);
+            if (search.tab || search.banners) void navigate({ search: {}, replace: true });
+        },
+        [pickTab, search.tab, search.banners, navigate],
+    );
+    const pullsPools = useMemo(() => parseBannerParam(search.banners), [search.banners]);
+    const setPullsPools = useCallback((next: string[]) => void navigate({ search: { tab: "pulls", banners: next.length > 0 ? next.join(",") : undefined }, replace: true }), [navigate]);
     // A visitor whose owner hid the Roster tab is refused `/roster`, so it is not asked.
     const canReadRoster = memory === "stored" || shown.includes("roster");
 
@@ -199,7 +219,7 @@ export function UserProfile() {
     const gamedataServer = useGamedataServer();
     // The default Stats tab reads only the slim index, so the full table (23.9 MB
     // raw) waits for a tab that renders phases, skills or template ids.
-    const { data: operatorsIndex } = useQuery({ ...operatorsIndexQueryOptions(gamedataServer), enabled: activeTab === "stats" || activeTab === "roster" });
+    const { data: operatorsIndex } = useQuery({ ...operatorsIndexQueryOptions(gamedataServer), enabled: activeTab === "stats" || activeTab === "roster" || activeTab === "lookback" });
     // A tab's chunk loads before the full table is asked for. bun blocks for about 2 s
     // while it serializes the table, and a chunk requested alongside it queues behind
     // that, so the tab could not render until the table had arrived. Hover or focus
@@ -249,6 +269,8 @@ export function UserProfile() {
             inventory: t("profile.tab.inventory"),
             enemies: t("profile.tab.enemies"),
             optimizer: t("profile.tab.optimizer"),
+            pulls: t("profile.tab.pulls"),
+            lookback: t("profile.tab.lookback"),
         }),
         [t],
     );
@@ -260,7 +282,8 @@ export function UserProfile() {
             enemies: encounteredEnemies?.encounteredCount ?? undefined,
         };
         // Only the owner is sent the private entries, so only they see the marker.
-        const hidden = new Set(layout?.tabs.filter((tab) => !tab.visible).map((tab) => tab.id));
+        const hidden = new Set<TabId>(layout?.tabs.filter((tab) => !tab.visible).map((tab) => tab.id));
+        if (data?.public_gacha !== true) hidden.add("pulls");
         return shown.map((tabId) => ({ id: tabId, label: labels[tabId], count: counts[tabId], private: hidden.has(tabId) }));
     }, [shown, labels, layout, data, roster, inventory, encounteredEnemies, publicPlans]);
 
@@ -322,10 +345,12 @@ export function UserProfile() {
                         {activeTab === "roster" && <RosterTab roster={roster ?? []} operatorsIndex={operatorsIndex ?? []} operatorsStatic={operatorsStatic ?? []} />}
                         {activeTab === "inventory" && <ItemsTab inventory={inventory ?? []} />}
                         {activeTab === "plans" && <PlansTab uid={id} roster={roster ?? []} />}
+                        {activeTab === "pulls" && <PullsTab uid={id} profile={data} isOwner={isOwner} pools={pullsPools} onPoolsChange={setPullsPools} />}
                         {activeTab === "enemies" && <EnemiesTab encountered={encounteredEnemies} isLoading={isEnemiesLoading} />}
                         {activeTab === "score" && <ScoreTab score={score} isLoading={isScoreLoading} improvements={improvements} isImprovementsLoading={isImprovementsLoading} uid={id} server={data.server} />}
                         {activeTab === "showcase" && <ShowcaseTab uid={id} profile={data} isOwner={isOwner} roster={roster ?? []} rosterAccess={showcaseRosterAccess} />}
                         {activeTab === "optimizer" && <OptimizerTab uid={id} roster={roster ?? []} operatorsStatic={operatorsStatic ?? []} />}
+                        {activeTab === "lookback" && <LookbackTab uid={id} server={data.server} operatorsIndex={operatorsIndex ?? []} rosterPrivate={!canReadRoster} />}
                     </Suspense>
                 )}
             </main>

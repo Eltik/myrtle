@@ -3,4 +3,15 @@
 /**
  * `user_settings` table
  */
-export type UserSettings = { user_id: string; public_profile: boolean; store_gacha: boolean; share_stats: boolean; updated_at: string };
+export type UserSettings = {
+    user_id: string;
+    public_profile: boolean;
+    store_gacha: boolean;
+    share_stats: boolean;
+    updated_at: string;
+    /**
+     * Visitors may read the pull history (`GET /gacha/public-records`). Off
+     * by default; behind `public_profile`, never instead of it.
+     */
+    public_gacha: boolean;
+};

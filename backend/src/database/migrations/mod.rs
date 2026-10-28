@@ -118,6 +118,18 @@ const MIGRATIONS: &[(&str, &str)] = &[
         "v041_leaderboard_unscored_last",
         include_str!("v041_leaderboard_unscored_last.sql"),
     ),
+    (
+        "v042_public_gacha_history",
+        include_str!("v042_public_gacha_history.sql"),
+    ),
+    (
+        "v043_account_lookback",
+        include_str!("v043_account_lookback.sql"),
+    ),
+    (
+        "v044_content_audit_log",
+        include_str!("v044_content_audit_log.sql"),
+    ),
 ];
 
 pub async fn run_migrations(pool: &PgPool) -> Result<(), sqlx::Error> {

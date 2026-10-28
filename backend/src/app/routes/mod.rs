@@ -195,6 +195,7 @@ pub mod assets;
 pub mod auth;
 pub mod base;
 pub mod chibis;
+pub mod content_audit;
 pub mod dps;
 pub mod enemies;
 pub mod gacha;
@@ -206,6 +207,7 @@ pub mod inventory;
 pub mod item_leaderboard;
 pub mod leaderboard;
 pub mod level;
+pub mod lookback;
 pub mod maintenance;
 pub mod music;
 pub mod operator_notes;
@@ -293,11 +295,15 @@ pub fn router() -> OpenApiRouter<AppState> {
         .routes(routes!(gacha::history))
         .routes(routes!(gacha::history_by_char))
         .routes(routes!(gacha::stored_records))
+        .routes(routes!(gacha::public_records))
         .routes(routes!(gacha::stats))
         .routes(routes!(gacha::get_settings, gacha::update_settings))
         .routes(routes!(auth::refresh))
         .routes(routes!(roster::get_roster))
         .routes(routes!(roster::get_operator))
+        .routes(routes!(lookback::overview))
+        .routes(routes!(lookback::current))
+        .routes(routes!(lookback::snapshot))
         .routes(routes!(stages::get_stage_clears))
         .routes(routes!(enemies::get_encountered_enemies))
         .routes(routes!(enemies::get_community_average))
@@ -348,6 +354,7 @@ pub fn router() -> OpenApiRouter<AppState> {
         .routes(routes!(operator_notes::get, operator_notes::update))
         .routes(routes!(operator_notes::audit_log))
         .routes(routes!(operator_notes::global_audit_log))
+        .routes(routes!(content_audit::content_audit_log))
         .routes(routes!(social::get_friends))
         .routes(routes!(social::search_players))
         .routes(routes!(planner::list))

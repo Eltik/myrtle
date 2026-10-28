@@ -26,9 +26,22 @@
         0 12px 28px oklch(0 0 0 / 0.1),
         0 0 0 1px color-mix(in srgb, var(--foreground) 6%, transparent);
 }
-.card:focus-visible {
+.card:has(.cardLink:focus-visible) {
     outline: 2px solid var(--ring);
     outline-offset: 2px;
+}
+
+/* The title link, stretched over the card so the whole card opens the list. */
+.cardLink {
+    color: inherit;
+    text-decoration: none;
+    outline: none;
+}
+.cardLink::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
 }
 
 .thumb {
@@ -185,6 +198,8 @@
     top: 8px;
     left: 8px;
     z-index: 3;
+    /* Above the stretched title link, so a click on it must fall through to the card. */
+    pointer-events: none;
     display: inline-flex;
     align-items: center;
     gap: 4px;
@@ -211,6 +226,8 @@
     top: 8px;
     right: 8px;
     z-index: 3;
+    /* Above the stretched title link, so a click on it must fall through to the card. */
+    pointer-events: none;
     display: inline-flex;
     align-items: center;
     gap: 3px;

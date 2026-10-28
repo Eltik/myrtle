@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { Heart, Settings } from "lucide-react";
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import { WhatsNewButton } from "#/components/changelog/WhatsNewButton";
 import { MaintenancePill } from "#/components/maintenance/MaintenanceCountdown";
 import { Button } from "#/components/ui/button";
@@ -20,6 +20,7 @@ import { type INavItem, type INavSection, MainNav } from "./impl/MainNav";
 import { MobileNav } from "./impl/MobileNav";
 import ThemeToggle from "./impl/ThemeToggle";
 import UserMenu from "./impl/UserMenu";
+import { useNavOverflow } from "./impl/use-nav-overflow";
 
 export default function Header() {
     const { user, loading, logout } = useAuth();
@@ -83,12 +84,20 @@ export default function Header() {
         ];
     }, [t, user]);
 
+    const rowRef = useRef<HTMLDivElement>(null);
+    const brandRef = useRef<HTMLAnchorElement>(null);
+    const navRef = useRef<HTMLElement>(null);
+    const controlsRef = useRef<HTMLDivElement>(null);
+    // Longer locales (Polish, German) overrun the row well above `lg`; the
+    // nav then collapses into the hamburger instead of crushing the brand.
+    const navCollapsed = useNavOverflow({ row: rowRef, brand: brandRef, nav: navRef, controls: controlsRef });
+
     return (
         <header className="sticky top-0 z-50 h-(--site-header-height) w-full border-border border-b bg-background/80 backdrop-blur-lg backdrop-saturate-150 supports-backdrop-filter:bg-background/60">
             <div className="flex h-full items-center gap-2 px-3 sm:gap-3.5 sm:px-4">
-                <div className="flex flex-1 items-center gap-2 sm:gap-4">
-                    <MobileNav items={navItems} />
-                    <Link to="/" className="flex min-w-0 shrink items-center gap-2 text-foreground no-underline">
+                <div ref={rowRef} className="flex min-w-0 flex-1 items-center gap-2 sm:gap-4">
+                    <MobileNav items={navItems} forceVisible={navCollapsed} />
+                    <Link ref={brandRef} to="/" className="flex shrink-0 items-center gap-2 whitespace-nowrap text-foreground no-underline">
                         <img src="/logo/bust_128.png" alt="" width={28} height={28} className="h-7 w-7 shrink-0 object-contain" />
                         {/* The wordmark goes below `sm`: five tap targets plus the text
                             "Login" overran a 390px bar by ~40px and pushed Login off-screen.
@@ -98,9 +107,9 @@ export default function Header() {
                         <span className="hidden rounded-[5px] border border-border bg-muted/60 px-1.5 py-0.75 font-medium font-mono text-[10.5px] text-muted-foreground leading-none sm:inline-block">v3</span>
                     </Link>
 
-                    <MainNav items={navItems} onOpenCommand={openCmd} />
+                    <MainNav ref={navRef} items={navItems} onOpenCommand={openCmd} collapsed={navCollapsed} />
 
-                    <div className="ml-auto flex shrink-0 items-center gap-1 sm:gap-1.5">
+                    <div ref={controlsRef} className="ml-auto flex shrink-0 items-center gap-1 sm:gap-1.5">
                         <button type="button" className={`${styles.headerSearch} hidden! xl:inline-flex!`} onClick={openCmd} aria-label={t("header.searchOperators")}>
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                                 <circle cx="11" cy="11" r="8" />

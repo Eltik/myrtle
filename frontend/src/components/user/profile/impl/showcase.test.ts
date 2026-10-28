@@ -6,7 +6,7 @@ import type { ShowcaseBlock } from "#/types/generated/ShowcaseBlock";
 import type { ShowcaseView } from "#/types/generated/ShowcaseView";
 import { normalizeLayout, resolveActiveTab, shownTabs, tabMemory } from "./layout";
 import { blocksForSave, cleanTitle, draftFromView, droppedOnSave, newFavourites, SHOWCASE_MAX_BLOCKS, SHOWCASE_MAX_IDS, type ShowcaseDraftBlock, showcaseForSave, shownBlocks, slugFromInput, toggleFavourite } from "./showcase";
-import type { TabId } from "./types";
+import type { LayoutTabId as TabId } from "./types";
 
 const GRID: ShowcaseBlock = { type: "grid", slug: "about-me" };
 const PLAN_ID = "0e87c223-eeee-4e2c-9a42-62acb51a3f10";

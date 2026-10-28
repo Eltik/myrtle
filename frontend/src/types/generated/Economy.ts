@@ -29,7 +29,14 @@ export type Economy = {
     cheapest_count: number;
     deploy_limit: number | null;
     /**
-     * Seats whose `cost` is at or under `start_dp`.
+     * The lowest DP the squad may drop to when deploying: 0, or below with a
+     * squad talent that lowers the DP Lower Limit (Closure's "Scheduler, Max
+     * Settings!" `cost` -4 makes it -4). A seat deploys once DP minus its
+     * `cost` stays at or above it.
+     */
+    dp_lower_limit: number;
+    /**
+     * Seats whose `cost` is at or under `start_dp - dp_lower_limit`.
      */
     openers: number;
     sources: Array<DpSource>;

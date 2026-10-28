@@ -66,6 +66,14 @@ pub struct UserProfile {
     /// the visible tabs and nulls the header numbers the owner hid.
     #[sqlx(json(nullable))]
     pub profile_layout: Option<ProfileLayout>,
+    /// Whether visitors may read the pull history (`user_settings.public_gacha`,
+    /// opt-in): the profile shows its Pulls tab while this is true. Not a
+    /// column of `v_user_profile`, so every row read from the view has `None`
+    /// and only `/get-user` fills it, from a fresh read of the switch.
+    #[sqlx(default)]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub public_gacha: Option<bool>,
 }
 
 impl UserProfile {
@@ -191,6 +199,9 @@ pub struct UserSettings {
     pub store_gacha: bool,
     pub share_stats: bool,
     pub updated_at: DateTime<Utc>,
+    /// Visitors may read the pull history (`GET /gacha/public-records`). Off
+    /// by default; behind `public_profile`, never instead of it.
+    pub public_gacha: bool,
 }
 
 /// `user_checkin` table: daily sign-in state from the game's `checkIn` section,
@@ -304,6 +315,7 @@ mod tests {
             updated_at: DateTime::<Utc>::from_timestamp(1_760_000_000, 0).unwrap(),
             originite: Some(777),
             profile_layout: layout.map(ProfileLayout::from),
+            public_gacha: None,
         }
     }
 

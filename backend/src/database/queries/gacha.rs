@@ -172,12 +172,37 @@ pub async fn get_all_for_user(
     pool: &PgPool,
     user_id: Uuid,
 ) -> Result<Vec<GachaRecord>, sqlx::Error> {
+    get_for_user_in_pools(pool, user_id, None).await
+}
+
+/// A user's records from the banners in `pools`, or from every banner when
+/// `None`, in [`get_all_for_user`]'s order.
+pub async fn get_for_user_in_pools(
+    pool: &PgPool,
+    user_id: Uuid,
+    pools: Option<&[String]>,
+) -> Result<Vec<GachaRecord>, sqlx::Error> {
     sqlx::query_as::<_, GachaRecord>(
-        "SELECT * FROM gacha_records WHERE user_id = $1 ORDER BY pull_timestamp DESC, batch_index ASC, id ASC",
+        "SELECT * FROM gacha_records \
+         WHERE user_id = $1 AND ($2::TEXT[] IS NULL OR pool_id = ANY($2)) \
+         ORDER BY pull_timestamp DESC, batch_index ASC, id ASC",
     )
     .bind(user_id)
+    .bind(pools)
     .fetch_all(pool)
     .await
+}
+
+/// Whether `user_settings.public_gacha` lets visitors read `user_id`'s pull
+/// history. A missing settings row reads as OFF, the column's default: the
+/// switch is opt-in, so an account that never opened Settings shares nothing.
+pub async fn public_history_enabled(pool: &PgPool, user_id: Uuid) -> Result<bool, sqlx::Error> {
+    let public: Option<bool> =
+        sqlx::query_scalar("SELECT public_gacha FROM user_settings WHERE user_id = $1")
+            .bind(user_id)
+            .fetch_optional(pool)
+            .await?;
+    Ok(public.unwrap_or(false))
 }
 
 pub async fn get_by_char_for_user(

@@ -14,15 +14,20 @@ use crate::app::services::gacha::get_history_for_char;
 use crate::app::services::gacha::get_per_banner_stats;
 use crate::app::services::gacha::get_stats;
 use crate::app::services::gacha::get_stored_records;
+use crate::app::services::gacha::get_stored_records_in_pools;
 use crate::app::services::gacha::update_gacha_settings;
 use crate::{
     app::{
         error::ApiError,
-        extractors::{auth::AuthUser, pagination::Pagination},
+        extractors::{
+            auth::{AuthUser, MaybeAuthUser},
+            pagination::Pagination,
+        },
+        routes::resolve_public_profile,
         services,
         state::AppState,
     },
-    database::models::gacha::GachaStats,
+    database::{models::gacha::GachaStats, queries::gacha::public_history_enabled},
 };
 
 #[derive(Deserialize)]
@@ -258,6 +263,92 @@ pub async fn stored_records(
     Ok(Json(records))
 }
 
+#[derive(Deserialize)]
+pub struct PublicRecordsParams {
+    pub uid: String,
+    /// Comma-separated banner (pool) ids; absent or empty is every banner.
+    #[serde(default)]
+    pub pools: Option<String>,
+}
+
+/// The most banners one request may name. A player has pulled on 40 at most
+/// (local Postgres, 2026-10-28), so this is room, not a limit anyone meets.
+const MAX_POOL_FILTER: usize = 64;
+
+/// The longest pool id accepted. The longest stored is 24 characters.
+const MAX_POOL_ID_LEN: usize = 64;
+
+/// `pools` as a list of distinct ids in the order given, `None` for absent or
+/// blank (every banner). A pool id is letters, digits and `_`
+/// (`LIMITED_EN_40_0_4`); anything else, or more than [`MAX_POOL_FILTER`]
+/// ids, is a 400 rather than a silently empty page.
+fn parse_pool_filter(raw: Option<&str>) -> Result<Option<Vec<String>>, ApiError> {
+    let mut pools: Vec<String> = Vec::new();
+    for id in raw.unwrap_or("").split(',').map(str::trim) {
+        if id.is_empty() {
+            continue;
+        }
+        if id.len() > MAX_POOL_ID_LEN || !id.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'_')
+        {
+            return Err(ApiError::BadRequest(format!(
+                "`pools` holds an invalid banner id: {id:?}"
+            )));
+        }
+        if !pools.iter().any(|p| p == id) {
+            pools.push(id.to_owned());
+        }
+    }
+    if pools.len() > MAX_POOL_FILTER {
+        return Err(ApiError::BadRequest(format!(
+            "`pools` names {} banners; at most {MAX_POOL_FILTER} are allowed",
+            pools.len()
+        )));
+    }
+    Ok((!pools.is_empty()).then_some(pools))
+}
+
+/// A player's stored pulls, grouped as `/gacha/stored-records` groups the
+/// caller's own, optionally limited to some banners: the profile's Pulls tab
+/// and the links the history page's Share button copies.
+///
+/// Two gates, the owner passing both: the profile must be public (403
+/// otherwise, as for every tab's data), and the owner must have opted in to
+/// a public pull history (`public_gacha`, off by default; 403 otherwise).
+/// An unknown `uid` is 404. The records carry no account identifier beyond
+/// the `uid` the caller already named.
+#[utoipa::path(
+    get,
+    path = "/gacha/public-records",
+    tag = "gacha",
+    params(
+        ("uid" = String, Query, description = "Player to read."),
+        ("pools" = Option<String>, Query, description = "Comma-separated banner (pool) ids, such as `LIMITED_EN_40_0_4,SINGLE_EN_40_0_1`, to keep only those banners' pulls. Absent or empty is every banner. At most 64 ids of letters, digits and `_`.")
+    ),
+    security(("bearer_auth" = []), ()),
+    responses(
+        (status = 200, description = "The player's pulls, newest first, grouped by banner type.", body = crate::app::services::gacha::GachaRecordsDto),
+        (status = 400, response = crate::app::openapi::responses::BadRequest),
+        (status = 403, response = crate::app::openapi::responses::Forbidden),
+        (status = 404, response = crate::app::openapi::responses::NotFound),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
+pub async fn public_records(
+    State(state): State<AppState>,
+    auth: MaybeAuthUser,
+    Query(params): Query<PublicRecordsParams>,
+) -> Result<Json<services::gacha::GachaRecordsDto>, ApiError> {
+    let (profile, own) = resolve_public_profile(&state, &auth, &params.uid).await?;
+    if !own && !public_history_enabled(&state.db, profile.id).await? {
+        return Err(ApiError::Forbidden);
+    }
+    let pools = parse_pool_filter(params.pools.as_deref())?;
+    let records = get_stored_records_in_pools(&state, profile.id, pools.as_deref()).await?;
+    Ok(Json(records))
+}
+
 /// The caller's own pull statistics: pity, rates and totals.
 #[utoipa::path(
     get,
@@ -347,7 +438,41 @@ pub async fn update_settings(
 
 #[cfg(test)]
 mod tests {
-    use super::snap_top_n;
+    use super::{MAX_POOL_FILTER, parse_pool_filter, snap_top_n};
+
+    #[test]
+    fn pool_filter_keeps_distinct_ids_in_order() {
+        assert_eq!(parse_pool_filter(None).unwrap(), None);
+        assert_eq!(parse_pool_filter(Some("")).unwrap(), None);
+        assert_eq!(parse_pool_filter(Some(" , ,")).unwrap(), None);
+        assert_eq!(
+            parse_pool_filter(Some(
+                "LIMITED_EN_40_0_4, SINGLE_EN_40_0_1,LIMITED_EN_40_0_4"
+            ))
+            .unwrap(),
+            Some(vec![
+                "LIMITED_EN_40_0_4".to_owned(),
+                "SINGLE_EN_40_0_1".to_owned()
+            ])
+        );
+    }
+
+    #[test]
+    fn pool_filter_refuses_what_no_pool_id_looks_like() {
+        for bad in ["LIMITED'; --", "a b", "pool%", "x".repeat(65).as_str()] {
+            assert!(parse_pool_filter(Some(bad)).is_err(), "{bad}");
+        }
+        let at_cap = (0..MAX_POOL_FILTER)
+            .map(|i| format!("P_{i}"))
+            .collect::<Vec<_>>()
+            .join(",");
+        assert_eq!(
+            parse_pool_filter(Some(&at_cap)).unwrap().map(|p| p.len()),
+            Some(MAX_POOL_FILTER)
+        );
+        let over = format!("{at_cap},P_X");
+        assert!(parse_pool_filter(Some(&over)).is_err());
+    }
 
     #[test]
     fn top_n_rounds_up_to_a_served_size() {

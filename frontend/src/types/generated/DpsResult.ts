@@ -7,7 +7,7 @@ import type { SpRecovery } from "./SpRecovery";
 /**
  * One operator configuration's damage.
  *
- * The three snake_case fields are the original response and keep their names
+ * The three `snake_case` fields are the original response and keep their names
  * and meaning. Every field after them is optional, camelCase, and present
  * only when the request asked for the behaviour that produces it.
  */

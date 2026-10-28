@@ -1,11 +1,13 @@
 use crate::app::cache::keys::CacheKey;
 use crate::app::error::ApiError;
+use crate::app::services::content_audit;
 use crate::app::services::tier_entity::{self, EntitySummary, StoryCatalogues};
 use crate::app::state::{AppState, ServerData};
 use crate::core::auth::permissions::{GlobalRole, Permission};
 use crate::core::gamedata::assets::AssetIndex;
 use crate::core::gamedata::types::GameData;
 use crate::core::hypergryph::constants::Server;
+use crate::database::models::content_audit::{ContentAuditAction, ContentAuditDetails};
 use crate::database::models::tier_list::{
     EntityKind, Tier, TierList, TierListFlair, TierListStats, TierListType, TierPlacement,
 };
@@ -439,9 +441,10 @@ pub async fn load_detail(state: &AppState, slug: &str) -> Result<TierListDetail,
 pub async fn list_details(
     state: &AppState,
     limit: i64,
+    author: Option<Uuid>,
     server: Server,
 ) -> Result<Vec<TierListDetail>, ApiError> {
-    let lists = find_all_active_limited(&state.db, limit).await?;
+    let lists = find_all_active_limited(&state.db, limit, author).await?;
     let list_ids: Vec<Uuid> = lists.iter().map(|list| list.id).collect();
     let flair_ids: Vec<i16> = lists
         .iter()
@@ -522,6 +525,15 @@ pub async fn create(
     let slug = generate_slug(name);
     let list = queries::create(&state.db, name, &slug, description, list_type, user_id).await?;
     ensure_stats_row(&state.db, list.id).await?;
+    let details = ContentAuditDetails {
+        list_type: Some(list_type.as_str().to_owned()),
+        ..Default::default()
+    };
+    content_audit::record(
+        state,
+        content_audit::tier_list_entry(&list, user_id, ContentAuditAction::Create, details),
+    )
+    .await;
     Ok(list)
 }
 
@@ -542,6 +554,24 @@ pub async fn update_list(
     let updated = update(&state.db, list.id, name, description, kinds.as_deref())
         .await
         .map_err(ApiError::from)?;
+    let details = ContentAuditDetails {
+        renamed_from: (list.name != updated.name).then(|| list.name.clone()),
+        description_changed: (list.description != updated.description).then_some(true),
+        kinds: (list.entity_kinds != updated.entity_kinds).then(|| {
+            updated
+                .entity_kinds
+                .0
+                .iter()
+                .map(|k| k.as_str().to_owned())
+                .collect()
+        }),
+        ..Default::default()
+    };
+    content_audit::record(
+        state,
+        content_audit::tier_list_entry(&updated, user_id, ContentAuditAction::Edit, details),
+    )
+    .await;
     Ok(updated)
 }
 

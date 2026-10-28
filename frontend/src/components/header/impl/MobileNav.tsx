@@ -25,9 +25,11 @@ import type { messages as themeMessages } from "./ThemeToggle.messages";
 
 interface IMobileNavProps {
     items: INavItem[];
+    /** The desktop nav did not fit, so the hamburger shows at every width. */
+    forceVisible?: boolean;
 }
 
-export function MobileNav({ items }: IMobileNavProps) {
+export function MobileNav({ items, forceVisible = false }: IMobileNavProps) {
     const { user, loading, logout } = useAuth();
     const router = useRouterState();
     const pathname = router.location.pathname;
@@ -90,7 +92,7 @@ export function MobileNav({ items }: IMobileNavProps) {
 
     return (
         <Drawer position="left">
-            <DrawerTrigger render={<Button variant="ghost" size="icon" className="lg:hidden" aria-label={t("mobileNav.openMenu")} />}>
+            <DrawerTrigger render={<Button variant="ghost" size="icon" className={cn(!forceVisible && "lg:hidden")} aria-label={t("mobileNav.openMenu")} />}>
                 <MenuIcon className="h-5 w-5" />
             </DrawerTrigger>
             <DrawerPopup showCloseButton className="w-70 max-w-[calc(100vw-3rem)]">

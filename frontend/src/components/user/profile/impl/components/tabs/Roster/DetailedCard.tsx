@@ -8,13 +8,13 @@ import { Dialog } from "#/components/ui/dialog";
 import { Progress } from "#/components/ui/progress";
 import { ScrollArea } from "#/components/ui/scroll-area";
 import { Separator } from "#/components/ui/separator";
-import { useT } from "#/lib/i18n";
+import { useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { professionLabel } from "#/lib/utils";
 import type { IEnrichedSkill, IModule } from "#/types/operators";
 import { DynamicArtOverlay } from "../../../DynamicArtOverlay";
 import type { messages } from "./DetailedCard.messages";
-import { getAttributeStats, getTrustPercent, isMaxed, MAX_LEVEL_BY_RARITY, moduleIconURL, moduleTypeLabel, ownedHeroURL, rarityIcon, skillIconURL, specializedIcon } from "./helpers.card";
+import { getAttributeStats, getTrustPercent, isMaxed, MAX_LEVEL_BY_RARITY, moduleIconURL, moduleTypeLabel, OBTAINED_DATE, obtainedDate, ownedHeroURL, rarityIcon, skillIconURL, specializedIcon } from "./helpers.card";
 import type { messages as cardMessages } from "./helpers.card.messages";
 import { OperatorDialog } from "./OperatorDialog";
 import type { IOwnedEntry } from "./types";
@@ -29,8 +29,10 @@ interface IDetailedCardProps {
 
 export function DetailedCard({ entry, lastRef }: IDetailedCardProps) {
     const t: DetailedT = useT("user");
+    const f = useFormatters();
     const op = entry.static;
     const star = entry.rarity;
+    const obtained = obtainedDate(entry);
     const rarityColor = RARITY_COLORS[star] ?? "#ffffff";
     const maxed = isMaxed(entry);
     const trustPct = getTrustPercent(entry.favor_point);
@@ -167,6 +169,12 @@ export function DetailedCard({ entry, lastRef }: IDetailedCardProps) {
                             <Stat label={t("profile.roster.card.stat.cost")} value={stats?.cost} />
                             <Stat label={t("profile.roster.card.stat.block")} value={stats?.blockCnt} />
                         </div>
+                        {obtained && (
+                            <div className="mt-1 flex items-center justify-between text-xs">
+                                <span className="text-muted-foreground">{t("profile.roster.card.obtained")}</span>
+                                <span className="font-medium tabular-nums">{f.date(obtained, OBTAINED_DATE)}</span>
+                            </div>
+                        )}
                         <Separator className="my-3" />
                         <div data-roster-card-accordion>
                             <Accordion className="w-full" multiple>

@@ -25,6 +25,10 @@ export interface IExportSettings {
     fps: number; // 10, 15, 20, 30, 60
     transparentBg: boolean; // GIF only
     loopCount: number; // Minimum number of loops for video export
+    /** Fill behind an opaque export; the export default when unset. */
+    backgroundColor?: number;
+    /** Mirror the skeleton horizontally, as the viewer's flip shows it. */
+    flipX?: boolean;
 }
 
 export const DEFAULT_EXPORT_SETTINGS: IExportSettings = {

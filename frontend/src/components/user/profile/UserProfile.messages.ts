@@ -35,6 +35,14 @@ export const messages = {
         text: "Optimizer",
         description: "Profile tab: tools that suggest improvements to the account.",
     },
+    "profile.tab.pulls": {
+        text: "Pulls",
+        description: "Profile tab: the account's gacha pull history, shown to visitors only when the player made it public. A pull is one draw on a headhunting banner.",
+    },
+    "profile.tab.lookback": {
+        text: "Lookback",
+        description: "Profile tab: snapshots of how built the account was at each event launch, and how it changed between them.",
+    },
     "profile.notFound.eyebrow": {
         text: "Player",
         description: "Small uppercase label above the 'profile not found' heading. 'Player' is the site's term; the game itself says 'Doctor'.",

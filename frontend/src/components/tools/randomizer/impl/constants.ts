@@ -1,3 +1,4 @@
+import type { AcquisitionFilter } from "#/lib/operators/acquisition";
 import type { OperatorProfession, OperatorRarity } from "#/types/operators";
 
 export const ALL_CLASSES: OperatorProfession[] = ["PIONEER", "WARRIOR", "TANK", "SNIPER", "CASTER", "MEDIC", "SUPPORT", "SPECIAL"];
@@ -66,6 +67,7 @@ export const DEFAULT_SETTINGS = {
     onlyAvailableStages: true,
     onlyE2Operators: false,
     e2SixStarOnly: false,
+    acquisition: "any" as AcquisitionFilter,
     tierListSlug: null as string | null,
     deselectedTierIds: [] as string[],
     deselectedStageIds: [] as string[],

@@ -59,6 +59,18 @@ export const messages = {
         text: "store_gacha",
         description: "Database column name substituted into privacy.gacha.desc as {column}, shown in monospace. Leave it exactly as it is.",
     },
+    "privacy.publicGacha.title": {
+        text: "Public pull history",
+        description: "Label of the switch that lets visitors see the player's pull history on their profile and through links they share. 'Pull' is one draw on a headhunting banner.",
+    },
+    "privacy.publicGacha.desc": {
+        text: "Shows your stored pulls on your profile's Pulls tab and through the links you share from Gacha → History. Off by default, and only on a public profile. Backed by {column}.",
+        description: "Caption under the public pull history switch. 'Gacha → History' names a menu path in this site's own navigation; {column} is a database column name in monospace, movable wherever the sentence needs it.",
+    },
+    "privacy.publicGacha.column": {
+        text: "public_gacha",
+        description: "Database column name substituted into privacy.publicGacha.desc as {column}, shown in monospace. Leave it exactly as it is.",
+    },
 } satisfies MessageMap;
 
 export const { keys } = defineMessages({ namespace, messages });

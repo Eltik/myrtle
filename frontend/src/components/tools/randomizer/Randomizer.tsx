@@ -3,11 +3,13 @@ import * as React from "react";
 import { useAuth } from "#/hooks/use-auth";
 import { useLocalStorageState } from "#/hooks/use-local-storage-state";
 import { operatorsIndexQueryOptions } from "#/lib/api/operators";
+import { recruitmentDataQueryOptions } from "#/lib/api/recruitment";
 import { activitiesQueryOptions, retroActsQueryOptions, stagesQueryOptions, userStageClearsQueryOptions, zonesQueryOptions } from "#/lib/api/stages";
 import { browseTierListsQueryOptions, tierListDetailQueryOptions } from "#/lib/api/tier-lists";
 import { userRosterQueryOptions } from "#/lib/api/user";
 import { useGamedataServer, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
+import { ACQUISITION_FILTERS, needsRecruitPool } from "#/lib/operators/acquisition";
 import type { IStage } from "#/types/stages";
 import { buildActivityLookup } from "./impl/activity-lookup";
 import { BriefingHero } from "./impl/components/BriefingHero";
@@ -31,7 +33,9 @@ interface IPersistedSettings extends IRandomizerSettings {
 /** Fills any setting added since the save with its default, and drops the version stamp. */
 function migrateSettings(saved: IPersistedSettings): IRandomizerSettings {
     const { _version: _, ...rest } = saved;
-    return { ...DEFAULT_SETTINGS, ...rest } satisfies IRandomizerSettings;
+    const merged = { ...DEFAULT_SETTINGS, ...rest } satisfies IRandomizerSettings;
+    // A source this build does not offer reads as no source filter, not as an empty pool.
+    return ACQUISITION_FILTERS.includes(merged.acquisition) ? merged : { ...merged, acquisition: "any" };
 }
 
 /**
@@ -108,8 +112,12 @@ export function Randomizer(): React.ReactElement {
         [tierChoices, tierListSlug, tierIndex, tierListQuery.isLoading, settings.deselectedTierIds, tierListDetail],
     );
 
+    // The recruitment pool loads only once the source filter reads it.
+    const { data: recruitment } = useQuery({ ...recruitmentDataQueryOptions(server), enabled: needsRecruitPool(settings.acquisition) });
+    const recruitable = React.useMemo(() => new Set((recruitment?.operators ?? []).map((op) => op.id)), [recruitment]);
+
     // Mirrors every operator-tab constraint, so the roster picker only lists what can be drawn.
-    const rosterPickerOperators = React.useMemo(() => selectAvailableOperators(randomizerOperators, settings, rosterIndex, tierIndex), [randomizerOperators, settings, rosterIndex, tierIndex]);
+    const rosterPickerOperators = React.useMemo(() => selectAvailableOperators(randomizerOperators, settings, rosterIndex, tierIndex, recruitable), [randomizerOperators, settings, rosterIndex, tierIndex, recruitable]);
     const availableOperators = React.useMemo(() => rosterPickerOperators.filter((op) => effectiveRosterSet.has(op.id)), [rosterPickerOperators, effectiveRosterSet]);
 
     const availableStages = React.useMemo(() => selectAvailableStages(playableStages, zones, settings, stageClears ?? null, activityLookup), [playableStages, zones, settings, stageClears, activityLookup]);

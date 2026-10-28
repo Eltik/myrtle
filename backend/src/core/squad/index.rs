@@ -31,7 +31,9 @@ use crate::core::gamedata::types::operator::{Operator, OperatorProfession};
 use super::policy::{
     PROFESSION_ORDER, THREAT_GRADE_DEF, THREAT_GRADE_MOVE_SPEED, THREAT_GRADE_RES,
 };
-use super::targets::{Target, Vocab, highest_only, parse_cond, parse_need, parse_target};
+use super::targets::{
+    Target, Vocab, highest_only, parse_cond, parse_faction, parse_need, parse_target,
+};
 use super::text::{any_of, has_tag, lower_plain, plain};
 use super::types::SynergyCond;
 
@@ -103,6 +105,16 @@ pub struct TextFacts {
     pub heal_area_words: bool,
     /// The blackboard keys the text names as DP gained (`dp_gain_keys`).
     pub dp_gain: Vec<String>,
+    /// "first redeployment": a redeploy change on this text's blackboard is
+    /// for the first redeployment only (the Horncare Set trait line, "First
+    /// Redeployment Time reduced by 35%", Ines and Cantabile).
+    pub first_redeploy: bool,
+    /// The blackboard keys the text prints as a DP Cost change, each with
+    /// whether the text puts a minus before the value (`dp_cost_cut_keys`).
+    pub dp_cost_cut: Vec<(String, bool)>,
+    /// The ally faction the text names, whatever else it names
+    /// (`targets::parse_faction`): the Synergy panel's reading of skills.
+    pub faction: Option<Target>,
     /// Talent texts only.
     pub talent: Option<TalentText>,
 }
@@ -126,6 +138,8 @@ impl TextFacts {
             out.ally_word |= p.ally_word;
             out.heal_area_words |= p.heal_area_words;
             out.dp_gain.extend(p.dp_gain.iter().cloned());
+            out.first_redeploy |= p.first_redeploy;
+            out.dp_cost_cut.extend(p.dp_cost_cut.iter().cloned());
         }
         out
     }
@@ -157,6 +171,15 @@ pub struct TalentText {
     pub on_defeat: bool,
     /// "if ", "when ", "first time" or "after ".
     pub conditional: bool,
+    /// Carries the DP Lower Limit term (`<$ba.costlowerbound>`, Closure's
+    /// "Scheduler, Max Settings!"): its `cost` lowers how far DP may drop
+    /// below zero for the whole squad, and is no operator's DP Cost.
+    pub lowers_dp_floor: bool,
+    /// The numbers printed in sentences that open with the holder ("SilverAsh
+    /// and other allies in the 8 surrounding tiles gain an additional -10%
+    /// Redeployment Time") and speak of Redeployment Time: a hidden module
+    /// part's `respawn_time` printed there is the holder's own.
+    pub own_redeploy_numbers: Vec<(f64, bool)>,
     /// Every number the rendered text prints, with whether a `%` follows it
     /// (`(+2%)` potential notes included). Digits and `%` read the same in
     /// every language, so this is not a word rule.
@@ -188,19 +211,59 @@ impl TalentText {
     /// text prints the Fragile %), now left out of the hand-off instead of
     /// read as a ratio. Every `respawn_time` read agrees with the guess.
     pub fn scale_of(&self, v: f64, complement: bool) -> Option<StatScale> {
-        const EPS: f64 = 1e-3;
-        let a = v.abs();
-        let pct = a * 100.0;
-        let ratio = self.numbers.iter().any(|&(n, p)| {
-            p && ((n - pct).abs() < EPS || (complement && (n - (1.0 - a) * 100.0).abs() < EPS))
-        });
-        let flat = self.numbers.iter().any(|&(n, p)| !p && (n - a).abs() < EPS);
-        match (ratio, flat) {
-            (true, false) => Some(StatScale::Ratio),
-            (false, true) => Some(StatScale::Flat),
-            _ => None,
-        }
+        scale_in(&self.numbers, v, complement)
     }
+
+    /// `scale_of` over the sentences that open with the holder and speak of
+    /// Redeployment Time only (`own_redeploy_numbers`).
+    pub fn own_redeploy_scale(&self, v: f64) -> Option<StatScale> {
+        scale_in(&self.own_redeploy_numbers, v, true)
+    }
+}
+
+/// The scale `numbers` print `v` at; see `TalentText::scale_of`.
+fn scale_in(numbers: &[(f64, bool)], v: f64, complement: bool) -> Option<StatScale> {
+    const EPS: f64 = 1e-3;
+    let a = v.abs();
+    let pct = a * 100.0;
+    let ratio = numbers.iter().any(|&(n, p)| {
+        p && ((n - pct).abs() < EPS || (complement && (n - (1.0 - a) * 100.0).abs() < EPS))
+    });
+    let flat = numbers.iter().any(|&(n, p)| !p && (n - a).abs() < EPS);
+    match (ratio, flat) {
+        (true, false) => Some(StatScale::Ratio),
+        (false, true) => Some(StatScale::Flat),
+        _ => None,
+    }
+}
+
+/// Every number in plain text, with whether a `%` follows it.
+fn numbers_in(p: &str) -> Vec<(f64, bool)> {
+    NUMBER
+        .captures_iter(p)
+        .filter_map(|c| Some((c[1].parse().ok()?, !c[2].is_empty())))
+        .collect()
+}
+
+/// A sentence end: `.` or `;` before a space or the end, so "1.5%" stays whole.
+static SENTENCE_END: std::sync::LazyLock<regex::Regex> =
+    std::sync::LazyLock::new(|| regex::Regex::new(r"[.;](?:\s|$)").expect("sentence regex"));
+
+/// The numbers of the sentences of plain text `p` that open with `holder` (the
+/// operator's name) or "this unit" and speak of Redeployment Time. TEXT
+/// HEURISTIC: the opening names who the sentence's change is for.
+fn own_redeploy_numbers(p: &str, holder: &str) -> Vec<(f64, bool)> {
+    SENTENCE_END
+        .split(p)
+        .map(str::trim)
+        .filter(|sentence| {
+            let lower = sentence.to_lowercase();
+            let opens_with_holder = (!holder.is_empty() && sentence.starts_with(holder))
+                || lower.starts_with("this unit");
+            opens_with_holder && lower.contains("redeployment time")
+        })
+        .flat_map(numbers_in)
+        .collect()
 }
 
 /// A number and an optional `%` right after it.
@@ -322,8 +385,39 @@ fn dp_gain_keys(raw: &str) -> Vec<String> {
     keys
 }
 
-/// Read one piece of text. `talent` adds the talent rules.
-fn read(raw: &str, vocab: &Vocab, talent: bool) -> TextFacts {
+/// The keys of every placeholder the template prints as a DP Cost change, with
+/// whether a minus stands before it: "-{cost}</> DP Cost" (`SilverAsh` the
+/// Reignfrost S1 and S2, the value printed positive), or the last
+/// placeholder of a "DP cost of <who> {x}" clause (Matsukiri S1 `value` -4,
+/// S2 `cost_decrease` -1, the value printed signed). A bound ("DP Cost no
+/// more than {x}") is neither. 2026-10-28 EN: these four are every playable
+/// operator's skill whose text changes another unit's DP Cost.
+fn dp_cost_cut_keys(raw: &str) -> Vec<(String, bool)> {
+    let mut keys = Vec::new();
+    for c in PLACEHOLDER.captures_iter(raw) {
+        let whole = c.get(0).expect("group 0");
+        let key = c[1].trim().to_string();
+        let after = raw[whole.end()..]
+            .trim_start_matches("</>")
+            .trim_start()
+            .to_lowercase();
+        if raw[..whole.start()].ends_with('-') && after.starts_with("dp cost") {
+            keys.push((key, true));
+            continue;
+        }
+        let clause_start = raw[..whole.start()].rfind([';', ',']).map_or(0, |i| i + 1);
+        let clause = lower_plain(&raw[clause_start..whole.start()]);
+        let clause_end = after.find([';', ',']).unwrap_or(after.len());
+        if clause.contains("dp cost of") && !PLACEHOLDER.is_match(&after[..clause_end]) {
+            keys.push((key, false));
+        }
+    }
+    keys
+}
+
+/// Read one piece of text. `talent` adds the talent rules; `holder` is the
+/// operator's English name, which a talent's own-redeploy sentence opens with.
+fn read(raw: &str, vocab: &Vocab, talent: bool, holder: &str) -> TextFacts {
     let lower = lower_plain(raw);
     let talent = talent.then(|| {
         let p = plain(raw);
@@ -343,10 +437,9 @@ fn read(raw: &str, vocab: &Vocab, talent: bool) -> TextFacts {
             conditional: ["if ", "when ", "first time", "after "]
                 .iter()
                 .any(|w| lower.contains(w)),
-            numbers: NUMBER
-                .captures_iter(p)
-                .filter_map(|c| Some((c[1].parse().ok()?, !c[2].is_empty())))
-                .collect(),
+            lowers_dp_floor: has_tag(raw, "ba.costlowerbound"),
+            own_redeploy_numbers: own_redeploy_numbers(p, holder),
+            numbers: numbers_in(p),
         }
     });
     TextFacts {
@@ -376,6 +469,9 @@ fn read(raw: &str, vocab: &Vocab, talent: bool) -> TextFacts {
             ],
         ),
         dp_gain: dp_gain_keys(raw),
+        first_redeploy: lower.contains("first redeployment"),
+        dp_cost_cut: dp_cost_cut_keys(raw),
+        faction: parse_faction(raw, vocab),
         talent,
     }
 }
@@ -416,9 +512,10 @@ fn read_operator(
     out: &mut HashMap<TextKey, TextFacts>,
 ) {
     let id = || char_id.to_string();
+    let name = op.name.as_str();
     out.insert(
         TextKey::Trait { char_id: id() },
-        read(&op.description, vocab, false),
+        read(&op.description, vocab, false, name),
     );
     if let Some(t) = &op.trait_data {
         for (cand, c) in t.candidates.iter().enumerate() {
@@ -428,7 +525,7 @@ fn read_operator(
                         char_id: id(),
                         cand,
                     },
-                    read(d, vocab, false),
+                    read(d, vocab, false, name),
                 );
             }
         }
@@ -442,7 +539,7 @@ fn read_operator(
                     talent,
                     cand,
                 },
-                read(d, vocab, true),
+                read(d, vocab, true, name),
             );
         }
     }
@@ -469,7 +566,7 @@ fn read_operator(
                             part,
                             cand,
                         },
-                        read(d, vocab, true),
+                        read(d, vocab, true, name),
                     );
                 }
                 for (cand, c) in pt
@@ -487,10 +584,10 @@ fn read_operator(
                         additional,
                     };
                     if let Some(d) = c.override_description.as_ref().filter(|d| !d.is_empty()) {
-                        out.insert(key(false), read(d, vocab, false));
+                        out.insert(key(false), read(d, vocab, false, name));
                     }
                     if !c.additional_description.is_empty() {
-                        out.insert(key(true), read(&c.additional_description, vocab, false));
+                        out.insert(key(true), read(&c.additional_description, vocab, false, name));
                     }
                 }
             }
@@ -503,7 +600,7 @@ fn read_operator(
                 skill_id: s.skill_id.clone(),
                 level,
             })
-            .or_insert_with(|| read(&l.description, vocab, false));
+            .or_insert_with(|| read(&l.description, vocab, false, name));
         }
     }
 }

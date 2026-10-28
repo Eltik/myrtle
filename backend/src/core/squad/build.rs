@@ -131,6 +131,12 @@ pub struct Seat<'a> {
     pub phase: usize,
     pub skill: Option<LiveSkill<'a>>,
     pub talents: Vec<LiveTalent>,
+    /// The blackboards of the module's hidden talent parts (`talent_index` -1
+    /// with no name, or `is_hide_talent`): engine numbers no talent shows,
+    /// which a visible talent's text may still print (`SilverAsh`'s Snow
+    /// Realm Fowlcare Kit stage 3 `respawn_time` -0.1, "SilverAsh ... gain an
+    /// additional -10% Redeployment Time").
+    pub hidden_boards: Vec<Board>,
     /// The trait text (`description`, or a candidate's / module's override,
     /// plus a module's additional line), raw.
     pub trait_text: String,
@@ -313,6 +319,7 @@ pub fn resolve<'a>(data: &'a GameData, seat: i32, b: &SquadMemberBuild) -> Optio
 
     let branch_board = trait_board.clone();
     let mut talents = live_talents(&b.char_id, op, &build);
+    let mut hidden_boards = Vec::new();
 
     let module = build
         .module_id
@@ -348,15 +355,31 @@ pub fn resolve<'a>(data: &'a GameData, seat: i32, b: &SquadMemberBuild) -> Optio
                         part: part_i,
                         cand: cand_i,
                     };
-                    // Hidden parts (`talent_index` -1, `is_hide_talent`) carry
-                    // engine numbers with no text; the visible part of the same
-                    // talent is the one the player reads.
-                    if c.is_hide_talent == Some(true) || c.talent_index < 0 {
+                    // Hidden parts (`talent_index` -1 with no name,
+                    // `is_hide_talent`) carry engine numbers with no text; the
+                    // visible part of the same talent is the one the player
+                    // reads.
+                    if c.is_hide_talent == Some(true) || (c.talent_index < 0 && c.name.is_empty())
+                    {
+                        hidden_boards.push(board(&c.blackboard));
                         continue;
                     }
-                    let index = usize::try_from(c.talent_index).unwrap_or(0);
+                    // A named part with `talent_index` -1 is a talent the
+                    // module adds (Gravel's "Battlefield Vassal", 15 EN
+                    // modules on 2026-10-28), indexed past the operator's own;
+                    // a second part of the same name is the same talent.
+                    let added = c.talent_index < 0;
+                    let index = usize::try_from(c.talent_index)
+                        .unwrap_or_else(|_| op.talents.len() + part_i);
                     let part_board = board(&c.blackboard);
-                    if let Some(t) = talents.iter_mut().find(|t| t.index == index) {
+                    let same = |t: &&mut LiveTalent| {
+                        if added {
+                            t.module.is_some() && t.name == c.name
+                        } else {
+                            t.index == index
+                        }
+                    };
+                    if let Some(t) = talents.iter_mut().find(same) {
                         if !c.name.is_empty() {
                             t.name.clone_from(&c.name);
                         }
@@ -425,6 +448,7 @@ pub fn resolve<'a>(data: &'a GameData, seat: i32, b: &SquadMemberBuild) -> Optio
         phase,
         skill,
         talents,
+        hidden_boards,
         trait_text,
         trait_board,
         branch_board,
