@@ -1,2 +1,15 @@
 target/
 gamedata-old/
+
+# Runtime state written by the running backend
+backup/
+game_sessions/
+device_ids.json
+device_ids.json.tmp
+regrade_state.json
+regrade_state.json.tmp
+startup_timings.json
+startup_timings.json.tmp
+
+# Checkout of the ArknightsDpsCompare submodule on main
+external/
