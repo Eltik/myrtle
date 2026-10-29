@@ -7,7 +7,10 @@ import { EmptyHint, PANEL_PADDING, Pill, SectionHeader, TEXT_BADGE } from "./sha
 
 interface IProps {
     improvements: IImprovementsResponse;
-    acceexport function SandboxPanel({ improvements, accent }: IProps) {
+    accent: string;
+}
+
+export function SandboxPanel({ improvements, accent }: IProps) {
     const t: TypedT<typeof messages> = useT("user");
     const s = improvements.sandbox;
     const hasAnyData = s.total > 0 || s.topics.some((topic) => topic.categories.some((c) => c.parts.some((p) => p.current > 0)));
@@ -36,10 +39,6 @@ function TopicBlock({ topic, shared, accent }: { topic: ISandboxTopic; shared: b
                 ))}
             </div>
         </div>
-    );
-}
-
-div>
     );
 }
 
