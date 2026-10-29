@@ -422,7 +422,7 @@ pub async fn refresh(
         let game_data = state.default_game_data();
         let graded = user.id;
         let handle = tokio::runtime::Handle::current();
-        let grading = tokio::spawn(async move {
+        let mut grading = tokio::spawn(async move {
             let grade = crate::app::cpu::run("user_grade", move || {
                 handle.block_on(calculate_user_grade(&scoring_db, graded, &game_data))
             })
@@ -448,20 +448,39 @@ pub async fn refresh(
             .await?;
             Ok::<(), ApiError>(())
         });
-        match tokio::time::timeout(GRADE_BUDGET, grading).await {
-            Ok(Ok(Ok(()))) => {}
+        let overran = match tokio::time::timeout(GRADE_BUDGET, &mut grading).await {
+            Ok(Ok(Ok(()))) => false,
             Ok(Ok(Err(e))) => {
                 tracing::error!(uid = %user_id, error = ?e, "the grade failed; the roster sync stands");
+                false
             }
             Ok(Err(e)) => {
                 tracing::error!(uid = %user_id, error = %e, "the grade task panicked; the roster sync stands");
+                false
             }
-            Err(_) => tracing::error!(
-                uid = %user_id,
-                budget_secs = GRADE_BUDGET.as_secs(),
-                "the grade did not finish inside the budget; it continues in the background and user_scores updates when it does"
-            ),
-        }
+            Err(_) => {
+                tracing::error!(
+                    uid = %user_id,
+                    budget_secs = GRADE_BUDGET.as_secs(),
+                    "the grade did not finish inside the budget; it continues in the background and user_scores updates when it does"
+                );
+                true
+            }
+        };
+
+        // RA topics this sync did not carry (only the loaded one is sent since
+        // the 2026-10-28 update), fetched off the request; see
+        // `sandbox_backfill`. After the grade, which it waits for when the
+        // grade overran, so the grade's RA score never lands after its own.
+        crate::app::services::sandbox_backfill::spawn(
+            state,
+            user_id,
+            user.id,
+            server,
+            &session,
+            &raw,
+            overran.then_some(grading),
+        );
 
         // After the grade, so the period's snapshot carries the score this sync
         // produced (the previous one when the grade missed its budget). One

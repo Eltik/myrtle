@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-10-28T03:02:51.968Z",
+    "generatedAt": "2026-10-29T00:23:03.118Z",
     "entries": [
         {
             "key": "admin.home.access.everyList",
@@ -61276,9 +61276,19 @@
         {
             "key": "user.score.improvements.sandbox.empty",
             "namespace": "user",
-            "source_text": "No RA progress detected. Start RA in Operation Originium Dust to begin tracking.",
-            "description": "Empty state in the RA panel. 'RA' abbreviates the game mode Reclamation Algorithm and 'Operation Originium Dust' is the in-game event that hosts it - both keep the game's own names.",
+            "source_text": "No RA progress detected. Play Reclamation Algorithm to begin tracking.",
+            "description": "Empty state in the RA panel. 'RA' abbreviates the game mode Reclamation Algorithm and keeps the game's own name.",
             "placeholders": []
+        },
+        {
+            "key": "user.score.improvements.sandbox.topicShare",
+            "namespace": "user",
+            "source_text": "{pct}% · {share}% of RA",
+            "description": "Badge beside one Reclamation Algorithm topic (a season of the mode, such as 'Tales Within the Sand'): the player's completion of that topic, then how much of the overall RA score the topic carries. Every topic carries the same share. 'RA' is the game mode's own abbreviation.",
+            "placeholders": [
+                "pct",
+                "share"
+            ]
         },
         {
             "key": "user.score.improvements.sandbox.weight",

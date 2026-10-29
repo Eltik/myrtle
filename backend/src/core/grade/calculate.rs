@@ -112,6 +112,45 @@ pub async fn calculate_user_grade(
     })
 }
 
+/// Recompute only the RA section of a stored `user_scores` row and rebuild
+/// its total and letter grade from the other five stored sections, through
+/// [`total_from_sections`]. `None` when the user has no row to rebuild from.
+/// Writes `sandbox_score`, `total_score` and `grade` unless `dry_run`; returns
+/// the letter grade.
+pub async fn rescore_sandbox_section(
+    pool: &PgPool,
+    user_id: Uuid,
+    game_data: &GameData,
+    dry_run: bool,
+) -> Result<Option<String>, sqlx::Error> {
+    let stored: Option<(f64, f64, f64, f64, f64)> = sqlx::query_as(
+        "SELECT operator_score, base_score, roguelike_score, medal_score, stage_score \
+         FROM user_scores WHERE user_id = $1",
+    )
+    .bind(user_id)
+    .fetch_optional(pool)
+    .await?;
+    let Some((operator, base, roguelike, medal, stage)) = stored else {
+        return Ok(None);
+    };
+    let sandbox = grade_sandbox(pool, user_id, game_data).await?;
+    let total = total_from_sections(operator, base, roguelike, medal, stage, sandbox);
+    let overall = score_to_grade(total);
+    if !dry_run {
+        sqlx::query(
+            "UPDATE user_scores SET sandbox_score = $2, total_score = $3, grade = $4, \
+             calculated_at = NOW() WHERE user_id = $1",
+        )
+        .bind(user_id)
+        .bind(sandbox)
+        .bind(total)
+        .bind(&overall)
+        .execute(pool)
+        .await?;
+    }
+    Ok(Some(overall))
+}
+
 /// The overall score from the six section grades. One formula for the full
 /// grade and for a pass that recomputes a single section, so both write the
 /// same bits for the same inputs.

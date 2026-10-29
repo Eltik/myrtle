@@ -22,6 +22,7 @@ pub mod planner;
 pub mod recruitment;
 pub mod release;
 pub mod roster;
+pub mod sandbox_backfill;
 pub mod search;
 pub mod showcase;
 pub mod social;

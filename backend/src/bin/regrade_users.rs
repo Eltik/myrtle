@@ -33,10 +33,7 @@ use backend::{
     app::state::{default_bin_server_from_env, derive_assets_dir, derive_game_data_dir},
     core::{
         gamedata::init_game_data,
-        grade::{
-            calculate::{calculate_user_grade, score_to_grade, total_from_sections},
-            sandbox::grade_sandbox,
-        },
+        grade::calculate::{calculate_user_grade, rescore_sandbox_section},
         hypergryph::constants::Server,
     },
     database::{models::score::UserScore, queries::score::update_score},
@@ -372,48 +369,21 @@ async fn regrade_one(
     Ok(overall)
 }
 
-/// The RA section alone, with the total and letter grade rebuilt from the
-/// stored section scores. Falls back to `regrade_one` when the user has no
-/// `user_scores` row to rebuild from.
+/// The RA section alone, through `rescore_sandbox_section`. Falls back to
+/// `regrade_one` when the user has no `user_scores` row to rebuild from.
 async fn regrade_sandbox_only(
     pool: &PgPool,
     user_id: Uuid,
     game_data: &backend::core::gamedata::types::GameData,
     dry_run: bool,
 ) -> Result<String> {
-    let stored: Option<(f64, f64, f64, f64, f64)> = sqlx::query_as(
-        "SELECT operator_score, base_score, roguelike_score, medal_score, stage_score \
-         FROM user_scores WHERE user_id = $1",
-    )
-    .bind(user_id)
-    .fetch_optional(pool)
-    .await
-    .with_context(|| format!("read user_scores({user_id})"))?;
-    let Some((operator, base, roguelike, medal, stage)) = stored else {
-        return regrade_one(pool, user_id, game_data, dry_run).await;
-    };
-
-    let sandbox = grade_sandbox(pool, user_id, game_data)
+    match rescore_sandbox_section(pool, user_id, game_data, dry_run)
         .await
-        .with_context(|| format!("grade_sandbox({user_id})"))?;
-    let total = total_from_sections(operator, base, roguelike, medal, stage, sandbox);
-    let overall = score_to_grade(total);
-
-    if !dry_run {
-        sqlx::query(
-            "UPDATE user_scores SET sandbox_score = $2, total_score = $3, grade = $4, \
-             calculated_at = NOW() WHERE user_id = $1",
-        )
-        .bind(user_id)
-        .bind(sandbox)
-        .bind(total)
-        .bind(&overall)
-        .execute(pool)
-        .await
-        .with_context(|| format!("update sandbox score({user_id})"))?;
+        .with_context(|| format!("rescore_sandbox_section({user_id})"))?
+    {
+        Some(overall) => Ok(overall),
+        None => regrade_one(pool, user_id, game_data, dry_run).await,
     }
-
-    Ok(overall)
 }
 
 async fn count_targets(pool: &PgPool, args: &Args) -> Result<i64> {
