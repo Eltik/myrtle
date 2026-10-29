@@ -1,3 +1,5 @@
+use std::collections::BTreeMap;
+
 use serde_json::Value;
 
 /// Content totals of the Reclamation Algorithm, the denominators of the RA grade.
@@ -21,6 +23,12 @@ pub struct SandboxUniverse {
     pub max_base_level: usize,
     pub max_blueprints: usize,
     pub max_rifts: usize,
+    /// Summed band levels (`BandDataMap`, each band's `LevelList` length). V3
+    /// only; 0 on V2, which has no bands.
+    pub max_band_levels: usize,
+    /// Zone of every graded map node (HOME excluded), for zones a V3 save does
+    /// not record: a zone is unlocked once one of its nodes is. V3 only.
+    pub node_zones: BTreeMap<String, String>,
     /// Every topic in `BasicInfo`, in `SortId` order. Empty inside a topic's
     /// own `counts`.
     pub topics: Vec<SandboxTopicUniverse>,
@@ -59,6 +67,8 @@ impl SandboxTemplate {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SandboxTopicUniverse {
     pub topic_id: String,
+    /// `BasicInfo.TopicName`, in the served table's language; empty without one.
+    pub name: String,
     pub template: SandboxTemplate,
     pub sort_id: i64,
     pub counts: SandboxUniverse,
@@ -121,18 +131,15 @@ impl SandboxUniverse {
             // progress of players who have collected them all.
             max_blueprints: count("CraftItemData"),
             max_rifts: count("FixedRiftData"),
-            topics: Vec::new(),
+            ..Self::default()
         }
     }
 
     /// Totals of one `SANDBOX_V3` topic's `Detail` value. Counts on CN
-    /// `sandbox_2` (extract of 2026-10-06) in brackets.
+    /// `sandbox_2` (extract of 2026-10-24) in brackets.
     ///
-    /// Each V3 table below is the one whose rows play the role the V2 table
-    /// played, matched by shape, not yet by a player's progress: no V3
-    /// `sandboxPerm` blob has been seen (the only dump is EN and the DB backups
-    /// hold no CN account), so which of these a player's progress counts
-    /// against is open until the first EN sync after 2026-10-28.
+    /// Matched against an EN `sandboxPerm` sync of 2026-10-29: every id the
+    /// save holds on a graded path is a row of the table named here.
     fn count_v3(sandbox_data: &Value) -> Self {
         let count = |key: &str| -> usize {
             sandbox_data
@@ -140,42 +147,61 @@ impl SandboxUniverse {
                 .and_then(|v| v.as_array())
                 .map_or(0, std::vec::Vec::len)
         };
-        // V3 has one fixed overworld, `MainMapData`, an object with `Nodes`
-        // [30: 25 STORY, 4 EXPLORE, 1 HOME] and `Zones` [6, `z_2_0` the home
-        // block through `z_2_5`], where V2 had `MapData` variants and `ZoneData`.
-        // OPEN: both totals include the HOME node and the `z_2_0` home zone.
-        // V2 counts its home zone `z_1_0` too and drops only the tutorial, so
-        // this matches V2's rule; if a fresh V3 save starts with both unlocked
-        // it gets 1/30 nodes and 1/6 zones for free. A logged V3 shape with
-        // per-node `state` settles it.
-        let main_map = |key: &str| -> usize {
-            sandbox_data
-                .get("MainMapData")
-                .and_then(|m| m.get(key))
-                .and_then(|v| v.as_array())
-                .map_or(0, std::vec::Vec::len)
-        };
+        // One fixed overworld, `MainMapData.Nodes` [30: 25 STORY, 4 EXPLORE,
+        // 1 HOME]. The save's `map.node` holds the HOME node at `state` 0 while
+        // its neighbours are 1 and 2, so HOME is never counted and is left out
+        // of the total [29]. The save records no zone state (`map.zone` holds
+        // defend slots only), so zones are the nodes' `ZoneId`s: `z_2_1` ..
+        // `z_2_5` [5]; `z_2_0` holds only HOME.
+        let node_zones: BTreeMap<String, String> =
+            keyed_entries(sandbox_data.get("MainMapData").and_then(|m| m.get("Nodes")))
+                .into_iter()
+                .filter(|(_, node)| node.get("NodeType").and_then(Value::as_str) != Some("HOME"))
+                .map(|(id, node)| {
+                    let zone = node
+                        .get("ZoneId")
+                        .and_then(Value::as_str)
+                        .unwrap_or_default();
+                    (id.to_owned(), zone.to_owned())
+                })
+                .collect();
+        let max_zones = node_zones
+            .values()
+            .filter(|z| !z.is_empty())
+            .collect::<std::collections::BTreeSet<_>>()
+            .len();
+        // Six bands of three levels each [18], read from `band.<id>.level`.
+        let max_band_levels = keyed_entries(sandbox_data.get("BandDataMap"))
+            .into_iter()
+            .map(|(_, band)| {
+                band.get("LevelList")
+                    .and_then(Value::as_array)
+                    .map_or(0, Vec::len)
+            })
+            .sum();
 
         Self {
             max_achievements: count("AchievementData"), // [59]
-            max_nodes: main_map("Nodes"),               // [30]
-            max_zones: main_map("Zones"),               // [6]
+            max_nodes: node_zones.len(),                // [29]
+            max_zones,                                  // [5]
             max_tech_nodes: count("DevelopmentData"),   // [57]
             max_quests: count("ArchiveQuestData"),      // [7]
             max_stages: count("StageData"),             // [29]
-            // `CookbookData` [21] replaces V2's `FoodData`.
+            // `CookbookData` [21], the ids of `inventory.cookbook`.
             max_recipes: count("CookbookData"),
             max_music: count("ArchiveMusicUnlockData"), // [9]
-            // `BasementUpdateDatas` [12 rows, `BaseLevel` 1..12] replaces V2's
-            // `BaseUpdate`.
+            // `BasementUpdateDatas` [12 rows, `BaseLevel` 1..12], `base.level`.
             max_base_level: count("BasementUpdateDatas"),
-            // `BuildRecipeData` [63] replaces V2's `CraftItemData`.
-            max_blueprints: count("BuildRecipeData"),
-            // V3 has no `FixedRiftData`. `ExploreStageData` [4] is the nearest
-            // repeatable-stage table, but nothing says a player's progress
-            // records clears of it, so the rift piece is left out of the V3
-            // grade (0 here) rather than guessed.
+            // `BuildRecipeData` [63] ids appear only in `current.bag.recipe`,
+            // the bag of the run in progress, so V3 has no blueprint
+            // collection to grade; bands take that half of base building.
+            max_blueprints: 0,
+            // No `FixedRiftData`. `dungeon.difficulty` records per-difficulty
+            // states, but every one read 0 in the only save seen, so what a
+            // clear looks like is unmeasured and the piece is left out.
             max_rifts: 0,
+            max_band_levels,
+            node_zones,
             topics: Vec::new(),
         }
     }
@@ -188,7 +214,7 @@ impl SandboxUniverse {
             return Vec::new();
         };
 
-        let mut declared: Vec<(String, String, i64)> = keyed_entries(raw.get("BasicInfo"))
+        let mut declared: Vec<(String, String, String, i64)> = keyed_entries(raw.get("BasicInfo"))
             .into_iter()
             .map(|(key, info)| {
                 let topic_id = info
@@ -201,18 +227,23 @@ impl SandboxUniverse {
                     .and_then(Value::as_str)
                     .unwrap_or_default()
                     .to_owned();
+                let name = info
+                    .get("TopicName")
+                    .and_then(Value::as_str)
+                    .unwrap_or_default()
+                    .to_owned();
                 let sort_id = info
                     .get("SortId")
                     .and_then(Value::as_i64)
                     .unwrap_or(i64::MAX);
-                (topic_id, template, sort_id)
+                (topic_id, template, name, sort_id)
             })
             .collect();
         if declared.is_empty() {
             let mut position = 0;
             for (template, entries) in detail.as_object().into_iter().flatten() {
                 for (key, _) in keyed_entries(Some(entries)) {
-                    declared.push((key.to_owned(), template.clone(), position));
+                    declared.push((key.to_owned(), template.clone(), String::new(), position));
                     position += 1;
                 }
             }
@@ -220,7 +251,7 @@ impl SandboxUniverse {
 
         let mut topics: Vec<SandboxTopicUniverse> = declared
             .into_iter()
-            .map(|(topic_id, template_name, sort_id)| {
+            .map(|(topic_id, template_name, name, sort_id)| {
                 let template = SandboxTemplate::from_name(&template_name);
                 let data = keyed_entries(detail.get(&template_name))
                     .into_iter()
@@ -239,6 +270,7 @@ impl SandboxUniverse {
                 };
                 SandboxTopicUniverse {
                     topic_id,
+                    name,
                     template,
                     sort_id,
                     counts,
@@ -366,16 +398,19 @@ mod tests {
 
         let v3 = &u.topics[1].counts;
         assert_eq!(v3.max_achievements, 3, "AchievementData rows");
-        assert_eq!(v3.max_nodes, 4, "MainMapData.Nodes");
-        assert_eq!(v3.max_zones, 2, "MainMapData.Zones");
+        assert_eq!(v3.max_nodes, 4, "MainMapData.Nodes without HOME");
+        assert_eq!(v3.max_zones, 2, "zones of those nodes, not the HOME zone");
+        assert_eq!(v3.node_zones["sandbox_2_node_04"], "z_2_2");
         assert_eq!(v3.max_tech_nodes, 4, "DevelopmentData");
         assert_eq!(v3.max_quests, 2, "ArchiveQuestData");
         assert_eq!(v3.max_stages, 2, "StageData");
         assert_eq!(v3.max_recipes, 2, "CookbookData");
         assert_eq!(v3.max_music, 2, "ArchiveMusicUnlockData");
         assert_eq!(v3.max_base_level, 3, "BasementUpdateDatas");
-        assert_eq!(v3.max_blueprints, 2, "BuildRecipeData");
+        assert_eq!(v3.max_blueprints, 0, "run-scoped recipes are not graded");
+        assert_eq!(v3.max_band_levels, 6, "2 bands x 3 levels");
         assert_eq!(v3.max_rifts, 0, "V3 has no fixed rifts");
+        assert_eq!(u.topics[1].name, "重启锚点", "BasicInfo.TopicName");
         assert!(v3.topics.is_empty());
     }
 

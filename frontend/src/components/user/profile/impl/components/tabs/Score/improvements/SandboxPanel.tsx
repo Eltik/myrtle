@@ -1,4 +1,4 @@
-import type { IImprovementsResponse, ISandboxCategory } from "#/lib/api/user";
+import type { IImprovementsResponse, ISandboxCategory, ISandboxTopic } from "#/lib/api/user";
 import { useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
@@ -7,25 +7,39 @@ import { EmptyHint, PANEL_PADDING, Pill, SectionHeader, TEXT_BADGE } from "./sha
 
 interface IProps {
     improvements: IImprovementsResponse;
-    accent: string;
-}
-
-export function SandboxPanel({ improvements, accent }: IProps) {
+    acceexport function SandboxPanel({ improvements, accent }: IProps) {
     const t: TypedT<typeof messages> = useT("user");
     const s = improvements.sandbox;
-    const hasAnyData = s.total > 0 || s.categories.some((c) => c.parts.some((p) => p.current > 0));
+    const hasAnyData = s.total > 0 || s.topics.some((topic) => topic.categories.some((c) => c.parts.some((p) => p.current > 0)));
 
     return (
-        <div className={`${PANEL_PADDING} flex flex-col gap-3`}>
-            {/* "Reclamation Algorithm" is the game mode's own name and stays as game vocabulary. */}
-            <SectionHeader title="Reclamation Algorithm" accent={accent} />
+        <div className={`${PANEL_PADDING} flex flex-col gap-5`}>
             {!hasAnyData && <EmptyHint>{t("score.improvements.sandbox.empty")}</EmptyHint>}
+            {s.topics.map((topic) => (
+                <TopicBlock key={topic.topic_id} topic={topic} shared={s.topics.length > 1} accent={accent} />
+            ))}
+        </div>
+    );
+}
+
+function TopicBlock({ topic, shared, accent }: { topic: ISandboxTopic; shared: boolean; accent: string }) {
+    const t: TypedT<typeof messages> = useT("user");
+    const pct = Math.round(Math.min(1, Math.max(0, topic.total)) * 100);
+    const count = shared ? t("score.improvements.sandbox.topicShare", { pct, share: Math.round(topic.weight * 100) }) : `${pct}%`;
+    return (
+        <div className="flex flex-col gap-3">
+            {/* "Reclamation Algorithm" is the game mode's own name and stays as game vocabulary; it titles a topic the game data names no further. */}
+            <SectionHeader title={topic.name || "Reclamation Algorithm"} count={count} accent={accent} />
             <div className="grid gap-x-5 gap-y-3 sm:grid-cols-2">
-                {s.categories.map((category) => (
+                {topic.categories.map((category) => (
                     <CategoryRow key={category.key} category={category} accent={accent} />
                 ))}
             </div>
         </div>
+    );
+}
+
+div>
     );
 }
 

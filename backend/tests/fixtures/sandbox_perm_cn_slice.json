@@ -223,6 +223,42 @@
               "value": {}
             }
           ],
+          "BandDataMap": [
+            {
+              "key": "band_farmer",
+              "value": {
+                "BandId": "band_farmer",
+                "LevelList": [
+                  {
+                    "Level": 1
+                  },
+                  {
+                    "Level": 2
+                  },
+                  {
+                    "Level": 3
+                  }
+                ]
+              }
+            },
+            {
+              "key": "band_merchant",
+              "value": {
+                "BandId": "band_merchant",
+                "LevelList": [
+                  {
+                    "Level": 1
+                  },
+                  {
+                    "Level": 2
+                  },
+                  {
+                    "Level": 3
+                  }
+                ]
+              }
+            }
+          ],
           "BasementUpdateDatas": [
             {
               "BaseLevel": 1,
@@ -288,31 +324,43 @@
           "MainMapData": {
             "Nodes": [
               {
+                "key": "sandbox_2_node_home",
+                "value": {
+                  "NodeId": "sandbox_2_node_home",
+                  "NodeType": "HOME",
+                  "ZoneId": "z_2_0"
+                }
+              },
+              {
                 "key": "sandbox_2_node_01",
                 "value": {
                   "NodeId": "sandbox_2_node_01",
-                  "NodeType": "STORY"
+                  "NodeType": "STORY",
+                  "ZoneId": "z_2_1"
                 }
               },
               {
                 "key": "sandbox_2_node_02",
                 "value": {
                   "NodeId": "sandbox_2_node_02",
-                  "NodeType": "STORY"
+                  "NodeType": "STORY",
+                  "ZoneId": "z_2_1"
                 }
               },
               {
                 "key": "sandbox_2_node_03",
                 "value": {
                   "NodeId": "sandbox_2_node_03",
-                  "NodeType": "STORY"
+                  "NodeType": "STORY",
+                  "ZoneId": "z_2_1"
                 }
               },
               {
                 "key": "sandbox_2_node_04",
                 "value": {
                   "NodeId": "sandbox_2_node_04",
-                  "NodeType": "STORY"
+                  "NodeType": "STORY",
+                  "ZoneId": "z_2_2"
                 }
               }
             ],
@@ -327,6 +375,12 @@
                 "key": "z_2_1",
                 "value": {
                   "ZoneId": "z_2_1"
+                }
+              },
+              {
+                "key": "z_2_2",
+                "value": {
+                  "ZoneId": "z_2_2"
                 }
               }
             ]

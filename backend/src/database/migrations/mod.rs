@@ -130,6 +130,10 @@ const MIGRATIONS: &[(&str, &str)] = &[
         "v044_content_audit_log",
         include_str!("v044_content_audit_log.sql"),
     ),
+    (
+        "v045_sandbox_keep_unloaded_topics",
+        include_str!("v045_sandbox_keep_unloaded_topics.sql"),
+    ),
 ];
 
 pub async fn run_migrations(pool: &PgPool) -> Result<(), sqlx::Error> {

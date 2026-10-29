@@ -36,12 +36,36 @@ const improvements = {
         },
     ],
     sandbox: {
-        total: 0.5127,
-        categories: [
-            { key: "base", label: "Base development", weight: 0.3, score: 0.72, parts: [{ label: "Buildings", current: 26, max: 38 }, { label: "Blueprints", current: 41, max: 57 }] },
-            { key: "exploration", label: "Map exploration", weight: 0.25, score: 0.58, parts: [{ label: "Nodes revealed", current: 118, max: 204 }] },
-            { key: "collection", label: "Collection", weight: 0.25, score: 0.41, parts: [{ label: "Items", current: 92, max: 224 }] },
-            { key: "achievement", label: "Achievements", weight: 0.2, score: 0.26, parts: [{ label: "Trophies", current: 17, max: 65 }] },
+        total: 0.5128,
+        topics: [
+            {
+                topic_id: "sandbox_1",
+                name: "Tales Within the Sand",
+                weight: 0.5,
+                total: 0.762,
+                categories: [
+                    { key: "achievements", label: "Achievements", weight: 0.3, score: 0.563, parts: [{ label: "Completed", current: 40, max: 71 }] },
+                    { key: "exploration", label: "Exploration", weight: 0.2, score: 0.771, parts: [{ label: "Map nodes", current: 90, max: 127 }, { label: "Zones", current: 5, max: 6 }] },
+                    { key: "tech", label: "Tech unlocks", weight: 0.15, score: 0.926, parts: [{ label: "Unlocked", current: 50, max: 54 }] },
+                    { key: "quests", label: "Story acts", weight: 0.15, score: 1, parts: [{ label: "Completed", current: 7, max: 7 }] },
+                    { key: "base", label: "Base building", weight: 0.1, score: 0.844, parts: [{ label: "Base level", current: 6, max: 8 }, { label: "Blueprints", current: 90, max: 96 }] },
+                    { key: "content", label: "Content depth", weight: 0.1, score: 0.656, parts: [{ label: "Recipes", current: 30, max: 53 }, { label: "Music", current: 8, max: 10 }, { label: "Rifts cleared", current: 3, max: 5 }] },
+                ],
+            },
+            {
+                topic_id: "sandbox_2",
+                name: "Relaunch Anchor",
+                weight: 0.5,
+                total: 0.2635,
+                categories: [
+                    { key: "achievements", label: "Achievements", weight: 0.3, score: 0.169, parts: [{ label: "Completed", current: 10, max: 59 }] },
+                    { key: "exploration", label: "Exploration", weight: 0.2, score: 0.459, parts: [{ label: "Map nodes", current: 12, max: 29 }, { label: "Zones", current: 2, max: 5 }] },
+                    { key: "tech", label: "Tech unlocks", weight: 0.15, score: 0.211, parts: [{ label: "Unlocked", current: 12, max: 57 }] },
+                    { key: "quests", label: "Story acts", weight: 0.15, score: 0.286, parts: [{ label: "Completed", current: 2, max: 7 }] },
+                    { key: "base", label: "Base building", weight: 0.1, score: 0.361, parts: [{ label: "Base level", current: 5, max: 12 }, { label: "Band levels", current: 5, max: 18 }] },
+                    { key: "content", label: "Content depth", weight: 0.1, score: 0.317, parts: [{ label: "Recipes", current: 6, max: 21 }, { label: "Music", current: 3, max: 9 }] },
+                ],
+            },
         ],
     },
 };

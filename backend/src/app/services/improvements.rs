@@ -39,10 +39,10 @@ use crate::core::grade::grade_operators::{
     is_graded, operator_score_breakdown, operator_upgrade_deltas, potential_matters,
     rarity_to_weight, total_roster_weight,
 };
-use crate::core::grade::sandbox::grade_sandbox_detail;
 use crate::core::grade::sandbox::score::{
     ACHIEVEMENT_WEIGHT, BASE_WEIGHT, CONTENT_WEIGHT, EXPLORATION_WEIGHT, QUEST_WEIGHT, TECH_WEIGHT,
 };
+use crate::core::grade::sandbox::{SandboxGradeDetail, grade_sandbox_detail};
 use crate::core::grade::stages::{PlayerPools, PoolStage};
 use crate::core::hypergryph::constants::Server;
 use crate::database::models::roster::RosterEntry;
@@ -184,11 +184,29 @@ pub struct RoguelikeCollectibles {
 #[ts(export)]
 #[derive(Debug, Clone, Serialize, Default)]
 pub struct SandboxImprovements {
-    /// Overall RA score (0..1), the weighted sum of the categories below. The
+    /// Overall RA score (0..1), the equal-weight mean of the topics below. The
     /// headline percentage is computed from it.
     pub total: f64,
+    /// One entry per graded RA topic, in release order.
+    pub topics: Vec<SandboxTopic>,
+}
+
+#[derive(TS, utoipa::ToSchema)]
+#[ts(export)]
+#[derive(Debug, Clone, Serialize)]
+pub struct SandboxTopic {
+    /// `sandbox_1`, `sandbox_2`, ...
+    pub topic_id: String,
+    /// The game's own topic name, in the served game data's language; empty
+    /// when the table carries none.
+    pub name: String,
+    /// Fraction of the RA score this topic carries (0..1). Every topic weighs
+    /// the same.
+    pub weight: f64,
+    /// This topic's own score (0..1), the weighted sum of its categories.
+    pub total: f64,
     /// One entry per scored category, in grade-weight order, with its weight,
-    /// completion and counts, so the breakdown adds up to the headline.
+    /// completion and counts, so the breakdown adds up to `total`.
     pub categories: Vec<SandboxCategory>,
 }
 
@@ -1069,15 +1087,54 @@ async fn build_sandbox_improvements(
     user_id: Uuid,
     game_data: &GameData,
 ) -> Result<SandboxImprovements, ApiError> {
-    let d = grade_sandbox_detail(pool, user_id, game_data).await?;
+    let grade = grade_sandbox_detail(pool, user_id, game_data).await?;
+    let weight = 1.0 / grade.topics.len().max(1) as f64;
+    let topics = grade
+        .topics
+        .iter()
+        .map(|d| SandboxTopic {
+            topic_id: d.topic_id.clone().unwrap_or_default(),
+            name: d.topic_name.clone(),
+            weight,
+            total: d.total,
+            categories: sandbox_categories(d),
+        })
+        .collect();
 
+    Ok(SandboxImprovements {
+        total: grade.total,
+        topics,
+    })
+}
+
+/// The six categories of one topic. V3 shows bands where V2 shows blueprints,
+/// and has no rift piece.
+fn sandbox_categories(d: &SandboxGradeDetail) -> Vec<SandboxCategory> {
     let part = |label: &'static str, current: usize, max: usize| SandboxPart {
         label,
         current,
         max,
     };
+    let base_parts = if d.v3 {
+        vec![
+            part("Base level", d.base_level, d.base_level_max),
+            part("Band levels", d.band_levels, d.band_levels_max),
+        ]
+    } else {
+        vec![
+            part("Base level", d.base_level, d.base_level_max),
+            part("Blueprints", d.blueprints, d.blueprints_total),
+        ]
+    };
+    let mut content_parts = vec![
+        part("Recipes", d.recipes, d.recipes_total),
+        part("Music", d.music, d.music_total),
+    ];
+    if !d.v3 {
+        content_parts.push(part("Rifts cleared", d.rift_levels, d.rift_levels_max));
+    }
 
-    let categories = vec![
+    vec![
         SandboxCategory {
             key: "achievements",
             label: "Achievements",
@@ -1118,28 +1175,16 @@ async fn build_sandbox_improvements(
             label: "Base building",
             weight: BASE_WEIGHT,
             score: d.base_building,
-            parts: vec![
-                part("Base level", d.base_level, d.base_level_max),
-                part("Blueprints", d.blueprints, d.blueprints_total),
-            ],
+            parts: base_parts,
         },
         SandboxCategory {
             key: "content",
             label: "Content depth",
             weight: CONTENT_WEIGHT,
             score: d.content_depth,
-            parts: vec![
-                part("Recipes", d.recipes, d.recipes_total),
-                part("Music", d.music, d.music_total),
-                part("Rifts cleared", d.rift_levels, d.rift_levels_max),
-            ],
+            parts: content_parts,
         },
-    ];
-
-    Ok(SandboxImprovements {
-        total: d.total,
-        categories,
-    })
+    ]
 }
 
 async fn build_medal_improvements(
