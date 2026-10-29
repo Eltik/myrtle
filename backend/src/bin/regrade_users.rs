@@ -11,6 +11,14 @@
 //!   cargo run --release --bin regrade-users -- --server en              # filter by server
 //!   cargo run --release --bin regrade-users -- --dry-run                # compute, don't write
 //!   cargo run --release --bin regrade-users -- --fail-fast               # stop on first error
+//!   cargo run --release --bin regrade-users -- --only-sandbox            # RA section only
+//!
+//! `--only-sandbox` recomputes the RA grade alone and rebuilds the total and
+//! letter grade from the other five section scores already in `user_scores`,
+//! through the same `total_from_sections` the full grade uses. Each user costs
+//! one progress read and one score row read and write instead of the roster,
+//! base, stage and medal grading. A user with no `user_scores` row gets the
+//! full regrade.
 
 // CLI: the long `main` and the counter casts are deliberate; `try_from` would only add noise.
 #![allow(
@@ -24,7 +32,11 @@ use anyhow::{Context, Result};
 use backend::{
     app::state::{default_bin_server_from_env, derive_assets_dir, derive_game_data_dir},
     core::{
-        gamedata::init_game_data, grade::calculate::calculate_user_grade,
+        gamedata::init_game_data,
+        grade::{
+            calculate::{calculate_user_grade, score_to_grade, total_from_sections},
+            sandbox::grade_sandbox,
+        },
         hypergryph::constants::Server,
     },
     database::{models::score::UserScore, queries::score::update_score},
@@ -50,6 +62,7 @@ struct Args {
     server: Option<i16>,
     dry_run: bool,
     fail_fast: bool,
+    only_sandbox: bool,
     quiet: bool,
     progress_every: u64,
 }
@@ -63,6 +76,7 @@ impl Default for Args {
             server: None,
             dry_run: false,
             fail_fast: false,
+            only_sandbox: false,
             quiet: false,
             progress_every: 50,
         }
@@ -97,6 +111,7 @@ fn parse_args() -> Result<Args> {
             }
             "--dry-run" => a.dry_run = true,
             "--fail-fast" => a.fail_fast = true,
+            "--only-sandbox" => a.only_sandbox = true,
             "--quiet" | "-q" => a.quiet = true,
             "--progress-every" => {
                 a.progress_every = it
@@ -130,6 +145,7 @@ fn print_usage() {
                --server <code>       Restrict to one server (en|jp|kr|cn|bili|tw)\n\
                --dry-run             Compute grades but do not write to user_scores\n\
                --fail-fast           Abort on the first per-user failure\n\
+               --only-sandbox        Recompute the RA section only, keep the other five\n\
            -q, --quiet               Suppress per-user log lines\n\
                --progress-every <N>  Log running totals every N users (default 50)\n\
            -h, --help                Show this help"
@@ -241,13 +257,18 @@ async fn main() -> Result<()> {
             let abort = abort.clone();
             let dry_run = args.dry_run;
             let fail_fast = args.fail_fast;
+            let only_sandbox = args.only_sandbox;
             let quiet = args.quiet;
             let progress_every = args.progress_every;
 
             let handle = tokio::spawn(async move {
                 let _permit = permit;
                 let started = Instant::now();
-                let result = regrade_one(&pool, user_id, &game_data, dry_run).await;
+                let result = if only_sandbox {
+                    regrade_sandbox_only(&pool, user_id, &game_data, dry_run).await
+                } else {
+                    regrade_one(&pool, user_id, &game_data, dry_run).await
+                };
                 let elapsed_ms = started.elapsed().as_millis();
 
                 let n = processed.fetch_add(1, Ordering::Relaxed) + 1;
@@ -346,6 +367,50 @@ async fn regrade_one(
         update_score(pool, &score)
             .await
             .with_context(|| format!("update_score({user_id})"))?;
+    }
+
+    Ok(overall)
+}
+
+/// The RA section alone, with the total and letter grade rebuilt from the
+/// stored section scores. Falls back to `regrade_one` when the user has no
+/// `user_scores` row to rebuild from.
+async fn regrade_sandbox_only(
+    pool: &PgPool,
+    user_id: Uuid,
+    game_data: &backend::core::gamedata::types::GameData,
+    dry_run: bool,
+) -> Result<String> {
+    let stored: Option<(f64, f64, f64, f64, f64)> = sqlx::query_as(
+        "SELECT operator_score, base_score, roguelike_score, medal_score, stage_score \
+         FROM user_scores WHERE user_id = $1",
+    )
+    .bind(user_id)
+    .fetch_optional(pool)
+    .await
+    .with_context(|| format!("read user_scores({user_id})"))?;
+    let Some((operator, base, roguelike, medal, stage)) = stored else {
+        return regrade_one(pool, user_id, game_data, dry_run).await;
+    };
+
+    let sandbox = grade_sandbox(pool, user_id, game_data)
+        .await
+        .with_context(|| format!("grade_sandbox({user_id})"))?;
+    let total = total_from_sections(operator, base, roguelike, medal, stage, sandbox);
+    let overall = score_to_grade(total);
+
+    if !dry_run {
+        sqlx::query(
+            "UPDATE user_scores SET sandbox_score = $2, total_score = $3, grade = $4, \
+             calculated_at = NOW() WHERE user_id = $1",
+        )
+        .bind(user_id)
+        .bind(sandbox)
+        .bind(total)
+        .bind(&overall)
+        .execute(pool)
+        .await
+        .with_context(|| format!("update sandbox score({user_id})"))?;
     }
 
     Ok(overall)

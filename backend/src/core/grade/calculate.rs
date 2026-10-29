@@ -88,16 +88,14 @@ pub async fn calculate_user_grade(
     let roguelike_grade = grade_roguelike(&roguelike_data, &game_data.roguelike);
     let medal_grade = grade_medals(&user_medals, &game_data.medals, &owned_operators);
 
-    let scores: Vec<(f64, f64)> = vec![
-        (SECTION_WEIGHT_OPERATOR, operator_grade),
-        (SECTION_WEIGHT_BASE, base_grade),
-        (SECTION_WEIGHT_ROGUELIKE, roguelike_grade),
-        (SECTION_WEIGHT_MEDAL, medal_grade),
-        (SECTION_WEIGHT_STAGE, stage_grade),
-        (SECTION_WEIGHT_SANDBOX, sandbox_grade),
-    ];
-
-    let total_score = scores.iter().map(|(w, v)| w * v).sum::<f64>() / SECTION_WEIGHT_TOTAL;
+    let total_score = total_from_sections(
+        operator_grade,
+        base_grade,
+        roguelike_grade,
+        medal_grade,
+        stage_grade,
+        sandbox_grade,
+    );
     let overall = score_to_grade(total_score);
 
     Ok(UserGrade {
@@ -114,7 +112,29 @@ pub async fn calculate_user_grade(
     })
 }
 
-fn score_to_grade(score: f64) -> String {
+/// The overall score from the six section grades. One formula for the full
+/// grade and for a pass that recomputes a single section, so both write the
+/// same bits for the same inputs.
+pub fn total_from_sections(
+    operator: f64,
+    base: f64,
+    roguelike: f64,
+    medal: f64,
+    stage: f64,
+    sandbox: f64,
+) -> f64 {
+    let scores = [
+        (SECTION_WEIGHT_OPERATOR, operator),
+        (SECTION_WEIGHT_BASE, base),
+        (SECTION_WEIGHT_ROGUELIKE, roguelike),
+        (SECTION_WEIGHT_MEDAL, medal),
+        (SECTION_WEIGHT_STAGE, stage),
+        (SECTION_WEIGHT_SANDBOX, sandbox),
+    ];
+    scores.iter().map(|(w, v)| w * v).sum::<f64>() / SECTION_WEIGHT_TOTAL
+}
+
+pub fn score_to_grade(score: f64) -> String {
     match score {
         s if s >= 0.90 => "S+",
         s if s >= 0.75 => "S",
