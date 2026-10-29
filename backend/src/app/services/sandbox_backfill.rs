@@ -224,6 +224,16 @@ async fn run(
         switch_back(state, uid, session, server, &loaded).await;
     }
     if fetched > 0 {
+        // The improvements body is cached under `users.updated_at`
+        // (`trg_users_timestamp`), and a build started before the store can
+        // land after any invalidation, under the same key, with the topic at 0
+        // (seen on prod 2026-10-29: RA 19.4% beside a 0% breakdown). A new
+        // generation makes that write unreachable. It also moves the profile's
+        // "last synced" to now, ~30 s after the sync that started this.
+        sqlx::query("UPDATE users SET updated_at = NOW() WHERE id = $1")
+            .bind(user_id)
+            .execute(&state.db)
+            .await?;
         let game_data = state.default_game_data();
         rescore_sandbox_section(&state.db, user_id, &game_data, false).await?;
         state.cache.invalidate(&CacheKey::User { uid }).await;
