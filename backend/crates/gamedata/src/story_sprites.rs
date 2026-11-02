@@ -11,10 +11,11 @@ pub struct StorySprite {
     pub body: String,
     pub face_center: Option<(f32, f32)>,
     pub speaker: Option<String>,
-    pub aliases: Vec<String>
+    pub aliases: Vec<String>,
 }
 
 impl StorySprite {
+    #[must_use]
     pub fn body_path(&self) -> String {
         format!("/textures/avg/characters/{}/{}.png", self.folder, self.body)
     }
@@ -26,6 +27,7 @@ pub struct StorySprites {
 }
 
 impl StorySprites {
+    #[must_use]
     pub fn get(&self, id: &str) -> Option<&StorySprite> {
         self.sprites.get(id)
     }
@@ -34,10 +36,12 @@ impl StorySprites {
         self.sprites.values()
     }
 
+    #[must_use]
     pub fn len(&self) -> usize {
         self.sprites.len()
     }
 
+    #[must_use]
     pub fn is_empty(&self) -> bool {
         self.sprites.is_empty()
     }
@@ -208,6 +212,7 @@ fn hub_body(hub: Option<&Value>, stems: &[String]) -> Option<String> {
     stems.iter().find(|stem| stem.as_str() == name).cloned()
 }
 
+#[must_use]
 pub fn face_center(hub: Option<&Value>, body_head: Option<&[u8]>) -> Option<(f32, f32)> {
     let group = hub?.get("groups")?.as_array()?.first()?;
     let num = |o: &Value, k: &str| o.get(k).and_then(Value::as_f64);
@@ -324,7 +329,9 @@ impl Stage {
     fn character(&mut self, a: &[(String, String)]) {
         self.slots.clear();
         for key in ["name", "name2"] {
-            if let Some(v) = arg(a, key) && !v.is_empty() {
+            if let Some(v) = arg(a, key)
+                && !v.is_empty()
+            {
                 self.slots.push((key.to_owned(), v.to_owned()));
             }
         }

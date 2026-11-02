@@ -212,6 +212,7 @@ pub struct BuffUnlockCondition {
 }
 
 impl BuffUnlockCondition {
+    #[must_use]
     pub fn elite(&self) -> i32 {
         match self.phase.as_str() {
             "PHASE_0" => 0,

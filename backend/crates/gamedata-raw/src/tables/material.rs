@@ -23,6 +23,7 @@ pub enum ItemRarity {
 }
 
 impl ItemRarity {
+    #[must_use]
     pub const fn tier(&self) -> u8 {
         match self {
             Self::Tier1 => 1,
@@ -363,6 +364,7 @@ pub struct ItemTableFile {
 }
 
 impl ItemTableFile {
+    #[must_use]
     pub fn into_materials(self) -> Materials {
         Materials {
             items: self.items,

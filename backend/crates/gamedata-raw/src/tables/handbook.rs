@@ -410,6 +410,7 @@ pub struct HandbookTableFile {
 }
 
 impl HandbookTableFile {
+    #[must_use]
     pub fn into_handbook(self) -> Handbook {
         Handbook {
             handbook_dict: self.handbook_dict,

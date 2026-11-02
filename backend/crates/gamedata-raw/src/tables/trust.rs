@@ -31,6 +31,7 @@ pub struct Favor {
 
 impl Favor {
     /// Raw favor points -> trust percent (0-200), 0.0 if table is empty
+    #[must_use]
     pub fn trust_pct(&self, favor_point: i32) -> f64 {
         self.favor_frames
             .iter()
@@ -40,6 +41,7 @@ impl Favor {
     }
 
     /// e.g. 200.0
+    #[must_use]
     pub fn max_trust_pct(&self) -> f64 {
         self.favor_frames.last().map_or(0.0, |f| f.data.percent)
     }

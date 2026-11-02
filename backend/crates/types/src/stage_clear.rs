@@ -8,14 +8,17 @@ pub struct StageClear {
 }
 
 impl StageClear {
+    #[must_use]
     pub const fn is_cleared(&self) -> bool {
         self.state >= 2
     }
 
+    #[must_use]
     pub const fn is_three_starred(&self) -> bool {
         self.state >= 3
     }
 
+    #[must_use]
     pub const fn clear_score(&self) -> f64 {
         if !self.is_cleared() {
             0.0

@@ -57,6 +57,7 @@ pub struct RoguelikeTopicTableFile {
 }
 
 impl RoguelikeGameData {
+    #[must_use]
     pub fn from_table(table: &RoguelikeTopicTableFile) -> Self {
         let mut data = Self {
             entries: RoguelikeEntries::from_tables(&table.topics, &table.details),
@@ -120,10 +121,12 @@ impl RoguelikeGameData {
         data
     }
 
+    #[must_use]
     pub fn total_max_endings(&self) -> i32 {
         self.themes.values().map(|t| t.max_endings).sum()
     }
 
+    #[must_use]
     pub fn total_max_collectibles(&self) -> i32 {
         self.themes
             .values()
@@ -131,14 +134,17 @@ impl RoguelikeGameData {
             .sum()
     }
 
+    #[must_use]
     pub fn total_max_challenges(&self) -> i32 {
         self.themes.values().map(|t| t.max_challenges).sum()
     }
 
+    #[must_use]
     pub fn total_max_monthly_squads(&self) -> i32 {
         self.themes.values().map(|t| t.max_monthly_squads).sum()
     }
 
+    #[must_use]
     pub fn theme_count(&self) -> i32 {
         self.themes.len() as i32
     }
@@ -154,6 +160,7 @@ pub struct CollectedCounts {
 
 impl RoguelikeThemeGameData {
     /// Archive relics/capsules/bands a player's theme progress has unlocked (`state >= 1`)
+    #[must_use]
     pub fn count_collected(&self, progress: &Value) -> CollectedCounts {
         let collect = progress.get("collect");
         let relic_buckets = [

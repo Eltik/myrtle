@@ -56,10 +56,12 @@ pub struct RoguelikeEntries {
 }
 
 impl RoguelikeEntries {
+    #[must_use]
     pub fn get(&self, id: &str) -> Option<&RoguelikeEntry> {
         self.index.get(id).map(|&i| &self.entries[i])
     }
 
+    #[must_use]
     pub fn from_tables(topics: &Value, details: &Value) -> Self {
         let topics = kv_pairs(topics);
         let details: HashMap<&str, &Value> = kv_pairs(details).into_iter().collect();

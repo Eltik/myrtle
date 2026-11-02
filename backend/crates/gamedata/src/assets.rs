@@ -77,6 +77,7 @@ pub struct AssetIndex {
 }
 
 impl AssetIndex {
+    #[must_use]
     pub fn from_paths(paths: &[String]) -> Self {
         let mut idx = Self::default();
         for kind in ALL_KINDS {
@@ -107,8 +108,7 @@ impl AssetIndex {
                         .strip_prefix("storyEntryPic_")
                         .unwrap_or(stem)
                         .to_owned(),
-                    AssetKind::CampLogo => stem
-                        .to_ascii_lowercase(),
+                    AssetKind::CampLogo => stem.to_ascii_lowercase(),
                     _ => stem.to_owned(),
                 };
                 idx.kind_mut(kind).insert(key, rel_path.clone());
@@ -139,7 +139,7 @@ impl AssetIndex {
 
         for (sub, kind) in [
             ("gacha", AssetKind::GachaBanner),
-            ("event", AssetKind::EventBanner)
+            ("event", AssetKind::EventBanner),
         ] {
             let prefix = format!("derived/release-art/{sub}");
             let map = idx.kind_mut(kind);
@@ -189,12 +189,14 @@ impl AssetIndex {
         idx
     }
 
+    #[must_use]
     pub fn build(paths: &[String], sprites: &StorySpriteFiles, scripts: &[String]) -> Self {
         let mut idx = Self::from_paths(paths);
         idx.story_sprites = StorySprites::build(sprites, scripts, &story_folders(paths));
         idx
     }
 
+    #[must_use]
     pub fn resolve_audio(&self, asset: &str) -> Vec<String> {
         const PREFIX: &str = "audio/sound_beta_2/";
         const VOICE_DIRS: &[&str] = &["voice", "voice_cn", "voice_en", "voice_kr", "vox"];
@@ -240,28 +242,34 @@ impl AssetIndex {
         self.map.get(&kind)?.get(name).map(String::as_str)
     }
 
+    #[must_use]
     pub fn gacha_banner_path(&self, pool_id: &str) -> Option<&str> {
         let key = normalize_stem(&format!("pic{pool_id}"));
         self.path(AssetKind::GachaBanner, &key)
     }
 
+    #[must_use]
     pub fn event_banner_path(&self, act_id: &str) -> Option<&str> {
         self.path(AssetKind::EventBanner, act_id)
             .or_else(|| self.path(AssetKind::StoryEntryPic, act_id))
     }
 
+    #[must_use]
     pub fn loading_illust_path(&self, pic: &str) -> Option<&str> {
         self.path(AssetKind::LoadingIllust, pic)
     }
 
+    #[must_use]
     pub fn brand_kv_path(&self, kv_id: &str) -> Option<&str> {
         self.path(AssetKind::BrandKv, kv_id)
     }
 
+    #[must_use]
     pub fn brand_logo_path(&self, brand_id: &str) -> Option<&str> {
         self.path(AssetKind::BrandLogo, &format!("brand_{brand_id}"))
     }
 
+    #[must_use]
     pub fn portrait_path(&self, char_id: &str) -> Option<&str> {
         let mut buf = String::with_capacity(char_id.len() + 2);
         buf.push_str(char_id);
@@ -274,6 +282,7 @@ impl AssetIndex {
         self.path(AssetKind::Portrait, &buf)
     }
 
+    #[must_use]
     pub fn portrait_variants(&self, char_id: &str) -> Vec<&str> {
         let Some(portraits) = self.map.get(&AssetKind::Portrait) else {
             return vec![];
@@ -286,6 +295,7 @@ impl AssetIndex {
             .collect()
     }
 
+    #[must_use]
     pub fn charart_path(&self, char_id: &str) -> Option<String> {
         let suffixes = self.chararts.get(char_id)?;
         for preferred in &["_2", "_1"] {
@@ -302,14 +312,17 @@ impl AssetIndex {
         self.chararts.get(char_id).map(Vec::as_slice)
     }
 
+    #[must_use]
     pub fn has_charart(&self, char_id: &str) -> bool {
         self.chararts.contains_key(char_id)
     }
 
+    #[must_use]
     pub fn skill_icon_path(&self, skill_id: &str) -> Option<&str> {
         self.path(AssetKind::SkillIcon, &format!("skill_icon_{skill_id}"))
     }
 
+    #[must_use]
     pub fn module_big_path(&self, equip_icon: &str) -> Option<&str> {
         if equip_icon == "original" || equip_icon.starts_with("uniequip_001_") {
             return None;
@@ -317,6 +330,7 @@ impl AssetIndex {
         self.path(AssetKind::ModuleBig, equip_icon)
     }
 
+    #[must_use]
     pub fn module_icon_path(&self, equip_icon: &str) -> Option<&str> {
         if equip_icon == "original" || equip_icon.starts_with("uniequip_001_") {
             return None;
@@ -328,6 +342,7 @@ impl AssetIndex {
         self.skinpacks.get(char_id).map(Vec::as_slice)
     }
 
+    #[must_use]
     pub const fn story_sprites(&self) -> &StorySprites {
         &self.story_sprites
     }

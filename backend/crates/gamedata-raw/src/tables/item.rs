@@ -53,6 +53,7 @@ pub struct RecommendTag {
 }
 
 /// Number in `tag_NNNN`, `None` for any other spelling
+#[must_use]
 pub fn tag_number(tag_id: &str) -> Option<u32> {
     let digits = tag_id.strip_prefix("tag_")?;
     if digits.is_empty() || !digits.bytes().all(|b| b.is_ascii_digit()) {
@@ -145,11 +146,13 @@ pub struct ShopTableFile {
 /// Fashion Review, identified by name since its listing template changes
 const REVIEW_NAMES: &[&str] = &["风尚回顾", "Fashion Review"];
 
+#[must_use]
 pub fn is_review_name(tag_name: &str) -> bool {
     REVIEW_NAMES.iter().any(|n| tag_name.contains(n))
 }
 
 impl ShopTableFile {
+    #[must_use]
     pub fn into_skin_windows(self) -> Vec<SkinWindow> {
         let mut out: Vec<SkinWindow> = self
             .carousels
@@ -172,6 +175,7 @@ impl ShopTableFile {
         out
     }
 
+    #[must_use]
     pub fn into_skin_listings(&self) -> Vec<SkinListing> {
         let mut out: Vec<SkinListing> = self
             .recommend_list
@@ -238,6 +242,7 @@ impl ShopTableFile {
     }
 
     /// Recommend entries with a tag and a start
+    #[must_use]
     pub fn recommend_tags(&self) -> Vec<RecommendTag> {
         self.recommend_list
             .iter()

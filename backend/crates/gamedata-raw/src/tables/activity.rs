@@ -72,6 +72,7 @@ pub struct ActivityBasicInfo {
 }
 
 impl ActivityBasicInfo {
+    #[must_use]
     pub fn is_one_time_competitive(&self) -> bool {
         matches!(
             self.activity_type.as_str(),
@@ -142,6 +143,7 @@ pub struct BattleTask {
 
 impl ActivityTableFile {
     /// Stages on one arm of an either/or choice (`OR` rings), locked for good by the other arm
+    #[must_use]
     pub fn optional_stage_ids(&self) -> HashSet<String> {
         self.siracusa_data
             .task_ring_map
@@ -155,6 +157,7 @@ impl ActivityTableFile {
     }
 
     /// Stages that only existed while the event ran (the 14 `IS-QT` stages)
+    #[must_use]
     pub fn live_only_stage_ids(&self) -> HashSet<String> {
         self.siracusa_data
             .battle_task_map
@@ -187,6 +190,7 @@ pub struct MissionReward {
 }
 
 /// Event currency each activity's missions pay out, keyed by activity id
+#[must_use]
 pub fn mission_tokens_by_activity(
     missions: &[ActivityMission],
     activity_items: &HashMap<String, Vec<String>>,
@@ -217,6 +221,7 @@ pub struct OpStage {
 }
 
 /// Originite Prime stages of each activity, in stage order
+#[must_use]
 pub fn op_stages_by_activity(
     stages: &HashMap<String, Stage>,
     zone_to_activity: &HashMap<String, String>,
@@ -297,6 +302,7 @@ pub const FARM_STAGES: usize = 3;
 pub const FARM_MIN_TIER: u8 = 3;
 
 /// Last `FARM_STAGES` normal stages of each activity dropping a tier `FARM_MIN_TIER`+ material
+#[must_use]
 pub fn farm_stages_by_activity(
     stages: &HashMap<String, Stage>,
     zone_to_activity: &HashMap<String, String>,
@@ -399,6 +405,7 @@ pub struct MissionArchiveClip {
 }
 
 /// Skin ids (`char_002_amiya@test#1`) that appear as whole JSON strings in `raw`
+#[must_use]
 pub fn scan_skin_refs(raw: &[u8]) -> HashSet<String> {
     let mut refs = HashSet::new();
     let mut i = 0;
@@ -421,6 +428,7 @@ pub fn scan_skin_refs(raw: &[u8]) -> HashSet<String> {
 /// `FlatBuffer` map entry (`{key: <stage_id>, value: {... BossData: {EnemyId}}}`)
 /// anywhere in `raw`; some bosses are never in a level file. Empty when `raw`
 /// does not parse.
+#[must_use]
 pub fn scan_boss_stages(raw: &[u8]) -> Vec<(String, String)> {
     let mut out = Vec::new();
     if let Ok(table) = serde_json::from_slice::<Value>(raw) {

@@ -352,6 +352,7 @@ pub struct BattleEquipTableFile {
 }
 
 impl UniequipTableFile {
+    #[must_use]
     pub fn into_raw_modules(self) -> RawModules {
         RawModules {
             equip_dict: self.equip_dict,
@@ -364,6 +365,7 @@ impl UniequipTableFile {
 }
 
 impl BattleEquipTableFile {
+    #[must_use]
     pub fn into_battle_equip(self) -> BattleEquip {
         self.equips
     }

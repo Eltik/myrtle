@@ -43,6 +43,7 @@ pub struct GachaPoolDetail {
 
 impl GachaPoolDetail {
     /// Player-pick banner (`SPECIAL` pickup), by layout discriminator rather than rule type
+    #[must_use]
     pub fn is_pickup(&self) -> bool {
         self.detail_info.gacha_obj_list.as_ref().is_some_and(|l| {
             l.iter()

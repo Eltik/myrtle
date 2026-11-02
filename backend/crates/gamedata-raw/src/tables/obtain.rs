@@ -16,6 +16,7 @@ pub enum ObtainChannel {
 
 impl ObtainChannel {
     /// EN and CN wording, by prefix. `None` for an empty approach
+    #[must_use]
     pub fn classify(approach: &str) -> Option<Self> {
         const PREFIXES: &[(&str, ObtainChannel)] = &[
             ("Recruitment & Headhunting", ObtainChannel::Headhunting),

@@ -17,6 +17,7 @@ pub struct LevelTables {
 /// A `*.json` under `gamedata/levels/`, outside the `enemydata/` stats
 /// directory and `levelreplacers/` (IS layout variants that duplicate a base
 /// node). `rel_path` is relative to `gamedata/levels/`.
+#[must_use]
 pub fn is_level_file(rel_path: &str) -> bool {
     let mut segments: Vec<&str> = rel_path.split('/').collect();
     let Some(file) = segments.pop() else {

@@ -151,6 +151,7 @@ pub const MALE_TAG_ID: i32 = 1012;
 pub const FEMALE_TAG_ID: i32 = 1013;
 
 /// Profession code -> server's class name from its gacha tags
+#[must_use]
 pub fn profession_names(tags: &[GachaTag]) -> HashMap<String, String> {
     PROFESSION_TAG_IDS
         .iter()
@@ -243,6 +244,7 @@ pub struct GachaTableFile {
 }
 
 impl GachaTableFile {
+    #[must_use]
     pub fn into_gacha_data(self) -> GachaData {
         GachaData {
             gacha_pool_client: self.gacha_pool_client,

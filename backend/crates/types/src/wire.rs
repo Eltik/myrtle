@@ -16,12 +16,14 @@ impl PageRequest {
     pub const DEFAULT_LIMIT: u32 = 20;
     pub const MAX_LIMIT: u32 = 100;
 
+    #[must_use]
     pub fn limit(&self) -> u32 {
         self.limit
             .unwrap_or(Self::DEFAULT_LIMIT)
             .min(Self::MAX_LIMIT)
     }
 
+    #[must_use]
     pub fn offset(&self) -> u32 {
         self.offset.unwrap_or(0)
     }

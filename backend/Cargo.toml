@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["crates/gamedata","crates/gamedata-raw",
+members = ["crates/gamedata","crates/gamedata-old","crates/gamedata-raw",
     "crates/storage",
     "crates/types",
     "xtask",
@@ -21,6 +21,7 @@ myrtle-types = { path = "crates/types" }
 myrtle-gamedata-raw = { path = "crates/gamedata-raw" }
 myrtle-storage = { path = "crates/storage" }
 myrtle-gamedata = { path = "crates/gamedata" }
+myrtle-gamedata-old = { path = "crates/gamedata-old" }
 myrtle-snapshot = { path = "crates/snapshot" }
 myrtle-engine-dps = { path = "crates/engine-dps" }
 myrtle-dps-formulas = { path = "crates/dps-formulas" }
@@ -137,7 +138,7 @@ crates = ["myrtle-gamedata-raw", "myrtle-storage"]
 [[workspace.metadata.layers]]
 level = 2
 name = "game model"
-crates = ["myrtle-gamedata"]
+crates = ["myrtle-gamedata", "myrtle-gamedata-old"]
 
 [[workspace.metadata.layers]]
 level = 3
@@ -179,6 +180,7 @@ pure = [
     "myrtle-types",
     "myrtle-gamedata-raw",
     "myrtle-gamedata",
+    "myrtle-gamedata-old",
     "myrtle-engine-*",
     "myrtle-dps-formulas",
 ]

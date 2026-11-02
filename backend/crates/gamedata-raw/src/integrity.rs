@@ -21,12 +21,14 @@ pub struct IntegrityReport {
 }
 
 impl IntegrityReport {
+    #[must_use]
     pub const fn is_clean(&self) -> bool {
         self.skipped.is_empty() && self.warnings.is_empty()
     }
 }
 
 /// Load warnings, plus one for each core table that parsed but has no rows
+#[must_use]
 pub fn check(raw: &RawGameData) -> IntegrityReport {
     let populated = [
         ("character_table", raw.character.characters.characters.len()),

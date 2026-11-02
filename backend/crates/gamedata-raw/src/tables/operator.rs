@@ -55,6 +55,7 @@ pub enum OperatorRarity {
 }
 
 impl OperatorRarity {
+    #[must_use]
     pub const fn to_star_int(&self) -> i16 {
         match self {
             Self::SixStar => 6,
@@ -96,6 +97,7 @@ pub enum OperatorProfession {
 }
 
 impl OperatorProfession {
+    #[must_use]
     pub const fn to_raw_str(&self) -> &'static str {
         match self {
             Self::Medic => "MEDIC",

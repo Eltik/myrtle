@@ -36,6 +36,7 @@ pub struct HomeBackground {
 
 impl DisplayMetaTableFile {
     /// Backgrounds in lobby order
+    #[must_use]
     pub fn into_home_backgrounds(self) -> Vec<HomeBackground> {
         let mut list = self.home_background_data.home_bg_data_list;
         list.retain(|bg| !bg.bg_id.is_empty());

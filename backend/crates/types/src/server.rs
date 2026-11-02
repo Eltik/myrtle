@@ -23,6 +23,7 @@ impl Server {
     ];
 
     /// `users.server_id`
+    #[must_use]
     pub const fn index(self) -> i16 {
         match self {
             Self::EN => 0,
@@ -34,11 +35,13 @@ impl Server {
         }
     }
 
+    #[must_use]
     pub fn from_index(index: i16) -> Option<Self> {
         Self::ALL.into_iter().find(|s| s.index() == index)
     }
 
     /// `en`, `jp`, `kr`, `cn`, `bili`, `tw`
+    #[must_use]
     pub const fn as_str(self) -> &'static str {
         match self {
             Self::EN => "en",
@@ -51,6 +54,7 @@ impl Server {
     }
 
     /// Case-insensitive inverse of [`Self::as_str`]
+    #[must_use]
     pub fn parse(s: &str) -> Option<Self> {
         match s.trim().to_lowercase().as_str() {
             "en" => Some(Self::EN),

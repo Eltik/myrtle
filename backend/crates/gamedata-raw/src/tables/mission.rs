@@ -71,6 +71,7 @@ pub struct MissionData {
 }
 
 impl MissionData {
+    #[must_use]
     pub fn from_table(file: MissionTableFile) -> Self {
         Self {
             daily_periods: file.daily_mission_period_info,
@@ -80,6 +81,7 @@ impl MissionData {
     }
 
     /// Average daily-chest LMD per day at `now` (unix seconds), `None` if no period covers `now`
+    #[must_use]
     pub fn daily_lmd_per_day(&self, now: i64) -> Option<f64> {
         let period = self
             .daily_periods
@@ -103,6 +105,7 @@ impl MissionData {
     }
 
     /// Live weekly-chest LMD per day (week total / 7), `None` if none live at `now`
+    #[must_use]
     pub fn weekly_lmd_per_day(&self, now: i64) -> Option<f64> {
         let live: Vec<&PeriodicalReward> = self
             .weekly_rewards

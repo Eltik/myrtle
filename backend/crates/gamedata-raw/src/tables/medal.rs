@@ -155,6 +155,7 @@ pub enum Obtainability {
 }
 
 impl MedalData {
+    #[must_use]
     pub fn from_table(table: MedalTableFile) -> Self {
         let mut data = Self::default();
 
@@ -220,6 +221,7 @@ impl MedalData {
     }
 
     /// Lock info for a medal gated on an unobtainable operator
+    #[must_use]
     pub fn operator_lock(&self, medal_id: &str) -> Option<&OperatorLock> {
         self.operator_locked.get(medal_id)
     }
@@ -281,6 +283,7 @@ impl MedalData {
         self.event_windows = event_windows;
     }
 
+    #[must_use]
     pub fn get_category_name(&self, category: &str) -> String {
         self.category_names
             .get(category)
@@ -289,6 +292,7 @@ impl MedalData {
     }
 
     /// Classify a medal's current obtainability
+    #[must_use]
     pub fn obtainability(&self, medal_id: &str, now: i64) -> Obtainability {
         let Some(medal) = self.medals.get(medal_id) else {
             return Obtainability::Event { proxy_close_ts: 1 };
@@ -367,6 +371,7 @@ impl MedalData {
     }
 
     /// Display description, walking the `origin_medal` chain for upgrade variants
+    #[must_use]
     pub fn resolve_description(&self, medal_id: &str) -> String {
         let mut current = medal_id;
         for _ in 0..ORIGIN_CHAIN_MAX_DEPTH {

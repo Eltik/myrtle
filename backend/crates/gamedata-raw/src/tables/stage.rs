@@ -395,6 +395,7 @@ pub struct ClimbTowerSeason {
 
 impl ClimbTowerTableFile {
     /// `tower_id` -> `[(season_start, season_end)]` across every season it appears in
+    #[must_use]
     pub fn tower_windows(&self) -> HashMap<String, Vec<(i64, i64)>> {
         let mut windows: HashMap<String, Vec<(i64, i64)>> = HashMap::new();
         for entry in &self.season_infos {

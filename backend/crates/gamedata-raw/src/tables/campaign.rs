@@ -64,6 +64,7 @@ pub struct CampaignRotations {
 }
 
 impl CampaignRotations {
+    #[must_use]
     pub fn from_table(table: CampaignTableFile) -> Self {
         let windows = table
             .campaign_rotate_stage_open_times
@@ -91,15 +92,18 @@ impl CampaignRotations {
     }
 
     /// Full-clear kill count (highest `BreakLadders` milestone), `None` if not in the table
+    #[must_use]
     pub fn kill_max(&self, stage_id: &str) -> Option<i32> {
         self.kill_max.get(stage_id).copied()
     }
 
+    #[must_use]
     pub fn window(&self, stage_id: &str) -> Option<RotationWindow> {
         self.windows.get(stage_id).copied()
     }
 
     /// Rotating map's availability at `now`, `None` for non-rotating stages
+    #[must_use]
     pub fn status(&self, stage_id: &str, now: i64) -> Option<RotationStatus> {
         let w = self.windows.get(stage_id)?;
         Some(if now < w.start_ts {
