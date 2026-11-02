@@ -10,11 +10,20 @@
 // extract, `--spine` only) are left alone, so a partial run never deletes what it did not
 // re-produce. Every removed path is logged next to the output tree, the way the local
 // install (`install_spine.sh`, rsync --delete --itemize-changes) records its deletions.
+//
+// `derived/` is never swept. The unpacker writes nothing there: it holds the backend's own
+// caches and archives (story art, release art, farm stages, the gacha pool-detail sidecar),
+// written at request or job time, so "older than the run" says nothing about whether a file
+// is stale. A backend write landing during an extract used to mark the subtree as written,
+// and the sweep then deleted everything else in it, archives that cannot be rebuilt included.
 import { readdirSync, rmdirSync, statSync, unlinkSync, writeFileSync } from "node:fs";
 import { join, relative, sep } from "node:path";
 
 /** Clock slack between "the run started" and the first file's mtime, in ms. */
 const MTIME_SLACK_MS = 2000;
+
+/** Top-level subtrees the extract does not own, so the sweep never enters them. */
+const NOT_EXTRACT_OUTPUT = new Set(["derived"]);
 
 /**
  * Walk `dir` depth first, yielding every regular file's path and stat.
@@ -81,7 +90,7 @@ export function sweepOrphans(outputDir, startedAt, opts = {}) {
 	for (const e of top) {
 		if (!e.isDirectory()) continue;
 		const sub = join(outputDir, e.name);
-		if (!subtreeWasWritten(sub, startedAt)) {
+		if (NOT_EXTRACT_OUTPUT.has(e.name) || !subtreeWasWritten(sub, startedAt)) {
 			result.skipped.push(e.name);
 			continue;
 		}
