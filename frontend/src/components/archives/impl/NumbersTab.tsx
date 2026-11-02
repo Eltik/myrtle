@@ -131,7 +131,7 @@ function Numbers({ d, t, f, onOpenFile }: { d: ArchiveDemographics; t: ArchivesT
                     </Panel>
                     <Panel title={t("numbers.manufactured")}>
                         <div className="flex items-baseline gap-2">
-                            <span className="font-bold text-[34px] text-foreground tabular-nums leading-none">{f.number(manufactured)}</span>
+                            <span className="shrink-0 whitespace-nowrap font-bold text-[34px] text-foreground tabular-nums leading-none">{f.number(manufactured)}</span>
                             <span className="text-[12px] text-muted-foreground">{t("numbers.manufacturedTotal", { total: f.number(d.total) })}</span>
                         </div>
                         <BarList rows={d.manufactured} total={manufactured} t={t} f={f} />
@@ -380,7 +380,7 @@ function RatingsCard({ d, t, f }: { d: ArchiveDemographics; t: ArchivesT; f: IFo
     return (
         <Panel title={t("numbers.ratings")} footer={t("numbers.ratingsNote", { steps: d.scale.length, top, share: total > 0 ? f.percent(covered / total) : "", topWord: d.scale[last] ? stepWord(d.scale[last], t) : "", topCount: perStep[last] ?? 0 })}>
             <div className="flex items-baseline gap-2">
-                <span className="font-bold text-[34px] text-foreground tabular-nums leading-none">{f.number(total)}</span>
+                <span className="shrink-0 whitespace-nowrap font-bold text-[34px] text-foreground tabular-nums leading-none">{f.number(total)}</span>
                 <span className="text-[12px] text-muted-foreground">{t("numbers.ratingsTotal", { files: f.number(d.total) })}</span>
             </div>
             <BarList rows={d.scale.map((step, i) => ({ value: stepWord(step, t), count: perStep[i] }))} total={total} t={t} f={f} />
