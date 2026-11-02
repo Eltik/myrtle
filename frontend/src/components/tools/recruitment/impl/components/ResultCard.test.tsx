@@ -40,12 +40,13 @@ const ROSTER: IRosterOverlay = {
     ]),
     showPotentials: true,
     showNextUpgrade: true,
+    showNewOdds: false,
 };
 
-function mount(roster: IRosterOverlay | null, Card: typeof ResultCard = ResultCard) {
+function mount(roster: IRosterOverlay | null, Card: typeof ResultCard = ResultCard, result: ITagCombinationResult = RESULT) {
     return render(
         <I18nProvider locale="en" available={[{ code: "en", nativeName: "English" }]} messages={MESSAGES}>
-            <Card result={RESULT} roster={roster} />
+            <Card result={result} roster={roster} />
         </I18nProvider>,
     );
 }
@@ -128,5 +129,29 @@ describe.each([
     it("greys nothing when potentials are hidden", () => {
         const { container } = mount({ ...ROSTER, showPotentials: false }, Card);
         expect(container.querySelectorAll(".grayscale")).toHaveLength(0);
+    });
+});
+
+describe.each([
+    ["compact", ResultCard],
+    ["detailed", ResultCardDetailed],
+] as const)("%s layout new-operator odds", (_name, Card) => {
+    const oddsText = (container: HTMLElement) => container.querySelector('[data-slot="recruit-new-odds"]')?.textContent ?? null;
+
+    it("shows one figure for a single-rarity pool", () => {
+        const { container } = mount({ ...ROSTER, showNewOdds: true }, Card);
+        expect(oddsText(container)).toBe("14% new");
+        expect(screen.getByRole("note").getAttribute("aria-label")).toBe("Among 4★ results, 1 of 7 operators is new to you.");
+    });
+
+    it("splits a mixed pool by rarity and words the certainties", () => {
+        const mixed: ITagCombinationResult = { ...RESULT, operators: [{ ...op("five", FIVE), rarity: 5 }, op("p1", FIVE), op("p2", FIVE)], maxRarity: 5, fiveStarCount: 1 };
+        const { container } = mount({ ...ROSTER, showNewOdds: true }, Card, mixed);
+        expect(oddsText(container)).toBe("5★ all new·4★ all owned");
+    });
+
+    it("draws nothing while the option is off", () => {
+        const { container } = mount(ROSTER, Card);
+        expect(oddsText(container)).toBeNull();
     });
 });

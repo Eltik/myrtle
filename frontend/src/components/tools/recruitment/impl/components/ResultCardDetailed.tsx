@@ -11,7 +11,7 @@ import { cn } from "#/lib/utils";
 import { PROFESSION_LABELS, RARITY_COLORS } from "../constants";
 import { getStarsDisplay } from "../helpers";
 import type { IRecruitableOperator, IRosterOverlay, ITagCombinationResult } from "../types";
-import { GuaranteedBadge, nextUpgradeLabel, OperatorTagList, type ResultT, UPGRADE_TONE_CLASS } from "./ResultCard";
+import { GuaranteedBadge, NewOddsLabel, nextUpgradeLabel, OperatorTagList, type ResultT, UPGRADE_TONE_CLASS } from "./ResultCard";
 
 interface IResultCardDetailedProps {
     result: ITagCombinationResult;
@@ -36,6 +36,7 @@ export function ResultCardDetailed({ result, roster }: IResultCardDetailedProps)
                     ))}
                 </div>
                 <GuaranteedBadge result={result} layout="detailed" />
+                {roster?.showNewOdds ? <NewOddsLabel result={result} roster={roster} /> : null}
             </CardHeader>
             <CardPanel className="px-3 pt-0 pb-3 sm:px-4">
                 <ul className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-3">

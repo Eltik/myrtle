@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-11-02T10:14:53.027Z",
+    "generatedAt": "2026-11-02T10:15:00.342Z",
     "entries": [
         {
             "key": "admin.home.access.everyList",
@@ -45645,6 +45645,20 @@
             "placeholders": []
         },
         {
+            "key": "tools.recruit.options.showNewOdds",
+            "namespace": "tools",
+            "source_text": "Show new-operator odds",
+            "description": "Switch label: on each combination, show the chance the recruit is an operator the signed-in roster does not hold yet. Saved per browser.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.recruit.options.showNewOdds.hint",
+            "namespace": "tools",
+            "source_text": "Per rarity, since rarity rates are unpublished",
+            "description": "Hint under the new-operator odds switch: the odds are given separately for each star rating, because the game does not publish how likely each rarity is, so they cannot be combined into one number.",
+            "placeholders": []
+        },
+        {
             "key": "tools.recruit.options.showNextUpgrade",
             "namespace": "tools",
             "source_text": "Show next potential",
@@ -45717,6 +45731,75 @@
             "placeholders": [
                 "floor"
             ]
+        },
+        {
+            "key": "tools.recruit.result.newOdds.allNew",
+            "namespace": "tools",
+            "source_text": "Guaranteed new",
+            "description": "Shown instead of '100% new': every operator this combination can roll is one the roster does not hold.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.recruit.result.newOdds.allOwned",
+            "namespace": "tools",
+            "source_text": "All owned",
+            "description": "Shown instead of '0% new': the roster already holds every operator this combination can roll.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.recruit.result.newOdds.pct",
+            "namespace": "tools",
+            "source_text": "{pct}% new",
+            "description": "Chance the recruit is an operator the signed-in roster does not hold, on a combination that can only roll one rarity, e.g. '50% new'. Very narrow.",
+            "placeholders": [
+                "pct"
+            ]
+        },
+        {
+            "key": "tools.recruit.result.newOdds.rarityAllNew",
+            "namespace": "tools",
+            "source_text": "{rarity} all new",
+            "description": "Shown instead of '{rarity} 100% new': the roster holds none of this rarity's operators in the combination.",
+            "placeholders": [
+                "rarity"
+            ]
+        },
+        {
+            "key": "tools.recruit.result.newOdds.rarityAllOwned",
+            "namespace": "tools",
+            "source_text": "{rarity} all owned",
+            "description": "Shown instead of '{rarity} 0% new': the roster holds every operator of this rarity in the combination.",
+            "placeholders": [
+                "rarity"
+            ]
+        },
+        {
+            "key": "tools.recruit.result.newOdds.rarityPct",
+            "namespace": "tools",
+            "source_text": "{rarity} {pct}% new",
+            "description": "One rarity's share of new operators on a combination that can roll several rarities, e.g. '5★ 67% new'. {rarity} is a star rating or the word Robot. Very narrow.",
+            "placeholders": [
+                "pct",
+                "rarity"
+            ]
+        },
+        {
+            "key": "tools.recruit.result.newOdds.title",
+            "namespace": "tools",
+            "source_text": "Among {rarity} results, {unowned} of {total} {total, plural, one {operator} other {operators}} {unowned, plural, one {is} other {are}} new to you.",
+            "description": "Tooltip line explaining one new-operator figure, e.g. 'Among 6★ results, 1 of 2 operators is new to you.' {rarity} is a star rating or the word Robot.",
+            "placeholders": [
+                "rarity",
+                "total",
+                "unowned"
+            ]
+        },
+        {
+            "key": "tools.recruit.result.newOdds.unpublished",
+            "namespace": "tools",
+            "source_text": "The game does not publish how likely each rarity is, so the rarities are not combined.",
+            "description": "Last tooltip line on a combination that can roll several rarities: why the new-operator odds are given per rarity rather than as one number.",
+            "placeholders": []
         },
         {
             "key": "tools.recruit.result.nextPotential",

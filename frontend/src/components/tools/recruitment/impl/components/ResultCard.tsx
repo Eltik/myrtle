@@ -10,6 +10,7 @@ import { cn, RARITY_HEX_MUTED } from "#/lib/utils";
 import { guaranteedFloorRarity } from "../calculator";
 import { RARITY_COLORS } from "../constants";
 import { getStarsDisplay } from "../helpers";
+import { type IRarityNewOdds, newOddsPercent, newOperatorOdds } from "../newOperatorOdds";
 import type { IRecruitableOperator, IRosterOverlay, ITagCombinationResult, ResultLayout } from "../types";
 import type { messages } from "./ResultCard.messages";
 
@@ -37,6 +38,12 @@ export function ResultCard({ result, roster }: IResultCardProps): React.ReactEle
                 ))}
                 <span className="basis-full max-sm:hidden" aria-hidden="true" />
                 <GuaranteedBadge result={result} layout="compact" />
+                {roster?.showNewOdds ? (
+                    <>
+                        <span className="basis-full" aria-hidden="true" />
+                        <NewOddsLabel result={result} roster={roster} />
+                    </>
+                ) : null}
             </div>
             <ul className="flex min-w-0 flex-wrap content-start gap-1">
                 {result.operators.map((op) => (
@@ -80,6 +87,65 @@ export function GuaranteedBadge({ result, layout }: { result: ITagCombinationRes
             <TooltipPopup>{t("recruit.result.minTitle", { floor: floorLabel(floor, t) })}</TooltipPopup>
         </Tooltip>
     );
+}
+
+/** "50% new", or the two certainties in words, so a reader never has to decode 100% or 0%. */
+function oddsText(odds: IRarityNewOdds, withRarity: boolean, t: ResultT): string {
+    const pct = newOddsPercent(odds);
+    if (!withRarity) {
+        if (pct === 100) return t("recruit.result.newOdds.allNew");
+        if (pct === 0) return t("recruit.result.newOdds.allOwned");
+        return t("recruit.result.newOdds.pct", { pct });
+    }
+    const rarity = floorLabel(odds.rarity, t);
+    if (pct === 100) return t("recruit.result.newOdds.rarityAllNew", { rarity });
+    if (pct === 0) return t("recruit.result.newOdds.rarityAllOwned", { rarity });
+    return t("recruit.result.newOdds.rarityPct", { rarity, pct });
+}
+
+/**
+ * The chance the recruit is an operator the roster does not hold. The game rolls rarity first at unpublished rates, so
+ * each rarity the pool can produce gets its own exact figure and they are never added up. A pool of one rarity reads as
+ * a single figure, the floor badge beside it already names the rarity.
+ */
+export function NewOddsLabel({ result, roster }: { result: ITagCombinationResult; roster: IRosterOverlay }): React.ReactElement | null {
+    const t: ResultT = useT("tools");
+    const odds = newOperatorOdds(result.operators, roster.potentialByOperator);
+    if (!odds || odds.length === 0) return null;
+    const multi = odds.length > 1;
+    const lines = odds.map((o) => t("recruit.result.newOdds.title", { rarity: floorLabel(o.rarity, t), unowned: o.unowned, total: o.total }));
+    const summary = multi ? [...lines, t("recruit.result.newOdds.unpublished")].join(" ") : lines.join(" ");
+
+    return (
+        <Tooltip>
+            <TooltipTrigger render={<span data-slot="recruit-new-odds" role="note" aria-label={summary} className="inline-flex min-h-5.5 shrink-0 flex-wrap items-center gap-x-1 whitespace-nowrap px-0.5 font-medium text-xs sm:min-h-4.5 sm:text-[11px]" />}>
+                {odds.map((o, i) => (
+                    <span key={o.rarity} className="inline-flex items-center gap-1">
+                        {i > 0 ? (
+                            <span aria-hidden="true" className="text-muted-foreground">
+                                ·
+                            </span>
+                        ) : null}
+                        <OddsSegment odds={o} withRarity={multi} t={t} />
+                    </span>
+                ))}
+            </TooltipTrigger>
+            <TooltipPopup>
+                <div className="flex max-w-64 flex-col gap-1">
+                    {lines.map((line) => (
+                        <span key={line}>{line}</span>
+                    ))}
+                    {multi ? <span className="text-muted-foreground">{t("recruit.result.newOdds.unpublished")}</span> : null}
+                </div>
+            </TooltipPopup>
+        </Tooltip>
+    );
+}
+
+function OddsSegment({ odds, withRarity, t }: { odds: IRarityNewOdds; withRarity: boolean; t: ResultT }): React.ReactElement {
+    const pct = newOddsPercent(odds);
+    const text = oddsText(odds, withRarity, t);
+    return <span className={cn("font-mono", pct === 0 ? "text-muted-foreground" : withRarity ? RARITY_COLORS[odds.rarity]?.text : "text-foreground")}>{text}</span>;
 }
 
 export function OperatorTagList({ tags }: { tags: string[] }): React.ReactElement {

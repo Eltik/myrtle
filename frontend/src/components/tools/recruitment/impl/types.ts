@@ -58,10 +58,12 @@ export interface ICalculatorOptions {
 /** The options the panel edits: every calculator input except the roster, which comes from the session. */
 export type ICalculatorSettings = Required<Omit<ICalculatorOptions, "potentialByOperator">>;
 
-/** The two roster overlays, kept apart from the calculator inputs: flipping one re-renders cards, never re-runs the search. */
+/** The roster overlays, kept apart from the calculator inputs: flipping one re-renders cards, never re-runs the search. */
 export interface IRosterViewOptions {
     showPotentials: boolean;
     showNextUpgrade: boolean;
+    /** Per rarity, the chance the recruit is an operator the roster does not hold. */
+    showNewOdds: boolean;
 }
 
 /** How the results draw: `compact` is one row of portrait tiles per combination, `detailed` a card per combination with a wide row per operator. */

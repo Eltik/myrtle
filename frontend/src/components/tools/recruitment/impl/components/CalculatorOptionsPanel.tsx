@@ -46,6 +46,14 @@ export function CalculatorOptionsPanel({ settings, rosterView, rosterAvailable, 
             <div className="flex flex-col gap-3 border-border/60 border-t pt-3">
                 <ToggleRow id="recruit-show-potentials" label={t("recruit.options.showPotentials")} hint={rosterHint} checked={rosterAvailable && rosterView.showPotentials} disabled={!rosterAvailable} onCheckedChange={(showPotentials) => onChangeRosterView({ showPotentials })} />
                 <ToggleRow id="recruit-show-next-upgrade" label={t("recruit.options.showNextUpgrade")} checked={rosterAvailable && rosterView.showNextUpgrade} disabled={!rosterAvailable} onCheckedChange={(showNextUpgrade) => onChangeRosterView({ showNextUpgrade })} />
+                <ToggleRow
+                    id="recruit-show-new-odds"
+                    label={t("recruit.options.showNewOdds")}
+                    hint={rosterAvailable ? t("recruit.options.showNewOdds.hint") : undefined}
+                    checked={rosterAvailable && rosterView.showNewOdds}
+                    disabled={!rosterAvailable}
+                    onCheckedChange={(showNewOdds) => onChangeRosterView({ showNewOdds })}
+                />
             </div>
             <div className="flex flex-col gap-3 border-border/60 border-t pt-3">
                 <SelectRow id="recruit-layout" label={t("recruit.options.layout")} value={layout} options={LAYOUTS} t={t} onValueChange={onChangeLayout} />

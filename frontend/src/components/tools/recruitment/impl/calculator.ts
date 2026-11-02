@@ -118,7 +118,7 @@ function getCombinations<T>(arr: T[], maxSize: number): T[][] {
 // many 5★s Survival's pool happens to contain.
 //
 // The 5★ share is also not a real drop probability. It is pool share, which is
-// not the in-game rate, which is why this tool shows no percentage anywhere. A
+// not the in-game rate, which is why this tool shows no cross-rarity percentage. A
 // number we won't show a user because it is wrong must not decide the order.
 //
 // This precedence has been inverted three times, each pass silently undoing the

@@ -55,6 +55,14 @@ export const messages = {
         text: "Show next potential",
         description: "Switch label: under each operator's portrait, show what their next potential rank would grant (e.g. 'DP cost -1', 'Talent 2'). Saved per browser.",
     },
+    "recruit.options.showNewOdds": {
+        text: "Show new-operator odds",
+        description: "Switch label: on each combination, show the chance the recruit is an operator the signed-in roster does not hold yet. Saved per browser.",
+    },
+    "recruit.options.showNewOdds.hint": {
+        text: "Per rarity, since rarity rates are unpublished",
+        description: "Hint under the new-operator odds switch: the odds are given separately for each star rating, because the game does not publish how likely each rarity is, so they cannot be combined into one number.",
+    },
     "recruit.options.roster.signIn": {
         text: "Sign in to sync your roster",
         description: "Hint under the roster switches when nobody is signed in; the switches are disabled.",

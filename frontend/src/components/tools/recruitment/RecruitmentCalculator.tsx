@@ -63,7 +63,7 @@ export function RecruitmentCalculator(): React.ReactElement {
     // paint every operator as unowned for the length of the request.
     const rosterOverlay: IRosterOverlay | null = React.useMemo(() => {
         if (!roster.signedIn || roster.loading) return null;
-        if (!rosterView.showPotentials && !rosterView.showNextUpgrade) return null;
+        if (!rosterView.showPotentials && !rosterView.showNextUpgrade && !rosterView.showNewOdds) return null;
         return { potentialByOperator: roster.potentialByOperator, ...rosterView };
     }, [roster.signedIn, roster.loading, roster.potentialByOperator, rosterView]);
 
