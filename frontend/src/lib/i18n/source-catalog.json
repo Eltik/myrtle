@@ -2965,6 +2965,7 @@
     "operators.cnUpdates.kind.trust_bonus_changed": "trust bonus",
     "operators.cnUpdates.tag": "CN",
     "operators.cnUpdates.tag.title": "From CN's data, not on this server yet. Names and descriptions are CN's own text.",
+    "operators.cnUpdates.text.own.title": "CN's own text: this server's no longer matches CN's numbers, so it is shown as CN has it.",
     "operators.cnUpdates.text.title": "This text with CN's numbers: struck through is this server's, highlighted is CN's.",
     "operators.cnUpdates.value.title": "{value} on CN",
     "operators.facts.birthPlace.Aegir": "Ægir",

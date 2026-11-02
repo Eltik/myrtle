@@ -13,8 +13,9 @@ import { blackboardDiff } from "#/lib/operators/cn-changes";
 import { cn } from "#/lib/utils";
 import type { IOperatorListItem, ISkillLevel } from "#/types/operators";
 import { asset } from "../../assets";
+import { templateWithCnValues } from "../../cnText";
 import { useCnUpdatesContext } from "../../cnUpdates";
-import { descriptionToHtml, renderDescriptionDiffHtml } from "../../description";
+import { descriptionToHtml } from "../../description";
 import { computeSkillDiff, formatBlackboardValue, formatSkillLevel, getSkillTypeLabel, getSpTypeLabel } from "../../helpers";
 import type { messages as helperMessages } from "../../helpers.messages";
 import { useCommunityDefaults } from "../../useCommunityDefaults";
@@ -49,9 +50,12 @@ export const SkillsContent = memo(function SkillsContent({ operator }: ISkillsCo
     const selectedIsCn = selectedSkillId ? (cnUpdates?.skillIds.has(selectedSkillId) ?? false) : false;
     // The same level of a skill both servers have, as CN's record carries it, where CN changed its values.
     const cnSkillData = selectedSkillId && cnUpdates?.changes.some((c) => c.kind === "skill_values_changed" && c.skillId === selectedSkillId) ? cnUpdates.cn.skills.find((s) => s.skillId === selectedSkillId)?.static?.levels?.[skillLevel] : undefined;
+    // This server's text with CN's numbers, or CN's own text where this server's cannot take them.
     const cnSkillDescription = useMemo(() => {
         if (!cnSkillData || !skillData?.description || blackboardDiff(skillData.blackboard, cnSkillData.blackboard).length === 0) return null;
-        return renderDescriptionDiffHtml(skillData.description, skillData.description, skillData.blackboard ?? [], cnSkillData.blackboard ?? []);
+        const html = templateWithCnValues(skillData.description, skillData.blackboard ?? [], cnSkillData.blackboard ?? [], cnSkillData.description);
+        if (html === null) return cnSkillData.description ? { html: descriptionToHtml(cnSkillData.description, cnSkillData.blackboard ?? []), lang: "zh-CN" } : null;
+        return html === descriptionToHtml(skillData.description, skillData.blackboard ?? []) ? null : { html };
     }, [cnSkillData, skillData?.description, skillData?.blackboard]);
     /** CN's value of one number, formatted as its cell formats its own, where it differs. */
     const onCn = (here: number | null | undefined, there: number | null | undefined, format: (n: number) => string = String) => (typeof here === "number" && typeof there === "number" && here !== there ? format(there) : null);
@@ -323,7 +327,7 @@ export const SkillsContent = memo(function SkillsContent({ operator }: ISkillsCo
                             // biome-ignore lint/security/noDangerouslySetInnerHtml: Sanitized
                             dangerouslySetInnerHTML={{ __html: skillDescription }}
                         />
-                        {cnSkillDescription && <CnDescription html={cnSkillDescription} />}
+                        {cnSkillDescription && <CnDescription {...cnSkillDescription} />}
                     </div>
 
                     {skillRange && (

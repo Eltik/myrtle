@@ -18,9 +18,10 @@ import { blackboardDiff } from "#/lib/operators/cn-changes";
 import { cn, rarityToNumber } from "#/lib/utils";
 import type { IAttributeData, IModulePart, IModulePhase, IOperatorListItem, IOperatorModule, IPotentialRank } from "#/types/operators";
 import { asset, eliteIcon, potentialIcon } from "../../assets";
+import { type ICnModuleTexts, type ICnText, templateWithCnValues } from "../../cnText";
 import { type ICnUpdates, useCnUpdatesContext } from "../../cnUpdates";
 import type { messages as detailConstantsMessages } from "../../constants.messages";
-import { descriptionToHtml, renderDescriptionDiffHtml } from "../../description";
+import { DIFF_INSERT_CLASS, descriptionToHtml, renderDescriptionDiffHtml } from "../../description";
 import { combinedDescriptionBlackboard, formatAttributeKey, formatStatValue, getActiveTalentCandidate, getOperatorAttributeStats } from "../../helpers";
 import type { messages as helperMessages } from "../../helpers.messages";
 import { useCommunityDefaults } from "../../useCommunityDefaults";
@@ -64,8 +65,14 @@ interface ITalentEffect {
     /** The talent before the module rewrote it; null when the module added it. */
     base: IDescribed | null;
     modifiedByModule: boolean;
-    /** Rewritten by a module merged in from CN, so its name and text are CN's. */
+    /** Rewritten by a module merged in from CN. */
     fromCn: boolean;
+    /** The rewrite's text as this server can show it, set when `fromCn`; `description` is then its whole text. */
+    cnText: ICnText | null;
+    /** The name is CN's own, with no counterpart on this server. */
+    zhName: boolean;
+    /** Which candidates and module phases produced it, to tell a talent CN reshaped from one whose values changed. */
+    shape: string;
 }
 
 /** Changes that move the combat stats: base stats, trust, potentials, module bonuses. */
@@ -81,16 +88,47 @@ function samePotential(a: IPotentialRank | undefined, b: IPotentialRank | undefi
     return JSON.stringify(a?.buff ?? null) === JSON.stringify(b?.buff ?? null);
 }
 
+/** A potential rank's bonuses as a blackboard, so its description can take another server's numbers. */
+function potentialBlackboard(rank: IPotentialRank | null | undefined): Blackboard {
+    return (rank?.buff?.attributes.attributeModifiers ?? []).map((m) => ({ key: m.attributeType, value: m.value }));
+}
+
+/** CN's potential rank as HTML: this server's description with CN's numbers, else CN's own (tagged Chinese). */
+function cnPotentialHtml(rank: IPotentialRank | null | undefined, cnRank: IPotentialRank): { html: string; lang?: string } {
+    const html = rank?.description ? templateWithCnValues(rank.description, potentialBlackboard(rank), potentialBlackboard(cnRank), cnRank.description) : null;
+    return html !== null && rank && html !== descriptionToHtml(rank.description) ? { html } : { html: descriptionToHtml(cnRank.description), lang: "zh-CN" };
+}
+
 /** The module the tab opens on: the first advanced one this server has, never one merged in from CN. */
 function defaultModule(operator: IOperatorListItem, cnUpdates: ICnUpdates | null): IOperatorModule | undefined {
     return operator.modules.find((m) => m.type !== "INITIAL" && !cnUpdates?.moduleIds.has(m.uniEquipId));
 }
 
-/** `text` repeated with CN's numbers, the changed ones marked; null when no number in it moves. */
-function cnNumbersHtml(text: string, blackboard: Blackboard, cnBlackboard: Blackboard | undefined): string | null {
+/**
+ * `text` repeated with CN's numbers, the changed ones marked, or CN's own `cnText` (tagged Chinese)
+ * where `text` cannot take CN's numbers; null when no number in it moves.
+ */
+function cnNumbersHtml(text: string, blackboard: Blackboard, cnText: string | null | undefined, cnBlackboard: Blackboard | undefined): { html: string; lang?: string } | null {
     if (!text || !cnBlackboard || blackboardDiff(blackboard, cnBlackboard).length === 0) return null;
-    const html = renderDescriptionDiffHtml(text, text, blackboard, cnBlackboard);
-    return html === descriptionToHtml(text, blackboard) ? null : html;
+    const html = templateWithCnValues(text, blackboard, cnBlackboard, cnText);
+    if (html === null) return cnText ? { html: descriptionToHtml(cnText, cnBlackboard), lang: "zh-CN" } : null;
+    return html === descriptionToHtml(text, blackboard) ? null : { html };
+}
+
+/** Chinese text from CN's data, tagged as such, and marked as added when it follows a diff. */
+function zhSpan(text: string, blackboard: Blackboard, added: boolean): string {
+    return `<span lang="zh-CN"${added ? ` class="${DIFF_INSERT_CLASS}"` : ""}>${descriptionToHtml(text, blackboard)}</span>`;
+}
+
+/**
+ * {@link renderChange} for a rewrite from a CN module: the part in this server's language diffs
+ * against `base` as any module's does, and the Chinese CN adds after it follows in its own span,
+ * after `separator` (HTML).
+ */
+function renderCnChange(base: IDescribed | null, text: ICnText, blackboard: Blackboard, showDiff: boolean, separator = ""): { html: string; baseHtml: string | null } {
+    if (text.text === null) return { html: zhSpan(text.zh ?? "", blackboard, false), baseHtml: null };
+    const change = renderChange(base, { description: text.text, blackboard }, showDiff);
+    return text.zh ? { ...change, html: `${change.html}${separator}${zhSpan(text.zh, blackboard, change.baseHtml !== null)}` } : change;
 }
 
 function isTalentPart(part: IModulePart): boolean {
@@ -125,7 +163,7 @@ function renderChange(base: IDescribed | null, next: IDescribed, showDiff: boole
  * bare description when the trait carries no override of its own); an
  * addition appends to the description and merges both blackboards.
  */
-function traitChange(operator: IOperatorListItem, phase: IModulePhase, descriptionBlackboard: Blackboard): { base: IDescribed | null; next: IDescribed } | null {
+function traitChange(operator: IOperatorListItem, phase: IModulePhase, descriptionBlackboard: Blackboard): { base: IDescribed | null; next: IDescribed; part: { kind: "override" | "addition"; text: string; blackboard: Blackboard } } | null {
     const candidate = phase.parts.find(isTraitPart)?.overrideTraitDataBundle.candidates?.[0];
     if (!candidate) return null;
     const overrideDesc = candidate.overrideDescription ?? "";
@@ -141,6 +179,7 @@ function traitChange(operator: IOperatorListItem, phase: IModulePhase, descripti
         return {
             base: baseDesc ? { description: baseDesc, blackboard: baseFromTrait ? (lastTrait?.blackboard ?? []) : descriptionBlackboard } : null,
             next: { description: overrideDesc, blackboard: nextBlackboard },
+            part: { kind: "override", text: overrideDesc, blackboard: nextBlackboard },
         };
     }
 
@@ -148,6 +187,7 @@ function traitChange(operator: IOperatorListItem, phase: IModulePhase, descripti
     return {
         base: baseDesc.length > 0 ? { description: baseDesc, blackboard: descriptionBlackboard } : null,
         next: { description: baseDesc.length > 0 ? `${baseDesc}\n${additionalDesc}` : additionalDesc, blackboard: [...descriptionBlackboard, ...nextBlackboard] },
+        part: { kind: "addition", text: additionalDesc, blackboard: [...descriptionBlackboard, ...nextBlackboard] },
     };
 }
 
@@ -161,8 +201,9 @@ function moduleTalentCandidates(phase: IModulePhase) {
  * `moduleLevel` applied in order: a candidate whose `talentIndex` names an
  * existing talent rewrites it, any other index appends a module-only talent.
  * Within one phase the highest candidate the potential rank unlocks wins.
+ * `cnTexts` is set for a module merged in from CN, to read its text in this server's language.
  */
-function buildTalentEffects(operator: IOperatorListItem, phaseIndex: number, level: number, potentialRank: number, module: IOperatorModule | null, moduleLevel: number, moduleFromCn = false): ITalentEffect[] {
+function buildTalentEffects(operator: IOperatorListItem, phaseIndex: number, level: number, potentialRank: number, module: IOperatorModule | null, moduleLevel: number, cnTexts: ICnModuleTexts | null = null): ITalentEffect[] {
     const effects: ITalentEffect[] = (operator.talents ?? []).map((entry, idx) => {
         const c = getActiveTalentCandidate(entry, phaseIndex, level, potentialRank);
         const described: IDescribed = { description: c?.description ?? "", blackboard: c?.blackboard ?? [] };
@@ -174,6 +215,9 @@ function buildTalentEffects(operator: IOperatorListItem, phaseIndex: number, lev
             base: c?.description ? described : null,
             modifiedByModule: false,
             fromCn: false,
+            cnText: null,
+            zhName: false,
+            shape: c ? `${entry.candidates?.length}:${c.unlockCondition.phase}/${c.unlockCondition.level}/${c.requiredPotentialRank}` : "",
         };
     });
 
@@ -189,19 +233,28 @@ function buildTalentEffects(operator: IOperatorListItem, phaseIndex: number, lev
             }
             if (!chosen) continue;
             const description = chosen.upgradeDescription || chosen.description || "";
+            const blackboard = chosen.blackboard ?? [];
             const tIdx = chosen.talentIndex;
+            const cn = cnTexts?.talent({ talentIndex: tIdx, requiredPotentialRank: chosen.requiredPotentialRank, name: chosen.name, description, blackboard }) ?? null;
+            const rewrite = {
+                name: cn ? (cn.name.text ?? cn.name.zh) : chosen.name,
+                description,
+                blackboard,
+                modifiedByModule: true,
+                fromCn: cn !== null,
+                cnText: cn?.description ?? null,
+                zhName: !!cn && cn.name.text === null && !!cn.name.zh,
+            };
+            const shape = `+${i}/${chosen.requiredPotentialRank}`;
             if (tIdx >= 0 && tIdx < effects.length) {
-                effects[tIdx] = { ...effects[tIdx], name: chosen.name ?? effects[tIdx].name, description, blackboard: chosen.blackboard ?? [], modifiedByModule: true, fromCn: moduleFromCn };
+                effects[tIdx] = { ...effects[tIdx], ...rewrite, name: rewrite.name ?? effects[tIdx].name, shape: effects[tIdx].shape + shape };
             } else {
                 effects.push({
                     key: `t-mod-${tIdx}-${i}`,
-                    name: chosen.name,
-                    description,
-                    blackboard: chosen.blackboard ?? [],
+                    ...rewrite,
                     requiredPotentialRank: chosen.requiredPotentialRank ?? 0,
                     base: null,
-                    modifiedByModule: true,
-                    fromCn: moduleFromCn,
+                    shape,
                 });
             }
         }
@@ -292,14 +345,15 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
         return getOperatorAttributeStats(cnUpdates.cn, { phaseIndex, favorPoint: trustLevel, potentialRank, moduleId, moduleLevel }, level);
     }, [cnUpdates, phaseIndex, level, trustLevel, potentialRank, moduleId, moduleLevel]);
 
-    const talents = useMemo(() => buildTalentEffects(operator, phaseIndex, level, potentialRank, currentModule, moduleLevel, currentModuleIsCn).filter((eff) => eff.name || eff.description), [operator, phaseIndex, level, potentialRank, currentModule, moduleLevel, currentModuleIsCn]);
+    const cnModuleTexts = currentModuleIsCn ? (cnUpdates?.texts ?? null) : null;
+    const talents = useMemo(() => buildTalentEffects(operator, phaseIndex, level, potentialRank, currentModule, moduleLevel, cnModuleTexts).filter((eff) => eff.name || eff.description), [operator, phaseIndex, level, potentialRank, currentModule, moduleLevel, cnModuleTexts]);
     // CN's talents at the same state, by key, where a talent's or a shared module's values changed.
     const cnTalents = useMemo(() => {
         if (!cnUpdates || !(cnUpdates.kinds.has("talents_changed") || cnUpdates.kinds.has("module_changed"))) return null;
         const cnModule = currentModule ? (cnUpdates.cn.modules.find((m) => m.uniEquipId === currentModule.uniEquipId) ?? null) : null;
         return new Map(buildTalentEffects(cnUpdates.cn, phaseIndex, level, potentialRank, cnModule, moduleLevel).map((eff) => [eff.key, eff]));
     }, [cnUpdates, phaseIndex, level, potentialRank, currentModule, moduleLevel]);
-    const cnDescription = useMemo(() => (cnUpdates?.kinds.has("trait_changed") ? cnNumbersHtml(operator.description ?? "", descriptionBlackboard, combinedDescriptionBlackboard(cnUpdates.cn)) : null), [cnUpdates, operator.description, descriptionBlackboard]);
+    const cnDescription = useMemo(() => (cnUpdates?.kinds.has("trait_changed") ? cnNumbersHtml(operator.description ?? "", descriptionBlackboard, cnUpdates.cn.description, combinedDescriptionBlackboard(cnUpdates.cn)) : null), [cnUpdates, operator.description, descriptionBlackboard]);
 
     const fmt = (n: number | undefined) => (typeof n === "number" ? f.number(Math.round(n)) : (n ?? "-"));
     const seconds = (n: number | undefined) => t("stat.seconds", { value: n ?? 0 });
@@ -336,7 +390,7 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
                     // biome-ignore lint/security/noDangerouslySetInnerHtml: Sanitized in description-to-html
                     dangerouslySetInnerHTML={{ __html: description }}
                 />
-                {cnDescription && <CnDescription html={cnDescription} />}
+                {cnDescription && <CnDescription {...cnDescription} />}
             </div>
 
             <CollapsibleSection icon={User} title={t("info.profile")} open={showProfile} onOpenChange={setShowProfile}>
@@ -417,6 +471,7 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
                                 const rank = idx === 0 ? null : operator.potentialRanks?.[idx - 1];
                                 const cnRank = idx > 0 && cnUpdates?.kinds.has("potentials_changed") ? cnUpdates.cn.potentialRanks?.[idx - 1] : undefined;
                                 const cnRankDiffers = !!cnRank && !samePotential(rank ?? undefined, cnRank);
+                                const cnRankHtml = cnRankDiffers && cnRank ? cnPotentialHtml(rank, cnRank) : null;
                                 return (
                                     // biome-ignore lint/suspicious/noArrayIndexKey: potential rank is positionally stable
                                     <Tooltip key={`pot-${idx}`}>
@@ -435,10 +490,14 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
                                         />
                                         <TooltipPopup>
                                             {rank ? t("info.potential.rankTip", { rank: idx, description: rank.description }) : t("info.potential.baseTip", { rank: idx })}
-                                            {cnRankDiffers && cnRank && (
+                                            {cnRankHtml && (
                                                 <span className="mt-1 flex items-baseline gap-1.5">
                                                     <CnTag />
-                                                    <span lang="zh-CN">{cnRank.description}</span>
+                                                    <span
+                                                        lang={cnRankHtml.lang}
+                                                        // biome-ignore lint/security/noDangerouslySetInnerHtml: Sanitized in description-to-html
+                                                        dangerouslySetInnerHTML={{ __html: cnRankHtml.html }}
+                                                    />
                                                 </span>
                                             )}
                                         </TooltipPopup>
@@ -648,8 +707,8 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
 
                             {currentModulePhase && (
                                 <div className="space-y-2">
-                                    <ModuleTraitChange operator={operator} phase={currentModulePhase} descriptionBlackboard={descriptionBlackboard} showDiff={showDiff} onShowDiffChange={setShowDiff} fromCn={currentModuleIsCn} />
-                                    <ModuleTalentChanges operator={operator} phase={currentModulePhase} showDiff={showDiff} fromCn={currentModuleIsCn} />
+                                    <ModuleTraitChange operator={operator} phase={currentModulePhase} descriptionBlackboard={descriptionBlackboard} showDiff={showDiff} onShowDiffChange={setShowDiff} cnTexts={cnModuleTexts} cnPhase={currentModulePhaseOnCn} cnOperator={cnUpdates?.cn ?? null} />
+                                    <ModuleTalentChanges operator={operator} phase={currentModulePhase} showDiff={showDiff} cnTexts={cnModuleTexts} cnPhase={currentModulePhaseOnCn} />
                                 </div>
                             )}
                         </div>
@@ -663,15 +722,15 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
                 ) : (
                     <div className="mt-3 space-y-3">
                         {talents.map((talent) => {
-                            // A CN module's rewrite is CN's text, so it is shown alone: a diff against this
-                            // server's text would compare two languages.
-                            const change = renderChange(talent.modifiedByModule && !talent.fromCn ? talent.base : null, talent, showDiff);
+                            const base = talent.modifiedByModule ? talent.base : null;
+                            const change = talent.cnText ? renderCnChange(base, talent.cnText, talent.blackboard, showDiff) : renderChange(base, talent, showDiff);
                             const cnTalent = talent.fromCn ? undefined : cnTalents?.get(talent.key);
-                            const cnHtml = cnTalent ? cnNumbersHtml(talent.description, talent.blackboard, cnTalent.blackboard) : null;
+                            // A talent CN reshaped (other candidates, another module phase) is not this one with new values.
+                            const cnHtml = cnTalent ? (cnTalent.shape === talent.shape ? cnNumbersHtml(talent.description, talent.blackboard, cnTalent.description, cnTalent.blackboard) : { html: descriptionToHtml(cnTalent.description, cnTalent.blackboard), lang: "zh-CN" }) : null;
                             return (
                                 <div className="rounded-lg border border-border/50 bg-card/30 p-3" key={talent.key}>
                                     <div className="mb-1 flex items-center gap-2">
-                                        <h4 lang={talent.fromCn ? "zh-CN" : undefined} className="font-medium text-foreground text-sm">
+                                        <h4 lang={talent.zhName ? "zh-CN" : undefined} className="font-medium text-foreground text-sm">
                                             {talent.name ?? t("info.talents.unnamed")}
                                         </h4>
                                         {talent.requiredPotentialRank > 0 && (
@@ -687,8 +746,8 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
                                         )}
                                         {talent.fromCn && <CnTag />}
                                     </div>
-                                    <DescriptionDiff {...change} baseLabel={t("info.baseTalent")} lang={talent.fromCn ? "zh-CN" : undefined} />
-                                    {cnHtml && <CnDescription html={cnHtml} />}
+                                    <DescriptionDiff {...change} baseLabel={t("info.baseTalent")} />
+                                    {cnHtml && <CnDescription {...cnHtml} />}
                                 </div>
                             );
                         })}
@@ -758,14 +817,12 @@ interface IDescriptionDiffProps {
     baseLabel: string;
     /** A name shown before both texts, for talents. */
     prefix?: ReactNode;
-    /** Set to "zh-CN" for text from a module merged in from CN. */
-    lang?: string;
 }
 
 const DIFF_LABEL_CLASS = "mb-0.5 font-medium text-[10px] text-muted-foreground uppercase tracking-wider";
 
 /** A description a module changed, shown as the faded base above the marked-up new text. */
-function DescriptionDiff({ html, baseHtml, baseLabel, prefix, lang }: IDescriptionDiffProps) {
+function DescriptionDiff({ html, baseHtml, baseLabel, prefix }: IDescriptionDiffProps) {
     const t: InfoT = useT("operators");
     return (
         <>
@@ -783,7 +840,6 @@ function DescriptionDiff({ html, baseHtml, baseLabel, prefix, lang }: IDescripti
             {baseHtml && <div className={DIFF_LABEL_CLASS}>{t("info.changes")}</div>}
             {prefix}
             <span
-                lang={lang}
                 className="text-muted-foreground text-xs"
                 // biome-ignore lint/security/noDangerouslySetInnerHtml: Sanitized in description-to-html
                 dangerouslySetInnerHTML={{ __html: html }}
@@ -798,20 +854,36 @@ interface IModuleTraitChangeProps {
     descriptionBlackboard: Blackboard;
     showDiff: boolean;
     onShowDiffChange: (show: boolean) => void;
-    /** The module is CN's: its text is Chinese, so it shows alone, without a diff or the switch for one. */
-    fromCn: boolean;
+    /** Set when the module is CN's, to read its text in this server's language where it can be. */
+    cnTexts: ICnModuleTexts | null;
+    /** The same phase of a module both servers have, as CN's record carries it, where CN changed the module. */
+    cnPhase: IModulePhase | null;
+    cnOperator: IOperatorListItem | null;
 }
 
-function ModuleTraitChange({ operator, phase, descriptionBlackboard, showDiff, onShowDiffChange, fromCn }: IModuleTraitChangeProps) {
+/** A CN module's trait part as this server can show it: an addition follows this server's trait. */
+function cnTraitText(operator: IOperatorListItem, part: { kind: "override" | "addition"; text: string; blackboard: Blackboard }, texts: ICnModuleTexts): { text: ICnText; separator: string } {
+    const own = texts.trait(part.text, part.kind, part.blackboard);
+    const base = operator.description ?? "";
+    if (part.kind === "override" || base.length === 0) return { text: own, separator: "" };
+    if (own.text !== null) return { text: { text: `${base}\n${own.text}`, zh: own.zh }, separator: "" };
+    return { text: { text: base, zh: own.zh }, separator: "<br/>" };
+}
+
+function ModuleTraitChange({ operator, phase, descriptionBlackboard, showDiff, onShowDiffChange, cnTexts, cnPhase, cnOperator }: IModuleTraitChangeProps) {
     const t: InfoT = useT("operators");
     const change = traitChange(operator, phase, descriptionBlackboard);
     if (!change) return null;
-    const rendered = renderChange(fromCn ? null : change.base, change.next, showDiff && !fromCn);
+    const cn = cnTexts ? cnTraitText(operator, change.part, cnTexts) : null;
+    const rendered = cn ? renderCnChange(change.base, cn.text, change.next.blackboard, showDiff, cn.separator) : renderChange(change.base, change.next, showDiff);
+    const canDiff = change.base !== null && (cn === null || cn.text.text !== null);
+    const cnChange = cnPhase && cnOperator ? traitChange(cnOperator, cnPhase, combinedDescriptionBlackboard(cnOperator)) : null;
+    const cnHtml = cnChange ? cnNumbersHtml(change.next.description, change.next.blackboard, cnChange.next.description, cnChange.next.blackboard) : null;
     return (
         <>
             <div className="mb-1 flex items-center justify-between">
                 <h6 className="font-medium text-foreground text-xs">{t("info.traitChanges")}</h6>
-                {!fromCn && (
+                {canDiff && (
                     <Tooltip>
                         <TooltipTrigger
                             render={(props) => (
@@ -825,33 +897,50 @@ function ModuleTraitChange({ operator, phase, descriptionBlackboard, showDiff, o
                 )}
             </div>
             <div className="rounded-md bg-secondary/20 p-2">
-                <DescriptionDiff {...rendered} baseLabel={t("info.baseTrait")} lang={fromCn ? "zh-CN" : undefined} />
+                <DescriptionDiff {...rendered} baseLabel={t("info.baseTrait")} />
+                {cnHtml && <CnDescription {...cnHtml} />}
             </div>
         </>
     );
 }
 
-function ModuleTalentChanges({ operator, phase, showDiff, fromCn }: { operator: IOperatorListItem; phase: IModulePhase; showDiff: boolean; fromCn: boolean }) {
+interface IModuleTalentChangesProps {
+    operator: IOperatorListItem;
+    phase: IModulePhase;
+    showDiff: boolean;
+    cnTexts: ICnModuleTexts | null;
+    cnPhase: IModulePhase | null;
+}
+
+function ModuleTalentChanges({ operator, phase, showDiff, cnTexts, cnPhase }: IModuleTalentChangesProps) {
     const t: InfoT = useT("operators");
     const candidates = moduleTalentCandidates(phase);
     if (candidates.length === 0) return null;
+    const cnCandidates = cnPhase ? moduleTalentCandidates(cnPhase) : [];
     return (
         <div>
             <h6 className="mb-1 font-medium text-foreground text-xs">{t("info.talentChanges")}</h6>
             {candidates.map((c, cIdx) => {
                 const oldTalent = operator.talents?.[c.talentIndex];
                 const oldCand = oldTalent?.candidates?.[oldTalent.candidates.length - 1];
-                const base = !fromCn && oldCand?.description ? { description: oldCand.description, blackboard: oldCand.blackboard ?? [] } : null;
-                const rendered = renderChange(base, { description: c.upgradeDescription || c.description || "", blackboard: c.blackboard ?? [] }, showDiff);
-                const name = c.name ? (
-                    <span lang={fromCn ? "zh-CN" : undefined} className="font-medium text-foreground text-xs">
-                        {c.name}:{" "}
+                const base = oldCand?.description ? { description: oldCand.description, blackboard: oldCand.blackboard ?? [] } : null;
+                const next = { description: c.upgradeDescription || c.description || "", blackboard: c.blackboard ?? [] };
+                const cn = cnTexts?.talent({ talentIndex: c.talentIndex, requiredPotentialRank: c.requiredPotentialRank, name: c.name, description: next.description, blackboard: next.blackboard });
+                const rendered = cn ? renderCnChange(base, cn.description, next.blackboard, showDiff) : renderChange(base, next, showDiff);
+                const shownName = cn ? (cn.name.text ?? cn.name.zh) : c.name;
+                const name = shownName ? (
+                    <span lang={cn && cn.name.text === null ? "zh-CN" : undefined} className="font-medium text-foreground text-xs">
+                        {shownName}:{" "}
                     </span>
                 ) : null;
+                // The same candidate of a module both servers have, where CN changed the module.
+                const onCn = cnCandidates[cIdx];
+                const cnHtml = onCn && onCn.talentIndex === c.talentIndex && onCn.requiredPotentialRank === c.requiredPotentialRank ? cnNumbersHtml(next.description, next.blackboard, onCn.upgradeDescription || onCn.description, onCn.blackboard ?? []) : null;
                 return (
                     // biome-ignore lint/suspicious/noArrayIndexKey: candidate order is determined by module phase data
                     <div className="rounded-md bg-secondary/20 px-2 py-1" key={`tc-${cIdx}-${c.name ?? ""}`}>
-                        <DescriptionDiff {...rendered} baseLabel={t("info.baseTalent")} prefix={name} lang={fromCn ? "zh-CN" : undefined} />
+                        <DescriptionDiff {...rendered} baseLabel={t("info.baseTalent")} prefix={name} />
+                        {cnHtml && <CnDescription {...cnHtml} />}
                     </div>
                 );
             })}

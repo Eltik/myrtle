@@ -31,13 +31,18 @@ export function CnValue({ value, className }: { value: string; className?: strin
     );
 }
 
-/** A description repeated with CN's numbers under the page's own, the changed numbers marked; `html` is already sanitized. */
-export function CnDescription({ html, className }: { html: string; className?: string }) {
+/**
+ * A description repeated under the page's own as CN has it: this server's text with CN's numbers,
+ * the changed ones marked, or with `lang` set, CN's own text where this server's no longer fits
+ * CN's numbers. `html` is already sanitized.
+ */
+export function CnDescription({ html, lang, className }: { html: string; lang?: string; className?: string }) {
     const t: MarkersT = useT("operators");
     return (
         <div className={cn("mt-1.5 flex items-baseline gap-2", className)}>
-            <CnTag title={t("cnUpdates.text.title")} />
+            <CnTag title={lang ? t("cnUpdates.text.own.title") : t("cnUpdates.text.title")} />
             <span
+                lang={lang}
                 className="text-muted-foreground text-xs"
                 // biome-ignore lint/security/noDangerouslySetInnerHtml: Sanitized in description-to-html
                 dangerouslySetInnerHTML={{ __html: html }}

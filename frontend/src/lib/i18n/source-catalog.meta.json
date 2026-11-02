@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-11-02T10:38:03.320Z",
+    "generatedAt": "2026-11-02T11:01:44.699Z",
     "entries": [
         {
             "key": "admin.home.access.everyList",
@@ -21943,6 +21943,13 @@
             "namespace": "operators",
             "source_text": "From CN's data, not on this server yet. Names and descriptions are CN's own text.",
             "description": "Hover text of the CN tag. 'CN's own text' means untranslated Chinese. 'CN' is the Chinese game server, which receives content months before the others.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.cnUpdates.text.own.title",
+            "namespace": "operators",
+            "source_text": "CN's own text: this server's no longer matches CN's numbers, so it is shown as CN has it.",
+            "description": "Hover text on a CN tag in front of a description shown in Chinese, because the description on this server could not be filled with the Chinese server's numbers. 'CN' is the Chinese game server.",
             "placeholders": []
         },
         {

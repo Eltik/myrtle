@@ -5,6 +5,7 @@ import { cnChangesQueryOptions, operatorQueryOptions } from "#/lib/api/operators
 import { type ChangeKind, withCnAdditions } from "#/lib/operators/cn-changes";
 import type { OperatorChange } from "#/types/generated/OperatorChange";
 import type { IOperatorListItem } from "#/types/operators";
+import { cnModuleTexts, type ICnModuleTexts } from "./cnText";
 
 /** What CN's data has for the operator on the page, for the tabs to mark inline. */
 export interface ICnUpdates {
@@ -15,6 +16,8 @@ export interface ICnUpdates {
     /** The modules and skills merged into the page's operator from `cn`. */
     moduleIds: ReadonlySet<string>;
     skillIds: ReadonlySet<string>;
+    /** The merged modules' text in this server's language, where this server's own text allows. */
+    texts: ICnModuleTexts;
 }
 
 /** Null whenever the page shows only this server's data: setting off, nothing changed, or CN's record not loaded. */
@@ -39,6 +42,6 @@ export function useCnUpdatesFor(operator: IOperatorListItem | null | undefined, 
     return useMemo(() => {
         if (!operator || !changes || changes.length === 0 || !cn) return { operator, updates: null };
         const merged = withCnAdditions(operator, cn, changes);
-        return { operator: merged.operator, updates: { changes, kinds: new Set(changes.map((c) => c.kind)), cn, moduleIds: merged.moduleIds, skillIds: merged.skillIds } };
+        return { operator: merged.operator, updates: { changes, kinds: new Set(changes.map((c) => c.kind)), cn, moduleIds: merged.moduleIds, skillIds: merged.skillIds, texts: cnModuleTexts(operator, cn) } };
     }, [operator, changes, cn]);
 }

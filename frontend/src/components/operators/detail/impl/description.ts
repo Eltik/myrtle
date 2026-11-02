@@ -31,6 +31,9 @@ export function descriptionToHtml(description: string, blackboard: IBlackboard[]
     return renderTagsAndNewlines(interpolateValues(description, blackboard));
 }
 
+/** How a diff marks text the new side adds or changes. */
+export const DIFF_INSERT_CLASS = "rounded bg-emerald-500/15 px-0.5 text-emerald-300";
+
 type DiffOp = { type: "equal" | "delete" | "insert"; tokens: string[] };
 
 function tokenizeRawForDiff(text: string): string[] {
@@ -114,7 +117,7 @@ export function renderDescriptionDiffHtml(oldDesc: string | null | undefined, ne
             const html = renderTagsAndNewlines(op.tokens.join(""));
             if (op.type === "equal") return html;
             if (op.type === "delete") return `<span class="rounded bg-red-500/15 px-0.5 text-red-300 line-through decoration-red-400/70">${html}</span>`;
-            return `<span class="rounded bg-emerald-500/15 px-0.5 text-emerald-300">${html}</span>`;
+            return `<span class="${DIFF_INSERT_CLASS}">${html}</span>`;
         })
         .join("");
 }

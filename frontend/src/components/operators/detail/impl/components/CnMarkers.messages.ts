@@ -19,6 +19,10 @@ export const messages = {
         text: "This text with CN's numbers: struck through is this server's, highlighted is CN's.",
         description: "Hover text on a CN tag in front of a description repeated with the Chinese server's numbers, the changed ones marked.",
     },
+    "cnUpdates.text.own.title": {
+        text: "CN's own text: this server's no longer matches CN's numbers, so it is shown as CN has it.",
+        description: "Hover text on a CN tag in front of a description shown in Chinese, because the description on this server could not be filled with the Chinese server's numbers. 'CN' is the Chinese game server.",
+    },
 } satisfies MessageMap;
 
 export const { keys } = defineMessages({ namespace, messages });
