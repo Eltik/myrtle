@@ -11,9 +11,11 @@ pub mod handbook;
 pub mod modules;
 pub mod operators;
 pub mod profile;
+pub mod reference;
 pub mod skills;
 pub mod skins;
 pub mod stage_class;
+pub mod stage_index;
 
 pub fn resolve_item_icon(
     item_id: &str,
