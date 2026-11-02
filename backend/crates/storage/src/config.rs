@@ -1,4 +1,4 @@
-//! `STORAGE_*`, `CLOUDFLARE_*` and `ASSET_DELIVERY` parsing.
+//! `STORAGE_*`, `CLOUDFLARE_*`, `ASSET_DELIVERY` and `ASSET_DELIVERY_ORACLE` parsing.
 //!
 use std::env::var;
 use std::fmt::{self, Display, Formatter};
@@ -368,6 +368,56 @@ impl DeliveryMode {
 }
 
 impl Display for DeliveryMode {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DeliveryOracle {
+    /// Redirect only what the sync manifest records
+    Manifest,
+    /// Redirect any local file, stub or not
+    Exists,
+}
+
+impl DeliveryOracle {
+    #[must_use]
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::Manifest => "manifest",
+            Self::Exists => "exists",
+        }
+    }
+
+    pub fn from_env(storage: Option<&StorageConfig>) -> Result<Self, ConfigError> {
+        Self::from_lookup(&|k| var(k).ok(), storage)
+    }
+
+    /// Defaults to `manifest`; `exists` when storage is disabled
+    pub fn from_lookup(
+        lookup: &dyn Fn(&str) -> Option<String>,
+        storage: Option<&StorageConfig>,
+    ) -> Result<Self, ConfigError> {
+        if storage.is_none() {
+            return Ok(Self::Exists);
+        }
+        match get(lookup, "ASSET_DELIVERY_ORACLE") {
+            None => Ok(Self::Manifest),
+            Some(v) => match v.to_ascii_lowercase().as_str() {
+                "manifest" => Ok(Self::Manifest),
+                "exists" => Ok(Self::Exists),
+                _ => Err(ConfigError::Invalid {
+                    var: "ASSET_DELIVERY_ORACLE",
+                    value: v,
+                    reason: "expected manifest or exists",
+                }),
+            },
+        }
+    }
+}
+
+impl Display for DeliveryOracle {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.write_str(self.as_str())
     }

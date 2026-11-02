@@ -1,6 +1,7 @@
 //! S3-compatible object storage for the asset roots the browser loads.
 
 pub mod config;
+pub mod delivery;
 pub mod evict;
 pub mod key;
 pub mod providers;
@@ -13,7 +14,8 @@ use std::sync::Arc;
 use crate::providers::local::LocalStore;
 use crate::providers::s3::S3Store;
 
-pub use config::{ConfigError, DeliveryMode, StorageConfig, StorageKind};
+pub use config::{ConfigError, DeliveryMode, DeliveryOracle, StorageConfig, StorageKind};
+pub use delivery::{Delivery, DeliveryResolver};
 pub use evict::EvictPolicy;
 pub use store::{GetOptions, GetResult, ObjectMeta, ObjectStore, PutBody, PutObject, StorageError};
 pub use sync::Manifest;
