@@ -118,9 +118,9 @@ export function NewOddsLabel({ result, roster }: { result: ITagCombinationResult
 
     return (
         <Tooltip>
-            <TooltipTrigger render={<span data-slot="recruit-new-odds" role="note" aria-label={summary} className="inline-flex min-h-5.5 shrink-0 flex-wrap items-center gap-x-1 whitespace-nowrap px-0.5 font-medium text-xs sm:min-h-4.5 sm:text-[11px]" />}>
+            <TooltipTrigger render={<span data-slot="recruit-new-odds" role="note" aria-label={summary} className="inline-flex min-h-5.5 min-w-0 max-w-full flex-wrap items-center gap-x-1 px-0.5 font-medium text-xs sm:min-h-4.5 sm:text-[11px]" />}>
                 {odds.map((o, i) => (
-                    <span key={o.rarity} className="inline-flex items-center gap-1">
+                    <span key={o.rarity} className="inline-flex items-center gap-1 whitespace-nowrap">
                         {i > 0 ? (
                             <span aria-hidden="true" className="text-muted-foreground">
                                 ·
