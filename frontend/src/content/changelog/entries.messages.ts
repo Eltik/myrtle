@@ -10,6 +10,42 @@ import { defineMessages, type MessageMap } from "#/lib/i18n/messages";
 export const namespace = "changelog";
 
 export const messages = {
+    "note.2026-11-02.title": {
+        text: "New: See what CN has changed on every operator page",
+        description: "Title of the 2026-11-02 release note. CN is the Chinese game server, which receives updates before the others.",
+    },
+    "note.2026-11-02.lead": {
+        text: "**Operator pages now show what CN has already changed.** New modules join the module picker with a CN tag, changed numbers sit beside this server's with a CN label, and the Upcoming list includes operators CN has updated. Most of the new text reads in English, though some module text is still in Chinese. You can turn this off with Show CN updates in Settings.",
+        description: "Lead paragraph of the 2026-11-02 release note, rendered as Markdown. CN is the Chinese game server. 'Show CN updates' is the name of a setting.",
+    },
+    "note.2026-11-02.item.1": {
+        text: "Recruitment can show the chance of getting an operator you don't own yet, for each rarity. Turn on Show new-operator odds beside the roster options.",
+        description: "Release note item. 'Show new-operator odds' is the name of a toggle.",
+    },
+    "note.2026-11-02.item.2": {
+        text: "Data Saver Mode in Settings shows small avatars instead of full artwork on roster cards, the operator list and operator pages, and loads the artwork only when you ask.",
+        description: "Release note item. 'Data Saver Mode' is the name of a setting.",
+    },
+    "note.2026-11-02.item.3": {
+        text: "With auto-save on, the tier list editor counts down to the next save.",
+        description: "Release note item.",
+    },
+    "note.2026-11-02.item.4": {
+        text: "The Reclamation Algorithm panel on the Score tab shows your completion of each topic and how much of the score it carries.",
+        description: "Release note item. Reclamation Algorithm is a game mode; a topic is one of its seasons.",
+    },
+    "note.2026-11-02.item.5": {
+        text: "Modules now add all of their stat bonuses. HP, attack speed, RES, redeploy time and block bonuses were missing from operator stats, and only ATK, DEF and cost applied.",
+        description: "Release note item. Modules are operator upgrades; ATK, DEF, RES and HP keep the game's stat names.",
+    },
+    "note.2026-11-02.item.6": {
+        text: "Since the 10/28 game update, Reclamation Algorithm topics you didn't have loaded in game scored 0. They count again.",
+        description: "Release note item. Reclamation Algorithm is a game mode; a topic is one of its seasons. 10/28 is a date.",
+    },
+    "note.2026-11-02.hrefLabel": {
+        text: "Browse operators",
+        description: "Link label on the 2026-11-02 release note, pointing to the operators page.",
+    },
     "note.2026-10-28.title": {
         text: "New: Share your pull history and look back on your roster",
         description: "Title of the 2026-10-28 release note.",

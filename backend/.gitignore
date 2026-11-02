@@ -16,3 +16,4 @@ backup
 snapshots
 !tests/snapshots/
 bindings/
+crates/
