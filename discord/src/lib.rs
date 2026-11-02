@@ -21,6 +21,7 @@ pub mod gametext;
 pub mod handler;
 pub mod hooks;
 pub mod search;
+pub mod service_accounts;
 pub mod tts;
 pub mod types;
 pub mod ui;

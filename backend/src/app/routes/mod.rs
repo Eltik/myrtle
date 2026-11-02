@@ -216,6 +216,7 @@ pub mod planner;
 pub mod release;
 pub mod roster;
 pub mod search;
+pub mod service_accounts;
 pub mod skins;
 pub mod social;
 pub mod squads;
@@ -241,6 +242,7 @@ pub fn router() -> OpenApiRouter<AppState> {
     OpenApiRouter::new()
         .routes(routes!(health::health))
         .routes(routes!(maintenance::maintenance))
+        .routes(routes!(service_accounts::service_accounts))
         .routes(routes!(announcements::list))
         .routes(routes!(announcements::detail))
         .routes(routes!(user::get_user))

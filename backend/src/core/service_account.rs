@@ -24,13 +24,15 @@
 use std::{
     collections::HashMap,
     path::{Path, PathBuf},
-    sync::Arc,
+    sync::{Arc, PoisonError},
     time::{Duration, Instant},
 };
 
 use reqwest::{Client, StatusCode};
+use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use tokio::sync::Mutex;
+use ts_rs::TS;
 
 use crate::core::hypergryph::{
     constants::{AuthSession, Server},
@@ -121,6 +123,81 @@ pub fn write_session_file(path: &Path, session: &AuthSession) -> std::io::Result
     std::fs::rename(&tmp, path)
 }
 
+/// Whether a service account's durable token still refreshes.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS, utoipa::ToSchema)]
+#[serde(rename_all = "snake_case")]
+#[ts(export)]
+pub enum ServiceAccountState {
+    /// The game accepted the last refresh or request.
+    Ok,
+    /// The durable token was refused; the account needs a human to log in again.
+    Refused,
+    /// Not used yet in this process.
+    Unknown,
+}
+
+/// One service account, as `GET /service-accounts` reports it. Carries no
+/// credential, uid or upstream error text.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS, utoipa::ToSchema)]
+#[ts(export)]
+pub struct ServiceAccountStatus {
+    /// The server code: `en`, `jp`, `kr`, `cn` or `bili`.
+    pub server: String,
+    pub state: ServiceAccountState,
+    /// Unix seconds of the first refusal in the current outage; `null` unless
+    /// `state` is `refused`.
+    #[ts(type = "number | null")]
+    pub refused_since: Option<i64>,
+    /// Unix seconds of the last refresh or request the game accepted; `null`
+    /// before the first one in this process.
+    #[ts(type = "number | null")]
+    pub last_ok_at: Option<i64>,
+}
+
+/// `GET /service-accounts`.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS, utoipa::ToSchema)]
+#[ts(export)]
+pub struct ServiceAccountsStatus {
+    /// Every account with stored credentials, ordered by server code.
+    pub accounts: Vec<ServiceAccountStatus>,
+}
+
+/// What [`ServiceAccount::status`] reads. Kept apart from the session lock,
+/// which a request holds for up to a minute.
+#[derive(Debug, Default, Clone, Copy)]
+struct Health {
+    refused_since: Option<i64>,
+    last_ok_at: Option<i64>,
+}
+
+impl Health {
+    const fn state(self) -> ServiceAccountState {
+        if self.refused_since.is_some() {
+            ServiceAccountState::Refused
+        } else if self.last_ok_at.is_some() {
+            ServiceAccountState::Ok
+        } else {
+            ServiceAccountState::Unknown
+        }
+    }
+
+    /// The first refusal of an outage keeps its time; later ones don't move it.
+    const fn refused(&mut self, now: i64) {
+        if self.refused_since.is_none() {
+            self.refused_since = Some(now);
+        }
+    }
+
+    const fn ok(&mut self, now: i64) {
+        self.refused_since = None;
+        self.last_ok_at = Some(now);
+    }
+}
+
+fn now_secs() -> i64 {
+    chrono::Utc::now().timestamp()
+}
+
 struct Inner {
     session: AuthSession,
     /// `None` until the first successful refresh in this process.
@@ -136,6 +213,7 @@ struct Inner {
 /// counter by construction.
 pub struct ServiceAccount {
     inner: Mutex<Inner>,
+    health: std::sync::Mutex<Health>,
     server: Server,
     path: PathBuf,
     max_age: Duration,
@@ -163,6 +241,7 @@ impl ServiceAccount {
                 refreshed_at: None,
                 alerted: false,
             }),
+            health: std::sync::Mutex::default(),
             server,
             path,
             max_age: secret_max_age(),
@@ -171,6 +250,32 @@ impl ServiceAccount {
 
     pub const fn server(&self) -> Server {
         self.server
+    }
+
+    /// Whether the account works, for `GET /service-accounts`. Never waits on
+    /// a request in flight.
+    pub fn status(&self) -> ServiceAccountStatus {
+        let health = *self.health.lock().unwrap_or_else(PoisonError::into_inner);
+        ServiceAccountStatus {
+            server: self.server.as_str().to_owned(),
+            state: health.state(),
+            refused_since: health.refused_since,
+            last_ok_at: health.last_ok_at,
+        }
+    }
+
+    fn mark_ok(&self) {
+        self.health
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .ok(now_secs());
+    }
+
+    fn mark_refused(&self) {
+        self.health
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .refused(now_secs());
     }
 
     /// The account's in-game UID, for logging.
@@ -259,6 +364,8 @@ impl ServiceAccount {
         } else {
             response
         };
+        // Past the 401 checks the secret was accepted, whatever the body says.
+        self.mark_ok();
 
         let parsed = parse_json_tolerating(response, endpoint, tolerated).await;
         self.persist(&guard.session);
@@ -328,6 +435,7 @@ impl ServiceAccount {
             error = ?refused,
             "service account token refused; run `set-session` for this server"
         );
+        self.mark_refused();
         if !inner.alerted {
             inner.alerted = true;
             let client = client.clone();
@@ -352,7 +460,9 @@ impl ServiceAccount {
             Err((_, e)) => return Err(Refusal::Other(e)),
         }
         inner.refreshed_at = Some(Instant::now());
+        // Recovered: the next outage alerts again.
         inner.alerted = false;
+        self.mark_ok();
         self.persist(&inner.session);
         Ok(())
     }
@@ -423,5 +533,65 @@ impl ServiceAccounts {
 
     pub fn servers(&self) -> Vec<Server> {
         self.accounts.keys().copied().collect()
+    }
+
+    /// Every account's health, ordered by server code.
+    pub fn status(&self) -> ServiceAccountsStatus {
+        let mut accounts: Vec<_> = self.accounts.values().map(|a| a.status()).collect();
+        accounts.sort_by(|a, b| a.server.cmp(&b.server));
+        ServiceAccountsStatus { accounts }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn health_moves_through_unknown_refused_ok() {
+        let mut health = Health::default();
+        assert_eq!(health.state(), ServiceAccountState::Unknown);
+
+        health.refused(100);
+        health.refused(200);
+        assert_eq!(health.state(), ServiceAccountState::Refused);
+        assert_eq!(health.refused_since, Some(100), "an outage keeps its start");
+
+        health.ok(300);
+        assert_eq!(health.state(), ServiceAccountState::Ok);
+        assert_eq!(health.refused_since, None);
+        assert_eq!(health.last_ok_at, Some(300));
+
+        health.refused(400);
+        assert_eq!(health.refused_since, Some(400), "a new outage starts fresh");
+        assert_eq!(health.state(), ServiceAccountState::Refused);
+    }
+
+    /// The wire shape the Discord bot's poller reads.
+    #[test]
+    fn status_serializes_without_credentials() {
+        let status = ServiceAccountsStatus {
+            accounts: vec![
+                ServiceAccountStatus {
+                    server: "bili".into(),
+                    state: ServiceAccountState::Refused,
+                    refused_since: Some(1_762_000_000),
+                    last_ok_at: Some(1_761_990_000),
+                },
+                ServiceAccountStatus {
+                    server: "en".into(),
+                    state: ServiceAccountState::Unknown,
+                    refused_since: None,
+                    last_ok_at: None,
+                },
+            ],
+        };
+        assert_eq!(
+            serde_json::to_value(&status).unwrap(),
+            json!({ "accounts": [
+                { "server": "bili", "state": "refused", "refused_since": 1_762_000_000, "last_ok_at": 1_761_990_000 },
+                { "server": "en", "state": "unknown", "refused_since": null, "last_ok_at": null }
+            ] })
+        );
     }
 }

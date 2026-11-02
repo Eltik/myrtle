@@ -21,5 +21,9 @@
     "queue_max": 10,
     "user_queue_max": 3,
     "settle_ms": 1500
+  },
+  "service_accounts": {
+    "enabled": true,
+    "poll_secs": 300
   }
 }

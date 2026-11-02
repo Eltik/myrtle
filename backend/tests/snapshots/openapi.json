@@ -9607,6 +9607,34 @@
         }
       }
     },
+    "/api/service-accounts": {
+      "get": {
+        "tags": [
+          "meta"
+        ],
+        "summary": "Whether each service account still logs in.",
+        "description": "Read from memory, never calls the game. An account reads `refused` from the\nfirst refused token refresh until one succeeds again, and `unknown` until a\njob first uses it after a restart.",
+        "operationId": "service_accounts",
+        "responses": {
+          "200": {
+            "description": "One entry per account with stored credentials.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServiceAccountsStatus"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
     "/api/skill-icon/{id}": {
       "get": {
         "tags": [
@@ -29798,6 +29826,64 @@
           },
           "server": {
             "type": "string"
+          }
+        }
+      },
+      "ServiceAccountState": {
+        "type": "string",
+        "description": "Whether a service account's durable token still refreshes.",
+        "enum": [
+          "ok",
+          "refused",
+          "unknown"
+        ]
+      },
+      "ServiceAccountStatus": {
+        "type": "object",
+        "description": "One service account, as `GET /service-accounts` reports it. Carries no\ncredential, uid or upstream error text.",
+        "required": [
+          "server",
+          "state"
+        ],
+        "properties": {
+          "last_ok_at": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "Unix seconds of the last refresh or request the game accepted; `null`\nbefore the first one in this process."
+          },
+          "refused_since": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "Unix seconds of the first refusal in the current outage; `null` unless\n`state` is `refused`."
+          },
+          "server": {
+            "type": "string",
+            "description": "The server code: `en`, `jp`, `kr`, `cn` or `bili`."
+          },
+          "state": {
+            "$ref": "#/components/schemas/ServiceAccountState"
+          }
+        }
+      },
+      "ServiceAccountsStatus": {
+        "type": "object",
+        "description": "`GET /service-accounts`.",
+        "required": [
+          "accounts"
+        ],
+        "properties": {
+          "accounts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ServiceAccountStatus"
+            },
+            "description": "Every account with stored credentials, ordered by server code."
           }
         }
       },
