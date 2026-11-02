@@ -128,8 +128,9 @@ async fn run_download(
                     "stages" => downloader::profile::keep_for_stages,
                     "gamedata" => downloader::profile::keep_for_gamedata,
                     "release" => downloader::profile::keep_for_release,
+                    "story" => downloader::profile::keep_for_story,
                     _ => anyhow::bail!(
-                        "unknown profile: {p} (expected: operators, stages, gamedata, release, full)"
+                        "unknown profile: {p} (expected: operators, stages, gamedata, release, story, full)"
                     ),
                 });
             }

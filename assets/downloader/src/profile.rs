@@ -85,6 +85,35 @@ pub fn keep_for_release(name: &str) -> bool {
     is_idx(name) || PREFIXES.iter().any(|p| name.starts_with(p))
 }
 
+/// Bundles the Story Reader needs: character sprites, images, backgrounds and
+/// effects (`textures/avg`), music and story sound effects, and cutscene video.
+///
+/// Neither `operators` nor `release` keeps any of these, so a region pulled
+/// without this profile has story text but no pictures, sound or video. Traced
+/// 2026-11-02 on the CN `act8d2` story: `avg_book1` <- `avg/imgs/avg_img_misc_0`,
+/// `bg_rhodescom` <- `avg/bg/avg_bkg_h1_bg_rh_0`, `$darkness01_intro` <-
+/// `audio/sound_beta_2/music/beta1_180603/m_dia_darkness01`. Sized on the local
+/// CN raw dir: `avg/` 1.9 GB, music 1.2 GB, `raw/video/` 323 MB, story SFX
+/// 178 MB, `custom_se` 27 MB.
+#[must_use]
+pub fn keep_for_story(name: &str) -> bool {
+    const PREFIXES: &[&str] = &[
+        // Sprites, images, backgrounds, effects, animated text and key visuals.
+        "avg/",
+        // BGM, keyed by `audio_data` from `PlayMusic`.
+        "audio/sound_beta_2/music",
+        // `PlaySound` effects, ambience and dialog stingers.
+        "audio/sound_beta_2/avg_se",
+        "audio/sound_beta_2/ambience",
+        "audio/sound_beta_2/dialog",
+        // Per-event sound effects.
+        "audio/custom_se/",
+        // Cutscenes (`.usm`), transcoded into `video/` by the unpacker.
+        "raw/video/",
+    ];
+    is_idx(name) || PREFIXES.iter().any(|p| name.starts_with(p))
+}
+
 #[must_use]
 pub fn keep_for_operators(name: &str) -> bool {
     const PREFIXES: &[&str] = &[
@@ -224,5 +253,29 @@ mod tests {
         // not stage-viewer content
         assert!(!keep_for_stages("chararts/char_002_amiya.ab"));
         assert!(!keep_for_stages("audio/sound_beta_2/music_0.ab"));
+    }
+
+    #[test]
+    fn keeps_story_assets() {
+        use super::keep_for_story;
+        // the act8d2 trace
+        assert!(keep_for_story("avg/imgs/avg_img_misc_0.ab"));
+        assert!(keep_for_story("avg/bg/avg_bkg_h1_bg_rh_0.ab"));
+        assert!(keep_for_story(
+            "audio/sound_beta_2/music/beta1_180603/m_dia_darkness01.ab"
+        ));
+        assert!(keep_for_story("avg/characters/avg_char_002_amiya_1.ab"));
+        assert!(keep_for_story("avg/[uc]common.ab"));
+        assert!(keep_for_story("audio/sound_beta_2/avg_se_10.ab"));
+        assert!(keep_for_story("audio/sound_beta_2/ambience.ab"));
+        assert!(keep_for_story("audio/sound_beta_2/dialog.ab"));
+        assert!(keep_for_story("audio/custom_se/act1autochess.ab"));
+        assert!(keep_for_story("raw/video/01.usm"));
+        assert!(keep_for_story("hot_update_list.idx"));
+        // not story content
+        assert!(!keep_for_story("chararts/char_002_amiya.ab"));
+        assert!(!keep_for_story("audio/sound_beta_2/voice/char_002_amiya.ab"));
+        assert!(!keep_for_story("audio/sound_beta_2/btl_snd_0.ab"));
+        assert!(!keep_for_story("scenes/obt/main/level_main_01-07.ab"));
     }
 }

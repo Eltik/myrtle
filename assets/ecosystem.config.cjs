@@ -56,8 +56,11 @@ module.exports = {
                 WS_PORT: "9161",
                 // `release` adds the event / banner / skin-brand art the
                 // Release Planner serves for CN-only content; without it the
-                // CN preview has names and dates but no pictures.
-                WS_PROFILE: "operators,release",
+                // CN preview has names and dates but no pictures. `story` adds
+                // the Story Reader's sprites, backgrounds, music, sound and
+                // cutscenes (~3.6 GB of CN bundles, measured 2026-11-02);
+                // without it CN-only stories render text over blank frames.
+                WS_PROFILE: "operators,release,story",
                 WS_THREADS: "1",
                 // A PHASE offset, not a one-off delay: checks are anchored to
                 // the wall clock, so EN lands on :00 and :30 and CN on :15 and
