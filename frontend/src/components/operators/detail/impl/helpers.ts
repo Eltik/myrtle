@@ -62,13 +62,30 @@ interface IStatBag {
 
 const ZERO_STATS: IStatBag = { atk: 0, maxHp: 0, def: 0, attackSpeed: 0, magicResistance: 0, cost: 0, respawnTime: 0, blockCnt: 0 };
 
-function moduleStats(mod: IOperatorModule, level: number): IStatBag {
+/**
+ * A module stage's `attributeBlackboard` keys, as the game spells them, onto the stat they add to.
+ * Matching the game key against the camelCase stat names dropped every bonus but `atk`, `def` and
+ * `cost`: a module's HP, attack speed, RES, redeploy time and block never reached the stats.
+ */
+const MODULE_STAT_KEYS: Readonly<Record<string, keyof IStatBag>> = {
+    max_hp: "maxHp",
+    atk: "atk",
+    def: "def",
+    attack_speed: "attackSpeed",
+    magic_resistance: "magicResistance",
+    cost: "cost",
+    respawn_time: "respawnTime",
+    block_cnt: "blockCnt",
+};
+
+export function moduleStats(mod: IOperatorModule, level: number): IStatBag {
     if (!mod.data?.phases || level <= 0) return { ...ZERO_STATS };
     const phase = mod.data.phases[level - 1];
     if (!phase?.attributeBlackboard) return { ...ZERO_STATS };
     const out = { ...ZERO_STATS };
     for (const a of phase.attributeBlackboard) {
-        if (a.key in out) (out as unknown as Record<string, number>)[a.key] += a.value;
+        const stat = MODULE_STAT_KEYS[a.key];
+        if (stat) out[stat] += a.value;
     }
     return out;
 }
