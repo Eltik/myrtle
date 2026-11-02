@@ -15,9 +15,11 @@ import { values } from "#/lib/records";
 import { cn, downloadBlob } from "#/lib/utils";
 import { hasWebGL } from "#/lib/webgl";
 import type { IOperatorListItem } from "#/types/operators";
+import { useCnUpdatesContext } from "../../cnUpdates";
 import { sanitizeFilename } from "../../helpers";
 import { buildOperatorSkinList, chibiSkinKey, type IUISkin } from "../../skins";
 import type { messages as skinMessages } from "../../skins.messages";
+import { CnTag } from "../CnMarkers";
 import { DynamicChibiViewer } from "../chibi/ChibiViewer.lazy";
 import { DEFAULT_SPINE_FIT } from "../chibi/skin-data";
 import type { ISceneIllustHandle } from "../dynillust/SceneIllust";
@@ -36,6 +38,9 @@ export const SkinsContent = memo(function SkinsContent({ operator }: ISkinsConte
     const localeServer = useGamedataServer();
     const server = operatorGamedataServer(operator.server, localeServer);
     const { data: skinsResponse, isLoading: skinsLoading } = useQuery(operatorSkinsQueryOptions(operator.id ?? "", server));
+    // An operator CN has changed also shows the outfits only CN has, from CN's skin table.
+    const cnUpdates = useCnUpdatesContext();
+    const { data: cnSkinsResponse } = useQuery({ ...operatorSkinsQueryOptions(operator.id ?? "", "cn"), enabled: !!cnUpdates && server !== "cn" });
     // Chibi spine data is art, not text, so it stays on the operator's own
     // art tree rather than following the locale.
     const { data: chibiCharacter } = useQuery(chibiByOperatorQueryOptions(operator.id ?? "", operator.server));
@@ -46,7 +51,9 @@ export const SkinsContent = memo(function SkinsContent({ operator }: ISkinsConte
         // For Amiya, every skin's `charId` is the base; `tmplId` identifies
         // the form. Match by tmplId when present so each form only shows its
         // own skins. Falls back to charId for regular operators.
-        const operatorSkins: ISkin[] = values(charSkins).filter((s) => (s.tmplId ? s.tmplId === operator.id : s.charId === operator.id));
+        const ownSkin = (s: ISkin) => (s.tmplId ? s.tmplId === operator.id : s.charId === operator.id);
+        const operatorSkins: ISkin[] = values(charSkins).filter(ownSkin);
+        const cnSkins: ISkin[] | undefined = cnUpdates && cnSkinsResponse ? values(cnSkinsResponse.charSkins ?? {}).filter(ownSkin) : undefined;
         return buildOperatorSkinList({
             skinsFromBackend: operatorSkins,
             operatorId: operator.id ?? "",
@@ -56,9 +63,10 @@ export const SkinsContent = memo(function SkinsContent({ operator }: ISkinsConte
             artistFallback: operator.artists?.[0],
             isBranchForm,
             server: operator.server,
+            cnSkins,
             t,
         });
-    }, [skinsResponse, operator.id, operator.skin, operator.portrait, operator.phases.length, operator.artists?.[0], isBranchForm, operator.server, t]);
+    }, [skinsResponse, cnSkinsResponse, cnUpdates, operator.id, operator.skin, operator.portrait, operator.phases.length, operator.artists?.[0], isBranchForm, operator.server, t]);
 
     const [selectedId, setSelectedId] = useState<string | null>(null);
     const selected = useMemo(() => skins.find((s) => s.id === selectedId) ?? skins[0] ?? null, [skins, selectedId]);
@@ -154,7 +162,10 @@ export const SkinsContent = memo(function SkinsContent({ operator }: ISkinsConte
                             </SkinViewerDialog>
                             <div className="absolute inset-x-0 bottom-0 p-4 md:p-5">
                                 <div className="font-mono text-[10px] text-white/70 uppercase tracking-wider">{selected.kicker}</div>
-                                <div className="mt-0.5 font-semibold text-2xl text-white drop-shadow-md">{selected.name}</div>
+                                <div className="mt-0.5 flex items-center gap-2 font-semibold text-2xl text-white drop-shadow-md">
+                                    <span lang={selected.fromCn ? "zh" : undefined}>{selected.name}</span>
+                                    {selected.fromCn && <CnTag className="bg-black/40 text-[10px]" />}
+                                </div>
                                 {selected.displaySkin?.drawerList?.join(", ") && <div className="mt-0.5 text-white/70 text-xs">{t("skins.artist", { artist: selected.displaySkin?.drawerList?.join(", ") })}</div>}
                             </div>
                         </div>
@@ -183,7 +194,12 @@ export const SkinsContent = memo(function SkinsContent({ operator }: ISkinsConte
                             </div>
                             <div className="min-w-0 flex-1">
                                 <div className="font-medium font-mono text-[10px] text-muted-foreground uppercase tracking-wider">{skin.kicker}</div>
-                                <div className="mt-0.5 truncate font-semibold text-foreground text-sm">{skin.name}</div>
+                                <div className="mt-0.5 flex min-w-0 items-center gap-1.5">
+                                    <span className="truncate font-semibold text-foreground text-sm" lang={skin.fromCn ? "zh" : undefined}>
+                                        {skin.name}
+                                    </span>
+                                    {skin.fromCn && <CnTag />}
+                                </div>
                                 <div className="mt-0.5 truncate text-muted-foreground text-xs">{skin.sub}</div>
                             </div>
                         </button>

@@ -14,6 +14,8 @@ export interface IUISkin {
     thumbnail: string;
     isDefault: boolean;
     displaySkin?: IDisplaySkin;
+    /** Only in CN's data so far; its art is served from the CN tree and its text is CN's. */
+    fromCn?: boolean;
 }
 
 interface IBuildArgs {
@@ -28,11 +30,13 @@ interface IBuildArgs {
      *  is replaced with the E2 art and the "Evolved" entry is suppressed. */
     isBranchForm?: boolean;
     server?: "en" | "cn";
+    /** CN's skins for this operator; any this server lacks follow its own, marked {@link IUISkin.fromCn}. */
+    cnSkins?: ISkin[];
     /** Resolves the stand-in copy this builder supplies; see `skins.messages.ts`. */
     t: TypedT<typeof skinMessages>;
 }
 
-export function buildOperatorSkinList({ skinsFromBackend, operatorId, operatorSkin, operatorPortrait, phasesLength, artistFallback, isBranchForm, server, t }: IBuildArgs): IUISkin[] {
+export function buildOperatorSkinList({ skinsFromBackend, operatorId, operatorSkin, operatorPortrait, phasesLength, artistFallback, isBranchForm, server, cnSkins, t }: IBuildArgs): IUISkin[] {
     const skins: IUISkin[] = [];
 
     const e0 = operatorElite0(operatorId, operatorSkin, operatorPortrait, server);
@@ -72,23 +76,32 @@ export function buildOperatorSkinList({ skinsFromBackend, operatorId, operatorSk
         }
     }
 
-    for (const skin of skinsFromBackend) {
+    const own = new Set<string>();
+    const pushSkin = (skin: ISkin, skinServer: "en" | "cn" | undefined, fromCn: boolean) => {
         const id = skin.skinId;
         const isDefault = !id?.includes("@") && (id?.endsWith("#1") || id?.endsWith("#2"));
-        if (!id || isDefault) continue;
+        if (!id || isDefault) return;
 
         const display = skin.displaySkin;
-        const tex = skinTexture(operatorId, id, server);
         skins.push({
             id,
             name: display?.skinName ?? t("skins.fallback.name"),
             kicker: display?.skinGroupName ?? t("skins.fallback.kicker"),
             sub: artistFallback ? t("skins.artist", { artist: artistFallback }) : (display?.obtainApproach ?? t("skins.fallback.sub")),
-            image: tex,
-            thumbnail: skinThumbnail(operatorId, id, server),
+            image: skinTexture(operatorId, id, skinServer),
+            thumbnail: skinThumbnail(operatorId, id, skinServer),
             isDefault: false,
             displaySkin: display,
+            ...(fromCn ? { fromCn } : {}),
         });
+    };
+
+    for (const skin of skinsFromBackend) {
+        if (skin.skinId) own.add(skin.skinId);
+        pushSkin(skin, server, false);
+    }
+    for (const skin of cnSkins ?? []) {
+        if (skin.skinId && !own.has(skin.skinId)) pushSkin(skin, "cn", true);
     }
 
     return skins;
