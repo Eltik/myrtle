@@ -12,8 +12,8 @@ function hydrated() {
 afterEach(() => window.localStorage.clear());
 
 describe("theme store toggles", () => {
-    it("reads the defaults when nothing is stored: spoilers, data saver and CN updates off, the rest on", () => {
-        expect(hydrated()).toEqual({ dynamicArtwork: true, latinNames: true, spoilers: false, maintenanceCountdown: true, dataSaver: false, cnUpdates: false });
+    it("reads the defaults when nothing is stored: spoilers and data saver off, the rest on", () => {
+        expect(hydrated()).toEqual({ dynamicArtwork: true, latinNames: true, spoilers: false, maintenanceCountdown: true, dataSaver: false, cnUpdates: true });
     });
 
     it("reads only the exact string `true` as on", () => {
@@ -29,11 +29,11 @@ describe("theme store toggles", () => {
         themeActions.setSpoilers(true);
         themeActions.setMaintenanceCountdown(false);
         themeActions.setDataSaver(true);
-        themeActions.setCnUpdates(true);
-        expect({ ...window.localStorage }).toEqual({ [KEYS.dynamicArtwork]: "false", [KEYS.latinNames]: "false", [KEYS.spoilers]: "true", [KEYS.maintenanceCountdown]: "false", [KEYS.dataSaver]: "true", [KEYS.cnUpdates]: "true" });
+        themeActions.setCnUpdates(false);
+        expect({ ...window.localStorage }).toEqual({ [KEYS.dynamicArtwork]: "false", [KEYS.latinNames]: "false", [KEYS.spoilers]: "true", [KEYS.maintenanceCountdown]: "false", [KEYS.dataSaver]: "true", [KEYS.cnUpdates]: "false" });
         const { dynamicArtwork, latinNames, spoilers, maintenanceCountdown, dataSaver, cnUpdates } = themeStore.state;
-        expect({ dynamicArtwork, latinNames, spoilers, maintenanceCountdown, dataSaver, cnUpdates }).toEqual({ dynamicArtwork: false, latinNames: false, spoilers: true, maintenanceCountdown: false, dataSaver: true, cnUpdates: true });
-        expect(hydrated()).toEqual({ dynamicArtwork: false, latinNames: false, spoilers: true, maintenanceCountdown: false, dataSaver: true, cnUpdates: true });
+        expect({ dynamicArtwork, latinNames, spoilers, maintenanceCountdown, dataSaver, cnUpdates }).toEqual({ dynamicArtwork: false, latinNames: false, spoilers: true, maintenanceCountdown: false, dataSaver: true, cnUpdates: false });
+        expect(hydrated()).toEqual({ dynamicArtwork: false, latinNames: false, spoilers: true, maintenanceCountdown: false, dataSaver: true, cnUpdates: false });
     });
 
     it("mirrors data saver into a cookie the server render reads, and forgets it when off", async () => {

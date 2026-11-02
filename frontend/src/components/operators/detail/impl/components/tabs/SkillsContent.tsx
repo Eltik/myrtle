@@ -9,13 +9,16 @@ import { operatorGamedataServer } from "#/lib/api/gamedata";
 import { type IRange, rangesQueryOptions } from "#/lib/api/ranges";
 import { useGamedataServer, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
+import { blackboardDiff } from "#/lib/operators/cn-changes";
 import { cn } from "#/lib/utils";
 import type { IOperatorListItem, ISkillLevel } from "#/types/operators";
 import { asset } from "../../assets";
-import { descriptionToHtml } from "../../description";
+import { useCnUpdatesContext } from "../../cnUpdates";
+import { descriptionToHtml, renderDescriptionDiffHtml } from "../../description";
 import { computeSkillDiff, formatBlackboardValue, formatSkillLevel, getSkillTypeLabel, getSpTypeLabel } from "../../helpers";
 import type { messages as helperMessages } from "../../helpers.messages";
 import { useCommunityDefaults } from "../../useCommunityDefaults";
+import { CnDescription, CnTag, CnValue } from "../CnMarkers";
 import { CommunitySharePill } from "../CommunitySharePill";
 import { LevelBreakdown } from "../LevelBreakdown";
 import { OperatorRange } from "../OperatorRange";
@@ -30,7 +33,10 @@ type SkillsT = TypedT<typeof messages & typeof helperMessages>;
 
 export const SkillsContent = memo(function SkillsContent({ operator }: ISkillsContentProps) {
     const t: SkillsT = useT("operators");
-    const [selectedSkillIndex, setSelectedSkillIndex] = useState(operator.skills.length > 0 ? operator.skills.length - 1 : 0);
+    const cnUpdates = useCnUpdatesContext();
+    // Skills merged in from CN come after this server's, so the tab still opens on this server's last.
+    const ownSkillCount = operator.skills.filter((s) => !cnUpdates?.skillIds.has(s.skillId)).length;
+    const [selectedSkillIndex, setSelectedSkillIndex] = useState(ownSkillCount > 0 ? ownSkillCount - 1 : 0);
     const [skillLevel, setSkillLevel] = useState(Math.max(0, (operator.skills[selectedSkillIndex]?.static?.levels ?? []).length - 1));
     const [comparisonMode, setComparisonMode] = useState(false);
     const [showDifferencesOnly, setShowDifferencesOnly] = useState(false);
@@ -39,6 +45,19 @@ export const SkillsContent = memo(function SkillsContent({ operator }: ISkillsCo
 
     const skillData = (operator.skills[selectedSkillIndex]?.static?.levels ?? [])[skillLevel];
     const skillDescription = useMemo(() => descriptionToHtml(skillData?.description ?? "", skillData?.blackboard ?? []), [skillData?.description, skillData?.blackboard]);
+    const selectedSkillId = operator.skills[selectedSkillIndex]?.skillId;
+    const selectedIsCn = selectedSkillId ? (cnUpdates?.skillIds.has(selectedSkillId) ?? false) : false;
+    // The same level of a skill both servers have, as CN's record carries it, where CN changed its values.
+    const cnSkillData = selectedSkillId && cnUpdates?.changes.some((c) => c.kind === "skill_values_changed" && c.skillId === selectedSkillId) ? cnUpdates.cn.skills.find((s) => s.skillId === selectedSkillId)?.static?.levels?.[skillLevel] : undefined;
+    const cnSkillDescription = useMemo(() => {
+        if (!cnSkillData || !skillData?.description || blackboardDiff(skillData.blackboard, cnSkillData.blackboard).length === 0) return null;
+        return renderDescriptionDiffHtml(skillData.description, skillData.description, skillData.blackboard ?? [], cnSkillData.blackboard ?? []);
+    }, [cnSkillData, skillData?.description, skillData?.blackboard]);
+    /** CN's value of one number, formatted as its cell formats its own, where it differs. */
+    const onCn = (here: number | null | undefined, there: number | null | undefined, format: (n: number) => string = String) => (typeof here === "number" && typeof there === "number" && here !== there ? format(there) : null);
+    const cnSpCost = onCn(skillData?.spData?.spCost, cnSkillData?.spData?.spCost);
+    const cnInitSp = onCn(skillData?.spData?.initSp, cnSkillData?.spData?.initSp);
+    const cnDuration = onCn(skillData?.duration, cnSkillData?.duration, (n) => (n > 0 ? t("skills.durationSeconds", { value: n }) : "-"));
 
     const levelsCount = (operator.skills[selectedSkillIndex]?.static?.levels ?? []).length;
 
@@ -134,6 +153,7 @@ export const SkillsContent = memo(function SkillsContent({ operator }: ISkillsCo
                     const name = skill.static?.levels?.[0]?.name ?? t("skills.fallbackName", { index: idx + 1 });
                     const image = skill.static?.image;
                     const isSelected = selectedSkillIndex === idx;
+                    const isCn = cnUpdates?.skillIds.has(skill.skillId) ?? false;
                     return (
                         <button
                             key={skill.skillId ?? idx}
@@ -141,8 +161,9 @@ export const SkillsContent = memo(function SkillsContent({ operator }: ISkillsCo
                             onClick={() => handleSkillChange(idx)}
                             className={cn("flex w-full items-center gap-2 rounded-lg border px-4 py-2 font-medium text-sm transition-colors sm:w-auto", isSelected ? "border-primary bg-primary/10 text-primary" : "border-border bg-secondary/30 text-muted-foreground hover:border-primary/50 hover:text-foreground")}
                         >
-                            {image && <img alt="" className="h-5 w-5 shrink-0 object-contain" decoding="async" loading="lazy" src={asset(image, operator.server)} />}
-                            {name}
+                            {image && <img alt="" className="h-5 w-5 shrink-0 object-contain" decoding="async" loading="lazy" src={asset(image, isCn ? "cn" : operator.server)} />}
+                            {isCn ? <span lang="zh-CN">{name}</span> : name}
+                            {isCn && <CnTag />}
                             {/* Keyed by skillId, never by position: the game's
                                 own default index is positional, but matching on
                                 it here would repeat the module-order bug. */}
@@ -250,11 +271,16 @@ export const SkillsContent = memo(function SkillsContent({ operator }: ISkillsCo
                     <div className="mb-5 flex items-start gap-4">
                         {operator.skills[selectedSkillIndex].static?.image && (
                             <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-md border border-border bg-secondary/50">
-                                <img alt={skillData.name ?? t("skills.imageAlt")} className="h-12 w-12 object-contain" decoding="async" loading="lazy" src={asset(operator.skills[selectedSkillIndex].static.image, operator.server)} />
+                                <img alt={skillData.name ?? t("skills.imageAlt")} className="h-12 w-12 object-contain" decoding="async" loading="lazy" src={asset(operator.skills[selectedSkillIndex].static.image, selectedIsCn ? "cn" : operator.server)} />
                             </div>
                         )}
                         <div className="min-w-0 flex-1">
-                            <h3 className="font-semibold text-foreground text-lg">{skillData.name}</h3>
+                            <div className="flex items-center gap-2">
+                                <h3 lang={selectedIsCn ? "zh-CN" : undefined} className="font-semibold text-foreground text-lg">
+                                    {skillData.name}
+                                </h3>
+                                {selectedIsCn && <CnTag />}
+                            </div>
                             <div className="mt-2 flex flex-wrap gap-2">
                                 <Badge className="rounded-sm bg-secondary/50" variant="secondary">
                                     {getSpTypeLabel(skillData.spData?.spType ?? "", t)}
@@ -269,24 +295,35 @@ export const SkillsContent = memo(function SkillsContent({ operator }: ISkillsCo
                     <div className="mb-5 grid grid-cols-3 gap-3">
                         <div className="rounded-sm border border-border/50 bg-secondary/20 p-3 text-center">
                             <div className="text-muted-foreground text-xs">{t("skills.spCost")}</div>
-                            <div className="mt-1 font-mono font-semibold text-foreground text-lg">{skillData.spData?.spCost ?? "-"}</div>
+                            <div className="mt-1 font-mono font-semibold text-foreground text-lg">
+                                {skillData.spData?.spCost ?? "-"}
+                                {cnSpCost && <CnValue value={cnSpCost} />}
+                            </div>
                         </div>
                         <div className="rounded-sm border border-border/50 bg-secondary/20 p-3 text-center">
                             <div className="text-muted-foreground text-xs">{t("skills.initialSp")}</div>
-                            <div className="mt-1 font-mono font-semibold text-foreground text-lg">{skillData.spData?.initSp ?? "-"}</div>
+                            <div className="mt-1 font-mono font-semibold text-foreground text-lg">
+                                {skillData.spData?.initSp ?? "-"}
+                                {cnInitSp && <CnValue value={cnInitSp} />}
+                            </div>
                         </div>
                         <div className="rounded-sm border border-border/50 bg-secondary/20 p-3 text-center">
                             <div className="text-muted-foreground text-xs">{t("skills.duration")}</div>
-                            <div className="mt-1 font-mono font-semibold text-foreground text-lg">{skillData.duration && skillData.duration > 0 ? t("skills.durationSeconds", { value: skillData.duration }) : "-"}</div>
+                            <div className="mt-1 font-mono font-semibold text-foreground text-lg">
+                                {skillData.duration && skillData.duration > 0 ? t("skills.durationSeconds", { value: skillData.duration }) : "-"}
+                                {cnDuration && <CnValue value={cnDuration} />}
+                            </div>
                         </div>
                     </div>
 
                     <div className="rounded-sm border border-border/50 bg-secondary/10 p-4">
                         <p
+                            lang={selectedIsCn ? "zh-CN" : undefined}
                             className="text-foreground text-sm leading-relaxed"
                             // biome-ignore lint/security/noDangerouslySetInnerHtml: Sanitized
                             dangerouslySetInnerHTML={{ __html: skillDescription }}
                         />
+                        {cnSkillDescription && <CnDescription html={cnSkillDescription} />}
                     </div>
 
                     {skillRange && (

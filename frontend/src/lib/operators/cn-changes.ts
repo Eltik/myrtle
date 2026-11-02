@@ -1,6 +1,6 @@
 import type { OperatorChange } from "#/types/generated/OperatorChange";
 import type { OperatorCnChanges } from "#/types/generated/OperatorCnChanges";
-import type { IAttributeKeyFrame, IEnrichedSkill, IOperatorListItem, IOperatorModule } from "#/types/operators";
+import type { IOperatorListItem } from "#/types/operators";
 
 /** A blackboard row as skills, talents, traits and modules all carry it. */
 type BlackboardRow = { key: string; value: number };
@@ -53,111 +53,25 @@ export function blackboardDiff(en: readonly BlackboardRow[] | null | undefined, 
     });
 }
 
-/** The numeric fields of two records that differ, by field name. */
-function recordDiff(en: Record<string, unknown> | null | undefined, cn: Record<string, unknown> | null | undefined): IValueDiff[] {
-    const keys = [...new Set([...Object.keys(en ?? {}), ...Object.keys(cn ?? {})])];
-    return keys.flatMap((key) => {
-        const x = en?.[key];
-        const y = cn?.[key];
-        const xn = typeof x === "number" ? x : null;
-        const yn = typeof y === "number" ? y : null;
-        if (xn === null && yn === null) return [];
-        if (xn !== null && yn !== null && sameNumber(xn, yn)) return [];
-        return [{ key, en: xn, cn: yn }];
-    });
+/** An operator with CN's additions merged in, and which of its modules and skills are CN's. */
+export interface ICnMerged {
+    operator: IOperatorListItem;
+    moduleIds: ReadonlySet<string>;
+    skillIds: ReadonlySet<string>;
 }
 
-/** One skill level's differing numbers; `level` is 1-based (8 to 10 are the masteries). */
-export interface ISkillLevelDiff {
-    level: number;
-    values: IValueDiff[];
-}
-
-/** Per level, the SP data, duration and blackboard numbers that differ between two copies of a skill. */
-export function skillLevelDiffs(en: IEnrichedSkill | undefined, cn: IEnrichedSkill | undefined): ISkillLevelDiff[] {
-    const a = en?.static?.levels ?? [];
-    const b = cn?.static?.levels ?? [];
-    const out: ISkillLevelDiff[] = [];
-    for (let i = 0; i < Math.max(a.length, b.length); i++) {
-        const x = a[i];
-        const y = b[i];
-        const values = [...recordDiff(x?.spData as Record<string, unknown> | undefined, y?.spData as Record<string, unknown> | undefined), ...recordDiff({ duration: x?.duration }, { duration: y?.duration }), ...blackboardDiff(x?.blackboard, y?.blackboard)];
-        if (values.length > 0) out.push({ level: i + 1, values });
-    }
-    return out;
-}
-
-/** One promotion phase's differing stats at its max level (the last key frame). `phase` is 0-based. */
-export interface IPhaseStatDiff {
-    phase: number;
-    level: number;
-    values: IValueDiff[];
-}
-
-function lastFrame(frames: readonly IAttributeKeyFrame[] | undefined): IAttributeKeyFrame | undefined {
-    return frames?.[frames.length - 1];
-}
-
-/** Per promotion phase, the max-level attributes that differ. */
-export function phaseStatDiffs(en: IOperatorListItem, cn: IOperatorListItem): IPhaseStatDiff[] {
-    const out: IPhaseStatDiff[] = [];
-    for (let i = 0; i < Math.max(en.phases.length, cn.phases.length); i++) {
-        const x = lastFrame(en.phases[i]?.attributesKeyFrames);
-        const y = lastFrame(cn.phases[i]?.attributesKeyFrames);
-        const values = recordDiff(x?.data as Record<string, unknown> | undefined, y?.data as Record<string, unknown> | undefined);
-        if (values.length > 0) out.push({ phase: i, level: y?.level ?? x?.level ?? 0, values });
-    }
-    return out;
-}
-
-/** The trust bonus at full trust (the last favor key frame) where it differs. */
-export function trustDiffs(en: IOperatorListItem, cn: IOperatorListItem): IValueDiff[] {
-    return recordDiff(lastFrame(en.favorKeyFrames)?.data as Record<string, unknown> | undefined, lastFrame(cn.favorKeyFrames)?.data as Record<string, unknown> | undefined);
-}
-
-/** One talent or trait candidate's differing blackboard values, by talent and candidate position. */
-export interface ICandidateDiff {
-    talent: number;
-    candidate: number;
-    values: IValueDiff[];
-}
-
-/** Per talent candidate, the blackboard values that differ. */
-export function talentDiffs(en: IOperatorListItem, cn: IOperatorListItem): ICandidateDiff[] {
-    const out: ICandidateDiff[] = [];
-    const a = en.talents ?? [];
-    const b = cn.talents ?? [];
-    for (let t = 0; t < Math.max(a.length, b.length); t++) {
-        const x = a[t]?.candidates ?? [];
-        const y = b[t]?.candidates ?? [];
-        for (let c = 0; c < Math.max(x.length, y.length); c++) {
-            const values = blackboardDiff(x[c]?.blackboard, y[c]?.blackboard);
-            if (values.length > 0) out.push({ talent: t, candidate: c, values });
-        }
-    }
-    return out;
-}
-
-/** Per trait candidate, the blackboard values that differ. */
-export function traitDiffs(en: IOperatorListItem, cn: IOperatorListItem): IValueDiff[][] {
-    const x = en.trait?.candidates ?? [];
-    const y = cn.trait?.candidates ?? [];
-    const out: IValueDiff[][] = [];
-    for (let c = 0; c < Math.max(x.length, y.length); c++) {
-        const values = blackboardDiff(x[c]?.blackboard, y[c]?.blackboard);
-        if (values.length > 0) out.push(values);
-    }
-    return out;
-}
-
-/** Per module stage, the attribute bonuses that differ between two copies of a module. */
-export function moduleStageDiffs(en: IOperatorModule | undefined, cn: IOperatorModule | undefined): { stage: number; values: IValueDiff[] }[] {
-    const a = en?.data?.phases ?? [];
-    const b = cn?.data?.phases ?? [];
-    const out: { stage: number; values: IValueDiff[] }[] = [];
-    for (let i = 0; i < Math.max(a.length, b.length); i++) {
-        const values = blackboardDiff(a[i]?.attributeBlackboard, b[i]?.attributeBlackboard);
-        if (values.length > 0) out.push({ stage: a[i]?.equipLevel ?? b[i]?.equipLevel ?? i + 1, values });
-    }
-    return out;
+/**
+ * `en` with the modules and skills `changes` reports as added on CN appended from CN's record,
+ * so the page's own module and skill pickers offer them after this server's. Everything else
+ * stays `en`'s; with nothing added, `operator` is `en` itself.
+ */
+export function withCnAdditions(en: IOperatorListItem, cn: IOperatorListItem, changes: readonly OperatorChange[]): ICnMerged {
+    const added = new Set(changes.flatMap((c) => (c.kind === "module_added" ? [c.moduleId] : c.kind === "skill_added" ? [c.skillId] : [])));
+    const modules = cn.modules.filter((m) => added.has(m.uniEquipId) && !en.modules.some((x) => x.uniEquipId === m.uniEquipId));
+    const skills = cn.skills.filter((s) => added.has(s.skillId) && !en.skills.some((x) => x.skillId === s.skillId));
+    return {
+        operator: modules.length === 0 && skills.length === 0 ? en : { ...en, modules: [...en.modules, ...modules], skills: [...en.skills, ...skills] },
+        moduleIds: new Set(modules.map((m) => m.uniEquipId)),
+        skillIds: new Set(skills.map((s) => s.skillId)),
+    };
 }

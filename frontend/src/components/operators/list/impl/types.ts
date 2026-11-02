@@ -5,8 +5,7 @@ export type ViewMode = "grid" | "compact" | "list";
 export type SortOption = "rarity" | "name" | "class" | "hp" | "atk" | "def" | "res" | "cost" | "block" | "ownership" | "e2";
 export type SortOrder = "asc" | "desc";
 export type HasNotesFilter = "any" | "yes" | "no";
-/** "updated" is the Global list narrowed to operators whose CN data differs. */
-export type AvailabilityFilter = "global" | "upcoming" | "updated";
+export type AvailabilityFilter = "global" | "upcoming";
 
 /** Which community number the card badge shows. Independent of `sortBy`, so
  *  sorting by E2 rate while displaying ownership is legal. */

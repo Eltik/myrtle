@@ -30,9 +30,10 @@ interface IThemeState {
      */
     dataSaver: boolean;
     /**
-     * Show, on an operator's page, what CN's data has for them that this
-     * server's does not yet (a new module, changed values). Off by default:
-     * it is CN text, and the page fetches CN's record only when it is on.
+     * Show what CN's data has for an operator that this server's does not
+     * yet (a new module, changed values): on the operator's page, and as the
+     * updated operators in the list's Upcoming view. On by default; off, no
+     * CN record or change list is fetched.
      */
     cnUpdates: boolean;
     hydrated: boolean;
@@ -99,7 +100,7 @@ export const themeStore = new Store<IThemeState>({
     spoilers: false,
     maintenanceCountdown: true,
     dataSaver: false,
-    cnUpdates: false,
+    cnUpdates: true,
     hydrated: false,
 });
 
@@ -147,7 +148,7 @@ export function hydrateTheme(): void {
         spoilers: readToggle(SPOILERS_STORAGE_KEY, false),
         maintenanceCountdown: readToggle(MAINTENANCE_COUNTDOWN_STORAGE_KEY, true),
         dataSaver: readToggle(DATA_SAVER_STORAGE_KEY, false),
-        cnUpdates: readToggle(CN_UPDATES_STORAGE_KEY, false),
+        cnUpdates: readToggle(CN_UPDATES_STORAGE_KEY, true),
         hydrated: true,
     }));
 }

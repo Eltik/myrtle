@@ -4,7 +4,7 @@ import { rarityToNumber } from "#/lib/utils";
 import { CLASS_SORT_ORDER } from "./constants";
 import { operatorFilterPredicate } from "./matchFilters";
 import { buildFilterOptions, countSharedFilters } from "./shared-filters";
-import type { ArrayFilterKey, IFilterState, IOperatorView, IUseOperatorFiltersReturn } from "./types";
+import type { ArrayFilterKey, AvailabilityFilter, IFilterState, IOperatorView, IUseOperatorFiltersReturn } from "./types";
 
 const initialState: IFilterState = {
     searchQuery: "",
@@ -25,11 +25,22 @@ const initialState: IFilterState = {
     sortOrder: "desc",
 };
 
+const AVAILABILITIES: ReadonlySet<string> = new Set<AvailabilityFilter>(["global", "upcoming"]);
+
+/**
+ * Stored filters, merged over the initial state since they predate later keys (modules). An
+ * availability no longer offered falls back: the retired "updated" (Global operators CN has
+ * updated) to "upcoming", which lists them now, anything else to the default.
+ */
+export function parseStoredFilters(raw: string): IFilterState {
+    const stored = { ...initialState, ...(JSON.parse(raw) as Partial<IFilterState>) };
+    const availability: string = stored.availability;
+    if (AVAILABILITIES.has(availability)) return stored;
+    return { ...stored, availability: availability === "updated" ? "upcoming" : initialState.availability };
+}
+
 export function useOperatorFilters(data: IOperatorView[]): IUseOperatorFiltersReturn {
-    // Stored filters predate later keys (modules), so the parse merges over the initial state to fill them.
-    const [filters, setFilters] = useLocalStorageState<IFilterState>("operators:filters", initialState, {
-        parse: (raw) => ({ ...initialState, ...(JSON.parse(raw) as Partial<IFilterState>) }),
-    });
+    const [filters, setFilters] = useLocalStorageState<IFilterState>("operators:filters", initialState, { parse: parseStoredFilters });
 
     const set = useCallback(<K extends keyof IFilterState>(key: K, value: IFilterState[K]) => setFilters((prev) => ({ ...prev, [key]: value })), [setFilters]);
 
@@ -45,12 +56,9 @@ export function useOperatorFilters(data: IOperatorView[]): IUseOperatorFiltersRe
     const filterOptions = useMemo(() => buildFilterOptions(data), [data]);
 
     // Separate memos so a sort change doesn't rerun the more expensive filter pass.
-    // "updated" narrows to operators with CN changes, but only once some are known: with none
-    // loaded (or none on this server) it reads as the whole Global list, not an empty one.
-    const updatedOnly = filters.availability === "updated" && data.some((op) => op.cnChanges !== null);
     const filtered = useMemo(
         () =>
-            (updatedOnly ? data.filter((op) => op.cnChanges !== null) : data).filter(
+            data.filter(
                 operatorFilterPredicate({
                     searchQuery: filters.searchQuery,
                     classes: filters.classes,
@@ -67,7 +75,7 @@ export function useOperatorFilters(data: IOperatorView[]): IUseOperatorFiltersRe
                     hasNotes: filters.hasNotes,
                 }),
             ),
-        [data, updatedOnly, filters.searchQuery, filters.classes, filters.subclasses, filters.rarities, filters.genders, filters.nations, filters.factions, filters.races, filters.birthPlaces, filters.artists, filters.voiceActors, filters.modules, filters.hasNotes],
+        [data, filters.searchQuery, filters.classes, filters.subclasses, filters.rarities, filters.genders, filters.nations, filters.factions, filters.races, filters.birthPlaces, filters.artists, filters.voiceActors, filters.modules, filters.hasNotes],
     );
 
     const filteredOperators = useMemo(() => {

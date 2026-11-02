@@ -11,6 +11,8 @@ import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
 import type { ILevelUpCostItem, IOperatorListItem, IUnlockCondition } from "#/types/operators";
 import { asset, itemIcon } from "../../assets";
+import { useCnUpdatesContext } from "../../cnUpdates";
+import { CnTag } from "../CnMarkers";
 import type { messages } from "./LevelUpContent.messages";
 
 interface ILevelUpContentProps {
@@ -118,6 +120,7 @@ export const LevelUpContent = memo(function LevelUpContent({ operator }: ILevelU
     const t: LevelUpT = useT("operators");
     const operatorName = useOperatorName();
     const [activeSkill, setActiveSkill] = useState(0);
+    const cnUpdates = useCnUpdatesContext();
     const localeServer = useGamedataServer();
     const { data: materials } = useQuery(materialsQueryOptions(operatorGamedataServer(operator.server, localeServer)));
 
@@ -127,22 +130,26 @@ export const LevelUpContent = memo(function LevelUpContent({ operator }: ILevelU
     const masterySkills = useMemo(() => operator.skills.filter((s) => s.levelUpCostCond?.length), [operator.skills]);
     const validModules = useMemo(() => operator.modules.filter((m) => m.itemCost && Object.keys(m.itemCost).length > 0), [operator.modules]);
 
+    // The total stays what this server asks for: modules and skills merged in from CN are listed
+    // with their costs above it, not counted in it.
     const grandTotal = useMemo(() => {
         const all: ILevelUpCostItem[] = [
             ...operator.phases.flatMap((p) => p.evolveCost ?? []),
             ...operator.phases.flatMap((p) => p.levelUpCost ?? []),
             ...operator.allSkillLevelUp.flatMap((l) => l.lvlUpCost ?? []),
-            ...operator.skills.flatMap((s) => s.levelUpCostCond.flatMap((c) => c.levelUpCost ?? [])),
-            ...operator.modules.flatMap((m) =>
-                m.itemCost
-                    ? Object.values(m.itemCost)
-                          .flat()
-                          .filter((c) => c !== undefined)
-                    : [],
-            ),
+            ...operator.skills.filter((s) => !cnUpdates?.skillIds.has(s.skillId)).flatMap((s) => s.levelUpCostCond.flatMap((c) => c.levelUpCost ?? [])),
+            ...operator.modules
+                .filter((m) => !cnUpdates?.moduleIds.has(m.uniEquipId))
+                .flatMap((m) =>
+                    m.itemCost
+                        ? Object.values(m.itemCost)
+                              .flat()
+                              .filter((c) => c !== undefined)
+                        : [],
+                ),
         ];
         return aggregate(all);
-    }, [operator.phases, operator.allSkillLevelUp, operator.skills, operator.modules]);
+    }, [operator.phases, operator.allSkillLevelUp, operator.skills, operator.modules, cnUpdates]);
 
     if (!grandTotal.length) {
         return (
@@ -216,7 +223,8 @@ export const LevelUpContent = memo(function LevelUpContent({ operator }: ILevelU
                                         type="button"
                                     >
                                         <span className="grid h-5 w-5 shrink-0 place-items-center rounded bg-background/60 font-bold text-[10px]">{i + 1}</span>
-                                        <span>{s.static?.levels?.[0]?.name ?? t("levelup.skillFallback", { index: i + 1 })}</span>
+                                        <span lang={cnUpdates?.skillIds.has(s.skillId) ? "zh-CN" : undefined}>{s.static?.levels?.[0]?.name ?? t("levelup.skillFallback", { index: i + 1 })}</span>
+                                        {cnUpdates?.skillIds.has(s.skillId) && <CnTag />}
                                     </button>
                                 ))}
                             </div>
@@ -238,29 +246,37 @@ export const LevelUpContent = memo(function LevelUpContent({ operator }: ILevelU
                 {validModules.length > 0 && (
                     <Section icon={<Box className="h-4 w-4" />} subtitle={t("levelup.section.modules.desc")} title={t("levelup.section.modules")}>
                         <div className="divide-y divide-border">
-                            {validModules.map((m) => (
-                                <div className="px-5 py-4" key={m.uniEquipId}>
-                                    <div className="mb-3 flex items-center gap-3">
-                                        <div className="grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded-md border border-border bg-muted/40">
-                                            {m.image ? <img alt="" className="h-full w-full object-contain" loading="lazy" src={asset(m.image, operator.server)} /> : <span className="font-bold text-[10px] text-primary uppercase">{m.typeName2 ?? m.typeName1}</span>}
-                                        </div>
-                                        <div className="min-w-0">
-                                            <div className="truncate font-semibold text-foreground text-sm">{m.uniEquipName}</div>
-                                            <div className="text-muted-foreground text-xs">
-                                                {m.typeName1}
-                                                {m.typeName2 ? ` · ${m.typeName2}` : ""}
+                            {validModules.map((m) => {
+                                const fromCn = cnUpdates?.moduleIds.has(m.uniEquipId) ?? false;
+                                return (
+                                    <div className="px-5 py-4" key={m.uniEquipId}>
+                                        <div className="mb-3 flex items-center gap-3">
+                                            <div className="grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded-md border border-border bg-muted/40">
+                                                {m.image ? <img alt="" className="h-full w-full object-contain" loading="lazy" src={asset(m.image, fromCn ? "cn" : operator.server)} /> : <span className="font-bold text-[10px] text-primary uppercase">{m.typeName2 ?? m.typeName1}</span>}
+                                            </div>
+                                            <div className="min-w-0">
+                                                <div className="flex min-w-0 items-center gap-2">
+                                                    <span lang={fromCn ? "zh-CN" : undefined} className="truncate font-semibold text-foreground text-sm">
+                                                        {m.uniEquipName}
+                                                    </span>
+                                                    {fromCn && <CnTag />}
+                                                </div>
+                                                <div lang={fromCn ? "zh-CN" : undefined} className="text-muted-foreground text-xs">
+                                                    {m.typeName1}
+                                                    {m.typeName2 ? ` · ${m.typeName2}` : ""}
+                                                </div>
                                             </div>
                                         </div>
+                                        <div className="space-y-1 rounded-lg border border-border/60 bg-background/40">
+                                            {Object.entries(m.itemCost ?? {})
+                                                .sort(([a], [b]) => Number(a) - Number(b))
+                                                .map(([stage, items]) => (
+                                                    <CostRow items={items ?? []} key={stage} label={t("levelup.row.stage", { stage })} materials={materials} server={operator.server} />
+                                                ))}
+                                        </div>
                                     </div>
-                                    <div className="space-y-1 rounded-lg border border-border/60 bg-background/40">
-                                        {Object.entries(m.itemCost ?? {})
-                                            .sort(([a], [b]) => Number(a) - Number(b))
-                                            .map(([stage, items]) => (
-                                                <CostRow items={items ?? []} key={stage} label={t("levelup.row.stage", { stage })} materials={materials} server={operator.server} />
-                                            ))}
-                                    </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     </Section>
                 )}

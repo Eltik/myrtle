@@ -136,8 +136,8 @@ export const messages = {
         description: "Label of the switch that shows CN-server changes on operator pages, and the switch's accessible name.",
     },
     "appearance.cnUpdates.rowDesc": {
-        text: "Adds a CN section to an operator's page with the data that differs on CN, in CN's own text. Off by default.",
-        description: "Caption under the CN updates switch. 'CN's own text' means the section shows Chinese game text, untranslated.",
+        text: "Marks CN's values on an operator's page, adds CN-only modules to its module choices in CN's own text, and lists updated operators under Upcoming. On by default.",
+        description: "Caption under the CN updates switch. 'Modules' is the game's word for an operator's equipment upgrades. 'CN's own text' means Chinese game text, untranslated. 'Upcoming' is the name of the operator list's view of CN-server operators.",
     },
     "appearance.topBar.title": {
         text: "Top Bar",

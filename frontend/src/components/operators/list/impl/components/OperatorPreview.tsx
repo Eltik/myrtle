@@ -1,4 +1,5 @@
 import { useOperatorFactLabel } from "#/components/operators/OperatorFacts";
+import { useOperatorName } from "#/hooks/use-operator-name";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { archetypeLabel, getAvatarById, nationLabel, professionLabel, rarityToNumber } from "#/lib/utils";
@@ -9,13 +10,16 @@ import styles from "./OperatorPreview.module.css";
 
 interface IOperatorPreviewProps {
     operator: IOperatorIndexEntry;
+    /** The game-data server the record comes from, for its avatar; omitted for this site's own. */
+    server?: string;
 }
 
-export function OperatorPreview({ operator }: IOperatorPreviewProps) {
+export function OperatorPreview({ operator, server }: IOperatorPreviewProps) {
     const t: TypedT<typeof messages> = useT("operators");
     const fact = useOperatorFactLabel();
+    const name = useOperatorName()(operator);
     const rarity = rarityToNumber(operator.rarity);
-    const initial = operator.name.charAt(0).toUpperCase();
+    const initial = name.charAt(0).toUpperCase();
     const nation = nationLabel(operator);
     const archetype = archetypeLabel(operator);
     const logoId = operator.nationId && operator.nationId.length > 0 ? operator.nationId : operator.teamId && operator.teamId.length > 0 ? operator.teamId : operator.groupId && operator.groupId.length > 0 ? operator.groupId : "rhodes";
@@ -26,11 +30,11 @@ export function OperatorPreview({ operator }: IOperatorPreviewProps) {
         <div className={styles.opPreview} data-rarity={rarity}>
             <div className={styles.head}>
                 <div className={styles.avatar} aria-hidden="true">
-                    {operator.id ? <img className={styles.avatarImg} src={getAvatarById(operator.id)} alt="" /> : <span className={styles.initial}>{initial}</span>}
+                    {operator.id ? <img className={styles.avatarImg} src={getAvatarById(operator.id, server)} alt="" /> : <span className={styles.initial}>{initial}</span>}
                     <CampIcon groupId={logoId} size={60} className={styles.faction} />
                 </div>
                 <div className={styles.title}>
-                    <div className={styles.name}>{operator.name}</div>
+                    <div className={styles.name}>{name}</div>
                     <div className={styles.rarity}>
                         {Array.from({ length: rarity }, (_, i) => (
                             // biome-ignore lint/suspicious/noArrayIndexKey: decorative stars with fixed count

@@ -4,6 +4,7 @@ import { ArrowDown, ArrowUp, Download, LayoutGrid, LayoutList, Rows3, Search } f
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DynamicExportDialog } from "#/components/export/ExportDialog.lazy";
 import { PageHeader } from "#/components/ui/page-header";
+import { useCnUpdates } from "#/hooks/use-cn-updates";
 import { useLocalStorageState } from "#/hooks/use-local-storage-state";
 import { useOperatorName } from "#/hooks/use-operator-name";
 import { noteHasContent, operatorNotesListQueryOptions } from "#/lib/api/operator-notes";
@@ -40,6 +41,12 @@ const UPCOMING_SKELETON_KEYS = Array.from({ length: 18 }, (_, i) => `upcoming-sk
 // export dialog is closed, avoiding needless ExportDialog re-renders.
 const EMPTY_EXPORT_ROWS: IOperatorExportRow[] = [];
 
+/** A card in the Upcoming view: a CN-only operator, or a Global one CN has `updated`. */
+interface IUpcomingEntry {
+    operator: IOperatorView;
+    updated: boolean;
+}
+
 export function OperatorsList() {
     const t: TypedT<typeof messages & typeof listConstantsMessages> = useT("operators");
     const rt: TypedRichT<typeof messages> = useRichT("operators");
@@ -73,10 +80,11 @@ export function OperatorsList() {
         }
         return map;
     }, [ownership, operators]);
-    // The "Updated" pill does not wait on the CN updates setting: it is one small request, and it
-    // is how a reader learns there is something to turn the setting on for.
-    const { data: cnChanges } = useQuery(cnChangesQueryOptions(server));
-    const cnChangesMap = useMemo(() => cnChangesById(cnChanges), [cnChanges]);
+    // The "Updated" pill and the updated operators under Upcoming follow the CN updates setting;
+    // off, the change list is neither fetched nor read from an earlier fetch's cache.
+    const showCnUpdates = useCnUpdates(server);
+    const { data: cnChanges } = useQuery({ ...cnChangesQueryOptions(server), enabled: showCnUpdates });
+    const cnChangesMap = useMemo(() => cnChangesById(showCnUpdates ? cnChanges : undefined), [showCnUpdates, cnChanges]);
     const enriched = useMemo(() => enrichOperators(operators, notedIds, ownershipMap, cnChangesMap), [operators, notedIds, ownershipMap, cnChangesMap]);
 
     const {
@@ -113,7 +121,10 @@ export function OperatorsList() {
     // subclass, rarity and nation, so a race, faction, gender, birthplace, artist, CV or notes filter
     // showed every upcoming operator under a "Showing N of N" that read as a filtered result.
     const enrichedUpcoming = useMemo(() => enrichOperators(upcoming, notedIds, undefined), [upcoming, notedIds]);
-    const upcomingFiltered = useMemo(() => enrichedUpcoming.filter(operatorFilterPredicate(filters)).sort((a, b) => b.rarity - a.rarity || operatorName(a).localeCompare(operatorName(b))), [enrichedUpcoming, filters, operatorName]);
+    const upcomingOnly = useMemo(() => enrichedUpcoming.filter(operatorFilterPredicate(filters)).sort((a, b) => b.rarity - a.rarity || operatorName(a).localeCompare(operatorName(b))), [enrichedUpcoming, filters, operatorName]);
+    // Upcoming also lists the Global operators CN has updated, after the CN-only ones and in the
+    // Global list's own order, so both answer "what is coming from CN".
+    const upcomingFiltered = useMemo<IUpcomingEntry[]>(() => [...upcomingOnly.map((operator) => ({ operator, updated: false })), ...filteredOperators.filter((op) => op.cnChanges !== null).map((operator) => ({ operator, updated: true }))], [upcomingOnly, filteredOperators]);
 
     const [viewMode, setViewMode] = useLocalStorageState<ViewMode>(VIEW_MODE_KEY, "grid", {
         parse: (raw) => (VIEW_MODES.has(raw as ViewMode) ? (raw as ViewMode) : undefined),
@@ -257,7 +268,6 @@ export function OperatorsList() {
                     selectedModules={filters.modules}
                     selectedHasNotes={filters.hasNotes}
                     selectedAvailability={filters.availability}
-                    cnUpdatesAvailable={cnChangesMap.size > 0}
                     options={filterOptions}
                     onClassesChange={setClasses}
                     onSubclassesChange={setSubclasses}
@@ -486,9 +496,7 @@ export function OperatorsList() {
                         </div>
                     ) : isUpcoming ? (
                         <div className="grid grid-cols-3 gap-2.5 min-[1080px]:grid-cols-6 min-[520px]:grid-cols-4 min-[780px]:grid-cols-5 min-[1280px]:gap-4 min-[780px]:gap-3">
-                            {upcomingPaginated.map((op) => (
-                                <OperatorCardUpcoming key={op.id} operator={op} />
-                            ))}
+                            {upcomingPaginated.map(({ operator: op, updated }) => (updated ? <OperatorCardGrid key={op.id} operator={op} statMetric={statMetric} /> : <OperatorCardUpcoming key={op.id} operator={op} />))}
                         </div>
                     ) : viewMode === "grid" ? (
                         <div className="grid grid-cols-3 gap-2.5 min-[1080px]:grid-cols-6 min-[520px]:grid-cols-4 min-[780px]:grid-cols-5 min-[1280px]:gap-4 min-[780px]:gap-3">
