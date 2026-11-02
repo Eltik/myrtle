@@ -121,7 +121,7 @@ export function DetailedCard({ entry, lastRef }: IDetailedCardProps) {
                         <div className="relative aspect-5/4 w-full cursor-pointer overflow-hidden">
                             {/* `scale-105` sets the CSS `scale` property (Tailwind v4), so the transition must name `scale`, not `transform`. */}
                             {dataSaver ? (
-                                <img alt={entry.name} src={ownedAvatar(entry.operator_id, entry.skin_id)} className={`h-full w-full object-contain p-6 pb-16 transition-[scale] duration-300 ${hovered ? "scale-105" : "scale-100"}`} decoding="async" loading="lazy" />
+                                <img alt={entry.name} src={ownedAvatar(entry.operator_id, entry.skin_id)} className={`h-full w-full object-contain object-top px-6 pt-4 pb-26 transition-[scale] duration-300 ${hovered ? "scale-105" : "scale-100"}`} decoding="async" loading="lazy" />
                             ) : (
                                 <img alt={entry.name} src={ownedHeroURL(entry)} className={`h-full w-full object-cover object-top transition-[scale,opacity] duration-300 ${hovered ? "scale-105" : "scale-100"} ${dynActive ? "opacity-0" : "opacity-100"}`} decoding="async" loading="lazy" />
                             )}
