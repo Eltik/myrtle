@@ -43,7 +43,8 @@ export const SkinsContent = memo(function SkinsContent({ operator }: ISkinsConte
     const { data: cnSkinsResponse } = useQuery({ ...operatorSkinsQueryOptions(operator.id ?? "", "cn"), enabled: !!cnUpdates && server !== "cn" });
     // Chibi spine data is art, not text, so it stays on the operator's own
     // art tree rather than following the locale.
-    const { data: chibiCharacter } = useQuery(chibiByOperatorQueryOptions(operator.id ?? "", operator.server));
+    const { data: ownChibi } = useQuery(chibiByOperatorQueryOptions(operator.id ?? "", operator.server));
+    const { data: cnChibi } = useQuery({ ...chibiByOperatorQueryOptions(operator.id ?? "", "cn"), enabled: !!cnUpdates && !!operator.id && operator.server !== "cn" });
 
     const isBranchForm = !!operator.tmplDefault && operator.id !== operator.tmplDefault;
     const skins: IUISkin[] = useMemo(() => {
@@ -70,6 +71,11 @@ export const SkinsContent = memo(function SkinsContent({ operator }: ISkinsConte
 
     const [selectedId, setSelectedId] = useState<string | null>(null);
     const selected = useMemo(() => skins.find((s) => s.id === selectedId) ?? skins[0] ?? null, [skins, selectedId]);
+
+    // A CN-only outfit's chibi and dynamic art exist only in CN's tree, so its record and server come from CN.
+    const fromCn = !!selected?.fromCn && !!cnChibi;
+    const chibiCharacter = fromCn ? cnChibi : ownChibi;
+    const artServer = fromCn ? "cn" : operator.server;
 
     const chibiSkin = useMemo(() => {
         if (!chibiCharacter || !selected) return null;
@@ -153,9 +159,9 @@ export const SkinsContent = memo(function SkinsContent({ operator }: ISkinsConte
                                 (aligned behind the spine) so the full painted vista fills in even
                                 when the dynamic asset omits it (sky/interior). */}
                             <img alt={selected.name} className={cn("absolute inset-0 h-full w-full object-contain transition-opacity duration-500", showDynamic && dynamicReady && !fullscreenOpen && "opacity-0")} decoding="async" loading="eager" src={selected.image} />
-                            {showDynamic && dynamicFiles && !fullscreenOpen && <SceneIllustPlayer files={dynamicFiles} server={operator.server} framing="authored" surface="panel" backdrop={selected.image} onReady={() => setReadySkel(dynSkel)} />}
+                            {showDynamic && dynamicFiles && !fullscreenOpen && <SceneIllustPlayer files={dynamicFiles} server={artServer} framing="authored" surface="panel" backdrop={selected.image} onReady={() => setReadySkel(dynSkel)} />}
                             <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-linear-to-t from-black/70 via-black/40 to-transparent" />
-                            <SkinViewerDialog imageSrc={selected.image} skinName={selected.name} dynamic={showDynamic && dynamicFiles ? { files: dynamicFiles, server: operator.server } : null} onOpenChange={onFullscreenChange}>
+                            <SkinViewerDialog imageSrc={selected.image} skinName={selected.name} dynamic={showDynamic && dynamicFiles ? { files: dynamicFiles, server: artServer } : null} onOpenChange={onFullscreenChange}>
                                 <button type="button" aria-label={t("outfits.fullscreen")} className="absolute top-3 right-3 inline-flex items-center justify-center rounded-md border border-white/20 bg-black/40 p-1.5 text-white backdrop-blur-md transition-colors hover:bg-black/60">
                                     <Maximize2 className="h-4 w-4" />
                                 </button>
@@ -275,7 +281,7 @@ export const SkinsContent = memo(function SkinsContent({ operator }: ISkinsConte
                         </div>
                     );
                 })()}
-            {chibiCharacter && <DynamicChibiViewer chibi={chibiCharacter} skin={chibiSkin} server={operator.server} />}
+            {chibiCharacter && <DynamicChibiViewer chibi={chibiCharacter} skin={chibiSkin} server={artServer} />}
         </div>
     );
 });
