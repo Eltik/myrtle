@@ -87,6 +87,7 @@ function EditorContent({ slug, detail, queryClient }: IEditorContentProps) {
     // Off until the browser's stored choice is read after mount, so the server render and hydration agree.
     const [autosaveOn, setAutosaveOn] = useState(false);
     const [autosaveStatus, setAutosaveStatus] = useState<AutosaveStatus>("idle");
+    const [nextSaveAt, setNextSaveAt] = useState<number | null>(null);
     const [draftOffer, setDraftOffer] = useState<IStoredDraft | null>(null);
     const [draftChecked, setDraftChecked] = useState(false);
 
@@ -288,13 +289,16 @@ function EditorContent({ slug, detail, queryClient }: IEditorContentProps) {
     useEffect(() => {
         if (!autosaveArmed) return;
         const now = Date.now();
-        const timer = window.setTimeout(
-            () => {
-                if (autosaveArmedRef.current) startSave(true);
-            },
-            autosaveDelay({ now, lastEditAt: now, lastSaveEndedAt: lastSaveEndedAt.current }),
-        );
-        return () => window.clearTimeout(timer);
+        const delay = autosaveDelay({ now, lastEditAt: now, lastSaveEndedAt: lastSaveEndedAt.current });
+        setNextSaveAt(now + delay);
+        const timer = window.setTimeout(() => {
+            setNextSaveAt(null);
+            if (autosaveArmedRef.current) startSave(true);
+        }, delay);
+        return () => {
+            window.clearTimeout(timer);
+            setNextSaveAt(null);
+        };
     }, [autosaveArmed, state, startSave]);
 
     // Leaving the tab or the page: keep the draft now rather than after its delay, and
@@ -470,7 +474,7 @@ function EditorContent({ slug, detail, queryClient }: IEditorContentProps) {
                     saving={saveMutation.isPending}
                     saveError={saveError}
                     saveProgress={saveProgress}
-                    autosave={{ enabled: autosaveOn, status: autosaveStatus, onToggle: handleAutosaveToggle, onRetry: handleAutosaveRetry }}
+                    autosave={{ enabled: autosaveOn, status: autosaveStatus, nextSaveAt, onToggle: handleAutosaveToggle, onRetry: handleAutosaveRetry }}
                 />
 
                 {draftOffer && (

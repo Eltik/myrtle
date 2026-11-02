@@ -1,6 +1,6 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { toTierEntity, UNPLACED } from "#/lib/api/tier-entities";
-import { AUTOSAVE_DEBOUNCE_MS, AUTOSAVE_MIN_GAP_MS, autosaveDelay, DRAFT_MAX_AGE_MS, draftOfferKind, editStateFingerprint, type IStoredDraft, parseDraft, remapDraftTierIds, restorableDraftState, serializeDraft } from "./autosave";
+import { AUTOSAVE_DEBOUNCE_MS, AUTOSAVE_MIN_GAP_MS, autosaveDelay, DRAFT_MAX_AGE_MS, draftOfferKind, editStateFingerprint, type IStoredDraft, parseDraft, remapDraftTierIds, restorableDraftState, secondsUntil, serializeDraft } from "./autosave";
 import { type IEditState, type IEditTier, isDraftId } from "./state";
 
 function tier(id: string, entityKeys: string[] = []): IEditTier {
@@ -127,5 +127,34 @@ describe("stored drafts", () => {
         expect(isDraftId(restored.tiers[1]?.id ?? "")).toBe(true);
         expect(restored.tiers[1]?.entityKeys).toEqual(["operator:char_1"]);
         expect(restored.entityByKey["operator:char_1"]).toBe(entity);
+    });
+});
+
+describe("secondsUntil", () => {
+    beforeEach(() => {
+        vi.useFakeTimers();
+        vi.setSystemTime(0);
+    });
+    afterEach(() => {
+        vi.useRealTimers();
+    });
+
+    it("counts down in whole seconds, rounding up", () => {
+        const dueAt = Date.now() + 4000;
+        expect(secondsUntil(dueAt, Date.now())).toBe(4);
+        vi.advanceTimersByTime(1);
+        expect(secondsUntil(dueAt, Date.now())).toBe(4);
+        vi.advanceTimersByTime(999);
+        expect(secondsUntil(dueAt, Date.now())).toBe(3);
+        vi.advanceTimersByTime(2000);
+        expect(secondsUntil(dueAt, Date.now())).toBe(1);
+    });
+
+    it("never shows zero or a negative number", () => {
+        const dueAt = Date.now() + 1000;
+        vi.advanceTimersByTime(1000);
+        expect(secondsUntil(dueAt, Date.now())).toBe(1);
+        vi.advanceTimersByTime(5000);
+        expect(secondsUntil(dueAt, Date.now())).toBe(1);
     });
 });

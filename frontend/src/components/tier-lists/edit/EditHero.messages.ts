@@ -83,6 +83,14 @@ export const messages = {
         text: "Saves a few seconds after you stop editing. Saved changes are live for anyone viewing the list.",
         description: "Small note under the auto-save switch. Saving updates the public page right away, which is why the switch starts off.",
     },
+    "edit.hero.autosaveCountdown": {
+        text: "Saving in {seconds}s",
+        description: "Auto-save status while changes wait for the next save; {seconds} counts down each second and the trailing 's' means seconds. Rendered uppercase.",
+    },
+    "edit.hero.autosaveScheduled": {
+        text: "Saving soon",
+        description: "Screen-reader-only auto-save status announced once when changes are waiting for the next save, in place of the per-second countdown.",
+    },
     "edit.hero.autosaveSaving": {
         text: "Saving",
         description: "Auto-save status while a save is running. Rendered uppercase.",

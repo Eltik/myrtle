@@ -14,6 +14,7 @@ import type { TypedT } from "#/lib/i18n/messages";
 import { LIST_DESCRIPTION_MAX as DESC_MAX, LIST_NAME_MAX as TITLE_MAX } from "../shared";
 import type { messages } from "./EditHero.messages";
 import type { IPendingChange } from "./state";
+import { useCountdownSeconds } from "./useCountdownSeconds";
 
 /** Where auto-save stands. `failed` and `conflict` hold it until the author acts. */
 export type AutosaveStatus = "idle" | "saving" | "saved" | "failed" | "conflict";
@@ -21,6 +22,8 @@ export type AutosaveStatus = "idle" | "saving" | "saved" | "failed" | "conflict"
 interface IAutosaveControls {
     enabled: boolean;
     status: AutosaveStatus;
+    /** When the pending auto-save starts, in ms since the epoch. Null when none is scheduled. */
+    nextSaveAt: number | null;
     onToggle: (next: boolean) => void;
     onRetry: () => void;
 }
@@ -165,7 +168,7 @@ export function EditHero({ slug, title, description, onTitleChange, onDescriptio
                                     <Switch checked={autosave.enabled} onCheckedChange={autosave.onToggle} aria-describedby={autosaveHintId} />
                                     {t("edit.hero.autosave")}
                                 </Label>
-                                {autosave.enabled && <AutosaveBadge status={autosave.status} isDirty={isDirty} onRetry={autosave.onRetry} t={t} />}
+                                {autosave.enabled && <AutosaveBadge status={autosave.status} nextSaveAt={autosave.nextSaveAt} isDirty={isDirty} onRetry={autosave.onRetry} t={t} />}
                             </div>
                             <p id={autosaveHintId} className="mt-1 font-sans text-[11.5px] text-muted-foreground">
                                 {t("edit.hero.autosaveHint")}
@@ -191,14 +194,16 @@ export function EditHero({ slug, title, description, onTitleChange, onDescriptio
 
 interface IAutosaveBadgeProps {
     status: AutosaveStatus;
+    nextSaveAt: number | null;
     isDirty: boolean;
     onRetry: () => void;
     t: TypedT<typeof messages>;
 }
 
-/** The auto-save state in a word, beside the switch. Nothing while it waits for the next save. */
-function AutosaveBadge({ status, isDirty, onRetry, t }: IAutosaveBadgeProps) {
+/** The auto-save state in a word, beside the switch. While a save is scheduled, the seconds until it starts. */
+function AutosaveBadge({ status, nextSaveAt, isDirty, onRetry, t }: IAutosaveBadgeProps) {
     const label = "font-bold font-mono text-[10.5px] uppercase tracking-[0.14em]";
+    const seconds = useCountdownSeconds(status === "idle" || status === "saved" ? nextSaveAt : null);
     if (status === "saving") {
         return <output className={`${label} text-muted-foreground`}>{t("edit.hero.autosaveSaving")}</output>;
     }
@@ -218,6 +223,16 @@ function AutosaveBadge({ status, isDirty, onRetry, t }: IAutosaveBadgeProps) {
                     {t("edit.hero.autosaveRetry")}
                 </Button>
             </output>
+        );
+    }
+    if (seconds !== null && isDirty) {
+        return (
+            <>
+                <output className="sr-only">{t("edit.hero.autosaveScheduled")}</output>
+                <span aria-hidden="true" className={`${label} text-muted-foreground tabular-nums`}>
+                    {t("edit.hero.autosaveCountdown", { seconds })}
+                </span>
+            </>
         );
     }
     return null;

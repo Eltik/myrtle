@@ -18,6 +18,11 @@ export function autosaveDelay({ now, lastEditAt, lastSaveEndedAt }: { now: numbe
     return Math.max(0, Math.max(debounced, spaced) - now);
 }
 
+/** Whole seconds left until `dueAt`, rounded up and never below 1, so a countdown never shows 0 or less. */
+export function secondsUntil(dueAt: number, now: number): number {
+    return Math.max(1, Math.ceil((dueAt - now) / 1000));
+}
+
 /**
  * Everything a save would write, as one comparable string. Resolved entity
  * data is left out: it is game data, not the list, and it varies by server.
