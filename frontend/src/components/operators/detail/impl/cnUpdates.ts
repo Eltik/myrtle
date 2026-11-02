@@ -42,6 +42,7 @@ export function useCnUpdatesFor(operator: IOperatorListItem | null | undefined, 
     return useMemo(() => {
         if (!operator || !changes || changes.length === 0 || !cn) return { operator, updates: null };
         const merged = withCnAdditions(operator, cn, changes);
-        return { operator: merged.operator, updates: { changes, kinds: new Set(changes.map((c) => c.kind)), cn, moduleIds: merged.moduleIds, skillIds: merged.skillIds, texts: cnModuleTexts(operator, cn) } };
+        const translations = changes.flatMap((c) => (c.kind === "module_added" ? c.translations : []));
+        return { operator: merged.operator, updates: { changes, kinds: new Set(changes.map((c) => c.kind)), cn, moduleIds: merged.moduleIds, skillIds: merged.skillIds, texts: cnModuleTexts(operator, cn, translations) } };
     }, [operator, changes, cn]);
 }

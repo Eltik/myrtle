@@ -8,7 +8,7 @@ mod common;
 
 use std::collections::BTreeMap;
 
-use backend::core::release::operator_changes::{OperatorChange, cn_changes};
+use backend::core::release::operator_changes::{OperatorChange, SharedTexts, cn_changes};
 use common::load_server_with_en_art as load;
 
 fn kind(change: &OperatorChange) -> &'static str {
@@ -59,7 +59,7 @@ fn cn_changes_flag_real_differences_only() {
     // A module CN adds is absent from EN's module list and present in CN's.
     for op in &changed {
         for change in &op.changes {
-            if let OperatorChange::ModuleAdded { module_id } = change {
+            if let OperatorChange::ModuleAdded { module_id, .. } = change {
                 let has = |gd: &backend::core::gamedata::types::GameData| {
                     gd.operators[&op.id]
                         .modules
@@ -74,11 +74,11 @@ fn cn_changes_flag_real_differences_only() {
     // sides: an enrichment that dropped them would compare empty to empty.
     for gd in [&en, &cn] {
         let shu = &gd.operators["char_2025_shu"];
-        assert!(shu.skills.iter().all(|s| {
-            s.static_data
-                .as_ref()
-                .is_some_and(|d| d.levels.len() == 10)
-        }));
+        assert!(
+            shu.skills
+                .iter()
+                .all(|s| { s.static_data.as_ref().is_some_and(|d| d.levels.len() == 10) })
+        );
         assert!(shu.modules.iter().any(|m| m.data.phases.len() == 3));
     }
     // Text differs on every shared operator; a diff that read it would flag
@@ -87,5 +87,52 @@ fn cn_changes_flag_real_differences_only() {
         changed.len() * 4 < shared,
         "{} of {shared} flagged: is text leaking into the comparison?",
         changed.len()
+    );
+}
+
+/// `CN_CHANGES_DUMP=<path>` also writes the full response there.
+#[test]
+fn cn_only_modules_borrow_text_from_shared_modules() {
+    let (Some(en), Some(cn)) = (load("en"), load("cn")) else {
+        eprintln!("assets/output/en or cn absent, skipping");
+        return;
+    };
+    let shared = SharedTexts::build(&en, &cn);
+    println!(
+        "{} shared texts, {} ambiguous dropped",
+        shared.texts.len(),
+        shared.ambiguous
+    );
+    let changed = cn_changes(&en, &cn);
+    for op in &changed {
+        for change in &op.changes {
+            if let OperatorChange::ModuleAdded {
+                module_id,
+                translations,
+            } = change
+            {
+                println!("{module_id}: {}", translations.len());
+                for t in translations {
+                    println!("  {} => {}", t.cn, t.en);
+                }
+            }
+        }
+    }
+    if let Ok(path) = std::env::var("CN_CHANGES_DUMP") {
+        std::fs::write(path, serde_json::to_string(&changed).unwrap()).unwrap();
+    }
+
+    // Shu's GUA-Y adds a damage reduction another module both servers have
+    // words the same way.
+    let shu = changed.iter().find(|o| o.id == "char_2025_shu").unwrap();
+    assert!(
+        shu.changes.iter().any(|c| matches!(
+            c,
+            OperatorChange::ModuleAdded { translations, .. }
+                if translations.iter().any(|t| t.cn == "受到的伤害减少<@ba.kw>15%</>"
+                    && t.en == "Reduces damage taken by <@ba.kw>15%</>")
+        )),
+        "{:?}",
+        shu.changes
     );
 }

@@ -23,7 +23,7 @@ use ts_rs::TS;
 use crate::core::gamedata::types::GameData;
 use crate::core::gamedata::types::module::{ModuleBlackboard, ModuleType};
 use crate::core::gamedata::types::operator::{
-    AttributeKeyFrame, Blackboard, Operator, UnlockCondition,
+    AttributeKeyFrame, Blackboard, Operator, OperatorModule, UnlockCondition,
 };
 use crate::core::gamedata::types::skill::{SkillBlackboard, SkillLevel};
 
@@ -42,8 +42,12 @@ const EPSILON: f64 = 1e-6;
 pub enum OperatorChange {
     /// A module CN has and the trailing server does not. The default
     /// (`ORIGINAL`) module is never reported: it appears with the first
-    /// real one.
-    ModuleAdded { module_id: String },
+    /// real one. `translations` carries the trailing server's text for each
+    /// of the module's CN texts that a module both servers have also uses.
+    ModuleAdded {
+        module_id: String,
+        translations: Vec<CnTranslation>,
+    },
     /// A module both have whose stats, talent or trait numbers, or unlock
     /// requirement differ.
     ModuleChanged { module_id: String },
@@ -66,6 +70,16 @@ pub enum OperatorChange {
     TrustBonusChanged,
 }
 
+/// A CN text and the trailing server's text at the same place, both raw
+/// templates (`{key}` placeholders and rich-text tags left in).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS, utoipa::ToSchema)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct CnTranslation {
+    pub cn: String,
+    pub en: String,
+}
+
 /// Every difference found on one operator, in a fixed order.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
@@ -75,14 +89,30 @@ pub struct OperatorCnChanges {
     pub changes: Vec<OperatorChange>,
 }
 
-/// The operators on both servers whose CN data differs, sorted by id.
+/// The operators on both servers whose CN data differs, sorted by id. Each
+/// added module carries the translations [`SharedTexts`] has for its text.
 #[must_use]
 pub fn cn_changes(base: &GameData, cn: &GameData) -> Vec<OperatorCnChanges> {
+    let shared = SharedTexts::build(base, cn);
     let mut out: Vec<OperatorCnChanges> = base
         .operators
         .iter()
         .filter_map(|(id, op)| {
-            let changes = operator_changes(op, cn.operators.get(id)?);
+            let cn_op = cn.operators.get(id)?;
+            let mut changes = operator_changes(op, cn_op);
+            for change in &mut changes {
+                if let OperatorChange::ModuleAdded {
+                    module_id,
+                    translations,
+                } = change
+                    && let Some(m) = cn_op
+                        .modules
+                        .iter()
+                        .find(|m| &m.module.uni_equip_id == module_id)
+                {
+                    *translations = shared.translations(m);
+                }
+            }
             (!changes.is_empty()).then(|| OperatorCnChanges {
                 id: id.clone(),
                 changes,
@@ -91,6 +121,163 @@ pub fn cn_changes(base: &GameData, cn: &GameData) -> Vec<OperatorCnChanges> {
         .collect();
     out.sort_by(|a, b| a.id.cmp(&b.id));
     out
+}
+
+/// CN text -> the trailing server's text, read off modules both servers have:
+/// the same module, phase, part and candidate on each side. A CN text paired
+/// with two different texts is dropped as ambiguous.
+#[derive(Debug, Default)]
+pub struct SharedTexts {
+    pub texts: HashMap<String, String>,
+    /// CN texts dropped for pairing with more than one text.
+    pub ambiguous: usize,
+}
+
+impl SharedTexts {
+    #[must_use]
+    pub fn build(base: &GameData, cn: &GameData) -> Self {
+        let mut pairs: Vec<(&str, &str)> = Vec::new();
+        for (id, op) in &base.operators {
+            if let Some(cn_op) = cn.operators.get(id) {
+                module_text_pairs(op, cn_op, &mut pairs);
+            }
+        }
+        Self::from_pairs(pairs)
+    }
+
+    /// Keeps each CN text that pairs with exactly one other text.
+    #[must_use]
+    pub fn from_pairs<'a>(pairs: impl IntoIterator<Item = (&'a str, &'a str)>) -> Self {
+        let mut seen: HashMap<&str, Option<&str>> = HashMap::new();
+        for (cn, en) in pairs {
+            if cn.is_empty() || en.is_empty() || cn == en {
+                continue;
+            }
+            seen.entry(cn)
+                .and_modify(|prior| {
+                    if prior.is_some_and(|p| p != en) {
+                        *prior = None;
+                    }
+                })
+                .or_insert(Some(en));
+        }
+        let ambiguous = seen.values().filter(|en| en.is_none()).count();
+        let texts = seen
+            .into_iter()
+            .filter_map(|(cn, en)| Some((cn.to_string(), en?.to_string())))
+            .collect();
+        Self { texts, ambiguous }
+    }
+
+    /// The pairs for the texts `module` uses, in the order it uses them,
+    /// each once.
+    #[must_use]
+    pub fn translations(&self, module: &OperatorModule) -> Vec<CnTranslation> {
+        let mut out: Vec<CnTranslation> = Vec::new();
+        for text in module_texts(module) {
+            if let Some(en) = self.texts.get(text)
+                && !out.iter().any(|t| t.cn == text)
+            {
+                out.push(CnTranslation {
+                    cn: text.to_string(),
+                    en: en.clone(),
+                });
+            }
+        }
+        out
+    }
+}
+
+/// Every text a module's parts carry, by part position: talent names and
+/// descriptions, then trait additions and overrides, per candidate.
+fn module_texts(m: &OperatorModule) -> impl Iterator<Item = &str> {
+    m.data
+        .phases
+        .iter()
+        .flat_map(|p| &p.parts)
+        .flat_map(|part| {
+            let talents = part
+                .add_or_override_talent_data_bundle
+                .candidates
+                .iter()
+                .flatten()
+                .flat_map(|c| {
+                    [
+                        Some(c.name.as_str()),
+                        Some(c.upgrade_description.as_str()),
+                        c.description.as_deref(),
+                    ]
+                });
+            let traits = part
+                .override_trait_data_bundle
+                .candidates
+                .iter()
+                .flatten()
+                .flat_map(|c| {
+                    [
+                        Some(c.additional_description.as_str()),
+                        c.override_description.as_deref(),
+                    ]
+                });
+            talents.chain(traits).flatten()
+        })
+}
+
+/// `(cn, base)` text pairs from the modules both operators have, matched by
+/// module id and the same phase, part and candidate.
+fn module_text_pairs<'a>(base: &'a Operator, cn: &'a Operator, out: &mut Vec<(&'a str, &'a str)>) {
+    for m in &base.modules {
+        let Some(cn_m) = cn
+            .modules
+            .iter()
+            .find(|c| c.module.uni_equip_id == m.module.uni_equip_id)
+        else {
+            continue;
+        };
+        for (p, cn_p) in m.data.phases.iter().zip(&cn_m.data.phases) {
+            for (part, cn_part) in p.parts.iter().zip(&cn_p.parts) {
+                let talents = part
+                    .add_or_override_talent_data_bundle
+                    .candidates
+                    .iter()
+                    .flatten()
+                    .zip(
+                        cn_part
+                            .add_or_override_talent_data_bundle
+                            .candidates
+                            .iter()
+                            .flatten(),
+                    );
+                for (c, cn_c) in talents {
+                    out.push((&cn_c.name, &c.name));
+                    out.push((&cn_c.upgrade_description, &c.upgrade_description));
+                    if let (Some(x), Some(y)) = (&cn_c.description, &c.description) {
+                        out.push((x, y));
+                    }
+                }
+                let traits = part
+                    .override_trait_data_bundle
+                    .candidates
+                    .iter()
+                    .flatten()
+                    .zip(
+                        cn_part
+                            .override_trait_data_bundle
+                            .candidates
+                            .iter()
+                            .flatten(),
+                    );
+                for (c, cn_c) in traits {
+                    out.push((&cn_c.additional_description, &c.additional_description));
+                    if let (Some(x), Some(y)) =
+                        (&cn_c.override_description, &c.override_description)
+                    {
+                        out.push((x, y));
+                    }
+                }
+            }
+        }
+    }
 }
 
 /// What `cn` adds or changes over `base`, the same operator on the trailing
@@ -110,6 +297,7 @@ pub fn operator_changes(base: &Operator, cn: &Operator) -> Vec<OperatorChange> {
             None if m.module.module_type != ModuleType::Initial => {
                 out.push(OperatorChange::ModuleAdded {
                     module_id: id.to_string(),
+                    translations: Vec::new(),
                 });
             }
             Some(shape) if !same(shape, &module_shape(m)) => {
@@ -151,7 +339,7 @@ pub fn operator_changes(base: &Operator, cn: &Operator) -> Vec<OperatorChange> {
         }
     }
 
-    let checks: [(fn(&Operator) -> Value, OperatorChange); 6] = [
+    let checks: [ShapeCheck; 6] = [
         (talents_shape, OperatorChange::TalentsChanged),
         (trait_shape, OperatorChange::TraitChanged),
         (stats_shape, OperatorChange::StatsChanged),
@@ -166,6 +354,9 @@ pub fn operator_changes(base: &Operator, cn: &Operator) -> Vec<OperatorChange> {
     }
     out
 }
+
+/// A category's projection and the change reported when it differs.
+type ShapeCheck = (fn(&Operator) -> Value, OperatorChange);
 
 /// Structural equality with numbers compared within [`EPSILON`].
 fn same(a: &Value, b: &Value) -> bool {
@@ -215,7 +406,7 @@ fn unlock(u: &UnlockCondition) -> Value {
     json!([u.phase, u.level])
 }
 
-fn module_shape(m: &crate::core::gamedata::types::operator::OperatorModule) -> Value {
+fn module_shape(m: &OperatorModule) -> Value {
     let phases: Vec<Value> = m
         .data
         .phases
@@ -379,9 +570,12 @@ fn trust_shape(op: &Operator) -> Value {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::core::gamedata::types::module::{Module, ModuleData, ModulePhase};
+    use crate::core::gamedata::types::module::{
+        AddModuleCandidates, AddOrOverrideTalentDataBundle, Module, ModuleCandidates, ModuleData,
+        ModulePart, ModulePhase, OverrideTraitDataBundle,
+    };
     use crate::core::gamedata::types::operator::{
-        EnrichedSkill, OperatorModule, Phase, SkillStatic, Talent, TalentCandidate,
+        EnrichedSkill, Phase, SkillStatic, Talent, TalentCandidate,
     };
     use crate::core::gamedata::types::skill::SkillSpData;
 
@@ -494,10 +688,12 @@ mod tests {
             operator_changes(&en, &cn),
             vec![
                 OperatorChange::ModuleAdded {
-                    module_id: "uniequip_002_shu".into()
+                    module_id: "uniequip_002_shu".into(),
+                    translations: vec![],
                 },
                 OperatorChange::ModuleAdded {
-                    module_id: "uniequip_003_shu".into()
+                    module_id: "uniequip_003_shu".into(),
+                    translations: vec![],
                 },
             ]
         );
@@ -534,15 +730,151 @@ mod tests {
     fn the_wire_shape_is_kind_tagged_with_camel_case_fields() {
         let value = serde_json::to_value(OperatorChange::ModuleAdded {
             module_id: "uniequip_003_shu".into(),
+            translations: vec![CnTranslation {
+                cn: "受到的伤害减少15%".into(),
+                en: "Reduces damage taken by 15%".into(),
+            }],
         })
         .unwrap();
         assert_eq!(
             value,
-            json!({ "kind": "module_added", "moduleId": "uniequip_003_shu" })
+            json!({
+                "kind": "module_added",
+                "moduleId": "uniequip_003_shu",
+                "translations": [{ "cn": "受到的伤害减少15%", "en": "Reduces damage taken by 15%" }],
+            })
         );
         assert_eq!(
             serde_json::to_value(OperatorChange::StatsChanged).unwrap(),
             json!({ "kind": "stats_changed" })
+        );
+    }
+
+    fn texted(id: &str, trait_add: &str, talent: (&str, &str)) -> OperatorModule {
+        let mut m = module(id, ModuleType::Advanced, 60.0);
+        m.data.phases[0].parts = vec![
+            ModulePart {
+                override_trait_data_bundle: OverrideTraitDataBundle {
+                    candidates: Some(vec![ModuleCandidates {
+                        additional_description: trait_add.into(),
+                        ..ModuleCandidates::default()
+                    }]),
+                },
+                ..ModulePart::default()
+            },
+            ModulePart {
+                add_or_override_talent_data_bundle: AddOrOverrideTalentDataBundle {
+                    candidates: Some(vec![AddModuleCandidates {
+                        name: talent.0.into(),
+                        upgrade_description: talent.1.into(),
+                        ..AddModuleCandidates::default()
+                    }]),
+                },
+                ..ModulePart::default()
+            },
+        ];
+        m
+    }
+
+    fn pair(cn: &str, en: &str) -> CnTranslation {
+        CnTranslation {
+            cn: cn.into(),
+            en: en.into(),
+        }
+    }
+
+    #[test]
+    fn shared_texts_keep_exact_pairs_and_drop_ambiguous_ones() {
+        let shared = SharedTexts::from_pairs([
+            ("受到的伤害减少15%", "Reduces damage taken by 15%"),
+            ("受到的伤害减少15%", "Reduces damage taken by 15%"),
+            ("攻击力+{atk}", "ATK +{atk}"),
+            ("攻击力+{atk}", "Attack +{atk}"),
+            ("", "Empty"),
+            ("+15%", "+15%"),
+        ]);
+        assert_eq!(shared.ambiguous, 1);
+        assert_eq!(
+            shared.texts,
+            HashMap::from([(
+                "受到的伤害减少15%".to_string(),
+                "Reduces damage taken by 15%".to_string()
+            )])
+        );
+    }
+
+    #[test]
+    fn shared_texts_pair_the_same_part_position_only() {
+        let mut en_op = base();
+        en_op.modules = vec![texted(
+            "uniequip_002_yato",
+            "Reduces damage taken by 15%",
+            ("Edge", "ATK +{atk}"),
+        )];
+        let mut cn_op = base();
+        cn_op.modules = vec![texted(
+            "uniequip_002_yato",
+            "受到的伤害减少15%",
+            ("锋刃", "攻击力+{atk}"),
+        )];
+        // A module only one side has pairs nothing.
+        cn_op
+            .modules
+            .push(texted("uniequip_003_yato", "仅CN", ("新", "新的")));
+        let mut pairs = Vec::new();
+        module_text_pairs(&en_op, &cn_op, &mut pairs);
+        assert_eq!(
+            pairs,
+            vec![
+                ("受到的伤害减少15%", "Reduces damage taken by 15%"),
+                ("锋刃", "Edge"),
+                ("攻击力+{atk}", "ATK +{atk}"),
+            ]
+        );
+    }
+
+    #[test]
+    fn an_added_module_carries_the_translations_its_text_has() {
+        let mut en = GameData::default();
+        let mut cn = GameData::default();
+        let mut yato_en = base();
+        yato_en.modules = vec![texted(
+            "uniequip_002_yato",
+            "Reduces damage taken by 15%",
+            ("Edge", "ATK +{atk}"),
+        )];
+        let mut yato_cn = base();
+        yato_cn.modules = vec![texted(
+            "uniequip_002_yato",
+            "受到的伤害减少15%",
+            ("锋刃", "攻击力+{atk}"),
+        )];
+        let mut shu_en = base();
+        shu_en.modules.truncate(1);
+        let mut shu_cn = base();
+        shu_cn.modules = vec![
+            shu_cn.modules[0].clone(),
+            texted(
+                "uniequip_002_shu",
+                "受到的伤害减少15%",
+                ("丰", "攻击力+{atk}"),
+            ),
+        ];
+        en.operators.insert("char_yato".into(), yato_en);
+        en.operators.insert("char_shu".into(), shu_en);
+        cn.operators.insert("char_yato".into(), yato_cn);
+        cn.operators.insert("char_shu".into(), shu_cn);
+        let changes = cn_changes(&en, &cn);
+        let shu = changes.iter().find(|o| o.id == "char_shu").unwrap();
+        assert_eq!(
+            shu.changes,
+            vec![OperatorChange::ModuleAdded {
+                module_id: "uniequip_002_shu".into(),
+                translations: vec![
+                    pair("受到的伤害减少15%", "Reduces damage taken by 15%"),
+                    pair("攻击力+{atk}", "ATK +{atk}"),
+                ],
+            }]
         );
     }
 }

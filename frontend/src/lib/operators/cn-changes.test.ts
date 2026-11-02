@@ -7,7 +7,7 @@ const bb = (rows: [string, number][]) => rows.map(([key, value]) => ({ key, valu
 describe("cnChangesById", () => {
     it("indexes by operator id and drops rows with no changes", () => {
         const map = cnChangesById([
-            { id: "char_2025_shu", changes: [{ kind: "module_added", moduleId: "uniequip_003_shu" }] },
+            { id: "char_2025_shu", changes: [{ kind: "module_added", moduleId: "uniequip_003_shu", translations: [] }] },
             { id: "char_empty", changes: [] },
         ]);
         expect([...map.keys()]).toEqual(["char_2025_shu"]);
@@ -17,7 +17,7 @@ describe("cnChangesById", () => {
 
 describe("summarizeChanges", () => {
     it("counts each kind once, in the fixed kind order", () => {
-        expect(summarizeChanges([{ kind: "stats_changed" }, { kind: "module_added", moduleId: "a" }, { kind: "skill_values_changed", skillId: "s1" }, { kind: "module_added", moduleId: "b" }])).toEqual([
+        expect(summarizeChanges([{ kind: "stats_changed" }, { kind: "module_added", moduleId: "a", translations: [] }, { kind: "skill_values_changed", skillId: "s1" }, { kind: "module_added", moduleId: "b", translations: [] }])).toEqual([
             { kind: "module_added", count: 2 },
             { kind: "skill_values_changed", count: 1 },
             { kind: "stats_changed", count: 1 },
@@ -68,7 +68,7 @@ describe("withCnAdditions", () => {
 
     it("appends CN's added modules and skills after this server's own, from CN's record", () => {
         const merged = withCnAdditions(en, cn, [
-            { kind: "module_added", moduleId: "uniequip_003_shu" },
+            { kind: "module_added", moduleId: "uniequip_003_shu", translations: [] },
             { kind: "skill_added", skillId: "skchr_shu_2" },
         ]);
         expect(merged.operator.modules.map((m) => m.uniEquipId)).toEqual(["uniequip_001_shu", "uniequip_002_shu", "uniequip_003_shu"]);
@@ -79,7 +79,7 @@ describe("withCnAdditions", () => {
 
     it("returns this server's record itself when nothing was added, or the addition is already here", () => {
         expect(withCnAdditions(en, cn, [{ kind: "stats_changed" }]).operator).toBe(en);
-        const merged = withCnAdditions(en, cn, [{ kind: "module_added", moduleId: "uniequip_002_shu" }]);
+        const merged = withCnAdditions(en, cn, [{ kind: "module_added", moduleId: "uniequip_002_shu", translations: [] }]);
         expect(merged.operator).toBe(en);
         expect(merged.moduleIds.size).toBe(0);
     });

@@ -204,4 +204,22 @@ describe("cnModuleTexts", () => {
         expect(texts.trait(zh, "addition", bb([["aspd", 12]]))).toEqual({ text: null, zh });
         expect(texts.trait("受到的伤害减少15%", "addition", [])).toEqual({ text: null, zh: "受到的伤害减少15%" });
     });
+
+    it("takes a text another operator's shared module translates, its own pairs first", () => {
+        const withShared = cnModuleTexts(en, cn, [
+            { cn: "受到的伤害减少<@ba.kw>15%</>", en: "Reduces damage taken by <@ba.kw>15%</>" },
+            { cn: "攻击时有{prob:0%}的几率束缚", en: "{prob:0%} chance to Bind" },
+            { cn: "落英", en: "Fallen Petals" },
+        ]);
+        expect(withShared.trait("受到的伤害减少<@ba.kw>15%</>", "addition", [])).toEqual({ text: "Reduces damage taken by <@ba.kw>15%</>", zh: null });
+        expect(withShared.talent({ talentIndex: 3, requiredPotentialRank: 0, name: "落英", description: "攻击时有{prob:0%}的几率束缚", blackboard: bb([["prob", 0.25]]) })).toEqual({
+            name: { text: "Falling Petals", zh: null },
+            description: { text: "{prob:0%} chance to Bind", zh: null },
+        });
+    });
+
+    it("keeps a translated text Chinese when CN's blackboard cannot fill it", () => {
+        const withShared = cnModuleTexts(en, cn, [{ cn: "攻击力+{atk}", en: "ATK +{atk}" }]);
+        expect(withShared.trait("攻击力+{atk}", "addition", bb([["def", 10]]))).toEqual({ text: null, zh: "攻击力+{atk}" });
+    });
 });

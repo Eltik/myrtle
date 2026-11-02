@@ -1,4 +1,5 @@
 import { tagTokenRegex } from "#/lib/gamedata/richtext";
+import type { CnTranslation } from "#/types/generated/CnTranslation";
 import type { IOperatorListItem, ITalent, ITalentCandidate } from "#/types/operators";
 import { renderDescriptionDiffHtml } from "./description";
 import { getActiveTalentCandidate } from "./helpers";
@@ -176,12 +177,13 @@ const zhOnly = (text: string): ICnText => ({ text: null, zh: text });
 /**
  * Texts for the modules merged in from `cn`, read against `en`, this server's own record (before
  * the merge). A CN text is this server's where the two records pair it with one: the same text on
- * a talent, trait or module both servers have. Failing that, a talent rewrite is rebuilt from the
+ * a talent, trait or module both servers have, or else one of `translations`, the same text on
+ * another operator's module both servers have. Failing that, a talent rewrite is rebuilt from the
  * talent it rewrites and a trait override from the trait it replaces (see {@link rebuildFromBase}),
  * when both servers have that talent or trait in the same shape. A trait addition has nothing here
  * to be rebuilt from. Either way this server's text must take only keys `blackboard` carries.
  */
-export function cnModuleTexts(en: IOperatorListItem, cn: IOperatorListItem): ICnModuleTexts {
+export function cnModuleTexts(en: IOperatorListItem, cn: IOperatorListItem, translations: readonly CnTranslation[] = []): ICnModuleTexts {
     const pairs = new Map<string, string>();
     const pair = (zh: string | null | undefined, here: string | null | undefined) => {
         if (zh && here && !pairs.has(zh)) pairs.set(zh, here);
@@ -218,6 +220,7 @@ export function cnModuleTexts(en: IOperatorListItem, cn: IOperatorListItem): ICn
             });
         });
     }
+    for (const t of translations) pair(t.cn, t.en);
 
     const resolve = (zh: string, blackboard: Blackboard, rebuild: () => ICnText): ICnText => {
         const paired = pairs.get(zh);

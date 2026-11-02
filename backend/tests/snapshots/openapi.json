@@ -19967,6 +19967,22 @@
           }
         }
       },
+      "CnTranslation": {
+        "type": "object",
+        "description": "A CN text and the trailing server's text at the same place, both raw\ntemplates (`{key}` placeholders and rich-text tags left in).",
+        "required": [
+          "cn",
+          "en"
+        ],
+        "properties": {
+          "cn": {
+            "type": "string"
+          },
+          "en": {
+            "type": "string"
+          }
+        }
+      },
       "CollectiveStats": {
         "type": "object",
         "required": [
@@ -26021,9 +26037,10 @@
         "oneOf": [
           {
             "type": "object",
-            "description": "A module CN has and the trailing server does not. The default\n(`ORIGINAL`) module is never reported: it appears with the first\nreal one.",
+            "description": "A module CN has and the trailing server does not. The default\n(`ORIGINAL`) module is never reported: it appears with the first\nreal one. `translations` carries the trailing server's text for each\nof the module's CN texts that a module both servers have also uses.",
             "required": [
               "module_id",
+              "translations",
               "kind"
             ],
             "properties": {
@@ -26035,6 +26052,12 @@
               },
               "module_id": {
                 "type": "string"
+              },
+              "translations": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/CnTranslation"
+                }
               }
             }
           },
