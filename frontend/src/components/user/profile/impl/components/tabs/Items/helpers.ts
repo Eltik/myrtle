@@ -64,17 +64,26 @@ export function formatVoucherId(voucherId: string): string {
         .replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
+/**
+ * Item types filed under Currency: LMD, Originite Prime and Orundum, the four shop certificates
+ * (Distinction, Commendation, Intelligence, Universal), Headhunting Parametric Models, and Credit.
+ */
+const CURRENCY_TYPES = new Set(["GOLD", "DIAMOND", "DIAMOND_SHD", "LMD", "ETH", "EPGS", "EPGS_COIN", "HGG_SHD", "LGG_SHD", "REP_COIN", "CLASSIC_SHD", "SOCIAL_PT", "VOUCHER_PRTS", "ACTIVITY_COIN"]);
+
 export function categorizeItem(meta: IMaterialItem | null, expIds: Set<string>): ItemCategory {
     if (!meta) return "other";
     if (expIds.has(meta.itemId)) return "exp";
     if (meta.classifyType === "CONSUME") return "consume";
     const t = (meta.itemType || "").toUpperCase();
     if (t.includes("EXP")) return "exp";
-    if (t === "GOLD" || t === "DIAMOND" || t === "DIAMOND_SHD" || t === "LMD" || t === "ETH" || t === "EPGS" || t === "VOUCHER_PRTS" || t === "ACTIVITY_COIN") return "lmd";
+    if (CURRENCY_TYPES.has(t)) return "lmd";
     if (t.includes("MOD_")) return "module";
     if (t.includes("CHIP") || t.includes("CLASS_TOKEN")) return "chip";
     if (t.includes("FURN")) return "furniture";
-    if (t.includes("HGG") || t.includes("LGG") || t.includes("TKT") || t.includes("VOUCHER") || t.includes("HG_") || t.includes("AP_GAMEPLAY") || t.includes("AP_ITEM") || t.includes("AP_BASE")) return "ticket";
+    if (t.includes("TKT") || t.includes("VOUCHER") || t.includes("AP_GAMEPLAY") || t.includes("AP_ITEM") || t.includes("AP_BASE")) return "ticket";
+    // Event tokens (faction prestige, search warrants, ID cards) are typed MATERIAL but carry no
+    // material classify type; base materials say NORMAL and upgrade materials say MATERIAL.
+    if (t === "MATERIAL" && meta.classifyType === "NONE") return "other";
     if (t.includes("MATERIAL")) return "mat";
     if (meta.classifyType === "MATERIAL") {
         if (meta.iconId?.toLowerCase().includes("skill")) return "skill";

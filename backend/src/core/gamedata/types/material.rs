@@ -56,6 +56,9 @@ pub enum ItemClass {
     Unknown,
 }
 
+/// `rename_all` puts no underscore before a digit (`TktGacha10` -> `TKT_GACHA10`) while the game
+/// writes `TKT_GACHA_10`, so every name ending in a number carries an explicit rename. A name that
+/// misses falls to `Unknown`, and the inventory files the item under Other.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 #[derive(Default, TS, utoipa::ToSchema)]
@@ -73,8 +76,10 @@ pub enum ItemType {
     PlayerAvatar,
     TktTry,
     TktryRecruit,
+    TktRecruit,
     TktInstFin,
     TktGacha,
+    #[serde(rename = "TKT_GACHA_10")]
     TktGacha10,
     SocialPt,
     ApGameplay,
@@ -89,16 +94,34 @@ pub enum ItemType {
     RenamingCard,
     ApSupply,
     ExterminationAgent,
+    #[serde(rename = "LIMITED_TKT_GACHA_10")]
     LimitedTktGacha10,
+    LinkageTktGacha,
+    #[serde(rename = "LINKAGE_TKT_GACHA_10")]
     LinkageTktGacha10,
     VoucherPick,
+    #[serde(rename = "VOUCHER_LEVELMAX_6")]
     VoucherLevelmax6,
+    #[serde(rename = "VOUCHER_LEVELMAX_5")]
     VoucherLevelmax5,
+    #[serde(rename = "VOUCHER_LEVELMAX_4")]
+    VoucherLevelmax4,
     #[serde(rename = "VOUCHER_ELITE_II_6")]
     VoucherEliteIi6,
     #[serde(rename = "VOUCHER_ELITE_II_5")]
     VoucherEliteIi5,
+    #[serde(rename = "VOUCHER_ELITE_II_4")]
+    VoucherEliteIi4,
+    #[serde(rename = "VOUCHER_SKILL_SPECIALLEVELMAX_6")]
+    VoucherSkillSpeciallevelmax6,
+    #[serde(rename = "VOUCHER_SKILL_SPECIALLEVELMAX_5")]
+    VoucherSkillSpeciallevelmax5,
+    #[serde(rename = "VOUCHER_SKILL_SPECIALLEVELMAX_4")]
+    VoucherSkillSpeciallevelmax4,
     VoucherSkin,
+    #[serde(rename = "VOUCHER_SKIN_V2")]
+    VoucherSkinV2,
+    RandomVoucherSkin,
     VoucherCgacha,
     OptionalVoucherPick,
     ItemPack,
@@ -117,9 +140,12 @@ pub enum ItemType {
     FavorAddItem,
     ClassicShd,
     ClassicTktGacha,
+    #[serde(rename = "CLASSIC_TKT_GACHA_10")]
     ClassicTktGacha10,
     LimitedBuff,
+    #[serde(rename = "CLASSIC_FES_PICK_TIER_5")]
     ClassicFesPickTier5,
+    #[serde(rename = "CLASSIC_FES_PICK_TIER_6")]
     ClassicFesPickTier6,
     ReturnProgress,
     NewProgress,
@@ -127,7 +153,12 @@ pub enum ItemType {
     MaterialIssueVoucher,
     SandboxToken,
     ExclusiveTktGacha,
+    #[serde(rename = "EXCLUSIVE_TKT_GACHA_10")]
     ExclusiveTktGacha10,
+    GiftpackageTkt,
+    EmoticonSet,
+    SoCharExp,
+    PlotItem,
     #[serde(other)]
     Unknown,
 }
@@ -415,6 +446,47 @@ impl ItemTableFile {
             potential_items: HashMap::new(),
             ap_supplies: self.ap_supply_out_of_date_dict,
             char_voucher_items: self.char_voucher_items,
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::ItemType;
+
+    /// Every item type the EN and CN item tables shipped on 2026-11-03 whose name the plain
+    /// `rename_all` spelling would miss.
+    #[test]
+    fn game_item_types_round_trip() {
+        for name in [
+            "TKT_GACHA_10",
+            "TKT_RECRUIT",
+            "LIMITED_TKT_GACHA_10",
+            "LINKAGE_TKT_GACHA",
+            "LINKAGE_TKT_GACHA_10",
+            "CLASSIC_TKT_GACHA_10",
+            "EXCLUSIVE_TKT_GACHA_10",
+            "VOUCHER_LEVELMAX_4",
+            "VOUCHER_LEVELMAX_5",
+            "VOUCHER_LEVELMAX_6",
+            "VOUCHER_ELITE_II_4",
+            "VOUCHER_SKILL_SPECIALLEVELMAX_4",
+            "VOUCHER_SKILL_SPECIALLEVELMAX_5",
+            "VOUCHER_SKILL_SPECIALLEVELMAX_6",
+            "VOUCHER_SKIN_V2",
+            "RANDOM_VOUCHER_SKIN",
+            "CLASSIC_FES_PICK_TIER_5",
+            "CLASSIC_FES_PICK_TIER_6",
+            "CRS_SHOP_COIN_V2",
+            "GIFTPACKAGE_TKT",
+            "EMOTICON_SET",
+            "SO_CHAR_EXP",
+            "PLOT_ITEM",
+        ] {
+            let json = format!("\"{name}\"");
+            let parsed: ItemType = serde_json::from_str(&json).unwrap();
+            assert_ne!(parsed, ItemType::Unknown, "{name} fell to Unknown");
+            assert_eq!(serde_json::to_string(&parsed).unwrap(), json, "{name} does not round-trip");
         }
     }
 }
