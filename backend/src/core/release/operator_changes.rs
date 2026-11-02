@@ -70,6 +70,25 @@ pub enum OperatorChange {
     TrustBonusChanged,
 }
 
+impl OperatorChange {
+    /// The wire `kind` tag.
+    #[must_use]
+    pub const fn kind(&self) -> &'static str {
+        match self {
+            Self::ModuleAdded { .. } => "module_added",
+            Self::ModuleChanged { .. } => "module_changed",
+            Self::SkillAdded { .. } => "skill_added",
+            Self::SkillValuesChanged { .. } => "skill_values_changed",
+            Self::TalentsChanged => "talents_changed",
+            Self::TraitChanged => "trait_changed",
+            Self::StatsChanged => "stats_changed",
+            Self::RangeChanged => "range_changed",
+            Self::PotentialsChanged => "potentials_changed",
+            Self::TrustBonusChanged => "trust_bonus_changed",
+        }
+    }
+}
+
 /// A CN text and the trailing server's text at the same place, both raw
 /// templates (`{key}` placeholders and rich-text tags left in).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS, utoipa::ToSchema)]
@@ -120,7 +139,39 @@ pub fn cn_changes(base: &GameData, cn: &GameData) -> Vec<OperatorCnChanges> {
         })
         .collect();
     out.sort_by(|a, b| a.id.cmp(&b.id));
+    warn_on_data_wide_kinds(&out, shared_operator_count(base, cn));
     out
+}
+
+fn shared_operator_count(base: &GameData, cn: &GameData) -> usize {
+    base.operators
+        .keys()
+        .filter(|id| cn.operators.contains_key(*id))
+        .count()
+}
+
+/// A kind of change on most shared operators is a decode or schema difference
+/// between the two extracts, not a balance change, so it is logged loudly.
+fn warn_on_data_wide_kinds(changes: &[OperatorCnChanges], shared: usize) {
+    if shared == 0 {
+        return;
+    }
+    let mut counts: HashMap<&'static str, usize> = HashMap::new();
+    for op in changes {
+        for change in &op.changes {
+            *counts.entry(change.kind()).or_default() += 1;
+        }
+    }
+    for (kind, n) in counts {
+        if n * 2 > shared {
+            tracing::warn!(
+                kind,
+                operators = n,
+                shared,
+                "cn changes: one kind flags most shared operators; likely an extract difference, not an update"
+            );
+        }
+    }
 }
 
 /// CN text -> the trailing server's text, read off modules both servers have:
@@ -524,14 +575,19 @@ fn trait_shape(op: &Operator) -> Value {
         .collect()
 }
 
+/// Attribute key frames, numeric attributes only. The immunity flags are left
+/// out: no operator on EN sets one, and the CN extract of 2026-11-01 decodes
+/// `StunImmune` as true on all 467 of its operators, which flagged every shared
+/// operator's stats and trust as changed.
 fn key_frames(frames: &[AttributeKeyFrame]) -> Value {
     frames
         .iter()
         .map(|f| {
-            json!([
-                f.level,
-                serde_json::to_value(&f.data).unwrap_or(Value::Null)
-            ])
+            let mut data = serde_json::to_value(&f.data).unwrap_or(Value::Null);
+            if let Value::Object(fields) = &mut data {
+                fields.retain(|_, v| v.is_number());
+            }
+            json!([f.level, data])
         })
         .collect()
 }
@@ -574,6 +630,7 @@ mod tests {
         AddModuleCandidates, AddOrOverrideTalentDataBundle, Module, ModuleCandidates, ModuleData,
         ModulePart, ModulePhase, OverrideTraitDataBundle,
     };
+    use crate::core::gamedata::types::operator::AttributeData;
     use crate::core::gamedata::types::operator::{
         EnrichedSkill, Phase, SkillStatic, Talent, TalentCandidate,
     };
@@ -724,6 +781,44 @@ mod tests {
                 OperatorChange::StatsChanged,
             ]
         );
+    }
+
+    #[test]
+    fn an_immunity_flag_is_not_a_stat_or_trust_change() {
+        let frame = AttributeKeyFrame {
+            level: 1,
+            data: AttributeData {
+                atk: 500,
+                ..AttributeData::default()
+            },
+        };
+        let mut en = base();
+        en.phases[0].attributes_key_frames = vec![frame.clone()];
+        en.favor_key_frames = vec![frame];
+        let mut cn = en.clone();
+        cn.phases[0].attributes_key_frames[0].data.stun_immune = true;
+        cn.favor_key_frames[0].data.stun_immune = true;
+        assert_eq!(operator_changes(&en, &cn), vec![]);
+
+        cn.phases[0].attributes_key_frames[0].data.atk = 520;
+        assert_eq!(
+            operator_changes(&en, &cn),
+            vec![OperatorChange::StatsChanged]
+        );
+    }
+
+    #[test]
+    fn every_kind_names_its_wire_tag() {
+        for change in [
+            OperatorChange::StatsChanged,
+            OperatorChange::TrustBonusChanged,
+            OperatorChange::SkillAdded {
+                skill_id: "s".into(),
+            },
+        ] {
+            let wire = serde_json::to_value(&change).unwrap();
+            assert_eq!(wire["kind"], change.kind());
+        }
     }
 
     #[test]
