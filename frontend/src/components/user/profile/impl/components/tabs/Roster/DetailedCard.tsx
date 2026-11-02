@@ -8,13 +8,14 @@ import { Dialog } from "#/components/ui/dialog";
 import { Progress } from "#/components/ui/progress";
 import { ScrollArea } from "#/components/ui/scroll-area";
 import { Separator } from "#/components/ui/separator";
+import { useDataSaver } from "#/hooks/use-data-saver";
 import { useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { professionLabel } from "#/lib/utils";
 import type { IEnrichedSkill, IModule } from "#/types/operators";
 import { DynamicArtOverlay } from "../../../DynamicArtOverlay";
 import type { messages } from "./DetailedCard.messages";
-import { getAttributeStats, getTrustPercent, isMaxed, MAX_LEVEL_BY_RARITY, moduleIconURL, moduleTypeLabel, OBTAINED_DATE, obtainedDate, ownedHeroURL, rarityIcon, skillIconURL, specializedIcon } from "./helpers.card";
+import { getAttributeStats, getTrustPercent, isMaxed, MAX_LEVEL_BY_RARITY, moduleIconURL, moduleTypeLabel, OBTAINED_DATE, obtainedDate, ownedAvatar, ownedHeroURL, rarityIcon, skillIconURL, specializedIcon } from "./helpers.card";
 import type { messages as cardMessages } from "./helpers.card.messages";
 import { OperatorDialog } from "./OperatorDialog";
 import type { IOwnedEntry } from "./types";
@@ -46,6 +47,8 @@ export function DetailedCard({ entry, lastRef }: IDetailedCardProps) {
     const [trustProgress, setTrustProgress] = useState(0);
     const [dialogOpen, setDialogOpen] = useState(false);
     const [dynActive, setDynActive] = useState(false);
+    // Data saver keeps the multi-MB art and its animation for the dialog a press opens.
+    const dataSaver = useDataSaver();
     const cardRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -117,9 +120,13 @@ export function DetailedCard({ entry, lastRef }: IDetailedCardProps) {
                     <div className="relative">
                         <div className="relative aspect-5/4 w-full cursor-pointer overflow-hidden">
                             {/* `scale-105` sets the CSS `scale` property (Tailwind v4), so the transition must name `scale`, not `transform`. */}
-                            <img alt={entry.name} src={ownedHeroURL(entry)} className={`h-full w-full object-cover object-top transition-[scale,opacity] duration-300 ${hovered ? "scale-105" : "scale-100"} ${dynActive ? "opacity-0" : "opacity-100"}`} decoding="async" loading="lazy" />
+                            {dataSaver ? (
+                                <img alt={entry.name} src={ownedAvatar(entry.operator_id, entry.skin_id)} className={`h-full w-full object-contain p-6 pb-16 transition-[scale] duration-300 ${hovered ? "scale-105" : "scale-100"}`} decoding="async" loading="lazy" />
+                            ) : (
+                                <img alt={entry.name} src={ownedHeroURL(entry)} className={`h-full w-full object-cover object-top transition-[scale,opacity] duration-300 ${hovered ? "scale-105" : "scale-100"} ${dynActive ? "opacity-0" : "opacity-100"}`} decoding="async" loading="lazy" />
+                            )}
                             {/* The L2D is composited over the same hero art at the game's authored frame and cropped exactly as the image above (cover, top). */}
-                            <DynamicArtOverlay elite={entry.elite} operatorCode={entry.operator_id} skinId={entry.skin_id} viewportGated fit={{ mode: "cover", align: "top" }} framing="authored" surface="panel" backdrop={ownedHeroURL(entry)} onActiveChange={setDynActive} />
+                            {!dataSaver && <DynamicArtOverlay elite={entry.elite} operatorCode={entry.operator_id} skinId={entry.skin_id} viewportGated fit={{ mode: "cover", align: "top" }} framing="authored" surface="panel" backdrop={ownedHeroURL(entry)} onActiveChange={setDynActive} />}
                             <div className={`absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent transition-opacity duration-300 ${hovered ? "opacity-100" : "opacity-90"}`} />
                             <div className="absolute right-0 bottom-0 left-0 p-4">
                                 <h3 className={`mt-2 max-w-3/4 text-left font-bold text-white text-xl transition-all duration-300 ${hovered ? "translate-y-0" : "translate-y-1"}`}>{entry.name}</h3>

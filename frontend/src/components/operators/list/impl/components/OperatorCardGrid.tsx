@@ -1,9 +1,10 @@
 import { Link } from "@tanstack/react-router";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "#/components/ui/preview-card";
+import { useDataSaver } from "#/hooks/use-data-saver";
 import { assetURL } from "#/lib/assets";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import { cn, rarityToNumber } from "#/lib/utils";
+import { cn, getAvatarById, rarityToNumber } from "#/lib/utils";
 import { RARITY_BLUR_COLORS, RARITY_COLORS } from "../constants";
 import type { IOperatorView, StatMetric } from "../types";
 import { CampIcon, ClassIcon } from "./Icons";
@@ -21,20 +22,28 @@ interface IOperatorCardGridProps {
 
 export function OperatorCardGrid({ operator, statMetric }: IOperatorCardGridProps) {
     const t: TypedT<typeof messages> = useT("operators");
+    const dataSaver = useDataSaver();
     const logoId = operator.nationId && operator.nationId.length > 0 ? operator.nationId : operator.teamId && operator.teamId.length > 0 ? operator.teamId : operator.groupId && operator.groupId.length > 0 ? operator.groupId : "rhodes";
 
     return (
         <HoverCard>
             <HoverCardTrigger
                 render={
-                    <Link to="/operators/$id" params={{ id: operator.id ?? "" }} className={cn("group relative flex aspect-2/3 overflow-clip rounded-md border border-muted/50 bg-card contain-content hover:rounded-lg", styles["card-hover-transition"])}>
+                    <Link to="/operators/$id" params={{ id: operator.id ?? "" }} preload={dataSaver ? false : undefined} className={cn("group relative flex aspect-2/3 overflow-clip rounded-md border border-muted/50 bg-card contain-content hover:rounded-lg", styles["card-hover-transition"])}>
                         {operator.ownership && <OwnershipBadge info={operator.ownership} metric={statMetric} color={RARITY_COLORS[rarityToNumber(operator.rarity)]} className="absolute top-1 left-1 z-20" />}
                         <div className="absolute -translate-x-8 -translate-y-4">
                             <CampIcon groupId={logoId} className="opacity-5 transition-opacity group-hover:opacity-10" size={360} />
                         </div>
-                        <div className="absolute inset-0 origin-center transition-transform group-hover:scale-105">
-                            <img alt={t("card.portraitAlt", { name: operator.name })} className="h-full w-full rounded-lg object-contain" decoding="async" loading="lazy" src={operator.portrait ? assetURL(operator.portrait) : undefined} />
-                        </div>
+                        {dataSaver && operator.id ? (
+                            // The deployment-bar avatar, under half the portrait's bytes, sat in the space above the name bar.
+                            <div className="absolute inset-x-0 top-0 bottom-12 flex origin-center items-center justify-center p-3 transition-transform group-hover:scale-105">
+                                <img alt={t("card.portraitAlt", { name: operator.name })} className="aspect-square w-full max-w-40 rounded-md object-contain" decoding="async" loading="lazy" src={getAvatarById(operator.id)} />
+                            </div>
+                        ) : (
+                            <div className="absolute inset-0 origin-center transition-transform group-hover:scale-105">
+                                <img alt={t("card.portraitAlt", { name: operator.name })} className="h-full w-full rounded-lg object-contain" decoding="async" loading="lazy" src={operator.portrait ? assetURL(operator.portrait) : undefined} />
+                            </div>
+                        )}
                         <div className="absolute inset-x-0 bottom-0 z-10">
                             <div className="relative">
                                 <div className="h-12 w-full bg-background/80 backdrop-blur-sm" />

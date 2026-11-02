@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "#/components/ui/preview-card";
+import { useDataSaver } from "#/hooks/use-data-saver";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { getAvatarById, parseOperatorName, rarityToNumber, subProfessionLabel } from "#/lib/utils";
@@ -24,12 +25,13 @@ export function OperatorCardCompact({ operator, statMetric }: IOperatorCardCompa
     const operatorName = operator.name ?? t("card.unknownOperator");
     const { displayName, subtitle } = parseOperatorName(operatorName);
     const factionLogoId = operator.nationId || operator.teamId || operator.groupId || "rhodes";
+    const dataSaver = useDataSaver();
 
     return (
         <HoverCard>
             <HoverCardTrigger
                 render={
-                    <Link to="/operators/$id" params={{ id: operator.id ?? "" }} className="group relative flex flex-col rounded bg-card pt-1 pr-2 pb-1 pl-1.5 transition-transform hover:scale-102">
+                    <Link to="/operators/$id" params={{ id: operator.id ?? "" }} preload={dataSaver ? false : undefined} className="group relative flex flex-col rounded bg-card pt-1 pr-2 pb-1 pl-1.5 transition-transform hover:scale-102">
                         <div className="ml-px flex h-4.25 flex-col justify-center text-left sm:h-5">
                             {subtitle && <span className="text-[0.625rem] text-foreground leading-normal sm:text-xs sm:leading-loose">{subtitle}</span>}
                             <span className="truncate text-[0.625rem] text-foreground leading-tight sm:text-xs sm:leading-4.25">{displayName}</span>

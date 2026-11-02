@@ -123,6 +123,12 @@ export interface IBootstrap {
      * picker and leaves the locale's row in charge.
      */
     gamedataServers: string[];
+    /**
+     * Present, and true, when the request carried the data saver cookie, so the
+     * server render already leaves optional art out. The client reads its own
+     * stored setting once the theme store hydrates (see `useDataSaver`).
+     */
+    dataSaver?: true;
 }
 
 export interface IAvailableLocale {

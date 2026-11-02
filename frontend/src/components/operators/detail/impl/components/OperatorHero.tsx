@@ -1,15 +1,17 @@
 import { Link } from "@tanstack/react-router";
 import { useSelector } from "@tanstack/react-store";
-import { EyeOffIcon } from "lucide-react";
+import { EyeOffIcon, ImageIcon } from "lucide-react";
 import { useState } from "react";
 import { Badge } from "#/components/ui/badge";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "#/components/ui/breadcrumb";
+import { Button } from "#/components/ui/button";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
+import { useDataSaver } from "#/hooks/use-data-saver";
 import { useOperatorName } from "#/hooks/use-operator-name";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { themeStore } from "#/lib/theme/store";
-import { cn, nationLabel, professionLabel, rarityToNumber, subProfessionLabel } from "#/lib/utils";
+import { cn, getAvatarById, nationLabel, professionLabel, rarityToNumber, subProfessionLabel } from "#/lib/utils";
 import type { IOperatorListItem } from "#/types/operators";
 import { campLogo, operatorHero } from "../assets";
 import { RARITY_COLORS, RARITY_GLOW } from "../constants";
@@ -33,6 +35,12 @@ export function OperatorHero({ operator }: IOperatorHeroProps) {
     // The page's LCP. Both breakpoint copies share this URL, so the one request is marked
     // high priority whichever copy the viewport shows.
     const img = operatorHero(operator.id ?? "", operator.skin, operator.portrait, operator.server);
+    // Under data saver the splash art waits for a press, remembered per operator so the
+    // next operator opened from this page starts without it again.
+    const dataSaver = useDataSaver();
+    const [artRequestedFor, setArtRequestedFor] = useState<string | null>(null);
+    const showArt = !dataSaver || artRequestedFor === operator.id;
+    const requestArt = () => setArtRequestedFor(operator.id ?? null);
 
     const factionId = operator.nationId?.length ? operator.nationId : operator.teamId?.length ? operator.teamId : operator.groupId?.length ? operator.groupId : null;
 
@@ -42,11 +50,10 @@ export function OperatorHero({ operator }: IOperatorHeroProps) {
                 <div className="relative h-90 w-full overflow-hidden sm:h-100">
                     <div aria-hidden className={cn("backface-hidden absolute inset-x-0 top-0 will-change-transform contain-paint", styles["parallax-image"])}>
                         <div className="flex items-start justify-center pt-0">
-                            <div className="relative h-120 w-[85vw] max-w-95 sm:h-135 sm:w-110 sm:max-w-none">
-                                <img alt={name} className={cn("h-full w-full object-contain object-top", rarityGlow)} decoding="async" fetchPriority="high" loading="eager" src={img} />
-                            </div>
+                            <div className="relative h-120 w-[85vw] max-w-95 sm:h-135 sm:w-110 sm:max-w-none">{showArt && <img alt={name} className={cn("h-full w-full object-contain object-top", rarityGlow)} decoding="async" fetchPriority="high" loading="eager" src={img} />}</div>
                         </div>
                     </div>
+                    {!showArt && <ArtPlaceholder operator={operator} onLoad={requestArt} className="inset-x-0 top-6 sm:top-8" />}
                     <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-linear-to-t from-background via-background/80 to-transparent" />
                     <div className={cn("backface-hidden relative z-10 flex h-full flex-col justify-end px-3 pb-4 will-change-[transform,opacity] sm:px-4 sm:pb-5", styles["parallax-content"])}>
                         <Breadcrumb className="mb-2">
@@ -92,11 +99,10 @@ export function OperatorHero({ operator }: IOperatorHeroProps) {
                 <div className="lg:h105 relative h-95 w-full overflow-hidden">
                     <div aria-hidden className={cn("backface-hidden absolute inset-x-0 top-0 will-change-transform contain-paint", styles["parallax-image"])}>
                         <div className="flex items-start justify-end pr-[5%] lg:pr-[10%]">
-                            <div className="relative h-155 w-130 lg:h-180 lg:w-150">
-                                <img alt={name} className={cn("h-full w-full object-contain object-top", rarityGlow)} decoding="async" fetchPriority="high" loading="eager" src={img} />
-                            </div>
+                            <div className="relative h-155 w-130 lg:h-180 lg:w-150">{showArt && <img alt={name} className={cn("h-full w-full object-contain object-top", rarityGlow)} decoding="async" fetchPriority="high" loading="eager" src={img} />}</div>
                         </div>
                     </div>
+                    {!showArt && <ArtPlaceholder operator={operator} onLoad={requestArt} className="top-12 right-[5%] w-130 lg:right-[10%] lg:w-150" />}
                     <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-linear-to-t from-background via-background/80 to-transparent" />
                     <div className={cn("backface-hidden relative z-10 mx-auto flex h-full max-w-6xl flex-col justify-end px-8 pb-6 will-change-[transform,opacity] lg:pb-8", styles["parallax-content"])}>
                         <Breadcrumb className="mb-3">
@@ -149,6 +155,25 @@ export function OperatorHero({ operator }: IOperatorHeroProps) {
                     </div>
                 </div>
             </div>
+        </div>
+    );
+}
+
+/**
+ * Stands in for the splash art while data saver is on: the operator's deployment avatar,
+ * a few dozen KB against the art's megabytes, and the button that loads the art. Sits
+ * above the hero's text layer so the button takes the press.
+ */
+function ArtPlaceholder({ operator, onLoad, className }: { operator: IOperatorListItem; onLoad: () => void; className?: string }) {
+    const t: TypedT<typeof messages> = useT("operators");
+    return (
+        <div className={cn("absolute z-20 flex flex-col items-center gap-3", className)}>
+            {operator.id && <img alt="" className="size-24 rounded-xl border border-border/60 bg-card/60 object-contain sm:size-28" decoding="async" src={getAvatarById(operator.id, operator.server)} />}
+            <Button variant="outline" size="sm" onClick={onLoad}>
+                <ImageIcon aria-hidden />
+                {t("hero.dataSaver.load")}
+            </Button>
+            <span className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider">{t("hero.dataSaver.note")}</span>
         </div>
     );
 }

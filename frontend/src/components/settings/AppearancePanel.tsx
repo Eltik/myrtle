@@ -18,7 +18,7 @@ import type { messages } from "./AppearancePanel.messages";
 import { SectionLabel, SettingRow } from "./SettingsShell";
 
 export function AppearancePanel() {
-    const { mode, resolved, accent, isDefaultAccent, dynamicArtwork, latinNames, spoilers, maintenanceCountdown, setMode, setPresetHue, setCustomHex, resetAccent, setDynamicArtwork, setLatinNames, setSpoilers, setMaintenanceCountdown } = useTheme();
+    const { mode, resolved, accent, isDefaultAccent, dynamicArtwork, latinNames, spoilers, maintenanceCountdown, dataSaver, setMode, setPresetHue, setCustomHex, resetAccent, setDynamicArtwork, setLatinNames, setSpoilers, setMaintenanceCountdown, setDataSaver } = useTheme();
     const customInputId = useId();
     const t: TypedT<typeof messages> = useT("settings");
 
@@ -104,6 +104,8 @@ export function AppearancePanel() {
             <ToggleCard title={t("appearance.spoilers.title")} description={t("appearance.spoilers.desc")} rowTitle={t("appearance.spoilers.rowTitle")} rowDescription={t("appearance.spoilers.rowDesc")} checked={spoilers} onCheckedChange={setSpoilers} />
 
             <ToggleCard title={t("appearance.topBar.title")} description={t("appearance.topBar.desc")} rowTitle={t("appearance.topBar.maintenance.rowTitle")} rowDescription={t("appearance.topBar.maintenance.rowDesc")} checked={maintenanceCountdown} onCheckedChange={setMaintenanceCountdown} />
+
+            <ToggleCard title={t("appearance.dataSaver.title")} description={t("appearance.dataSaver.desc")} rowTitle={t("appearance.dataSaver.rowTitle")} rowDescription={t("appearance.dataSaver.rowDesc")} checked={dataSaver} onCheckedChange={setDataSaver} />
             <LanguageCard />
         </div>
     );

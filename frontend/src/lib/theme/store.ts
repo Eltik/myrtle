@@ -1,4 +1,5 @@
 import { Store } from "@tanstack/store";
+import { writePreferenceCookie } from "#/lib/i18n/cookie";
 import { type Accent, applyAccentColors, clearAccentColors, generateAccentColors, getStoredAccent, setStoredAccent } from "#/lib/theme/color-utils";
 
 export type ThemeMode = "light" | "dark" | "auto";
@@ -23,16 +24,29 @@ interface IThemeState {
     spoilers: boolean;
     /** Show the game maintenance countdown in the top bar. On by default. */
     maintenanceCountdown: boolean;
+    /**
+     * Skip optional heavy art: small avatars instead of portraits in operator
+     * lists, and splash or animated art only on request. Off by default.
+     */
+    dataSaver: boolean;
     hydrated: boolean;
 }
 
-type ToggleField = "dynamicArtwork" | "latinNames" | "spoilers" | "maintenanceCountdown";
+type ToggleField = "dynamicArtwork" | "latinNames" | "spoilers" | "maintenanceCountdown" | "dataSaver";
 
 const THEME_MODE_STORAGE_KEY = "theme";
 const DYNAMIC_ART_STORAGE_KEY = "myrtle-dynamic-art";
 const LATIN_NAMES_STORAGE_KEY = "myrtle-latin-names";
 const SPOILERS_STORAGE_KEY = "myrtle-spoilers";
 const MAINTENANCE_COUNTDOWN_STORAGE_KEY = "myrtle-maintenance-countdown";
+const DATA_SAVER_STORAGE_KEY = "myrtle-data-saver";
+
+/**
+ * Data saver is mirrored into this cookie so the server render already leaves the
+ * art out: an `<img>` in the SSR HTML starts downloading before hydration could
+ * swap it. Read by `getI18nBootstrapFn`.
+ */
+export const DATA_SAVER_COOKIE = "myrtle_data_saver";
 
 function getInitialMode(): ThemeMode {
     if (typeof window === "undefined") return "auto";
@@ -76,6 +90,7 @@ export const themeStore = new Store<IThemeState>({
     latinNames: true,
     spoilers: false,
     maintenanceCountdown: true,
+    dataSaver: false,
     hydrated: false,
 });
 
@@ -122,6 +137,7 @@ export function hydrateTheme(): void {
         // Off by default: only an explicit opt-in shows spoilers.
         spoilers: readToggle(SPOILERS_STORAGE_KEY, false),
         maintenanceCountdown: readToggle(MAINTENANCE_COUNTDOWN_STORAGE_KEY, true),
+        dataSaver: readToggle(DATA_SAVER_STORAGE_KEY, false),
         hydrated: true,
     }));
 }
@@ -187,5 +203,9 @@ export const themeActions = {
     },
     setMaintenanceCountdown(enabled: boolean): void {
         writeToggle("maintenanceCountdown", MAINTENANCE_COUNTDOWN_STORAGE_KEY, enabled);
+    },
+    setDataSaver(enabled: boolean): void {
+        writeToggle("dataSaver", DATA_SAVER_STORAGE_KEY, enabled);
+        void writePreferenceCookie(DATA_SAVER_COOKIE, enabled ? "1" : null);
     },
 };

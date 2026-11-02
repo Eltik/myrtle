@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getCookie, getRequestHeader, getRequestUrl } from "@tanstack/react-start/server";
-
+import { DATA_SAVER_COOKIE } from "#/lib/theme/store";
 import { type IBootstrap, isEnabledLocale, loadBootstrap } from "./catalog";
 import { DEFAULT_LOCALE, GAMEDATA_SERVER_COOKIE, LOCALE_COOKIE, negotiateLocale, parseLocaleFromPath } from "./locale";
 import { requestLocale } from "./request-locale.server";
@@ -11,6 +11,11 @@ import { requestLocale } from "./request-locale.server";
  * their cookie says.
  */
 export const getI18nBootstrapFn = createServerFn({ method: "GET" }).handler(async (): Promise<IBootstrap> => {
+    const bootstrap = await resolveBootstrap();
+    return getCookie(DATA_SAVER_COOKIE) === "1" ? { ...bootstrap, dataSaver: true } : bootstrap;
+});
+
+async function resolveBootstrap(): Promise<IBootstrap> {
     const fromPath = requestLocale();
     const pickedServer = getCookie(GAMEDATA_SERVER_COOKIE);
 
@@ -29,7 +34,7 @@ export const getI18nBootstrapFn = createServerFn({ method: "GET" }).handler(asyn
     if (remembered) return await loadBootstrap(remembered, DEFAULT_LOCALE, undefined, pickedServer);
 
     return await loadBootstrap(DEFAULT_LOCALE, DEFAULT_LOCALE, undefined, pickedServer);
-});
+}
 
 /**
  * What the bare root should redirect a returning visitor to. Kept separate

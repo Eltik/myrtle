@@ -139,6 +139,22 @@ export const messages = {
         text: "Shows when the game is about to go down for maintenance, or is down right now, straight from Yostar's notices. Home still shows it either way. On by default.",
         description: "Caption under the maintenance countdown switch. 'Yostar' is the game's publisher; 'Home' is the site's landing page.",
     },
+    "appearance.dataSaver.title": {
+        text: "Data Saver",
+        description: "Card title over the option that cuts how much artwork the site downloads.",
+    },
+    "appearance.dataSaver.desc": {
+        text: "Operator art is the heaviest thing the site loads. Turn this on for a slow or metered connection.",
+        description: "Card description under the Data Saver title.",
+    },
+    "appearance.dataSaver.rowTitle": {
+        text: "Data Saver Mode",
+        description: "Label of the switch that turns data saver on, and the switch's accessible name.",
+    },
+    "appearance.dataSaver.rowDesc": {
+        text: "Operator lists and rosters show small avatars, and splash art and animated art wait until you tap Load artwork or open the Skins tab. Off by default.",
+        description: "Caption under the data saver switch. 'Load artwork' is the button shown in place of the art; 'Skins' is the operator page tab with the outfits.",
+    },
 } satisfies MessageMap;
 
 export const { keys } = defineMessages({ namespace, messages });

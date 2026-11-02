@@ -4,6 +4,7 @@ import { RARITY_COLORS } from "#/components/operators/list/impl/constants";
 import { Card, CardContent } from "#/components/ui/card";
 import { Progress } from "#/components/ui/progress";
 import { Separator } from "#/components/ui/separator";
+import { useDataSaver } from "#/hooks/use-data-saver";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { getAvatarById, professionLabel } from "#/lib/utils";
@@ -63,12 +64,13 @@ function UnownedDetailed({ entry }: { entry: IUnownedEntry }) {
     const star = entry.rarity;
     const profession = entry.meta.profession;
     const heroSrc = operatorElite0(entry.operator_id, entry.static?.skin ?? null, entry.static?.portrait ?? null);
+    const dataSaver = useDataSaver();
 
     return (
         <Card className="fade-in slide-in-from-bottom-4 flex w-full animate-in flex-col gap-0 overflow-hidden border-2 border-muted/30 py-0 pb-1 opacity-60 grayscale transition-all duration-300 hover:border-muted hover:opacity-80 hover:shadow-lg">
             <div className="relative">
                 <div className="relative h-64 w-full overflow-hidden">
-                    <img alt={entry.name} className="h-full w-full object-contain object-top" decoding="async" loading="lazy" src={heroSrc} />
+                    {dataSaver ? <img alt={entry.name} className="h-full w-full object-contain p-6 pb-16" decoding="async" loading="lazy" src={getAvatarById(entry.operator_id)} /> : <img alt={entry.name} className="h-full w-full object-contain object-top" decoding="async" loading="lazy" src={heroSrc} />}
                     <div className="absolute inset-0 bg-linear-to-t from-black/50 to-transparent opacity-70" />
                     <div className="absolute right-0 bottom-0 left-0 p-4">
                         <h3 className="mt-2 max-w-3/4 text-left font-bold text-white text-xl">{entry.name}</h3>

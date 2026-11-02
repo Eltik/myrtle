@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { useDataSaver } from "#/hooks/use-data-saver";
 import { useOperatorName } from "#/hooks/use-operator-name";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -14,16 +15,17 @@ export function OperatorCardUpcoming({ operator }: { operator: IOperatorIndexEnt
     const { displayName } = parseOperatorName(name);
     const portrait = getPortraitById(operator.id, "cn");
     const fallback = getAvatarById(operator.id, "cn");
+    const dataSaver = useDataSaver();
 
     return (
-        <Link to="/operators/$id" params={{ id: operator.id }} className="group relative flex aspect-2/3 overflow-clip rounded-md border border-muted/50 bg-card contain-content hover:rounded-lg">
-            <div className="absolute inset-0 origin-center transition-transform group-hover:scale-105">
+        <Link to="/operators/$id" params={{ id: operator.id }} preload={dataSaver ? false : undefined} className="group relative flex aspect-2/3 overflow-clip rounded-md border border-muted/50 bg-card contain-content hover:rounded-lg">
+            <div className={dataSaver ? "absolute inset-x-0 top-0 bottom-12 flex origin-center items-center justify-center p-3 transition-transform group-hover:scale-105" : "absolute inset-0 origin-center transition-transform group-hover:scale-105"}>
                 <img
                     alt={t("card.upcoming.portraitAlt", { name })}
-                    className="h-full w-full rounded-lg object-contain"
+                    className={dataSaver ? "aspect-square w-full max-w-40 rounded-md object-contain" : "h-full w-full rounded-lg object-contain"}
                     decoding="async"
                     loading="lazy"
-                    src={portrait}
+                    src={dataSaver ? fallback : portrait}
                     onError={(e) => {
                         const img = e.currentTarget;
                         if (!img.src.endsWith(fallback)) img.src = fallback;
