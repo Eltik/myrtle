@@ -18,7 +18,7 @@ import type { messages } from "./AppearancePanel.messages";
 import { SectionLabel, SettingRow } from "./SettingsShell";
 
 export function AppearancePanel() {
-    const { mode, resolved, accent, isDefaultAccent, dynamicArtwork, latinNames, spoilers, maintenanceCountdown, dataSaver, setMode, setPresetHue, setCustomHex, resetAccent, setDynamicArtwork, setLatinNames, setSpoilers, setMaintenanceCountdown, setDataSaver } = useTheme();
+    const { mode, resolved, accent, isDefaultAccent, dynamicArtwork, latinNames, spoilers, maintenanceCountdown, dataSaver, cnUpdates, setMode, setPresetHue, setCustomHex, resetAccent, setDynamicArtwork, setLatinNames, setSpoilers, setMaintenanceCountdown, setDataSaver, setCnUpdates } = useTheme();
     const customInputId = useId();
     const t: TypedT<typeof messages> = useT("settings");
 
@@ -102,6 +102,8 @@ export function AppearancePanel() {
             <ToggleCard title={t("appearance.latinNames.title")} description={t("appearance.latinNames.desc")} rowTitle={t("appearance.latinNames.rowTitle")} rowDescription={t("appearance.latinNames.rowDesc")} checked={latinNames} onCheckedChange={setLatinNames} />
 
             <ToggleCard title={t("appearance.spoilers.title")} description={t("appearance.spoilers.desc")} rowTitle={t("appearance.spoilers.rowTitle")} rowDescription={t("appearance.spoilers.rowDesc")} checked={spoilers} onCheckedChange={setSpoilers} />
+
+            <ToggleCard title={t("appearance.cnUpdates.title")} description={t("appearance.cnUpdates.desc")} rowTitle={t("appearance.cnUpdates.rowTitle")} rowDescription={t("appearance.cnUpdates.rowDesc")} checked={cnUpdates} onCheckedChange={setCnUpdates} />
 
             <ToggleCard title={t("appearance.topBar.title")} description={t("appearance.topBar.desc")} rowTitle={t("appearance.topBar.maintenance.rowTitle")} rowDescription={t("appearance.topBar.maintenance.rowDesc")} checked={maintenanceCountdown} onCheckedChange={setMaintenanceCountdown} />
 

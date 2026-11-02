@@ -370,6 +370,8 @@ pub fn router() -> OpenApiRouter<AppState> {
         .routes(routes!(planner::delete_preset))
         .routes(routes!(operators::upcoming))
         .routes(routes!(operators::upcoming_srv))
+        .routes(routes!(operators::cn_changes))
+        .routes(routes!(operators::cn_changes_srv))
         .routes(routes!(operators::detail))
         .routes(routes!(operators::build_stats))
         .routes(routes!(operators::voices_detail))

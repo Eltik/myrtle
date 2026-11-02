@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-11-02T10:15:09.278Z",
+    "generatedAt": "2026-11-02T10:15:34.982Z",
     "entries": [
         {
             "key": "admin.home.access.everyList",
@@ -21838,6 +21838,275 @@
             ]
         },
         {
+            "key": "operators.cnUpdates.badge",
+            "namespace": "operators",
+            "source_text": "Updated",
+            "description": "Short pill on an operator card when the CN server's data for this operator differs from this server's (a new module, changed values). Keep it to one short word.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.cnUpdates.badge.title",
+            "namespace": "operators",
+            "source_text": "Updated on CN: {changes}",
+            "description": "Hover text and accessible name of the Updated pill. {changes} is a comma-separated list of change labels such as 'new module'. 'CN' is the Chinese game server, which is months ahead.",
+            "placeholders": [
+                "changes"
+            ]
+        },
+        {
+            "key": "operators.cnUpdates.kind.module_added",
+            "namespace": "operators",
+            "source_text": "{count, plural, one {new module} other {# new modules}}",
+            "description": "Change label: CN has modules for this operator that this server does not. 'Module' is the game's word for an operator's equipment upgrade.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "operators.cnUpdates.kind.module_changed",
+            "namespace": "operators",
+            "source_text": "{count, plural, one {module values} other {# modules' values}}",
+            "description": "Change label: a module both servers have carries different numbers on CN.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "operators.cnUpdates.kind.potentials_changed",
+            "namespace": "operators",
+            "source_text": "potentials",
+            "description": "Change label: potential bonuses differ on CN. 'Potential' is the game's word for duplicate-copy upgrades.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.cnUpdates.kind.range_changed",
+            "namespace": "operators",
+            "source_text": "attack range",
+            "description": "Change label: the attack range of a promotion differs on CN.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.cnUpdates.kind.skill_added",
+            "namespace": "operators",
+            "source_text": "{count, plural, one {new skill} other {# new skills}}",
+            "description": "Change label: CN lists skills for this operator that this server does not.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "operators.cnUpdates.kind.skill_values_changed",
+            "namespace": "operators",
+            "source_text": "{count, plural, one {skill values} other {# skills' values}}",
+            "description": "Change label: a skill both servers have carries different numbers (SP cost, duration, multipliers) on CN.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "operators.cnUpdates.kind.stats_changed",
+            "namespace": "operators",
+            "source_text": "stats",
+            "description": "Change label: base attributes (HP, ATK, redeployment time and so on) differ on CN.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.cnUpdates.kind.talents_changed",
+            "namespace": "operators",
+            "source_text": "talents",
+            "description": "Change label: talent numbers or unlock conditions differ on CN. 'Talent' is the game's word for an operator's passive ability.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.cnUpdates.kind.trait_changed",
+            "namespace": "operators",
+            "source_text": "trait",
+            "description": "Change label: the class trait's numbers differ on CN.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.cnUpdates.kind.trust_bonus_changed",
+            "namespace": "operators",
+            "source_text": "trust bonus",
+            "description": "Change label: the stat bonus at full trust differs on CN.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.cnUpdates.section.absent",
+            "namespace": "operators",
+            "source_text": "none",
+            "description": "Table cell when one server has no such value at all.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.cnUpdates.section.badge",
+            "namespace": "operators",
+            "source_text": "CN",
+            "description": "Badge on the section that shows Chinese-server data. The server code, which normally stays as-is.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.cnUpdates.section.changedModule",
+            "namespace": "operators",
+            "source_text": "Module values",
+            "description": "Heading over a module whose numbers differ on CN.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.cnUpdates.section.column.cn",
+            "namespace": "operators",
+            "source_text": "CN",
+            "description": "Column heading over the Chinese server's number. The server code, which normally stays as-is.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.cnUpdates.section.column.here",
+            "namespace": "operators",
+            "source_text": "Here",
+            "description": "Column heading over this server's number.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.cnUpdates.section.column.value",
+            "namespace": "operators",
+            "source_text": "Value",
+            "description": "Column heading over the name of a number that differs, such as 'atk' or 'Redeploy'.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.cnUpdates.section.desc",
+            "namespace": "operators",
+            "source_text": "The CN server runs months ahead. This is its data where it differs from this server's: {changes}. Names and descriptions are CN's own text.",
+            "description": "Lead paragraph of the CN updates section. {changes} is a list such as 'new module and stats'. 'CN's own text' means untranslated Chinese.",
+            "placeholders": [
+                "changes"
+            ]
+        },
+        {
+            "key": "operators.cnUpdates.section.loading",
+            "namespace": "operators",
+            "source_text": "Loading CN data...",
+            "description": "Shown while the Chinese server's record for this operator loads.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.cnUpdates.section.moduleStage",
+            "namespace": "operators",
+            "source_text": "Stage {stage}",
+            "description": "Column heading for one upgrade stage (1 to 3) of a module.",
+            "placeholders": [
+                "stage"
+            ]
+        },
+        {
+            "key": "operators.cnUpdates.section.moduleTalent",
+            "namespace": "operators",
+            "source_text": "Talent",
+            "description": "Label over the talent text a module stage gives, in CN's own text.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.cnUpdates.section.moduleTrait",
+            "namespace": "operators",
+            "source_text": "Trait",
+            "description": "Label over the trait text a module stage gives, in CN's own text.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.cnUpdates.section.newModule",
+            "namespace": "operators",
+            "source_text": "New module",
+            "description": "Heading over a module the Chinese server has and this one does not yet.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.cnUpdates.section.newSkill",
+            "namespace": "operators",
+            "source_text": "New skill",
+            "description": "Heading over a skill the Chinese server lists and this one does not.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.cnUpdates.section.noBonuses",
+            "namespace": "operators",
+            "source_text": "No stat bonuses",
+            "description": "Shown in a module stage column that adds no stats.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.cnUpdates.section.phase",
+            "namespace": "operators",
+            "source_text": "Elite {phase}, level {level}",
+            "description": "Row group label for one promotion stage at its level cap, e.g. 'Elite 2, level 90'. 'Elite' is the game's word for a promotion.",
+            "placeholders": [
+                "level",
+                "phase"
+            ]
+        },
+        {
+            "key": "operators.cnUpdates.section.potentials",
+            "namespace": "operators",
+            "source_text": "Potential bonuses differ on CN.",
+            "description": "One-line note when potential bonuses differ on the Chinese server.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.cnUpdates.section.range",
+            "namespace": "operators",
+            "source_text": "The attack range differs on CN.",
+            "description": "One-line note when a promotion's attack range differs on the Chinese server.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.cnUpdates.section.skillValues",
+            "namespace": "operators",
+            "source_text": "Skill values",
+            "description": "Heading over a skill whose numbers (SP cost, duration, multipliers) differ on CN.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.cnUpdates.section.stats",
+            "namespace": "operators",
+            "source_text": "Stats",
+            "description": "Heading over the base attributes that differ on CN.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.cnUpdates.section.talents",
+            "namespace": "operators",
+            "source_text": "Talents",
+            "description": "Heading over talent values that differ on CN.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.cnUpdates.section.title",
+            "namespace": "operators",
+            "source_text": "Updates on CN",
+            "description": "Title of the operator-page section listing what the Chinese server's data has for this operator that this server's does not yet.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.cnUpdates.section.trait",
+            "namespace": "operators",
+            "source_text": "Trait",
+            "description": "Heading over trait values that differ on CN.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.cnUpdates.section.trust",
+            "namespace": "operators",
+            "source_text": "Trust bonus",
+            "description": "Heading over the full-trust stat bonus when it differs on CN.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.cnUpdates.section.unavailable",
+            "namespace": "operators",
+            "source_text": "CN data for this operator could not be loaded.",
+            "description": "Shown when the Chinese server's record for this operator failed to load.",
+            "placeholders": []
+        },
+        {
             "key": "operators.facts.birthPlace.Aegir",
             "namespace": "operators",
             "source_text": "Ægir",
@@ -22416,6 +22685,13 @@
             "namespace": "operators",
             "source_text": "Upcoming (CN)",
             "description": "Availability option: operators out on the Chinese server but not yet on Global. 'CN' is the server code and normally stays as-is.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.filters.availability.updated",
+            "namespace": "operators",
+            "source_text": "Updated on CN",
+            "description": "Availability option: Global operators whose data on the Chinese server differs (a new module, changed values). 'CN' is the server code and normally stays as-is.",
             "placeholders": []
         },
         {
@@ -25005,6 +25281,34 @@
             "namespace": "settings",
             "source_text": "Accent color",
             "description": "Card title over the accent-colour picker.",
+            "placeholders": []
+        },
+        {
+            "key": "settings.appearance.cnUpdates.desc",
+            "namespace": "settings",
+            "source_text": "The CN server runs months ahead, and operators you already have can gain new modules or changed values there before they arrive here.",
+            "description": "Card description under the CN Updates title. 'Modules' is the game's word for an operator's equipment upgrades.",
+            "placeholders": []
+        },
+        {
+            "key": "settings.appearance.cnUpdates.rowDesc",
+            "namespace": "settings",
+            "source_text": "Adds a CN section to an operator's page with the data that differs on CN, in CN's own text. Off by default.",
+            "description": "Caption under the CN updates switch. 'CN's own text' means the section shows Chinese game text, untranslated.",
+            "placeholders": []
+        },
+        {
+            "key": "settings.appearance.cnUpdates.rowTitle",
+            "namespace": "settings",
+            "source_text": "Show CN updates",
+            "description": "Label of the switch that shows CN-server changes on operator pages, and the switch's accessible name.",
+            "placeholders": []
+        },
+        {
+            "key": "settings.appearance.cnUpdates.title",
+            "namespace": "settings",
+            "source_text": "CN Updates",
+            "description": "Card title over the option that shows CN-server changes on operator pages. 'CN' is the Chinese game server, which receives content months before the others.",
             "placeholders": []
         },
         {

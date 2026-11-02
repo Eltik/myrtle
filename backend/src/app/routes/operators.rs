@@ -8,14 +8,15 @@ use axum::{
 use crate::app::routes::static_data::json_response;
 use crate::app::services::operators::{
     OperatorBuildStatsResponse, OperatorIndexEntry, OperatorOwnershipResponse, get_build_stats,
-    get_index, get_operator_json, get_operator_skins, get_operator_voices, get_ownership,
-    get_roster, get_upcoming, resolve_operator_json,
+    get_cn_changes, get_index, get_operator_json, get_operator_skins, get_operator_voices,
+    get_ownership, get_roster, get_upcoming, resolve_operator_json,
 };
 use crate::app::services::recruitment::get_recruitment;
 use crate::app::{error::ApiError, state::AppState};
 use crate::core::gamedata::types::skin::SkinData;
 use crate::core::gamedata::types::voice::Voices;
 use crate::core::hypergryph::constants::Server;
+use crate::core::release::operator_changes::OperatorCnChanges;
 
 /// Every operator on the default (EN) server, in the compact form the roster
 /// and list screens use.
@@ -304,6 +305,54 @@ pub async fn upcoming_srv(
     Path(server): Path<Server>,
 ) -> Result<Json<Vec<OperatorIndexEntry>>, ApiError> {
     Ok(Json(get_upcoming(&state, server).await?))
+}
+
+/// `GET /operators/cn-changes` - operators the default (EN) server already
+/// has whose CN data differs in structure or numbers: a module EN does not
+/// have yet, changed skill, talent, trait or stat values. Text is never
+/// compared, the two servers' languages differ.
+#[utoipa::path(
+    get,
+    path = "/operators/cn-changes",
+    tag = "gamedata",
+    responses(
+        (status = 200, description = "Changed operators, sorted by id, each with its typed changes.", body = Vec<OperatorCnChanges>),
+        (status = 404, response = crate::app::openapi::responses::NotFound),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
+pub async fn cn_changes(
+    State(state): State<AppState>,
+) -> Result<Json<Vec<OperatorCnChanges>>, ApiError> {
+    let changes = get_cn_changes(&state, state.default_server).await?;
+    Ok(Json(changes.as_ref().clone()))
+}
+
+/// `GET /{server}/operators/cn-changes` - the same diff against `{server}`. A
+/// CN or Bilibili `{server}` reads CN already and gets an empty list.
+#[utoipa::path(
+    get,
+    path = "/{server}/operators/cn-changes",
+    tag = "gamedata",
+    params(
+        ("server" = String, Path, description = "Game server: `en`, `jp`, `kr`, `cn` or `tw`.")
+    ),
+    responses(
+        (status = 200, description = "Changed operators, sorted by id, each with its typed changes.", body = Vec<OperatorCnChanges>),
+        (status = 404, response = crate::app::openapi::responses::NotFound),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
+pub async fn cn_changes_srv(
+    State(state): State<AppState>,
+    Path(server): Path<Server>,
+) -> Result<Json<Vec<OperatorCnChanges>>, ApiError> {
+    let changes = get_cn_changes(&state, server).await?;
+    Ok(Json(changes.as_ref().clone()))
 }
 
 /// One operator's full record: stats, talents, skills, modules and handbook.

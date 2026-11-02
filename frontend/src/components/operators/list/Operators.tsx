@@ -7,11 +7,12 @@ import { PageHeader } from "#/components/ui/page-header";
 import { useLocalStorageState } from "#/hooks/use-local-storage-state";
 import { useOperatorName } from "#/hooks/use-operator-name";
 import { noteHasContent, operatorNotesListQueryOptions } from "#/lib/api/operator-notes";
-import { type IOperatorExportFields, operatorOwnershipQueryOptions, operatorsExportFieldsQueryOptions, operatorsIndexQueryOptions } from "#/lib/api/operators";
+import { cnChangesQueryOptions, type IOperatorExportFields, operatorOwnershipQueryOptions, operatorsExportFieldsQueryOptions, operatorsIndexQueryOptions } from "#/lib/api/operators";
 import { upcomingQueryOptions } from "#/lib/api/upcoming";
 import { operatorsExportSchema } from "#/lib/export";
 import { type TypedRichT, useGamedataServer, useRichT, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
+import { cnChangesById } from "#/lib/operators/cn-changes";
 import { Route } from "#/routes/operators";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../ui/select";
 import { Skeleton } from "../../ui/skeleton";
@@ -72,7 +73,11 @@ export function OperatorsList() {
         }
         return map;
     }, [ownership, operators]);
-    const enriched = useMemo(() => enrichOperators(operators, notedIds, ownershipMap), [operators, notedIds, ownershipMap]);
+    // The "Updated" pill does not wait on the CN updates setting: it is one small request, and it
+    // is how a reader learns there is something to turn the setting on for.
+    const { data: cnChanges } = useQuery(cnChangesQueryOptions(server));
+    const cnChangesMap = useMemo(() => cnChangesById(cnChanges), [cnChanges]);
+    const enriched = useMemo(() => enrichOperators(operators, notedIds, ownershipMap, cnChangesMap), [operators, notedIds, ownershipMap, cnChangesMap]);
 
     const {
         filters,
@@ -252,6 +257,7 @@ export function OperatorsList() {
                     selectedModules={filters.modules}
                     selectedHasNotes={filters.hasNotes}
                     selectedAvailability={filters.availability}
+                    cnUpdatesAvailable={cnChangesMap.size > 0}
                     options={filterOptions}
                     onClassesChange={setClasses}
                     onSubclassesChange={setSubclasses}

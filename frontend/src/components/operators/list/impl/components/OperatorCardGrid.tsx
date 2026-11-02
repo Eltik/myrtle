@@ -7,6 +7,7 @@ import type { TypedT } from "#/lib/i18n/messages";
 import { cn, getAvatarById, rarityToNumber } from "#/lib/utils";
 import { RARITY_BLUR_COLORS, RARITY_COLORS } from "../constants";
 import type { IOperatorView, StatMetric } from "../types";
+import { CnUpdateBadge } from "./CnUpdateBadge";
 import { CampIcon, ClassIcon } from "./Icons";
 import type { messages } from "./OperatorCardGrid.messages";
 import styles from "./OperatorCardGrid.module.css";
@@ -31,6 +32,7 @@ export function OperatorCardGrid({ operator, statMetric }: IOperatorCardGridProp
                 render={
                     <Link to="/operators/$id" params={{ id: operator.id ?? "" }} preload={dataSaver ? false : undefined} className={cn("group relative flex aspect-2/3 overflow-clip rounded-md border border-muted/50 bg-card contain-content hover:rounded-lg", styles["card-hover-transition"])}>
                         {operator.ownership && <OwnershipBadge info={operator.ownership} metric={statMetric} color={RARITY_COLORS[rarityToNumber(operator.rarity)]} className="absolute top-1 left-1 z-20" />}
+                        {operator.cnChanges && <CnUpdateBadge changes={operator.cnChanges} className="absolute top-1 right-1 z-20" />}
                         <div className="absolute -translate-x-8 -translate-y-4">
                             <CampIcon groupId={logoId} className="opacity-5 transition-opacity group-hover:opacity-10" size={360} />
                         </div>

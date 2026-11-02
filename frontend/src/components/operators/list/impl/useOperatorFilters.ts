@@ -45,9 +45,12 @@ export function useOperatorFilters(data: IOperatorView[]): IUseOperatorFiltersRe
     const filterOptions = useMemo(() => buildFilterOptions(data), [data]);
 
     // Separate memos so a sort change doesn't rerun the more expensive filter pass.
+    // "updated" narrows to operators with CN changes, but only once some are known: with none
+    // loaded (or none on this server) it reads as the whole Global list, not an empty one.
+    const updatedOnly = filters.availability === "updated" && data.some((op) => op.cnChanges !== null);
     const filtered = useMemo(
         () =>
-            data.filter(
+            (updatedOnly ? data.filter((op) => op.cnChanges !== null) : data).filter(
                 operatorFilterPredicate({
                     searchQuery: filters.searchQuery,
                     classes: filters.classes,
@@ -64,7 +67,7 @@ export function useOperatorFilters(data: IOperatorView[]): IUseOperatorFiltersRe
                     hasNotes: filters.hasNotes,
                 }),
             ),
-        [data, filters.searchQuery, filters.classes, filters.subclasses, filters.rarities, filters.genders, filters.nations, filters.factions, filters.races, filters.birthPlaces, filters.artists, filters.voiceActors, filters.modules, filters.hasNotes],
+        [data, updatedOnly, filters.searchQuery, filters.classes, filters.subclasses, filters.rarities, filters.genders, filters.nations, filters.factions, filters.races, filters.birthPlaces, filters.artists, filters.voiceActors, filters.modules, filters.hasNotes],
     );
 
     const filteredOperators = useMemo(() => {

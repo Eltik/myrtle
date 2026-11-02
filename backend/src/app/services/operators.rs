@@ -1,12 +1,16 @@
 use std::collections::{HashMap, HashSet};
+use std::sync::{Arc, Weak};
 
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 use crate::app::cache::keys::CacheKey;
 use crate::app::cache::{CachedJson, cached_json};
+use crate::app::cpu;
 use crate::app::error::ApiError;
+use crate::app::services::story::ServerCache;
 use crate::app::state::AppState;
+use crate::core::gamedata::types::GameData;
 use crate::core::gamedata::types::handbook::{OperatorBirthPlace, OperatorGender, OperatorRace};
 use crate::core::gamedata::types::module::ModuleType;
 use crate::core::gamedata::types::obtain::ObtainChannel;
@@ -16,6 +20,7 @@ use crate::core::gamedata::types::operator::{
 use crate::core::gamedata::types::skin::SkinData;
 use crate::core::gamedata::types::voice::Voices;
 use crate::core::hypergryph::constants::Server;
+use crate::core::release::operator_changes::{OperatorCnChanges, cn_changes};
 use crate::database::queries::operator_ownership;
 
 /// Compact operator record for client-side search palettes and autocompletes.
@@ -705,6 +710,59 @@ pub async fn get_upcoming(
 
     state.cache.set(&key, &entries).await;
     Ok(entries)
+}
+
+/// One viewer server's CN changes and the CN load they were diffed against.
+pub struct CnChangesCache {
+    cn: Weak<GameData>,
+    pub changes: Arc<Vec<OperatorCnChanges>>,
+}
+
+static CN_CHANGES: ServerCache<CnChangesCache> = ServerCache::new();
+
+/// Operators `viewer` already has whose CN data differs in structure or
+/// numbers (a new module, changed skill values), sorted by id.
+///
+/// Built once per pair of game-data loads under `cpu::run`: the slot is keyed
+/// on `viewer`'s load and rebuilt when either side reloads. A CN or Bilibili
+/// viewer reads CN's data already, so it has nothing to preview and gets an
+/// empty list. Returns 404 when CN is not a loaded server.
+pub async fn get_cn_changes(
+    state: &AppState,
+    viewer: Server,
+) -> Result<Arc<Vec<OperatorCnChanges>>, ApiError> {
+    let cn_data = state
+        .try_server_data(Server::CN)
+        .ok_or(ApiError::NotFound)?;
+    if matches!(viewer, Server::CN | Server::Bilibili) {
+        return Ok(Arc::new(Vec::new()));
+    }
+    let base = state
+        .try_server_data(viewer)
+        .map_or_else(|| state.default_game_data(), |sd| sd.game_data.load_full());
+    let cn = cn_data.game_data.load_full();
+    let cn_key = Arc::downgrade(&cn);
+    let build_base = Arc::clone(&base);
+    let build_cn = Arc::clone(&cn);
+    let built = CN_CHANGES
+        .get_or_build(
+            viewer,
+            base,
+            |hit| hit.cn.upgrade().is_some_and(|old| Arc::ptr_eq(&old, &cn)),
+            || async move {
+                cpu::run("cn_changes", move || {
+                    let changes = cn_changes(&build_base, &build_cn);
+                    tracing::info!(viewer = ?viewer, operators = changes.len(), "cn changes built");
+                    Arc::new(CnChangesCache {
+                        cn: cn_key,
+                        changes: Arc::new(changes),
+                    })
+                })
+                .await
+            },
+        )
+        .await?;
+    Ok(Arc::clone(&built.changes))
 }
 
 #[derive(Serialize)]

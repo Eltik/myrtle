@@ -29,10 +29,16 @@ interface IThemeState {
      * lists, and splash or animated art only on request. Off by default.
      */
     dataSaver: boolean;
+    /**
+     * Show, on an operator's page, what CN's data has for them that this
+     * server's does not yet (a new module, changed values). Off by default:
+     * it is CN text, and the page fetches CN's record only when it is on.
+     */
+    cnUpdates: boolean;
     hydrated: boolean;
 }
 
-type ToggleField = "dynamicArtwork" | "latinNames" | "spoilers" | "maintenanceCountdown" | "dataSaver";
+type ToggleField = "dynamicArtwork" | "latinNames" | "spoilers" | "maintenanceCountdown" | "dataSaver" | "cnUpdates";
 
 const THEME_MODE_STORAGE_KEY = "theme";
 const DYNAMIC_ART_STORAGE_KEY = "myrtle-dynamic-art";
@@ -47,6 +53,8 @@ const DATA_SAVER_STORAGE_KEY = "myrtle-data-saver";
  * swap it. Read by `getI18nBootstrapFn`.
  */
 export const DATA_SAVER_COOKIE = "myrtle_data_saver";
+
+const CN_UPDATES_STORAGE_KEY = "myrtle-cn-updates";
 
 function getInitialMode(): ThemeMode {
     if (typeof window === "undefined") return "auto";
@@ -91,6 +99,7 @@ export const themeStore = new Store<IThemeState>({
     spoilers: false,
     maintenanceCountdown: true,
     dataSaver: false,
+    cnUpdates: false,
     hydrated: false,
 });
 
@@ -138,6 +147,7 @@ export function hydrateTheme(): void {
         spoilers: readToggle(SPOILERS_STORAGE_KEY, false),
         maintenanceCountdown: readToggle(MAINTENANCE_COUNTDOWN_STORAGE_KEY, true),
         dataSaver: readToggle(DATA_SAVER_STORAGE_KEY, false),
+        cnUpdates: readToggle(CN_UPDATES_STORAGE_KEY, false),
         hydrated: true,
     }));
 }
@@ -207,5 +217,9 @@ export const themeActions = {
     setDataSaver(enabled: boolean): void {
         writeToggle("dataSaver", DATA_SAVER_STORAGE_KEY, enabled);
         void writePreferenceCookie(DATA_SAVER_COOKIE, enabled ? "1" : null);
+    },
+
+    setCnUpdates(enabled: boolean): void {
+        writeToggle("cnUpdates", CN_UPDATES_STORAGE_KEY, enabled);
     },
 };

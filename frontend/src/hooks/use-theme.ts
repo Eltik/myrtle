@@ -11,6 +11,7 @@ export function useTheme() {
     const spoilers = useSelector(themeStore, (s) => s.spoilers);
     const maintenanceCountdown = useSelector(themeStore, (s) => s.maintenanceCountdown);
     const dataSaver = useSelector(themeStore, (s) => s.dataSaver);
+    const cnUpdates = useSelector(themeStore, (s) => s.cnUpdates);
     const hydrated = useSelector(themeStore, (s) => s.hydrated);
 
     useEffect(() => {
@@ -27,6 +28,7 @@ export function useTheme() {
         spoilers,
         maintenanceCountdown,
         dataSaver,
+        cnUpdates,
         hydrated,
         setMode: themeActions.setMode,
         setPresetHue: themeActions.setPresetHue,
@@ -37,6 +39,7 @@ export function useTheme() {
         setSpoilers: themeActions.setSpoilers,
         setMaintenanceCountdown: themeActions.setMaintenanceCountdown,
         setDataSaver: themeActions.setDataSaver,
+        setCnUpdates: themeActions.setCnUpdates,
         isDefaultAccent: accent === null,
     };
 }

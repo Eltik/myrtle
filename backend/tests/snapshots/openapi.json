@@ -7960,6 +7960,42 @@
         ]
       }
     },
+    "/api/operators/cn-changes": {
+      "get": {
+        "tags": [
+          "gamedata"
+        ],
+        "summary": "`GET /operators/cn-changes` - operators the default (EN) server already\nhas whose CN data differs in structure or numbers: a module EN does not\nhave yet, changed skill, talent, trait or stat values. Text is never\ncompared, the two servers' languages differ.",
+        "operationId": "cn_changes",
+        "responses": {
+          "200": {
+            "description": "Changed operators, sorted by id, each with its typed changes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OperatorCnChanges"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        }
+      }
+    },
     "/api/operators/index": {
       "get": {
         "tags": [
@@ -14605,6 +14641,53 @@
           },
           "500": {
             "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/api/{server}/operators/cn-changes": {
+      "get": {
+        "tags": [
+          "gamedata"
+        ],
+        "summary": "`GET /{server}/operators/cn-changes` - the same diff against `{server}`. A\nCN or Bilibili `{server}` reads CN already and gets an empty list.",
+        "operationId": "cn_changes_srv",
+        "parameters": [
+          {
+            "name": "server",
+            "in": "path",
+            "description": "Game server: `en`, `jp`, `kr`, `cn` or `tw`.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Changed operators, sorted by id, each with its typed changes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OperatorCnChanges"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
           }
         }
       }
@@ -25932,6 +26015,196 @@
           "skillTotal": {
             "type": "integer",
             "format": "int64"
+          }
+        }
+      },
+      "OperatorChange": {
+        "oneOf": [
+          {
+            "type": "object",
+            "description": "A module CN has and the trailing server does not. The default\n(`ORIGINAL`) module is never reported: it appears with the first\nreal one.",
+            "required": [
+              "module_id",
+              "kind"
+            ],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "module_added"
+                ]
+              },
+              "module_id": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "A module both have whose stats, talent or trait numbers, or unlock\nrequirement differ.",
+            "required": [
+              "module_id",
+              "kind"
+            ],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "module_changed"
+                ]
+              },
+              "module_id": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "A skill CN lists that the trailing server does not.",
+            "required": [
+              "skill_id",
+              "kind"
+            ],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "skill_added"
+                ]
+              },
+              "skill_id": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "A skill both have whose per-level blackboard, SP data, duration or\nrange differs.",
+            "required": [
+              "skill_id",
+              "kind"
+            ],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "skill_values_changed"
+                ]
+              },
+              "skill_id": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "Talent count, unlock conditions, ranges or blackboard values.",
+            "required": [
+              "kind"
+            ],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "talents_changed"
+                ]
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "Trait unlock conditions, ranges or blackboard values.",
+            "required": [
+              "kind"
+            ],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "trait_changed"
+                ]
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "Promotion count, level caps or attribute key frames.",
+            "required": [
+              "kind"
+            ],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "stats_changed"
+                ]
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "The attack range of a promotion phase.",
+            "required": [
+              "kind"
+            ],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "range_changed"
+                ]
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "Potential rank types or their attribute bonuses.",
+            "required": [
+              "kind"
+            ],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "potentials_changed"
+                ]
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "The trust bonus key frames.",
+            "required": [
+              "kind"
+            ],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "trust_bonus_changed"
+                ]
+              }
+            }
+          }
+        ],
+        "description": "One way an operator's CN data differs from the trailing server's."
+      },
+      "OperatorCnChanges": {
+        "type": "object",
+        "description": "Every difference found on one operator, in a fixed order.",
+        "required": [
+          "id",
+          "changes"
+        ],
+        "properties": {
+          "changes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OperatorChange"
+            }
+          },
+          "id": {
+            "type": "string"
           }
         }
       },

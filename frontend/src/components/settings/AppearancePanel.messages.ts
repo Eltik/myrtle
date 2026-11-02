@@ -123,6 +123,22 @@ export const messages = {
         text: "Shows the hidden factions the game never puts on an operator's card. Off by default.",
         description: "Caption under the spoilers switch. 'Faction' is the game's word for a nation, group or team an operator belongs to.",
     },
+    "appearance.cnUpdates.title": {
+        text: "CN Updates",
+        description: "Card title over the option that shows CN-server changes on operator pages. 'CN' is the Chinese game server, which receives content months before the others.",
+    },
+    "appearance.cnUpdates.desc": {
+        text: "The CN server runs months ahead, and operators you already have can gain new modules or changed values there before they arrive here.",
+        description: "Card description under the CN Updates title. 'Modules' is the game's word for an operator's equipment upgrades.",
+    },
+    "appearance.cnUpdates.rowTitle": {
+        text: "Show CN updates",
+        description: "Label of the switch that shows CN-server changes on operator pages, and the switch's accessible name.",
+    },
+    "appearance.cnUpdates.rowDesc": {
+        text: "Adds a CN section to an operator's page with the data that differs on CN, in CN's own text. Off by default.",
+        description: "Caption under the CN updates switch. 'CN's own text' means the section shows Chinese game text, untranslated.",
+    },
     "appearance.topBar.title": {
         text: "Top Bar",
         description: "Card title over the options for what shows up in the bar at the top of every page.",

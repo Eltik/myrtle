@@ -6,6 +6,7 @@ import type { TypedT } from "#/lib/i18n/messages";
 import { archetypeLabel, cn, getAvatarById, professionLabel, rarityToNumber } from "#/lib/utils";
 import { LIST_GRID_COLS, RARITY_COLORS } from "../constants";
 import type { IOperatorView, StatMetric } from "../types";
+import { CnUpdateBadge } from "./CnUpdateBadge";
 import { CampIcon, ClassIcon } from "./Icons";
 import type { messages } from "./OperatorCardList.messages";
 import { OperatorPreview } from "./OperatorPreview";
@@ -52,7 +53,10 @@ export function OperatorCardList({ operator, statMetric }: IOperatorCardListProp
                             <div className="relative h-12 w-12 overflow-hidden rounded-md border border-border/50 bg-background">
                                 <img alt={operator.name} src={portraitSrc} loading="lazy" className="absolute inset-0 h-full w-full object-cover transition-transform duration-200 ease-out group-hover:scale-110" />
                             </div>
-                            <span className="truncate font-semibold text-foreground text-sm uppercase tracking-wide">{operator.name}</span>
+                            <div className="flex min-w-0 items-center gap-2">
+                                <span className="truncate font-semibold text-foreground text-sm uppercase tracking-wide">{operator.name}</span>
+                                {operator.cnChanges && <CnUpdateBadge changes={operator.cnChanges} className="shrink-0" />}
+                            </div>
                             <RarityStars rarity={rarityNum} className="justify-self-center" />
                             <div className="flex min-w-0 items-center gap-2 justify-self-center">
                                 <ClassIcon profession={operator.profession} size={20} className="opacity-60 transition-opacity group-hover:opacity-100" />
@@ -72,6 +76,7 @@ export function OperatorCardList({ operator, statMetric }: IOperatorCardListProp
                             <div className="flex min-w-0 flex-1 flex-col gap-1">
                                 <div className="flex items-center gap-2">
                                     <span className="truncate font-semibold text-foreground text-sm uppercase tracking-wide">{operator.name}</span>
+                                    {operator.cnChanges && <CnUpdateBadge changes={operator.cnChanges} className="shrink-0" />}
                                     <div className="flex h-4 w-4 shrink-0 items-center justify-center opacity-50">
                                         <CampIcon groupId={factionLogoId} size={16} />
                                     </div>

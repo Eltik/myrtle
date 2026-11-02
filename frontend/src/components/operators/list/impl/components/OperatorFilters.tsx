@@ -22,6 +22,8 @@ interface IOperatorFiltersProps {
     selectedModules: string[];
     selectedHasNotes: HasNotesFilter;
     selectedAvailability: AvailabilityFilter;
+    /** Offer the "Updated on CN" availability; false while no operator is known to differ. */
+    cnUpdatesAvailable?: boolean;
     options: IFilterOptions;
     onClassesChange: (v: string[]) => void;
     onSubclassesChange: (v: string[]) => void;
@@ -46,6 +48,7 @@ interface IOperatorFiltersProps {
 const AVAILABILITY_OPTIONS: { value: AvailabilityFilter; labelKey: keyof typeof messages & string }[] = [
     { value: "global", labelKey: "filters.availability.global" },
     { value: "upcoming", labelKey: "filters.availability.upcoming" },
+    { value: "updated", labelKey: "filters.availability.updated" },
 ];
 
 function FiltersContent(props: Omit<IOperatorFiltersProps, "collapsed" | "onToggle" | "activeFilterCount">) {
@@ -80,7 +83,7 @@ function FiltersContent(props: Omit<IOperatorFiltersProps, "collapsed" | "onTogg
             }}
             options={props.options}
             onChange={(key, value) => (setters[key] as (v: ISharedFilters[typeof key]) => void)(value)}
-            basicLeading={<TagRow label={t("filters.availability")} options={AVAILABILITY_OPTIONS.map((o) => ({ value: o.value, label: t(o.labelKey) }))} value={props.selectedAvailability} onChange={props.onAvailabilityChange} />}
+            basicLeading={<TagRow label={t("filters.availability")} options={AVAILABILITY_OPTIONS.filter((o) => o.value !== "updated" || props.cnUpdatesAvailable).map((o) => ({ value: o.value, label: t(o.labelKey) }))} value={props.selectedAvailability} onChange={props.onAvailabilityChange} />}
             basicTrailing={<TagRow label={t("filters.notes")} options={HAS_NOTES_OPTIONS.map((o) => ({ value: o.value, label: t(o.labelKey) }))} value={props.selectedHasNotes} onChange={props.onHasNotesChange} />}
         />
     );

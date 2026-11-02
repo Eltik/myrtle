@@ -6,6 +6,7 @@ import type { TypedT } from "#/lib/i18n/messages";
 import { getAvatarById, parseOperatorName, rarityToNumber, subProfessionLabel } from "#/lib/utils";
 import { RARITY_COLORS } from "../constants";
 import type { IOperatorView, StatMetric } from "../types";
+import { CnUpdateBadge } from "./CnUpdateBadge";
 import { CampIcon, ClassIcon } from "./Icons";
 import type { messages } from "./OperatorCardCompact.messages";
 import { OperatorPreview } from "./OperatorPreview";
@@ -38,6 +39,7 @@ export function OperatorCardCompact({ operator, statMetric }: IOperatorCardCompa
                         </div>
                         <div className="relative box-content aspect-square h-20 overflow-hidden sm:h-30" style={{ borderBottom: `4px solid ${rarityColor}` }}>
                             {operator.ownership && <OwnershipBadge info={operator.ownership} metric={statMetric} color={rarityColor} className="absolute top-0.5 left-0.5 z-10" />}
+                            {operator.cnChanges && <CnUpdateBadge changes={operator.cnChanges} className="absolute top-0.5 right-0.5 z-10" />}
                             <div className="pointer-events-none absolute -translate-x-3 -translate-y-2">
                                 <CampIcon groupId={factionLogoId} className="opacity-5 transition-opacity group-hover:opacity-10" size={140} />
                             </div>

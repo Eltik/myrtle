@@ -19,6 +19,10 @@ export const messages = {
         text: "Upcoming (CN)",
         description: "Availability option: operators out on the Chinese server but not yet on Global. 'CN' is the server code and normally stays as-is.",
     },
+    "filters.availability.updated": {
+        text: "Updated on CN",
+        description: "Availability option: Global operators whose data on the Chinese server differs (a new module, changed values). 'CN' is the server code and normally stays as-is.",
+    },
     "filters.notes": {
         text: "Notes",
         description: "Field label over the has-notes choice, meaning this site's own written notes about an operator.",

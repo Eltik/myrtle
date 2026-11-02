@@ -1,10 +1,12 @@
+import type { OperatorChange } from "#/types/generated/OperatorChange";
 import type { IOperatorIndexEntry, OperatorRarity, OperatorRarityTier } from "#/types/operators";
 
 export type ViewMode = "grid" | "compact" | "list";
 export type SortOption = "rarity" | "name" | "class" | "hp" | "atk" | "def" | "res" | "cost" | "block" | "ownership" | "e2";
 export type SortOrder = "asc" | "desc";
 export type HasNotesFilter = "any" | "yes" | "no";
-export type AvailabilityFilter = "global" | "upcoming";
+/** "updated" is the Global list narrowed to operators whose CN data differs. */
+export type AvailabilityFilter = "global" | "upcoming" | "updated";
 
 /** Which community number the card badge shows. Independent of `sortBy`, so
  *  sorting by E2 rate while displaying ownership is legal. */
@@ -44,6 +46,9 @@ export interface IOperatorView extends IOperatorIndexEntry {
     /** Population-level ownership, or `null` when ownership data is unavailable
      *  (still loading) or the operator has no recorded owners. */
     ownership: IOperatorOwnershipInfo | null;
+    /** What CN's data has for this operator that this server's does not yet, or `null` when
+     *  nothing differs (or the changes have not loaded). */
+    cnChanges: OperatorChange[] | null;
 }
 
 /**

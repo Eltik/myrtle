@@ -3,6 +3,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { noRetryOnServer } from "#/integrations/tanstack-query/root-provider";
 import { backendFetch, backendJsonOrNull } from "#/lib/fetch";
 import type { OperatorBuildStatsResponse } from "#/types/generated/OperatorBuildStatsResponse";
+import type { OperatorCnChanges } from "#/types/generated/OperatorCnChanges";
 import type { OperatorOwnershipResponse } from "#/types/generated/OperatorOwnershipResponse";
 import type { IOperatorIndexEntry, IOperatorListItem, IOperatorsStaticMap } from "#/types/operators";
 import { DEFAULT_GAMEDATA_SERVER, gamedataKey, gamedataPath, resolveGamedataServer } from "./gamedata";
@@ -245,6 +246,24 @@ export function operatorQueryOptions(id: string, server: string = DEFAULT_GAMEDA
     return queryOptions({
         queryKey: ["operators", "detail", id, ...gamedataKey(server)],
         queryFn: () => fetchOperator(id, resolveGamedataServer(server)),
+        staleTime: 60 * 60 * 1000,
+        gcTime: 24 * 60 * 60 * 1000,
+    });
+}
+
+/**
+ * Operators this server already has whose CN data differs in structure or numbers (a module not
+ * here yet, changed skill or stat values), read by the browser straight from the backend. A
+ * backend without the route, or without CN loaded, answers 404, which reads as no changes.
+ */
+async function fetchCnChanges(server: string): Promise<OperatorCnChanges[]> {
+    return (await backendJsonOrNull<OperatorCnChanges[]>(gamedataPath(server, "/operators/cn-changes"), "CN changes")) ?? [];
+}
+
+export function cnChangesQueryOptions(server: string = DEFAULT_GAMEDATA_SERVER) {
+    return queryOptions({
+        queryKey: ["operators", "cn-changes", ...gamedataKey(server)],
+        queryFn: () => fetchCnChanges(resolveGamedataServer(server)),
         staleTime: 60 * 60 * 1000,
         gcTime: 24 * 60 * 60 * 1000,
     });
