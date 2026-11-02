@@ -13,6 +13,8 @@ use crate::evict::EvictPolicy;
 
 /// Served roots synced by default, generic asset route's allowlist
 pub const DEFAULT_ROOTS: &[&str] = &["textures", "spine", "audio", "video", "portraits"];
+/// Unserved roots synced as a backup by default, never evicted
+pub const DEFAULT_BACKUP_ROOTS: &[&str] = &["derived"];
 /// `Cache-Control` on every uploaded object
 pub const DEFAULT_CACHE_CONTROL: &str = "public, max-age=604800";
 /// Concurrent uploads and deletes
@@ -94,6 +96,9 @@ pub struct StorageConfig {
     pub local_dir: Option<PathBuf>,
     /// Top-level dirs under each server
     pub roots: Vec<String>,
+    /// `STORAGE_BACKUP_ROOTS`: top-level dirs synced beside `roots` but never
+    /// evicted, never deleted remotely, and never served
+    pub backup_roots: Vec<String>,
     pub cache_control: String,
     pub sync_concurrency: usize,
     pub hash_threads: usize,
@@ -249,6 +254,15 @@ impl StorageConfig {
             }
             None => DEFAULT_ROOTS.iter().map(|r| (*r).to_owned()).collect(),
         };
+        let backup_roots = lookup("STORAGE_BACKUP_ROOTS").map_or_else(
+            || {
+                DEFAULT_BACKUP_ROOTS
+                    .iter()
+                    .map(|r| (*r).to_owned())
+                    .collect()
+            },
+            |raw| parse_roots(&raw),
+        );
 
         Ok(Some(Self {
             kind,
@@ -261,6 +275,7 @@ impl StorageConfig {
             public_url,
             local_dir,
             roots,
+            backup_roots,
             cache_control: get(lookup, "STORAGE_CACHE_CONTROL")
                 .unwrap_or_else(|| DEFAULT_CACHE_CONTROL.to_owned()),
             sync_concurrency: parse_positive(

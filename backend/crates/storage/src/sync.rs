@@ -1,4 +1,4 @@
-//! Mirrors one server's served roots into the store
+//! Mirrors one server's served and backup roots into the store
 
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::fs::{File, OpenOptions, TryLockError, metadata, read, rename};
@@ -63,6 +63,7 @@ pub struct SyncOptions {
     pub server: String,
     pub prefix: String,
     pub roots: Vec<String>,
+    pub backup_roots: Vec<String>,
     pub delete: bool,
     pub dry_run: bool,
     pub allow_shrink: bool,
@@ -87,6 +88,7 @@ impl SyncOptions {
             server,
             prefix: config.prefix.clone(),
             roots: config.roots.clone(),
+            backup_roots: config.backup_roots.clone(),
             delete: true,
             dry_run: false,
             allow_shrink: false,
@@ -99,6 +101,17 @@ impl SyncOptions {
             bucket: config.bucket.clone(),
             evict: config.evict.clone(),
         }
+    }
+
+    #[must_use]
+    pub fn walk_roots(&self) -> Vec<String> {
+        let mut roots = self.roots.clone();
+        for root in &self.backup_roots {
+            if !roots.contains(root) {
+                roots.push(root.clone());
+            }
+        }
+        roots
     }
 }
 
@@ -384,20 +397,26 @@ impl ServerLock {
     }
 }
 
-#[derive(Debug, Clone)]
-struct LocalFile {
-    /// Path under `<root>/<server>/`
-    rel: String,
-    path: PathBuf,
-    size: u64,
-    modified: Option<SystemTime>,
+#[must_use]
+pub fn in_roots(rel: &str, roots: &[String]) -> bool {
+    rel.split_once('/')
+        .is_some_and(|(first, _)| roots.iter().any(|r| r == first))
 }
 
-struct Walked {
-    files: Vec<LocalFile>,
-    skipped: usize,
-    missing_roots: Vec<String>,
-    roots: Vec<String>,
+#[derive(Debug, Clone)]
+pub(crate) struct LocalFile {
+    /// Path under `<root>/<server>/`
+    pub(crate) rel: String,
+    pub(crate) path: PathBuf,
+    pub(crate) size: u64,
+    pub(crate) modified: Option<SystemTime>,
+}
+
+pub(crate) struct Walked {
+    pub(crate) files: Vec<LocalFile>,
+    pub(crate) skipped: usize,
+    pub(crate) missing_roots: Vec<String>,
+    pub(crate) roots: Vec<String>,
 }
 
 fn is_skipped_name(name: &str) -> bool {
@@ -415,7 +434,7 @@ fn has_served_extension(name: &str) -> bool {
 }
 
 /// Every syncable file under `server_dir/<root>` for each root
-fn walk_local(server_dir: &Path, roots: &[String]) -> Result<Walked, String> {
+pub(crate) fn walk_local(server_dir: &Path, roots: &[String]) -> Result<Walked, String> {
     let mut walked = Walked {
         files: Vec::new(),
         skipped: 0,
@@ -497,11 +516,15 @@ enum FileResult {
 
 /// `file` when the policy evicts it
 fn eviction_candidate(opts: &SyncOptions, file: &LocalFile) -> Option<LocalFile> {
-    (opts.evict.enabled && file.size > 0 && !opts.evict.keeps(&file.rel)).then(|| file.clone())
+    (opts.evict.enabled
+        && file.size > 0
+        && !opts.evict.keeps(&file.rel)
+        && !in_roots(&file.rel, &opts.backup_roots))
+    .then(|| file.clone())
 }
 
 /// Truncates `file` in place unless it changed since walk
-fn truncate_unchanged(file: &LocalFile) -> io::Result<()> {
+pub(crate) fn truncate_unchanged(file: &LocalFile) -> io::Result<()> {
     let meta = metadata(&file.path)?;
     if meta.len() != file.size || meta.modified().ok() != file.modified {
         return Err(Error::other("changed since it was hashed"));
@@ -740,7 +763,8 @@ async fn delete_with_retry(
     }
 }
 
-/// Mirrors `opts.roots` of `<opts.root>/<opts.server>` into `store`.
+/// Mirrors `opts.roots` and `opts.backup_roots` of `<opts.root>/<opts.server>`
+/// into `store`.
 ///
 /// # Errors
 /// The server directory is missing, the local walk fails, or the remote
@@ -762,7 +786,7 @@ pub async fn run_sync(
     };
 
     let walk_dir = server_dir.clone();
-    let roots = opts.roots.clone();
+    let roots = opts.walk_roots();
     let walked = spawn_blocking(move || walk_local(&walk_dir, &roots))
         .await
         .map_err(|e| SyncError::Walk(e.to_string()))?
@@ -911,7 +935,9 @@ pub async fn run_sync(
     let remote_in_roots = remote.keys().filter(|rel| in_walked_root(rel)).count();
     let mut doomed: Vec<String> = remote
         .keys()
-        .filter(|rel| in_walked_root(rel) && !local_rels.contains(*rel))
+        .filter(|rel| {
+            in_walked_root(rel) && !in_roots(rel, &opts.backup_roots) && !local_rels.contains(*rel)
+        })
         .map(|rel| object_key(&opts.prefix, &opts.server, rel))
         .collect();
     doomed.sort();
@@ -978,29 +1004,60 @@ pub async fn run_sync(
 async fn evict_and_save(
     opts: &SyncOptions,
     manifest_path: &Path,
-    mut records: BTreeMap<String, ManifestRecord>,
+    records: BTreeMap<String, ManifestRecord>,
     candidates: Vec<LocalFile>,
     report: &mut SyncReport,
 ) {
-    let key_of = |file: &LocalFile| object_key(&opts.prefix, &opts.server, &file.rel);
-    for file in &candidates {
-        if let Some(record) = records.get_mut(&key_of(file)) {
-            record.evicted = true;
-        }
-    }
-    let mut manifest = Manifest {
+    let manifest = Manifest {
         version: MANIFEST_VERSION,
         bucket: opts.bucket.clone(),
         prefix: opts.prefix.clone(),
         objects: records,
     };
+    let done = save_and_truncate(
+        manifest_path,
+        manifest,
+        &opts.prefix,
+        &opts.server,
+        candidates,
+        opts.hash_threads,
+    )
+    .await;
+    report.evicted = done.evicted;
+    report.freed_bytes = done.freed_bytes;
+    report.evict_failed += done.failed;
+}
+
+/// What [`save_and_truncate`] did
+#[derive(Debug, Default)]
+pub(crate) struct Truncated {
+    pub(crate) evicted: usize,
+    pub(crate) freed_bytes: u64,
+    pub(crate) failed: usize,
+}
+
+pub(crate) async fn save_and_truncate(
+    manifest_path: &Path,
+    mut manifest: Manifest,
+    prefix: &str,
+    server: &str,
+    candidates: Vec<LocalFile>,
+    threads: usize,
+) -> Truncated {
+    let mut done = Truncated::default();
+    let key_of = |file: &LocalFile| object_key(prefix, server, &file.rel);
+    for file in &candidates {
+        if let Some(record) = manifest.objects.get_mut(&key_of(file)) {
+            record.evicted = true;
+        }
+    }
     if let Err(e) = manifest.save(manifest_path) {
         warn!(path = %manifest_path.display(), error = %e, "manifest not written; nothing evicted");
-        report.evict_failed += candidates.len();
-        return;
+        done.failed = candidates.len();
+        return done;
     }
     if candidates.is_empty() {
-        return;
+        return done;
     }
 
     let mut truncations = iter(candidates.into_iter().map(|file| async move {
@@ -1011,17 +1068,17 @@ async fn evict_and_save(
             .and_then(|r| r);
         (file, result)
     }))
-    .buffer_unordered(opts.hash_threads.max(1));
+    .buffer_unordered(threads.max(1));
     let mut unmarked = 0usize;
     while let Some((file, result)) = truncations.next().await {
         match result {
             Ok(()) => {
-                report.evicted += 1;
-                report.freed_bytes += file.size;
+                done.evicted += 1;
+                done.freed_bytes += file.size;
             }
             Err(e) => {
                 warn!(rel = %file.rel, error = %e, "eviction failed; the file keeps its bytes");
-                report.evict_failed += 1;
+                done.failed += 1;
                 if let Some(record) = manifest.objects.get_mut(&key_of(&file)) {
                     record.evicted = false;
                     unmarked += 1;
@@ -1035,4 +1092,5 @@ async fn evict_and_save(
     {
         warn!(path = %manifest_path.display(), error = %e, "manifest not rewritten after failed evictions");
     }
+    done
 }

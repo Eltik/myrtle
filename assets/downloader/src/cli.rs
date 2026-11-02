@@ -38,7 +38,8 @@ pub enum Commands {
         /// (operator assets), "stages" (stage-viewer level scenes + preview &
         /// banner art), "gamedata" (the anon/ bundles + .idx manifests, i.e.
         /// exactly what `unpacker extract --gamedata` reads), "release"
-        /// (event / banner / skin-brand art for the Release Planner), or
+        /// (event / banner / skin-brand art for the Release Planner), "story"
+        /// (Story Reader sprites, backgrounds, music, sound and cutscenes), or
         /// "full" (everything). Omit for full.
         #[arg(long)]
         profile: Option<String>,

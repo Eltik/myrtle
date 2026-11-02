@@ -1581,7 +1581,7 @@ async function runUpdate() {
 				{ name: "operators — gamedata + operator assets only", value: "operators" },
 				{ name: "stages — stage-viewer level scenes + preview/banner art", value: "stages" },
 				{ name: "gamedata — only the anon/ bundles + .idx (what `unpacker extract --gamedata` reads)", value: "gamedata" },
-				{ name: "release — event / banner / skin-brand art for the Release Planner", value: "release" },
+				{ name: "release — event / banner / skin-brand art for the Release Planner", value: "release" }, { name: "story — Story Reader sprites, backgrounds, music, sound and cutscenes", value: "story" },
 			],
 			default: "full",
 		},
@@ -1823,7 +1823,7 @@ async function runWebSocketServer({ nonInteractive = false, cliArgs = {} } = {})
 			{ type: "input", name: "savedir", message: "Asset download directory:", default: defaults.savedir },
 			{ type: "input", name: "outputDir", message: "Extraction output directory:", default: defaults.outputDir },
 			{ type: "number", name: "threads", message: "Concurrent threads (download & unpack):", default: defaults.threads },
-			{ type: "list", name: "profile", message: "Content profile:", choices: [{ name: "full — everything", value: "full" }, { name: "operators — gamedata + operator assets only", value: "operators" }, { name: "stages — stage-viewer level scenes + preview/banner art", value: "stages" }, { name: "gamedata — only the anon/ bundles + .idx", value: "gamedata" }, { name: "release — event / banner / skin-brand art for the Release Planner", value: "release" }], default: defaults.profile },
+			{ type: "list", name: "profile", message: "Content profile:", choices: [{ name: "full — everything", value: "full" }, { name: "operators — gamedata + operator assets only", value: "operators" }, { name: "stages — stage-viewer level scenes + preview/banner art", value: "stages" }, { name: "gamedata — only the anon/ bundles + .idx", value: "gamedata" }, { name: "release — event / banner / skin-brand art for the Release Planner", value: "release" }, { name: "story — Story Reader sprites, backgrounds, music, sound and cutscenes", value: "story" }], default: defaults.profile },
 			{ type: "number", name: "port", message: "WebSocket port:", default: defaults.port },
 			{ type: "number", name: "intervalMin", message: "Check interval (minutes):", default: defaults.intervalMin },
 		]);

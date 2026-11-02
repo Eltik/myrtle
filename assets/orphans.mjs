@@ -17,6 +17,13 @@ import { join, relative, sep } from "node:path";
 const MTIME_SLACK_MS = 2000;
 
 /**
+ * Top-level directories the sweep never enters. `derived/` holds accumulated history
+ * (`farm-stages.json`, `release-art/`, `archive-pics/`) that no extract regenerates, so a
+ * file there older than the run is not an orphan.
+ */
+export const SWEEP_EXCLUDED_DIRS = ["derived"];
+
+/**
  * Walk `dir` depth first, yielding every regular file's path and stat.
  * @param {string} dir
  * @returns {Generator<{path: string, mtimeMs: number, size: number, name: string}>}
@@ -59,7 +66,8 @@ function subtreeWasWritten(dir, startedAt) {
 
 /**
  * Remove (or list) every file under `outputDir` that the extract which began at
- * `startedAt` did not write, within the top-level subtrees it did write into.
+ * `startedAt` did not write, within the top-level subtrees it did write into, except
+ * `SWEEP_EXCLUDED_DIRS`.
  *
  * @param {string} outputDir - The tree the extract wrote into (e.g. `./output/en`).
  * @param {number} startedAt - `Date.now()` taken just before the unpacker was spawned.
@@ -79,7 +87,7 @@ export function sweepOrphans(outputDir, startedAt, opts = {}) {
 	}
 	const orphans = [];
 	for (const e of top) {
-		if (!e.isDirectory()) continue;
+		if (!e.isDirectory() || SWEEP_EXCLUDED_DIRS.includes(e.name)) continue;
 		const sub = join(outputDir, e.name);
 		if (!subtreeWasWritten(sub, startedAt)) {
 			result.skipped.push(e.name);

@@ -6,6 +6,7 @@ use clap::{Args, Parser, Subcommand};
 use dotenv::from_path;
 use futures::StreamExt;
 use myrtle_storage::config::parse_roots;
+use myrtle_storage::evict::{EvictOptions, run_evict};
 use myrtle_storage::key::server_prefix;
 use myrtle_storage::restore::{RestoreOptions, run_restore};
 use myrtle_storage::sync::{SyncError, SyncOptions, run_sync};
@@ -108,6 +109,31 @@ enum Command {
         #[command(flatten)]
         env: EnvArgs,
     },
+    /// Truncate files the bucket already holds
+    Evict {
+        #[arg(long)]
+        root: PathBuf,
+        /// Server directory (en, cn, jp, kr)
+        #[arg(long)]
+        server: String,
+        /// Comma list of roots, overrides `STORAGE_ROOTS`
+        #[arg(long)]
+        roots: Option<String>,
+        /// Concurrent hashing tasks, overrides `STORAGE_SYNC_HASH_THREADS`
+        #[arg(long)]
+        hash_threads: Option<usize>,
+        /// Dry run
+        #[arg(long)]
+        dry_run: bool,
+        /// Evict even when asset delivery resolves to `local`
+        #[arg(long)]
+        force_evict: bool,
+        /// Print summary as JSON object
+        #[arg(long)]
+        json: bool,
+        #[command(flatten)]
+        env: EnvArgs,
+    },
     /// Dry-run diff; exits 2 when the remote differs from the local tree
     Verify {
         #[command(flatten)]
@@ -141,6 +167,7 @@ impl Command {
         match self {
             Self::Sync { env, .. }
             | Self::Restore { env, .. }
+            | Self::Evict { env, .. }
             | Self::Verify { env, .. }
             | Self::Ls { env, .. }
             | Self::Cors { env, .. } => &env.env_file,
@@ -310,6 +337,44 @@ async fn run(cli: Cli) -> u8 {
             opts.only = only;
             restore_and_report(store.as_ref(), &opts, json).await
         }
+        Command::Evict {
+            root,
+            server,
+            roots,
+            hash_threads,
+            dry_run,
+            force_evict,
+            json,
+            ..
+        } => {
+            if let Err(e) = check_server(&server) {
+                eprintln!("asset-sync: {e}");
+                return EXIT_CONFIG;
+            }
+            let mut opts = EvictOptions::from_config(&config, root, server);
+            if let Some(raw) = roots {
+                let roots = parse_roots(&raw);
+                if roots.is_empty() {
+                    eprintln!("asset-sync: --roots {raw:?} names no directory");
+                    return EXIT_CONFIG;
+                }
+                opts.roots = roots;
+            }
+            match hash_threads {
+                Some(0) => {
+                    eprintln!("asset-sync: --hash-threads must be at least 1");
+                    return EXIT_CONFIG;
+                }
+                Some(n) => opts.hash_threads = n,
+                None => {}
+            }
+            opts.dry_run = dry_run;
+            if !force_evict && let Err(e) = delivery_guard(&config) {
+                eprintln!("asset-sync: {e}");
+                return EXIT_CONFIG;
+            }
+            evict_and_report(store.as_ref(), &opts, json).await
+        }
         Command::Verify { tree, .. } => {
             let mut opts = match options(&config, &tree) {
                 Ok(o) => o,
@@ -439,6 +504,35 @@ async fn restore_and_report(store: &dyn ObjectStore, opts: &RestoreOptions, json
         eprintln!("asset-sync: failed {failure}");
     }
     u8::try_from(report.exit_code()).unwrap_or(EXIT_CONFIG)
+}
+
+async fn evict_and_report(store: &dyn ObjectStore, opts: &EvictOptions, json: bool) -> u8 {
+    let report = match run_evict(store, opts).await {
+        Ok(r) => r,
+        Err(e @ SyncError::MissingServerDir(_)) => {
+            eprintln!("asset-sync: {e}");
+            return EXIT_CONFIG;
+        }
+        Err(e) => {
+            eprintln!("asset-sync: {e}");
+            return EXIT_FAILED;
+        }
+    };
+    if json {
+        match to_string(&report) {
+            Ok(line) => println!("{line}"),
+            Err(e) => eprintln!("asset-sync: report not serializable: {e}"),
+        }
+    } else {
+        println!("{}", report.summary_line());
+    }
+    if report.failed > 0 {
+        eprintln!(
+            "asset-sync: {} files could not be evicted and keep their bytes (see the warnings above)",
+            report.failed
+        );
+    }
+    u8::try_from(report.exit_code()).unwrap_or(EXIT_FAILED)
 }
 
 fn main() -> ExitCode {
