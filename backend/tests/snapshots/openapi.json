@@ -6061,8 +6061,7 @@
         "tags": [
           "auth"
         ],
-        "summary": "Ask Bilibili to send a login code by SMS.",
-        "description": "Experimental: see the note on `login_bilibili_sms`.",
+        "summary": "Ask Bilibili to send a login code by SMS to a mainland (+86) number. The\ncode stays usable for five minutes.",
         "operationId": "send_bilibili_sms",
         "requestBody": {
           "content": {
@@ -6105,7 +6104,7 @@
         "tags": [
           "auth"
         ],
-        "summary": "Experimental: see `core::hypergryph::bilibili` module docs. The SMS\nendpoints themselves are unverified guesses, unlike username/password\nlogin.",
+        "summary": "Log in with the code `send-code` texted to the same number. A code older\nthan five minutes, or one never sent, is refused with 400.",
         "operationId": "login_bilibili_sms",
         "requestBody": {
           "content": {

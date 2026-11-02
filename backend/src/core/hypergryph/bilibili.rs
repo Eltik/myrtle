@@ -7,12 +7,13 @@
 //! protocol documented by thesadru/arkprts (GPL-3.0), confirmed against a real
 //! response. Independent reimplementation, not a copy of arkprts.
 //!
-//! [`send_sms_code`] and [`login_sms`] are a GUESS: arkprts has no SMS path and
-//! neither is confirmed. Probed 2026-09-15, `issue/sms_code/v3` answers 404, so
-//! SMS login doesn't work until the real endpoint turns up. The guess mirrors the
-//! password endpoints (same ids and signing, `issue/sms_code/v3`, `login/sms/v3`,
-//! plaintext `sms_code` in place of the RSA `pwd`). A 404 or odd shape means a
-//! wrong path or field name: read the actual error and fix that assumption.
+//! The SMS path ([`send_otp`] + [`login_otp`]) is `otp/send/v3` then
+//! `login/otp/v3`, as in mikumifa/UmaShow `src/autouma/bilibiliSms.ts`, with
+//! Arknights's ids and app key in place of Uma Musume's. Confirmed 2026-11-02:
+//! it logs in an account that password login refuses with `200007` (risk
+//! control), and a non-CN number needs its own `country_code` (`86005` is a
+//! number that does not parse under the code sent). The earlier guesses,
+//! `issue/sms_code/v3` and `login/sms/v3`, answer 404.
 
 use std::time::Duration;
 
@@ -21,7 +22,7 @@ use rand::Rng;
 use reqwest::Client;
 use rsa::Pkcs1v15Encrypt;
 use rsa::pkcs8::DecodePublicKey;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use crate::core::hypergryph::crypto::generate_bilibili_sign;
 use crate::core::hypergryph::fetch::FetchError;
@@ -275,63 +276,116 @@ pub async fn login(
     Ok(data)
 }
 
-/// SMS code for `phone`, ahead of [`login_sms`]. UNVERIFIED: the path is a guess
-/// (see module docs).
-pub async fn send_sms_code(client: &Client, phone: &str) -> Result<(), FetchError> {
-    let body = signed_form(vec![
-        ("merchant_id", MERCHANT_ID.to_owned()),
-        ("game_id", GAME_ID.to_owned()),
-        ("server_id", SERVER_ID.to_owned()),
-        ("version", VERSION.to_owned()),
-        ("timestamp", unix_timestamp()),
-        ("user_id", phone.to_owned()),
-    ]);
+/// The SDK's public key for `feign_sign` on `login/otp/v3`: SDK-wide, not per
+/// game. Exponent 65537.
+const FEIGN_SIGN_MODULUS: &str = concat!(
+    "9bd251710f53895feb03bc6d679fe4068bde702113fbd58d2bda3b38ecd81399",
+    "89cc28ab7055b45d729bdcfcc61e3903f539409471008125a296a53b6cb88785",
+    "3e05d8948abb968a0aab12f9c73076aae1008a745545359a3e90f9bf445ee27e",
+    "1be9266612be018d583642156b544f201d6905425459c1fe5fe93aeb91d3fe05",
+);
 
-    let response = client
-        .post(format!("{BASE_URL}/issue/sms_code/v3"))
-        .header("Content-Type", "application/x-www-form-urlencoded")
-        .body(encode_form(&body))
-        .timeout(REQUEST_TIMEOUT)
-        .send()
-        .await?;
+/// How long a sent code stays usable. The SDK does not say; this matches the
+/// client's own resend window.
+pub const OTP_TTL_SECS: u64 = 5 * 60;
 
-    let status = response.status();
-    let text = response
-        .text()
-        .await
-        .map_err(|e| FetchError::ParseError(format!("bilibili::send_sms_code: read body: {e}")))?;
-
-    if !status.is_success() {
-        return Err(FetchError::ParseError(format!(
-            "bilibili::send_sms_code: upstream non-success (status={status}): {text}"
-        )));
-    }
-
-    Ok(())
+/// A sent SMS code, waiting for the number's owner to type it in.
+///
+/// `login/otp/v3` must come from the same device as `otp/send/v3` and name its
+/// `captcha_key`, so the pair is carried between the two calls (in memory for
+/// the site, in a file for `set-session`).
+#[derive(Clone, Serialize, Deserialize)]
+pub struct OtpChallenge {
+    /// The national number, without the country code.
+    pub phone: String,
+    pub country_code: String,
+    captcha_key: String,
+    device_id: String,
+    bd_id: String,
+    /// Unix seconds.
+    pub issued_at: u64,
 }
 
-/// Phone + SMS code login, same `{uid, access_key}` shape as [`login`].
-/// UNVERIFIED: see module docs.
-pub async fn login_sms(
-    client: &Client,
-    phone: &str,
-    sms_code: &str,
-) -> Result<BilibiliLoginResult, FetchError> {
-    let body = signed_form(vec![
-        ("merchant_id", MERCHANT_ID.to_owned()),
+impl OtpChallenge {
+    #[must_use]
+    pub fn is_expired(&self, now: u64) -> bool {
+        now.saturating_sub(self.issued_at) > OTP_TTL_SECS
+    }
+}
+
+fn unix_seconds() -> u64 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map_or(0, |d| d.as_secs())
+}
+
+fn unix_millis() -> String {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map_or(0, |d| d.as_millis())
+        .to_string()
+}
+
+/// The device and client fields the SDK sends with every OTP call.
+fn otp_common_fields(
+    challenge_device: &str,
+    bd_id: &str,
+    country_code: &str,
+) -> Vec<(&'static str, String)> {
+    let host = BASE_URL.trim_end_matches("/api/external");
+    vec![
+        ("cur_buvid", challenge_device.to_owned()),
+        ("old_buvid", challenge_device.to_owned()),
+        ("udid", challenge_device.to_owned()),
+        ("bd_id", bd_id.to_owned()),
+        ("app_id", GAME_ID.to_owned()),
         ("game_id", GAME_ID.to_owned()),
         ("server_id", SERVER_ID.to_owned()),
+        ("merchant_id", MERCHANT_ID.to_owned()),
+        ("sdk_ver", "6.28.0".to_owned()),
+        ("version_code", "11150".to_owned()),
+        ("channel_id", "1".to_owned()),
+        ("sdk_type", "1".to_owned()),
+        ("platform", "3".to_owned()),
+        ("platform_type", "3".to_owned()),
         ("version", VERSION.to_owned()),
-        ("timestamp", unix_timestamp()),
-        ("bd_id", bd_id().to_owned()),
-        ("user_id", phone.to_owned()),
-        ("sms_code", sms_code.to_owned()),
-    ]);
+        ("domain_switch_count", "0".to_owned()),
+        ("country_code", country_code.to_owned()),
+        ("domain", host.trim_start_matches("https://").to_owned()),
+        ("original_domain", host.to_owned()),
+        ("sdk_log_type", "1".to_owned()),
+        ("current_env", "0".to_owned()),
+    ]
+}
 
+fn random_device_id() -> String {
+    let mut bytes = [0u8; 16];
+    rand::rng().fill_bytes(&mut bytes);
+    hex::encode_upper(bytes)
+}
+
+/// RSA/ECB/PKCS1 of the form `sign`, base64, as `login/otp/v3` wants it.
+fn feign_sign(sign: &str) -> Result<String, FetchError> {
+    let modulus = rsa::BigUint::parse_bytes(FEIGN_SIGN_MODULUS.as_bytes(), 16)
+        .ok_or_else(|| FetchError::ParseError("bilibili: bad feign_sign modulus".into()))?;
+    let key = RsaPublicKey::new(modulus, rsa::BigUint::from(65_537u32))
+        .map_err(|e| FetchError::ParseError(format!("bilibili: feign_sign key: {e}")))?;
+    let encrypted = key
+        .encrypt(&mut rsa::rand_core::OsRng, Pkcs1v15Encrypt, sign.as_bytes())
+        .map_err(|e| FetchError::ParseError(format!("bilibili: feign_sign encrypt: {e}")))?;
+    Ok(STANDARD.encode(encrypted))
+}
+
+async fn post_otp(
+    client: &Client,
+    path: &str,
+    body: &[(&str, String)],
+    what: &str,
+) -> Result<String, FetchError> {
     let response = client
-        .post(format!("{BASE_URL}/login/sms/v3"))
+        .post(format!("{BASE_URL}/{path}"))
         .header("Content-Type", "application/x-www-form-urlencoded")
-        .body(encode_form(&body))
+        .body(encode_form(body))
         .timeout(REQUEST_TIMEOUT)
         .send()
         .await?;
@@ -340,27 +394,109 @@ pub async fn login_sms(
     let text = response
         .text()
         .await
-        .map_err(|e| FetchError::ParseError(format!("bilibili::login_sms: read body: {e}")))?;
+        .map_err(|e| FetchError::ParseError(format!("bilibili::{what}: read body: {e}")))?;
 
     if !status.is_success() {
         return Err(FetchError::ParseError(format!(
-            "bilibili::login_sms: upstream non-success (status={status}): {text}"
+            "bilibili::{what}: upstream non-success (status={status}): {}",
+            redacted_body(&text)
         )));
     }
+    if let Ok(err) = serde_json::from_str::<BilibiliError>(&text)
+        && err.is_error()
+    {
+        return Err(FetchError::ParseError(format!(
+            "bilibili::{what}: upstream refused (code {}): {}{}",
+            err.code,
+            err.message,
+            match err.server_message.as_deref() {
+                Some(m) if !m.is_empty() => format!(" ({m})"),
+                _ => String::new(),
+            }
+        )));
+    }
+    Ok(text)
+}
 
-    let data: BilibiliLoginResult = serde_json::from_str(&text).map_err(|e| {
-        tracing::warn!(body = %redacted_body(&text), error = %e, "bilibili::login_sms: failed to parse response");
-        FetchError::ParseError(
-            "bilibili::login_sms: invalid upstream response, check the code or that this guessed endpoint is even right".into(),
-        )
+/// Text a login code to `phone` (national number) under `country_code` (`86`
+/// for mainland China, `1` for the US).
+pub async fn send_otp(
+    client: &Client,
+    phone: &str,
+    country_code: &str,
+) -> Result<OtpChallenge, FetchError> {
+    let device_id = random_device_id();
+    let bd_id = random_bd_id();
+    let mut fields = otp_common_fields(&device_id, &bd_id, country_code);
+    fields.extend([
+        ("otp_type", "login".to_owned()),
+        ("otp_channel_no", phone.to_owned()),
+        ("otp_channel_category", "tel".to_owned()),
+        ("timestamp", unix_millis()),
+    ]);
+    let text = post_otp(client, "otp/send/v3", &signed_form(fields), "send_otp").await?;
+
+    #[derive(Deserialize)]
+    struct Sent {
+        #[serde(default)]
+        captcha_key: String,
+    }
+    let sent: Sent = serde_json::from_str(&text).map_err(|e| {
+        FetchError::ParseError(format!(
+            "bilibili::send_otp: invalid upstream response ({e}): {}",
+            redacted_body(&text)
+        ))
     })?;
-
-    if data.uid.is_empty() || data.access_key.is_empty() {
+    if sent.captcha_key.is_empty() {
         return Err(FetchError::ParseError(
-            "bilibili::login_sms: upstream returned an empty uid or access_key".into(),
+            "bilibili::send_otp: upstream returned no captcha_key".into(),
         ));
     }
 
+    Ok(OtpChallenge {
+        phone: phone.to_owned(),
+        country_code: country_code.to_owned(),
+        captcha_key: sent.captcha_key,
+        device_id,
+        bd_id,
+        issued_at: unix_seconds(),
+    })
+}
+
+/// Trade the texted code for a channel `uid` + `access_key`, the same shape
+/// [`login`] yields.
+pub async fn login_otp(
+    client: &Client,
+    challenge: &OtpChallenge,
+    otp: &str,
+) -> Result<BilibiliLoginResult, FetchError> {
+    let mut fields = otp_common_fields(
+        &challenge.device_id,
+        &challenge.bd_id,
+        &challenge.country_code,
+    );
+    fields.extend([
+        ("captcha_key", challenge.captcha_key.clone()),
+        ("mobile", challenge.phone.clone()),
+        ("otp", otp.to_owned()),
+        ("timestamp", unix_millis()),
+    ]);
+    let mut body = signed_form(fields);
+    let sign = body.last().map(|(_, v)| v.clone()).unwrap_or_default();
+    body.push(("feign_sign", feign_sign(&sign)?));
+
+    let text = post_otp(client, "login/otp/v3", &body, "login_otp").await?;
+    let data: BilibiliLoginResult = serde_json::from_str(&text).map_err(|e| {
+        FetchError::ParseError(format!(
+            "bilibili::login_otp: invalid upstream response ({e}): {}",
+            redacted_body(&text)
+        ))
+    })?;
+    if data.uid.is_empty() || data.access_key.is_empty() {
+        return Err(FetchError::ParseError(
+            "bilibili::login_otp: upstream returned an empty uid or access_key".into(),
+        ));
+    }
     Ok(data)
 }
 
@@ -392,5 +528,49 @@ mod tests {
 
         let ok: BilibiliError = serde_json::from_str(r#"{"code":0,"uid":1}"#).unwrap();
         assert!(!ok.is_error());
+    }
+
+    #[test]
+    fn feign_sign_encrypts_to_one_rsa_block() {
+        let out = STANDARD
+            .decode(feign_sign("0123456789abcdef0123456789abcdef").unwrap())
+            .unwrap();
+        assert_eq!(out.len(), 128);
+    }
+
+    #[test]
+    fn otp_fields_carry_the_arknights_ids_and_country_code() {
+        let fields = otp_common_fields("DEV", "bd", "1");
+        let get = |k: &str| {
+            fields
+                .iter()
+                .find(|(key, _)| *key == k)
+                .map(|(_, v)| v.as_str())
+        };
+        assert_eq!(get("game_id"), Some(GAME_ID));
+        assert_eq!(get("merchant_id"), Some(MERCHANT_ID));
+        assert_eq!(get("country_code"), Some("1"));
+        assert_eq!(
+            get("domain"),
+            Some("line1-sdk-center-login-sh.biligame.net")
+        );
+        assert_eq!(
+            get("original_domain"),
+            Some("https://line1-sdk-center-login-sh.biligame.net")
+        );
+    }
+
+    #[test]
+    fn a_challenge_expires_after_its_window() {
+        let c = OtpChallenge {
+            phone: "2065550100".into(),
+            country_code: "1".into(),
+            captcha_key: "k".into(),
+            device_id: "d".into(),
+            bd_id: "b".into(),
+            issued_at: 1_000,
+        };
+        assert!(!c.is_expired(1_000 + OTP_TTL_SECS));
+        assert!(c.is_expired(1_001 + OTP_TTL_SECS));
     }
 }

@@ -3,6 +3,7 @@ use crate::app::error::ApiError;
 use crate::app::services::showcase::{validate as validate_showcase, validate_background};
 use crate::app::state::AppState;
 use crate::core::auth::jwt::create_token;
+use crate::core::hypergryph::bilibili;
 use crate::core::hypergryph::constants::{AuthSession, Server};
 use crate::core::hypergryph::session;
 use crate::core::hypergryph::yostar;
@@ -14,6 +15,8 @@ use crate::database::queries::users::create_user;
 use crate::database::queries::users::find_raw_by_uid;
 use crate::utils::redact::mask_identifier;
 use serde::Serialize;
+use std::collections::HashMap;
+use std::sync::{LazyLock, Mutex, PoisonError};
 use ts_rs::TS;
 use utoipa::ToSchema;
 use uuid::Uuid;
@@ -216,11 +219,41 @@ pub async fn login_bilibili(
     })
 }
 
+/// Codes texted by [`send_bilibili_sms`] and not yet used, by phone. The site's
+/// Bilibili accounts are mainland numbers, so the country code is always `86`.
+/// One process serves the site, so memory is enough; a restart only costs the
+/// reader a resend.
+static PENDING_BILIBILI_SMS: LazyLock<Mutex<HashMap<String, bilibili::OtpChallenge>>> =
+    LazyLock::new(|| Mutex::new(HashMap::new()));
+
+const BILIBILI_SMS_COUNTRY: &str = "86";
+
+fn unix_now() -> u64 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map_or(0, |d| d.as_secs())
+}
+
 pub async fn send_bilibili_sms(state: &AppState, phone: &str) -> Result<(), ApiError> {
-    if let Err(e) = session::send_bilibili_sms(&state.http_client, phone).await {
-        tracing::warn!(phone = %mask_identifier(phone), error = ?e, "bilibili send_sms_code failed");
-        return Err(e.into());
-    }
+    let challenge = match session::send_bilibili_sms(
+        &state.http_client,
+        phone,
+        BILIBILI_SMS_COUNTRY,
+    )
+    .await
+    {
+        Ok(c) => c,
+        Err(e) => {
+            tracing::warn!(phone = %mask_identifier(phone), error = ?e, "bilibili send_otp failed");
+            return Err(e.into());
+        }
+    };
+    let now = unix_now();
+    let mut pending = PENDING_BILIBILI_SMS
+        .lock()
+        .unwrap_or_else(PoisonError::into_inner);
+    pending.retain(|_, c| !c.is_expired(now));
+    pending.insert(phone.to_owned(), challenge);
     Ok(())
 }
 
@@ -232,7 +265,18 @@ pub async fn login_bilibili_sms(
 ) -> Result<LoginResponse, ApiError> {
     let server = Server::Bilibili;
 
-    let auth_session = match session::login_bilibili_sms(&state.http_client, phone, sms_code).await
+    let challenge = PENDING_BILIBILI_SMS
+        .lock()
+        .unwrap_or_else(PoisonError::into_inner)
+        .get(phone)
+        .filter(|c| !c.is_expired(unix_now()))
+        .cloned()
+        .ok_or_else(|| {
+            ApiError::BadRequest("no live code for this number; send a new one".into())
+        })?;
+
+    let auth_session = match session::login_bilibili_sms(&state.http_client, &challenge, sms_code)
+        .await
     {
         Ok(s) => s,
         Err(e) => {
@@ -240,6 +284,10 @@ pub async fn login_bilibili_sms(
             return Err(e.into());
         }
     };
+    PENDING_BILIBILI_SMS
+        .lock()
+        .unwrap_or_else(PoisonError::into_inner)
+        .remove(phone);
 
     let session_json =
         serde_json::to_string(&auth_session).map_err(|e| ApiError::Internal(e.into()))?;

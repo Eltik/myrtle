@@ -92,9 +92,11 @@ pub fn relogin_steps(server: &str) -> String {
     );
     if server == "bili" {
         format!(
-            "Log the `bili` account in with an SMS one-time code (password login runs into \
-             risk control), so that `backend/game_sessions/bili.json` holds the new session.\n\n\
-             {deploy}"
+            "In `backend/`, text a code to the account's phone (national number; add \
+             `--country-code <c>` outside mainland China), then log in with it:\n```\n\
+             cargo run --bin set-session -- --server bili --bili-phone <phone>\n\
+             cargo run --bin set-session -- --server bili --bili-phone <phone> --otp <code>\n\
+             ```\n{deploy}"
         )
     } else {
         format!(
@@ -350,7 +352,7 @@ mod tests {
         assert!(en.contains("set-session -- --server en --email <addr> --code <code>"));
         assert!(en.contains("game_sessions/en.json"));
         let bili = relogin_steps("bili");
-        assert!(bili.contains("SMS one-time code"));
+        assert!(bili.contains("--bili-phone"));
         assert!(bili.contains("game_sessions/bili.json"));
         assert!(!bili.contains("--email"));
     }

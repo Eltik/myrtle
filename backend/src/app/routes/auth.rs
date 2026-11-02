@@ -171,9 +171,8 @@ pub struct BilibiliSendSmsRequest {
     pub phone: String,
 }
 
-/// Ask Bilibili to send a login code by SMS.
-///
-/// Experimental: see the note on `login_bilibili_sms`.
+/// Ask Bilibili to send a login code by SMS to a mainland (+86) number. The
+/// code stays usable for five minutes.
 #[utoipa::path(
     post,
     path = "/login/bilibili/send-code",
@@ -205,9 +204,8 @@ pub struct BilibiliSmsLoginRequest {
     pub save_credentials: bool,
 }
 
-/// Experimental: see `core::hypergryph::bilibili` module docs. The SMS
-/// endpoints themselves are unverified guesses, unlike username/password
-/// login.
+/// Log in with the code `send-code` texted to the same number. A code older
+/// than five minutes, or one never sent, is refused with 400.
 #[utoipa::path(
     post,
     path = "/login/bilibili/sms",

@@ -56,8 +56,9 @@ pub async fn report_degraded_tables(client: &reqwest::Client, server: &str, warn
 /// is stalled until a human logs it in again, hence the ping.
 pub async fn report_service_account_refused(client: &reqwest::Client, server: &str, error: &str) {
     let login = if server == "bili" {
-        "cargo run --bin set-session -- --server bili --bili-user <user> --bili-pass <pass>\n\
-         # code 200007 (risk control): wait a few days and retry, or use another account"
+        "cargo run --bin set-session -- --server bili --bili-phone <phone>\n\
+         cargo run --bin set-session -- --server bili --bili-phone <phone> --otp <code>\n\
+         # outside mainland China add --country-code <c> to the first; SMS gets past code 200007"
     } else {
         "cargo run --bin set-session -- --server <server> --email <addr>\n\
          cargo run --bin set-session -- --server <server> --email <addr> --code <code>"

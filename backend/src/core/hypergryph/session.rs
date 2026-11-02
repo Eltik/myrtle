@@ -298,22 +298,26 @@ pub async fn login_bilibili(
     })
 }
 
-/// UNVERIFIED: the endpoint is a structural guess (see
-/// `core::hypergryph::bilibili`).
-pub async fn send_bilibili_sms(client: &Client, phone: &str) -> Result<(), FetchError> {
-    bilibili::send_sms_code(client, phone).await
-}
-
-/// [`login_bilibili`] via phone + SMS code. UNVERIFIED: see
-/// `core::hypergryph::bilibili`.
-pub async fn login_bilibili_sms(
+/// Text a Bilibili login code to `phone` (national number) under
+/// `country_code`. The returned challenge goes back into
+/// [`login_bilibili_sms`].
+pub async fn send_bilibili_sms(
     client: &Client,
     phone: &str,
+    country_code: &str,
+) -> Result<bilibili::OtpChallenge, FetchError> {
+    bilibili::send_otp(client, phone, country_code).await
+}
+
+/// [`login_bilibili`] via the code [`send_bilibili_sms`] texted.
+pub async fn login_bilibili_sms(
+    client: &Client,
+    challenge: &bilibili::OtpChallenge,
     sms_code: &str,
 ) -> Result<AuthSession, FetchError> {
     let server = Server::Bilibili;
 
-    let bili_data = bilibili::login_sms(client, phone, sms_code).await?;
+    let bili_data = bilibili::login_otp(client, challenge, sms_code).await?;
     let u8_data = get_u8_token(client, &bili_data.uid, &bili_data.access_key, server).await?;
     let secret = get_secret(client, &u8_data.uid, &u8_data.token, server).await?;
 
