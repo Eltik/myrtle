@@ -16,7 +16,7 @@ export const messages = {
         description: "Link from the not-found page back to the tier-list browse page.",
     },
     "detail.snapshot.failedTitle": {
-        text: "Version {version} didn't load",
+        text: "Couldn't load version {version}",
         description: "Error heading when a link asks for an older published version of a tier list and the version list failed to load. {version} is the version number.",
     },
     "detail.snapshot.failedBody": {

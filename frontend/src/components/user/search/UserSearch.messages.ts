@@ -76,7 +76,7 @@ export const messages = {
         description: "Empty-state body under search.empty.filtered.title. A 'Clear filters' button follows.",
     },
     "search.error.title": {
-        text: "The search couldn't be loaded.",
+        text: "Couldn't search players",
         description: "Shown in place of the results when the player search request fails.",
     },
     "search.error.retry": {

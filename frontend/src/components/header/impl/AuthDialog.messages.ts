@@ -144,7 +144,7 @@ export const messages = {
         description: "Label of the checkbox in the login dialog that decides whether the site may store the player's GAME credentials. It does not affect the myrtle.moe session itself, which lasts a week either way, so the wording must not promise to keep the player signed in.",
     },
     "authDialog.saveCredentials.hint": {
-        text: "Keeps an encrypted game token on our server, so re-syncing works without signing in again. Untick it and nothing is saved, so a re-sync more than an hour later asks you to sign in again. Revoke it any time in Settings.",
+        text: "Keeps an encrypted game token on our server, so re-syncing works without signing in again. Uncheck it and nothing is saved, so a re-sync more than an hour later asks you to sign in again. Revoke it any time in Settings.",
         description: "Caption under that checkbox, saying exactly what it stores: an encrypted game access token, never the password or the code. 'Settings' is this site's settings page, where the stored token can be disconnected.",
     },
     "authDialog.toast.loginFailed": {

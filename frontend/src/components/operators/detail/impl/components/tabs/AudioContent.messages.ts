@@ -92,7 +92,7 @@ export const messages = {
         description: "Empty state when a voice-line search matches nothing. Keep the typographic quotation marks, or use this language's own quote pair.",
     },
     "audio.error.voice": {
-        text: "The voice lines did not load.",
+        text: "Couldn't load the voice lines.",
         description: "Shown in place of the voice-line list when its request failed, beside a Try again button. Distinct from 'No voice data available', which means the game data has none.",
     },
     "audio.empty.voice": {

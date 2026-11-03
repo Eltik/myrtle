@@ -4,7 +4,7 @@ export const namespace = "user";
 
 export const messages = {
     "profile.plans.loading": {
-        text: "Loading plans",
+        text: "Loading plans…",
         description: "Screen-reader status while the profile's public plans load; the skeleton cards are hidden from assistive tech.",
     },
     "profile.plans.kicker": {
@@ -20,7 +20,7 @@ export const messages = {
         description: "Empty-state body of the plans tab. 'Doctor' is what Arknights calls the player; keep the apostrophe.",
     },
     "profile.plans.error": {
-        text: "The plans couldn't be loaded.",
+        text: "Couldn't load the plans.",
         description: "Shown on the Plans tab when the player's public plans fail to load.",
     },
     "profile.plans.aria": {

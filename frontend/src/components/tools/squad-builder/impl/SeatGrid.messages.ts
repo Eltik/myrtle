@@ -72,7 +72,7 @@ export const messages = {
         description: "On a seat card when the operator has no module equipped.",
     },
     "squad.grid.detailsFailed": {
-        text: "Details failed to load",
+        text: "Couldn't load this operator's details",
         description: "Screen-reader-only note on a squad seat card when the operator's skill and module details could not be fetched; the tiles fall back to text labels such as S3. Retry lives in the seat editor.",
     },
     "squad.grid.menu": {

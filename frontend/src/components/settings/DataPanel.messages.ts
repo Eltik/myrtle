@@ -64,8 +64,8 @@ export const messages = {
         description: "Card title over the connected game account's status and controls.",
     },
     "data.linked.desc": {
-        text: "We never store your password or sign-in code. If you ticked Keep me synced when you signed in, we keep an encrypted game token that lets us re-sync on your behalf. Disconnect below to delete it.",
-        description: "Card description under Linked Yostar account. It must stay true: the password and code are never stored; the token is stored only when the Keep me synced box in the sign-in dialog was ticked.",
+        text: "We never store your password or sign-in code. If you checked Keep me synced when you signed in, we keep an encrypted game token that lets us re-sync on your behalf. Disconnect below to delete it.",
+        description: "Card description under Linked Yostar account. It must stay true: the password and code are never stored; the token is stored only when the Keep me synced box in the sign-in dialog was checked.",
     },
     "data.signOut.title": {
         text: "Sign out of this browser",

@@ -32,7 +32,7 @@ export const messages = {
         description: "Button on the owner's empty showcase that opens the editor.",
     },
     "profile.showcase.error": {
-        text: "The showcase couldn't be loaded.",
+        text: "Couldn't load the showcase.",
         description: "Shown in place of the showcase when it fails to load.",
     },
     "profile.showcase.retry": {
@@ -96,15 +96,15 @@ export const messages = {
         description: "Accessible name and tooltip of a favourite the game data no longer knows. {id} is its raw game id. Shown only to the owner.",
     },
     "profile.showcase.blockFailed.grid": {
-        text: "This grid couldn't be loaded.",
+        text: "Couldn't load this grid.",
         description: "Shown in place of a grid block on a profile showcase when fetching the grid failed (not when it was deleted). A retry button follows.",
     },
     "profile.showcase.blockFailed.tierList": {
-        text: "This tier list couldn't be loaded.",
+        text: "Couldn't load this tier list.",
         description: "Shown in place of a tier list block on a profile showcase when fetching the list failed (not when it was deleted). A retry button follows.",
     },
     "profile.showcase.blockFailed.plan": {
-        text: "This plan couldn't be loaded.",
+        text: "Couldn't load this plan.",
         description: "Shown in place of a plan block on a profile showcase when fetching the player's plans failed (not when the plan was deleted). A retry button follows.",
     },
 } satisfies MessageMap;

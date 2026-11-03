@@ -152,7 +152,7 @@ export const messages = {
         description: "Heading over the grid showing which tiles the operator can hit.",
     },
     "info.attackRange.error": {
-        text: "The attack range did not load.",
+        text: "Couldn't load the attack range.",
         description: "Shown in place of the range grid when the range data failed to load, beside a Try again button. Distinct from 'No range data available', which means the game data has none.",
     },
     "info.attackRange.empty": {

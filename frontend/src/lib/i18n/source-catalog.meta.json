@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-11-03T16:47:04.452Z",
+    "generatedAt": "2026-11-03T17:47:55.776Z",
     "entries": [
         {
             "key": "admin.home.access.everyList",
@@ -9708,7 +9708,7 @@
         {
             "key": "common.routeError.title",
             "namespace": "common",
-            "source_text": "Something went wrong loading this page",
+            "source_text": "Couldn't load this page",
             "description": "Heading shown in place of a page whose data or code failed to load. No full stop: it is a heading.",
             "placeholders": []
         },
@@ -11460,21 +11460,21 @@
         {
             "key": "gacha.community.error.bannerStats",
             "namespace": "gacha",
-            "source_text": "The per-banner pull counts couldn't be loaded, so the banners below show without them.",
+            "source_text": "Couldn't load the per-banner pull counts, so the banners below show without them.",
             "description": "Shown above the banner runs panel on the community gacha page when the per-banner pull statistics fail to load; the banners still list.",
             "placeholders": []
         },
         {
             "key": "gacha.community.error.banners",
             "namespace": "gacha",
-            "source_text": "The banner list couldn't be loaded.",
+            "source_text": "Couldn't load the banner list.",
             "description": "Shown above the banner runs panel on the community gacha page when the list of banners fails to load.",
             "placeholders": []
         },
         {
             "key": "gacha.community.error.load",
             "namespace": "gacha",
-            "source_text": "The community stats couldn't be loaded.",
+            "source_text": "Couldn't load the community stats.",
             "description": "Shown in place of the community page's stat panels (totals, most-pulled operators, rarity rates, pull timing) when they fail to load.",
             "placeholders": []
         },
@@ -12530,7 +12530,7 @@
         {
             "key": "gacha.history.error.names",
             "namespace": "gacha",
-            "source_text": "Operator or banner names couldn't be loaded, so some pulls show without them.",
+            "source_text": "Couldn't load some operator or banner names, so those pulls show without them.",
             "description": "Notice above the pull-history panels when the operator list or the banner list fails to load; the pulls still count, but rows lose their operator or banner names.",
             "placeholders": []
         },
@@ -17002,7 +17002,7 @@
         {
             "key": "home.leaders.loading",
             "namespace": "home",
-            "source_text": "Loading the leaderboard.",
+            "source_text": "Loading the leaderboard…",
             "description": "Read out by screen readers only, while the home page's top-five panel loads.",
             "placeholders": []
         },
@@ -17124,7 +17124,7 @@
         {
             "key": "home.live.loading",
             "namespace": "home",
-            "source_text": "Loading what's running on {server}.",
+            "source_text": "Loading what's running on {server}…",
             "description": "Read out by screen readers only, while the home page's live section loads. {server} is the game server's region name, such as 'Global' or 'China'.",
             "placeholders": [
                 "server"
@@ -19976,7 +19976,7 @@
         {
             "key": "nav.authDialog.saveCredentials.hint",
             "namespace": "nav",
-            "source_text": "Keeps an encrypted game token on our server, so re-syncing works without signing in again. Untick it and nothing is saved, so a re-sync more than an hour later asks you to sign in again. Revoke it any time in Settings.",
+            "source_text": "Keeps an encrypted game token on our server, so re-syncing works without signing in again. Uncheck it and nothing is saved, so a re-sync more than an hour later asks you to sign in again. Revoke it any time in Settings.",
             "description": "Caption under that checkbox, saying exactly what it stores: an encrypted game access token, never the password or the code. 'Settings' is this site's settings page, where the stored token can be disconnected.",
             "placeholders": []
         },
@@ -21295,7 +21295,7 @@
         {
             "key": "operators.audio.error.voice",
             "namespace": "operators",
-            "source_text": "The voice lines did not load.",
+            "source_text": "Couldn't load the voice lines.",
             "description": "Shown in place of the voice-line list when its request failed, beside a Try again button. Distinct from 'No voice data available', which means the game data has none.",
             "placeholders": []
         },
@@ -23103,7 +23103,7 @@
         {
             "key": "operators.info.attackRange.error",
             "namespace": "operators",
-            "source_text": "The attack range did not load.",
+            "source_text": "Couldn't load the attack range.",
             "description": "Shown in place of the range grid when the range data failed to load, beside a Try again button. Distinct from 'No range data available', which means the game data has none.",
             "placeholders": []
         },
@@ -23519,7 +23519,7 @@
         {
             "key": "operators.levelup.materialsFailed",
             "namespace": "operators",
-            "source_text": "Item names did not load, so tiles show item ids.",
+            "source_text": "Couldn't load item names, so tiles show item ids.",
             "description": "Shown above the cost rows, beside a Try again button, when the item table failed to load.",
             "placeholders": []
         },
@@ -23796,7 +23796,7 @@
         {
             "key": "operators.list.error.upcoming",
             "namespace": "operators",
-            "source_text": "The upcoming CN operators did not load.",
+            "source_text": "Couldn't load the upcoming CN operators.",
             "description": "Shown above the Upcoming (CN) view when its list failed to load, beside a Try again button. Distinct from the empty state: nothing was filtered out, the data never arrived.",
             "placeholders": []
         },
@@ -24040,14 +24040,14 @@
         {
             "key": "operators.notes.error",
             "namespace": "operators",
-            "source_text": "The operator notes did not load.",
+            "source_text": "Couldn't load the operator notes.",
             "description": "Shown in place of the notes section when its request failed, beside a Try again button. Not the same as an operator with no notes, which shows nothing.",
             "placeholders": []
         },
         {
             "key": "operators.notes.loading",
             "namespace": "operators",
-            "source_text": "Loading operator notes",
+            "source_text": "Loading operator notes…",
             "description": "Screen-reader text for the spinner shown while the community notes for this operator load.",
             "placeholders": []
         },
@@ -24838,7 +24838,7 @@
         {
             "key": "operators.skills.range.error",
             "namespace": "operators",
-            "source_text": "The skill's attack range did not load.",
+            "source_text": "Couldn't load the skill's attack range.",
             "description": "Shown in place of the skill's range grid, beside a Try again button, when the range data failed to load.",
             "placeholders": []
         },
@@ -25122,7 +25122,7 @@
         {
             "key": "operators.summons.attackRange.error",
             "namespace": "operators",
-            "source_text": "The summon's attack range did not load.",
+            "source_text": "Couldn't load the summon's attack range.",
             "description": "Shown in place of the summon's range grid, beside a Try again button, when the range data failed to load.",
             "placeholders": []
         },
@@ -25865,8 +25865,8 @@
         {
             "key": "settings.data.linked.desc",
             "namespace": "settings",
-            "source_text": "We never store your password or sign-in code. If you ticked Keep me synced when you signed in, we keep an encrypted game token that lets us re-sync on your behalf. Disconnect below to delete it.",
-            "description": "Card description under Linked Yostar account. It must stay true: the password and code are never stored; the token is stored only when the Keep me synced box in the sign-in dialog was ticked.",
+            "source_text": "We never store your password or sign-in code. If you checked Keep me synced when you signed in, we keep an encrypted game token that lets us re-sync on your behalf. Disconnect below to delete it.",
+            "description": "Card description under Linked Yostar account. It must stay true: the password and code are never stored; the token is stored only when the Keep me synced box in the sign-in dialog was checked.",
             "placeholders": []
         },
         {
@@ -29895,7 +29895,7 @@
         {
             "key": "story.export.doneMissing",
             "namespace": "story",
-            "source_text": "{count, plural, one {# picture} other {# pictures}} could not be loaded and were left out.",
+            "source_text": "Couldn't load {count, plural, one {# picture} other {# pictures}}, so {count, plural, one {it was} other {they were}} left out.",
             "description": "Second sentence of the status line after saving when some pictures failed to download.",
             "placeholders": [
                 "count"
@@ -30539,7 +30539,7 @@
         {
             "key": "story.illustrations.panel.failed",
             "namespace": "story",
-            "source_text": "The artwork could not be loaded.",
+            "source_text": "Couldn't load the artwork.",
             "description": "Error state inside the artwork panel when the request fails.",
             "placeholders": []
         },
@@ -30895,7 +30895,7 @@
         {
             "key": "story.operators.dialog.failed",
             "namespace": "story",
-            "source_text": "This shelf did not load. Close the dialog and open it again.",
+            "source_text": "Couldn't load this shelf. Close the dialog and open it again.",
             "description": "Message shown in the operator dialog when a shelf's query failed.",
             "placeholders": []
         },
@@ -32080,7 +32080,7 @@
         {
             "key": "story.route.loadFailed",
             "namespace": "story",
-            "source_text": "This story didn't load. Check your connection and try again.",
+            "source_text": "Couldn't load this story. Check your connection and try again.",
             "description": "Shown on the story reader page when the story or the library index failed to load, beside a Retry button.",
             "placeholders": []
         },
@@ -32925,7 +32925,7 @@
         {
             "key": "story.sprites.failed",
             "namespace": "story",
-            "source_text": "The character list could not be loaded.",
+            "source_text": "Couldn't load the character list.",
             "description": "Error state of the character gallery.",
             "placeholders": []
         },
@@ -34485,7 +34485,7 @@
         {
             "key": "tierLists.detail.snapshot.failedTitle",
             "namespace": "tierLists",
-            "source_text": "Version {version} didn't load",
+            "source_text": "Couldn't load version {version}",
             "description": "Error heading when a link asks for an older published version of a tier list and the version list failed to load. {version} is the version number.",
             "placeholders": [
                 "version"
@@ -36080,7 +36080,7 @@
         {
             "key": "tierLists.edit.pool.loadFailed",
             "namespace": "tierLists",
-            "source_text": "This list did not load.",
+            "source_text": "Couldn't load this list.",
             "description": "Shown in the pool when a kind's list failed to load.",
             "placeholders": []
         },
@@ -41735,7 +41735,7 @@
         {
             "key": "tools.dps.import.failed",
             "namespace": "tools",
-            "source_text": "Couldn't load the operator list, so your squad wasn't added yet.",
+            "source_text": "Couldn't load the operator list, so your squad wasn't added.",
             "description": "Error toast when the Squad Builder sent squadmates over but the calculator's operator list failed to load. The toast has a retry button.",
             "placeholders": []
         },
@@ -42316,7 +42316,7 @@
         {
             "key": "tools.dps.supporters.blocked",
             "namespace": "tools",
-            "source_text": "Results are paused: the supporter values could not be loaded ({error}). Switch the supporters off or try again.",
+            "source_text": "Results are paused: couldn't load the supporter values ({error}). Switch the supporters off or try again.",
             "description": "Shown when switched-on supporters' values failed to load; the calculator does not compute without them. {error} is the server's message.",
             "placeholders": [
                 "error"
@@ -42350,7 +42350,7 @@
         {
             "key": "tools.dps.supporters.failed",
             "namespace": "tools",
-            "source_text": "Supporters could not be loaded: {error}",
+            "source_text": "Couldn't load the supporters: {error}",
             "description": "Shown when the supporter list request failed. {error} is the server's message.",
             "placeholders": [
                 "error"
@@ -45354,7 +45354,7 @@
         {
             "key": "tools.randomizer.loadError",
             "namespace": "tools",
-            "source_text": "Some of the game data couldn't be loaded, so the operator and stage pools may be incomplete.",
+            "source_text": "Couldn't load some of the game data, so the operator and stage pools may be incomplete.",
             "description": "Shown in place of the empty result when a list the randomizer draws from (operators, stages, the player's roster or clears) fails to load.",
             "placeholders": []
         },
@@ -49264,7 +49264,7 @@
         {
             "key": "tools.release.pulls.plan.eventsError",
             "namespace": "tools",
-            "source_text": "Event names and art couldn't be loaded, so some banners show without them.",
+            "source_text": "Couldn't load event names and art, so some banners show without them.",
             "description": "Notice above the banner plan when the events list fails to load; the banners still plan, but those that borrow their name and picture from an event show without them.",
             "placeholders": []
         },
@@ -52583,7 +52583,7 @@
         {
             "key": "tools.squad.grid.detailsFailed",
             "namespace": "tools",
-            "source_text": "Details failed to load",
+            "source_text": "Couldn't load this operator's details",
             "description": "Screen-reader-only note on a squad seat card when the operator's skill and module details could not be fetched; the tiles fall back to text labels such as S3. Retry lives in the seat editor.",
             "placeholders": []
         },
@@ -53842,7 +53842,7 @@
         {
             "key": "tools.squad.stagePicker.error",
             "namespace": "tools",
-            "source_text": "The stage list couldn't be loaded.",
+            "source_text": "Couldn't load the stage list.",
             "description": "Shown in place of the stage grid when the stage list fails to load.",
             "placeholders": []
         },
@@ -54215,7 +54215,7 @@
         {
             "key": "user.leaderboard.hero.stat.failed",
             "namespace": "user",
-            "source_text": "Did not load. Retry",
+            "source_text": "Couldn't load. Try again",
             "description": "Small link under a leaderboard header figure (player count or top value) that failed to load, shown in place of the figure with a dash; clicking it fetches again. Keep it short, the tile is narrow.",
             "placeholders": []
         },
@@ -54440,35 +54440,35 @@
         {
             "key": "user.leaderboard.loadFailed.holders",
             "namespace": "user",
-            "source_text": "The holders of this item did not load.",
+            "source_text": "Couldn't load the holders of this item.",
             "description": "Failure line in place of the inventory-ranked table when the page of item holders could not be fetched, above a Try again button.",
             "placeholders": []
         },
         {
             "key": "user.leaderboard.loadFailed.items",
             "namespace": "user",
-            "source_text": "The item list did not load.",
+            "source_text": "Couldn't load the item list.",
             "description": "Failure line in place of the sidebar card listing the most-held items, when the item catalog or item names failed to load, beside a Try again button.",
             "placeholders": []
         },
         {
             "key": "user.leaderboard.loadFailed.movers",
             "namespace": "user",
-            "source_text": "The biggest movers did not load.",
+            "source_text": "Couldn't load the biggest movers.",
             "description": "Failure line in place of the sidebar card listing the players whose rank rose most, beside a Try again button.",
             "placeholders": []
         },
         {
             "key": "user.leaderboard.loadFailed.players",
             "namespace": "user",
-            "source_text": "The leaderboard did not load.",
+            "source_text": "Couldn't load the leaderboard.",
             "description": "Failure line in place of the ranked table when the page of players could not be fetched (network or server error), above a Try again button.",
             "placeholders": []
         },
         {
             "key": "user.leaderboard.loadFailed.standing",
             "namespace": "user",
-            "source_text": "Your standing did not load.",
+            "source_text": "Couldn't load your standing.",
             "description": "Failure line in place of the sidebar card with the signed-in player's own rank, beside a Try again button.",
             "placeholders": []
         },
@@ -54597,7 +54597,7 @@
         {
             "key": "user.leaderboard.rankBy.loadFailed",
             "namespace": "user",
-            "source_text": "The item list did not load.",
+            "source_text": "Couldn't load the item list.",
             "description": "Failure line in the 'Rank by' picker's Inventory group, in place of the item list, when the item catalog or item names failed to load, beside a Try again button. The score metrics above it still work.",
             "placeholders": []
         },
@@ -55147,7 +55147,7 @@
         {
             "key": "user.lookback.error",
             "namespace": "user",
-            "source_text": "The snapshots couldn't be loaded.",
+            "source_text": "Couldn't load the snapshots.",
             "description": "Shown on the Lookback tab when the account's snapshots fail to load.",
             "placeholders": []
         },
@@ -58523,7 +58523,7 @@
         {
             "key": "user.profile.items.materialsFailed",
             "namespace": "user",
-            "source_text": "Item names did not load, so items show their ids.",
+            "source_text": "Couldn't load item names, so items show their ids.",
             "description": "Shown above the depot list, beside a Try again button, when the item table failed to load.",
             "placeholders": []
         },
@@ -58796,28 +58796,28 @@
         {
             "key": "user.profile.loadFailed.enemies",
             "namespace": "user",
-            "source_text": "This player's encountered enemies could not be loaded.",
+            "source_text": "Couldn't load this player's encountered enemies.",
             "description": "Shown in place of the profile's Enemies tab when loading which enemies the player has met failed. A retry button follows.",
             "placeholders": []
         },
         {
             "key": "user.profile.loadFailed.improvements",
             "namespace": "user",
-            "source_text": "Upgrade suggestions could not be loaded, so the panels below show none.",
+            "source_text": "Couldn't load upgrade suggestions, so the panels below show none.",
             "description": "Shown above the Score tab's cards when the suggestions of what to upgrade next failed to load; the score itself loaded. A retry button follows.",
             "placeholders": []
         },
         {
             "key": "user.profile.loadFailed.inventory",
             "namespace": "user",
-            "source_text": "This player's items could not be loaded.",
+            "source_text": "Couldn't load this player's items.",
             "description": "Shown in place of the profile's Inventory tab when loading the items failed. A retry button follows.",
             "placeholders": []
         },
         {
             "key": "user.profile.loadFailed.profile",
             "namespace": "user",
-            "source_text": "This profile could not be loaded. The site may be having trouble; try again in a moment.",
+            "source_text": "Couldn't load this profile. Try again in a moment.",
             "description": "Shown in place of a profile page when loading it failed for a reason other than the profile not existing or being private (a network error or server outage). A retry button follows.",
             "placeholders": []
         },
@@ -58831,14 +58831,14 @@
         {
             "key": "user.profile.loadFailed.roster",
             "namespace": "user",
-            "source_text": "This player's operators could not be loaded.",
+            "source_text": "Couldn't load this player's operators.",
             "description": "Shown in place of a profile tab that needs the player's operator list (Stats, Roster, Plans, Optimizer) when loading that list failed. A retry button follows.",
             "placeholders": []
         },
         {
             "key": "user.profile.loadFailed.score",
             "namespace": "user",
-            "source_text": "This player's score could not be loaded.",
+            "source_text": "Couldn't load this player's score.",
             "description": "Shown in place of the profile's Score tab when loading the score failed. A retry button follows.",
             "placeholders": []
         },
@@ -58956,7 +58956,7 @@
         {
             "key": "user.profile.plans.error",
             "namespace": "user",
-            "source_text": "The plans couldn't be loaded.",
+            "source_text": "Couldn't load the plans.",
             "description": "Shown on the Plans tab when the player's public plans fail to load.",
             "placeholders": []
         },
@@ -58977,7 +58977,7 @@
         {
             "key": "user.profile.plans.loading",
             "namespace": "user",
-            "source_text": "Loading plans",
+            "source_text": "Loading plans…",
             "description": "Screen-reader status while the profile's public plans load; the skeleton cards are hidden from assistive tech.",
             "placeholders": []
         },
@@ -59945,21 +59945,21 @@
         {
             "key": "user.profile.showcase.blockFailed.grid",
             "namespace": "user",
-            "source_text": "This grid couldn't be loaded.",
+            "source_text": "Couldn't load this grid.",
             "description": "Shown in place of a grid block on a profile showcase when fetching the grid failed (not when it was deleted). A retry button follows.",
             "placeholders": []
         },
         {
             "key": "user.profile.showcase.blockFailed.plan",
             "namespace": "user",
-            "source_text": "This plan couldn't be loaded.",
+            "source_text": "Couldn't load this plan.",
             "description": "Shown in place of a plan block on a profile showcase when fetching the player's plans failed (not when the plan was deleted). A retry button follows.",
             "placeholders": []
         },
         {
             "key": "user.profile.showcase.blockFailed.tierList",
             "namespace": "user",
-            "source_text": "This tier list couldn't be loaded.",
+            "source_text": "Couldn't load this tier list.",
             "description": "Shown in place of a tier list block on a profile showcase when fetching the list failed (not when it was deleted). A retry button follows.",
             "placeholders": []
         },
@@ -60288,7 +60288,7 @@
         {
             "key": "user.profile.showcase.error",
             "namespace": "user",
-            "source_text": "The showcase couldn't be loaded.",
+            "source_text": "Couldn't load the showcase.",
             "description": "Shown in place of the showcase when it fails to load.",
             "placeholders": []
         },
@@ -60921,7 +60921,7 @@
         {
             "key": "user.profile.stats.error",
             "namespace": "user",
-            "source_text": "The statistics couldn't be loaded.",
+            "source_text": "Couldn't load the statistics.",
             "description": "Shown in place of the Stats tab's cards when the skin list they are counted against fails to load.",
             "placeholders": []
         },
@@ -63088,7 +63088,7 @@
         {
             "key": "user.search.error.title",
             "namespace": "user",
-            "source_text": "The search couldn't be loaded.",
+            "source_text": "Couldn't search players",
             "description": "Shown in place of the results when the player search request fails.",
             "placeholders": []
         },

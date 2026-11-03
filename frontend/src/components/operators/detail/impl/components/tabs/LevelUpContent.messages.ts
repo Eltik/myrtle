@@ -120,7 +120,7 @@ export const messages = {
         description: "Row label for one module upgrade stage, e.g. 'Stage 2'.",
     },
     "levelup.materialsFailed": {
-        text: "Item names did not load, so tiles show item ids.",
+        text: "Couldn't load item names, so tiles show item ids.",
         description: "Shown above the cost rows, beside a Try again button, when the item table failed to load.",
     },
 } satisfies MessageMap;

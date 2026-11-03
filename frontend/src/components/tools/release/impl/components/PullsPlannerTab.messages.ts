@@ -445,7 +445,7 @@ export const messages = {
         description: "Warning summarising how many banners the plan cannot pay for in full.",
     },
     "release.pulls.plan.eventsError": {
-        text: "Event names and art couldn't be loaded, so some banners show without them.",
+        text: "Couldn't load event names and art, so some banners show without them.",
         description: "Notice above the banner plan when the events list fails to load; the banners still plan, but those that borrow their name and picture from an event show without them.",
     },
     "release.pulls.plan.eventsRetry": {

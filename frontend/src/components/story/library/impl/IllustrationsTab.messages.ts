@@ -76,7 +76,7 @@ export const messages = {
         description: "Accessible name of the loading state inside the artwork panel.",
     },
     "illustrations.panel.failed": {
-        text: "The artwork could not be loaded.",
+        text: "Couldn't load the artwork.",
         description: "Error state inside the artwork panel when the request fails.",
     },
     "illustrations.panel.unavailable": {

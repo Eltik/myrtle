@@ -52,7 +52,7 @@ export const messages = {
         description: "Shown in the picker when the search matches neither a score metric nor an item.",
     },
     "leaderboard.rankBy.loadFailed": {
-        text: "The item list did not load.",
+        text: "Couldn't load the item list.",
         description: "Failure line in the 'Rank by' picker's Inventory group, in place of the item list, when the item catalog or item names failed to load, beside a Try again button. The score metrics above it still work.",
     },
 } satisfies MessageMap;

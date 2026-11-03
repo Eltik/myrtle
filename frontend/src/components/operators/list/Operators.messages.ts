@@ -132,7 +132,7 @@ export const messages = {
         description: "Empty state when the grid is filtered down to nothing.",
     },
     "list.error.upcoming": {
-        text: "The upcoming CN operators did not load.",
+        text: "Couldn't load the upcoming CN operators.",
         description: "Shown above the Upcoming (CN) view when its list failed to load, beside a Try again button. Distinct from the empty state: nothing was filtered out, the data never arrived.",
     },
     "list.clearFilters": {

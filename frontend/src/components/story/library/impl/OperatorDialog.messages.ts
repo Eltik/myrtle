@@ -32,7 +32,7 @@ export const messages = {
         description: "Placeholder while a shelf's query is in flight in the operator dialog.",
     },
     "operators.dialog.failed": {
-        text: "This shelf did not load. Close the dialog and open it again.",
+        text: "Couldn't load this shelf. Close the dialog and open it again.",
         description: "Message shown in the operator dialog when a shelf's query failed.",
     },
     "operators.dialog.files.empty": {

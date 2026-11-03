@@ -52,7 +52,7 @@ export const messages = {
         description: "Muted line at the foot of the leaderboard header saying the ranking is still being worked on.",
     },
     "leaderboard.hero.stat.failed": {
-        text: "Did not load. Retry",
+        text: "Couldn't load. Try again",
         description: "Small link under a leaderboard header figure (player count or top value) that failed to load, shown in place of the figure with a dash; clicking it fetches again. Keep it short, the tile is narrow.",
     },
     "leaderboard.hero.blurb.item": {

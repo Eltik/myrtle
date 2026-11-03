@@ -88,7 +88,7 @@ export const messages = {
         description: "Shown in the pool while a kind's list is still loading. Keep the single-character ellipsis.",
     },
     "edit.pool.loadFailed": {
-        text: "This list did not load.",
+        text: "Couldn't load this list.",
         description: "Shown in the pool when a kind's list failed to load.",
     },
     "edit.pool.retry": {

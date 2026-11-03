@@ -8,7 +8,7 @@ export const messages = {
         description: "Shown on the Lookback tab when the player hid their Roster tab, whose data the snapshots are.",
     },
     "lookback.error": {
-        text: "The snapshots couldn't be loaded.",
+        text: "Couldn't load the snapshots.",
         description: "Shown on the Lookback tab when the account's snapshots fail to load.",
     },
     "lookback.loading": {

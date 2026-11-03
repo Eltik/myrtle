@@ -68,7 +68,7 @@ export const messages = {
         description: "Accessible label of the character gallery's loading placeholders.",
     },
     "sprites.failed": {
-        text: "The character list could not be loaded.",
+        text: "Couldn't load the character list.",
         description: "Error state of the character gallery.",
     },
     "sprites.unavailable": {

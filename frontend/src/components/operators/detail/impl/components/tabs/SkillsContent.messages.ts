@@ -140,7 +140,7 @@ export const messages = {
         description: "Narrow column header: duration, short for 'duration'. Four characters at most.",
     },
     "skills.range.error": {
-        text: "The skill's attack range did not load.",
+        text: "Couldn't load the skill's attack range.",
         description: "Shown in place of the skill's range grid, beside a Try again button, when the range data failed to load.",
     },
 } satisfies MessageMap;

@@ -28,7 +28,7 @@ export const messages = {
         description: "Button beside the error message in the home page's live section; it reloads the event and banner data.",
     },
     "live.loading": {
-        text: "Loading what's running on {server}.",
+        text: "Loading what's running on {server}…",
         description: "Read out by screen readers only, while the home page's live section loads. {server} is the game server's region name, such as 'Global' or 'China'.",
     },
     "live.eventDetail": {

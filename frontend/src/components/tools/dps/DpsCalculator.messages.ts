@@ -172,7 +172,7 @@ export const messages = {
         description: "Shown above the chart when a request for the damage curves failed, beside a retry button.",
     },
     "dps.import.failed": {
-        text: "Couldn't load the operator list, so your squad wasn't added yet.",
+        text: "Couldn't load the operator list, so your squad wasn't added.",
         description: "Error toast when the Squad Builder sent squadmates over but the calculator's operator list failed to load. The toast has a retry button.",
     },
     "dps.import.added": {

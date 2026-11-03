@@ -5,7 +5,7 @@ export const namespace = "common";
 
 export const messages = {
     "routeError.title": {
-        text: "Something went wrong loading this page",
+        text: "Couldn't load this page",
         description: "Heading shown in place of a page whose data or code failed to load. No full stop: it is a heading.",
     },
     "routeError.description": {

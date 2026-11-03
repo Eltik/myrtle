@@ -64,27 +64,27 @@ export const messages = {
         description: "Shown under another player's profile header when they hid every tab, so there is nothing else to view.",
     },
     "profile.loadFailed.profile": {
-        text: "This profile could not be loaded. The site may be having trouble; try again in a moment.",
+        text: "Couldn't load this profile. Try again in a moment.",
         description: "Shown in place of a profile page when loading it failed for a reason other than the profile not existing or being private (a network error or server outage). A retry button follows.",
     },
     "profile.loadFailed.roster": {
-        text: "This player's operators could not be loaded.",
+        text: "Couldn't load this player's operators.",
         description: "Shown in place of a profile tab that needs the player's operator list (Stats, Roster, Plans, Optimizer) when loading that list failed. A retry button follows.",
     },
     "profile.loadFailed.inventory": {
-        text: "This player's items could not be loaded.",
+        text: "Couldn't load this player's items.",
         description: "Shown in place of the profile's Inventory tab when loading the items failed. A retry button follows.",
     },
     "profile.loadFailed.score": {
-        text: "This player's score could not be loaded.",
+        text: "Couldn't load this player's score.",
         description: "Shown in place of the profile's Score tab when loading the score failed. A retry button follows.",
     },
     "profile.loadFailed.improvements": {
-        text: "Upgrade suggestions could not be loaded, so the panels below show none.",
+        text: "Couldn't load upgrade suggestions, so the panels below show none.",
         description: "Shown above the Score tab's cards when the suggestions of what to upgrade next failed to load; the score itself loaded. A retry button follows.",
     },
     "profile.loadFailed.enemies": {
-        text: "This player's encountered enemies could not be loaded.",
+        text: "Couldn't load this player's encountered enemies.",
         description: "Shown in place of the profile's Enemies tab when loading which enemies the player has met failed. A retry button follows.",
     },
 } satisfies MessageMap;

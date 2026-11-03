@@ -28,7 +28,7 @@ export const messages = {
         description: "Button beside the error message in the home page's top-five panel; it reloads the leaderboard.",
     },
     "leaders.loading": {
-        text: "Loading the leaderboard.",
+        text: "Loading the leaderboard…",
         description: "Read out by screen readers only, while the home page's top-five panel loads.",
     },
     "leaders.missing": {
