@@ -17,7 +17,7 @@ interface IChipGroupProps {
 function ChipGroup({ label, children }: IChipGroupProps) {
     return (
         <div className="flex w-full flex-col gap-1.5 sm:w-auto sm:flex-row sm:items-center sm:gap-2.5">
-            <span className="shrink-0 whitespace-nowrap font-medium font-mono text-[10px] text-muted-foreground uppercase leading-none tracking-[0.14em]">{label}</span>
+            <span className="shrink-0 whitespace-nowrap font-medium font-mono text-[10px] text-muted-foreground leading-none">{label}</span>
             <div className="flex flex-wrap gap-1.5">{children}</div>
         </div>
     );

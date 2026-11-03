@@ -66,7 +66,7 @@ export function MyGrids() {
                                 grid={grid}
                                 badge={
                                     grid.is_listed ? null : (
-                                        <span className="inline-flex items-center gap-1 rounded-sm bg-muted px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground uppercase tracking-wider">
+                                        <span className="inline-flex items-center gap-1 rounded-sm bg-muted px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
                                             <EyeOffIcon className="h-3 w-3" aria-hidden="true" />
                                             {t("my.unlisted")}
                                         </span>

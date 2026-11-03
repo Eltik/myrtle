@@ -52,14 +52,14 @@ export function StageHeader({ stage, zone, variants }: { stage: IStage; zone: IZ
 
             <h1 className="mt-3 text-balance font-bold font-sans text-[24px] text-foreground leading-[1.1] tracking-tight">{stage.name ?? stage.code}</h1>
 
-            <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 font-medium font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.12em]">
+            <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 font-medium font-mono text-[10.5px] text-muted-foreground">
                 <span>{stageTypeKey ? tConst(stageTypeKey) : stage.stageType}</span>
                 <span aria-hidden="true">·</span>
-                <span className="text-foreground normal-case tracking-normal">{zoneTitle}</span>
+                <span className="text-foreground">{zoneTitle}</span>
                 {zoneSub && (
                     <>
                         <span aria-hidden="true">·</span>
-                        <span className="normal-case tracking-normal">{zoneSub}</span>
+                        <span>{zoneSub}</span>
                     </>
                 )}
             </div>

@@ -539,7 +539,7 @@ function RangeSelect({ label, value, order, disabled, onChange }: { label: strin
  * radio group inside it; the name field is a plain label for its input.
  */
 function Field({ label, hint, htmlFor, children }: { label: string; hint?: string; htmlFor?: string; children: React.ReactNode }): React.ReactElement {
-    const caption = "font-medium text-muted-foreground text-xs uppercase tracking-wide";
+    const caption = "font-medium text-muted-foreground text-xs";
     const hintLine = hint ? <p className="text-muted-foreground text-xs">{hint}</p> : null;
     if (htmlFor) {
         return (

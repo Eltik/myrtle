@@ -80,7 +80,7 @@ export function PickTierDialog({ entity, currentTierId, description, tiers, onCl
                                     </span>
                                     <span className="min-w-0 flex-1 truncate">{tier.name}</span>
                                     <span className="font-mono text-[10.5px] text-muted-foreground tabular-nums">{tier.entityKeys.length}</span>
-                                    {isCurrent && <span className="font-bold font-mono text-[10px] text-primary uppercase tracking-wider">{t("edit.pick.current")}</span>}
+                                    {isCurrent && <span className="font-bold font-mono text-[10px] text-primary">{t("edit.pick.current")}</span>}
                                 </button>
                             );
                         })}

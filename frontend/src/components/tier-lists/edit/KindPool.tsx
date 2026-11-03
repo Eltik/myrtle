@@ -240,7 +240,7 @@ export function KindPool({ kind, entities, status, onRetry, placedKeys, onUnplac
                                                     <TooltipContent>
                                                         <span className="font-sans font-semibold text-xs">{entry.name}</span>
                                                         {owner ? <span className="ms-1.5 font-sans text-xs opacity-70">{owner}</span> : null}
-                                                        {placed ? <span className="ms-1.5 font-mono text-[10px] uppercase tracking-wider opacity-70">{t("edit.pool.placed")}</span> : null}
+                                                        {placed ? <span className="ms-1.5 font-mono text-[10px] opacity-70">{t("edit.pool.placed")}</span> : null}
                                                     </TooltipContent>
                                                 </Tooltip>
                                             </li>

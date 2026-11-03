@@ -154,9 +154,9 @@ function DesktopRow({ row, ranking, topValue, intervalKey }: { row: IRankedRow; 
                 <RankMovement delta={row.delta} intervalKey={intervalKey} />
             </span>
             <span className="inline-flex min-w-0 max-w-80 items-center gap-3">
-                <Avatar className="size-9 rounded-[10px]">
+                <Avatar className="size-9 rounded-lg">
                     <AvatarImage src={avatarSrc} alt={nickname} />
-                    <AvatarFallback className="rounded-[10px] text-xs">{initials}</AvatarFallback>
+                    <AvatarFallback className="rounded-lg text-xs">{initials}</AvatarFallback>
                 </Avatar>
                 <span className="flex min-w-0 flex-col gap-0.5">
                     <span className="truncate font-sans font-semibold text-[13.5px] text-foreground leading-tight tracking-tight">{nickname}</span>
@@ -191,7 +191,7 @@ function MobileRow({ row, ranking, topValue, intervalKey }: { row: IRankedRow; r
             )}
         >
             <span className="inline-flex flex-col items-center gap-1">
-                <span className="inline-flex size-9 items-center justify-center rounded-[10px] bg-muted font-mono font-semibold text-[13px] text-foreground tabular-nums leading-none">#{row.rank ?? "-"}</span>
+                <span className="inline-flex size-9 items-center justify-center rounded-lg bg-muted font-mono font-semibold text-[13px] text-foreground tabular-nums leading-none">#{row.rank ?? "-"}</span>
                 <RankMovement delta={row.delta} intervalKey={intervalKey} />
             </span>
             <div className="flex min-w-0 flex-col gap-1">
@@ -227,7 +227,7 @@ export function LeaderboardTableSkeleton({ rows = 8 }: { rows?: number }) {
                         <div key={key} className={cn("grid items-center gap-4 px-4 py-3", DESKTOP_GRID)}>
                             <span className="h-4 w-12 rounded bg-muted" />
                             <div className="flex items-center gap-3">
-                                <span className="size-9 rounded-[10px] bg-muted" />
+                                <span className="size-9 rounded-lg bg-muted" />
                                 <div className="flex flex-col gap-1.5">
                                     <span className="h-3 w-32 rounded bg-muted" />
                                     <span className="h-2.5 w-20 rounded bg-muted/70" />
@@ -245,7 +245,7 @@ export function LeaderboardTableSkeleton({ rows = 8 }: { rows?: number }) {
                 <div className="flex flex-col sm:gap-2">
                     {Array.from({ length: Math.min(rows, 6) }, (_, i) => `mobile-skeleton-${i}`).map((key) => (
                         <div key={key} className="grid grid-cols-[auto_1fr_auto] items-center gap-3 border-border border-b px-4 py-3 last:border-b-0 sm:rounded-2xl sm:border sm:bg-card sm:px-3 sm:last:border-b">
-                            <span className="size-9 rounded-[10px] bg-muted" />
+                            <span className="size-9 rounded-lg bg-muted" />
                             <div className="flex flex-col gap-1.5">
                                 <span className="h-3 w-32 rounded bg-muted" />
                                 <span className="h-2.5 w-20 rounded bg-muted/70" />

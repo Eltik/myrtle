@@ -41,7 +41,7 @@ export function ColorPicker({ value, onChange }: IColorPickerProps) {
     return (
         <div className="flex flex-col gap-3.5">
             <div>
-                <p className="m-0 mb-2 font-bold font-mono text-[10.5px] text-muted-foreground uppercase leading-none tracking-[0.14em]">{t("edit.color.presets")}</p>
+                <p className="kicker m-0 mb-2 leading-none">{t("edit.color.presets")}</p>
                 <div className="grid grid-cols-6 gap-1.5">
                     {PRESET_SWATCHES.map((c) => {
                         const selected = c.toLowerCase() === value.toLowerCase();

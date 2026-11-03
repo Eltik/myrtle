@@ -65,7 +65,7 @@ export function StatsPage() {
                     <h2 className="m-0 text-balance font-sans font-semibold text-[22px] text-foreground leading-[1.15] tracking-[-0.02em]">{t("page.catalog.title")}</h2>
                     <p className="m-0 font-sans text-[13px] text-muted-foreground leading-normal">{t("page.catalog.blurb")}</p>
                 </header>
-                {data ? <CatalogGrid gameData={data.gameData} tierLists={data.tierLists} rosters={data.rosters} /> : <Skeleton className="h-[328px] rounded-xl border border-border max-sm:-mx-4 max-sm:rounded-none max-sm:border-x-0 lg:h-[164px]" />}
+                {data ? <CatalogGrid gameData={data.gameData} tierLists={data.tierLists} rosters={data.rosters} /> : <Skeleton className="h-[328px] rounded-2xl border border-border max-sm:-mx-4 max-sm:rounded-none max-sm:border-x-0 lg:h-[164px]" />}
                 <FieldNotes />
             </section>
 

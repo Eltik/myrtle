@@ -27,7 +27,7 @@ export function EnemyHero({ enemy }: { enemy: IEnemyView }) {
 
     return (
         <div className="flex gap-4 rounded-2xl border border-border bg-card p-4 sm:gap-5 sm:p-5">
-            <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-[10px] border bg-[color-mix(in_oklch,var(--muted)_40%,transparent)] sm:h-28 sm:w-28" style={{ borderColor: enemy.enemyLevel === "NORMAL" ? "var(--border)" : tok.badgeBorder }}>
+            <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-lg border bg-[color-mix(in_oklch,var(--muted)_40%,transparent)] sm:h-28 sm:w-28" style={{ borderColor: enemy.enemyLevel === "NORMAL" ? "var(--border)" : tok.badgeBorder }}>
                 {hasPortrait && portraitSrc ? <img src={portraitSrc} alt={enemy.name} onError={() => setImgError(true)} className="absolute inset-0 h-full w-full object-contain" /> : <EnemyPlaceholder className="absolute inset-0 h-full w-full p-2.5" />}
                 {enemy.enemyLevel !== "NORMAL" && <span aria-hidden="true" className="absolute right-0 bottom-0 left-0 h-0.75" style={{ background: tok.accent }} />}
             </div>
@@ -37,7 +37,7 @@ export function EnemyHero({ enemy }: { enemy: IEnemyView }) {
                     <h1 className="m-0 font-bold font-sans text-[20px] text-foreground leading-[1.1] tracking-tight sm:text-[26px]">{enemy.name}</h1>
                     <LevelBadge level={enemy.enemyLevel} />
                 </div>
-                {meta && <div className="font-medium font-mono text-[10.5px] text-muted-foreground uppercase leading-snug tracking-[0.14em] sm:text-[11px]">{meta}</div>}
+                {meta && <div className="font-medium font-mono text-[10.5px] text-muted-foreground leading-snug sm:text-[11px]">{meta}</div>}
 
                 {enemy.damageType.length > 0 && (
                     <div className="mt-1 flex flex-wrap gap-1.5">

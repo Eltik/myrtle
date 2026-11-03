@@ -11,19 +11,6 @@
     padding: 10px 32px;
     gap: 24px;
 }
-.crumbs {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-family: var(--font-mono);
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.14em;
-    color: var(--muted-foreground);
-}
-.crumbs svg {
-    opacity: 0.5;
-}
 .crumb:hover {
     color: var(--foreground);
 }

@@ -206,7 +206,7 @@ function ZoneCollapsible({ group, defaultOpen }: { group: IAppearanceGroup; defa
                     <ChevronDown className={cn("h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200 motion-reduce:transition-none", open && "rotate-180")} aria-hidden="true" />
                     <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                         <h4 className="m-0 truncate font-sans font-semibold text-[13.5px] text-foreground leading-tight">{group.title}</h4>
-                        {group.subtitle && <span className="truncate font-medium font-mono text-[10px] text-muted-foreground uppercase leading-none tracking-[0.12em]">{group.subtitle}</span>}
+                        {group.subtitle && <span className="truncate font-medium font-mono text-[10px] text-muted-foreground leading-none">{group.subtitle}</span>}
                     </div>
                     {typeLabelKey && <span className="shrink-0 rounded-full border border-border bg-card px-2 py-0.75 font-medium font-mono text-[10px] text-muted-foreground uppercase leading-none tracking-[0.12em]">{t(typeLabelKey)}</span>}
                     <span className="shrink-0 rounded-full bg-[color-mix(in_oklch,var(--muted)_60%,transparent)] px-1.75 py-0.75 font-medium font-mono text-[10px] text-muted-foreground tabular-nums leading-none">{group.refs.length}</span>
@@ -231,7 +231,7 @@ function ZoneBody({ group }: { group: IAppearanceGroup }) {
             <div className="flex flex-col gap-3">
                 {subgroups.map((sg) => (
                     <div key={sg.labelKey}>
-                        <div className="mb-1.5 font-medium font-mono text-[10px] text-muted-foreground uppercase leading-none tracking-[0.12em]">{t(sg.labelKey)}</div>
+                        <div className="kicker mb-1.5 leading-none">{t(sg.labelKey)}</div>
                         <ChipRow refs={sg.refs} />
                     </div>
                 ))}

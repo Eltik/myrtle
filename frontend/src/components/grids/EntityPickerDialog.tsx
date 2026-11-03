@@ -246,7 +246,7 @@ export function EntityPickerBody({ kinds, current, selected, onPick, searchRef }
                                                     </span>
                                                 )}
                                                 {fromPreview && (
-                                                    <span className="absolute top-1 left-1 rounded-sm bg-black/70 px-1 py-px font-sans font-semibold text-[9px] text-white uppercase leading-none tracking-wide" aria-hidden="true">
+                                                    <span className="absolute top-1 left-1 rounded-sm bg-black/70 px-1 py-px font-sans font-semibold text-[9px] text-white leading-none" aria-hidden="true">
                                                         {t("picker.previewBadge")}
                                                     </span>
                                                 )}

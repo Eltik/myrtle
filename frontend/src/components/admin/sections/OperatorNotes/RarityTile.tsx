@@ -10,7 +10,7 @@ export function RarityTile({ id, name, rarity, size }: { id: string; name: strin
         <span
             className={cn(
                 "relative grid shrink-0 place-items-center overflow-hidden bg-muted font-semibold after:pointer-events-none after:absolute after:inset-0 after:rounded-[inherit]",
-                size === "sm" ? "size-[34px] rounded-lg text-[13px] after:shadow-[inset_0_-2px_0_var(--tile-rarity)]" : "size-11 rounded-[10px] text-[16px] after:shadow-[inset_0_-3px_0_var(--tile-rarity)]",
+                size === "sm" ? "size-[34px] rounded-lg text-[13px] after:shadow-[inset_0_-2px_0_var(--tile-rarity)]" : "size-11 rounded-lg text-[16px] after:shadow-[inset_0_-3px_0_var(--tile-rarity)]",
             )}
             style={{ "--tile-rarity": `var(--rarity-${rarity})` } as React.CSSProperties}
         >

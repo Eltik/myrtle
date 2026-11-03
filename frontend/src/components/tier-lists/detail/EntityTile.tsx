@@ -88,7 +88,7 @@ export function EntityPreview({ entity, linked }: { entity: ITierEntity; linked:
                     </div>
                 )}
                 <div className={previewStyles.title}>
-                    {entity.resolved && <div className="font-bold font-mono text-[9.5px] text-muted-foreground uppercase leading-none tracking-[0.14em]">{labels.singular(entity.kind)}</div>}
+                    {entity.resolved && <div className="kicker leading-none">{labels.singular(entity.kind)}</div>}
                     <div className={previewStyles.name}>{entity.name}</div>
                     {detail.length > 0 && <div className={previewStyles.subtitle}>{detail.join(" · ")}</div>}
                 </div>

@@ -117,7 +117,7 @@ export function VersionsBar({ slug, versions, selectedVersion, isLatestView }: I
             {!isLatestView && selectedVersion && (
                 <output aria-live="polite" className="mt-2 block rounded-2xl border border-[color-mix(in_srgb,var(--primary)_30%,transparent)] bg-[color-mix(in_srgb,var(--primary)_8%,transparent)] px-3 py-2.5">
                     <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 font-sans text-[12.5px] text-foreground">
-                        <span className="font-bold font-mono text-[10.5px] text-foreground uppercase tracking-[0.12em]">{t("detail.versions.snapshot")}</span>
+                        <span className="kicker">{t("detail.versions.snapshot")}</span>
                         <span className="font-medium">
                             {t("detail.versions.snapshotLine", { version: selectedVersion.version })} <time dateTime={selectedVersion.publishedAt}>{formatPublishedAt(selectedVersion.publishedAt, f)}</time>
                         </span>

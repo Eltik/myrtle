@@ -148,7 +148,7 @@ export function Hero({ profile, background, onChangeBackground, onEditHeader, is
 
                 <div className="col-span-2 flex min-w-0 flex-col sm:order-2 sm:col-span-1">
                     <div className="mb-1.5 flex flex-wrap items-center gap-2">
-                        <span className="font-medium font-mono text-[11px] text-muted-foreground uppercase leading-none tracking-widest">{profile.uid}</span>
+                        <span className="font-medium font-mono text-[11px] text-muted-foreground leading-none">{profile.uid}</span>
                         <span className="inline-flex items-center gap-1 rounded-full border border-[oklch(0.28_0.005_285)] bg-muted px-2 py-0.5 font-medium font-mono text-[11px] text-muted-foreground leading-none">{t("profile.hero.serverTag", { server: profile.server })}</span>
                     </div>
                     <h1 className="wrap-break-word mb-1 flex flex-wrap items-baseline gap-x-1.5 font-bold font-sans text-2xl leading-[1.1] tracking-tight sm:text-3xl lg:text-[36px] lg:leading-[1.05]">
@@ -221,7 +221,7 @@ function LevelProgressBar({ progress, marked }: { progress: ILevelProgress; mark
 
     return (
         <div className="mb-3.5 w-full max-w-prose lg:max-w-135">
-            <div className="mb-1.5 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 font-medium font-mono text-[11px] text-muted-foreground uppercase leading-none tracking-widest">
+            <div className="mb-1.5 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 font-medium font-mono text-[11px] text-muted-foreground leading-none">
                 <span>
                     {t("profile.hero.level.lv")} <span className="text-foreground tabular-nums">{level}</span>
                     {!isMax && (

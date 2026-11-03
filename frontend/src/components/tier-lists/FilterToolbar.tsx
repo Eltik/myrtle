@@ -160,7 +160,7 @@ export function FilterToolbar({ type, sort, query, selectedFlairs, flairOptions,
                             onClick={() => setFlairsOpenOverride(!flairsOpen)}
                             aria-expanded={flairsOpen}
                             aria-controls="tier-list-flairs"
-                            className="mt-2.5 flex pointer-coarse:min-h-11 w-full items-center justify-between gap-2 rounded-lg border border-border bg-muted/40 px-2.5 py-1.5 font-mono text-[10.5px] text-muted-foreground uppercase tracking-wider transition-colors hover:bg-muted hover:text-foreground sm:hidden"
+                            className="mt-2.5 flex pointer-coarse:min-h-11 w-full items-center justify-between gap-2 rounded-lg border border-border bg-muted/40 px-2.5 py-1.5 font-mono text-[10.5px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:hidden"
                         >
                             <span className="inline-flex items-center gap-1.5">
                                 <span>{t("browse.flairs")}</span>

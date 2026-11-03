@@ -8,7 +8,7 @@ import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
 import type { messages } from "./PublishingPanel.messages";
 
-const SECTION_LABEL = "inline-flex items-center gap-1.5 font-mono text-[10.5px] font-medium uppercase tracking-[0.12em] text-muted-foreground";
+const SECTION_LABEL = "kicker inline-flex items-center gap-1.5";
 
 interface IPublishingPanelProps {
     flair: { id: number; label: string; color: string | null } | null;
@@ -31,7 +31,7 @@ export function PublishingPanel({ flair, flairOptions, isListed, canPublish, pub
     return (
         <div className="rounded-2xl border border-border bg-card p-3 shadow-[0_1px_2px_oklch(0_0_0/0.04)]">
             <div className="flex items-center justify-between gap-2">
-                <span className="font-bold font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.14em]">{t("edit.publishing.heading")}</span>
+                <span className="kicker">{t("edit.publishing.heading")}</span>
             </div>
 
             <div className="mt-3 flex flex-col gap-3">

@@ -74,7 +74,7 @@ export function SpawnSchedule({ level, enemyData, onFocusEnemy }: { level: ILeve
                 <span className="h-px flex-1 bg-border" />
                 {hiddenGroups.length > 0 && (
                     <span className="flex flex-wrap items-center gap-1.5">
-                        <span className="font-medium font-mono text-[10px] text-muted-foreground uppercase tracking-[0.12em]">{t("spawns.hiddenRoutes")}</span>
+                        <span className="kicker">{t("spawns.hiddenRoutes")}</span>
                         {hiddenGroups.map((g) => (
                             <Pill key={g}>{g}</Pill>
                         ))}

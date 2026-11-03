@@ -45,7 +45,7 @@ export function CatalogGrid({ gameData, tierLists, rosters }: ICatalogGridProps)
     ];
 
     return (
-        <dl className="m-0 grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-border bg-border max-sm:-mx-4 max-sm:rounded-none max-sm:border-x-0 lg:grid-cols-4">
+        <dl className="m-0 grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-border bg-border max-sm:-mx-4 max-sm:rounded-none max-sm:border-x-0 lg:grid-cols-4">
             {tiles.map((tile) => (
                 <CatalogCell key={tile.id} {...tile} />
             ))}

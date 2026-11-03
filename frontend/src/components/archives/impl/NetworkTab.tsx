@@ -166,7 +166,7 @@ function Network({ data, chart, onChart, onOpenFile, server, t }: INetworkTabPro
 
                 <div ref={toolbarRef} className="pointer-events-none absolute inset-x-3 top-3 flex flex-wrap items-start justify-between gap-2">
                     <div className="pointer-events-auto flex min-w-0 flex-col gap-2">
-                        <nav aria-label={t("network.breadcrumb")} className="flex items-center gap-1 self-start rounded-md border border-border bg-background/95 px-2 py-1 font-mono text-[10.5px] uppercase tracking-[0.14em]">
+                        <nav aria-label={t("network.breadcrumb")} className="flex items-center gap-1 self-start rounded-md border border-border bg-background/95 px-2 py-1 font-mono text-[10.5px]">
                             <button type="button" className={cn("relative cursor-pointer pointer-coarse:after:absolute pointer-coarse:after:-inset-x-2 pointer-coarse:after:-inset-y-3.5", group ? "text-muted-foreground hover:text-foreground" : "text-primary")} onClick={() => goChart(undefined)}>
                                 {t("network.territories")}
                             </button>
@@ -188,7 +188,7 @@ function Network({ data, chart, onChart, onOpenFile, server, t }: INetworkTabPro
                                             <li key={p.id}>
                                                 <button type="button" className="flex w-full cursor-pointer flex-col rounded-sm px-2 py-1 text-left hover:bg-accent" onClick={() => pickPerson(p)}>
                                                     <span className="text-[13px] text-foreground">{p.name}</span>
-                                                    <span className="font-mono text-[10px] text-muted-foreground uppercase tracking-[0.1em]">{[data.forces.find((fo) => fo.id === p.factionId)?.name ?? p.factionId, p.number].filter(Boolean).join(" · ")}</span>
+                                                    <span className="font-mono text-[10px] text-muted-foreground">{[data.forces.find((fo) => fo.id === p.factionId)?.name ?? p.factionId, p.number].filter(Boolean).join(" · ")}</span>
                                                 </button>
                                             </li>
                                         ))
@@ -259,7 +259,7 @@ function Network({ data, chart, onChart, onOpenFile, server, t }: INetworkTabPro
                     </div>
                 </div>
 
-                <p ref={hintRef} className="pointer-events-none absolute bottom-2 left-3 m-0 font-mono text-[10px] text-muted-foreground uppercase tracking-[0.14em]">
+                <p ref={hintRef} className="pointer-events-none absolute bottom-2 left-3 m-0 font-mono text-[10px] text-muted-foreground">
                     {group ? (group.cells.length === 0 ? t("network.emptyChart") : t("network.hintChart")) : t("network.hintMap")}
                 </p>
 
@@ -449,7 +449,7 @@ function TerritoryLabels({ data, view, hover, onHover, onPick, t }: { data: Arch
                         style={{ borderLeftColor: color, transform: box ? `translate(${Math.round(box.x)}px, ${Math.round(box.y)}px)` : undefined }}
                     >
                         <span className={cn("px-2 pt-1 pb-0.5 font-semibold text-foreground leading-tight", fo.cardScale >= BIG_CARD ? "text-[13px]" : "text-[11.5px]")}>{fo.name}</span>
-                        <span className="border-border/60 border-t px-2 pt-0.5 pb-1 font-mono text-[9.5px] text-muted-foreground uppercase tracking-[0.08em]">
+                        <span className="border-border/60 border-t px-2 pt-0.5 pb-1 font-mono text-[9.5px] text-muted-foreground">
                             {fo.code} · <span className="text-foreground">{t("network.forceCounts", { people: f.number(fo.memberCount), hexes: fo.hexes.length })}</span>
                         </span>
                     </button>
@@ -573,7 +573,7 @@ function RostersSheet({ open, onOpenChange, group, people, server, onOpenFile, t
                             <header className="flex items-center gap-2 border-border border-b pb-1.5">
                                 <FactionLogo id={b.forceId} className="size-5" />
                                 <h3 className="m-0 flex-1 font-semibold text-[13px] text-foreground">{b.name}</h3>
-                                {b.home ? null : <span className="rounded-sm border border-border px-1.5 font-mono text-[9.5px] text-muted-foreground uppercase tracking-[0.12em]">{t("network.visiting")}</span>}
+                                {b.home ? null : <span className="rounded-sm border border-border px-1.5 font-mono text-[9.5px] text-muted-foreground">{t("network.visiting")}</span>}
                                 <span className="font-mono text-[11px] text-muted-foreground tabular-nums">{t("network.rosterCount", { count: b.members.length })}</span>
                             </header>
                             <div className="flex flex-wrap gap-1.5">

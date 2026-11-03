@@ -483,7 +483,7 @@ function FeaturedHero({ event, onBrowse, onDetails }: { event: IEventVM; onBrows
                     <span className="inline-flex h-5.5 items-center rounded-full border px-2.5 font-mono font-semibold text-[10px] text-white" style={{ borderColor: `color-mix(in oklch, ${event.tone} 55%, transparent)`, background: `color-mix(in oklch, ${event.tone} 16%, rgba(0,0,0,0.35))` }}>
                         {tNav(STAGE_GROUP_LABEL_KEY[event.group])}
                     </span>
-                    {event.kicker && <span className="font-mono text-[10px] text-white/75 uppercase tracking-[0.12em]">{event.kicker}</span>}
+                    {event.kicker && <span className="kicker text-white/75">{event.kicker}</span>}
                 </div>
                 <div>
                     <div className="text-balance font-bold font-sans text-[25px] text-white leading-[1.02] tracking-[-0.03em] sm:max-w-[80%] sm:text-[34px]" style={{ textShadow: "0 2px 24px rgba(0,0,0,0.55)" }}>

@@ -135,7 +135,7 @@ export function TierDetailsDialog({ tier, color }: ITierDetailsDialogProps) {
                 <section aria-label={t("detail.tierDialog.operatorsLabel")} className="space-y-2.5">
                     <div className="flex items-baseline justify-between gap-3">
                         <SectionHeading>{t("detail.tierDialog.operatorsHeading")}</SectionHeading>
-                        <span className="font-mono text-[10.5px] text-muted-foreground uppercase tabular-nums tracking-[0.12em]">{total}</span>
+                        <span className="font-mono text-[10.5px] text-muted-foreground tabular-nums">{total}</span>
                     </div>
                     {ops.length === 0 ? (
                         <p className="rounded-lg border border-border border-dashed bg-muted/20 px-4 py-6 text-center font-sans text-[12.5px] text-muted-foreground italic">{t("detail.tierDialog.operatorsEmpty")}</p>
@@ -154,7 +154,7 @@ export function TierDetailsDialog({ tier, color }: ITierDetailsDialogProps) {
                                             {op.resolved ? (
                                                 <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                                                     <span className="truncate font-sans font-semibold text-[13.5px] text-foreground tracking-[-0.005em] transition-colors group-hover:text-primary">{op.name}</span>
-                                                    <span className="truncate font-mono text-[10.5px] text-muted-foreground uppercase leading-none tracking-[0.08em]">{[labels.singular(op.kind), ...detail].join(" · ")}</span>
+                                                    <span className="truncate font-mono text-[10.5px] text-muted-foreground leading-none">{[labels.singular(op.kind), ...detail].join(" · ")}</span>
                                                 </span>
                                             ) : (
                                                 <span className="min-w-0 flex-1 truncate font-mono text-[12px] text-muted-foreground">{op.id}</span>
@@ -183,7 +183,7 @@ export function TierDetailsDialog({ tier, color }: ITierDetailsDialogProps) {
                                             </span>
                                             <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                                                 <span className="truncate font-sans font-semibold text-[13.5px] text-foreground tracking-[-0.005em] transition-colors group-hover:text-primary">{op.name}</span>
-                                                <span className="truncate font-mono text-[10.5px] text-muted-foreground uppercase leading-none tracking-[0.08em]">
+                                                <span className="truncate font-mono text-[10.5px] text-muted-foreground leading-none">
                                                     <span style={{ color: RARITY_INK[op.rarity] }} className="font-semibold">
                                                         {op.rarity}★
                                                     </span>

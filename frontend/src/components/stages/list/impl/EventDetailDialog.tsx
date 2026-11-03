@@ -63,7 +63,7 @@ export function EventDetailDialog({ event, onClose, onBrowse }: { event: IEventV
                                 <Icon className="h-3 w-3" aria-hidden="true" />
                                 {tNav(STAGE_GROUP_LABEL_KEY[ev.group])}
                             </span>
-                            {ev.kicker && <span className="font-mono text-[10px] text-white/60 uppercase tracking-[0.12em]">{ev.kicker}</span>}
+                            {ev.kicker && <span className="kicker text-white/75">{ev.kicker}</span>}
                         </div>
                         <DialogTitle className="text-balance font-bold font-sans text-[21px] text-white leading-[1.05] tracking-tight sm:text-[26px]" style={{ textShadow: "0 2px 20px rgba(0,0,0,0.55)" }}>
                             {ev.title}

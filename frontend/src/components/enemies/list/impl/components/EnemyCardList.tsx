@@ -54,7 +54,7 @@ export function EnemyCardList({ enemy, statMax }: IEnemyCardListProps) {
 
             <div className="flex min-w-0 flex-col gap-0.75">
                 <span className="truncate font-sans font-semibold text-[13px] text-foreground leading-[1.1]">{enemy.name}</span>
-                <span className="font-medium font-mono text-[10px] text-muted-foreground uppercase leading-none tracking-[0.14em]">
+                <span className="font-medium font-mono text-[10px] text-muted-foreground leading-none">
                     {enemy.enemyIndex}
                     {enemy.race ? ` · ${enemy.race}` : ""}
                 </span>

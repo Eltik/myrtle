@@ -325,7 +325,7 @@ export function EnemiesList() {
                         )}
                     </span>
                     <div className="ml-auto flex items-center gap-3">
-                        <span className="hidden font-mono text-[10.5px] text-muted-foreground uppercase leading-none tracking-[0.12em] sm:inline">{t("list.hint")}</span>
+                        <span className="hidden font-mono text-[10.5px] text-muted-foreground leading-none sm:inline">{t("list.hint")}</span>
                         <PaginationCompact currentPage={page} totalPages={totalPages} onPageChange={handlePageChange} />
                     </div>
                 </div>

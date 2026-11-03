@@ -27,7 +27,7 @@ interface IProfileHeaderEditorProps {
 /** One row of either list: the same chrome as the tab editor's rows. */
 const ROW = "flex items-center gap-2 rounded-lg border border-border/50 bg-background/60 py-1.5 pr-1.5 pl-3";
 const BADGE = "rounded-full bg-muted px-2 py-0.5 font-medium font-mono text-[11px] text-muted-foreground leading-none";
-const HEADING = "font-medium font-mono text-[11px] text-muted-foreground uppercase tracking-widest";
+const HEADING = "kicker";
 
 /**
  * The owner's header editor: which numbers fill the stat strip, in what order, and which

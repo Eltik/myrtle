@@ -85,7 +85,7 @@ export function MyHero({ total, communityCount, communityQuota, officialCount, t
             </div>
 
             {officialCount > 0 && (
-                <p className="mt-3 inline-flex items-center gap-1.5 font-mono text-[10.5px] text-muted-foreground uppercase leading-none tracking-wider">
+                <p className="mt-3 inline-flex items-center gap-1.5 font-mono text-[10.5px] text-muted-foreground leading-none">
                     <span className="inline-block h-1.5 w-1.5 rounded-full bg-warning" aria-hidden="true" />
                     {t("my.hero.officialIncluded", { count: officialCount })}
                 </p>

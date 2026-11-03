@@ -99,7 +99,7 @@ export function EditHero({ slug, title, description, onTitleChange, onDescriptio
                                 <MarkdownEditor id={descId} value={description} onChange={onDescriptionChange} placeholder={t("edit.hero.descriptionPlaceholder")} rows={4} maxLength={DESC_MAX} showHint={false} />
                             </Field>
 
-                            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.14em]">
+                            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[10.5px] text-muted-foreground">
                                 <span className="tabular-nums">
                                     <span className="text-foreground">{title.length}</span> {t("edit.hero.titleCounter", { max: TITLE_MAX })}
                                 </span>
@@ -114,7 +114,7 @@ export function EditHero({ slug, title, description, onTitleChange, onDescriptio
                     <div className="flex w-full shrink-0 flex-col gap-3 lg:w-72">
                         <div className="rounded-2xl border border-border bg-card p-3 shadow-[0_1px_2px_oklch(0_0_0/0.04)]">
                             <div className="flex items-center justify-between gap-2">
-                                <span className="font-bold font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.14em]">{isDirty ? t("edit.hero.unsaved") : t("edit.hero.allSaved")}</span>
+                                <span className="font-bold font-mono text-[10.5px] text-muted-foreground">{isDirty ? t("edit.hero.unsaved") : t("edit.hero.allSaved")}</span>
                                 {!isDirty && <CheckIcon className="h-3.5 w-3.5 text-primary" aria-hidden="true" />}
                             </div>
                             {isDirty ? (
@@ -202,7 +202,7 @@ interface IAutosaveBadgeProps {
 
 /** The auto-save state in a word, beside the switch. While a save is scheduled, the seconds until it starts. */
 function AutosaveBadge({ status, nextSaveAt, isDirty, onRetry, t }: IAutosaveBadgeProps) {
-    const label = "font-bold font-mono text-[10.5px] uppercase tracking-[0.14em]";
+    const label = "font-bold font-mono text-[10.5px]";
     const seconds = useCountdownSeconds(status === "idle" || status === "saved" ? nextSaveAt : null);
     if (status === "saving") {
         return <output className={`${label} text-muted-foreground`}>{t("edit.hero.autosaveSaving")}</output>;

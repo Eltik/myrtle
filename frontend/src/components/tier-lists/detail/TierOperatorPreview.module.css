@@ -184,8 +184,6 @@
 .hint {
     margin: 0;
     font: 700 9.5px / 1 var(--font-mono);
-    text-transform: uppercase;
-    letter-spacing: 0.16em;
     color: var(--muted-foreground);
     text-align: center;
     padding-top: 8px;

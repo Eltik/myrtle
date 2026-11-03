@@ -18,7 +18,7 @@ export function WavesSection({ level }: { level: ILevel | null }) {
                     // biome-ignore lint/suspicious/noArrayIndexKey: waves are positional ("Wave 1", "Wave 2") and never reorder, so index is their identity
                     <div key={`wave-${wi}`} className="rounded-2xl border border-border bg-card p-3.5">
                         <div className="flex items-center justify-between gap-2">
-                            <span className="inline-flex items-center gap-2 font-medium font-mono text-[10.5px] text-primary uppercase leading-none tracking-[0.14em]">
+                            <span className="kicker inline-flex items-center gap-2 text-primary leading-none">
                                 <Swords className="h-3.5 w-3.5" /> {t("waves.wave", { index: wi + 1 })}
                             </span>
                             <span className="font-mono text-[11px] text-muted-foreground tabular-nums">{t("waves.spawns", { count: spawnCount })}</span>

@@ -7,7 +7,7 @@
     --op-pad-x: 10px;
     --op-pad-y: 10px;
     --op-radius: 8px;
-    border-radius: 12px;
+    border-radius: var(--radius-2xl);
     overflow: hidden;
     background: var(--card);
     border: 1px solid var(--border);
