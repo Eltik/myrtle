@@ -25,14 +25,14 @@ export function FilterToggleButton({ visible, onToggle, activeCount }: { visible
                         variant="outline"
                         size="icon-xs"
                         data-pressed={visible || undefined}
-                        className="text-muted-foreground hover:text-foreground data-pressed:inset-ring data-pressed:inset-ring-foreground/40 data-pressed:bg-input data-pressed:text-foreground md:h-9 md:w-auto md:min-w-20 md:gap-1 md:rounded-lg md:px-1.5 md:before:rounded-[calc(var(--radius-lg)-1px)] dark:data-pressed:bg-foreground/12"
+                        className="text-muted-foreground hover:text-foreground data-pressed:inset-ring data-pressed:inset-ring-ring data-pressed:bg-primary/12 data-pressed:text-foreground md:h-9 md:w-auto md:min-w-20 md:gap-1 md:rounded-lg md:px-1.5 md:before:rounded-[calc(var(--radius-lg)-1px)] dark:data-pressed:bg-primary/16"
                         onClick={onToggle}
                         aria-label={toggleLabel}
                         aria-expanded={visible}
                     />
                 }
             >
-                <span className="hidden border-border border-r pr-1 font-medium font-sans text-xs leading-none md:inline">{t("filters.toggle.label")}</span>
+                <span className="hidden border-border border-r pr-1 font-medium font-mono text-[10px] uppercase leading-none tracking-[0.12em] md:inline">{t("filters.toggle.label")}</span>
                 <Filter className="hidden h-3.5 w-3.5 md:block" aria-hidden="true" />
                 {visible ? <ChevronLeft className="block h-3.5 w-3.5 md:hidden" aria-hidden="true" /> : <ChevronRight className="block h-3.5 w-3.5 md:hidden" aria-hidden="true" />}
                 {!visible && activeCount > 0 && (

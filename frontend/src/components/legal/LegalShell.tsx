@@ -5,11 +5,20 @@ import { Button } from "#/components/ui/button";
 import { Separator } from "#/components/ui/separator";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
+import styles from "./LegalPageShell.module.css";
 import type { messages } from "./LegalShell.messages";
 
-export function LegalContainer({ children }: { children: ReactNode }) {
+/** `ambient` adds the hero's corner glow and faint grid behind the header. */
+export function LegalContainer({ children, ambient }: { children: ReactNode; ambient?: boolean }) {
     return (
         <div className="relative overflow-x-clip">
+            <div className={styles.pageAmbient} aria-hidden="true" />
+            {ambient ? (
+                <>
+                    <div className={styles.heroAmb} aria-hidden="true" />
+                    <div className={styles.heroGrid} aria-hidden="true" />
+                </>
+            ) : null}
             <article className="page-gutter relative z-1 py-14 [--page-max:880px] sm:py-16">{children}</article>
         </div>
     );

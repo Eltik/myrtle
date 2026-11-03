@@ -2,6 +2,7 @@ import { fmtRelative, fmtUTCStamp } from "#/components/gacha/community/impl/form
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import type { messages } from "./PageHeader.messages";
+import styles from "./StatsPage.module.css";
 
 interface IPageHeaderProps {
     computedAt: string | null | undefined;
@@ -16,7 +17,10 @@ export function PageHeader({ computedAt }: IPageHeaderProps) {
                 <p className="m-0 max-w-[62ch] font-sans text-muted-foreground">{t("header.blurb")}</p>
             </div>
             <div className="flex flex-wrap gap-2">
-                <span className="inline-flex h-6 items-center rounded-md border border-border bg-card px-2.5 font-sans text-[11.5px] text-muted-foreground">{t("header.updated", { when: fmtRelative(computedAt) })}</span>
+                <span className="inline-flex h-6 items-center gap-1.5 rounded-md border border-border bg-card px-2.5 font-sans text-[11.5px] text-muted-foreground">
+                    <span className={styles.dotPulse} aria-hidden="true" />
+                    {t("header.updated", { when: fmtRelative(computedAt) })}
+                </span>
                 <span className="inline-flex h-6 items-center rounded-md border border-border bg-card px-2.5 font-mono text-[11.5px] text-muted-foreground tabular-nums">{fmtUTCStamp(computedAt)}</span>
             </div>
         </div>

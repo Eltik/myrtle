@@ -5,6 +5,7 @@ import type { IChangelogCommit } from "#/lib/api/changelog";
 import { useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import type { messages } from "./ActivityStrip.messages";
+import styles from "./ChangelogPage.module.css";
 
 const DAY_MS = 86_400_000;
 
@@ -52,7 +53,7 @@ export function ActivityStrip({ commits, days }: { commits: IChangelogCommit[]; 
                     <Tooltip key={i}>
                         <TooltipTrigger render={<div className="group/bar relative flex h-full flex-1 items-end" />}>
                             {/* Solid primary on card: 4.79 light / 8.07 dark (the old primary/35 measured 1.78 / 1.96). */}
-                            <div className={`w-full rounded-xs transition-colors ${b.count > 0 ? "bg-primary group-hover/bar:bg-foreground" : "bg-muted group-hover/bar:bg-muted-foreground/30"}`} style={{ height: `${b.count > 0 ? Math.max(8, (b.count / max) * 100) : 6}%` }} />
+                            <div className={`${styles.activityBar} w-full rounded-xs transition-colors ${b.count > 0 ? "bg-primary/35 group-hover/bar:bg-primary/70" : "bg-muted group-hover/bar:bg-muted-foreground/30"}`} style={{ height: `${b.count > 0 ? Math.max(8, (b.count / max) * 100) : 6}%` }} />
                         </TooltipTrigger>
                         <TooltipPopup>{t("activity.bar", { label: b.label, count: b.count })}</TooltipPopup>
                     </Tooltip>

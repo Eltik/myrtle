@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { ChevronDown, Loader2, ThumbsDown, ThumbsUp } from "lucide-react";
+import { ChevronDown, Lightbulb, Loader2, MessageSquareText, StickyNote, ThumbsDown, ThumbsUp } from "lucide-react";
 import { useLayoutEffect, useRef, useState } from "react";
 import { Badge } from "#/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "#/components/ui/collapsible";
@@ -42,7 +42,7 @@ function ExpandableText({ text, markdown = false }: { text: string; markdown?: b
                 {!expanded && overflows && <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-linear-to-t from-secondary/40 to-transparent" />}
             </div>
             {overflows && (
-                <button className="mt-2 inline-flex items-center gap-1 font-medium text-foreground text-xs underline decoration-primary underline-offset-2 hover:decoration-2" onClick={() => setExpanded((v) => !v)} type="button">
+                <button className="mt-2 inline-flex items-center gap-1 font-medium text-primary text-xs hover:underline" onClick={() => setExpanded((v) => !v)} type="button">
                     {expanded ? t("notes.showLess") : t("notes.showMore")}
                     <ChevronDown className={cn("h-3 w-3 transition-transform", expanded && "rotate-180")} />
                 </button>
@@ -96,7 +96,10 @@ export function OperatorNotes({ operatorId }: IOperatorNotesProps) {
     return (
         <Collapsible open={showNotes} onOpenChange={setShowNotes}>
             <CollapsibleTrigger className="flex w-full items-center justify-between rounded-lg border border-border bg-secondary/30 px-4 py-3 transition-colors hover:bg-secondary/50">
-                <span className="font-medium text-sm">{t("notes.title")}</span>
+                <span className="flex items-center gap-2">
+                    <MessageSquareText aria-hidden="true" className="h-4 w-4 text-primary" />
+                    <span className="font-medium text-sm">{t("notes.title")}</span>
+                </span>
             </CollapsibleTrigger>
             <CollapsibleContent>
                 <div className="mt-3 space-y-4">
@@ -131,14 +134,20 @@ export function OperatorNotes({ operatorId }: IOperatorNotesProps) {
 
                     {hasNotes && (
                         <div className="rounded-lg border border-border bg-secondary/20 p-4">
-                            <div className="mb-2 font-medium text-sm">{t("notes.notes")}</div>
+                            <div className="mb-2 flex items-center gap-2">
+                                <StickyNote aria-hidden="true" className="h-4 w-4 text-yellow-500" />
+                                <span className="font-medium text-sm">{t("notes.notes")}</span>
+                            </div>
                             <ExpandableText text={notesText} markdown />
                         </div>
                     )}
 
                     {hasTrivia && (
                         <div className="rounded-lg border border-border bg-secondary/20 p-4">
-                            <div className="mb-2 font-medium text-sm">{t("notes.trivia")}</div>
+                            <div className="mb-2 flex items-center gap-2">
+                                <Lightbulb aria-hidden="true" className="h-4 w-4 text-amber-500" />
+                                <span className="font-medium text-sm">{t("notes.trivia")}</span>
+                            </div>
                             <ExpandableText text={trivia} markdown />
                         </div>
                     )}

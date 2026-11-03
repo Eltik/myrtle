@@ -151,6 +151,7 @@ function Network({ data, chart, onChart, onOpenFile, server, t }: INetworkTabPro
     return (
         <div className="flex flex-col gap-3">
             <div ref={wrapRef} className={cn("relative overflow-hidden rounded-2xl border border-border bg-card", fullscreen ? "h-screen" : "h-[min(72vh,600px)] min-h-90")}>
+                <div aria-hidden className="pointer-events-none absolute inset-0 opacity-50" style={{ backgroundImage: "radial-gradient(circle at 1px 1px, color-mix(in oklab, var(--muted-foreground) 25%, transparent) 1px, transparent 0)", backgroundSize: "22px 22px" }} />
                 <PanZoom
                     content={content}
                     insets={insets}

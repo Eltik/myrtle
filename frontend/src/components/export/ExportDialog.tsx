@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckIcon, CircleAlertIcon, CopyIcon, DownloadIcon } from "lucide-react";
+import { CheckIcon, CircleAlertIcon, CopyIcon, DownloadIcon, FileTextIcon } from "lucide-react";
 import { useEffect, useId, useMemo, useState } from "react";
 import { Alert, AlertDescription, AlertTitle } from "#/components/ui/alert";
 import { Button } from "#/components/ui/button";
@@ -187,8 +187,15 @@ export function ExportDialog<T>({ open, onOpenChange, schema, allRows, filteredR
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogPopup className="flex h-[min(820px,92vh)] w-full max-w-260 flex-col overflow-hidden p-0">
                 <DialogHeader className="border-b px-6 py-4">
-                    <DialogTitle>{t("export.title", { name: headline })}</DialogTitle>
-                    <DialogDescription>{t("export.description")}</DialogDescription>
+                    <div className="flex items-center gap-3">
+                        <div aria-hidden="true" className="grid size-9 shrink-0 place-items-center rounded-md bg-primary/10 text-primary">
+                            <FileTextIcon className="size-4.5" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                            <DialogTitle>{t("export.title", { name: headline })}</DialogTitle>
+                            <DialogDescription>{t("export.description")}</DialogDescription>
+                        </div>
+                    </div>
                 </DialogHeader>
 
                 <div className="grid min-h-0 flex-1 grid-cols-1 overflow-hidden lg:grid-cols-[1fr_minmax(0,1.1fr)]">

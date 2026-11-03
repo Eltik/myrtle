@@ -78,7 +78,7 @@ export function TermsPage() {
                 </LegalHeaderLine>
             </LegalHeader>
 
-            <Alert className="mb-10">
+            <Alert className="mb-10 border-[color-mix(in_srgb,var(--primary)_32%,transparent)] bg-[color-mix(in_srgb,var(--primary)_5%,transparent)] [&>svg]:text-primary">
                 <ShieldIcon strokeWidth={1.8} />
                 <AlertDescription className="text-[15px] text-muted-foreground leading-[1.55]">{t("terms.tldr")}</AlertDescription>
             </Alert>

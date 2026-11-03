@@ -120,12 +120,12 @@ export function PrivacyPage() {
     const rt: TypedRichT<typeof messages> = useRichT("legal");
 
     return (
-        <LegalContainer>
+        <LegalContainer ambient>
             <LegalHeader title={t("privacy.hero.title")} subtitle={t("privacy.hero.subtitle")} version={t("privacy.hero.version", { version: VERSION })}>
                 <LegalHeaderLine icon={<Calendar className="size-4" aria-hidden="true" />}>{t("privacy.hero.effective", { date: EFFECTIVE_DATE })}</LegalHeaderLine>
             </LegalHeader>
 
-            <Alert className="mb-10">
+            <Alert className="mb-10 border-[color-mix(in_srgb,var(--primary)_32%,transparent)] bg-[color-mix(in_srgb,var(--primary)_5%,transparent)] [&>svg]:text-primary">
                 <Eye strokeWidth={2} />
                 <AlertTitle className="text-[15px] text-foreground">{t("privacy.tldr.title")}</AlertTitle>
                 <AlertDescription className="text-[15px] text-muted-foreground leading-[1.55]">{t("privacy.tldr.body")}</AlertDescription>

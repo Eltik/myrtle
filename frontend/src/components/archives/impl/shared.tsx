@@ -153,7 +153,7 @@ export function Panel({ title, children, className, footer }: { title?: React.Re
         <section className={cn("flex min-w-0 flex-col gap-3 rounded-2xl border border-border bg-card p-4 sm:p-5", className)}>
             {title ? (
                 <h3 className="m-0 leading-none">
-                    <Kicker>{title}</Kicker>
+                    <Kicker tone="accent">{title}</Kicker>
                 </h3>
             ) : null}
             {children}

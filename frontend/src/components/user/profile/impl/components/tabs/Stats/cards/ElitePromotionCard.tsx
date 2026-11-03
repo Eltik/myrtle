@@ -1,7 +1,9 @@
+import { BarChart3 } from "lucide-react";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
-import { Bar, CARD_PADDING, CardKicker, KICKER_TEXT, StatCard } from "../primitives";
+import { PALETTE } from "../palette";
+import { Bar, CARD_PADDING, KICKER_TEXT, Kicker, StatCard } from "../primitives";
 import type { messages } from "./ElitePromotionCard.messages";
 
 interface IElitePromotionCardProps {
@@ -20,9 +22,9 @@ const ELITE_ROWS = [
 export function ElitePromotionCard({ eliteBreakdown }: IElitePromotionCardProps) {
     const t: TypedT<typeof messages> = useT("user");
     return (
-        <StatCard>
+        <StatCard color={PALETTE.elite}>
             <div className={cn("flex h-full flex-col gap-5", CARD_PADDING)}>
-                <CardKicker label={t("profile.stats.elite.title")} />
+                <Kicker icon={BarChart3} label={t("profile.stats.elite.title")} />
                 <div className="flex flex-1 flex-col justify-center gap-4">
                     {ELITE_ROWS.map(({ key, labelKey }, i) => {
                         const count = eliteBreakdown[key];
@@ -33,11 +35,13 @@ export function ElitePromotionCard({ eliteBreakdown }: IElitePromotionCardProps)
                                 <div className="flex items-center justify-between">
                                     <span className={KICKER_TEXT}>{t(labelKey)}</span>
                                     <div className="flex items-baseline gap-1.5">
-                                        <span className="font-bold text-sm tabular-nums">{count}</span>
+                                        <span className="font-bold text-sm tabular-nums" style={isPrimary ? { color: PALETTE.elite } : undefined}>
+                                            {count}
+                                        </span>
                                         <span className="font-mono text-[10px] text-muted-foreground tabular-nums">{pct.toFixed(0)}%</span>
                                     </div>
                                 </div>
-                                <Bar dim={!isPrimary} pct={pct} />
+                                <Bar color={PALETTE.elite} dim={!isPrimary} pct={pct} />
                             </div>
                         );
                     })}

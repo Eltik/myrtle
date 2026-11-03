@@ -89,7 +89,7 @@ export function MusicGallery(): React.ReactElement {
             <MusicKeyframes />
             <div className="page-shell [--page-max:1200px]">
                 <PageHeader
-                    className="mb-4 border-border border-b pb-3"
+                    className="mb-4 border-primary/70 border-b-2 pb-3"
                     breadcrumbLabel={t("music.breadcrumb")}
                     breadcrumb={[t("music.breadcrumb.gallery"), t("music.title")]}
                     title={t("music.title")}

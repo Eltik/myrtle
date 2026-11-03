@@ -401,7 +401,7 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
             </div>
 
             <CollapsibleSection icon={User} title={t("info.profile")} open={showProfile} onOpenChange={setShowProfile}>
-                <dl className="mt-3 grid grid-cols-2 gap-x-6 md:grid-cols-4">
+                <dl className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-4">
                     {profile && (
                         <>
                             <ProfileCard icon={MapPin} label={t("info.profile.placeOfBirth")} value={profile.placeOfBirth ? fact.birthPlace(profile.placeOfBirth) : unknown} />
@@ -421,7 +421,7 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
             <Separator className="my-6" />
 
             <CollapsibleSection icon={Package} title={t("info.controls")} open={showControls} onOpenChange={setShowControls}>
-                <div className="mt-3 space-y-4 px-1">
+                <div className="mt-3 space-y-4 rounded-lg border border-border/50 bg-card/30 p-4">
                     <p className="text-muted-foreground text-xs">{t("info.controls.desc")}</p>
 
                     <div className="flex flex-wrap items-center gap-2">
@@ -746,7 +746,7 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
                 {talents.length === 0 ? (
                     <p className="mt-3 text-muted-foreground text-xs">{t("info.talents.empty")}</p>
                 ) : (
-                    <div className="mt-3 divide-y divide-border/60">
+                    <div className="mt-3 space-y-3">
                         {talents.map((talent) => {
                             const base = talent.modifiedByModule ? talent.base : null;
                             const change = talent.cnText ? renderCnChange(base, talent.cnText, talent.blackboard, showDiff) : renderChange(base, talent, showDiff);
@@ -754,7 +754,7 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
                             // A talent CN reshaped (other candidates, another module phase) is not this one with new values.
                             const cnHtml = cnTalent ? (cnTalent.shape === talent.shape ? cnNumbersHtml(talent.description, talent.blackboard, cnTalent.description, cnTalent.blackboard) : { html: descriptionToHtml(cnTalent.description, cnTalent.blackboard), lang: "zh-CN" }) : null;
                             return (
-                                <div className="py-3" key={talent.key}>
+                                <div className="rounded-lg border border-border/50 bg-card/30 p-3" key={talent.key}>
                                     <div className="mb-1 flex items-center gap-2">
                                         <h4 lang={talent.zhName ? "zh-CN" : undefined} className="font-medium text-foreground text-sm">
                                             {talent.name ?? t("info.talents.unnamed")}
@@ -813,7 +813,7 @@ function CollapsibleSection({ icon: Icon, title, open, onOpenChange, children }:
         <Collapsible open={open} onOpenChange={onOpenChange}>
             <CollapsibleTrigger className="flex w-full items-center justify-between rounded-lg border border-border bg-secondary/30 px-4 py-3 transition-colors hover:bg-secondary/50">
                 <span className="flex items-center gap-2">
-                    <Icon aria-hidden="true" className="h-4 w-4 text-muted-foreground" />
+                    <Icon aria-hidden="true" className="h-4 w-4 text-primary" />
                     <span className="font-medium text-sm">{title}</span>
                 </span>
                 <ChevronDown aria-hidden="true" className={cn("h-4 w-4 transition-transform", open && "rotate-180")} />
@@ -823,11 +823,10 @@ function CollapsibleSection({ icon: Icon, title, open, onOpenChange, children }:
     );
 }
 
-/** One fact in the profile list: a term over its value, divided by a rule rather than boxed, since
- *  the panel around it is already a card. */
+/** One fact in the profile list, a boxed term over its value. */
 function ProfileCard({ icon: Icon, label, value }: { icon: LucideIcon; label: string; value: string }) {
     return (
-        <div className="min-w-0 border-border/60 border-t py-2.5">
+        <div className="min-w-0 rounded-lg border border-border/50 bg-card/40 p-3">
             <dt className="flex items-center gap-1.5 text-muted-foreground">
                 <Icon aria-hidden="true" className="h-3.5 w-3.5" />
                 <span className="text-xs">{label}</span>
@@ -847,7 +846,7 @@ interface IDescriptionDiffProps {
     prefix?: ReactNode;
 }
 
-const DIFF_LABEL_CLASS = "mb-0.5 font-medium text-[11px] text-muted-foreground";
+const DIFF_LABEL_CLASS = "mb-0.5 font-medium text-[10px] text-muted-foreground uppercase tracking-wider";
 
 /** A description a module changed: the base, struck through under its label, above the marked-up new
  *  text. The base used to be faded with opacity 50, which put xs muted text near 2:1. */

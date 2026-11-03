@@ -14,6 +14,7 @@ import { isHidden } from "../header";
 import type { messages } from "./Hero.messages";
 import { HeroArt } from "./HeroArt";
 import { HiddenMarker } from "./HiddenMarker";
+import shared from "./shared.module.css";
 
 interface IHeroProps {
     profile: IUserProfile;
@@ -28,6 +29,33 @@ interface IHeroProps {
     onEditHeader?: () => void;
     /** The reader owns the profile: the numbers they hid render for them, marked. */
     isOwner?: boolean;
+}
+
+/** The header's tint, half of its plain look. */
+function HeroTint() {
+    return (
+        <div
+            className="pointer-events-none absolute inset-0"
+            style={{
+                background: "radial-gradient(ellipse 80% 60% at 60% 40%, color-mix(in oklab, var(--primary) 7%, transparent), transparent 70%), radial-gradient(ellipse 60% 80% at 80% 20%, oklch(0.696 0.17 162 / 0.06), transparent 70%)",
+            }}
+        />
+    );
+}
+
+/** The header's faint grid, the other half. */
+function HeroGrid() {
+    return (
+        <div
+            className="pointer-events-none absolute inset-0 opacity-[0.06]"
+            style={{
+                backgroundImage: "linear-gradient(var(--border) 1px, transparent 1px), linear-gradient(90deg, var(--border) 1px, transparent 1px)",
+                backgroundSize: "44px 44px",
+                maskImage: "radial-gradient(ellipse 60% 50% at 30% 50%, black 0%, transparent 80%)",
+                WebkitMaskImage: "radial-gradient(ellipse 60% 50% at 30% 50%, black 0%, transparent 80%)",
+            }}
+        />
+    );
 }
 
 async function copyToClipboard(text: string, successTitle: string, successDescription: string, errorTitle: string, errorDescription: string) {
@@ -80,8 +108,23 @@ export function Hero({ profile, background, onChangeBackground, onEditHeader, is
     const showSignIn = typeof profile.cumulative_signin === "number" && profile.cumulative_signin > 0;
 
     return (
-        <section className="relative overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
-            {background && <HeroArt key={`${background.kind}:${background.id}:${background.elite ?? ""}`} background={background} fallback={null} />}
+        <section className="relative overflow-hidden rounded-2xl border border-[oklch(0.28_0.005_285)] bg-card shadow-sm sm:rounded-3xl">
+            {/* Two slots, as the two decoration layers were before backgrounds, so with none the markup (base-ui's generated ids included) is byte-identical to it. */}
+            {background ? (
+                <HeroArt
+                    key={`${background.kind}:${background.id}:${background.elite ?? ""}`}
+                    background={background}
+                    fallback={
+                        <>
+                            <HeroTint />
+                            <HeroGrid />
+                        </>
+                    }
+                />
+            ) : (
+                <HeroTint />
+            )}
+            {background ? null : <HeroGrid />}
 
             <div className="relative grid grid-cols-[auto_1fr] items-start gap-4 px-5 pt-5 pb-5 sm:grid-cols-[auto_1fr_auto] sm:items-center sm:gap-6 sm:px-7 sm:pt-7 sm:pb-6 lg:gap-7 lg:px-8 lg:pt-8 lg:pb-7">
                 <div className="relative">
@@ -148,8 +191,8 @@ export function Hero({ profile, background, onChangeBackground, onEditHeader, is
 
                 <div className="col-span-2 flex min-w-0 flex-col sm:order-2 sm:col-span-1">
                     <div className="mb-1.5 flex flex-wrap items-center gap-2">
-                        <span className="font-medium font-mono text-[11px] text-muted-foreground leading-none">{profile.uid}</span>
-                        <span className="inline-flex items-center gap-1 rounded-full border border-border bg-muted px-2 py-0.5 font-medium font-mono text-[11px] text-muted-foreground leading-none">{t("profile.hero.serverTag", { server: profile.server })}</span>
+                        <span className="font-medium font-mono text-[11px] text-muted-foreground uppercase leading-none tracking-widest">{profile.uid}</span>
+                        <span className="inline-flex items-center gap-1 rounded-full border border-[oklch(0.28_0.005_285)] bg-muted px-2 py-0.5 font-medium font-mono text-[11px] text-muted-foreground leading-none">{t("profile.hero.serverTag", { server: profile.server })}</span>
                     </div>
                     <h1 className="wrap-break-word mb-1 flex flex-wrap items-baseline gap-x-1.5 font-bold font-sans text-2xl leading-[1.1] tracking-tight sm:text-3xl lg:text-[36px] lg:leading-[1.05]">
                         <Tooltip>
@@ -167,9 +210,10 @@ export function Hero({ profile, background, onChangeBackground, onEditHeader, is
                     {profile.resume && <p className="mb-3.5 max-w-prose font-normal font-sans text-muted-foreground text-sm leading-normal sm:text-[14.5px] lg:max-w-135">{profile.resume}</p>}
                     {levelProgress && <LevelProgressBar progress={levelProgress} marked={isOwner && levelHidden} />}
                     {(showRegistered || showSignIn) && (
-                        <div className="mt-1.5 flex flex-wrap items-center gap-x-5 gap-y-1.5 font-medium font-sans text-muted-foreground text-xs leading-none">
+                        <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1.5 font-medium font-sans text-muted-foreground text-xs leading-none">
                             {showRegistered && (
                                 <span className="inline-flex items-center gap-2">
+                                    <span className={shared.dotPulse} aria-hidden="true" />
                                     <span>
                                         {t("profile.hero.registered")}{" "}
                                         <b>
@@ -185,6 +229,8 @@ export function Hero({ profile, background, onChangeBackground, onEditHeader, is
                             )}
                             {showSignIn && (
                                 <span className="inline-flex items-center gap-2">
+                                    {/* The separator belongs between two pieces, so it goes when the date is hidden. */}
+                                    {showRegistered && <span aria-hidden="true" className="size-1.5 rounded-full bg-muted-foreground/40" />}
                                     <span>
                                         {t("profile.hero.signedIn")}{" "}
                                         <b className="text-foreground tabular-nums">
@@ -219,7 +265,7 @@ function LevelProgressBar({ progress, marked }: { progress: ILevelProgress; mark
 
     return (
         <div className="mb-3.5 w-full max-w-prose lg:max-w-135">
-            <div className="mb-1.5 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 font-medium font-mono text-[11px] text-muted-foreground leading-none">
+            <div className="mb-1.5 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 font-medium font-mono text-[11px] text-muted-foreground uppercase leading-none tracking-widest">
                 <span>
                     {t("profile.hero.level.lv")} <span className="text-foreground tabular-nums">{level}</span>
                     {!isMax && (
@@ -233,7 +279,7 @@ function LevelProgressBar({ progress, marked }: { progress: ILevelProgress; mark
                 <span className="tabular-nums">{isMax ? t("profile.hero.level.max", { max: MAX_PLAYER_LEVEL }) : t("profile.hero.level.exp", { current: f.number(currentExp), required: f.number(requiredExp) })}</span>
             </div>
             <div role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={percent} aria-label={ariaLabel} className="h-1.5 overflow-hidden rounded-full bg-muted">
-                <div className="h-full rounded-full bg-muted-foreground transition-[width] duration-500 ease-out" style={{ width: `${percent}%` }} />
+                <div className="h-full rounded-full bg-linear-to-r from-primary/70 to-primary transition-[width] duration-500 ease-out" style={{ width: `${percent}%` }} />
             </div>
         </div>
     );

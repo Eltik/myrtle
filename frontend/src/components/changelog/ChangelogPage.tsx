@@ -10,6 +10,7 @@ import { type IFormatters, useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import type { messages } from "./ChangelogPage.messages";
 import { ActivityStrip } from "./impl/ActivityStrip";
+import styles from "./impl/ChangelogPage.module.css";
 import { CommitItem } from "./impl/CommitItem";
 
 type ChangelogSurface = "notes" | "commits";
@@ -111,8 +112,10 @@ export function ChangelogPage() {
 
     return (
         <div className="relative overflow-x-clip">
+            <div className={styles.pageAmbient} aria-hidden="true" />
             <div className="page-gutter py-12 [--page-max:820px] sm:py-14">
                 <header className="relative mb-8">
+                    <div className={styles.heroGlow} aria-hidden="true" />
                     <div className="relative flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                         <div className="min-w-0">
                             <h1 className="m-0 text-balance font-extrabold text-[clamp(30px,5vw,42px)] text-foreground leading-[1.05] tracking-[-0.02em]">{t("page.title")}</h1>

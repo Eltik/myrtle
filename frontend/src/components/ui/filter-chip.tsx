@@ -28,9 +28,9 @@ type FilterChipProps = IFilterChipProps & Omit<React.ComponentProps<typeof Toggl
 /**
  * Toggle chip with an optional count badge, for list filter rows. It keeps the Toggle's
  * radius, type scale, `aria-pressed` and coarse-pointer 44px hit area. The active tint goes
- * through `data-pressed:`: unprefixed, the Toggle's own `data-pressed:bg-input` outranked
- * it, so the chip measured `--input` (light) and foreground/12 (dark) when pressed and the
- * primary tint and its 1px ring never painted. The pressed border is solid: `--tone` at /50
+ * through `data-pressed:` so it replaces the Toggle's own pressed fill and inset ring: an
+ * untoned chip is tinted `--primary` like a pressed Toggle, a toned chip takes its data
+ * colour. The pressed border is solid: `--tone` at /50
  * measured 2.28 light / 2.79 dark on the page, under the 3:1 an edge needs. Text stays foreground, since tone text on
  * its own tint fails AA (1.66 to 3.96 in audit-002), and a check mark carries the pressed
  * state without relying on colour. Other Toggle props pass through, so a chip can be a

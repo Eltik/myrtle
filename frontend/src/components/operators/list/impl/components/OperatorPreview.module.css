@@ -65,9 +65,8 @@
     font-weight: 600;
     font-size: 28px;
     line-height: 1;
-    /* Foreground, not the rarity hue: on this tinted tile the hue measured under 3:1 in light mode
-       for every rarity, and the tile border and top bar already carry it. */
-    color: var(--foreground);
+    /* The rarity ink, not the plain hue: the hue measured under 3:1 on this tinted tile in light mode. */
+    color: var(--ci, var(--foreground));
 }
 .avatarImg {
     position: relative;
@@ -104,7 +103,9 @@
     line-height: 1;
 }
 .nation {
-    font: 500 12px / 1 var(--font-sans);
+    font: 500 11px / 1 var(--font-mono);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
     color: var(--muted-foreground);
 }
 
@@ -145,7 +146,9 @@
     flex: 0 1 auto;
 }
 .metaItem .k {
-    font: 500 11px / 1 var(--font-sans);
+    font: 500 10px / 1 var(--font-mono);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
     color: var(--muted-foreground);
 }
 .metaItem .v {

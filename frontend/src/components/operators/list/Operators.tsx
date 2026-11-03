@@ -320,7 +320,15 @@ export function OperatorsList() {
                         <ToggleGroup aria-label={t("list.viewMode.aria")} value={[viewMode]} onValueChange={(next) => next[0] && setViewMode(next[0] as ViewMode)} variant="outline" size="lg">
                             {VIEW_MODE_ICONS.map(({ mode, Icon }) => (
                                 <Tooltip key={mode}>
-                                    <TooltipTrigger render={<ToggleGroupItem value={mode} aria-label={t(`list.viewMode.${mode}`)} />}>
+                                    <TooltipTrigger
+                                        render={
+                                            <ToggleGroupItem
+                                                value={mode}
+                                                aria-label={t(`list.viewMode.${mode}`)}
+                                                className="text-muted-foreground hover:text-foreground data-pressed:inset-ring-0 data-pressed:bg-primary data-pressed:text-primary-foreground data-pressed:hover:bg-primary-hover dark:data-pressed:bg-primary dark:data-pressed:hover:bg-primary-hover"
+                                            />
+                                        }
+                                    >
                                         <Icon aria-hidden="true" />
                                     </TooltipTrigger>
                                     <TooltipPopup side="top" sideOffset={8}>
@@ -333,7 +341,16 @@ export function OperatorsList() {
                         <ToggleGroup aria-label={t("list.stat.aria")} value={[statMetric]} onValueChange={(next) => next[0] && setStatMetric(next[0] as StatMetric)} variant="outline" size="lg">
                             {(["owned", "e2"] as const).map((metric) => (
                                 <Tooltip key={metric}>
-                                    <TooltipTrigger render={<ToggleGroupItem value={metric} className="text-xs sm:text-xs" />}>{t(`list.stat.${metric}`)}</TooltipTrigger>
+                                    <TooltipTrigger
+                                        render={
+                                            <ToggleGroupItem
+                                                value={metric}
+                                                className="font-mono text-[10px] text-muted-foreground uppercase tracking-[0.12em] hover:text-foreground data-pressed:inset-ring-0 data-pressed:bg-primary data-pressed:text-primary-foreground data-pressed:hover:bg-primary-hover sm:text-[10px] dark:data-pressed:bg-primary dark:data-pressed:hover:bg-primary-hover"
+                                            />
+                                        }
+                                    >
+                                        {t(`list.stat.${metric}`)}
+                                    </TooltipTrigger>
                                     <TooltipPopup side="top" sideOffset={8}>
                                         {t(`list.stat.${metric}.tip`)}
                                     </TooltipPopup>
@@ -344,7 +361,7 @@ export function OperatorsList() {
                         <div className="inline-flex h-10 items-center gap-1 rounded-lg border border-input bg-background p-1 sm:h-9 dark:bg-input/32">
                             <Select value={filters.sortBy} onValueChange={(v) => setSortBy(v as SortOption)} aria-label={t("list.sort.aria")}>
                                 <SelectTrigger size="sm" className="h-8 min-h-8 min-w-0 gap-1.5 border-0 bg-transparent px-2 font-medium font-sans text-[13px] text-foreground shadow-none before:shadow-none hover:bg-accent">
-                                    <span className="mr-1 border-border border-r pr-1 font-medium font-sans text-muted-foreground text-xs leading-none">{t("list.sort.caption")}</span>
+                                    <span className="mr-1 border-border border-r pr-1 font-medium font-mono text-[10px] text-muted-foreground uppercase leading-none tracking-[0.12em]">{t("list.sort.caption")}</span>
                                     <SelectValue>
                                         {(value) => {
                                             const opt = SORT_OPTIONS.find((o) => o.value === value);
@@ -380,7 +397,7 @@ export function OperatorsList() {
                                 aria-label={t("list.perPage.aria")}
                             >
                                 <SelectTrigger size="sm" className="h-8 min-h-8 min-w-0 gap-1.5 border-0 bg-transparent px-2 font-medium font-sans text-[13px] text-foreground shadow-none before:shadow-none hover:bg-accent">
-                                    <span className="mr-1 border-border border-r pr-1 font-medium font-sans text-muted-foreground text-xs leading-none">{t("list.perPage.caption")}</span>
+                                    <span className="mr-1 border-border border-r pr-1 font-medium font-mono text-[10px] text-muted-foreground uppercase leading-none tracking-[0.12em]">{t("list.perPage.caption")}</span>
                                     <SelectValue>{(value) => (value === "all" ? t("list.perPage.all") : value)}</SelectValue>
                                 </SelectTrigger>
                                 <SelectContent>
@@ -419,7 +436,7 @@ export function OperatorsList() {
                             })}
                         </span>
                         <div className="ml-auto flex items-center gap-3">
-                            <span className="hidden font-sans text-muted-foreground text-xs leading-none [@media(hover:hover)]:md:inline">{t("list.hint")}</span>
+                            <span className="hidden font-mono text-[11px] text-muted-foreground uppercase leading-none tracking-[0.08em] [@media(hover:hover)]:md:inline">{t("list.hint")}</span>
                             <PaginationCompact currentPage={page} totalPages={totalPages} onPageChange={handlePageChange} />
                         </div>
                     </div>
@@ -436,7 +453,7 @@ export function OperatorsList() {
                         // A failed upcoming fetch is said by the alert above; an empty state here would
                         // claim the filters removed operators that never arrived.
                         isUpcoming && upcomingFailed ? null : (
-                            <Empty className="rounded-2xl border border-border bg-card md:py-16">
+                            <Empty className="rounded-xl border border-border border-dashed bg-card/50 md:py-16">
                                 <EmptyHeader>
                                     <EmptyDescription>{isUpcoming ? t("list.empty.upcoming") : t("list.empty")}</EmptyDescription>
                                 </EmptyHeader>
@@ -476,7 +493,7 @@ export function OperatorsList() {
                                 <span className="text-center">{t("list.column.owned")}</span>
                                 <span />
                             </div>
-                            <div className="flex flex-col gap-0.5">
+                            <div className="flex flex-col gap-1">
                                 {paginated.map((op) => (
                                     <OperatorCardList key={op.id} operator={op} statMetric={statMetric} />
                                 ))}

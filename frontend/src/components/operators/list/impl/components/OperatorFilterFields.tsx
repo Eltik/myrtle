@@ -16,7 +16,7 @@ import { CampIcon, SubProfessionIcon, TeamIcon } from "./Icons";
 import type { messages } from "./OperatorFilterFields.messages";
 import styles from "./OperatorFilters.module.css";
 
-/** One of several, so a ToggleGroup (grey pressed, no check), not the multi-select FilterChip. */
+/** One of several, so a ToggleGroup (accent pressed, no check), not the multi-select FilterChip. */
 export function TagRow<T extends string>({ label, options, value, onChange }: { label: string; options: readonly { value: T; label: string }[]; value: T; onChange: (v: T) => void }) {
     const labelId = useId();
     return (
@@ -26,7 +26,7 @@ export function TagRow<T extends string>({ label, options, value, onChange }: { 
             </div>
             <ToggleGroup aria-labelledby={labelId} className={cn(styles.tagRow, "w-auto")} onValueChange={(next) => next[0] !== undefined && onChange(next[0] as T)} size="sm" value={[value]} variant="outline">
                 {options.map((opt) => (
-                    <ToggleGroupItem className="px-3" key={opt.value} value={opt.value}>
+                    <ToggleGroupItem className="px-3 text-muted-foreground hover:text-foreground data-pressed:text-foreground" key={opt.value} value={opt.value}>
                         {opt.label}
                     </ToggleGroupItem>
                 ))}

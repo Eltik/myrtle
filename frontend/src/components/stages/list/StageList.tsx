@@ -16,7 +16,7 @@ import { STAGE_GROUP_LABEL_KEY, type StageGroupKey } from "#/lib/registry/stage-
 import { cn } from "#/lib/utils";
 import { buildStageTree, coverImage, filterTree, type IEventVM, type IGroupVM, type IStageCardVM } from "./impl/derive";
 import { EventDetailDialog } from "./impl/EventDetailDialog";
-import { PreviewFallback, zoneCodeOf } from "./impl/PreviewFallback";
+import { PreviewFallback, STAGE_GROUP_ICON, zoneCodeOf } from "./impl/PreviewFallback";
 import { StagePreview } from "./impl/StagePreview";
 import type { messages } from "./StageList.messages";
 
@@ -125,7 +125,7 @@ export function StageList() {
 
             {/* Timeline spine: decoration only above sm, so phones get the full width back. */}
             <div className="relative sm:pl-6.5">
-                <div className="absolute top-2 bottom-2.5 left-0.75 hidden w-px bg-border sm:block" />
+                <div className="absolute top-2 bottom-2.5 left-0.75 hidden w-px sm:block" style={{ background: "linear-gradient(180deg,var(--border),color-mix(in oklch,var(--border) 25%,transparent))" }} />
                 <VirtualStageTree groups={visibleGroups} searching={searching} open={open} closedSections={closedSections} onToggleSection={toggleSection} onToggleZone={toggle} onDetails={setDetailEvent} scrollZone={scrollZone} onScrolled={() => setScrollZone(null)} />
             </div>
 
@@ -305,11 +305,14 @@ function GroupHeaderRow({ row, open, onToggle }: { row: Extract<FlatRow, { kind:
     const t: TypedT<typeof messages> = useT("stages");
     const tNav = useT("nav");
     const { group, first } = row;
+    const Icon = STAGE_GROUP_ICON[group.key];
     return (
         <section style={{ scrollMarginTop: 74 }} className={cn("relative", !first && "pt-7 sm:pt-8")}>
             <div className="relative pb-2 sm:pb-3.5">
+                <span className="absolute top-2.5 -left-5.75 hidden h-1.75 w-1.75 rotate-45 sm:block" style={{ background: group.tone, boxShadow: "0 0 0 4px var(--background)" }} />
                 <h2 className="m-0">
                     <button type="button" onClick={onToggle} aria-expanded={open} aria-controls={`section-${group.key}`} className="group/section flex w-full cursor-pointer flex-wrap items-baseline gap-x-3 gap-y-0.5 rounded-md py-1 text-left ring-inset focus-visible:ring-2 focus-visible:ring-ring">
+                        <Icon className="h-3.75 w-3.75 flex-none self-center" style={{ color: group.tone }} aria-hidden="true" />
                         <span className="font-bold font-sans text-[17px] text-foreground tracking-[-0.02em]">{tNav(STAGE_GROUP_LABEL_KEY[group.key])}</span>
                         <span className="whitespace-nowrap font-mono text-[10px] text-muted-foreground tracking-widest">{t("list.group.counts", { zones: group.zoneCount, stages: group.stageCount })}</span>
                         <span className="h-px flex-1 bg-border" />
@@ -339,7 +342,7 @@ function EventHeaderRow({ row, onToggle, onDetails }: { row: Extract<FlatRow, { 
                     aria-label={t("list.zone.about", { title: event.title })}
                     className="group relative z-1 h-10 pointer-coarse:h-11 w-16 flex-none cursor-zoom-in overflow-hidden rounded-md border border-border ring-inset focus-visible:ring-2 focus-visible:ring-ring"
                 >
-                    <PreviewFallback label={zoneCodeOf(event.codeRange)} />
+                    <PreviewFallback tone={event.tone} group={event.group} label={zoneCodeOf(event.codeRange)} iconClassName="h-3.5 w-3.5" />
                     {cover && <StagePreview src={cover} />}
                     <span className="absolute inset-0 flex items-center justify-center bg-black/45 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100">
                         <Maximize2 className="h-3.5 w-3.5 text-white" aria-hidden="true" />
@@ -372,7 +375,7 @@ function StagesRow({ row, cols }: { row: Extract<FlatRow, { kind: "stages" }>; c
             <div className={cn("bg-background/40 px-3 sm:px-4", row.first ? "border-border border-t pt-5" : "pt-2.5 sm:pt-3", row.last && "pb-4 sm:pb-4.5")}>
                 <div className="grid gap-2.5 sm:gap-3" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
                     {row.cards.map((st) => (
-                        <StageCard key={st.stageId} card={st} tone={event.tone} />
+                        <StageCard key={st.stageId} card={st} tone={event.tone} group={event.group} />
                     ))}
                 </div>
             </div>
@@ -380,12 +383,12 @@ function StagesRow({ row, cols }: { row: Extract<FlatRow, { kind: "stages" }>; c
     );
 }
 
-function StageCardInner({ card, tone }: { card: IStageCardVM; tone: string }) {
+function StageCardInner({ card, tone, group }: { card: IStageCardVM; tone: string; group: StageGroupKey }) {
     const t: TypedT<typeof messages> = useT("stages");
     return (
         <>
             <div className="relative aspect-16/10 w-full flex-none overflow-hidden">
-                <PreviewFallback />
+                <PreviewFallback tone={tone} group={group} />
                 {card.preview && (
                     <>
                         <StagePreview src={card.preview} />
@@ -401,7 +404,10 @@ function StageCardInner({ card, tone }: { card: IStageCardVM; tone: string }) {
                     </span>
                 )}
                 {card.boss && (
-                    <span className="absolute top-1.75 right-1.75 z-2 inline-flex h-4.5 items-center gap-1 rounded-full px-1.75 font-bold font-mono text-[10px] text-white" style={{ background: "color-mix(in oklch, var(--enemy-boss) 88%, black)" }}>
+                    <span
+                        className="absolute top-1.75 right-1.75 z-2 inline-flex h-4.5 items-center gap-1 rounded-full px-1.75 font-bold font-mono text-[10px] text-white"
+                        style={{ background: "color-mix(in oklch, var(--enemy-boss) 88%, black)", boxShadow: "0 0 10px color-mix(in oklch, var(--enemy-boss) 60%, transparent)" }}
+                    >
                         <Skull className="h-2.5 w-2.5" /> {t("list.card.boss")}
                     </span>
                 )}
@@ -416,7 +422,7 @@ function StageCardInner({ card, tone }: { card: IStageCardVM; tone: string }) {
     );
 }
 
-function StageCard({ card, tone }: { card: IStageCardVM; tone: string }) {
+function StageCard({ card, tone, group }: { card: IStageCardVM; tone: string; group: StageGroupKey }) {
     const cardStyle = { ["--rowtone" as string]: tone };
     // Variant links sit over the card's footer as siblings of the card link, never inside it.
     const variants = card.variants.length > 0 && <StageVariantLinks card={card} />;
@@ -425,7 +431,7 @@ function StageCard({ card, tone }: { card: IStageCardVM; tone: string }) {
         return (
             <div className="relative">
                 <div className="flex w-full flex-col overflow-hidden rounded-lg border border-border bg-card/55 text-left" style={{ ...cardStyle, cursor: "default" }}>
-                    <StageCardInner card={card} tone={tone} />
+                    <StageCardInner card={card} tone={tone} group={group} />
                 </div>
                 {variants}
             </div>
@@ -434,7 +440,7 @@ function StageCard({ card, tone }: { card: IStageCardVM; tone: string }) {
     return (
         <div className="msv-card relative">
             <Link to="/stages/$stageId" params={{ stageId: card.stageId }} className="msv-stage flex w-full flex-col overflow-hidden rounded-lg border border-border bg-card/55 text-left transition-[transform,border-color,box-shadow] duration-150" style={cardStyle}>
-                <StageCardInner card={card} tone={tone} />
+                <StageCardInner card={card} tone={tone} group={group} />
             </Link>
             {variants}
         </div>
@@ -483,18 +489,21 @@ function FeaturedHero({ event, onBrowse, onDetails }: { event: IEventVM; onBrows
     const cover = coverImage(event);
     return (
         <div className="relative mb-7 h-66 overflow-hidden rounded-2xl border border-border bg-card sm:mb-8 sm:h-60">
-            <PreviewFallback />
+            <PreviewFallback tone={event.tone} group={event.group} iconClassName="h-8 w-8" />
             {cover && <StagePreview src={cover} />}
             {/* Legibility + brand wash: side sweep for wide screens, bottom anchor so text survives bright art at any width. */}
             <div className="pointer-events-none absolute inset-0" style={{ background: "linear-gradient(90deg, rgba(7,9,12,0.86) 0%, rgba(7,9,12,0.55) 42%, rgba(7,9,12,0.15) 100%)" }} />
             <div className="pointer-events-none absolute inset-0 max-sm:hidden" style={{ background: "linear-gradient(0deg, rgba(7,9,12,0.85) 0%, rgba(7,9,12,0.35) 45%, rgba(7,9,12,0) 70%)" }} />
+            <div className="pointer-events-none absolute inset-0" style={{ background: "radial-gradient(90% 130% at 90% 0%, color-mix(in oklch, var(--primary) 26%, transparent), transparent 55%)" }} />
             {/* Below sm the title wraps up into the art and runs full width, past the side sweep. Every point a title or meta line can
                 reach (the lower 75%) keeps >= 0.68 of the scrim: over pure-white art white text then measures >= 7.16:1, white/75 >= 4.89:1. */}
             <div className="pointer-events-none absolute inset-0 sm:hidden" style={{ background: "linear-gradient(0deg, rgba(7,9,12,0.82) 0%, rgba(7,9,12,0.78) 62%, rgba(7,9,12,0.5) 100%)" }} />
 
             <div className="absolute inset-0 flex flex-col justify-between p-4.5 sm:p-7">
                 <div className="flex items-center gap-2.5">
-                    <span className="inline-flex h-5.5 items-center rounded-full border border-white/35 bg-black/35 px-2.5 font-mono font-semibold text-[10px] text-white">{tNav(STAGE_GROUP_LABEL_KEY[event.group])}</span>
+                    <span className="inline-flex h-5.5 items-center rounded-full border px-2.5 font-mono font-semibold text-[10px] text-white" style={{ borderColor: `color-mix(in oklch, ${event.tone} 55%, transparent)`, background: `color-mix(in oklch, ${event.tone} 16%, rgba(0,0,0,0.35))` }}>
+                        {tNav(STAGE_GROUP_LABEL_KEY[event.group])}
+                    </span>
                     {event.kicker && <span className="kicker text-white/75">{event.kicker}</span>}
                 </div>
                 <div>

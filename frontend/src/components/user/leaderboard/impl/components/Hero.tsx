@@ -40,7 +40,8 @@ function formatRelative(iso: string | null, t: TypedT<typeof messages>): string 
 export function Hero({ item, rankedPlayers, topValue, updatedAt, isLoading, statsError, onRetryStats }: IHeroProps) {
     const t: TypedT<typeof messages> = useT("user");
     const f = useFormatters();
-    // The item's rarity colour tints the item pill.
+    // The item's rarity colour tints the backdrop and the item pill, so switching what is
+    // ranked reads as the same page in a different light, not a new page.
     const tint = item ? rarityStarColor(item.rarityNum) : "var(--primary)";
     const failure =
         statsError && onRetryStats ? (
@@ -51,6 +52,14 @@ export function Hero({ item, rankedPlayers, topValue, updatedAt, isLoading, stat
 
     return (
         <section className="relative overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+            <div aria-hidden className="pointer-events-none absolute inset-x-0 -top-px h-px bg-linear-to-r from-transparent via-primary/60 to-transparent" />
+            <div
+                aria-hidden
+                className="pointer-events-none absolute inset-0 transition-[background] duration-300"
+                style={{
+                    background: `radial-gradient(ellipse 80% 60% at 60% 40%, color-mix(in oklab, ${tint} 7%, transparent), transparent 70%), radial-gradient(ellipse 60% 80% at 80% 20%, color-mix(in oklab, var(--chart-2) 6%, transparent), transparent 70%)`,
+                }}
+            />
             <div className="relative grid gap-x-7 gap-y-4 px-4 py-4 sm:grid-cols-[1fr_auto] sm:gap-y-5 sm:px-6 sm:py-6">
                 <div className="flex min-w-0 flex-col gap-1.5">
                     <h1 className="m-0 flex flex-wrap items-center gap-2.5 font-bold font-sans text-[22px] text-foreground leading-[1.1] tracking-tight sm:text-[28px]">

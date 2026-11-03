@@ -163,7 +163,7 @@ const ChartTrack = memo(function ChartTrack({ row, tracks, source, houseArtist }
                     {track.coverUrl ? <img referrerPolicy="no-referrer" src={sizedCover(track.coverUrl, 32)} alt="" loading="lazy" decoding="async" className="size-full object-cover" /> : <Gamepad2Icon className="absolute inset-0 m-auto size-4 text-muted-foreground" aria-hidden="true" />}
                 </span>
                 <span className="flex min-w-0 flex-1 flex-col leading-tight">
-                    <span className={cn("truncate font-sans text-[13px] text-foreground", current ? "font-semibold" : "font-medium")} title={name}>
+                    <span className={cn("truncate font-sans text-[13px]", current ? "font-semibold text-primary" : "font-medium text-foreground")} title={name}>
                         {name}
                     </span>
                     {sub ? (

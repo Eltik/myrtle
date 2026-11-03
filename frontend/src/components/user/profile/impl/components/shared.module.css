@@ -1,0 +1,18 @@
+.dotPulse {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    border-radius: 999px;
+    background: oklch(0.75 0.17 155);
+    box-shadow: 0 0 0 0 oklch(0.75 0.17 155 / 0.6);
+    animation: dotPulse 1.8s ease-out infinite;
+    flex-shrink: 0;
+}
+@keyframes dotPulse {
+    0% {
+        box-shadow: 0 0 0 0 oklch(0.75 0.17 155 / 0.6);
+    }
+    100% {
+        box-shadow: 0 0 0 8px oklch(0.75 0.17 155 / 0);
+    }
+}

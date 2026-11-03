@@ -5,6 +5,7 @@ import { Button } from "#/components/ui/button";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import type { messages } from "./ChangelogError.messages";
+import styles from "./impl/ChangelogPage.module.css";
 
 /** The changelog route's error screen. The error itself is not shown: it is GitHub's or the network's text, not a player's. */
 export function ChangelogError() {
@@ -23,6 +24,7 @@ export function ChangelogError() {
 
     return (
         <div className="relative overflow-x-clip">
+            <div className={styles.pageAmbient} aria-hidden="true" />
             <div className="mx-auto flex w-[min(820px,calc(100%-2rem))] flex-col items-center py-20 text-center sm:py-28">
                 <span className="mb-5 inline-flex size-16 items-center justify-center rounded-2xl bg-destructive/10 text-destructive-foreground">
                     <TriangleAlertIcon className="size-8" strokeWidth={1.8} aria-hidden="true" />

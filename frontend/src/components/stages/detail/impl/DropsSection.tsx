@@ -11,7 +11,7 @@ import type { messages } from "./DropsSection.messages";
 import { SectionHead } from "./primitives";
 import type { IDropGroup, IResolvedDrop } from "./types";
 
-function RateMeter({ occ }: { occ: { labelKey: StageDetailMessageKey; level: number } }) {
+function RateMeter({ occ }: { occ: { labelKey: StageDetailMessageKey; level: number; tone: string } }) {
     const t: TypedT<typeof messages> = useT("stages");
     const tConst: TypedT<typeof detailConstantsMessages> = useT("stages");
     const label = tConst(occ.labelKey);
@@ -20,7 +20,7 @@ function RateMeter({ occ }: { occ: { labelKey: StageDetailMessageKey; level: num
             <TooltipTrigger render={<span className="inline-flex items-center gap-1.5" />}>
                 <span aria-hidden="true" className="flex items-center gap-0.5">
                     {[0, 1, 2, 3, 4].map((i) => (
-                        <span key={i} className="h-2.5 w-1 rounded-[1px]" style={{ background: i < occ.level ? "var(--muted-foreground)" : "color-mix(in oklch, var(--muted-foreground) 28%, transparent)" }} />
+                        <span key={i} className="h-2.5 w-1 rounded-[1px]" style={{ background: i < occ.level ? occ.tone : "color-mix(in oklch, var(--muted-foreground) 28%, transparent)" }} />
                     ))}
                 </span>
                 <span className="font-medium font-mono text-[10px] text-muted-foreground leading-none">{label}</span>

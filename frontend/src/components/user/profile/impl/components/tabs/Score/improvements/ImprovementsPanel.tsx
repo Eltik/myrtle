@@ -29,7 +29,7 @@ export function ImprovementsPanel({ sub, improvements, isLoading, score }: IProp
 
     // The base panel reads the stored score row, not the improvements query,
     // so it renders without waiting on the shared fetch.
-    if (sub.key === "base_score") return <BasePanel score={score} />;
+    if (sub.key === "base_score") return <BasePanel score={score} accent={sub.color} />;
     if (isLoading && !improvements) return <PanelSkeleton />;
     if (!improvements) {
         return (
@@ -40,15 +40,15 @@ export function ImprovementsPanel({ sub, improvements, isLoading, score }: IProp
     }
     switch (sub.key) {
         case "operator_score":
-            return <OperatorPanel improvements={improvements} />;
+            return <OperatorPanel improvements={improvements} accent={sub.color} />;
         case "stage_score":
-            return <StagePanel improvements={improvements} />;
+            return <StagePanel improvements={improvements} accent={sub.color} />;
         case "roguelike_score":
-            return <RoguelikePanel improvements={improvements} />;
+            return <RoguelikePanel improvements={improvements} accent={sub.color} />;
         case "sandbox_score":
-            return <SandboxPanel improvements={improvements} />;
+            return <SandboxPanel improvements={improvements} accent={sub.color} />;
         case "medal_score":
-            return <MedalPanel improvements={improvements} />;
+            return <MedalPanel improvements={improvements} accent={sub.color} />;
         default:
             return null;
     }

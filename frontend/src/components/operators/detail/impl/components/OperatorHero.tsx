@@ -208,7 +208,7 @@ function ArtPlaceholder({ operator, onLoad, className }: { operator: IOperatorLi
                 <ImageIcon aria-hidden />
                 {t("hero.dataSaver.load")}
             </Button>
-            <span className="text-muted-foreground text-xs">{t("hero.dataSaver.note")}</span>
+            <span className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider">{t("hero.dataSaver.note")}</span>
         </div>
     );
 }

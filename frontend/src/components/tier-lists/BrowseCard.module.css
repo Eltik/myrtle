@@ -148,7 +148,7 @@
     border-radius: calc(var(--op-size) * 0.14);
     overflow: hidden;
     flex-shrink: 0;
-    background: oklch(0.25 0.005 285);
+    background: color-mix(in srgb, var(--row-color) 30%, oklch(0.25 0.005 285));
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -170,8 +170,8 @@
     padding: 0 calc(var(--op-size) * 0.22);
     margin-left: 2px;
     border-radius: calc(var(--op-size) * 0.18);
-    /* Neutral, the op-tile fill: white on a 30% tier tint fell under AA on the light tiers; white on this measures 16.01. */
-    background: oklch(0.25 0.005 285);
+    /* The tier tint over the dark op-tile fill, not over translucent black: white stays above AA on the light tiers. */
+    background: color-mix(in srgb, var(--row-color) 30%, oklch(0.25 0.005 285));
     color: white;
     font-family: var(--font-mono);
     font-size: calc(var(--op-size) * 0.42);

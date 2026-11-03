@@ -41,7 +41,7 @@ function FactTile({ label, fraction, sentence, meta, className }: IFactTileProps
                 <>
                     <span className="font-bold font-sans text-[24px] text-foreground tabular-nums leading-none tracking-tight">{fraction === null ? DASH : f.percent(fraction)}</span>
                     <span className="h-1 w-full overflow-hidden rounded-full bg-muted" aria-hidden="true">
-                        <span className="block h-full rounded-full bg-muted-foreground" style={{ width: `${Math.min(1, Math.max(0, fraction ?? 0)) * 100}%` }} />
+                        <span className="block h-full rounded-full bg-primary" style={{ width: `${Math.min(1, Math.max(0, fraction ?? 0)) * 100}%` }} />
                     </span>
                     {sentence ? <span className="text-pretty font-sans text-[12.5px] text-foreground/85 leading-snug">{sentence}</span> : null}
                     {meta ? <span className="mt-auto font-medium font-mono text-[11px] text-muted-foreground tabular-nums leading-[1.3]">{meta}</span> : null}

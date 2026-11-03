@@ -18,6 +18,7 @@ type MessageKey = keyof typeof messages & string;
 
 interface IProps {
     improvements: IImprovementsResponse;
+    accent: string;
 }
 
 const TAG_ORDER = ["ELITE", "MAX_LEVEL", "M3", "SL7", "MOD3", "POT6", "TRUST"] as const;
@@ -81,7 +82,7 @@ const INITIAL_VISIBLE = 18;
 // Below this a delta renders as a muted "·" instead of a "+0.00" stamp.
 const SHOW_DELTA_THRESHOLD_PCT = 0.005;
 
-export function OperatorPanel({ improvements }: IProps) {
+export function OperatorPanel({ improvements, accent }: IProps) {
     const t: TypedT<typeof messages> = useT("user");
     const rt: TypedRichT<typeof messages> = useRichT("user");
     const ops = improvements.operators.below_milestone;
@@ -128,7 +129,7 @@ export function OperatorPanel({ improvements }: IProps) {
     if (ops.length === 0) {
         return (
             <div className={`${PANEL_PADDING} flex flex-col gap-4`}>
-                <ScoreBreakdown dims={improvements.operators.score_breakdown} />
+                <ScoreBreakdown dims={improvements.operators.score_breakdown} accent={accent} />
                 <EmptyHint>{t("score.improvements.operator.empty")}</EmptyHint>
             </div>
         );
@@ -138,9 +139,9 @@ export function OperatorPanel({ improvements }: IProps) {
 
     return (
         <div className={`${PANEL_PADDING} flex flex-col gap-4`}>
-            <ScoreBreakdown dims={improvements.operators.score_breakdown} />
+            <ScoreBreakdown dims={improvements.operators.score_breakdown} accent={accent} />
 
-            <SectionHeader title={t("score.improvements.operator.title")} count={t("score.improvements.operator.count", { n: ops.length, gain: totalOverallGainPct.toFixed(1) })} />
+            <SectionHeader title={t("score.improvements.operator.title")} count={t("score.improvements.operator.count", { n: ops.length, gain: totalOverallGainPct.toFixed(1) })} accent={accent} />
 
             {/* Doubles as the filter for the rarity buckets below. */}
             <div className="flex flex-col gap-2">
@@ -149,7 +150,7 @@ export function OperatorPanel({ improvements }: IProps) {
                     {TAG_ORDER.map((tag) => {
                         const gain = tagGains[tag];
                         const sub = gain > 0.01 ? `+${gain.toFixed(1)}%` : t(TAG_DESC[tag]);
-                        return <StatTile key={tag} value={tagCounts[tag]} label={t(TAG_LABEL[tag])} sub={sub} active={activeFilter === tag} onClick={tagCounts[tag] > 0 ? () => setActiveFilter((cur) => (cur === tag ? null : tag)) : undefined} />;
+                        return <StatTile key={tag} value={tagCounts[tag]} label={t(TAG_LABEL[tag])} sub={sub} accent={accent} active={activeFilter === tag} onClick={tagCounts[tag] > 0 ? () => setActiveFilter((cur) => (cur === tag ? null : tag)) : undefined} />;
                     })}
                 </div>
                 {activeFilter && (
@@ -159,7 +160,7 @@ export function OperatorPanel({ improvements }: IProps) {
                 )}
             </div>
 
-            <div className="flex flex-col gap-1.5">{buckets.length === 0 ? <EmptyHint>{t("score.improvements.operator.noMatch")}</EmptyHint> : buckets.map(([rarity, list], idx) => <RarityBucket key={rarity} rarity={rarity} ops={list} defaultOpen={idx === 0} />)}</div>
+            <div className="flex flex-col gap-1.5">{buckets.length === 0 ? <EmptyHint>{t("score.improvements.operator.noMatch")}</EmptyHint> : buckets.map(([rarity, list], idx) => <RarityBucket key={rarity} rarity={rarity} ops={list} defaultOpen={idx === 0} accent={accent} />)}</div>
 
             <p className={cn(TEXT_BADGE, "text-subtle-foreground leading-relaxed")}>
                 {rt("score.improvements.operator.footnote", {
@@ -177,7 +178,7 @@ export function OperatorPanel({ improvements }: IProps) {
  * investment axes, earned vs available per row (both in % of this section).
  * The earned figures sum to the section score on the card.
  */
-function ScoreBreakdown({ dims }: { dims: IScoreDimension[] | undefined }) {
+function ScoreBreakdown({ dims, accent }: { dims: IScoreDimension[] | undefined; accent: string }) {
     const t: TypedT<typeof messages> = useT("user");
     const rt: TypedRichT<typeof messages> = useRichT("user");
     // Tolerate an older backend that doesn't send the breakdown yet.
@@ -186,7 +187,7 @@ function ScoreBreakdown({ dims }: { dims: IScoreDimension[] | undefined }) {
 
     return (
         <div className="flex flex-col gap-2.5">
-            <SectionHeader title={t("score.improvements.operator.dim.title")} count={t("score.improvements.operator.dim.earned", { pct: totalPct.toFixed(1) })} />
+            <SectionHeader title={t("score.improvements.operator.dim.title")} count={t("score.improvements.operator.dim.earned", { pct: totalPct.toFixed(1) })} accent={accent} />
             <div className="flex flex-col gap-1.5">
                 {dims.map((d) => {
                     const sharePct = d.weight_share * 100;
@@ -201,8 +202,14 @@ function ScoreBreakdown({ dims }: { dims: IScoreDimension[] | undefined }) {
                         <Tooltip key={d.kind}>
                             <TooltipTrigger render={<button type="button" className="grid w-full cursor-default grid-cols-[5.5rem_1fr_auto] items-center gap-2.5 rounded-sm text-left focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2" />}>
                                 <span className={cn(TEXT_BADGE, "truncate text-muted-foreground")}>{label}</span>
-                                <div className="h-1 w-full overflow-hidden rounded-full bg-muted">
-                                    <div className="h-full rounded-full bg-muted-foreground transition-[width] duration-500 ease-out" style={{ width: `${completionPct}%` }} />
+                                <div className="h-1 w-full overflow-hidden rounded-full bg-muted/40">
+                                    <div
+                                        className="h-full rounded-full transition-[width] duration-500 ease-out"
+                                        style={{
+                                            width: `${completionPct}%`,
+                                            background: `linear-gradient(to right, color-mix(in oklch, ${accent} 55%, transparent), ${accent})`,
+                                        }}
+                                    />
                                 </div>
                                 <span className={cn(TEXT_BADGE, "text-foreground/85")}>
                                     {earnedPct.toFixed(1)} <span className="text-subtle-foreground">/ {sharePct.toFixed(1)}%</span>
@@ -222,9 +229,10 @@ interface IBucketProps {
     rarity: number;
     ops: IOperatorGap[];
     defaultOpen: boolean;
+    accent: string;
 }
 
-function RarityBucket({ rarity, ops, defaultOpen }: IBucketProps) {
+function RarityBucket({ rarity, ops, defaultOpen, accent }: IBucketProps) {
     const t: PanelT = useT("user");
     const [open, setOpen] = useState(defaultOpen);
     const [showAll, setShowAll] = useState(false);
@@ -245,7 +253,7 @@ function RarityBucket({ rarity, ops, defaultOpen }: IBucketProps) {
                 <span className={cn(TEXT_KICKER, "text-subtle-foreground")}>{t("score.improvements.operator.bucket.toUpgrade")}</span>
                 {bucketGain > 0.01 && (
                     <Tooltip>
-                        <TooltipTrigger render={<span aria-hidden className={cn(TEXT_BADGE, "rounded-sm border border-border/40 bg-background px-1 py-px font-semibold tabular-nums")} />}>+{bucketGain.toFixed(1)}%</TooltipTrigger>
+                        <TooltipTrigger render={<span aria-hidden className={cn(TEXT_BADGE, "rounded-sm border border-border/40 bg-background px-1 py-px font-semibold tabular-nums")} style={{ color: `color-mix(in oklch, ${accent} 70%, var(--foreground))` }} />}>+{bucketGain.toFixed(1)}%</TooltipTrigger>
                         <TooltipPopup>{t("score.improvements.operator.bucket.gainTitle", { rarity, gain: bucketGain.toFixed(1) })}</TooltipPopup>
                     </Tooltip>
                 )}
@@ -265,7 +273,7 @@ function RarityBucket({ rarity, ops, defaultOpen }: IBucketProps) {
                        tag row, and at 3 cols the meta line no longer fits on one line. */}
                     <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
                         {visible.map((op) => (
-                            <OperatorRow key={op.operator_id} op={op} color={color} />
+                            <OperatorRow key={op.operator_id} op={op} color={color} accent={accent} />
                         ))}
                     </div>
                     {remaining > 0 && (
@@ -297,7 +305,7 @@ function PreviewStrip({ ops, color, dim }: { ops: IOperatorGap[]; color: string;
     );
 }
 
-const OperatorRow = memo(function OperatorRow({ op, color }: { op: IOperatorGap; color: string }) {
+const OperatorRow = memo(function OperatorRow({ op, color, accent }: { op: IOperatorGap; color: string; accent: string }) {
     const t: TypedT<typeof messages> = useT("user");
     const sortedTags = TAG_ORDER.filter((t) => op.missing.includes(t));
 
@@ -326,7 +334,15 @@ const OperatorRow = memo(function OperatorRow({ op, color }: { op: IOperatorGap;
                     </span>
                     {subscoreGainPct >= SHOW_DELTA_THRESHOLD_PCT && (
                         <Tooltip>
-                            <TooltipTrigger render={<button type="button" className={cn(TEXT_BADGE, "shrink-0 cursor-default rounded-sm border border-border/40 bg-background px-1 py-px text-left font-semibold tabular-nums focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2")} />}>
+                            <TooltipTrigger
+                                render={
+                                    <button
+                                        type="button"
+                                        className={cn(TEXT_BADGE, "shrink-0 cursor-default rounded-sm border border-border/40 bg-background px-1 py-px text-left font-semibold tabular-nums focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2")}
+                                        style={{ color: `color-mix(in oklch, ${accent} 70%, var(--foreground))` }}
+                                    />
+                                }
+                            >
                                 +{subscoreGainPct.toFixed(2)}
                             </TooltipTrigger>
                             <TooltipPopup>{t("score.improvements.operator.row.gainTitle", { name: op.name, section: subscoreGainPct.toFixed(2), overall: totalScoreGainPct.toFixed(2) })}</TooltipPopup>

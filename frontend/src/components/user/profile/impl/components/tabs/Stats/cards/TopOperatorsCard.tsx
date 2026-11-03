@@ -1,4 +1,4 @@
-import { Check } from "lucide-react";
+import { Check, Medal } from "lucide-react";
 import { useMemo } from "react";
 import { eliteIcon } from "#/components/operators/detail/impl/assets";
 import { RARITY_COLORS } from "#/components/operators/list/impl/constants";
@@ -15,7 +15,8 @@ type TopT = TypedT<typeof messages & typeof cardMessages>;
 
 import { operatorCompleteness, operatorMissing, ownedAvatar, parseOperatorName, RARITY_WEIGHT, specializedIcon } from "../../Roster/helpers.card";
 import type { messages as cardMessages } from "../../Roster/helpers.card.messages";
-import { CardKicker, StatCard } from "../primitives";
+import { PALETTE } from "../palette";
+import { Kicker, StatCard } from "../primitives";
 
 const TOP_OPERATOR_LIMIT = 8;
 
@@ -53,9 +54,9 @@ export function TopOperatorsCard({ roster, operatorsIndex }: ITopOperatorsCardPr
     if (top.length === 0) return null;
 
     return (
-        <StatCard className="sm:col-span-2">
+        <StatCard className="sm:col-span-2" color={PALETTE.top}>
             <div className="p-4 pb-3 sm:p-5 sm:pb-3">
-                <CardKicker label={t("profile.stats.top.title")} />
+                <Kicker icon={Medal} label={t("profile.stats.top.title")} />
             </div>
             <div className="grid grid-cols-2 gap-px bg-border sm:grid-cols-4">
                 {top.map((ranked, i) => (
@@ -80,6 +81,7 @@ function TopOperatorTile({ ranked, rank }: { ranked: IRanked; rank: number }) {
         <PreviewCard>
             <PreviewCardTrigger className="block h-full">
                 <div className="relative flex h-full flex-col gap-2.5 bg-card p-3 sm:p-4">
+                    <div aria-hidden className="absolute inset-x-0 top-0 h-0.5" style={{ background: rarityColor, opacity: 0.55 }} />
                     <div className="absolute top-2.5 right-2.5 font-bold font-mono text-[10px] text-subtle-foreground tabular-nums">#{rank}</div>
 
                     <div className="flex items-center gap-2.5 pt-0.5">
@@ -103,8 +105,8 @@ function TopOperatorTile({ ranked, rank }: { ranked: IRanked; rank: number }) {
                     {hasMasteries && <div className="flex gap-1">{entry.masteries.map((m) => (m.mastery > 0 ? <img alt={`M${m.mastery}`} className="icon-theme-aware h-4 w-4 opacity-90" key={m.index} src={specializedIcon(m.mastery)} /> : <div className="h-4 w-4 rounded-sm bg-muted/40" key={m.index} />))}</div>}
 
                     <div className="mt-auto flex items-center gap-2 pt-0.5">
-                        <div aria-label={t("profile.stats.top.completeAria", { pct: completenessPct })} aria-valuemax={100} aria-valuemin={0} aria-valuenow={completenessPct} className="h-1 flex-1 overflow-hidden rounded-full bg-muted" role="progressbar">
-                            <div className="h-full rounded-full bg-muted-foreground" style={{ width: `${completenessPct}%` }} />
+                        <div aria-label={t("profile.stats.top.completeAria", { pct: completenessPct })} aria-valuemax={100} aria-valuemin={0} aria-valuenow={completenessPct} className="h-1 flex-1 overflow-hidden rounded-full bg-muted/40" role="progressbar">
+                            <div className="h-full rounded-full" style={{ width: `${completenessPct}%`, background: rarityColor, opacity: 0.7 }} />
                         </div>
                         <span className="font-mono text-[10px] text-subtle-foreground tabular-nums">{completenessPct}%</span>
                     </div>

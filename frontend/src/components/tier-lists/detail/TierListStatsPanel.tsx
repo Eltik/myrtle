@@ -14,6 +14,7 @@ interface IStatRow {
     label: string;
     value: string;
     title: string;
+    accent?: boolean;
 }
 
 function formatTimeline(iso: string, f: IFormatters): string {
@@ -33,7 +34,7 @@ export function TierListStatsPanel({ detail }: ITierListStatsPanelProps) {
               { icon: UserRound, label: t("detail.stats.uniqueViews"), value: f.compact(stats.uniqueViewCount), title: t("detail.stats.uniqueViews.title", { count: f.number(stats.uniqueViewCount) }) },
               { icon: Heart, label: t("detail.stats.favorites"), value: f.compact(stats.favoriteCount), title: t("detail.stats.favorites.title", { count: f.number(stats.favoriteCount) }) },
               { icon: Share2, label: t("detail.stats.shares"), value: f.compact(stats.shareCount), title: t("detail.stats.shares.title", { count: f.number(stats.shareCount) }) },
-              { icon: Flame, label: t("detail.stats.views24h"), value: f.compact(stats.viewsLast24h), title: t("detail.stats.views24h.title", { count: f.number(stats.viewsLast24h) }) },
+              { icon: Flame, label: t("detail.stats.views24h"), value: f.compact(stats.viewsLast24h), title: t("detail.stats.views24h.title", { count: f.number(stats.viewsLast24h) }), accent: stats.viewsLast24h > 0 },
           ]
         : [];
 
@@ -42,7 +43,7 @@ export function TierListStatsPanel({ detail }: ITierListStatsPanelProps) {
             <div className="rounded-2xl border border-border bg-card">
                 <header className="flex items-baseline justify-between gap-3 border-border/60 border-b px-4 py-3">
                     <h2 className="m-0 font-sans font-semibold text-foreground text-sm tracking-tight">{t("detail.stats.title")}</h2>
-                    {stats?.isTrending && <span className="inline-flex items-center gap-1 font-medium font-sans text-foreground text-xs">{t("detail.stats.trending")}</span>}
+                    {stats?.isTrending && <span className="inline-flex items-center gap-1 font-medium font-sans text-primary text-xs">{t("detail.stats.trending")}</span>}
                 </header>
 
                 {stats ? (
@@ -56,7 +57,7 @@ export function TierListStatsPanel({ detail }: ITierListStatsPanelProps) {
                                             <Icon className="h-3.5 w-3.5 opacity-70" aria-hidden="true" />
                                             {row.label}
                                         </dt>
-                                        <dd className="m-0 font-mono font-semibold text-[13.5px] text-foreground tabular-nums">{row.value}</dd>
+                                        <dd className={`m-0 font-mono font-semibold text-[13.5px] tabular-nums ${row.accent ? "text-primary" : "text-foreground"}`}>{row.value}</dd>
                                     </TooltipTrigger>
                                     <TooltipPopup>{row.title}</TooltipPopup>
                                 </Tooltip>

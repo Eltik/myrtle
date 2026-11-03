@@ -1,3 +1,9 @@
+@property --planner-angle {
+    syntax: "<angle>";
+    inherits: false;
+    initial-value: 90deg;
+}
+
 .card {
     --planner-angle: 90deg;
     position: relative;
@@ -212,5 +218,18 @@
         width: 44px;
         height: 44px;
         content: "";
+    }
+}
+
+/* The conic border turns while the card is hovered or picked. */
+@media (prefers-reduced-motion: no-preference) {
+    .card:hover,
+    .card.selected {
+        animation: planner-spin 2.4s linear infinite;
+    }
+}
+@keyframes planner-spin {
+    to {
+        --planner-angle: 450deg;
     }
 }

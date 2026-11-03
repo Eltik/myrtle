@@ -76,6 +76,7 @@ export function MyHero({ total, communityCount, communityQuota, officialCount, t
                             style={{
                                 width: `${quotaPct}%`,
                                 background: atQuota ? "var(--destructive)" : "var(--primary)",
+                                boxShadow: atQuota ? "none" : "0 0 8px color-mix(in srgb, var(--primary) 50%, transparent)",
                             }}
                         />
                     </div>

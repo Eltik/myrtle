@@ -8,9 +8,10 @@ import { EmptyHint, PANEL_PADDING, ProgressLine, SectionHeader, TEXT_BADGE } fro
 
 interface IProps {
     improvements: IImprovementsResponse;
+    accent: string;
 }
 
-export function RoguelikePanel({ improvements }: IProps) {
+export function RoguelikePanel({ improvements, accent }: IProps) {
     const t: TypedT<typeof messages> = useT("user");
     const themes = improvements.roguelike;
     if (themes.length === 0) {
@@ -24,25 +25,25 @@ export function RoguelikePanel({ improvements }: IProps) {
     return (
         <div className={`${PANEL_PADDING} flex flex-col gap-5`}>
             {themes.map((theme) => (
-                <ThemeBlock key={theme.theme_id} theme={theme} />
+                <ThemeBlock key={theme.theme_id} theme={theme} accent={accent} />
             ))}
         </div>
     );
 }
 
-function ThemeBlock({ theme }: { theme: IRoguelikeThemeImprovement }) {
+function ThemeBlock({ theme, accent }: { theme: IRoguelikeThemeImprovement; accent: string }) {
     const t: TypedT<typeof messages> = useT("user");
     const collectibleTotal = theme.collectibles.relics.max + theme.collectibles.capsules.max + theme.collectibles.bands.max;
     const collectibleCurrent = theme.collectibles.relics.current + theme.collectibles.capsules.current + theme.collectibles.bands.current;
     return (
         <div className="flex flex-col gap-3">
-            <SectionHeader title={theme.theme_name} count={theme.theme_id.toUpperCase()} />
+            <SectionHeader title={theme.theme_name} count={theme.theme_id.toUpperCase()} accent={accent} />
             <div className="grid gap-2.5 sm:grid-cols-2">
-                <ProgressLine label={t("score.improvements.roguelike.endings")} current={theme.endings.current} max={theme.endings.max} hint={<EndingsHint theme={theme} />} />
-                <ProgressLine label={t("score.improvements.roguelike.bp")} current={theme.bp.current} max={theme.bp.max} />
-                {theme.difficulty.max > 0 && <ProgressLine label={t("score.improvements.roguelike.difficulty")} current={Math.max(0, theme.difficulty.highest_cleared)} max={theme.difficulty.max} />}
-                {theme.challenges.max > 0 && <ProgressLine label={t("score.improvements.roguelike.challenges")} current={theme.challenges.current} max={theme.challenges.max} />}
-                <ProgressLine label={t("score.improvements.roguelike.collectibles")} current={collectibleCurrent} max={collectibleTotal} />
+                <ProgressLine label={t("score.improvements.roguelike.endings")} current={theme.endings.current} max={theme.endings.max} accent={accent} hint={<EndingsHint theme={theme} />} />
+                <ProgressLine label={t("score.improvements.roguelike.bp")} current={theme.bp.current} max={theme.bp.max} accent={accent} />
+                {theme.difficulty.max > 0 && <ProgressLine label={t("score.improvements.roguelike.difficulty")} current={Math.max(0, theme.difficulty.highest_cleared)} max={theme.difficulty.max} accent={accent} />}
+                {theme.challenges.max > 0 && <ProgressLine label={t("score.improvements.roguelike.challenges")} current={theme.challenges.current} max={theme.challenges.max} accent={accent} />}
+                <ProgressLine label={t("score.improvements.roguelike.collectibles")} current={collectibleCurrent} max={collectibleTotal} accent={accent} />
             </div>
             <div className={cn("flex flex-wrap items-center gap-x-3 gap-y-1 text-muted-foreground", TEXT_BADGE)}>
                 {theme.collectibles.relics.max > 0 && (

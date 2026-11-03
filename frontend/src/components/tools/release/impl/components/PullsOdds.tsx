@@ -137,7 +137,7 @@ export function PullsOdds({ budget, pity }: IPullsOddsProps): React.ReactElement
                         <div key={`copies-${k}`} className="flex items-center gap-2">
                             <span className="w-20 flex-none font-sans text-[12px] text-muted-foreground">{k === result.copies.length - 1 ? t("release.pulls.odds.copiesTail", { count: k }) : t("release.pulls.odds.copiesRow", { count: k })}</span>
                             <div className="h-2 min-w-0 flex-1 overflow-hidden rounded-full bg-muted">
-                                <div className="h-full rounded-full bg-muted-foreground" style={{ width: `${Math.max(p * 100, p > 0 ? 0.5 : 0)}%` }} />
+                                <div className="h-full rounded-full bg-primary/70" style={{ width: `${Math.max(p * 100, p > 0 ? 0.5 : 0)}%` }} />
                             </div>
                             <span className="w-14 flex-none text-right font-mono text-[12px] text-muted-foreground tabular-nums">{pct(p, 1)}</span>
                         </div>

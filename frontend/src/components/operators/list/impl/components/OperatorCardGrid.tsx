@@ -5,7 +5,7 @@ import { assetURL } from "#/lib/assets";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { cn, getAvatarById, rarityToNumber } from "#/lib/utils";
-import { RARITY_COLORS } from "../constants";
+import { RARITY_BLUR_COLORS, RARITY_COLORS } from "../constants";
 import type { IOperatorView, StatMetric } from "../types";
 import { CnUpdateBadge } from "./CnUpdateBadge";
 import { CampIcon, ClassIcon } from "./Icons";
@@ -30,7 +30,7 @@ export function OperatorCardGrid({ operator, statMetric }: IOperatorCardGridProp
         <HoverCard>
             <HoverCardTrigger
                 render={
-                    <Link to="/operators/$id" params={{ id: operator.id ?? "" }} preload={dataSaver ? false : undefined} className={cn("group relative flex aspect-2/3 overflow-clip rounded-md border border-muted/50 bg-card contain-content", styles["card-hover-transition"])}>
+                    <Link to="/operators/$id" params={{ id: operator.id ?? "" }} preload={dataSaver ? false : undefined} className={cn("group relative flex aspect-2/3 overflow-clip rounded-md border border-muted/50 bg-card contain-content hover:rounded-lg", styles["card-hover-transition"])}>
                         {/* One wrapping row: on a three-column phone grid the two pills side by side ran past the card's edge. */}
                         {operator.ownership || operator.cnChanges ? (
                             <div className="pointer-events-none absolute inset-x-1 top-1 z-20 flex flex-wrap items-start gap-1 [&>*]:pointer-events-auto">
@@ -56,7 +56,7 @@ export function OperatorCardGrid({ operator, statMetric }: IOperatorCardGridProp
                                 {/* Solid: a blur per card cost up to 100 backdrop passes a page, and the name never needed the art behind it. */}
                                 <div className="h-12 w-full bg-background" />
                                 {/* Ends short of the class icon (16px, 24px from md) so "Leizi the Thunderbringer" wraps instead of running under it; two tight lines fit the 48px bar. */}
-                                <h2 className="absolute right-5 bottom-1 left-1 line-clamp-2 font-bold text-xs leading-tight opacity-60 opacity-transition group-hover:opacity-100 sm:text-sm md:right-7 md:text-sm">{operator.name}</h2>
+                                <h2 className="absolute right-5 bottom-1 left-1 line-clamp-2 font-bold text-xs uppercase leading-tight opacity-60 opacity-transition group-hover:opacity-100 sm:text-sm md:right-7 md:text-sm">{operator.name}</h2>
                                 <div className="card-hover-transition absolute right-1 bottom-1 flex scale-75 items-center opacity-90 transition-transform group-hover:scale-100 group-hover:opacity-100">
                                     <div className="h-4 w-4 md:h-6 md:w-6">
                                         <ClassIcon profession={operator.profession} size={160} />
@@ -66,6 +66,12 @@ export function OperatorCardGrid({ operator, statMetric }: IOperatorCardGridProp
                                     className="absolute bottom-0 h-0.5 w-full"
                                     style={{
                                         backgroundColor: RARITY_COLORS[rarityToNumber(operator.rarity)],
+                                    }}
+                                />
+                                <div
+                                    className="absolute -bottom-0.5 h-1 w-full blur-sm"
+                                    style={{
+                                        backgroundColor: RARITY_BLUR_COLORS[rarityToNumber(operator.rarity)],
                                     }}
                                 />
                             </div>

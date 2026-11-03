@@ -75,16 +75,16 @@ export const LevelBreakdown = memo(function LevelBreakdown({ buckets, total, tit
                                     <div className="col-span-3 grid grid-cols-subgrid items-center rounded-sm">
                                         <span className={cn("truncate text-[11px]", isNone ? "text-muted-foreground" : "text-foreground", isOwn && "font-semibold")}>
                                             {labels[bucket.level] ?? t("breakdown.levelFallback", { level: bucket.level })}
-                                            {isOwn && <span className="ml-1 font-normal text-[11px] text-muted-foreground">{t("breakdown.you")}</span>}
+                                            {isOwn && <span className="ml-1 font-normal text-[9px] text-primary uppercase tracking-wider">{t("breakdown.you")}</span>}
                                         </span>
 
-                                        <span className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                                        <span className="h-1.5 w-full overflow-hidden rounded-full bg-border/70">
                                             {bucket.users > 0 && (
                                                 <span
-                                                    // One neutral fill for every level: the label beside the
-                                                    // bar names the level, so colour carries nothing. Fill
-                                                    // vs bg-muted track 6.25:1 light, 5.35:1 dark.
-                                                    className="block h-full rounded-full bg-muted-foreground"
+                                                    // Accent for unlocked levels, full strength at the top
+                                                    // level; the label and percentage beside the bar carry
+                                                    // the value, so the colour is emphasis only.
+                                                    className={cn("block h-full rounded-full", isNone ? "bg-muted-foreground/45" : bucket.level === 3 ? "bg-primary" : "bg-primary/55")}
                                                     // Share of the WHOLE cohort, the same
                                                     // quantity as the percentage beside it,
                                                     // so bar and number cannot disagree.

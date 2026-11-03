@@ -20,9 +20,26 @@ export function SectionHead({ children, aside }: { children: React.ReactNode; as
     );
 }
 
-export function StatCard({ label, value, info }: { label: string; value: string; info?: React.ReactNode }) {
+export function GameIcon({ src }: { src: string }) {
+    return <img src={src} alt="" loading="lazy" decoding="async" className="h-6 w-6 object-contain drop-shadow-[0_1px_1px_rgba(0,0,0,0.55)]" />;
+}
+
+export function StatCard({ icon, label, value, accent, info }: { icon?: React.ReactNode; label: string; value: string; accent?: string; info?: React.ReactNode }) {
     return (
         <div className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3">
+            {icon && (
+                <span
+                    aria-hidden="true"
+                    className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-md [&_svg]:h-4.5 [&_svg]:w-4.5"
+                    style={{
+                        background: "linear-gradient(155deg, #1e2026, #111317)",
+                        boxShadow: accent ? `inset 0 0 0 1px color-mix(in oklch, ${accent} 42%, transparent)` : "inset 0 0 0 1px rgba(255,255,255,0.07)",
+                        color: accent ?? "var(--muted-foreground)",
+                    }}
+                >
+                    {icon}
+                </span>
+            )}
             <div className="flex min-w-0 flex-col gap-1">
                 <span className="flex items-center gap-1 font-medium font-sans text-[12px] text-muted-foreground leading-none">
                     {label}

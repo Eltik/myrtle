@@ -69,7 +69,9 @@ export function PlayerBar({ offPage = false }: { offPage?: boolean }): React.Rea
                                 </div>
                             )}
                             <div className="flex min-w-0 flex-col leading-tight">
-                                <Kicker className="block truncate">{kicker}</Kicker>
+                                <Kicker tone="accent" className="block truncate">
+                                    {kicker}
+                                </Kicker>
                                 <ClippedText className="font-sans font-semibold text-[13.5px] text-foreground" text={title} />
                                 <ClippedText className="text-[11.5px] text-muted-foreground" text={subLine(current, houseArtist)} />
                             </div>
@@ -212,7 +214,7 @@ function SeekLine({ t }: { t: PlayerT }): React.ReactElement {
                 {/* The bar thickens on hover by scaleY on its three layers, not by animating the track's height (a relayout per frame); the thumb is not scaled. On touch the control is 44 px tall and the thumb shows at rest: the old 24 px phone strip with a hidden thumb was the only drag target. */}
                 <SliderPrimitive.Track className="relative h-1.5 w-full grow select-none before:absolute before:inset-0 before:scale-y-[.667] before:bg-foreground/10 before:transition-transform before:duration-150 before:ease-out group-hover:before:scale-y-100">
                     <span aria-hidden="true" className="absolute inset-y-0 left-0 scale-y-[.667] bg-foreground/10 transition-transform duration-150 ease-out group-hover:scale-y-100" style={{ width: `${Math.round(p.buffered * 1000) / 10}%` }} />
-                    <SliderPrimitive.Indicator className="scale-y-[.667] bg-primary transition-transform duration-150 ease-out group-hover:scale-y-100" />
+                    <SliderPrimitive.Indicator className="scale-y-[.667] bg-primary shadow-[0_0_8px_var(--color-primary)] transition-transform duration-150 ease-out group-hover:scale-y-100" />
                     {loopPercent !== null && <span aria-hidden="true" className="absolute top-1/2 h-2.5 w-0.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-foreground/60" style={{ left: `${loopPercent}%` }} title={t("music.player.loopPoint")} />}
                     <SliderPrimitive.Thumb
                         className="block pointer-coarse:size-4 size-3 rounded-full bg-primary opacity-0 pointer-coarse:opacity-100 shadow outline-none transition-opacity group-hover:opacity-100 has-focus-visible:opacity-100 has-focus-visible:ring-3 has-focus-visible:ring-ring data-dragging:opacity-100"

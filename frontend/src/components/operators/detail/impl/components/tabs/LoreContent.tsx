@@ -1,4 +1,4 @@
-import { ChevronDown, FileText } from "lucide-react";
+import { BookMarked, ChevronDown, FileText, FlaskConical, ScrollText, Sparkles } from "lucide-react";
 import { memo, useState } from "react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "#/components/ui/collapsible";
 import { GameText } from "#/lib/gamedata/GameText";
@@ -32,6 +32,14 @@ const STAT_HEADERS = new Set([
     "Infection Status",
 ]);
 
+/** Section icon from the archive's title; the handbook gives no type field to key on. */
+function storyIcon(title: string): React.ElementType {
+    const lower = title.toLowerCase();
+    if (lower.includes("clinical") || lower.includes("medical")) return FlaskConical;
+    if (lower.includes("promotion") || lower.includes("elite")) return Sparkles;
+    return ScrollText;
+}
+
 const QUOTE_OPENERS = [">", "「", "『"];
 
 function isQuoted(line: string): boolean {
@@ -59,9 +67,12 @@ export const LoreContent = memo(function LoreContent({ operator }: ILoreContentP
 
             {hasStories ? (
                 <div className="space-y-4">
-                    <h3 className="font-semibold text-foreground text-lg">{t("lore.archives")}</h3>
+                    <div className="flex items-center gap-2">
+                        <BookMarked aria-hidden="true" className="h-5 w-5 text-primary" />
+                        <h3 className="font-semibold text-foreground text-lg">{t("lore.archives")}</h3>
+                    </div>
                     {stories.map((section, idx) => (
-                        <LoreSection key={section.storyTitle} title={section.storyTitle} defaultOpen={idx === 0}>
+                        <LoreSection key={section.storyTitle} title={section.storyTitle} icon={storyIcon(section.storyTitle)} defaultOpen={idx === 0}>
                             {section.stories.map((story) => (
                                 <StoryEntry key={story.storyText.slice(0, 50)} text={story.storyText} />
                             ))}
@@ -79,12 +90,15 @@ export const LoreContent = memo(function LoreContent({ operator }: ILoreContentP
     );
 });
 
-function LoreSection({ title, children, defaultOpen = false }: { title: string; children: React.ReactNode; defaultOpen?: boolean }) {
+function LoreSection({ title, icon: Icon, children, defaultOpen = false }: { title: string; icon: React.ElementType; children: React.ReactNode; defaultOpen?: boolean }) {
     const [open, setOpen] = useState(defaultOpen);
     return (
         <Collapsible open={open} onOpenChange={setOpen}>
             <CollapsibleTrigger className="flex w-full items-center justify-between rounded-lg border border-border bg-secondary/30 px-4 py-3 transition-colors hover:bg-secondary/50">
-                <span className="font-medium text-sm">{title}</span>
+                <span className="flex items-center gap-3">
+                    <Icon aria-hidden="true" className="h-4 w-4 text-primary" />
+                    <span className="font-medium text-sm">{title}</span>
+                </span>
                 <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", open && "rotate-180")} />
             </CollapsibleTrigger>
             <CollapsibleContent>
@@ -100,7 +114,7 @@ function StoryEntry({ text }: { text: string }) {
 
 /**
  * The handbook writes stories as line-oriented markup: `[Header] value` rows
- * (measurements set in mono), `-` bullets, quoted lines, and prose.
+ * (stat rows get a monospace cell), `-` bullets, quoted lines, and prose.
  */
 function renderParagraph(paragraph: string, idx: number) {
     const trimmed = paragraph.trim();
@@ -110,20 +124,19 @@ function renderParagraph(paragraph: string, idx: number) {
         const close = trimmed.indexOf("]");
         const header = trimmed.substring(1, close).trim();
         const content = trimmed.substring(close + 1).trim();
-        // Mono only where the value is a measurement ("165cm", "0.13u/L"); words stay sans.
-        const isNumeric = STAT_HEADERS.has(header) && /^\d/.test(content);
+        const isStat = STAT_HEADERS.has(header);
         return (
-            <dl className="grid gap-x-4 gap-y-0.5 py-1.5 sm:grid-cols-[10rem_1fr] sm:items-baseline" key={`hdr-${idx}`}>
-                <dt className="text-muted-foreground text-sm">{header}</dt>
-                <dd className={cn("text-foreground text-sm leading-relaxed", isNumeric && "font-mono tabular-nums")}>{content ? <GameText text={content} /> : "-"}</dd>
-            </dl>
+            <div className="flex flex-col gap-1 py-1.5 sm:flex-row sm:items-baseline sm:gap-3" key={`hdr-${idx}`}>
+                <span className="min-w-40 shrink-0 font-semibold text-primary text-xs uppercase tracking-wide sm:text-right">{header}</span>
+                <span className={cn("flex-1 text-foreground text-sm leading-relaxed", isStat && "rounded-md bg-secondary/40 px-2 py-1 font-mono text-xs")}>{content ? <GameText text={content} /> : "-"}</span>
+            </div>
         );
     }
 
     if (/^[-•·]/.test(trimmed)) {
         return (
             <div className="flex gap-3 py-1 pl-2" key={`bul-${idx}`}>
-                <span aria-hidden="true" className="mt-1 text-muted-foreground">
+                <span aria-hidden="true" className="mt-1 text-primary">
                     •
                 </span>
                 <span className="flex-1 text-muted-foreground text-sm leading-relaxed">
@@ -135,7 +148,7 @@ function renderParagraph(paragraph: string, idx: number) {
 
     if (isQuoted(trimmed)) {
         return (
-            <blockquote className="my-3 border-border border-l-2 py-1 pl-4" key={`q-${idx}`}>
+            <blockquote className="my-3 rounded-r-lg border-primary/40 border-l-4 bg-secondary/30 py-3 pr-4 pl-4" key={`q-${idx}`}>
                 <p className="text-muted-foreground text-sm italic leading-relaxed">
                     <GameText text={unquote(trimmed)} />
                 </p>

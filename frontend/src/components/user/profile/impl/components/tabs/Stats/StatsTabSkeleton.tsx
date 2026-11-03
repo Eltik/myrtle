@@ -1,5 +1,6 @@
 import { Skeleton } from "#/components/ui/skeleton";
 import { cn } from "#/lib/utils";
+import { PALETTE } from "./palette";
 import { CARD_PADDING, StatCard } from "./primitives";
 
 function KickerSkeleton() {
@@ -34,7 +35,7 @@ function TileSkeleton() {
 
 function CollectionSkeleton() {
     return (
-        <StatCard>
+        <StatCard color={PALETTE.collection}>
             <div className={cn("flex h-full flex-col gap-5", CARD_PADDING)}>
                 <KickerSkeleton />
                 <div className="flex flex-1 flex-col justify-between gap-5">
@@ -54,7 +55,7 @@ function CollectionSkeleton() {
 
 function ElitePromotionSkeleton() {
     return (
-        <StatCard>
+        <StatCard color={PALETTE.elite}>
             <div className={cn("flex h-full flex-col gap-5", CARD_PADDING)}>
                 <KickerSkeleton />
                 <div className="flex flex-1 flex-col justify-center gap-4">
@@ -78,7 +79,7 @@ function ElitePromotionSkeleton() {
 
 function ClassBreakdownSkeleton() {
     return (
-        <StatCard className="sm:col-span-2">
+        <StatCard className="sm:col-span-2" color={PALETTE.collection}>
             <div className={cn(CARD_PADDING, "pb-2")}>
                 <KickerSkeleton />
             </div>
@@ -115,7 +116,7 @@ function GapListSkeleton() {
 
 function MasterySkeleton() {
     return (
-        <StatCard>
+        <StatCard color={PALETTE.mastery.accent}>
             <div className={cn("flex h-full flex-col gap-5", CARD_PADDING)}>
                 <KickerSkeleton />
                 <div className="flex flex-1 flex-col justify-center gap-5">
@@ -145,7 +146,7 @@ function MasterySkeleton() {
 
 function ModulesSkinsSkeleton() {
     return (
-        <StatCard>
+        <StatCard color={PALETTE.modules.accent}>
             <div className={cn("flex h-full flex-col gap-5", CARD_PADDING)}>
                 <div className="space-y-4">
                     <KickerSkeleton />
@@ -192,7 +193,7 @@ function TopOperatorTileSkeleton({ rank }: { rank: number }) {
 
 function TopOperatorsSkeleton() {
     return (
-        <StatCard className="sm:col-span-2">
+        <StatCard className="sm:col-span-2" color={PALETTE.top}>
             <div className="p-4 pb-3 sm:p-5 sm:pb-3">
                 <KickerSkeleton />
             </div>

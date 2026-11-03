@@ -249,7 +249,7 @@ const AlbumTrack = memo(function AlbumTrack({ track, index, tracks, source, hous
                         </>
                     )}
                 </span>
-                <span className={cn("min-w-0 truncate font-sans text-[13.5px] text-foreground", current && "font-semibold")}>{title}</span>
+                <span className={cn("min-w-0 truncate font-sans text-[13.5px]", current ? "font-semibold text-primary" : "text-foreground")}>{title}</span>
                 {track.instrumental ? (
                     <Badge variant="outline" size="sm" className="shrink-0 font-mono tracking-[0.06em]">
                         {t("music.list.inst")}

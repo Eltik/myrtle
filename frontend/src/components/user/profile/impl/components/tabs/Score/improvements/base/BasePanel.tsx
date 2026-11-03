@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import type { IUserScore } from "#/lib/api/user";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -27,6 +28,7 @@ const COMPONENTS = [
 
 interface IProps {
     score: IUserScore | null | undefined;
+    accent: string;
 }
 
 /**
@@ -34,7 +36,7 @@ interface IProps {
  * infrastructure completeness (25%). Plans and rotations live in the
  * Optimizer tab; this only answers "which term drags my score".
  */
-export function BasePanel({ score }: IProps) {
+export function BasePanel({ score, accent }: IProps) {
     const t: TypedT<typeof messages> = useT("user");
     const util = score?.base_utilization ?? null;
     const infra = score?.base_infrastructure ?? null;
@@ -52,8 +54,8 @@ export function BasePanel({ score }: IProps) {
     };
 
     return (
-        <div className={`${PANEL_PADDING} flex flex-col gap-4`}>
-            <SectionHeader title={t("score.improvements.base.title")} />
+        <div className={`${PANEL_PADDING} flex flex-col gap-4`} style={{ "--imp-accent": accent } as CSSProperties}>
+            <SectionHeader title={t("score.improvements.base.title")} accent={accent} />
             <div className="flex flex-col gap-3.5">
                 {COMPONENTS.map((c) => {
                     const pct = Math.min(Math.max(values[c.key] * 100, 0), 100);
@@ -66,7 +68,7 @@ export function BasePanel({ score }: IProps) {
                                 </span>
                                 <span className="font-mono text-[11px] text-muted-foreground tabular-nums">{pct.toFixed(1)}%</span>
                             </div>
-                            <Bar pct={pct} />
+                            <Bar color={accent} pct={pct} />
                             <p className="text-[10.5px] text-subtle-foreground leading-snug">{t(c.descriptionKey)}</p>
                         </div>
                     );

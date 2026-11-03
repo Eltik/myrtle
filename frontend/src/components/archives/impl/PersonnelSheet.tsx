@@ -66,7 +66,7 @@ function Fact({ label, value, children }: { label: string; value?: React.ReactNo
 function SectionTitle({ children }: { children: React.ReactNode }): React.ReactElement {
     return (
         <h3 className="m-0 mt-6 mb-2 leading-none">
-            <Kicker>{children}</Kicker>
+            <Kicker tone="accent">{children}</Kicker>
         </h3>
     );
 }

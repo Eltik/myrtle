@@ -81,6 +81,7 @@ export function VersionsBar({ slug, versions, selectedVersion, isLatestView }: I
                         aria-label={t("detail.versions.trigger", { version: triggerLabel })}
                     >
                         <span className="flex min-w-0 items-center gap-2">
+                            <span className={cn("h-1.5 w-1.5 shrink-0 rounded-full", isLatestView ? "bg-primary shadow-[0_0_6px_color-mix(in_srgb,var(--primary)_60%,transparent)]" : "bg-muted-foreground")} aria-hidden="true" />
                             <span className="truncate">{triggerLabel}</span>
                             {triggerHint && <span className="hidden text-muted-foreground sm:inline">· {triggerHint}</span>}
                         </span>
@@ -89,7 +90,7 @@ export function VersionsBar({ slug, versions, selectedVersion, isLatestView }: I
                     <MenuPopup align="start" sideOffset={6} className="w-80 max-w-[calc(100vw-1.5rem)]">
                         <MenuItem render={<Link to="/tier-lists/$id" params={{ id: slug }} search={{}} replace resetScroll={false} preload={false} />} className={cn("flex-col items-start gap-0.5 py-2", isLatestView && "bg-accent/60 text-accent-foreground")}>
                             <span className="flex w-full items-center gap-2">
-                                <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground" aria-hidden="true" />
+                                <span className="h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_6px_color-mix(in_srgb,var(--primary)_60%,transparent)]" aria-hidden="true" />
                                 <span className="font-medium">{t("detail.versions.latest")}</span>
                                 {isLatestView && <CheckIcon className="ml-auto h-3.5 w-3.5" aria-hidden="true" />}
                             </span>
@@ -116,7 +117,7 @@ export function VersionsBar({ slug, versions, selectedVersion, isLatestView }: I
             {!isLatestView && selectedVersion && (
                 <output aria-live="polite" className="mt-2 block rounded-2xl border border-[color-mix(in_srgb,var(--primary)_30%,transparent)] bg-[color-mix(in_srgb,var(--primary)_8%,transparent)] px-3 py-2.5">
                     <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 font-sans text-[12.5px] text-foreground">
-                        <span className="kicker">{t("detail.versions.snapshot")}</span>
+                        <span className="kicker text-primary">{t("detail.versions.snapshot")}</span>
                         <span className="font-medium">
                             {t("detail.versions.snapshotLine", { version: selectedVersion.version })} <time dateTime={selectedVersion.publishedAt}>{formatPublishedAt(selectedVersion.publishedAt, f)}</time>
                         </span>

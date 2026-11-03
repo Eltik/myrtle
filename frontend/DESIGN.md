@@ -212,9 +212,9 @@ Icons are lucide-react. Charts are recharts. Strings live in `*.messages.ts` nex
 component, never inline.
 
 - Pressed looks, one per job. Multi-select filter chips are `FilterChip`; single-select
-  segments and toolbar toggles are `Toggle` / `ToggleGroup`, pressed as a grey fill
-  (`bg-input`, `foreground/12` in dark) plus `inset-ring-foreground/40`, with no check,
-  since the group already says one is chosen. A `ToggleGroup` drops the 44px coarse floor
+  segments and toolbar toggles are `Toggle` / `ToggleGroup`, pressed as an accent tint
+  (`bg-primary/12`, `primary/16` in dark, a step more on hover) plus `inset-ring-ring`,
+  with foreground text and no check, since the group already says one is chosen. A `ToggleGroup` drops the 44px coarse floor
   along its axis (`min-w-auto` horizontal, `min-h-auto` vertical) so neighbouring hit areas
   do not overlap.
   A disclosure that opens a panel (operators Filter, music Filters) stays a `Button` with

@@ -235,7 +235,7 @@ export function RoomPopover({ tile }: { tile: ITile }) {
                 </Button>
             )}
             {change && (
-                <div className="flex items-baseline justify-between gap-2 rounded-md border border-border px-2 py-1.5">
+                <div className="flex items-baseline justify-between gap-2 rounded-md border border-primary/30 bg-primary/5 px-2 py-1.5">
                     <span className="kicker">{t("profile.base.room.optimized")}</span>
                     <span className="font-mono text-[11px] tabular-nums">
                         {Math.round(change.efficiency_before)}% → <span className="font-semibold text-foreground">{Math.round(change.efficiency_after)}%</span>

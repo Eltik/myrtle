@@ -59,7 +59,7 @@ export function UpcomingView({ items, today }: IUpcomingViewProps): React.ReactE
                     <div key={dayKey(month, day)} className={cn("flex flex-col gap-2.5 rounded-2xl border bg-card p-4 shadow-xs/5", isToday ? "border-primary/50 bg-primary/6" : "border-border")}>
                         <div className="flex items-baseline justify-between">
                             <div>
-                                <div className="font-sans text-[12.5px] text-muted-foreground">{when}</div>
+                                <div className={cn("font-sans text-[12.5px]", isToday ? "text-primary" : "text-muted-foreground")}>{when}</div>
                                 <div className="font-bold font-sans text-[18px] text-foreground tracking-tight">{t("birthdays.upcoming.date", { month: monthLabels[month - 1], day })}</div>
                             </div>
                             <span className="font-sans text-[12.5px] text-muted-foreground">{weekday}</span>

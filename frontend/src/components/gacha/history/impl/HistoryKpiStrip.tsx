@@ -57,6 +57,7 @@ export function HistoryKpiStrip({ records, isLoading }: IHistoryKpiStripProps) {
     return (
         <KpiGrid columnsClass={COLUMNS}>
             <Kpi
+                featured
                 label={t("history.kpi.totalPulls")}
                 value={f.number(total)}
                 meta={

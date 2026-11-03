@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { CampIcon, ClassIcon } from "#/components/operators/list/impl/components/Icons";
-import { RARITY_COLORS } from "#/components/operators/list/impl/constants";
+import { RARITY_BLUR_COLORS, RARITY_COLORS } from "#/components/operators/list/impl/constants";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { getPortraitById, rarityToNumber } from "#/lib/utils";
 import type { OperatorProfession } from "#/types/operators";
@@ -26,6 +26,7 @@ export function OperatorFace({ entity, server }: { entity: IFaceOperator; server
                 <ClassIcon profession={entity.profession} size={160} className="size-4 shrink-0" />
             </span>
             <span aria-hidden="true" className="absolute inset-x-0 bottom-0 z-10 h-0.5" style={{ backgroundColor: RARITY_COLORS[rarity] }} />
+            <span aria-hidden="true" className="absolute inset-x-0 -bottom-0.5 z-10 h-1 blur-sm" style={{ backgroundColor: RARITY_BLUR_COLORS[rarity] }} />
         </>
     );
 }

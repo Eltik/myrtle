@@ -119,7 +119,9 @@ export function OverviewTab({ enemy }: { enemy: IEnemyView }) {
                             <div key={g.title ?? `g-${gi}`}>
                                 {g.title && (
                                     <h4 className="mb-1.5">
-                                        <Kicker className="leading-none">{g.title}</Kicker>
+                                        <Kicker tone="accent" className="leading-none">
+                                            {g.title}
+                                        </Kicker>
                                     </h4>
                                 )}
                                 {g.items.length > 0 && (
@@ -167,7 +169,8 @@ export function OverviewTab({ enemy }: { enemy: IEnemyView }) {
 
 function PhaseHeader({ phase, label }: { phase: IEnemyLevelStats; label: string }) {
     return (
-        <div className="flex items-baseline gap-2 px-0.5 leading-none">
+        <div className="flex items-center gap-2 rounded-md border border-[color-mix(in_oklch,var(--primary)_45%,transparent)] bg-[color-mix(in_oklch,var(--primary)_14%,transparent)] px-2.5 py-1.5 leading-none">
+            <span aria-hidden="true" className="inline-block h-1.25 w-1.25 shrink-0 rounded-full bg-primary" />
             <h4 className="m-0 truncate font-medium font-sans text-[13px] text-foreground">{label}</h4>
             <span className="ml-auto font-mono text-[10px] text-muted-foreground tracking-[0.12em]">L{phase.level}</span>
         </div>

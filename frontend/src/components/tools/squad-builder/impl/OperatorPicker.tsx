@@ -446,7 +446,7 @@ const PickerTile = React.memo(function PickerTile({ op, build, showOwnership, se
                 <span className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
                     <span className="break-words font-semibold text-[14px] text-foreground leading-snug">{op.name}</span>
                     {current && (
-                        <Badge variant="outline" size="sm">
+                        <Badge variant="tint" size="sm" style={{ "--tone": "var(--primary)" } as React.CSSProperties}>
                             {t("squad.picker.currentForm")}
                         </Badge>
                     )}

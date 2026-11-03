@@ -30,7 +30,7 @@ export function ClassPicker({ selected, onChange, labels }: { selected: string[]
                     const name = professionLabel({ profession: cls, professionName: labels?.[cls] });
                     return (
                         <Tooltip key={cls}>
-                            <TooltipTrigger render={<Toggle aria-label={name} className="aspect-square h-auto w-full" onPressedChange={() => onChange(toggle(selected, cls))} pressed={on} variant="outline" />}>
+                            <TooltipTrigger render={<Toggle aria-label={name} className="aspect-square h-auto w-full text-muted-foreground hover:text-foreground data-pressed:text-primary" onPressedChange={() => onChange(toggle(selected, cls))} pressed={on} variant="outline" />}>
                                 <ClassIcon className="pointer-events-none" profession={cls} size={20} />
                                 {on && <Check aria-hidden className="absolute top-1 right-1 size-3 opacity-100" />}
                             </TooltipTrigger>

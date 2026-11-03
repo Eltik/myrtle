@@ -31,8 +31,9 @@ export function EnemyCardList({ enemy, statMax }: IEnemyCardListProps) {
         <Link
             to="/enemies/$id"
             params={{ id: enemy.enemyId }}
-            className="enemy-row group relative grid w-full cursor-pointer items-center gap-3.5 rounded-lg border border-transparent bg-card/50 px-3.5 py-2.5 text-left transition-colors hover:border-border hover:bg-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring max-[900px]:grid-cols-[48px_1fr_auto]! max-[900px]:[&>:nth-child(4)]:hidden max-[900px]:[&>:nth-child(5)]:hidden"
-            style={{ gridTemplateColumns: LIST_GRID_COLS }}
+            className="enemy-row group relative grid w-full cursor-pointer items-center gap-3.5 rounded-lg border border-transparent bg-card/50 px-3.5 py-2.5 text-left transition-colors before:absolute before:top-1/2 before:left-0 before:h-8 before:w-0.5 before:-translate-y-1/2 before:rounded-full before:bg-(--level-stripe) before:opacity-60 before:transition-opacity hover:border-border hover:bg-card hover:before:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring max-[900px]:grid-cols-[48px_1fr_auto]! max-[900px]:[&>:nth-child(4)]:hidden max-[900px]:[&>:nth-child(5)]:hidden"
+            // The level stripe is a ::before, not a child, so the nth-child column hiding below 900px still counts only the cells.
+            style={{ gridTemplateColumns: LIST_GRID_COLS, ["--level-stripe" as string]: enemy.enemyLevel === "NORMAL" ? "transparent" : tok.accent }}
             aria-label={t("cardList.aria", { name: enemy.name, index: enemy.enemyIndex })}
         >
             <div className="relative h-12 w-12 overflow-hidden rounded-md border border-[color-mix(in_oklch,var(--border)_60%,transparent)] bg-[color-mix(in_oklch,var(--muted)_40%,transparent)]">
@@ -72,7 +73,7 @@ export function EnemyCardList({ enemy, statMax }: IEnemyCardListProps) {
             <div className="text-right">
                 <span className="font-mono font-semibold text-[13px] text-foreground tabular-nums leading-none">{f.number(enemy.flatStats.maxHp)}</span>
                 <div className="mt-1 h-0.5 overflow-hidden rounded-full bg-[color-mix(in_oklch,var(--muted-foreground)_14%,transparent)]">
-                    <div className="h-full" style={{ width: `${hpPct}%`, background: tok.ink }} />
+                    <div className="h-full" style={{ width: `${hpPct}%`, background: tok.accent }} />
                 </div>
             </div>
         </Link>

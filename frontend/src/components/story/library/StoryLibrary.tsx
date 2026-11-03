@@ -118,7 +118,7 @@ export function StoryLibrary(): React.ReactElement {
     return (
         <div className="page-shell [--page-max:1400px]">
             <PageHeader
-                className={cn("mb-4 border-border border-b pb-3", SHELF_HEAD)}
+                className={cn("mb-4 border-primary/70 border-b-2 pb-3", SHELF_HEAD)}
                 breadcrumbLabel={t("library.breadcrumb")}
                 breadcrumb={[t("library.breadcrumb.archive"), t("library.breadcrumb.stories")]}
                 title={t("library.title")}

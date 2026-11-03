@@ -246,7 +246,7 @@ const QueueRow = memo(function QueueRow({
                     {track.coverUrl ? <img referrerPolicy="no-referrer" alt="" className="size-full object-cover" decoding="async" loading="lazy" src={sizedCover(track.coverUrl, 40)} /> : <Disc3Icon aria-hidden="true" className="absolute inset-0 m-auto size-5 text-muted-foreground" />}
                 </span>
                 <span className="flex min-w-0 flex-col leading-tight">
-                    <ClippedText className={cn("text-[13px] text-foreground", current && "font-semibold")} text={title} />
+                    <ClippedText className={cn("text-[13px]", current ? "font-semibold text-primary" : "text-foreground")} text={title} />
                     <ClippedText className="text-[11.5px] text-muted-foreground" text={subLine(track, houseArtist)} />
                 </span>
             </button>

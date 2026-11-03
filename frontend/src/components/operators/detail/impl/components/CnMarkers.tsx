@@ -15,7 +15,7 @@ export function CnTag({ className, title }: { className?: string; title?: string
     const t: MarkersT = useT("operators");
     const label = title ?? t("cnUpdates.tag.title");
     return (
-        <span role="img" aria-label={label} title={label} className={cn("inline-flex shrink-0 items-center rounded-sm px-1 py-px font-sans font-semibold text-[11px] leading-none ring-1 ring-primary", className)}>
+        <span role="img" aria-label={label} title={label} className={cn("inline-flex shrink-0 items-center rounded-sm px-1 py-px font-mono font-semibold text-[9px] uppercase leading-none tracking-wider ring-1 ring-primary", className)}>
             {t("cnUpdates.tag")}
         </span>
     );

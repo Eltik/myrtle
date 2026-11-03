@@ -16,6 +16,7 @@ import type { messages } from "./HistoryPage.messages";
 import { BannerFilter } from "./impl/BannerFilter";
 import { bannerOptions, filterRecordsByPools } from "./impl/banner-filter";
 import { HistoryBody, hasAnyPull, useBannersById } from "./impl/HistoryBody";
+import styles from "./impl/HistoryPage.module.css";
 import { PublicHistorySwitch, ShareHistoryButton } from "./impl/ShareHistory";
 import { gachaStorageOff } from "./impl/storage-gate";
 
@@ -100,52 +101,55 @@ export function HistoryPage() {
     const hasRecords = hasAnyPull(rawRecords);
 
     return (
-        <section className="mx-auto flex w-full max-w-330 flex-col gap-6 px-8 pt-7 pb-15 max-[760px]:px-4 max-[760px]:pt-5 max-[760px]:pb-10">
-            <PageHeader>
-                {isAuthenticated ? (
-                    <div className="flex flex-col items-start gap-1.5 sm:items-end">
-                        <Button onClick={() => refreshMutation.mutate()} disabled={refreshMutation.isPending || storageOff} aria-describedby={storageOff ? "gacha-storage-off" : undefined}>
-                            <RefreshCw className={refreshMutation.isPending ? "animate-spin" : undefined} aria-hidden />
-                            {refreshMutation.isPending ? t("history.refreshing") : t("history.refresh")}
-                        </Button>
-                        {storageOff ? (
-                            <p id="gacha-storage-off" className="m-0 max-w-[40ch] font-sans text-muted-foreground text-xs sm:text-right">
-                                {t("history.refresh.storageOff")}{" "}
-                                <Link to="/settings" className="text-foreground underline underline-offset-2 hover:text-primary">
-                                    {t("history.refresh.storageOffAction")}
-                                </Link>
-                            </p>
-                        ) : null}
-                    </div>
-                ) : null}
-            </PageHeader>
-
-            {recordsQuery.isError ? (
-                <div className="rounded-2xl border border-destructive/30 bg-destructive/8 px-5 py-4 font-sans text-foreground/90 text-sm">
-                    <strong className="font-semibold text-foreground">{t("history.error.load")}</strong> {(recordsQuery.error as Error)?.message ?? t("history.error.unknown")}
-                </div>
-            ) : null}
-
-            {!isAuthenticated && !isLoading ? (
-                <UnauthenticatedState />
-            ) : isAuthenticated && !isLoading && !hasRecords ? (
-                <NoDataState />
-            ) : (
-                <>
-                    {user ? (
-                        <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
-                            <BannerFilter options={options} value={pools} onChange={setPools} disabled={isLoading} />
-                            <div className="flex flex-wrap items-center gap-3 sm:gap-4">
-                                <PublicHistorySwitch user={user} />
-                                <ShareHistoryButton user={user} pools={pools} />
-                            </div>
+        <>
+            <div className={styles.pageAmbient} aria-hidden />
+            <section className="mx-auto flex w-full max-w-330 flex-col gap-6 px-8 pt-7 pb-15 max-[760px]:px-4 max-[760px]:pt-5 max-[760px]:pb-10">
+                <PageHeader>
+                    {isAuthenticated ? (
+                        <div className="flex flex-col items-start gap-1.5 sm:items-end">
+                            <Button onClick={() => refreshMutation.mutate()} disabled={refreshMutation.isPending || storageOff} aria-describedby={storageOff ? "gacha-storage-off" : undefined}>
+                                <RefreshCw className={refreshMutation.isPending ? "animate-spin" : undefined} aria-hidden />
+                                {refreshMutation.isPending ? t("history.refreshing") : t("history.refresh")}
+                            </Button>
+                            {storageOff ? (
+                                <p id="gacha-storage-off" className="m-0 max-w-[40ch] font-sans text-muted-foreground text-xs sm:text-right">
+                                    {t("history.refresh.storageOff")}{" "}
+                                    <Link to="/settings" className="text-foreground underline underline-offset-2 hover:text-primary">
+                                        {t("history.refresh.storageOffAction")}
+                                    </Link>
+                                </p>
+                            ) : null}
                         </div>
                     ) : null}
+                </PageHeader>
 
-                    <HistoryBody records={records} banners={banners} isLoading={isLoading} filtered={pools.length > 0} />
-                </>
-            )}
-        </section>
+                {recordsQuery.isError ? (
+                    <div className="rounded-2xl border border-destructive/30 bg-destructive/8 px-5 py-4 font-sans text-foreground/90 text-sm">
+                        <strong className="font-semibold text-foreground">{t("history.error.load")}</strong> {(recordsQuery.error as Error)?.message ?? t("history.error.unknown")}
+                    </div>
+                ) : null}
+
+                {!isAuthenticated && !isLoading ? (
+                    <UnauthenticatedState />
+                ) : isAuthenticated && !isLoading && !hasRecords ? (
+                    <NoDataState />
+                ) : (
+                    <>
+                        {user ? (
+                            <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
+                                <BannerFilter options={options} value={pools} onChange={setPools} disabled={isLoading} />
+                                <div className="flex flex-wrap items-center gap-3 sm:gap-4">
+                                    <PublicHistorySwitch user={user} />
+                                    <ShareHistoryButton user={user} pools={pools} />
+                                </div>
+                            </div>
+                        ) : null}
+
+                        <HistoryBody records={records} banners={banners} isLoading={isLoading} filtered={pools.length > 0} />
+                    </>
+                )}
+            </section>
+        </>
     );
 }
 

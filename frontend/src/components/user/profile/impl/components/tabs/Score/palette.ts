@@ -1,4 +1,6 @@
 export const SCORE_PALETTE = {
+    overall: "var(--primary)",
+
     operator: "oklch(0.74 0.17 75)",
     base: "oklch(0.70 0.16 145)",
     stage: "oklch(0.62 0.20 255)",

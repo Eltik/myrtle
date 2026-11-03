@@ -7,7 +7,7 @@ import type { TypedT } from "#/lib/i18n/messages";
 import { STAGE_GROUP_DESCRIPTION_KEY, STAGE_GROUP_LABEL_KEY } from "#/lib/registry/stage-groups";
 import { coverImage, type IEventVM } from "./derive";
 import type { messages } from "./EventDetailDialog.messages";
-import { PreviewFallback } from "./PreviewFallback";
+import { PreviewFallback, STAGE_GROUP_ICON } from "./PreviewFallback";
 import { StagePreview } from "./StagePreview";
 
 function Stat({ label, value, tone }: { label: string; value: string; tone?: string }) {
@@ -38,6 +38,7 @@ export function EventDetailDialog({ event, onClose, onBrowse }: { event: IEventV
     if (!ev) return null;
 
     const cover = coverImage(ev);
+    const Icon = STAGE_GROUP_ICON[ev.group];
     const totalSanity = ev.stages.reduce((n, s) => n + Math.max(0, s.apCost), 0);
     const previews = ev.stages.filter((s) => s.preview).slice(0, 6);
 
@@ -50,12 +51,18 @@ export function EventDetailDialog({ event, onClose, onBrowse }: { event: IEventV
         >
             <DialogPopup className="max-w-2xl gap-0 overflow-hidden p-0" closeProps={{ className: "absolute end-2 top-2 text-white/85 hover:bg-white/15 hover:text-white" }}>
                 <div className="relative h-40 flex-none overflow-hidden sm:h-64">
-                    <PreviewFallback />
+                    <PreviewFallback tone={ev.tone} group={ev.group} iconClassName="h-9 w-9" />
                     {cover && <StagePreview src={cover} />}
                     <div className="pointer-events-none absolute inset-0" style={{ background: "linear-gradient(0deg, rgba(7,9,12,0.88) 0%, rgba(7,9,12,0.35) 45%, rgba(7,9,12,0.12) 100%)" }} />
                     <div className="absolute right-4.5 bottom-4 left-4.5 sm:right-6 sm:bottom-4.5 sm:left-6">
                         <div className="mb-2 flex flex-wrap items-center gap-2">
-                            <span className="inline-flex h-5.5 items-center gap-1.5 rounded-full border border-white/35 bg-black/40 px-2.5 font-mono font-semibold text-[10px] text-white uppercase tracking-[0.09em]">{tNav(STAGE_GROUP_LABEL_KEY[ev.group])}</span>
+                            <span
+                                className="inline-flex h-5.5 items-center gap-1.5 rounded-full border px-2.5 font-mono font-semibold text-[10px] text-white uppercase tracking-[0.09em]"
+                                style={{ borderColor: `color-mix(in oklch, ${ev.tone} 55%, transparent)`, background: `color-mix(in oklch, ${ev.tone} 16%, rgba(0,0,0,0.4))` }}
+                            >
+                                <Icon className="h-3 w-3" style={{ color: ev.tone }} aria-hidden="true" />
+                                {tNav(STAGE_GROUP_LABEL_KEY[ev.group])}
+                            </span>
                             {ev.kicker && <span className="kicker text-white/75">{ev.kicker}</span>}
                         </div>
                         <DialogTitle className="text-balance font-bold font-sans text-[21px] text-white leading-[1.05] tracking-tight sm:text-[26px]" style={{ textShadow: "0 2px 20px rgba(0,0,0,0.55)" }}>
@@ -80,7 +87,7 @@ export function EventDetailDialog({ event, onClose, onBrowse }: { event: IEventV
                             <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-6">
                                 {previews.map((s) => (
                                     <div key={s.stageId} className="relative aspect-16/10 overflow-hidden rounded-md border border-border">
-                                        <PreviewFallback />
+                                        <PreviewFallback tone={ev.tone} group={ev.group} iconClassName="h-3 w-3" />
                                         {s.preview && <StagePreview src={s.preview} />}
                                     </div>
                                 ))}

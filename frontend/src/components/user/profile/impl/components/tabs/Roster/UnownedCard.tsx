@@ -39,7 +39,7 @@ function UnownedCompact({ entry }: { entry: IUnownedEntry }) {
 
     return (
         <div
-            className="relative flex h-min w-full flex-col rounded bg-card"
+            className="fade-in slide-in-from-bottom-2 relative flex h-min w-full animate-in flex-col rounded bg-card"
             style={{
                 padding: "4px 6px",
                 boxShadow: "0 1px 3px 0 rgb(0 0 0 / 0.1)",
@@ -68,7 +68,7 @@ function UnownedDetailed({ entry }: { entry: IUnownedEntry }) {
     const dataSaver = useDataSaver();
 
     return (
-        <Card className="group flex w-full flex-col gap-0 overflow-hidden border-2 border-muted/30 py-0 pb-1 transition-all duration-300 hover:border-muted hover:shadow-lg">
+        <Card className="fade-in slide-in-from-bottom-4 group flex w-full animate-in flex-col gap-0 overflow-hidden border-2 border-muted/30 py-0 pb-1 transition-all duration-300 hover:border-muted hover:shadow-lg">
             <div className="relative">
                 {/* The dim sits on the art alone, so the labels below keep full muted-foreground (7.43, was 2.87 under a card-wide opacity-60). */}
                 <div className="relative h-64 w-full overflow-hidden grayscale">

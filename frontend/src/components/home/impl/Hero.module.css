@@ -269,3 +269,12 @@
         height: 44px;
     }
 }
+
+.myrtleGlow {
+    position: absolute;
+    inset: 12% 10%;
+    border-radius: 999px;
+    background: radial-gradient(closest-side, var(--glow-primary), transparent);
+    filter: blur(24px);
+    opacity: 0.55;
+}

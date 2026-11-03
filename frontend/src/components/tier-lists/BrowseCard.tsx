@@ -68,7 +68,7 @@ export default function BrowseCard({ tl, size = "default", rank, onOpen, onAutho
                         </Link>
                     </h3>
                     {isOfficial && (
-                        <Badge variant="outline" className="mt-0.5">
+                        <Badge variant="outline" className="mt-0.5 border-transparent bg-[oklch(0.92_0.13_85)] text-[oklch(0.32_0.12_75)] shadow-[0_1px_4px_oklch(0.6_0.16_75/0.4)]">
                             <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                                 <path d="M12 2 9.6 4.4 6.3 4l-.6 3.3L2.5 9 4 12l-1.5 3 3.2 1.7.6 3.3 3.3-.4L12 22l2.4-2.4 3.3.4.6-3.3L21.5 15 20 12l1.5-3-3.2-1.7-.6-3.3L14.4 4.4Zm-1.2 13.4-3.4-3.4 1.4-1.4 2 2 4.4-4.4 1.4 1.4Z" />
                             </svg>

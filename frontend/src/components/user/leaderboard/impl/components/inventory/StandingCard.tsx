@@ -36,7 +36,8 @@ export function StandingCard({ item, me, standing, isLoading }: IStandingCardPro
     const percentile = standing && standing.holders_global > 0 ? Math.max(0.1, (standing.rank_global / standing.holders_global) * 100) : null;
 
     return (
-        <aside className="rounded-2xl border border-border bg-card p-4 shadow-[0_1px_2px_rgb(0_0_0/0.04)]">
+        <aside className="relative isolate overflow-hidden rounded-2xl border border-border bg-card p-4 shadow-[0_1px_2px_rgb(0_0_0/0.04)]">
+            <div aria-hidden className="pointer-events-none absolute inset-0 -z-10" style={{ background: "radial-gradient(ellipse 80% 60% at 50% 0%, color-mix(in srgb, var(--primary) 8%, transparent), transparent 60%)" }} />
             <div className="mb-3 flex items-center justify-between gap-2">
                 <Kicker className="min-w-0 truncate">{t("leaderboard.itemYou.title")}</Kicker>
                 <span className="shrink-0 rounded-full border border-border bg-card px-2 py-0.5 font-medium font-mono text-[11px] text-foreground tabular-nums leading-none">#{rank ?? "-"}</span>

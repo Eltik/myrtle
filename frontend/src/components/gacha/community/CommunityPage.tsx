@@ -9,6 +9,7 @@ import type { TypedT } from "#/lib/i18n/messages";
 import type { IOperatorIndexEntry } from "#/types/operators";
 import type { messages } from "./CommunityPage.messages";
 import { BannerRunsPanel } from "./impl/BannerRunsPanel";
+import styles from "./impl/CommunityPage.module.css";
 import { KpiStrip } from "./impl/KpiStrip";
 import { Leaderboard } from "./impl/Leaderboard";
 import { PageHeader } from "./impl/PageHeader";
@@ -68,33 +69,36 @@ export function CommunityPage() {
     const isLoading = enhanced.isLoading;
 
     return (
-        <section className="page-shell flex flex-col gap-6 [--page-max:1320px]">
-            <PageHeader data={data} isLoading={isLoading} />
+        <>
+            <div className={styles.pageAmbient} aria-hidden />
+            <section className="page-shell flex flex-col gap-6 [--page-max:1320px]">
+                <PageHeader data={data} isLoading={isLoading} />
 
-            {/* The KPIs, leaderboard, rarity and timing panels all read this one query; on a failure
+                {/* The KPIs, leaderboard, rarity and timing panels all read this one query; on a failure
                     they would each sit on their placeholders, so one failure line stands in for all four. */}
-            {enhanced.isError && !data ? (
-                <LoadFailed message={t("community.error.load")} onRetry={() => void enhanced.refetch()} />
-            ) : (
-                <>
-                    <KpiStrip data={data} />
+                {enhanced.isError && !data ? (
+                    <LoadFailed message={t("community.error.load")} onRetry={() => void enhanced.refetch()} />
+                ) : (
+                    <>
+                        <KpiStrip data={data} />
 
-                    <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.3fr_1fr]">
-                        <div className="lg:relative lg:min-h-0">
-                            <Leaderboard ops={data?.mostCommonOperators ?? []} operatorsById={operatorsById} isLoading={isLoading} />
+                        <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.3fr_1fr]">
+                            <div className="lg:relative lg:min-h-0">
+                                <Leaderboard ops={data?.mostCommonOperators ?? []} operatorsById={operatorsById} isLoading={isLoading} />
+                            </div>
+                            <RarityPanel data={data} personal={personalRates} />
                         </div>
-                        <RarityPanel data={data} personal={personalRates} />
-                    </div>
 
-                    <TimingPanel timing={data?.pullTiming} firstPullAt={data?.collectiveStats.firstPullAt} banners={bannersSorted} />
-                </>
-            )}
+                        <TimingPanel timing={data?.pullTiming} firstPullAt={data?.collectiveStats.firstPullAt} banners={bannersSorted} />
+                    </>
+                )}
 
-            {/* The banner list and its per-banner stats are separate queries: without the list the runs
+                {/* The banner list and its per-banner stats are separate queries: without the list the runs
                     panel is empty, and without the stats its rows show no pull counts. */}
-            {banners.isError ? <LoadFailed message={t("community.error.banners")} onRetry={() => void banners.refetch()} /> : perBannerStats.isError ? <LoadFailed message={t("community.error.bannerStats")} onRetry={() => void perBannerStats.refetch()} /> : null}
+                {banners.isError ? <LoadFailed message={t("community.error.banners")} onRetry={() => void banners.refetch()} /> : perBannerStats.isError ? <LoadFailed message={t("community.error.bannerStats")} onRetry={() => void perBannerStats.refetch()} /> : null}
 
-            <BannerRunsPanel banners={bannersSorted} operatorsById={operatorsById} statsById={perBannerById} isLoading={banners.isLoading} />
-        </section>
+                <BannerRunsPanel banners={bannersSorted} operatorsById={operatorsById} statsById={perBannerById} isLoading={banners.isLoading} />
+            </section>
+        </>
     );
 }

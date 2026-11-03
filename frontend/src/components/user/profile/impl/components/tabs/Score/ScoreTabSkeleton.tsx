@@ -2,6 +2,7 @@ import { Skeleton } from "#/components/ui/skeleton";
 import { cn } from "#/lib/utils";
 import { CARD_PADDING, StatCard } from "../Stats/primitives";
 import { SUBSCORES } from "./helpers";
+import { SCORE_PALETTE } from "./palette";
 
 function KickerSkeleton() {
     return (
@@ -14,7 +15,7 @@ function KickerSkeleton() {
 
 function OverallSkeleton() {
     return (
-        <StatCard className="sm:col-span-2">
+        <StatCard className="sm:col-span-2" color={SCORE_PALETTE.overall}>
             <div className={cn("grid gap-6 sm:grid-cols-[auto_1fr] sm:gap-8", CARD_PADDING)}>
                 <div className="flex flex-col items-start gap-4">
                     <KickerSkeleton />
@@ -44,9 +45,9 @@ function OverallSkeleton() {
     );
 }
 
-function SubscoreSkeleton() {
+function SubscoreSkeleton({ color }: { color: string }) {
     return (
-        <StatCard>
+        <StatCard color={color}>
             <div className={cn("flex h-full flex-col gap-5", CARD_PADDING)}>
                 <div className="flex items-center justify-between">
                     <KickerSkeleton />
@@ -75,7 +76,7 @@ export function ScoreTabSkeleton() {
         <div className="grid gap-3 pb-8 sm:grid-cols-2">
             <OverallSkeleton />
             {SUBSCORES.map((sub) => (
-                <SubscoreSkeleton key={sub.key} />
+                <SubscoreSkeleton color={sub.color} key={sub.key} />
             ))}
         </div>
     );

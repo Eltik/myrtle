@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { ChevronDown, Star } from "lucide-react";
+import { ArrowUpRight, Box, ChevronDown, ChevronsUp, Sigma, Sparkles, Star, TrendingUp } from "lucide-react";
 import { memo, useMemo, useState } from "react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "#/components/ui/collapsible";
 import { LoadFailed } from "#/components/ui/load-failed";
@@ -106,11 +106,14 @@ function CostRow({ label, hint, items, materials, server }: { label: string; hin
     );
 }
 
-function Section({ title, subtitle, children, className }: { title: string; subtitle?: string; children: React.ReactNode; className?: string }) {
+function Section({ icon, title, subtitle, children, className }: { icon: React.ReactNode; title: string; subtitle?: string; children: React.ReactNode; className?: string }) {
     const [open, setOpen] = useState(true);
     return (
-        <Collapsible className={cn("overflow-hidden rounded-2xl border border-border bg-card", className)} onOpenChange={setOpen} open={open} render={<section />}>
+        <Collapsible className={cn("overflow-hidden rounded-xl border border-border bg-card", className)} onOpenChange={setOpen} open={open} render={<section />}>
             <CollapsibleTrigger className={cn("flex w-full items-center gap-3 px-5 py-3.5 text-left transition-colors hover:bg-muted/30", open && "border-border border-b")}>
+                <div aria-hidden="true" className="flex h-7 w-7 items-center justify-center rounded-md bg-primary/10 text-primary">
+                    {icon}
+                </div>
                 <div className="min-w-0 flex-1">
                     <h3 className="font-semibold text-foreground text-sm tracking-tight">{title}</h3>
                     {subtitle && <p className="truncate text-muted-foreground text-xs">{subtitle}</p>}
@@ -160,7 +163,7 @@ export const LevelUpContent = memo(function LevelUpContent({ operator }: ILevelU
     if (!grandTotal.length) {
         return (
             <div className="min-w-0 overflow-hidden p-4 md:p-6">
-                <section className="overflow-hidden rounded-2xl border border-border bg-card">
+                <section className="overflow-hidden rounded-xl border border-border bg-card">
                     <div className="flex flex-col items-center justify-center gap-3 px-6 py-16 text-center">
                         <div className="grid h-12 w-12 place-items-center rounded-full bg-muted text-muted-foreground">
                             <Star className="h-5 w-5" />
@@ -188,7 +191,7 @@ export const LevelUpContent = memo(function LevelUpContent({ operator }: ILevelU
             <div className="flex flex-col gap-5">
                 {materialsFailed && !materials && <LoadFailed message={t("levelup.materialsFailed")} onRetry={() => void refetchMaterials()} />}
                 {levelingRows.length > 0 && (
-                    <Section subtitle={t("levelup.section.operatorLevel.desc")} title={t("levelup.section.operatorLevel")}>
+                    <Section icon={<TrendingUp className="h-4 w-4" />} subtitle={t("levelup.section.operatorLevel.desc")} title={t("levelup.section.operatorLevel")}>
                         {levelingRows.map((r) => (
                             <CostRow hint={t("levelup.row.levelRange", { max: r.maxLevel })} items={r.cost} key={r.phase} label={t("levelup.row.elite", { phase: r.phase })} materials={materials} />
                         ))}
@@ -196,7 +199,7 @@ export const LevelUpContent = memo(function LevelUpContent({ operator }: ILevelU
                 )}
 
                 {elitePromotions.length > 0 && (
-                    <Section subtitle={t("levelup.section.elite.desc")} title={t("levelup.section.elite")}>
+                    <Section icon={<ChevronsUp className="h-4 w-4" />} subtitle={t("levelup.section.elite.desc")} title={t("levelup.section.elite")}>
                         {elitePromotions.map((r) => (
                             <CostRow hint={t("levelup.row.promoteTo", { to: r.to })} items={r.cost} key={r.to} label={t("levelup.row.elite", { phase: r.to })} materials={materials} server={operator.server} />
                         ))}
@@ -204,7 +207,7 @@ export const LevelUpContent = memo(function LevelUpContent({ operator }: ILevelU
                 )}
 
                 {allSkillRows.length > 0 && (
-                    <Section subtitle={t("levelup.section.skillLevels.desc")} title={t("levelup.section.skillLevels")}>
+                    <Section icon={<ArrowUpRight className="h-4 w-4" />} subtitle={t("levelup.section.skillLevels.desc")} title={t("levelup.section.skillLevels")}>
                         {allSkillRows.map((r, i) => (
                             <CostRow
                                 hint={t("levelup.row.unlockAt", { phase: t(PHASE_MESSAGE_KEY[r.unlockCond.phase]), level: r.unlockCond.level })}
@@ -219,11 +222,11 @@ export const LevelUpContent = memo(function LevelUpContent({ operator }: ILevelU
                 )}
 
                 {activeMastery && (
-                    <Section subtitle={t("levelup.section.mastery.desc")} title={t("levelup.section.mastery")}>
+                    <Section icon={<Sparkles className="h-4 w-4" />} subtitle={t("levelup.section.mastery.desc")} title={t("levelup.section.mastery")}>
                         {masterySkills.length > 1 && (
-                            <ToggleGroup aria-label={t("levelup.section.mastery")} className="w-full overflow-x-auto border-border border-b bg-muted/30 px-5 py-2.5" onValueChange={(next) => next[0] !== undefined && setActiveSkill(Number(next[0]))} size="sm" value={[String(activeSkill)]}>
+                            <ToggleGroup aria-label={t("levelup.section.mastery")} className="w-full gap-1.5 overflow-x-auto border-border border-b bg-muted/30 px-5 py-2.5" onValueChange={(next) => next[0] !== undefined && setActiveSkill(Number(next[0]))} size="sm" value={[String(activeSkill)]}>
                                 {masterySkills.map((s, i) => (
-                                    <ToggleGroupItem className="gap-2 text-xs sm:text-xs" key={s.skillId} value={String(i)}>
+                                    <ToggleGroupItem className="shrink-0 gap-2 text-muted-foreground text-xs hover:text-foreground data-pressed:text-foreground sm:text-xs" key={s.skillId} value={String(i)}>
                                         <span className="grid h-5 w-5 shrink-0 place-items-center rounded bg-background/60 font-bold text-[10px]">{i + 1}</span>
                                         <span lang={cnUpdates?.skillIds.has(s.skillId) ? "zh-CN" : undefined}>{s.static?.levels?.[0]?.name ?? t("levelup.skillFallback", { index: i + 1 })}</span>
                                         {cnUpdates?.skillIds.has(s.skillId) && <CnTag />}
@@ -231,7 +234,7 @@ export const LevelUpContent = memo(function LevelUpContent({ operator }: ILevelU
                                 ))}
                             </ToggleGroup>
                         )}
-                        <div className="kicker px-5 pt-3 pb-1">{activeMasteryName}</div>
+                        <div className="px-5 pt-3 pb-1 text-muted-foreground text-xs uppercase tracking-wider">{activeMasteryName}</div>
                         {activeMastery.levelUpCostCond.map((c, i) => (
                             <CostRow
                                 hint={t("levelup.row.unlockAt", { phase: t(PHASE_MESSAGE_KEY[c.unlockCond.phase]), level: c.unlockCond.level })}
@@ -246,7 +249,7 @@ export const LevelUpContent = memo(function LevelUpContent({ operator }: ILevelU
                 )}
 
                 {validModules.length > 0 && (
-                    <Section subtitle={t("levelup.section.modules.desc")} title={t("levelup.section.modules")}>
+                    <Section icon={<Box className="h-4 w-4" />} subtitle={t("levelup.section.modules.desc")} title={t("levelup.section.modules")}>
                         <div className="divide-y divide-border">
                             {validModules.map((m) => {
                                 const fromCn = cnUpdates?.moduleIds.has(m.uniEquipId) ?? false;
@@ -254,7 +257,7 @@ export const LevelUpContent = memo(function LevelUpContent({ operator }: ILevelU
                                     <div className="px-5 py-4" key={m.uniEquipId}>
                                         <div className="mb-3 flex items-center gap-3">
                                             <div className="grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded-md border border-border bg-muted/40">
-                                                {m.image ? <img alt="" className="h-full w-full object-contain" loading="lazy" src={asset(m.image, fromCn ? "cn" : operator.server)} /> : <span className="font-bold text-[10px] text-foreground">{m.typeName2 ?? m.typeName1}</span>}
+                                                {m.image ? <img alt="" className="h-full w-full object-contain" loading="lazy" src={asset(m.image, fromCn ? "cn" : operator.server)} /> : <span className="font-bold text-[10px] text-primary uppercase">{m.typeName2 ?? m.typeName1}</span>}
                                             </div>
                                             <div className="min-w-0">
                                                 <div className="flex min-w-0 items-center gap-2">
@@ -283,7 +286,7 @@ export const LevelUpContent = memo(function LevelUpContent({ operator }: ILevelU
                     </Section>
                 )}
 
-                <Section subtitle={t("levelup.section.total.desc")} title={t("levelup.section.total")}>
+                <Section icon={<Sigma className="h-4 w-4" />} subtitle={t("levelup.section.total.desc")} title={t("levelup.section.total")}>
                     <div className="px-5 py-4">
                         <div className="flex flex-wrap gap-2.5">
                             {grandTotal.map((it) => (

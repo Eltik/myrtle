@@ -195,7 +195,7 @@ function Estimated({ row, t, onPreset, onAllocate }: { row: IPlanRow; t: PullsT;
                                     // A border on every row, not just on hover: these ARE the
                                     // panel's control, and on touch there is no hover to
                                     // reveal that. Without it they read as a definition list.
-                                    g.key === activeKey ? "inset-ring inset-ring-foreground/40 border-transparent bg-input text-foreground dark:bg-foreground/12" : "border-border/50",
+                                    g.key === activeKey ? "border-primary/50 bg-primary/10" : "border-border/50",
                                 )}
                             >
                                 <span className={cn("min-w-0 truncate font-sans text-[12px]", g.key === activeKey ? "text-foreground" : "text-muted-foreground")}>{g.label}</span>
@@ -243,12 +243,7 @@ function OperatorPot({ id, lookup, name, copies, onSet, t }: { id: string; looku
     const rarity = entry ? rarityToNumber(entry.rarity) : null;
     const active = copies > 0;
     return (
-        <div
-            className={cn(
-                "inline-flex min-w-0 max-w-full items-center gap-1.5 rounded-md border py-0.5 pr-1 pl-0.5 font-medium font-sans text-[12px] transition-colors",
-                active ? "inset-ring inset-ring-foreground/40 border-transparent bg-input text-foreground" : "border-border/60 bg-secondary/40 text-muted-foreground",
-            )}
-        >
+        <div className={cn("inline-flex min-w-0 max-w-full items-center gap-1.5 rounded-md border py-0.5 pr-1 pl-0.5 font-medium font-sans text-[12px] transition-colors", active ? "border-primary bg-primary/15 text-foreground" : "border-border/60 bg-secondary/40 text-muted-foreground")}>
             <span className={cn("inline-flex size-5 shrink-0 items-center justify-center overflow-hidden rounded font-bold font-sans text-[11px]", rarity === null && "bg-muted text-muted-foreground")} style={rarity === null ? undefined : { backgroundColor: `var(--rarity-${rarity})` }}>
                 <OperatorAvatar charId={id} name={label.text} server={entry ? undefined : "cn"} />
             </span>
@@ -460,7 +455,7 @@ function PlanRow({ row, lookup, charNames, today, t, onAllocate, onPreset, onSet
 function FaceStrip({ ids, lookup }: { ids: string[]; lookup: OperatorLookup }): React.ReactElement {
     const many = ids.length > 3;
     return (
-        <div className="flex aspect-[5/2] w-full items-center justify-center gap-1 overflow-hidden rounded-md bg-muted p-1 sm:p-1.5">
+        <div className="flex aspect-[5/2] w-full items-center justify-center gap-1 overflow-hidden rounded-md bg-linear-to-br from-zinc-800 to-zinc-950 p-1 sm:p-1.5">
             {ids.map((id) => (
                 <Face key={id} id={id} onEn={lookup.has(id)} many={many} />
             ))}

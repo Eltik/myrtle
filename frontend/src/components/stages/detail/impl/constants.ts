@@ -54,13 +54,13 @@ export const DROP_TYPE_META: Record<string, { labelKey: StageDetailMessageKey; o
     CONDITION_DROP: { labelKey: "dropType.CONDITION_DROP", order: 5 },
 };
 
-export const OCC_META: Record<string, { labelKey: StageDetailMessageKey; level: number }> = {
-    ALWAYS: { labelKey: "occ.ALWAYS", level: 5 },
-    ALMOST: { labelKey: "occ.ALMOST", level: 4 },
-    USUAL: { labelKey: "occ.USUAL", level: 3 },
-    OFTEN: { labelKey: "occ.OFTEN", level: 2 },
-    SOMETIMES: { labelKey: "occ.SOMETIMES", level: 1 },
-    RARELY: { labelKey: "occ.RARELY", level: 0 },
+export const OCC_META: Record<string, { labelKey: StageDetailMessageKey; level: number; tone: string }> = {
+    ALWAYS: { labelKey: "occ.ALWAYS", level: 5, tone: "var(--success)" },
+    ALMOST: { labelKey: "occ.ALMOST", level: 4, tone: "var(--success)" },
+    USUAL: { labelKey: "occ.USUAL", level: 3, tone: "var(--info)" },
+    OFTEN: { labelKey: "occ.OFTEN", level: 2, tone: "var(--info)" },
+    SOMETIMES: { labelKey: "occ.SOMETIMES", level: 1, tone: "var(--warning)" },
+    RARELY: { labelKey: "occ.RARELY", level: 0, tone: "var(--destructive)" },
 };
 
-export const OCC_FALLBACK: { labelKey: StageDetailMessageKey; level: number } = { labelKey: "occ.FALLBACK", level: 2 };
+export const OCC_FALLBACK: { labelKey: StageDetailMessageKey; level: number; tone: string } = { labelKey: "occ.FALLBACK", level: 2, tone: "var(--muted-foreground)" };

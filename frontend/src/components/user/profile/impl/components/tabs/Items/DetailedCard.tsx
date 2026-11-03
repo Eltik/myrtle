@@ -39,7 +39,7 @@ export function DetailedCard({ item }: IDetailedCardProps) {
                     <Card
                         aria-describedby={stageCount > 0 || recipeCount > 0 ? hintId : undefined}
                         aria-label={t("profile.items.openAria", { name: item.name })}
-                        className="group relative cursor-pointer overflow-hidden rounded-2xl! text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-foreground/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        className="fade-in slide-in-from-bottom-4 group relative animate-in cursor-pointer overflow-hidden rounded-2xl! text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-foreground/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         render={<button type="button" />}
                     />
                 }

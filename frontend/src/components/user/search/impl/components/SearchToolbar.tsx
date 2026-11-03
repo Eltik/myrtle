@@ -181,7 +181,11 @@ function AllPicker({ scope, onChange, operators }: { scope: Scope | null; onChan
         <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger
                 aria-label={t("search.toolbar.all.aria")}
-                className={cn(FILTER, "relative w-full min-w-0 pointer-coarse:after:absolute pointer-coarse:after:inset-x-0 pointer-coarse:after:top-1/2 pointer-coarse:after:h-11 pointer-coarse:after:-translate-y-1/2 sm:w-auto", scope && "inset-ring inset-ring-foreground/40 bg-input dark:bg-foreground/12")}
+                className={cn(
+                    FILTER,
+                    "relative w-full min-w-0 pointer-coarse:after:absolute pointer-coarse:after:inset-x-0 pointer-coarse:after:top-1/2 pointer-coarse:after:h-11 pointer-coarse:after:-translate-y-1/2 sm:w-auto",
+                    scope && "inset-ring inset-ring-ring bg-primary/12 hover:bg-primary/16 dark:bg-primary/16 dark:hover:bg-primary/22",
+                )}
             >
                 <span className={INLINE_LABEL}>{t("search.toolbar.all.label")}</span>
                 <span className="min-w-0 truncate font-semibold text-foreground">{scope ? scopeLabel(scope) : t("search.toolbar.all.none")}</span>

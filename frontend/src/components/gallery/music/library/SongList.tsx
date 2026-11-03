@@ -291,7 +291,7 @@ const SongRow = memo(function SongRow({ index, track, tracks, source, houseArtis
                 <span className="relative size-7 shrink-0 overflow-hidden rounded-[4px] bg-muted">{track.coverUrl ? <img referrerPolicy="no-referrer" src={sizedCover(track.coverUrl, 28)} alt="" loading="lazy" decoding="async" className="size-full object-cover" /> : null}</span>
                 <span className="flex min-w-0 flex-1 flex-col leading-tight">
                     <span className="flex min-w-0 items-center gap-1.5">
-                        <span className={cn("truncate font-sans text-[13px] text-foreground", current ? "font-semibold" : "font-medium")}>{title}</span>
+                        <span className={cn("truncate font-sans text-[13px]", current ? "font-semibold text-primary" : "font-medium text-foreground")}>{title}</span>
                         {track.instrumental ? (
                             <Badge variant="outline" size="sm" className="shrink-0 font-mono tracking-[0.06em]">
                                 {t("music.list.inst")}

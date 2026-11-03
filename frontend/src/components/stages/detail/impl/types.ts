@@ -46,7 +46,7 @@ export interface IResolvedDrop {
     iconURL: string;
     rarity: number;
     isChar: boolean;
-    occ: { labelKey: StageDetailMessageKey; level: number };
+    occ: { labelKey: StageDetailMessageKey; level: number; tone: string };
 }
 
 export interface IDropGroup {

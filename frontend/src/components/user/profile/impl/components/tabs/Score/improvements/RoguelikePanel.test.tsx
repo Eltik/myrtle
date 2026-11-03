@@ -27,7 +27,7 @@ function theme(overrides: Partial<IRoguelikeThemeImprovement> = {}): IRoguelikeT
 function mount(themes: IRoguelikeThemeImprovement[]) {
     return render(
         <I18nProvider locale="en" available={[{ code: "en", nativeName: "English" }]} messages={MESSAGES}>
-            <RoguelikePanel improvements={{ roguelike: themes } as IImprovementsResponse} />
+            <RoguelikePanel improvements={{ roguelike: themes } as IImprovementsResponse} accent="red" />
         </I18nProvider>,
     );
 }

@@ -238,7 +238,8 @@ export function Browse() {
 
                             {hasMore && (
                                 <div className="mt-6 flex justify-center">
-                                    <Button variant="outline" className="border-dashed" onClick={() => setVisibleCount((n) => n + PAGE_INCREMENT)}>
+                                    <Button variant="outline" className="border-dashed hover:border-primary hover:bg-[color-mix(in_srgb,var(--primary)_5%,transparent)]" onClick={() => setVisibleCount((n) => n + PAGE_INCREMENT)}>
+                                        <span className="h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_8px_color-mix(in_srgb,var(--primary)_50%,transparent)]" aria-hidden="true" />
                                         <span>{t("browse.loadMore", { count: Math.min(PAGE_INCREMENT, sorted.length - visibleCount) })}</span>
                                         <span className="font-mono text-[10.5px] text-muted-foreground tabular-nums">
                                             {visibleCount} / {sorted.length}

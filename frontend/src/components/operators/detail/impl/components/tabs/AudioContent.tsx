@@ -252,7 +252,7 @@ function VolumeControl({ volume, setVolume, isMuted, setIsMuted }: { volume: num
 }
 
 function Pill({ children, className }: { children: ReactNode; className?: string }) {
-    return <span className={cn("rounded bg-secondary/60 px-1.5 py-0.5 text-[11px] text-muted-foreground", className)}>{children}</span>;
+    return <span className={cn("rounded bg-secondary/60 px-1.5 py-0.5 text-[10px] text-muted-foreground uppercase tracking-wide", className)}>{children}</span>;
 }
 
 function EmptyState({ children }: { children: ReactNode }) {
@@ -786,7 +786,7 @@ function SfxRow({ item, player, operatorName, showCategory }: { item: ISfxItem; 
                 {item.skinVariant && <Pill>{t("audio.altSkin")}</Pill>}
                 {isUnavailable && <Pill className="bg-muted">{t("audio.unavailable")}</Pill>}
                 {variantCount > 1 && (
-                    <button type="button" onClick={() => setExpanded((v) => !v)} aria-expanded={expanded} className="inline-flex items-center gap-1 rounded bg-secondary/60 px-1.5 py-0.5 font-medium text-[11px] text-muted-foreground transition-colors hover:text-foreground">
+                    <button type="button" onClick={() => setExpanded((v) => !v)} aria-expanded={expanded} className="inline-flex items-center gap-1 rounded bg-secondary/60 px-1.5 py-0.5 font-medium text-[10px] text-muted-foreground uppercase tracking-wide transition-colors hover:text-foreground">
                         <Layers className="h-3 w-3" />
                         {t("audio.variants", { count: variantCount })}
                         {expanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}

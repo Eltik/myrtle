@@ -5,7 +5,7 @@ import { RARITY_COLORS } from "#/components/operators/list/impl/constants";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "#/components/ui/accordion";
 import { Card, CardContent } from "#/components/ui/card";
 import { Dialog } from "#/components/ui/dialog";
-import { Progress, ProgressIndicator, ProgressTrack } from "#/components/ui/progress";
+import { Progress } from "#/components/ui/progress";
 import { ScrollArea } from "#/components/ui/scroll-area";
 import { Separator } from "#/components/ui/separator";
 import { useDataSaver } from "#/hooks/use-data-saver";
@@ -102,16 +102,14 @@ export function DetailedCard({ entry, lastRef }: IDetailedCardProps) {
                     the mouse target, and still skips the accordion. */}
                 <Card
                     ref={cardRef}
-                    className="flex w-full cursor-pointer flex-col gap-0 overflow-hidden border-2 border-muted/30 py-0 pb-1 text-left transition-all duration-300 hover:border-muted hover:shadow-lg"
+                    className="fade-in slide-in-from-bottom-4 flex w-full animate-in cursor-pointer flex-col gap-0 overflow-hidden border-2 border-muted/30 py-0 pb-1 text-left transition-all duration-300 hover:border-muted hover:shadow-lg"
                     onClick={(e) => {
                         if ((e.target as HTMLElement).closest("[data-roster-card-accordion]")) return;
                         setDialogOpen(true);
                     }}
                     onMouseEnter={() => setHovered(true)}
                     onMouseLeave={() => setHovered(false)}
-                    // A maxed operator is marked by its rarity colour on the border and the Maxed tag, not by
-                    // the 20px + 40px glow it used to cast over its neighbours in the grid.
-                    style={maxed ? { borderColor: rarityColor } : undefined}
+                    style={maxed ? { boxShadow: `0 0 20px ${rarityColor}60, 0 0 40px ${rarityColor}40` } : undefined}
                 >
                     <div className="relative">
                         <div className="relative aspect-5/4 w-full cursor-pointer overflow-hidden">
@@ -154,22 +152,14 @@ export function DetailedCard({ entry, lastRef }: IDetailedCardProps) {
                                     <span className="font-medium text-sm">{t("profile.roster.card.level")}</span>
                                     <span className="font-bold text-sm">{entry.level}</span>
                                 </div>
-                                <Progress value={levelProgress}>
-                                    <ProgressTrack className="bg-muted">
-                                        <ProgressIndicator className="bg-muted-foreground duration-1000 ease-out" />
-                                    </ProgressTrack>
-                                </Progress>
+                                <Progress className="h-1.5 transition-all duration-1000 ease-out" value={levelProgress} />
                             </div>
                             <div>
                                 <div className="flex items-center justify-between">
                                     <span className="font-medium text-sm">{t("profile.roster.card.trust")}</span>
                                     <span className="font-bold text-sm">{trustPct}%</span>
                                 </div>
-                                <Progress value={trustProgress}>
-                                    <ProgressTrack className="bg-muted">
-                                        <ProgressIndicator className="bg-muted-foreground duration-1000 ease-out" />
-                                    </ProgressTrack>
-                                </Progress>
+                                <Progress className="h-1.5 transition-all duration-1000 ease-out" value={trustProgress} />
                             </div>
                         </div>
                         <Separator className="my-3" />

@@ -25,7 +25,7 @@ export function TierListHero({ detail }: ITierListHeroProps) {
     const updatedRel = f.relative(detail.updatedAt);
 
     return (
-        <header className="border-border/60 border-b">
+        <header className="border-border/60 border-b bg-linear-to-b from-card/40 to-transparent">
             <div className="page-gutter pt-5 pb-6 [--page-max:1200px] sm:pt-10 sm:pb-9">
                 <Breadcrumb className="mb-3">
                     <BreadcrumbList className="text-xs">
@@ -98,16 +98,22 @@ export function TierListHero({ detail }: ITierListHeroProps) {
                                 </>
                             )}
 
-                            {/* Kind, flair and trending are neutral labels in the meta row, under the title they describe; only the flair's own colour means something, so it alone tints. */}
+                            {/* Kind, flair and trending sit in the meta row, under the title they describe: official in gold, the flair in its own colour, trending in the accent. */}
                             <span className="inline-flex flex-wrap items-center gap-1.5">
-                                <Badge variant="outline">{isOfficial ? t("detail.hero.official") : t("detail.hero.community")}</Badge>
+                                <Badge variant="outline" className={isOfficial ? "border-transparent bg-[oklch(0.92_0.13_85)] text-[oklch(0.32_0.12_75)]" : undefined}>
+                                    {isOfficial ? t("detail.hero.official") : t("detail.hero.community")}
+                                </Badge>
                                 {flair && (
                                     // Free-form flair colours measured 2.46 to 2.94 as text on their own tint; the tint and border carry the colour, the text stays foreground.
                                     <Badge variant={flair.color ? "tint" : "outline"} style={flair.color ? ({ "--tone": flair.color } as React.CSSProperties) : undefined}>
                                         {flair.label}
                                     </Badge>
                                 )}
-                                {stats?.isTrending && <Badge variant="outline">{t("detail.hero.trending")}</Badge>}
+                                {stats?.isTrending && (
+                                    <Badge variant="tint" style={{ "--tone": "var(--primary)" } as React.CSSProperties}>
+                                        {t("detail.hero.trending")}
+                                    </Badge>
+                                )}
                             </span>
                         </div>
                     </div>

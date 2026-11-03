@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { ArrowUpRightIcon, EyeOffIcon, PencilIcon, SparklesIcon } from "lucide-react";
+import { ArrowUpRightIcon, EyeOffIcon, HeartIcon, LayoutGridIcon, ListOrderedIcon, PencilIcon, SparklesIcon, TargetIcon } from "lucide-react";
 import { type CSSProperties, lazy, type ReactNode, Suspense, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { compactGridSize } from "#/components/grids/compact";
 import { GridBoard } from "#/components/grids/GridBoard";
@@ -26,7 +26,7 @@ import type { ShowcaseBlockView } from "#/types/generated/ShowcaseBlockView";
 import type { IUserProfile } from "#/types/user";
 import { draftFromView, type IShowcaseEntity, type ShowcaseDraftBlock, shownBlocks } from "../../../showcase";
 import { PlanCard } from "../Plans/PlansTab";
-import { CARD_PADDING, CardKicker, KICKER_TEXT, StatCard } from "../Stats/primitives";
+import { CARD_PADDING, KICKER_TEXT, Kicker, StatCard } from "../Stats/primitives";
 import { FactionFavouriteDialog, type IShowcasePlayer, OperatorFavouriteDialog, operatorTarget, ShowcasePlayerContext, useShowcasePlayer } from "./FavouriteDialogs";
 import type { messages as favMessages } from "./FavouriteDialogs.messages";
 import type { RosterAccess } from "./favourites";
@@ -175,7 +175,8 @@ function ShowcaseSkeleton() {
 function ShowcaseEmpty({ onStart }: { onStart: () => void }) {
     const t: TypedT<typeof messages> = useT("user");
     return (
-        <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-border border-dashed bg-card px-6 py-14 text-center sm:px-8 sm:py-16">
+        <div className="relative flex flex-col items-center justify-center gap-3 overflow-hidden rounded-3xl border border-border border-dashed bg-card px-6 py-14 text-center sm:px-8 sm:py-16">
+            <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-px bg-[linear-gradient(to_right,transparent,color-mix(in_oklch,var(--primary)_70%,transparent),transparent)]" />
             <span aria-hidden="true" className="flex size-11 items-center justify-center rounded-2xl border border-border bg-muted/50 text-primary">
                 <SparklesIcon className="size-5" />
             </span>
@@ -232,11 +233,11 @@ function RemovedBlock({ type }: { type: ShowcaseDraftBlock["type"] }) {
     );
 }
 
-function BlockHeader({ kicker, title, end }: { kicker: string; title?: string | null; end?: ReactNode }) {
+function BlockHeader({ icon, kicker, title, end }: { icon: typeof HeartIcon; kicker: string; title?: string | null; end?: ReactNode }) {
     return (
         <div className="flex items-start justify-between gap-3">
             <div className="flex min-w-0 flex-col gap-1">
-                <CardKicker label={kicker} />
+                <Kicker icon={icon} label={kicker} />
                 {title && <h3 className="truncate font-semibold text-base text-foreground leading-tight tracking-tight">{title}</h3>}
             </div>
             {end}
@@ -269,9 +270,9 @@ function FavouritesBlock({ block }: { block: Extract<ShowcaseDraftBlock, { type:
     const labels = useEntityLabels();
     const title = block.title.trim();
     return (
-        <StatCard>
+        <StatCard color={BLOCK_ACCENT.favourites}>
             <div className={cn(CARD_PADDING, "flex flex-col gap-4")}>
-                <BlockHeader kicker={labels.plural(block.kind)} title={title || null} end={<span className="shrink-0 text-muted-foreground text-xs tabular-nums">{t("profile.showcase.block.favourites.count", { count: block.entities.length })}</span>} />
+                <BlockHeader icon={HeartIcon} kicker={labels.plural(block.kind)} title={title || null} end={<span className="shrink-0 text-muted-foreground text-xs tabular-nums">{t("profile.showcase.block.favourites.count", { count: block.entities.length })}</span>} />
                 <FavouriteTiles entities={block.entities} />
             </div>
         </StatCard>
@@ -295,7 +296,7 @@ export function FavouriteTiles({ entities }: { entities: readonly IShowcaseEntit
 
 /** One tile's frame. Dark in both themes, as the art behind it is drawn for. */
 const TILE_CLASS =
-    "group relative flex items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-[linear-gradient(to_bottom,color-mix(in_oklch,var(--tile-accent)_26%,oklch(0.24_0.005_285)),oklch(0.15_0.004_285))] text-lg text-white no-underline outline-none transition-[border-color,transform] duration-150 hover:-translate-y-0.5 hover:border-(--tile-accent) focus-visible:ring-2 focus-visible:ring-ring";
+    "group relative flex items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-[linear-gradient(to_bottom,color-mix(in_oklch,var(--tile-accent)_26%,oklch(0.24_0.005_285)),oklch(0.15_0.004_285))] text-lg text-white no-underline outline-none transition-[border-color,transform,box-shadow] duration-150 hover:-translate-y-0.5 hover:border-(--tile-accent) hover:shadow-[0_6px_18px_-6px_color-mix(in_oklch,var(--tile-accent)_45%,transparent)] focus-visible:ring-2 focus-visible:ring-ring";
 
 /** An operator's card, drawn as the operators page draws it: no tinted backdrop, the portrait on the plain card. */
 const OPERATOR_TILE_CLASS = "group relative block overflow-hidden rounded-md border border-muted/50 bg-card text-foreground no-underline outline-none transition-[border-radius,border-color] duration-150 hover:rounded-lg hover:border-muted focus-visible:ring-2 focus-visible:ring-ring";
@@ -401,9 +402,9 @@ function GridBlock({ slug, isOwner }: { slug: string; isOwner: boolean }) {
     const cardWidth = `calc(${compactGridSize(grid.rows, grid.cols).boardMaxPx}px + 2rem + 2px)`;
     return (
         <div className={cn(FILL_SLOT, "lg:w-(--card-w) lg:max-w-full")} style={{ "--card-w": cardWidth } as CSSProperties}>
-            <StatCard>
+            <StatCard color={BLOCK_ACCENT.grid}>
                 <div className="flex flex-col gap-3 p-3 sm:p-4">
-                    <BlockHeader kicker={t("profile.showcase.block.grid")} title={grid.title} end={<OpenLink to="/grids/$slug" slug={slug} title={grid.title} />} />
+                    <BlockHeader icon={LayoutGridIcon} kicker={t("profile.showcase.block.grid")} title={grid.title} end={<OpenLink to="/grids/$slug" slug={slug} title={grid.title} />} />
                     {description && <p className="m-0 line-clamp-3 whitespace-pre-line text-muted-foreground text-sm">{description}</p>}
                     <GridBoard title={grid.title} rows={grid.rows} cols={grid.cols} cells={cells} size="compact" />
                 </div>
@@ -420,9 +421,9 @@ function TierListBlock({ slug, isOwner }: { slug: string; isOwner: boolean }) {
     if (isError) return <LoadFailed message={t("profile.showcase.blockFailed.tierList")} onRetry={() => void refetch()} />;
     if (!detail) return isOwner ? <RemovedBlock type="tier_list" /> : null;
     return (
-        <StatCard>
+        <StatCard color={BLOCK_ACCENT.tier_list}>
             <div className={CARD_PADDING}>
-                <BlockHeader kicker={t("profile.showcase.block.tierList")} title={detail.title} end={<OpenLink to="/tier-lists/$id" slug={slug} title={detail.title} />} />
+                <BlockHeader icon={ListOrderedIcon} kicker={t("profile.showcase.block.tierList")} title={detail.title} end={<OpenLink to="/tier-lists/$id" slug={slug} title={detail.title} />} />
             </div>
             <TierListPeek slug={slug}>
                 <TierListBoard detail={detail} />
@@ -476,9 +477,10 @@ function PlanBlock({ id, uid, roster, isOwner, plansHidden }: { id: string; uid:
     const plan = plans?.find((p) => p.id === id);
     if (!plan) return isOwner ? <RemovedBlock type="plan" /> : null;
     return (
-        <StatCard>
+        <StatCard color={BLOCK_ACCENT.plan}>
             <div className={cn(CARD_PADDING, "flex flex-col gap-3.5")}>
                 <BlockHeader
+                    icon={TargetIcon}
                     kicker={t("profile.showcase.block.plan")}
                     end={
                         isOwner &&

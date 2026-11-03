@@ -101,6 +101,7 @@ function SettingsNavButton({ item, isActive, activeRef, onSelect, tone = "defaul
                 tone === "danger" ? (isActive ? "bg-destructive/12 font-medium text-destructive" : "text-muted-foreground hover:bg-destructive/10 hover:text-destructive") : isActive ? "bg-accent font-medium text-foreground" : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
             )}
         >
+            <span aria-hidden className={cn("pointer-events-none absolute top-1.5 bottom-1.5 left-0 hidden w-0.75 rounded-r-full transition-opacity sm:block", isActive ? "opacity-100" : "opacity-0", tone === "danger" ? "bg-destructive" : "bg-primary")} />
             <Icon className={cn("size-4 shrink-0", isActive ? "opacity-100" : "opacity-80")} />
             <span className="min-w-0">{label}</span>
         </button>
