@@ -421,6 +421,9 @@ pre code {
   --muted-foreground: oklch(0.65 0.01 285);
   /* On background / card and popover / muted: 5.51 / 5.24 / 4.75. */
   --subtle-foreground: oklch(0.62 0.01 285);
+  /* Scroll-edge hint: the light page's black 12% edge is invisible on the dark page
+     (browser review 2026-11-04: dark tab strips looked cut off with no hint). */
+  --scroll-shadow-edge: color-mix(in oklch, var(--foreground) 18%, transparent);
   --popover: oklch(0.17 0.005 285);
   --popover-foreground: oklch(0.97 0.005 285);
   --primary: oklch(0.75 0.15 25);
@@ -711,8 +714,8 @@ pre code {
         background-image:
             linear-gradient(to bottom, var(--scroll-shadow-bg), transparent),
             linear-gradient(to top, var(--scroll-shadow-bg), transparent),
-            linear-gradient(to bottom, oklch(0 0 0 / 0.12), transparent),
-            linear-gradient(to top, oklch(0 0 0 / 0.12), transparent);
+            linear-gradient(to bottom, var(--scroll-shadow-edge, oklch(0 0 0 / 0.12)), transparent),
+            linear-gradient(to top, var(--scroll-shadow-edge, oklch(0 0 0 / 0.12)), transparent);
         background-position:
             0 0,
             0 100%,
@@ -737,8 +740,8 @@ pre code {
     background-image:
         linear-gradient(to right, var(--scroll-shadow-bg, var(--background)), transparent),
         linear-gradient(to left, var(--scroll-shadow-bg, var(--background)), transparent),
-        linear-gradient(to right, oklch(0 0 0 / 0.12), transparent),
-        linear-gradient(to left, oklch(0 0 0 / 0.12), transparent);
+        linear-gradient(to right, var(--scroll-shadow-edge, oklch(0 0 0 / 0.12)), transparent),
+        linear-gradient(to left, var(--scroll-shadow-edge, oklch(0 0 0 / 0.12)), transparent);
     background-position:
         0 0,
         100% 0,
