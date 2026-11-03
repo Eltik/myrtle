@@ -5,6 +5,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { SearchField } from "#/components/SearchField";
 import { Button } from "#/components/ui/button";
 import { Sheet, SheetHeader, SheetPanel, SheetPopup, SheetTitle } from "#/components/ui/sheet";
+import { Skeleton } from "#/components/ui/skeleton";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { archiveNetworkQueryOptions } from "#/lib/api/archives";
 import { useFormatters, useGamedataServer } from "#/lib/i18n";
@@ -48,7 +49,7 @@ export function NetworkTab({ chart, onChart, onOpenFile }: INetworkTabProps): Re
     const server = useGamedataServer();
     const { data, isLoading, isError, refetch } = useQuery(archiveNetworkQueryOptions(server));
     if (isError) return <TabFailed onRetry={() => void refetch()} />;
-    if (isLoading || !data) return <div className="h-[min(70vh,560px)] animate-pulse rounded-2xl border border-border bg-muted/40" />;
+    if (isLoading || !data) return <Skeleton className="h-[min(70vh,560px)] rounded-2xl border border-border" />;
     if (!data.imported) return <p className="rounded-2xl border border-border bg-card p-5 text-muted-foreground text-sm">{t("network.notImported")}</p>;
     return <Network data={data} chart={chart} onChart={onChart} onOpenFile={onOpenFile} server={server} t={t} />;
 }

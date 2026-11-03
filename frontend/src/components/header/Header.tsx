@@ -3,6 +3,7 @@ import { Heart, Settings } from "lucide-react";
 import { useMemo, useRef } from "react";
 import { WhatsNewButton } from "#/components/changelog/WhatsNewButton";
 import { MaintenancePill } from "#/components/maintenance/MaintenanceCountdown";
+import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import { Separator } from "#/components/ui/separator";
 import { useAuth } from "#/hooks/use-auth";
@@ -118,7 +119,9 @@ export default function Header() {
                             The wordmark is ~82px and the only thing that costs no function
                             (the bust stays, and the drawer header has the full wordmark). */}
                             <span className="hidden font-semibold text-[15px] tracking-tight sm:inline">myrtle.moe</span>
-                            <span className="hidden rounded-[5px] border border-border bg-muted/60 px-1.5 py-0.75 font-medium font-mono text-[10.5px] text-muted-foreground leading-none sm:inline-block">v3</span>
+                            <Badge variant="outline" size="sm" className="hidden font-mono sm:inline-flex">
+                                v3
+                            </Badge>
                         </Link>
 
                         <MainNav ref={navRef} items={navItems} onOpenCommand={openCmd} collapsed={navCollapsed} />
@@ -164,7 +167,7 @@ export default function Header() {
                                         size="icon"
                                         className="hidden sm:inline-flex"
                                         render={
-                                            <Link to="/donate" target="_blank" aria-label={t("header.support")}>
+                                            <Link to="/donate" aria-label={t("header.support")}>
                                                 <Heart className="h-4 w-4" aria-hidden="true" />
                                                 <span className="sr-only">{t("header.support")}</span>
                                             </Link>

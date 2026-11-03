@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-11-03T15:34:20.182Z",
+    "generatedAt": "2026-11-03T15:54:22.642Z",
     "entries": [
         {
             "key": "admin.home.access.everyList",
@@ -26187,13 +26187,6 @@
             "placeholders": []
         },
         {
-            "key": "settings.shell.kicker",
-            "namespace": "settings",
-            "source_text": "Account",
-            "description": "Small uppercase eyebrow above the page title.",
-            "placeholders": []
-        },
-        {
             "key": "settings.shell.sectionsNav",
             "namespace": "settings",
             "source_text": "Settings sections",
@@ -44067,15 +44060,6 @@
             "placeholders": []
         },
         {
-            "key": "tools.planner.dialog.groups.deleteConfirm",
-            "namespace": "tools",
-            "source_text": "Delete the group \"{name}\"?",
-            "description": "Question in the browser dialog confirming a group deletion; {name} is the group's own name, in quotes.",
-            "placeholders": [
-                "name"
-            ]
-        },
-        {
             "key": "tools.planner.dialog.groups.newName",
             "namespace": "tools",
             "source_text": "New group name…",
@@ -44094,13 +44078,6 @@
             "namespace": "tools",
             "source_text": "Select plan groups…",
             "description": "Placeholder in the group picker. Ends in an ellipsis character.",
-            "placeholders": []
-        },
-        {
-            "key": "tools.planner.dialog.groups.renamePrompt",
-            "namespace": "tools",
-            "source_text": "Enter new group name:",
-            "description": "Prompt in the browser dialog that renames a group. Keep the colon.",
             "placeholders": []
         },
         {
@@ -44355,15 +44332,6 @@
             ]
         },
         {
-            "key": "tools.planner.group.deleteConfirm",
-            "namespace": "tools",
-            "source_text": "Delete the group \"{name}\"?",
-            "description": "Question in the browser dialog confirming a group deletion; {name} is the group's own name, in quotes.",
-            "placeholders": [
-                "name"
-            ]
-        },
-        {
             "key": "tools.planner.group.empty",
             "namespace": "tools",
             "source_text": "No plans in this group.",
@@ -44405,13 +44373,6 @@
             ]
         },
         {
-            "key": "tools.planner.group.renamePrompt",
-            "namespace": "tools",
-            "source_text": "Enter new group name:",
-            "description": "Prompt in the browser dialog that renames a group. Keep the colon.",
-            "placeholders": []
-        },
-        {
             "key": "tools.planner.group.unpin",
             "namespace": "tools",
             "source_text": "Unpin {name}",
@@ -44419,6 +44380,64 @@
             "placeholders": [
                 "name"
             ]
+        },
+        {
+            "key": "tools.planner.groupDialog.cancel",
+            "namespace": "tools",
+            "source_text": "Cancel",
+            "description": "Button that closes the rename or delete dialog without changing the group.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.planner.groupDialog.delete.confirm",
+            "namespace": "tools",
+            "source_text": "Delete group",
+            "description": "Button that carries out the group deletion.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.planner.groupDialog.delete.failed",
+            "namespace": "tools",
+            "source_text": "Couldn't delete the group. Try again.",
+            "description": "Error shown in the delete dialog when the request failed.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.planner.groupDialog.delete.title",
+            "namespace": "tools",
+            "source_text": "Delete the group \"{name}\"?",
+            "description": "Title of the dialog confirming a group deletion; {name} is the group's own name, in quotes.",
+            "placeholders": [
+                "name"
+            ]
+        },
+        {
+            "key": "tools.planner.groupDialog.rename.failed",
+            "namespace": "tools",
+            "source_text": "Couldn't rename the group. Try again.",
+            "description": "Error shown in the rename dialog when the request failed.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.planner.groupDialog.rename.label",
+            "namespace": "tools",
+            "source_text": "Group name",
+            "description": "Label of the text field holding the group's new name.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.planner.groupDialog.rename.save",
+            "namespace": "tools",
+            "source_text": "Save",
+            "description": "Button that saves the group's new name.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.planner.groupDialog.rename.title",
+            "namespace": "tools",
+            "source_text": "Rename group",
+            "description": "Title of the dialog that renames a plan group.",
+            "placeholders": []
         },
         {
             "key": "tools.planner.intro",

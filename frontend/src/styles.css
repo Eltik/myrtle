@@ -63,6 +63,14 @@
   --popover-foreground: oklch(0.145 0.005 285);
   --primary: oklch(0.58 0.22 25);
   --primary-foreground: oklch(0.985 0.002 285);
+  /* `--primary` is the fill; `text-primary` reads `--primary-ink` and rings read
+     `--ring`, so a custom accent hex can keep its fill while text and ring get a
+     variant that clears 4.5 / 3 (lib/theme/accent-kit.ts). By default all three
+     are the same red: 4.59 page / 4.79 card. */
+  --primary-ink: oklch(0.58 0.22 25);
+  /* Hover/pressed moves the fill away from its label instead of thinning it:
+     /90 alpha measured 4.16 page / 4.14 card, this measures 6.08. */
+  --primary-hover: color-mix(in oklab, var(--primary) 88%, black);
   --ring: oklch(0.58 0.22 25);
   --secondary: oklch(0.94 0.005 285);
   --secondary-foreground: oklch(0.205 0.005 285);
@@ -237,6 +245,13 @@ pre code {
   --color-ring: var(--ring);
   --color-primary-foreground: var(--primary-foreground);
   --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  /* Namespace keys Tailwind reads before `--color-*`: text, underline, ring and
+     outline in "primary" take the ink/ring variants; bg, border, fill stay the fill. */
+  --text-color-primary: var(--primary-ink);
+  --text-decoration-color-primary: var(--primary-ink);
+  --ring-color-primary: var(--ring);
+  --outline-color-primary: var(--ring);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
   --color-muted-foreground: var(--muted-foreground);
@@ -403,6 +418,10 @@ pre code {
   --popover-foreground: oklch(0.97 0.005 285);
   --primary: oklch(0.75 0.15 25);
   --primary-foreground: oklch(0.13 0.005 285);
+  /* 8.49 page / 8.07 card. */
+  --primary-ink: oklch(0.75 0.15 25);
+  /* The label is dark here, so hover lightens: 9.46 (was 6.98 at /90). */
+  --primary-hover: color-mix(in oklab, var(--primary) 88%, white);
   --ring: oklch(0.75 0.15 25);
   --secondary: oklch(0.22 0.005 285);
   --secondary-foreground: oklch(0.97 0.005 285);

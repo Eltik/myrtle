@@ -29,7 +29,7 @@ export function PublishingPanel({ flair, flairOptions, isListed, canPublish, pub
     const visibilityHintId = `${visibilityId}-hint`;
 
     return (
-        <div className="rounded-xl border border-border bg-card p-3 shadow-[0_1px_2px_oklch(0_0_0/0.04)]">
+        <div className="rounded-2xl border border-border bg-card p-3 shadow-[0_1px_2px_oklch(0_0_0/0.04)]">
             <div className="flex items-center justify-between gap-2">
                 <span className="font-bold font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.14em]">{t("edit.publishing.heading")}</span>
             </div>

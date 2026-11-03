@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { Kicker } from "#/components/ui/kicker";
+import { Skeleton } from "#/components/ui/skeleton";
 import { statsQueryOptions } from "#/lib/api/stats";
 import { type TypedRichT, useFormatters, useRichT, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -70,7 +71,7 @@ export function StatsPage() {
                 ) : (
                     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
                         {["a", "b", "c", "d", "e", "f", "g", "h"].map((k) => (
-                            <div key={k} className="h-28 animate-pulse rounded-2xl border border-border bg-muted/40" />
+                            <Skeleton key={k} className="h-28 rounded-2xl border border-border" />
                         ))}
                     </div>
                 )}

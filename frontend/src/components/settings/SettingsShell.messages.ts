@@ -3,10 +3,6 @@ import { defineMessages, type MessageMap } from "#/lib/i18n/messages";
 export const namespace = "settings";
 
 export const messages = {
-    "shell.kicker": {
-        text: "Account",
-        description: "Small uppercase eyebrow above the page title.",
-    },
     "shell.title": {
         text: "Settings",
         description: "Page title of the settings screen.",

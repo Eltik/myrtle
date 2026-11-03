@@ -9,8 +9,14 @@ interface IFilterChipProps {
     active: boolean;
     count?: number;
     onSelect: () => void;
-    /** A CSS colour for the pressed tint and border, e.g. `var(--dmg-magic)`. Primary by default. */
+    /** A CSS colour for the pressed tint, e.g. `var(--dmg-magic)`. Primary by default. */
     tone?: string;
+    /**
+     * The pressed border, an `-ink` token for the tone (e.g. `DAMAGE_TOKENS[d].ink`). It has
+     * to clear 3:1 on the page, which raw data tones often miss; without it the border is
+     * the tone at full strength, and with no tone at all it is `--ring` (4.59 light, 8.49 dark).
+     */
+    toneInk?: string;
     disabled?: boolean;
     /** Overrides the visible label as the accessible name, e.g. to spell out the count. */
     "aria-label"?: string;
@@ -22,20 +28,24 @@ interface IFilterChipProps {
  * radius, type scale, `aria-pressed` and coarse-pointer 44px hit area. The active tint goes
  * through `data-pressed:`: unprefixed, the Toggle's own `data-pressed:bg-input` outranked
  * it, so the chip measured `--input` (light) and foreground/12 (dark) when pressed and the
- * primary tint and its 1px ring never painted. Text stays foreground, since tone text on
+ * primary tint and its 1px ring never painted. The pressed border is solid: `--tone` at /50
+ * measured 2.28 light / 2.79 dark on the page, under the 3:1 an edge needs. Text stays foreground, since tone text on
  * its own tint fails AA (1.66 to 3.96 in audit-002), and a check mark carries the pressed
  * state without relying on colour.
  */
-export function FilterChip({ label, active, count, onSelect, tone, disabled, "aria-label": ariaLabel, className }: IFilterChipProps) {
+export function FilterChip({ label, active, count, onSelect, tone, toneInk, disabled, "aria-label": ariaLabel, className }: IFilterChipProps) {
     return (
         <Toggle
             aria-label={ariaLabel}
-            className={cn("h-8 gap-1.5 px-3 [--tone:var(--primary)] data-pressed:inset-ring-0 data-pressed:border-(--tone)/50 data-pressed:bg-(--tone)/10 data-pressed:text-foreground data-pressed:hover:bg-(--tone)/15 dark:data-pressed:bg-(--tone)/10 dark:data-pressed:hover:bg-(--tone)/15", className)}
+            className={cn(
+                "h-8 gap-1.5 px-3 [--tone-edge:var(--ring)] [--tone:var(--primary)] data-pressed:inset-ring-0 data-pressed:border-(--tone-edge) data-pressed:bg-(--tone)/10 data-pressed:text-foreground data-pressed:hover:bg-(--tone)/15 dark:data-pressed:bg-(--tone)/10 dark:data-pressed:hover:bg-(--tone)/15",
+                className,
+            )}
             disabled={disabled}
             onPressedChange={() => onSelect()}
             pressed={active}
             size="sm"
-            style={tone ? ({ "--tone": tone } as React.CSSProperties) : undefined}
+            style={tone || toneInk ? ({ "--tone": tone, "--tone-edge": toneInk ?? tone } as React.CSSProperties) : undefined}
             variant="outline"
         >
             {active && <Check aria-hidden className="-ml-0.5 size-3.5" />}

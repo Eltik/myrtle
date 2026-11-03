@@ -154,14 +154,6 @@ export const messages = {
         text: "No groups found.",
         description: "Shown inside the group picker when the query matches nothing.",
     },
-    "planner.dialog.groups.renamePrompt": {
-        text: "Enter new group name:",
-        description: "Prompt in the browser dialog that renames a group. Keep the colon.",
-    },
-    "planner.dialog.groups.deleteConfirm": {
-        text: 'Delete the group "{name}"?',
-        description: "Question in the browser dialog confirming a group deletion; {name} is the group's own name, in quotes.",
-    },
     "planner.dialog.displayOnProfile": {
         text: "Display on profile",
         description: "Switch label: whether this plan appears on the player's public profile.",

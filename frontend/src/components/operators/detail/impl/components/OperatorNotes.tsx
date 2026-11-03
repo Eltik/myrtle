@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { ChevronDown, Lightbulb, Loader2, MessageSquareText, StickyNote, ThumbsDown, ThumbsUp } from "lucide-react";
+import { ChevronDown, Loader2, ThumbsDown, ThumbsUp } from "lucide-react";
 import { useLayoutEffect, useRef, useState } from "react";
 import { Badge } from "#/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "#/components/ui/collapsible";
@@ -96,10 +96,7 @@ export function OperatorNotes({ operatorId }: IOperatorNotesProps) {
     return (
         <Collapsible open={showNotes} onOpenChange={setShowNotes}>
             <CollapsibleTrigger className="flex w-full items-center justify-between rounded-lg border border-border bg-secondary/30 px-4 py-3 transition-colors hover:bg-secondary/50">
-                <span className="flex items-center gap-2">
-                    <MessageSquareText className="h-4 w-4 text-primary" />
-                    <span className="font-medium text-sm">{t("notes.title")}</span>
-                </span>
+                <span className="font-medium text-sm">{t("notes.title")}</span>
             </CollapsibleTrigger>
             <CollapsibleContent>
                 <div className="mt-3 space-y-4">
@@ -134,20 +131,14 @@ export function OperatorNotes({ operatorId }: IOperatorNotesProps) {
 
                     {hasNotes && (
                         <div className="rounded-lg border border-border bg-secondary/20 p-4">
-                            <div className="mb-2 flex items-center gap-2">
-                                <StickyNote className="h-4 w-4 text-warning-foreground" />
-                                <span className="font-medium text-sm">{t("notes.notes")}</span>
-                            </div>
+                            <div className="mb-2 font-medium text-sm">{t("notes.notes")}</div>
                             <ExpandableText text={notesText} markdown />
                         </div>
                     )}
 
                     {hasTrivia && (
                         <div className="rounded-lg border border-border bg-secondary/20 p-4">
-                            <div className="mb-2 flex items-center gap-2">
-                                <Lightbulb className="h-4 w-4 text-warning-foreground" />
-                                <span className="font-medium text-sm">{t("notes.trivia")}</span>
-                            </div>
+                            <div className="mb-2 font-medium text-sm">{t("notes.trivia")}</div>
                             <ExpandableText text={trivia} markdown />
                         </div>
                     )}

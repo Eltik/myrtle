@@ -64,7 +64,7 @@ function SettingRow({ def, checked, disabled, onChange }: { def: ISettingDef; ch
 export function MapSettings({ settings, onChange }: { settings: IMapSettings; onChange: (next: IMapSettings) => void }) {
     const t: TypedT<typeof messages> = useT("stages");
     return (
-        <div className="flex flex-col rounded-[10px] border border-border bg-card px-3.5 py-2.5">
+        <div className="flex flex-col rounded-2xl border border-border bg-card px-3.5 py-2.5">
             <div className="mb-1 flex items-center">
                 <Kicker className="mb-0 leading-none">{t("mapSettings.title")}</Kicker>
             </div>

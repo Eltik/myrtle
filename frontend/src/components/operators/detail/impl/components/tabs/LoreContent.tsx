@@ -1,4 +1,4 @@
-import { BookMarked, ChevronDown, FileText, FlaskConical, ScrollText, Sparkles } from "lucide-react";
+import { ChevronDown, FileText } from "lucide-react";
 import { memo, useState } from "react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "#/components/ui/collapsible";
 import { GameText } from "#/lib/gamedata/GameText";
@@ -32,14 +32,6 @@ const STAT_HEADERS = new Set([
     "Infection Status",
 ]);
 
-/** Section icon from the archive's title; the handbook gives no type field to key on. */
-function storyIcon(title: string): React.ElementType {
-    const lower = title.toLowerCase();
-    if (lower.includes("clinical") || lower.includes("medical")) return FlaskConical;
-    if (lower.includes("promotion") || lower.includes("elite")) return Sparkles;
-    return ScrollText;
-}
-
 const QUOTE_OPENERS = [">", "「", "『"];
 
 function isQuoted(line: string): boolean {
@@ -67,12 +59,9 @@ export const LoreContent = memo(function LoreContent({ operator }: ILoreContentP
 
             {hasStories ? (
                 <div className="space-y-4">
-                    <div className="flex items-center gap-2">
-                        <BookMarked className="h-5 w-5 text-primary" />
-                        <h3 className="font-semibold text-foreground text-lg">{t("lore.archives")}</h3>
-                    </div>
+                    <h3 className="font-semibold text-foreground text-lg">{t("lore.archives")}</h3>
                     {stories.map((section, idx) => (
-                        <LoreSection key={section.storyTitle} title={section.storyTitle} icon={storyIcon(section.storyTitle)} defaultOpen={idx === 0}>
+                        <LoreSection key={section.storyTitle} title={section.storyTitle} defaultOpen={idx === 0}>
                             {section.stories.map((story) => (
                                 <StoryEntry key={story.storyText.slice(0, 50)} text={story.storyText} />
                             ))}
@@ -90,15 +79,12 @@ export const LoreContent = memo(function LoreContent({ operator }: ILoreContentP
     );
 });
 
-function LoreSection({ title, icon: Icon, children, defaultOpen = false }: { title: string; icon: React.ElementType; children: React.ReactNode; defaultOpen?: boolean }) {
+function LoreSection({ title, children, defaultOpen = false }: { title: string; children: React.ReactNode; defaultOpen?: boolean }) {
     const [open, setOpen] = useState(defaultOpen);
     return (
         <Collapsible open={open} onOpenChange={setOpen}>
             <CollapsibleTrigger className="flex w-full items-center justify-between rounded-lg border border-border bg-secondary/30 px-4 py-3 transition-colors hover:bg-secondary/50">
-                <span className="flex items-center gap-3">
-                    <Icon className="h-4 w-4 text-primary" />
-                    <span className="font-medium text-sm">{title}</span>
-                </span>
+                <span className="font-medium text-sm">{title}</span>
                 <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", open && "rotate-180")} />
             </CollapsibleTrigger>
             <CollapsibleContent>

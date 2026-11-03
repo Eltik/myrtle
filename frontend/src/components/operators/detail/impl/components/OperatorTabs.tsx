@@ -50,7 +50,7 @@ export function OperatorTabs({ operator, activeTab, onTabChange }: IOperatorTabs
         <TooltipProvider>
             <div className="flex min-w-0 flex-col lg:flex-row lg:gap-8">
                 <nav aria-label={t("tabs.aria")} className="min-w-0 shrink-0 lg:w-56">
-                    <Tabs className="page-bleed sticky top-14 z-30 mb-4 border-border/50 border-b bg-background/80 backdrop-blur-xl sm:top-16 lg:hidden" onValueChange={handleValueChange} value={activeTab}>
+                    <Tabs className="page-bleed sticky top-(--site-header-height) z-30 mb-4 border-border/50 border-b bg-background lg:hidden" onValueChange={handleValueChange} value={activeTab}>
                         {/* At 375px the six tabs run to 713px and a screenshot showed the strip cut "Level-Up
                             Cost" mid-word with no sign that it scrolls, although the kit fade was on. At 1.5rem
                             it spans about three glyphs of text-sm; 3rem spans about six, so the cut reads as a
@@ -78,7 +78,7 @@ export function OperatorTabs({ operator, activeTab, onTabChange }: IOperatorTabs
 
                     <Tabs className="sticky top-20 hidden lg:block" onValueChange={handleValueChange} orientation="vertical" value={activeTab}>
                         <TabsList
-                            className={cn("w-full gap-0.5 rounded-xl border border-border/60 bg-card p-2", "**:data-[slot=tab-indicator]:rounded-lg **:data-[slot=tab-indicator]:bg-primary/10 **:data-[slot=tab-indicator]:shadow-none **:data-[slot=tab-indicator]:ring-1 **:data-[slot=tab-indicator]:ring-primary/30")}
+                            className={cn("w-full gap-0.5 rounded-2xl border border-border/60 bg-card p-2", "**:data-[slot=tab-indicator]:rounded-lg **:data-[slot=tab-indicator]:bg-primary/10 **:data-[slot=tab-indicator]:shadow-none **:data-[slot=tab-indicator]:ring-1 **:data-[slot=tab-indicator]:ring-primary/30")}
                         >
                             {filteredTabs.map((tab) => {
                                 const Icon = tab.icon;

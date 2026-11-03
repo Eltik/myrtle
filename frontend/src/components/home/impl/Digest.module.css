@@ -16,7 +16,7 @@
     min-width: 0;
     padding: 18px;
     border: 1px solid var(--border);
-    border-radius: 14px;
+    border-radius: var(--radius-2xl);
     background: var(--card);
 }
 .head {
@@ -71,8 +71,6 @@
     min-height: 40px;
     margin: 4px -6px;
     border-radius: 8px;
-    background: var(--muted);
-    opacity: 0.5;
 }
 
 /* Both panels' rows are links that bleed into the panel padding on hover. */

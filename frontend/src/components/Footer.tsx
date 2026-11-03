@@ -39,7 +39,7 @@ export default function Footer() {
                         <Link to="/discord" className={FOOTER_LINK}>
                             {t("footer.discord")}
                         </Link>
-                        <Link to="/donate" target="_blank" className={FOOTER_LINK}>
+                        <Link to="/donate" className={FOOTER_LINK}>
                             {t("footer.donate")}
                         </Link>
                     </nav>

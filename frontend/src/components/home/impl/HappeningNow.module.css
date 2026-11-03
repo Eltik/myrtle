@@ -40,7 +40,7 @@
 
 .empty {
     border: 1px dashed var(--border);
-    border-radius: 14px;
+    border-radius: var(--radius-2xl);
     padding: 20px;
     font-size: 14px;
     color: var(--muted-foreground);
@@ -72,7 +72,7 @@
     flex-direction: column;
     overflow: hidden;
     border: 1px solid var(--border);
-    border-radius: 14px;
+    border-radius: var(--radius-2xl);
     background: var(--card);
     color: inherit;
     text-decoration: none;
@@ -209,8 +209,5 @@
 
 .skeleton {
     min-height: 220px;
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    background: var(--muted);
-    opacity: 0.5;
+    border-radius: var(--radius-2xl);
 }

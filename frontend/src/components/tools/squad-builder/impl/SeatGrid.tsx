@@ -370,7 +370,7 @@ function SeatCard(props: ISeatCardProps): React.ReactElement {
                         <span className="sr-only">{subProfessionLabel(op)}</span>
                     </span>
                     <span className={styles.eliteBox} title={eliteLabel}>
-                        <img alt={eliteLabel} src={eliteIcon(build.phase)} />
+                        <img alt={eliteLabel} src={eliteIcon(build.phase)} width={24} height={24} />
                     </span>
                 </span>
                 <span id={`${detailsId}-stars`} role="img" aria-label={t("squad.grid.rarityAria", { rarity: op.rarity })} className={styles.stars} style={{ "--star-color": rarityInk(op.rarity) } as React.CSSProperties}>
@@ -380,7 +380,7 @@ function SeatCard(props: ISeatCardProps): React.ReactElement {
                 <span id={`${detailsId}-band`} className={styles.band}>
                     <SeatLoadout resolved={resolved} op={op} t={t} />
                     <span className={styles.potential} title={potentialLabel}>
-                        <img alt={potentialLabel} src={potentialIcon(build.potential)} />
+                        <img alt={potentialLabel} src={potentialIcon(build.potential)} width={24} height={24} />
                     </span>
                 </span>
             </span>
@@ -464,7 +464,7 @@ function SeatLoadout({ resolved, op, t }: { resolved: IResolvedSeat; op: IOperat
                 <span className={styles.tile} title={`${skillName}, ${skillRank}`}>
                     {skill ? <img alt={skillName} src={skillIconURL(skill)} loading="lazy" /> : <span className={styles.tileText}>{skillShort}</span>}
                     {build.mastery > 0 ? (
-                        <img alt={skillRank} src={specializedIcon(build.mastery)} className={styles.glyph} />
+                        <img alt={skillRank} src={specializedIcon(build.mastery)} width={17} height={15} className={styles.glyph} />
                     ) : (
                         <span role="img" aria-label={skillRank} className={styles.rank}>
                             {build.skill_level}

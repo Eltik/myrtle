@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import type * as React from "react";
 import { Button } from "#/components/ui/button";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
+import { Skeleton } from "#/components/ui/skeleton";
 import { toPct } from "#/components/user/leaderboard/impl/constants";
 import { playerIdentity } from "#/components/user/leaderboard/impl/identity";
 import { leaderboardQueryOptions } from "#/lib/api/user";
@@ -42,7 +43,7 @@ export default function TopPlayers() {
             {/* Mounted from the first render and only its text changes, so a screen reader announces the load. */}
             <output className="sr-only">{isPending ? t("leaders.loading") : ""}</output>
             <div className={styles.list} aria-busy={isPending}>
-                {isPending && SKELETON_KEYS.map((key) => <div key={key} className={styles.leaderSkeleton} aria-hidden="true" />)}
+                {isPending && SKELETON_KEYS.map((key) => <Skeleton key={key} className={styles.leaderSkeleton} />)}
                 {isError && (
                     <div className={styles.noteRow}>
                         <p className={styles.note}>{t("leaders.error")}</p>

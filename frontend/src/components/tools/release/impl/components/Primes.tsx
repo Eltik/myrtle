@@ -38,7 +38,7 @@ export function Calcs({ total, inline = false, className }: { total: IRowBalance
                 <Op value={total?.income ?? 0} sign="+" />
             </dd>
             <dt className="font-sans text-muted-foreground">{t("release.primes.expenses")}</dt>
-            <dd className="m-0 text-right text-rose-700 dark:text-rose-400">
+            <dd className="m-0 text-right text-destructive-foreground">
                 <Op value={total?.expense ?? 0} sign="-" />
             </dd>
             <dt className="font-sans font-semibold text-foreground">{t("release.primes.balance")}</dt>

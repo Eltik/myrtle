@@ -8,6 +8,7 @@ import { fromUnix } from "#/components/tools/release/impl/helpers";
 import { useReleaseTagLabel } from "#/components/tools/release/impl/labels";
 import { Button } from "#/components/ui/button";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
+import { Skeleton } from "#/components/ui/skeleton";
 import { DEFAULT_GAMEDATA_SERVER, resolveGamedataServer } from "#/lib/api/gamedata";
 import { liveFeedQueryOptions } from "#/lib/api/live";
 import { useFormatters, useGamedataServer, useLocale, useT } from "#/lib/i18n";
@@ -54,7 +55,7 @@ export default function HappeningNow({ id }: { id: string }) {
     // out, and the next one in the feed takes its place.
     const items = selectLive(feed.data?.items ?? [], now / 1000);
     const names: FeaturedNames = feed.data?.names ?? {};
-    const cards = loading ? SKELETON_KEYS.map((key) => <div key={key} className={styles.skeleton} aria-hidden="true" />) : items.map((item) => <LiveCard key={item.key} item={item} now={now} server={server} forecasts={forecasts} names={names} />);
+    const cards = loading ? SKELETON_KEYS.map((key) => <Skeleton key={key} className={styles.skeleton} />) : items.map((item) => <LiveCard key={item.key} item={item} now={now} server={server} forecasts={forecasts} names={names} />);
 
     return (
         <section id={id} className={`${shared.container} ${styles.section}`}>

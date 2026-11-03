@@ -70,7 +70,7 @@ export function GameTracks({ catalog, query, kind, collator, state }: { catalog:
                 {t("music.loopNote")}
             </p>
             {visible.length === 0 ? (
-                <div className="rounded-[14px] border border-border border-dashed p-14 text-center font-sans text-[14px] text-muted-foreground">{t("music.empty")}</div>
+                <div className="rounded-2xl border border-border border-dashed p-14 text-center font-sans text-[14px] text-muted-foreground">{t("music.empty")}</div>
             ) : (
                 <ul className="m-0 flex list-none flex-col gap-2 p-0">{page.shown.map((track) => (track.game ? <TrackRow key={track.id} track={track} record={track.game} onPlay={onPlay} /> : null))}</ul>
             )}

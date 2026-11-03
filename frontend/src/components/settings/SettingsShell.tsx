@@ -28,7 +28,6 @@ export function SettingsShell({ nav, active, onChange, children }: ISettingsShel
         // A `<div>`: the site shell already wraps every page in the one `<main>`.
         <div className="page-gutter relative py-8 [--page-max:1100px] sm:py-14">
             <div className="mb-6 sm:mb-8">
-                <Kicker className="mb-2">{t("shell.kicker")}</Kicker>
                 <h1 className="m-0 font-(--font-heading) font-bold text-[26px] text-foreground leading-[1.15] tracking-[-0.02em] sm:text-[36px]">{t("shell.title")}</h1>
                 <p className="m-0 mt-1.5 max-w-[60ch] font-sans text-[14px] text-muted-foreground leading-[1.55] sm:text-[15px]">{t("shell.subtitle")}</p>
             </div>
@@ -63,14 +62,7 @@ function SettingsNav({ nav, active, onChange }: { nav: ISettingsNavItem[]; activ
     const dangerItems = nav.filter((item) => item.id === "danger");
 
     return (
-        <nav
-            aria-label={t("shell.sectionsNav")}
-            className={cn(
-                "page-bleed sm:mx-0",
-                "sticky top-(--site-header-height) z-20 border-border border-b bg-background/85 backdrop-blur-md backdrop-saturate-150 supports-[backdrop-filter]:bg-background/65",
-                "sm:top-20 sm:z-0 sm:self-start sm:rounded-2xl sm:border sm:border-sidebar-border sm:bg-sidebar/60 sm:p-2 sm:backdrop-blur-none sm:backdrop-saturate-100",
-            )}
-        >
+        <nav aria-label={t("shell.sectionsNav")} className={cn("page-bleed sm:mx-0", "sticky top-(--site-header-height) z-20 border-border border-b bg-background", "sm:top-20 sm:z-0 sm:self-start sm:rounded-2xl sm:border sm:border-sidebar-border sm:bg-sidebar/60 sm:p-2")}>
             <div ref={scrollerRef} className="flex gap-1 overflow-x-auto px-3 py-2 [scrollbar-width:none] sm:flex-col sm:gap-0.5 sm:overflow-visible sm:p-0 [&::-webkit-scrollbar]:hidden">
                 {mainItems.map((item) => (
                     <SettingsNavButton key={item.id} item={item} isActive={active === item.id} activeRef={active === item.id ? activeRef : undefined} onSelect={onChange} />

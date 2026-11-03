@@ -53,7 +53,7 @@ export function AccountPanel({ user, onResync, syncing, onSignOut, signingOut, o
             <Card>
                 <div className="flex flex-col gap-4 p-4 sm:grid sm:grid-cols-[auto_1fr_auto] sm:items-center sm:gap-5 sm:p-6">
                     <div className="flex items-center gap-4 sm:contents">
-                        <div className="relative size-14 shrink-0 overflow-hidden rounded-full border-2 border-primary/30 bg-linear-to-br from-primary to-primary/60 text-primary-foreground sm:size-16">
+                        <div className="relative size-14 shrink-0 overflow-hidden rounded-full border border-border bg-muted text-foreground sm:size-16">
                             <span className="absolute inset-0 flex items-center justify-center font-bold text-[20px] sm:text-[22px]">
                                 <OperatorAvatar charId={user.secretary_skin_id ?? user.secretary} name={display} />
                             </span>

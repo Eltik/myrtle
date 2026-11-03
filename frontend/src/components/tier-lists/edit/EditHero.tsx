@@ -112,7 +112,7 @@ export function EditHero({ slug, title, description, onTitleChange, onDescriptio
                     </div>
 
                     <div className="flex w-full shrink-0 flex-col gap-3 lg:w-72">
-                        <div className="rounded-xl border border-border bg-card p-3 shadow-[0_1px_2px_oklch(0_0_0/0.04)]">
+                        <div className="rounded-2xl border border-border bg-card p-3 shadow-[0_1px_2px_oklch(0_0_0/0.04)]">
                             <div className="flex items-center justify-between gap-2">
                                 <span className="font-bold font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.14em]">{isDirty ? t("edit.hero.unsaved") : t("edit.hero.allSaved")}</span>
                                 {!isDirty && <CheckIcon className="h-3.5 w-3.5 text-primary" aria-hidden="true" />}
@@ -162,7 +162,7 @@ export function EditHero({ slug, title, description, onTitleChange, onDescriptio
                             </Button>
                         </div>
 
-                        <div className="rounded-xl border border-border bg-card px-3 py-2">
+                        <div className="rounded-2xl border border-border bg-card px-3 py-2">
                             <div className="flex items-center justify-between gap-2">
                                 <Label className="flex cursor-pointer items-center gap-2 font-medium font-sans text-[12.5px] text-foreground">
                                     <Switch checked={autosave.enabled} onCheckedChange={autosave.onToggle} aria-describedby={autosaveHintId} />

@@ -10,6 +10,7 @@ import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { compactForSearch } from "#/lib/search/fuzzy";
 import { CheckMark } from "./CheckMark";
+import { DeleteGroupDialog, RenameGroupDialog } from "./GroupDialogs";
 import type { messages as plannerMessages } from "./OperatorPlanner.messages";
 import type { messages } from "./OperatorPlannerDialog.messages";
 
@@ -64,29 +65,27 @@ export function PlanGroupsField({ groupNames, selectedGroups, onSelectedGroupsCh
         }
     };
 
-    const handleRename = async (oldName: string) => {
-        const newName = window.prompt(t("planner.dialog.groups.renamePrompt"), oldName);
-        if (newName === null) return;
-        const trimmed = newName.trim();
-        if (!trimmed || trimmed === oldName) return;
-        try {
-            await upsertGroupFn({ data: { oldName, name: trimmed } });
-            onSelectedGroupsChange((prev) => prev.map((g) => (g === oldName ? trimmed : g)));
-            invalidatePlans();
-        } catch (err) {
-            console.error(err);
-        }
+    const [renamingGroup, setRenamingGroup] = React.useState<string | null>(null);
+    const [deletingGroup, setDeletingGroup] = React.useState<string | null>(null);
+
+    /** The popup closes first so the dialog takes focus instead of fighting the combobox for it. */
+    const openGroupDialog = (open: (name: string) => void, name: string) => {
+        setIsOpen(false);
+        setSearchQuery("");
+        cancelCreate();
+        open(name);
     };
 
-    const handleDelete = async (name: string) => {
-        if (!window.confirm(t("planner.dialog.groups.deleteConfirm", { name }))) return;
-        try {
-            await deleteGroupFn({ data: { name } });
-            onSelectedGroupsChange((prev) => prev.filter((g) => g !== name));
-            invalidatePlans();
-        } catch (err) {
-            console.error(err);
-        }
+    const renameGroup = async (oldName: string, name: string) => {
+        await upsertGroupFn({ data: { oldName, name } });
+        onSelectedGroupsChange((prev) => prev.map((g) => (g === oldName ? name : g)));
+        invalidatePlans();
+    };
+
+    const deleteGroup = async (name: string) => {
+        await deleteGroupFn({ data: { name } });
+        onSelectedGroupsChange((prev) => prev.filter((g) => g !== name));
+        invalidatePlans();
     };
 
     /** The row's own buttons act on the group; they must not also toggle it in the selection. */
@@ -173,10 +172,10 @@ export function PlanGroupsField({ groupNames, selectedGroups, onSelectedGroupsCh
                                         <span>{name}</span>
                                     </div>
                                     <div className="flex items-center gap-1 pointer-coarse:gap-4">
-                                        <Button type="button" variant="ghost" size="icon-xs" onClick={rowAction(() => handleRename(name))} aria-label={tg("planner.group.rename", { name })} className="text-muted-foreground hover:text-foreground">
+                                        <Button type="button" variant="ghost" size="icon-xs" onClick={rowAction(() => openGroupDialog(setRenamingGroup, name))} aria-label={tg("planner.group.rename", { name })} className="text-muted-foreground hover:text-foreground">
                                             <Pencil aria-hidden />
                                         </Button>
-                                        <Button type="button" variant="ghost" size="icon-xs" onClick={rowAction(() => handleDelete(name))} aria-label={tg("planner.group.delete", { name })} className="text-muted-foreground hover:text-destructive-foreground">
+                                        <Button type="button" variant="ghost" size="icon-xs" onClick={rowAction(() => openGroupDialog(setDeletingGroup, name))} aria-label={tg("planner.group.delete", { name })} className="text-muted-foreground hover:text-destructive-foreground">
                                             <Trash aria-hidden />
                                         </Button>
                                     </div>
@@ -186,6 +185,8 @@ export function PlanGroupsField({ groupNames, selectedGroups, onSelectedGroupsCh
                     </ComboboxList>
                 </ComboboxPopup>
             </Combobox>
+            <RenameGroupDialog name={renamingGroup} onClose={() => setRenamingGroup(null)} onRename={renameGroup} />
+            <DeleteGroupDialog name={deletingGroup} onClose={() => setDeletingGroup(null)} onDelete={deleteGroup} />
         </div>
     );
 }

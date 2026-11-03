@@ -173,7 +173,7 @@ function PersonBody({ person, meId, canAssign, grants, locales, localeName }: Om
                         ))}
                     </div>
 
-                    {warning ? <div className="rounded-[10px] border border-[color-mix(in_oklch,var(--warning)_45%,transparent)] bg-[color-mix(in_oklch,var(--warning)_10%,transparent)] px-3 py-2.5 text-[13px] text-warning-foreground leading-[1.45]">{warningText(t, warning, name)}</div> : null}
+                    {warning ? <div className="rounded-2xl border border-[color-mix(in_oklch,var(--warning)_45%,transparent)] bg-[color-mix(in_oklch,var(--warning)_10%,transparent)] px-3 py-2.5 text-[13px] text-warning-foreground leading-[1.45]">{warningText(t, warning, name)}</div> : null}
 
                     <div className="flex flex-col gap-2">
                         <span className={SECTION_LABEL}>{t("users.sheet.section.role")}</span>

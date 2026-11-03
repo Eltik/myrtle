@@ -1,5 +1,6 @@
 import { Trash2Icon, TriangleAlertIcon } from "lucide-react";
 import { useId, useState } from "react";
+import { Alert } from "#/components/ui/alert";
 import { AlertDialog, AlertDialogClose, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogPopup, AlertDialogTitle } from "#/components/ui/alert-dialog";
 import { Button } from "#/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "#/components/ui/card";
@@ -84,9 +85,9 @@ export function DangerPanel({ onDelete, deleting, errorMessage, onDialogClose }:
                     </form>
 
                     {errorMessage && (
-                        <div role="alert" className="mx-6 mb-2 rounded-lg border border-destructive/30 bg-destructive/8 px-3 py-2 font-sans text-destructive-foreground text-xs">
+                        <Alert variant="error" className="mx-6 mb-2 w-auto">
                             {errorMessage}
-                        </div>
+                        </Alert>
                     )}
 
                     <AlertDialogFooter>

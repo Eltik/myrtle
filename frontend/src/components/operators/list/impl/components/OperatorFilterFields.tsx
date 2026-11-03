@@ -1,6 +1,9 @@
 import { ChevronDown } from "lucide-react";
 import { type ReactNode, useState } from "react";
 import { useOperatorFactLabel } from "#/components/operators/OperatorFacts";
+import { Badge } from "#/components/ui/badge";
+import { FilterChip } from "#/components/ui/filter-chip";
+import { Kicker } from "#/components/ui/kicker";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { cn, formatNationId, nationLabel, professionLabel, rarityToNumber, subProfessionLabel, subProfessionToProfession } from "#/lib/utils";
@@ -17,14 +20,9 @@ export function TagRow<T extends string>({ label, options, value, onChange }: { 
         <div className={styles.field}>
             <div className={styles.fieldLabel}>{label}</div>
             <div className={styles.tagRow}>
-                {options.map((opt) => {
-                    const on = value === opt.value;
-                    return (
-                        <button key={opt.value} type="button" className={cn(styles.tg, on && styles.on)} onClick={() => onChange(opt.value)} aria-pressed={on}>
-                            {opt.label}
-                        </button>
-                    );
-                })}
+                {options.map((opt) => (
+                    <FilterChip key={opt.value} active={value === opt.value} label={opt.label} onSelect={() => onChange(opt.value)} />
+                ))}
             </div>
         </div>
     );
@@ -55,7 +53,7 @@ export function OperatorFilterFields({
         <div className="flex flex-col gap-4.5">
             <div className="flex flex-col gap-4">
                 <div className={styles.sectionHead}>
-                    <span className={styles.lbl}>{t("filters.section.basic")}</span>
+                    <Kicker className="mb-0">{t("filters.section.basic")}</Kicker>
                     <span className={styles.line} />
                 </div>
 
@@ -65,14 +63,12 @@ export function OperatorFilterFields({
 
                 <div className={styles.field}>
                     <div className={styles.fieldLabel}>{t("filters.rarity")}</div>
-                    <div className={styles.rarityRow}>
+                    {/* Three across: six across the 280px sidebar left each chip too narrow for the
+                        check mark and the label side by side. */}
+                    <div className="grid grid-cols-3 gap-1.5">
                         {RARITIES.map((r) => {
-                            const on = filters.rarities.includes(r);
-                            return (
-                                <button key={r} type="button" data-rarity={rarityToNumber(r)} className={cn(styles.rarityBtn, on && styles.on)} onClick={() => onChange("rarities", toggle(filters.rarities, r))} aria-pressed={on}>
-                                    {rarityToNumber(r)}★
-                                </button>
-                            );
+                            const n = rarityToNumber(r);
+                            return <FilterChip key={r} active={filters.rarities.includes(r)} className="w-full" label={`${n}★`} onSelect={() => onChange("rarities", toggle(filters.rarities, r))} tone={`var(--rarity-${n})`} />;
                         })}
                     </div>
                 </div>
@@ -80,14 +76,9 @@ export function OperatorFilterFields({
                 <div className={styles.field}>
                     <div className={styles.fieldLabel}>{t("filters.module")}</div>
                     <div className={styles.tagRow}>
-                        {MODULE_TYPES.map((m) => {
-                            const on = filters.modules.includes(m.value);
-                            return (
-                                <button key={m.value} type="button" className={cn(styles.tg, on && styles.on)} onClick={() => onChange("modules", toggle(filters.modules, m.value))} aria-pressed={on}>
-                                    {m.label}
-                                </button>
-                            );
-                        })}
+                        {MODULE_TYPES.map((m) => (
+                            <FilterChip key={m.value} active={filters.modules.includes(m.value)} label={m.label} onSelect={() => onChange("modules", toggle(filters.modules, m.value))} />
+                        ))}
                     </div>
                 </div>
 
@@ -96,8 +87,12 @@ export function OperatorFilterFields({
 
             <div className="flex flex-col gap-4">
                 <button type="button" className={cn(styles.sectionHead, styles.expandable, advancedOpen && styles.open)} onClick={() => setAdvancedOpen((v) => !v)} aria-expanded={advancedOpen}>
-                    <span className={styles.lbl}>{t("filters.section.advanced")}</span>
-                    {advancedCount > 0 && <span className={styles.n}>{advancedCount}</span>}
+                    <Kicker className="mb-0">{t("filters.section.advanced")}</Kicker>
+                    {advancedCount > 0 && (
+                        <Badge className="font-mono tabular-nums" size="sm">
+                            {advancedCount}
+                        </Badge>
+                    )}
                     <span className={styles.line} />
                     <ChevronDown className={styles.chev} aria-hidden="true" />
                 </button>
@@ -120,14 +115,9 @@ export function OperatorFilterFields({
                         <div className={styles.field}>
                             <div className={styles.fieldLabel}>{t("filters.gender")}</div>
                             <div className={styles.tagRow}>
-                                {GENDERS.map((g) => {
-                                    const on = filters.genders.includes(g);
-                                    return (
-                                        <button key={g} type="button" className={cn(styles.tg, on && styles.on)} onClick={() => onChange("genders", toggle(filters.genders, g))} aria-pressed={on}>
-                                            {fact.gender(g)}
-                                        </button>
-                                    );
-                                })}
+                                {GENDERS.map((g) => (
+                                    <FilterChip key={g} active={filters.genders.includes(g)} label={fact.gender(g)} onSelect={() => onChange("genders", toggle(filters.genders, g))} />
+                                ))}
                             </div>
                         </div>
 

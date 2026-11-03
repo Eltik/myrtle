@@ -29,8 +29,18 @@ warm grey next to operator art.
 | muted-foreground | `oklch(0.45 0.01 285)` | `oklch(0.65 0.01 285)` |
 | subtle-foreground | `oklch(0.52 0.01 285)` | `oklch(0.62 0.01 285)` |
 | primary / ring | `oklch(0.58 0.22 25)` red | `oklch(0.75 0.15 25)` salmon |
+| primary-ink (text-primary) | = primary, 4.59 page / 4.79 card | = primary, 8.49 page / 8.07 card |
+| primary-hover | primary 88% + black, label 6.08 | primary 88% + white, label 9.46 |
 
 The one accent is the red primary (also `chart-1`, `enemy-boss`, `sidebar-primary`).
+`--primary` is the fill. `text-primary` and `decoration-primary` read `--primary-ink`, and
+`ring-primary` / `outline-primary` read `--ring` (namespace keys in `@theme inline`), so a
+picked accent keeps its fill while text and ring get variants that clear 4.5 and 3 on the
+page. `lib/theme/accent-kit.ts` is the one implementation (the pre-paint script in
+`__root.tsx` is its `toString()`): a custom hex stays the fill and its label is black or
+white by the higher ratio; a preset hue solves light L per hue (0.54 to 0.58, chroma clamped
+to sRGB) to clear 4.5 on page and card and under its label, 3 on muted. Hover and pressed
+fills use `bg-primary-hover`, never `bg-primary/90` (which measured 4.16 page / 4.14 card).
 Status colors (`info`, `success`, `warning`, `destructive`) come from the Tailwind
 blue / emerald / amber / red ramps, at 700 in light and 400 in dark for text.
 
@@ -143,6 +153,14 @@ card, where `text-destructive` measured 1.80 on its own tint), never a raw `-300
   same 2px solid ring. An invalid field focuses in `ring-destructive-foreground` (6.16
   light, 6.61 dark), not `ring-destructive/16`, which faded the focus mark exactly where
   the user has to fix something.
+  Kit standalone controls (button, toggle, badge, switch, checkbox, radio, slider, menu
+  switch, scroll-area, accordion trigger, tab panel) draw `ring-2 ring-ring ring-offset-2
+  ring-offset-background`, the same geometry as the base outline. Exceptions, each for a
+  reason: full-width list rows and anything inside a scroller (drawer rows, sidebar rows,
+  tab triggers, which sit in horizontally scrolling strips) use `inset-ring-2` so the ring
+  is not clipped; fields (input, select, textarea, OTP) colour their own border plus `ring-2`
+  with no offset; calendar days use `ring-2` without offset so a ring never covers its
+  neighbour.
 - Touch: kit controls reach 44px under `pointer-coarse` through a centred `::after` hit
   area (pattern in `ui/button.tsx`), without changing the desktop layout. A tooltip opens on
   a tap when its trigger has no action of its own; a trigger that is a working button or
@@ -171,7 +189,14 @@ component, never inline.
 - Toggle chips in a filter row: `FilterChip` (`label`, `active`, `count?`, `tone?`). It is
   a kit Toggle, so it carries `aria-pressed` and the coarse 44px hit area; pressed shows a
   check mark, a tone tint and border, and foreground text. Data-coloured text on its own
-  tint measured 1.66 to 3.96, which is why the tone never colours the label.
+  tint measured 1.66 to 3.96, which is why the tone never colours the label. The pressed
+  border is solid: `toneInk` (an `-ink` token) when given, else the tone, else `--ring`;
+  the old `--tone/50` measured 2.28 light / 2.79 dark on the page.
+- Pressed looks: multi-select filter chips are `FilterChip` (tone tint, solid edge, check
+  mark); single-select segments and toolbar toggles are `Toggle` / `ToggleGroup` (grey fill
+  plus `inset-ring-foreground/40`, no check, since the group already says one is chosen).
+  A horizontal `ToggleGroup` drops the 44px coarse width floor on its items
+  (`min-w-auto`) so neighbouring hit areas do not overlap; heights still reach 44.
 - Static data badges: `<Badge variant="tint">` with `--tone` set inline (primary by
   default): tone fill at 12%, tone border, foreground text.
 - Error states read `isError` before the empty and skeleton branches and offer a retry;

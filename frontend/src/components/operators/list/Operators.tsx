@@ -3,10 +3,11 @@ import { useNavigate } from "@tanstack/react-router";
 import { ArrowDown, ArrowUp, Download, LayoutGrid, LayoutList, Rows3, Search } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DynamicExportDialog } from "#/components/export/ExportDialog.lazy";
+import { LoadError } from "#/components/operators/detail/impl/components/LoadError";
 import { useOperatorFactLabel } from "#/components/operators/OperatorFacts";
 import { Button } from "#/components/ui/button";
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader } from "#/components/ui/empty";
 import { PageHeader } from "#/components/ui/page-header";
-import type { messages as routeErrorMessages } from "#/components/ui/route-error.messages";
 import { useCnUpdates } from "#/hooks/use-cn-updates";
 import { useLocalStorageState } from "#/hooks/use-local-storage-state";
 import { useOperatorName } from "#/hooks/use-operator-name";
@@ -52,7 +53,6 @@ interface IUpcomingEntry {
 
 export function OperatorsList() {
     const t: TypedT<typeof messages & typeof listConstantsMessages> = useT("operators");
-    const ct: TypedT<typeof routeErrorMessages> = useT("common");
     const fact = useOperatorFactLabel();
     const rt: TypedRichT<typeof messages> = useRichT("operators");
     const server = useGamedataServer();
@@ -486,14 +486,7 @@ export function OperatorsList() {
                         </div>
                     </div>
 
-                    {isUpcoming && upcomingFailed && (
-                        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-card px-4 py-3" role="alert">
-                            <p className="font-sans text-foreground text-sm">{t("list.error.upcoming")}</p>
-                            <Button onClick={() => void refetchUpcoming()} size="sm" variant="outline">
-                                {ct("routeError.retry")}
-                            </Button>
-                        </div>
-                    )}
+                    {isUpcoming && upcomingFailed && <LoadError message={t("list.error.upcoming")} onRetry={() => void refetchUpcoming()} />}
 
                     {isUpcoming && upcomingLoading ? (
                         <div className="grid grid-cols-3 gap-2.5 min-[1080px]:grid-cols-6 min-[520px]:grid-cols-4 min-[780px]:grid-cols-5 min-[1280px]:gap-4 min-[780px]:gap-3">
@@ -505,14 +498,18 @@ export function OperatorsList() {
                         // A failed upcoming fetch is said by the alert above; an empty state here would
                         // claim the filters removed operators that never arrived.
                         isUpcoming && upcomingFailed ? null : (
-                            <div className="rounded-xl border border-border border-dashed bg-card/50 py-16 text-center">
-                                <p className="font-sans text-muted-foreground text-sm">{isUpcoming ? t("list.empty.upcoming") : t("list.empty")}</p>
+                            <Empty className="rounded-2xl border border-border bg-card md:py-16">
+                                <EmptyHeader>
+                                    <EmptyDescription>{isUpcoming ? t("list.empty.upcoming") : t("list.empty")}</EmptyDescription>
+                                </EmptyHeader>
                                 {hasActiveFilters && (
-                                    <button type="button" onClick={clearFilters} className="mt-3 inline-flex items-center gap-1 font-medium text-[12px] text-primary hover:underline">
-                                        {t("list.clearFilters")}
-                                    </button>
+                                    <EmptyContent>
+                                        <Button onClick={clearFilters} size="sm" variant="outline">
+                                            {t("list.clearFilters")}
+                                        </Button>
+                                    </EmptyContent>
                                 )}
-                            </div>
+                            </Empty>
                         )
                     ) : isUpcoming ? (
                         <div className="grid grid-cols-3 gap-2.5 min-[1080px]:grid-cols-6 min-[520px]:grid-cols-4 min-[780px]:grid-cols-5 min-[1280px]:gap-4 min-[780px]:gap-3">

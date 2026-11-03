@@ -122,7 +122,7 @@ export function MobileNav({ items, forceVisible = false }: IMobileNavProps) {
                                     </a>
                                 }
                             />
-                            <DrawerMenuItem render={<DrawerClose nativeButton={false} render={<Link to="/donate" target="_blank" />} />}>
+                            <DrawerMenuItem render={<DrawerClose nativeButton={false} render={<Link to="/donate" />} />}>
                                 {t("mobileNav.donate")}
                                 <Heart className="mr-2 h-4 w-4" />
                                 <ExternalLinkIcon className="ml-auto h-3 w-3 opacity-50" />

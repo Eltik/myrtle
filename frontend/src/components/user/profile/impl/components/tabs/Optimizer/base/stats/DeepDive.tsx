@@ -2,6 +2,7 @@ import { Camera, ChevronDown, Copy, X } from "lucide-react";
 import { useState } from "react";
 import { Button } from "#/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "#/components/ui/collapsible";
+import { Spinner } from "#/components/ui/spinner";
 import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import type { IEvaluateResponse } from "#/lib/api/base";
 import { roomLabel } from "#/lib/base/catalog";
@@ -371,7 +372,10 @@ export function DeepDive() {
                     {api.rotationLoading && !sustainability && (
                         <section className="flex flex-col gap-1">
                             <h3 className="kicker">{t("profile.base.deep.simulating.title")}</h3>
-                            <span className="animate-pulse text-[11.5px] text-muted-foreground">{t("profile.base.deep.simulating")}</span>
+                            <span className="inline-flex items-center gap-1.5 text-[11.5px] text-muted-foreground">
+                                <Spinner className="size-3.5" />
+                                {t("profile.base.deep.simulating")}
+                            </span>
                         </section>
                     )}
 

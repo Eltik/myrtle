@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import type * as React from "react";
 import { useMemo, useState } from "react";
 import { Kicker } from "#/components/ui/kicker";
+import { Skeleton } from "#/components/ui/skeleton";
 import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import { enemiesListQueryOptions, enemyCommunityAverageQueryOptions } from "#/lib/api/enemies";
 import { operatorOwnershipQueryOptions, operatorsIndexQueryOptions, operatorsRosterQueryOptions } from "#/lib/api/operators";
@@ -32,9 +33,9 @@ function FactTile({ label, fraction, sentence, meta, className }: IFactTileProps
             <span className="font-medium font-mono text-[10.5px] text-muted-foreground uppercase leading-none tracking-[0.14em]">{label}</span>
             {loading ? (
                 <>
-                    <span className="h-6 w-16 animate-pulse rounded-md bg-muted/70" />
+                    <Skeleton className="h-6 w-16 rounded-md" />
                     <span className="h-1 w-full rounded-full bg-muted" />
-                    <span className="h-3 w-4/5 animate-pulse rounded bg-muted/50" />
+                    <Skeleton className="h-3 w-4/5 rounded" />
                 </>
             ) : (
                 <>

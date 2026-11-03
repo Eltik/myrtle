@@ -19,7 +19,7 @@ export function DraftRestoreBanner({ savedAt, diverged, onRestore, onDiscard }: 
     const { relativeShort } = useFormatters();
 
     return (
-        <section role="alert" className="flex flex-col gap-3 rounded-xl border border-primary/30 bg-primary/6 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+        <section role="alert" className="flex flex-col gap-3 rounded-2xl border border-primary/30 bg-primary/6 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex min-w-0 items-start gap-2.5">
                 <HistoryIcon className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
                 <div className="min-w-0">

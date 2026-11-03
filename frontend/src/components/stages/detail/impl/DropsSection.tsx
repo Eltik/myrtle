@@ -46,7 +46,7 @@ function DropCard({ drop }: { drop: IResolvedDrop }) {
             .toUpperCase() || "?";
 
     const inner = (
-        <div className="group flex h-full items-center gap-3 rounded-[10px] border border-border bg-card p-2.5 transition-colors hover:border-[color-mix(in_oklch,var(--primary)_50%,transparent)]">
+        <div className="group flex h-full items-center gap-3 rounded-2xl border border-border bg-card p-2.5 transition-colors hover:border-[color-mix(in_oklch,var(--primary)_50%,transparent)]">
             <span
                 className="relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-md border"
                 style={{

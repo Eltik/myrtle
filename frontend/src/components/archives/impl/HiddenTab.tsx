@@ -116,7 +116,7 @@ function Hidden({ data, onOpenFile, server }: { data: ArchiveHiddenFactions; onO
                                 </div>
                                 {[...groups.entries()].map(([gid, g]) => (
                                     <div key={gid} className="flex flex-col gap-1.5">
-                                        <span className="font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.12em]">{t("hidden.cardShowsGroup", { name: g.name })}</span>
+                                        <Kicker className="mb-0">{t("hidden.cardShowsGroup", { name: g.name })}</Kicker>
                                         <div className="flex flex-wrap gap-1.5">
                                             {g.ids.map((id) => (
                                                 <PersonChip key={id} person={people.get(id)} onOpen={onOpenFile} server={server} />
@@ -214,7 +214,7 @@ function FlowChart({ secret, shownName, hiddenName, pick, onPick, lit }: { secre
     const bandsFrom = (id: string) => layout.bands.filter((b) => b.shown === id);
     const list = (
         <ul className="m-0 flex list-none flex-col p-0 sm:hidden">
-            <li className="flex justify-between pb-1 font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.12em]">
+            <li className="kicker flex justify-between pb-1">
                 <span>{t("hidden.cardShows")}</span>
                 <span>{t("hidden.secretlyAlso")}</span>
             </li>
@@ -264,9 +264,9 @@ function FlowChart({ secret, shownName, hiddenName, pick, onPick, lit }: { secre
             {list}
             <div className="overflow-x-auto max-sm:hidden">
                 <div className="grid min-w-[520px] grid-cols-[max-content_minmax(120px,1fr)_max-content] gap-x-2">
-                    <span className="pb-2 text-right font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.12em]">{t("hidden.cardShows")}</span>
+                    <Kicker className="mb-0 pb-2 text-right">{t("hidden.cardShows")}</Kicker>
                     <span />
-                    <span className="pb-2 font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.12em]">{t("hidden.secretlyAlso")}</span>
+                    <Kicker className="mb-0 pb-2">{t("hidden.secretlyAlso")}</Kicker>
 
                     <div style={{ paddingTop: layout.left[0]?.top ?? 0 }}>{layout.left.map((n) => label("shown", n))}</div>
                     <div ref={midRef} className="min-w-0">
@@ -378,11 +378,11 @@ function PickList({
     );
     const sub = (title: string, id: string, rows: readonly ArchiveSecret[]) => (
         <div key={id} className="flex flex-col gap-1.5">
-            <span className="inline-flex items-center gap-1.5 font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.12em]">
+            <Kicker className="mb-0 inline-flex items-center gap-1.5">
                 <FactionLogo id={id} className="size-3.5" />
                 {title}
                 <span className="tabular-nums">{f.number(rows.length)}</span>
-            </span>
+            </Kicker>
             {chips(rows)}
         </div>
     );

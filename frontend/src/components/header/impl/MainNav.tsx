@@ -62,7 +62,7 @@ function HoverDropdown({ item, isActive, open, setOpen, onOpenCommand }: IHoverD
     // menu without an onClick of our own.
     const renderLink = (t: INavItem) => (
         <DropdownMenuItem key={t.href} className="cursor-pointer gap-3 rounded-lg px-3 py-2.5 no-underline transition-colors" render={<Link to={t.href} />}>
-            {hasIcons && <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border bg-muted/70 text-primary">{t.icon && <ToolIcon name={t.icon} />}</span>}
+            {hasIcons && <span className="inline-flex size-4 shrink-0 items-center justify-center text-muted-foreground">{t.icon && <ToolIcon name={t.icon} className="size-4" />}</span>}
             <span className="flex min-w-0 flex-1 flex-col gap-0.75">
                 <span className="font-medium font-sans text-[13px] text-foreground leading-none tracking-tight">{t.label}</span>
                 {t.desc && <span className="font-sans text-[11.5px] text-muted-foreground leading-snug">{t.desc}</span>}

@@ -1,6 +1,7 @@
 import { ChevronRight, Skull } from "lucide-react";
 import { useState } from "react";
 import { Dialog, DialogDescription, DialogPopup, DialogTitle } from "#/components/ui/dialog";
+import { Kicker } from "#/components/ui/kicker";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { STAGE_GROUP_DESCRIPTION_KEY, STAGE_GROUP_LABEL_KEY } from "#/lib/registry/stage-groups";
@@ -11,8 +12,8 @@ import { StagePreview } from "./StagePreview";
 
 function Stat({ label, value, tone }: { label: string; value: string; tone?: string }) {
     return (
-        <div className="rounded-[10px] border border-border bg-secondary/40 px-3 py-2.5">
-            <div className="font-mono text-[10px] text-muted-foreground uppercase tracking-[0.14em]">{label}</div>
+        <div className="rounded-2xl border border-border bg-secondary/40 px-3 py-2.5">
+            <Kicker className="mb-0 block">{label}</Kicker>
             <div className="mt-1 truncate font-mono font-semibold text-[13px]" style={{ color: tone ?? "var(--foreground)" }}>
                 {value}
             </div>
@@ -82,7 +83,7 @@ export function EventDetailDialog({ event, onClose, onBrowse }: { event: IEventV
 
                     {previews.length > 0 && (
                         <div>
-                            <div className="mb-2 font-mono text-[10px] text-muted-foreground uppercase tracking-[0.14em]">{t("event.previews")}</div>
+                            <Kicker className="mb-2 block">{t("event.previews")}</Kicker>
                             <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-6">
                                 {previews.map((s) => (
                                     <div key={s.stageId} className="relative aspect-16/10 overflow-hidden rounded-md border border-border">

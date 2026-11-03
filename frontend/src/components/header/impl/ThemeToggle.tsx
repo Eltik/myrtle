@@ -71,7 +71,12 @@ export default function ThemeToggle() {
                             {t("themeToggle.accent")}
                         </span>
                         {!isDefaultAccent && (
-                            <button type="button" onClick={resetAccent} className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded px-1.5 py-0.5 text-[10px] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground" aria-label={t("themeToggle.resetAccentAria")}>
+                            <button
+                                type="button"
+                                onClick={resetAccent}
+                                className="pointer-coarse:after:-translate-1/2 relative inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded px-1.5 py-0.5 text-muted-foreground text-xs transition-colors pointer-coarse:after:absolute pointer-coarse:after:top-1/2 pointer-coarse:after:left-1/2 pointer-coarse:after:size-11 hover:bg-accent hover:text-foreground"
+                                aria-label={t("themeToggle.resetAccentAria")}
+                            >
                                 <RotateCcwIcon className="h-3 w-3 shrink-0" />
                                 {t("themeToggle.reset")}
                             </button>
@@ -114,7 +119,7 @@ export default function ThemeToggle() {
                             </span>
                             {t("themeToggle.customColor")}
                         </span>
-                        <span className="shrink-0 font-mono text-[10px] text-muted-foreground tabular-nums">{customLabel}</span>
+                        <span className="shrink-0 font-mono text-[10.5px] text-muted-foreground tabular-nums">{customLabel}</span>
                         <input id={customInputId} type="color" value={renderedHex} onChange={onPickCustom} className="sr-only" aria-label={t("themeToggle.chooseCustomColor")} />
                     </label>
 
@@ -127,7 +132,7 @@ export default function ThemeToggle() {
                         </span>
                         <Switch id={dynamicArtId} checked={dynamicArtwork} onCheckedChange={setDynamicArtwork} aria-label={t("themeToggle.dynamicArtAria")} className="shrink-0" />
                     </label>
-                    <p className="text-[10px] text-muted-foreground leading-snug">{t("themeToggle.dynamicArtNote")}</p>
+                    <p className="text-muted-foreground text-xs leading-snug">{t("themeToggle.dynamicArtNote")}</p>
                 </div>
             </PopoverContent>
         </Popover>

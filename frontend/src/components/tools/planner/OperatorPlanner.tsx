@@ -17,6 +17,7 @@ import type { TypedT } from "#/lib/i18n/messages";
 import { BulkPlanButton } from "./BulkPlanDialog";
 import { CompletedPlansDialog } from "./CompletedPlansDialog";
 import { DeletePlansDialog, type IDeletePlansTarget } from "./DeletePlansDialog";
+import { DeleteGroupDialog, RenameGroupDialog } from "./GroupDialogs";
 import { GroupList } from "./GroupList";
 import type { messages } from "./OperatorPlanner.messages";
 import { OperatorPlannerDialog } from "./OperatorPlannerDialog";
@@ -173,29 +174,19 @@ export function OperatorPlanner(): React.ReactElement {
         }
     };
 
-    const handleRenameGroup = async (oldName: string) => {
-        const newName = window.prompt(t("planner.group.renamePrompt"), oldName);
-        if (newName === null) return;
-        const trimmed = newName.trim();
-        if (!trimmed || trimmed === oldName) return;
-        try {
-            await upsertGroupFn({ data: { oldName, name: trimmed } });
-            selection.renameGroup(oldName, trimmed);
-            invalidatePlans();
-        } catch (err) {
-            console.error(err);
-        }
+    const [renamingGroup, setRenamingGroup] = React.useState<string | null>(null);
+    const [deletingGroup, setDeletingGroup] = React.useState<string | null>(null);
+
+    const renameGroup = async (oldName: string, name: string) => {
+        await upsertGroupFn({ data: { oldName, name } });
+        selection.renameGroup(oldName, name);
+        invalidatePlans();
     };
 
-    const handleDeleteGroup = async (name: string) => {
-        if (!window.confirm(t("planner.group.deleteConfirm", { name }))) return;
-        try {
-            await deleteGroupFn({ data: { name } });
-            selection.dropGroup(plans, name);
-            invalidatePlans();
-        } catch (err) {
-            console.error(err);
-        }
+    const deleteGroup = async (name: string) => {
+        await deleteGroupFn({ data: { name } });
+        selection.dropGroup(plans, name);
+        invalidatePlans();
     };
 
     const entryContext: IPlanEntryContext = {
@@ -277,8 +268,8 @@ export function OperatorPlanner(): React.ReactElement {
                                         expandedGroups={expandedGroups}
                                         onExpandedGroupsChange={setExpandedGroups}
                                         onTogglePin={handleTogglePin}
-                                        onRename={handleRenameGroup}
-                                        onDelete={handleDeleteGroup}
+                                        onRename={setRenamingGroup}
+                                        onDelete={setDeletingGroup}
                                     />
                                 </TabsContent>
                             </Tabs>
@@ -303,6 +294,9 @@ export function OperatorPlanner(): React.ReactElement {
                 isSubmitting={isDeleting}
                 errorMessage={deleteError}
             />
+
+            <RenameGroupDialog name={renamingGroup} onClose={() => setRenamingGroup(null)} onRename={renameGroup} />
+            <DeleteGroupDialog name={deletingGroup} onClose={() => setDeletingGroup(null)} onDelete={deleteGroup} />
 
             <CompletedPlansDialog
                 plans={reviewPlans}

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { Button } from "#/components/ui/button";
 import { Kicker } from "#/components/ui/kicker";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
@@ -51,20 +51,28 @@ function StatusPill({ status }: { status: Status }) {
     );
 }
 
-function FeaturedAvatars({ ids, operatorsById, ringColor, cap }: { ids: string[]; operatorsById: Map<string, IOperatorIndexEntry>; ringColor: string; cap: number }) {
+/** `named` prints each name beside its portrait (the detail popup); without it the name is a hover title plus sr-only text, as the card has no room. */
+function FeaturedAvatars({ ids, operatorsById, ringColor, cap, named = false }: { ids: string[]; operatorsById: Map<string, IOperatorIndexEntry>; ringColor: string; cap: number; named?: boolean }) {
     const t: RunsT = useT("gacha");
     if (ids.length === 0) return null;
     const visible = ids.slice(0, cap);
     const extra = ids.length - visible.length;
     return (
-        <div className="flex items-center gap-1">
+        <div className={named ? "flex flex-wrap items-center gap-x-3 gap-y-1.5" : "flex items-center gap-1"}>
             {visible.map((charId) => {
                 const op = operatorsById.get(charId);
                 const opName = op?.name ?? charId;
-                return (
-                    <span key={charId} className="relative inline-flex h-7 w-7 shrink-0 overflow-hidden rounded-md" title={opName} style={{ background: "var(--muted)", boxShadow: `inset 0 0 0 1px color-mix(in oklch, ${ringColor} 60%, transparent)` }}>
+                const portrait = (
+                    <span className="relative inline-flex h-7 w-7 shrink-0 overflow-hidden rounded-md" title={named ? undefined : opName} style={{ background: "var(--muted)", boxShadow: `inset 0 0 0 1px color-mix(in oklch, ${ringColor} 60%, transparent)` }}>
                         <OperatorAvatar charId={charId} name={opName} className="block h-full w-full object-cover" />
-                        <span className="sr-only">{opName}</span>
+                        {named ? null : <span className="sr-only">{opName}</span>}
+                    </span>
+                );
+                if (!named) return <Fragment key={charId}>{portrait}</Fragment>;
+                return (
+                    <span key={charId} className="inline-flex min-w-0 items-center gap-1.5 font-sans text-[12px] text-foreground leading-none">
+                        {portrait}
+                        {opName}
                     </span>
                 );
             })}
@@ -160,7 +168,7 @@ function BannerCard({ entry, operatorsById, stat, rank, rankTitle }: { entry: IB
                             <span className="kicker mb-0" style={{ color: "var(--featured-six-ink)" }}>
                                 {t("community.runs.featuredSixStar")}
                             </span>
-                            <FeaturedAvatars ids={banner.featured6} operatorsById={operatorsById} ringColor="oklch(0.78 0.18 80)" cap={8} />
+                            <FeaturedAvatars ids={banner.featured6} operatorsById={operatorsById} ringColor="oklch(0.78 0.18 80)" cap={8} named />
                         </div>
                     ) : null}
 

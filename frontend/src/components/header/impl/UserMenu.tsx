@@ -83,7 +83,7 @@ export default function UserMenu({ user, loading, logout }: { user: ISession | n
                         <GithubIcon className="h-4 w-4 text-muted-foreground" />
                         {t("userMenu.github")}
                     </DropdownMenuItem>
-                    <DropdownMenuItem className="cursor-pointer" render={<Link to="/donate" target="_blank" />}>
+                    <DropdownMenuItem className="cursor-pointer" render={<Link to="/donate" />}>
                         <Heart className="h-4 w-4 text-muted-foreground" />
                         {t("userMenu.support")}
                     </DropdownMenuItem>

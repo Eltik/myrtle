@@ -439,7 +439,7 @@ function ExportBody({ group, storyId, open, running }: { group: BookGroup; story
                 </p>
                 {estimate.stories > 0 && !estimate.exactImages ? <p className="-mt-2 text-muted-foreground text-xs">{t("export.estimate.rough")}</p> : null}
                 {blobWarning ? (
-                    <output className="text-amber-700 text-xs dark:text-amber-400" data-export-blob-warning>
+                    <output className="text-warning-foreground text-xs" data-export-blob-warning>
                         {t("export.blobWarning", { size })}
                     </output>
                 ) : null}

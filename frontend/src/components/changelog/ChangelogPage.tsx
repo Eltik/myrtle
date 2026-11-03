@@ -4,6 +4,7 @@ import { CalendarClock, ExternalLink, GitBranch, ScrollText, Users } from "lucid
 import { useMemo, useState } from "react";
 import { ReleaseNotesList } from "#/components/changelog/ReleaseNotesList";
 import { Kicker } from "#/components/ui/kicker";
+import { Skeleton } from "#/components/ui/skeleton";
 import { Tabs, TabsList, TabsTab } from "#/components/ui/tabs";
 import { CHANGELOG_RANGES, type ChangelogRangeId, changelogQueryOptions, commitsWithinDays, type IChangelogCommit } from "#/lib/api/changelog";
 import { type IFormatters, useFormatters, useT } from "#/lib/i18n";
@@ -229,7 +230,7 @@ function TimelineSkeleton() {
             {["a", "b"].map((g) => (
                 <section key={g}>
                     <div className="mb-3.5 flex items-center gap-3">
-                        <div className="h-3.5 w-20 animate-pulse rounded bg-muted" />
+                        <Skeleton className="h-3.5 w-20 rounded" />
                         <span className="h-px flex-1 bg-border" />
                     </div>
                     <ul className="m-0 flex list-none flex-col gap-5 p-0">
@@ -239,9 +240,9 @@ function TimelineSkeleton() {
                                     <span className="size-3.5 rounded-full bg-muted" />
                                 </div>
                                 <div className="rounded-2xl border border-border bg-card px-4 py-3">
-                                    <div className="h-4 w-16 animate-pulse rounded bg-muted" />
-                                    <div className="mt-2.5 h-4 w-3/4 animate-pulse rounded bg-muted" />
-                                    <div className="mt-3 h-3 w-1/3 animate-pulse rounded bg-muted" />
+                                    <Skeleton className="h-4 w-16 rounded" />
+                                    <Skeleton className="mt-2.5 h-4 w-3/4 rounded" />
+                                    <Skeleton className="mt-3 h-3 w-1/3 rounded" />
                                 </div>
                             </li>
                         ))}

@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { ArrowUpRight, Box, ChevronDown, ChevronsUp, Sigma, Sparkles, Star, TrendingUp } from "lucide-react";
+import { ChevronDown, Star } from "lucide-react";
 import { memo, useMemo, useState } from "react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "#/components/ui/collapsible";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
@@ -105,12 +105,11 @@ function CostRow({ label, hint, items, materials, server }: { label: string; hin
     );
 }
 
-function Section({ icon, title, subtitle, children, className }: { icon: React.ReactNode; title: string; subtitle?: string; children: React.ReactNode; className?: string }) {
+function Section({ title, subtitle, children, className }: { title: string; subtitle?: string; children: React.ReactNode; className?: string }) {
     const [open, setOpen] = useState(true);
     return (
-        <Collapsible className={cn("overflow-hidden rounded-xl border border-border bg-card", className)} onOpenChange={setOpen} open={open} render={<section />}>
+        <Collapsible className={cn("overflow-hidden rounded-2xl border border-border bg-card", className)} onOpenChange={setOpen} open={open} render={<section />}>
             <CollapsibleTrigger className={cn("flex w-full items-center gap-3 px-5 py-3.5 text-left transition-colors hover:bg-muted/30", open && "border-border border-b")}>
-                <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary/10 text-primary">{icon}</div>
                 <div className="min-w-0 flex-1">
                     <h3 className="font-semibold text-foreground text-sm tracking-tight">{title}</h3>
                     {subtitle && <p className="truncate text-muted-foreground text-xs">{subtitle}</p>}
@@ -160,7 +159,7 @@ export const LevelUpContent = memo(function LevelUpContent({ operator }: ILevelU
     if (!grandTotal.length) {
         return (
             <div className="min-w-0 overflow-hidden p-4 md:p-6">
-                <section className="overflow-hidden rounded-xl border border-border bg-card">
+                <section className="overflow-hidden rounded-2xl border border-border bg-card">
                     <div className="flex flex-col items-center justify-center gap-3 px-6 py-16 text-center">
                         <div className="grid h-12 w-12 place-items-center rounded-full bg-muted text-muted-foreground">
                             <Star className="h-5 w-5" />
@@ -188,7 +187,7 @@ export const LevelUpContent = memo(function LevelUpContent({ operator }: ILevelU
             <div className="flex flex-col gap-5">
                 {materialsFailed && !materials && <LoadError message={t("levelup.materialsFailed")} onRetry={() => void refetchMaterials()} />}
                 {levelingRows.length > 0 && (
-                    <Section icon={<TrendingUp className="h-4 w-4" />} subtitle={t("levelup.section.operatorLevel.desc")} title={t("levelup.section.operatorLevel")}>
+                    <Section subtitle={t("levelup.section.operatorLevel.desc")} title={t("levelup.section.operatorLevel")}>
                         {levelingRows.map((r) => (
                             <CostRow hint={t("levelup.row.levelRange", { max: r.maxLevel })} items={r.cost} key={r.phase} label={t("levelup.row.elite", { phase: r.phase })} materials={materials} />
                         ))}
@@ -196,7 +195,7 @@ export const LevelUpContent = memo(function LevelUpContent({ operator }: ILevelU
                 )}
 
                 {elitePromotions.length > 0 && (
-                    <Section icon={<ChevronsUp className="h-4 w-4" />} subtitle={t("levelup.section.elite.desc")} title={t("levelup.section.elite")}>
+                    <Section subtitle={t("levelup.section.elite.desc")} title={t("levelup.section.elite")}>
                         {elitePromotions.map((r) => (
                             <CostRow hint={t("levelup.row.promoteTo", { to: r.to })} items={r.cost} key={r.to} label={t("levelup.row.elite", { phase: r.to })} materials={materials} server={operator.server} />
                         ))}
@@ -204,7 +203,7 @@ export const LevelUpContent = memo(function LevelUpContent({ operator }: ILevelU
                 )}
 
                 {allSkillRows.length > 0 && (
-                    <Section icon={<ArrowUpRight className="h-4 w-4" />} subtitle={t("levelup.section.skillLevels.desc")} title={t("levelup.section.skillLevels")}>
+                    <Section subtitle={t("levelup.section.skillLevels.desc")} title={t("levelup.section.skillLevels")}>
                         {allSkillRows.map((r, i) => (
                             <CostRow
                                 hint={t("levelup.row.unlockAt", { phase: t(PHASE_MESSAGE_KEY[r.unlockCond.phase]), level: r.unlockCond.level })}
@@ -219,7 +218,7 @@ export const LevelUpContent = memo(function LevelUpContent({ operator }: ILevelU
                 )}
 
                 {activeMastery && (
-                    <Section icon={<Sparkles className="h-4 w-4" />} subtitle={t("levelup.section.mastery.desc")} title={t("levelup.section.mastery")}>
+                    <Section subtitle={t("levelup.section.mastery.desc")} title={t("levelup.section.mastery")}>
                         {masterySkills.length > 1 && (
                             <div className="flex gap-1.5 overflow-x-auto border-border border-b bg-muted/30 px-5 py-2.5">
                                 {masterySkills.map((s, i) => (
@@ -255,7 +254,7 @@ export const LevelUpContent = memo(function LevelUpContent({ operator }: ILevelU
                 )}
 
                 {validModules.length > 0 && (
-                    <Section icon={<Box className="h-4 w-4" />} subtitle={t("levelup.section.modules.desc")} title={t("levelup.section.modules")}>
+                    <Section subtitle={t("levelup.section.modules.desc")} title={t("levelup.section.modules")}>
                         <div className="divide-y divide-border">
                             {validModules.map((m) => {
                                 const fromCn = cnUpdates?.moduleIds.has(m.uniEquipId) ?? false;
@@ -292,7 +291,7 @@ export const LevelUpContent = memo(function LevelUpContent({ operator }: ILevelU
                     </Section>
                 )}
 
-                <Section icon={<Sigma className="h-4 w-4" />} subtitle={t("levelup.section.total.desc")} title={t("levelup.section.total")}>
+                <Section subtitle={t("levelup.section.total.desc")} title={t("levelup.section.total")}>
                     <div className="px-5 py-4">
                         <div className="flex flex-wrap gap-2.5">
                             {grandTotal.map((it) => (

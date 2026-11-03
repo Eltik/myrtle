@@ -98,7 +98,7 @@ export function AppearancePanel() {
                         >
                             <span className="inline-block size-5 rounded-full border border-border bg-(--swatch-light) dark:bg-(--swatch-dark)" style={swatchVars(lightHex, darkHex)} aria-hidden="true" />
                             <span>{isCustom ? t("appearance.accent.customActive") : t("appearance.accent.pickCustomHex")}</span>
-                            <span className="font-mono text-[10px] text-muted-foreground tabular-nums">
+                            <span className="font-mono text-[10.5px] text-muted-foreground tabular-nums">
                                 {lightHex === darkHex ? (
                                     lightHex.toUpperCase()
                                 ) : (

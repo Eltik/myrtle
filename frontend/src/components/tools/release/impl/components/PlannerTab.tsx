@@ -451,7 +451,7 @@ function Summary({ rows, state, clears, totals, lookup, onRemove, t, locale }: I
                     <span className="text-muted-foreground">{t("release.planner.summary.start")}</span>
                     <Op value={state.initial} />
                     <Op value={income} sign="+" className="text-success-foreground" />
-                    <Op value={expense} sign="-" className="text-rose-700 dark:text-rose-400" />
+                    <Op value={expense} sign="-" className="text-destructive-foreground" />
                     <span className="text-muted-foreground">{t("release.planner.summary.end")}</span>
                     <Op value={end} className={cn("font-semibold", end < 0 ? "text-destructive-foreground" : "text-foreground")} />
                 </span>

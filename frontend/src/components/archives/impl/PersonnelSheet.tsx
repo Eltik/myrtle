@@ -56,7 +56,7 @@ function Fact({ label, value, children }: { label: string; value?: React.ReactNo
     if (shown === undefined || shown === null || shown === "") return null;
     return (
         <div className="flex items-baseline gap-2 py-1">
-            <dt className="shrink-0 font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.12em]">{label}</dt>
+            <dt className="kicker shrink-0">{label}</dt>
             <span aria-hidden className="min-w-4 flex-1 translate-y-[-3px] border-border border-b border-dotted" />
             <dd className="m-0 text-right text-[13px] text-foreground">{shown}</dd>
         </div>
@@ -118,7 +118,7 @@ function FileBody({ op, t, server, onOpenFile, onOpenChart, fromDossiers }: { op
                     <Fact label={t("file.assimilation")} value={p?.assimilation} />
                     <Fact label={t("file.manufacturer")} value={p?.manufacturer} />
                     <Fact label={t("file.faction")} value={op.factions.map((x) => x.name).join(" · ")} />
-                    {spoilers ? op.hiddenFactions.map((h) => <Fact key={h.id} label={t("file.hiddenFaction")} value={<span className="text-amber-700 dark:text-amber-300">{h.name ?? h.id}</span>} />) : null}
+                    {spoilers ? op.hiddenFactions.map((h) => <Fact key={h.id} label={t("file.hiddenFaction")} value={<span className="text-warning-foreground">{h.name ?? h.id}</span>} />) : null}
                 </dl>
 
                 {p?.infection ? (
@@ -135,7 +135,7 @@ function FileBody({ op, t, server, onOpenFile, onOpenChart, fromDossiers }: { op
 
                 {homeChart ? (
                     <div className="mt-4 flex flex-col gap-2">
-                        <span className="font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.12em]">{fromDossiers || otherCharts.length === 0 ? t("file.showOnNetwork") : t("file.alsoOn")}</span>
+                        <Kicker className="mb-0">{fromDossiers || otherCharts.length === 0 ? t("file.showOnNetwork") : t("file.alsoOn")}</Kicker>
                         <div className="flex flex-wrap gap-1.5">
                             {(fromDossiers || otherCharts.length === 0 ? [homeChart] : otherCharts).map((c) => (
                                 <Button key={c.groupId} size="sm" variant="outline" onClick={() => onOpenChart(c.groupId)}>

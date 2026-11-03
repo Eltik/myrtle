@@ -504,7 +504,7 @@ function EditorContent({ slug, detail, queryClient }: IEditorContentProps) {
                             ))}
                         </section>
                         {state.tiers.length === 0 && (
-                            <div className="mt-3 rounded-xl border border-border border-dashed bg-muted/20 px-5 py-10 text-center">
+                            <div className="mt-3 rounded-2xl border border-border border-dashed bg-muted/20 px-5 py-10 text-center">
                                 <p className="m-0 font-medium font-sans text-foreground text-sm">{t("edit.board.emptyTitle")}</p>
                                 <p className="mt-1 font-sans text-[12.5px] text-muted-foreground">{t("edit.board.emptyBody")}</p>
                                 <Button onClick={handleAddTier} size="sm" className="mt-3">

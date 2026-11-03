@@ -51,7 +51,7 @@ export function ArgumentCard({ arg, written, started, locale, language }: IArgum
     const forms = numeric ? pluralCategoriesFor(locale, arg.type === "selectordinal" ? "selectordinal" : "plural").length : 0;
 
     return (
-        <div className="rounded-[10px] border border-border px-3 py-2.5">
+        <div className="rounded-2xl border border-border px-3 py-2.5">
             <div className="flex flex-wrap items-center gap-1.5">
                 <span className="font-mono text-[12px]">{`{${arg.name}}`}</span>
                 <Badge variant="outline" size="sm">

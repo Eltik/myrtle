@@ -1,8 +1,10 @@
 /**
  * Accent colours. A "preset" is a stored hue (0-360) rendered through OKLch, so
  * it shifts with light/dark like the stylesheet defaults. A "custom" is a raw
- * sRGB hex applied as picked, with its foreground chosen by luminance.
+ * sRGB hex applied as picked, with its label picked by the higher WCAG ratio.
  */
+
+import { accentKit } from "./accent-kit";
 
 export const DEFAULT_PRIMARY_HUE = 25;
 
@@ -28,6 +30,8 @@ export type Accent = { type: "preset"; hue: number } | { type: "custom"; hex: st
 export interface IThemeColorSet {
     primary: string;
     primaryForeground: string;
+    primaryHover: string;
+    primaryInk: string;
     ring: string;
     chart1: string;
     sidebarPrimary: string;
@@ -35,75 +39,18 @@ export interface IThemeColorSet {
     sidebarRing: string;
     glowPrimary: string;
     glowPrimaryIntense: string;
-    glowTextIcon: string;
 }
 
-const LIGHT_FG = "oklch(0.985 0.002 285)";
-const DARK_FG = "oklch(0.13 0.005 285)";
+const kit = accentKit();
 
-const PRESET_OKLCH = {
-    dark: { l: 0.75, c: 0.15 },
-    light: { l: 0.58, c: 0.22 },
-} as const;
-
-function generateFromHue(hue: number, isDark: boolean): IThemeColorSet {
-    const { l: L, c: C } = PRESET_OKLCH[isDark ? "dark" : "light"];
-    const base = `oklch(${L} ${C} ${hue})`;
-    return {
-        primary: base,
-        primaryForeground: isDark ? DARK_FG : LIGHT_FG,
-        ring: base,
-        chart1: base,
-        sidebarPrimary: base,
-        sidebarPrimaryForeground: isDark ? DARK_FG : LIGHT_FG,
-        sidebarRing: base,
-        glowPrimary: `oklch(${L} ${C} ${hue} / ${isDark ? "0.5" : "0.35"})`,
-        glowPrimaryIntense: `oklch(${L} ${C} ${hue} / ${isDark ? "0.8" : "0.55"})`,
-        glowTextIcon: `oklch(${L} ${C} ${hue} / ${isDark ? "0.6" : "0.55"})`,
-    };
-}
-
-function generateFromHex(hex: string): IThemeColorSet {
-    const fg = pickForeground(hex);
-    return {
-        primary: hex,
-        primaryForeground: fg,
-        ring: hex,
-        chart1: hex,
-        sidebarPrimary: hex,
-        sidebarPrimaryForeground: fg,
-        sidebarRing: hex,
-        glowPrimary: hexWithAlpha(hex, 0.5),
-        glowPrimaryIntense: hexWithAlpha(hex, 0.8),
-        glowTextIcon: hexWithAlpha(hex, 0.6),
-    };
-}
-
-function pickForeground(hex: string): string {
-    const rgb = hexToRgb(hex);
-    if (!rgb) return LIGHT_FG;
-    const lum = relativeLuminance(rgb.r, rgb.g, rgb.b);
-    // Above ~0.55 relative luminance the accent reads as a light surface -> dark text.
-    return lum > 0.55 ? DARK_FG : LIGHT_FG;
-}
-
-function relativeLuminance(r: number, g: number, b: number): number {
-    return 0.2126 * srgbToLinear(r) + 0.7152 * srgbToLinear(g) + 0.0722 * srgbToLinear(b);
-}
-
-function hexWithAlpha(hex: string, alpha: number): string {
-    const rgb = hexToRgb(hex);
-    if (!rgb) return hex;
-    return `rgb(${Math.round(rgb.r * 255)} ${Math.round(rgb.g * 255)} ${Math.round(rgb.b * 255)} / ${alpha})`;
-}
-
-export function generateAccentColors(accent: Accent, isDark: boolean): IThemeColorSet {
-    return accent.type === "preset" ? generateFromHue(accent.hue, isDark) : generateFromHex(accent.hex);
-}
+/** Black or white, whichever has the higher WCAG ratio on the given `#rrggbb` fill. */
+export const readableOn: (hex: string) => string = kit.readableOn;
 
 const CSS_VAR_MAP: Record<keyof IThemeColorSet, string> = {
     primary: "--primary",
     primaryForeground: "--primary-foreground",
+    primaryHover: "--primary-hover",
+    primaryInk: "--primary-ink",
     ring: "--ring",
     chart1: "--chart-1",
     sidebarPrimary: "--sidebar-primary",
@@ -111,8 +58,32 @@ const CSS_VAR_MAP: Record<keyof IThemeColorSet, string> = {
     sidebarRing: "--sidebar-ring",
     glowPrimary: "--glow-primary",
     glowPrimaryIntense: "--glow-primary-intense",
-    glowTextIcon: "--glow-text-icon",
 };
+
+/**
+ * A preset renders its hue through OKLch with L solved per hue and theme (see
+ * `accentKit`). A custom hex stays the fill (`--primary`, `--chart-1`); text
+ * (`--primary-ink`, what `text-primary` reads) and the focus ring get per-theme
+ * variants at the same hue that clear 4.5 and 3 against the page.
+ */
+export function generateAccentColors(accent: Accent, isDark: boolean): IThemeColorSet {
+    const raw = accent.type === "preset" ? `h:${accent.hue}` : `c:${expandHex(accent.hex)}`;
+    const vars = kit.accentVars(raw, isDark);
+    if (!vars) {
+        // Only reachable for a custom hex that bypassed `parseAccent`: paint it as given.
+        const hex = accent.type === "custom" ? accent.hex : "";
+        return { primary: hex, primaryForeground: "#ffffff", primaryHover: hex, primaryInk: hex, ring: hex, chart1: hex, sidebarPrimary: hex, sidebarPrimaryForeground: "#ffffff", sidebarRing: hex, glowPrimary: hex, glowPrimaryIntense: hex };
+    }
+    const out = {} as IThemeColorSet;
+    for (const key of Object.keys(CSS_VAR_MAP) as Array<keyof IThemeColorSet>) {
+        out[key] = vars[CSS_VAR_MAP[key]];
+    }
+    return out;
+}
+
+function expandHex(hex: string): string {
+    return /^#[0-9a-f]{3}$/i.test(hex) ? `#${hex[1]}${hex[1]}${hex[2]}${hex[2]}${hex[3]}${hex[3]}` : hex;
+}
 
 export function applyAccentColors(root: HTMLElement, colors: IThemeColorSet): void {
     for (const key of Object.keys(CSS_VAR_MAP) as Array<keyof IThemeColorSet>) {
@@ -129,64 +100,9 @@ export function clearAccentColors(root: HTMLElement): void {
 /** The hex an accent actually renders as in the given theme, for the preset swatches and the native colour input. */
 export function accentToRenderedHex(accent: Accent | null, isDark: boolean): string {
     if (accent?.type === "custom") return accent.hex;
-    const { l, c } = PRESET_OKLCH[isDark ? "dark" : "light"];
-    return oklchToHex(l, c, accent?.hue ?? DEFAULT_PRIMARY_HUE);
-}
-
-function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
-    const cleaned = hex.replace(/^#/, "");
-    if (cleaned.length !== 3 && cleaned.length !== 6) return null;
-    const expanded =
-        cleaned.length === 3
-            ? cleaned
-                  .split("")
-                  .map((c) => c + c)
-                  .join("")
-            : cleaned;
-    // parseInt stops at the first non-hex character, so "12345g" would read as 0x12345.
-    if (!/^[0-9a-f]{6}$/i.test(expanded)) return null;
-    const n = Number.parseInt(expanded, 16);
-    return {
-        r: ((n >> 16) & 0xff) / 255,
-        g: ((n >> 8) & 0xff) / 255,
-        b: (n & 0xff) / 255,
-    };
-}
-
-function srgbToLinear(c: number): number {
-    return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
-}
-
-function linearToSrgb(c: number): number {
-    return c <= 0.0031308 ? 12.92 * c : 1.055 * c ** (1 / 2.4) - 0.055;
-}
-
-function oklchToHex(L: number, C: number, hueDeg: number): string {
-    const h = hueDeg * (Math.PI / 180);
-    const a = C * Math.cos(h);
-    const b = C * Math.sin(h);
-
-    const l_ = L + 0.3963377774 * a + 0.2158037573 * b;
-    const m_ = L - 0.1055613458 * a - 0.0638541728 * b;
-    const s_ = L - 0.0894841775 * a - 1.291485548 * b;
-
-    const lc = l_ ** 3;
-    const mc = m_ ** 3;
-    const sc = s_ ** 3;
-
-    const r = 4.0767416621 * lc - 3.3077115913 * mc + 0.2309699292 * sc;
-    const g = -1.2684380046 * lc + 2.6097574011 * mc - 0.3413193965 * sc;
-    const bb = -0.0041960863 * lc - 0.7034186147 * mc + 1.707614701 * sc;
-
-    return `#${toHexChannel(r)}${toHexChannel(g)}${toHexChannel(bb)}`;
-}
-
-function toHexChannel(linear: number): string {
-    const clamped = Math.max(0, Math.min(1, linear));
-    const srgb = linearToSrgb(clamped);
-    return Math.round(Math.max(0, Math.min(255, srgb * 255)))
-        .toString(16)
-        .padStart(2, "0");
+    const hue = accent?.hue ?? DEFAULT_PRIMARY_HUE;
+    const { L, C } = kit.presetFill(hue, isDark);
+    return kit.linearToHex(kit.lchToLinear(L, C, hue));
 }
 
 export const ACCENT_STORAGE_KEY = "myrtle-accent";

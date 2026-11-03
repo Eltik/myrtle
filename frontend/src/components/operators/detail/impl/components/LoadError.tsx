@@ -12,7 +12,7 @@ import { cn } from "#/lib/utils";
 export function LoadError({ message, onRetry, className }: { message: string; onRetry: () => void; className?: string }) {
     const t: TypedT<typeof routeErrorMessages> = useT("common");
     return (
-        <div className={cn("flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-card px-4 py-3", className)} role="alert">
+        <div className={cn("flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-card px-4 py-3", className)} role="alert">
             <p className="text-foreground text-sm">{message}</p>
             <Button onClick={onRetry} size="sm" variant="outline">
                 {t("routeError.retry")}

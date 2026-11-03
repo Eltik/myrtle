@@ -207,7 +207,7 @@ function HiddenFactionBadges({ operator }: { operator: IOperatorListItem }) {
     if (!spoilers || factions.length === 0) return null;
     return factions.map((faction) => (
         <Tooltip key={faction.id}>
-            <TooltipTrigger render={<Badge variant="outline" className="gap-1.5 border-amber-500/50 border-dashed bg-amber-500/10 text-amber-700 dark:text-amber-300" />}>
+            <TooltipTrigger render={<Badge variant="warning" className="gap-1.5 border-warning/50 border-dashed" tabIndex={0} />}>
                 <EyeOffIcon aria-hidden className="size-3" />
                 <CampLogo id={faction.id} server={operator.server} />
                 <span className="sr-only">{t("hero.hiddenFaction.srLabel")}</span>

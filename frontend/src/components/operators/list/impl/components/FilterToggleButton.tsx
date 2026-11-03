@@ -1,4 +1,5 @@
 import { ChevronLeft, ChevronRight, Filter } from "lucide-react";
+import { Badge } from "#/components/ui/badge";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -30,7 +31,11 @@ export function FilterToggleButton({ visible, onToggle, activeCount }: { visible
                 <span className="hidden border-border border-r pr-1 font-medium font-sans text-xs leading-none md:inline">{t("filters.toggle.label")}</span>
                 <Filter className="hidden h-3.5 w-3.5 md:block" aria-hidden="true" />
                 {visible ? <ChevronLeft className="block h-3.5 w-3.5 md:hidden" aria-hidden="true" /> : <ChevronRight className="block h-3.5 w-3.5 md:hidden" aria-hidden="true" />}
-                {!visible && activeCount > 0 && <span className="absolute -top-1.25 -right-1.25 inline-flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-primary px-0.75 font-mono font-semibold text-[9px] text-primary-foreground leading-none shadow-[0_0_0_2px_var(--background)]">{activeCount}</span>}
+                {!visible && activeCount > 0 && (
+                    <Badge className="absolute -top-1.5 -right-1.5 font-mono tabular-nums ring-2 ring-background" size="sm">
+                        {activeCount}
+                    </Badge>
+                )}
             </TooltipTrigger>
             <TooltipPopup side="top" sideOffset={8}>
                 {toggleLabel}

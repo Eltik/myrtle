@@ -119,7 +119,11 @@ export function OverviewTab({ enemy }: { enemy: IEnemyView }) {
                     <div className="flex flex-col gap-3.5">
                         {groups.map((g, gi) => (
                             <div key={g.title ?? `g-${gi}`}>
-                                {g.title && <h4 className="mb-1.5 font-sans font-semibold text-[12.5px] text-primary uppercase leading-none tracking-[0.04em]">{g.title}</h4>}
+                                {g.title && (
+                                    <h4 className="mb-1.5">
+                                        <Kicker className="mb-0 leading-none">{g.title}</Kicker>
+                                    </h4>
+                                )}
                                 {g.items.length > 0 && (
                                     <ul className="m-0 flex list-none flex-col gap-1.5 p-0">
                                         {g.items.map((ab) => (
@@ -251,7 +255,7 @@ function PhaseStatsBlock({ phase, label }: { phase: IEnemyLevelStats; label: str
                 <dl className="m-0 grid grid-cols-1 gap-1 sm:grid-cols-2">
                     {STAT_ROWS.map((row) => (
                         <div key={row.labelKey} className="flex items-baseline justify-between gap-2 border-border/40 border-b py-1 last:border-b-0 sm:nth-last-[2]:border-b-0">
-                            <dt className="font-medium font-mono text-[10px] text-muted-foreground uppercase leading-none tracking-[0.12em]">{t(row.labelKey)}</dt>
+                            <dt className="kicker leading-none">{t(row.labelKey)}</dt>
                             <dd className="m-0 font-mono font-semibold text-[13px] text-foreground tabular-nums leading-none">{row.format(row.pick(phase.attributes), f)}</dd>
                         </div>
                     ))}

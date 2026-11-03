@@ -127,14 +127,6 @@ export const messages = {
         text: "Unknown operator",
         description: "Stands in for a plan's operator name when the operator could not be resolved.",
     },
-    "planner.group.renamePrompt": {
-        text: "Enter new group name:",
-        description: "Prompt in the browser dialog that renames a group. Keep the colon.",
-    },
-    "planner.group.deleteConfirm": {
-        text: 'Delete the group "{name}"?',
-        description: "Question in the browser dialog confirming a group deletion; {name} is the group's own name, in quotes.",
-    },
     "planner.group.none": {
         text: "No groups created yet.",
         description: "Shown in place of the group list when the player has made none.",

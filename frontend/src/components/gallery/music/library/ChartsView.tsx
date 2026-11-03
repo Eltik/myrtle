@@ -3,6 +3,7 @@ import { Gamepad2Icon, PlayIcon, UsersIcon } from "lucide-react";
 import type React from "react";
 import { memo, useMemo, useState } from "react";
 import { Button } from "#/components/ui/button";
+import { Skeleton } from "#/components/ui/skeleton";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { musicListenersQueryOptions, musicTopTracksQueryOptions } from "#/lib/api/music";
 import { useFormatters, useT } from "#/lib/i18n";
@@ -126,8 +127,8 @@ const ChartTrack = memo(function ChartTrack({ row, tracks, source, houseArtist }
         return (
             <li className="flex min-h-12 items-center gap-2.5 px-1.5" aria-hidden="true">
                 <span className="w-6 shrink-0 text-right font-mono text-[11px] text-muted-foreground tabular-nums">{row.rank}</span>
-                <span className="size-8 shrink-0 animate-pulse rounded-[4px] bg-muted" />
-                <span className="h-3 w-40 animate-pulse rounded bg-muted" />
+                <Skeleton className="size-8 shrink-0 rounded-[4px]" />
+                <Skeleton className="h-3 w-40 rounded" />
             </li>
         );
     }
