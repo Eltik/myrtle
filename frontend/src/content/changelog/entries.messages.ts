@@ -10,6 +10,46 @@ import { defineMessages, type MessageMap } from "#/lib/i18n/messages";
 export const namespace = "changelog";
 
 export const messages = {
+    "note.2026-11-04.title": {
+        text: "Improved: Easier to read across the site",
+        description: "Title of the 2026-11-04 release note.",
+    },
+    "note.2026-11-04.lead": {
+        text: "**Text, focus outlines and data colours are easier to read across the site, in light and dark themes and with a custom accent colour.** When something fails to load, the page now says what and offers Try again.",
+        description: "Lead paragraph of the 2026-11-04 release note, rendered as Markdown. 'Try again' is the label of a button.",
+    },
+    "note.2026-11-04.item.1": {
+        text: "Operators CN has updated also list the outfits only CN has, with their chibi and animated art.",
+        description: "Release note item. CN is the Chinese game server; a chibi is the small animated in-game sprite of an operator.",
+    },
+    "note.2026-11-04.item.2": {
+        text: "Recruitment results colour operator names by rarity, and the DPS calculator shows each operator's rarity.",
+        description: "Release note item. DPS is the damage calculator tool.",
+    },
+    "note.2026-11-04.item.3": {
+        text: "Enemy stat bars are scaled so most enemies no longer read as nearly empty.",
+        description: "Release note item.",
+    },
+    "note.2026-11-04.item.4": {
+        text: "On phones, the tier list and enemy filters fold away, and tabs that run off the edge show that they scroll.",
+        description: "Release note item.",
+    },
+    "note.2026-11-04.item.5": {
+        text: "Ten-roll permits, Recruitment Permits and story items no longer land in Other in your inventory, and currencies and tickets each have their own section.",
+        description: "Release note item. Recruitment Permit keeps the game's item name.",
+    },
+    "note.2026-11-04.item.6": {
+        text: "Collapsing groups on the stage list no longer leaves a blank gap.",
+        description: "Release note item.",
+    },
+    "note.2026-11-04.item.7": {
+        text: 'Enemy stats no longer run together, such as "550ATK".',
+        description: "Release note item. 550ATK shows a number and a stat label printed with no space between them; keep it as is.",
+    },
+    "note.2026-11-04.item.8": {
+        text: "A failed refresh no longer replaces a loaded profile with an error page.",
+        description: "Release note item.",
+    },
     "note.2026-11-02.title": {
         text: "New: See what CN has changed on every operator page",
         description: "Title of the 2026-11-02 release note. CN is the Chinese game server, which receives updates before the others.",
