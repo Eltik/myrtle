@@ -266,7 +266,7 @@ function SearchBox({ value, onChange, placeholder, label }: { value: string; onC
     const t: AudioT = useT("operators");
 
     return (
-        <div className="flex h-9 min-w-60 max-w-115 flex-1 items-center gap-2 rounded-lg border border-border bg-[color-mix(in_oklch,var(--secondary)_60%,transparent)] px-3 transition-[border-color,box-shadow] duration-150 focus-within:border-primary focus-within:shadow-[0_0_0_1px_var(--primary)] [&>svg]:shrink-0 [&>svg]:text-muted-foreground">
+        <div className="flex h-9 min-w-60 max-w-115 flex-1 items-center gap-2 rounded-lg border border-border bg-[color-mix(in_oklch,var(--secondary)_60%,transparent)] px-3 transition-[border-color,box-shadow] duration-150 focus-within:border-ring focus-within:shadow-[0_0_0_1px_var(--ring)] [&>svg]:shrink-0 [&>svg]:text-muted-foreground">
             <Search className="h-3.75 w-3.75" aria-hidden="true" />
             <input type="text" value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} aria-label={label} className="min-w-0 flex-1 appearance-none border-0 bg-transparent p-0 font-sans text-foreground text-sm leading-none outline-none placeholder:text-muted-foreground" />
             {value && (
