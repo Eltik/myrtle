@@ -102,7 +102,7 @@ function TrendChip({ points }: { points: IChartPoint[] }) {
     const delta = points[points.length - 1].pct - points[0].pct;
     const up = delta >= 0;
     return (
-        <span className={`${KICKER_TEXT} font-mono tabular-nums ${up ? "text-emerald-500" : "text-red-400"}`}>
+        <span className={`${KICKER_TEXT} font-mono tabular-nums ${up ? "text-success-foreground" : "text-destructive-foreground"}`}>
             {up ? "▲" : "▼"} {t("score.history.trend", { delta: Math.abs(delta).toFixed(2), count: points.length })}
         </span>
     );

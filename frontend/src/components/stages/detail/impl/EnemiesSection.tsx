@@ -27,8 +27,8 @@ function EnemyTallyCard({ enemy, id, count, onFocusEnemy, statsFor }: { enemy: I
                     <img src={enemyIconURL(id)} alt={name} loading="lazy" width={44} height={44} className="h-full w-full object-contain" />
                 </span>
                 <span className="flex min-w-0 flex-1 flex-col gap-1">
-                    <span className="truncate font-sans font-semibold text-[12.5px] text-foreground leading-tight transition-colors group-hover/enemy:text-primary">{name}</span>
-                    <span className="font-medium font-mono text-[10px] leading-none" style={{ color: ink }}>
+                    <span className="line-clamp-2 break-words font-sans font-semibold text-[12.5px] text-foreground leading-tight transition-colors group-hover/enemy:text-primary">{name}</span>
+                    <span className="whitespace-nowrap font-medium font-mono text-[10px] leading-none" style={{ color: ink }}>
                         {tConst(enemy ? ENEMY_LEVEL_LABEL_KEY[enemy.enemyLevel] : "enemyLevel.UNKNOWN")}
                     </span>
                 </span>
@@ -36,7 +36,7 @@ function EnemyTallyCard({ enemy, id, count, onFocusEnemy, statsFor }: { enemy: I
             </button>
             {/* The map shows these stats only on pointer hover; this is the tap and keyboard path to the same card. */}
             <Popover>
-                <PopoverTrigger render={<Button aria-label={t("enemies.stats.aria", { name })} size="xs" variant="outline" />}>
+                <PopoverTrigger render={<Button aria-label={t("enemies.stats.aria", { name })} size="xs" variant="outline" className="shrink-0" />}>
                     <ChartColumn aria-hidden="true" />
                     {t("enemies.stats")}
                 </PopoverTrigger>
@@ -54,7 +54,8 @@ export function EnemiesSection({ tally, onFocusEnemy, statsFor }: { tally: IEnem
     return (
         <section>
             <SectionHead>{t("enemies.title", { count: tally.length })}</SectionHead>
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
+            {/* Two columns at most: the section sits in half the page from lg, and three cards there cut a name to "Ex…" and broke "Normal". */}
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                 {tally.map(({ enemy, id, count }) => (
                     <EnemyTallyCard key={id} count={count} enemy={enemy} id={id} onFocusEnemy={onFocusEnemy} statsFor={statsFor} />
                 ))}

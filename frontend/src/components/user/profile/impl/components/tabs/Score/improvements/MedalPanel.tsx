@@ -125,9 +125,9 @@ function MedalRow({ medal, mode }: { medal: IMedalGap; mode: MedalMode }) {
             <Tooltip>
                 <TooltipTrigger
                     render={
-                        <span className="shrink-0">
+                        <button type="button" aria-label={rarityLabel(medal.rarity)} className="shrink-0 cursor-default rounded-sm text-left focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2">
                             <MedalIcon medal={medal} color={color} />
-                        </span>
+                        </button>
                     }
                 />
                 <TooltipContent sideOffset={4}>
@@ -139,7 +139,13 @@ function MedalRow({ medal, mode }: { medal: IMedalGap; mode: MedalMode }) {
                     <span className={cn(TEXT_BODY, "truncate font-medium")}>{medal.name}</span>
                     {medal.is_hidden && (
                         <Tooltip>
-                            <TooltipTrigger render={<span className={cn(TEXT_KICKER, "rounded border border-border/40 px-1 py-0.5 text-muted-foreground")}>{t("score.improvements.medal.hidden")}</span>} />
+                            <TooltipTrigger
+                                render={
+                                    <button type="button" className={cn(TEXT_KICKER, "cursor-default rounded-sm border border-border/40 px-1 py-0.5 text-left text-muted-foreground focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2")}>
+                                        {t("score.improvements.medal.hidden")}
+                                    </button>
+                                }
+                            />
                             <TooltipContent sideOffset={4}>
                                 <p>{t("score.improvements.medal.hidden.tooltip")}</p>
                             </TooltipContent>
@@ -152,10 +158,10 @@ function MedalRow({ medal, mode }: { medal: IMedalGap; mode: MedalMode }) {
                 <Tooltip>
                     <TooltipTrigger
                         render={
-                            <span className={cn(TEXT_META, "flex shrink-0 items-center gap-1 whitespace-nowrap text-muted-foreground tabular-nums")}>
+                            <button type="button" className={cn(TEXT_META, "flex shrink-0 cursor-default items-center gap-1 whitespace-nowrap rounded-sm text-left text-muted-foreground tabular-nums focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2")}>
                                 <Users className="size-3" aria-hidden />
                                 {ownedPctLabel(medal.owned_pct)}
-                            </span>
+                            </button>
                         }
                     />
                     <TooltipContent sideOffset={4}>
@@ -177,9 +183,11 @@ function MedalRow({ medal, mode }: { medal: IMedalGap; mode: MedalMode }) {
                 <Tooltip>
                     <TooltipTrigger
                         render={
-                            <Pill color={color} className={cn("shrink-0 whitespace-nowrap", TEXT_BADGE)}>
-                                {lock.reason}
-                            </Pill>
+                            <button type="button" className="shrink-0 cursor-default rounded-md text-left focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2">
+                                <Pill color={color} className={cn("whitespace-nowrap", TEXT_BADGE)}>
+                                    {lock.reason}
+                                </Pill>
+                            </button>
                         }
                     />
                     <TooltipContent sideOffset={4}>

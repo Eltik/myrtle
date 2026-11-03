@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { ChevronDown, ChevronUp, Minus } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "#/components/ui/avatar";
+import { Kicker } from "#/components/ui/kicker";
 import type { IMaterials } from "#/lib/api/materials";
 import { useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -89,8 +90,9 @@ function RankMovement({ delta, intervalKey = "leaderboard.interval.day.since" }:
     if (delta == null) return null;
     if (delta === 0) {
         return (
-            <span className="inline-flex items-center gap-0.5 font-mono font-semibold text-[10px] text-muted-foreground tabular-nums leading-none" title={t("leaderboard.table.movement.none", { interval: t(intervalKey) })}>
-                <Minus className="size-2.5" aria-hidden /> 0
+            <span className="inline-flex items-center gap-0.5 font-mono font-semibold text-[10px] text-muted-foreground tabular-nums leading-none">
+                <Minus className="size-2.5" aria-hidden /> <span aria-hidden>0</span>
+                <span className="sr-only">{t("leaderboard.table.movement.none", { interval: t(intervalKey) })}</span>
             </span>
         );
     }
@@ -99,14 +101,15 @@ function RankMovement({ delta, intervalKey = "leaderboard.interval.day.since" }:
     const color = isUp ? "text-success-foreground" : "text-destructive-foreground";
     const label = t(isUp ? "leaderboard.table.movement.up" : "leaderboard.table.movement.down", { count: Math.abs(delta), interval: t(intervalKey) });
     return (
-        <span className={cn("inline-flex items-center gap-0.5 font-mono font-semibold text-[10px] tabular-nums leading-none", color)} title={label}>
-            <Icon className="size-2.5" aria-hidden /> {Math.abs(delta)}
+        <span className={cn("inline-flex items-center gap-0.5 font-mono font-semibold text-[10px] tabular-nums leading-none", color)}>
+            <Icon className="size-2.5" aria-hidden /> <span aria-hidden>{Math.abs(delta)}</span>
+            <span className="sr-only">{label}</span>
         </span>
     );
 }
 
 function Th({ children, align }: { children: React.ReactNode; align?: "right" }) {
-    return <span className={cn("whitespace-nowrap font-medium font-mono text-[11px] text-muted-foreground uppercase leading-none tracking-[0.16em]", align === "right" ? "text-right" : "text-left")}>{children}</span>;
+    return <Kicker className={cn("mb-0 whitespace-nowrap", align === "right" ? "text-right" : "text-left")}>{children}</Kicker>;
 }
 
 /** The ranked value with its bar: a percentage for a score, a count for an item. */
@@ -115,10 +118,13 @@ function ValueCell({ row, ranking, topValue, className }: { row: IRankedRow; ran
     const f = useFormatters();
     const pct = fill(ranking, row.value, topValue);
     const text = row.value == null ? "-" : ranking.kind === "score" ? formatPct(row.value) : f.number(row.value);
-    const title = ranking.kind === "item" && row.value != null ? t("leaderboard.table.share", { pct: Math.round(pct) }) : undefined;
+    const share = ranking.kind === "item" && row.value != null ? t("leaderboard.table.share", { pct: Math.round(pct) }) : undefined;
     return (
-        <span className={cn("inline-flex min-w-24 flex-col items-end gap-1.5", className)} title={title}>
-            <span className="font-mono font-semibold text-[13px] text-foreground tabular-nums leading-none">{text}</span>
+        <span className={cn("inline-flex min-w-24 flex-col items-end gap-1.5", className)}>
+            <span className="font-mono font-semibold text-[13px] text-foreground tabular-nums leading-none">
+                {text}
+                {share ? <span className="sr-only"> {share}</span> : null}
+            </span>
             <span className="relative block h-0.75 w-full overflow-hidden rounded-full bg-muted">
                 <span className="absolute inset-y-0 left-0 rounded-full bg-linear-to-r from-primary/70 to-primary transition-[width] duration-300 motion-reduce:transition-none" style={{ width: `${pct}%` }} />
             </span>
@@ -172,7 +178,7 @@ function MobileRow({ row, ranking, topValue, intervalKey }: { row: IRankedRow; r
     const { nickname, initials, avatarSrc } = playerIdentity(row);
 
     return (
-        <Link to="/user/$id" params={{ id: row.uid }} className={cn("grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-xl border border-border bg-card px-3 py-3 no-underline transition-colors hover:border-foreground/15", row.isSelf && "bg-[color-mix(in_srgb,var(--primary)_6%,transparent)]")}>
+        <Link to="/user/$id" params={{ id: row.uid }} className={cn("grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-2xl border border-border bg-card px-3 py-3 no-underline transition-colors hover:border-foreground/15", row.isSelf && "bg-[color-mix(in_srgb,var(--primary)_6%,transparent)]")}>
             <span className="inline-flex flex-col items-center gap-1">
                 <span className="inline-flex size-9 items-center justify-center rounded-[10px] bg-muted font-mono font-semibold text-[13px] text-foreground tabular-nums leading-none">#{row.rank ?? "-"}</span>
                 <RankMovement delta={row.delta} intervalKey={intervalKey} />
@@ -227,7 +233,7 @@ export function LeaderboardTableSkeleton({ rows = 8 }: { rows?: number }) {
             <div className="block p-3 md:hidden">
                 <div className="flex flex-col gap-2">
                     {Array.from({ length: Math.min(rows, 6) }, (_, i) => `mobile-skeleton-${i}`).map((key) => (
-                        <div key={key} className="grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-xl border border-border bg-card px-3 py-3">
+                        <div key={key} className="grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-2xl border border-border bg-card px-3 py-3">
                             <span className="size-9 rounded-[10px] bg-muted" />
                             <div className="flex flex-col gap-1.5">
                                 <span className="h-3 w-32 rounded bg-muted" />

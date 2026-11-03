@@ -1,11 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { Check, Search, X } from "lucide-react";
-import { memo, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { memo, useCallback, useDeferredValue, useEffect, useId, useMemo, useRef, useState, useTransition } from "react";
 import { LoadError } from "#/components/operators/detail/impl/components/LoadError";
 import { DetailRow, type ISkinPrice, SkinDetailContent } from "#/components/skins/SkinDetailDialog";
 import { Dialog, DialogContent, DialogTitle } from "#/components/ui/dialog";
 import { ScrollArea } from "#/components/ui/scroll-area";
+import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { type ISkinIndexEntry, skinPopularityQueryOptions } from "#/lib/api/skins";
 import { useFormatters, useT } from "#/lib/i18n";
@@ -231,7 +232,7 @@ function SkinViewerBody({ skins, ownedIds, profileOwnedCount, operatorsMap, colo
                 </div>
 
                 <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
-                    <FilterTabs color={color} counts={{ missing: missingCount, owned: ownedCount, all: totalCount }} onChange={setFilter} value={filter} />
+                    <FilterTabs counts={{ missing: missingCount, owned: ownedCount, all: totalCount }} onChange={setFilter} value={filter} />
                     <SortTabs onChange={setSort} value={sort} />
                     <div className="relative flex items-center sm:ml-auto">
                         <Search aria-hidden className="absolute left-2.5 h-3.5 w-3.5 text-subtle-foreground" />
@@ -298,31 +299,20 @@ interface IFilterTabsProps {
     value: OwnershipFilter;
     onChange: (v: OwnershipFilter) => void;
     counts: Record<OwnershipFilter, number>;
-    color: string;
 }
 
-function FilterTabs({ value, onChange, counts, color }: IFilterTabsProps) {
+function FilterTabs({ value, onChange, counts }: IFilterTabsProps) {
     const t: ViewerT = useT("user");
     const f = useFormatters();
     return (
-        <div className="inline-flex shrink-0 items-center gap-0.5 rounded-md border border-border bg-muted/40 p-0.5">
-            {FILTER_TABS.map((tab) => {
-                const active = value === tab.id;
-                return (
-                    <button
-                        aria-pressed={active}
-                        className={cn("flex cursor-pointer items-center gap-1.5 rounded-[5px] px-2.5 py-1 font-mono text-[11px] uppercase tracking-wider transition-colors", active ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}
-                        key={tab.id}
-                        onClick={() => onChange(tab.id)}
-                        style={active && tab.id === "missing" ? { color } : undefined}
-                        type="button"
-                    >
-                        {t(tab.labelKey)}
-                        <span className="font-semibold tabular-nums">{f.number(counts[tab.id])}</span>
-                    </button>
-                );
-            })}
-        </div>
+        <ToggleGroup aria-label={t("profile.skins.filter.aria")} variant="outline" size="sm" className="shrink-0" value={[value]} onValueChange={(next) => next[0] && onChange(next[0] as OwnershipFilter)}>
+            {FILTER_TABS.map((tab) => (
+                <ToggleGroupItem key={tab.id} value={tab.id} className="gap-1.5 px-2.5 text-[12px]">
+                    {t(tab.labelKey)}
+                    <span className="font-mono font-semibold tabular-nums">{f.number(counts[tab.id])}</span>
+                </ToggleGroupItem>
+            ))}
+        </ToggleGroup>
     );
 }
 
@@ -333,23 +323,19 @@ interface ISortTabsProps {
 
 function SortTabs({ value, onChange }: ISortTabsProps) {
     const t: ViewerT = useT("user");
+    const labelId = useId();
     return (
-        <div className="inline-flex shrink-0 items-center gap-0.5 rounded-md border border-border bg-muted/40 p-0.5">
-            <span className="px-1.5 font-mono text-[10px] text-muted-foreground uppercase tracking-wider">{t("profile.skins.sort.label")}</span>
-            {SORT_TABS.map((tab) => {
-                const active = value === tab.id;
-                return (
-                    <button
-                        aria-pressed={active}
-                        className={cn("cursor-pointer rounded-[5px] px-2 py-1 font-mono text-[11px] uppercase tracking-wider transition-colors", active ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}
-                        key={tab.id}
-                        onClick={() => onChange(tab.id)}
-                        type="button"
-                    >
+        <div className="flex shrink-0 items-center gap-2">
+            <span id={labelId} className="text-[12px] text-muted-foreground">
+                {t("profile.skins.sort.label")}
+            </span>
+            <ToggleGroup aria-labelledby={labelId} variant="outline" size="sm" value={[value]} onValueChange={(next) => next[0] && onChange(next[0] as SortMode)}>
+                {SORT_TABS.map((tab) => (
+                    <ToggleGroupItem key={tab.id} value={tab.id} className="px-2 text-[12px]">
                         {t(tab.labelKey)}
-                    </button>
-                );
-            })}
+                    </ToggleGroupItem>
+                ))}
+            </ToggleGroup>
         </div>
     );
 }
@@ -366,10 +352,14 @@ const SkinCard = memo(function SkinCard({ card, owned, color, popularity, onSele
     const t: ViewerT = useT("user");
     const { skin, opName, skinName, price, avatarURL } = card;
     const displayOpName = opName || skin.charId;
+    const f = useFormatters();
     const handleClick = () => onSelect(skin.skinId);
+    const detailId = useId();
+    const details = [price.label && (price.tooltip ? `${price.label}: ${price.tooltip}` : price.label), popularity && popularity.pct !== null && t("profile.skins.popularity.tooltip", { owners: f.number(popularity.owners), pct: (popularity.pct * 100).toFixed(2) })].filter(Boolean).join(". ");
 
     return (
         <button
+            aria-describedby={details ? detailId : undefined}
             aria-label={t("profile.skins.card.aria", { operator: displayOpName, skin: skinName })}
             className={cn("group relative flex cursor-pointer flex-col overflow-hidden rounded-lg border bg-card text-left transition-all", "hover:-translate-y-0.5 hover:border-foreground/30 hover:shadow-md", owned ? "border-border/60" : "border-border")}
             onClick={handleClick}
@@ -397,6 +387,11 @@ const SkinCard = memo(function SkinCard({ card, owned, color, popularity, onSele
                 <span className="truncate font-medium text-[11px] leading-tight">{skinName}</span>
                 <span className="truncate text-[10px] text-muted-foreground leading-tight">{displayOpName}</span>
             </div>
+            {details && (
+                <span id={detailId} className="sr-only">
+                    {details}
+                </span>
+            )}
         </button>
     );
 });
@@ -408,19 +403,18 @@ const PopularityChip = memo(function PopularityChip({ info, color }: { info: ISk
     const label = f.percent(pct);
     return (
         <Tooltip>
-            <TooltipTrigger render={<span className="flex items-center gap-0.5 rounded-full bg-background/85 px-1.5 py-px font-mono font-semibold text-[9px] uppercase tabular-nums tracking-wider shadow-sm" style={{ color }} />}>{label}</TooltipTrigger>
+            <TooltipTrigger render={<span aria-hidden className="flex items-center gap-0.5 rounded-full bg-background/85 px-1.5 py-px font-mono font-semibold text-[9px] tabular-nums shadow-sm" style={{ color }} />}>{label}</TooltipTrigger>
             <TooltipPopup>{t("profile.skins.popularity.tooltip", { owners: f.number(info.owners), pct: (pct * 100).toFixed(2) })}</TooltipPopup>
         </Tooltip>
     );
 });
 
+// The chip sits on the outfit art, so "Free" gets a solid ground: success-foreground on bg-background/85 over dark art measured 3.64 light; solid it is 5.14 light / 10.41 dark.
 const PriceChip = memo(function PriceChip({ price }: { price: ISkinPrice }) {
     const isFree = price.kind === "free";
     return (
         <Tooltip disabled={!price.tooltip}>
-            <TooltipTrigger render={<span className={cn("flex items-center gap-0.5 rounded-full px-1.5 py-px font-mono font-semibold text-[9px] uppercase tracking-wider shadow-sm", isFree ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" : "bg-background/85 text-foreground")} />}>
-                {price.label}
-            </TooltipTrigger>
+            <TooltipTrigger render={<span aria-hidden className={cn("flex items-center gap-0.5 rounded-full px-1.5 py-px font-mono font-semibold text-[9px] shadow-sm", isFree ? "bg-background text-success-foreground" : "bg-background/85 text-foreground")} />}>{price.label}</TooltipTrigger>
             <TooltipPopup>{price.tooltip}</TooltipPopup>
         </Tooltip>
     );
@@ -786,7 +780,7 @@ function SectionHeader({ title, tag, count, color }: ISectionHeaderProps) {
         <div className="sticky top-0 z-10 -mx-3 flex items-center gap-2 border-border/40 border-b bg-background/95 px-3 py-1.5 backdrop-blur sm:-mx-4 sm:px-4">
             <h3 className="truncate font-heading font-semibold text-sm">{title}</h3>
             {tag && (
-                <span className="rounded-full border px-1.5 py-px font-mono text-[9.5px] uppercase tracking-wider" style={{ borderColor: `color-mix(in oklch, ${color} 45%, transparent)`, color }}>
+                <span className="rounded-full border px-1.5 py-px font-mono text-[9.5px]" style={{ borderColor: `color-mix(in oklch, ${color} 45%, transparent)`, color }}>
                     {tag}
                 </span>
             )}

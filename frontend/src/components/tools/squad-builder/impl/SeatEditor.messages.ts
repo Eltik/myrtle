@@ -3,6 +3,10 @@ import { defineMessages, type MessageMap } from "#/lib/i18n/messages";
 export const namespace = "tools";
 
 export const messages = {
+    "squad.editor.detailFailed": {
+        text: "Couldn't load this operator's skills and modules.",
+        description: "Shown in the seat editor when the operator's detail failed to load, so the skill and module pickers show names and icons only after a retry.",
+    },
     "squad.editor.seat": {
         text: "Seat {seat}",
         description: "Under the operator's name in the seat editor. {seat} is 1 to 12.",

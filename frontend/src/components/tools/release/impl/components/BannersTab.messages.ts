@@ -32,7 +32,7 @@ export const messages = {
         description: "Empty-state heading when the banner list is empty.",
     },
     "release.banners.empty.none": {
-        text: "The backend returned no CN pools.",
+        text: "No CN banners to show yet.",
         description: "Empty-state body when the server sent nothing at all. 'Pool' is the game's own word for one banner.",
     },
     "release.banners.empty.filtered": {

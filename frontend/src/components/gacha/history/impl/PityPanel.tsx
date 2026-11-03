@@ -1,3 +1,5 @@
+import type React from "react";
+import { Badge } from "#/components/ui/badge";
 import { Kicker } from "#/components/ui/kicker";
 import { Skeleton } from "#/components/ui/skeleton";
 import type { ClientGachaGroup, IBanner, IClientGachaRecords } from "#/lib/api/gacha";
@@ -75,13 +77,15 @@ function PityCard({ labelKey, pity, softPityAt, hardPityAt, color, total, reset,
     const t: PityT = useT("gacha");
     const isSoftPity = pity >= softPityAt;
     const isNearHard = pity >= hardPityAt - 5;
-    const statusColor = reset ? "text-muted-foreground" : isNearHard ? "text-[oklch(0.78_0.18_25)]" : isSoftPity ? "text-[oklch(0.78_0.18_80)]" : "text-foreground";
+    // Status tokens, not the old oklch(0.78) literals that had no light variant (1.93 / 2.28).
+    // On muted/30 over the card: warning 4.80 light / 10.85 dark, destructive 6.10 / 6.44.
+    const statusColor = reset ? "text-muted-foreground" : isNearHard ? "text-destructive-foreground" : isSoftPity ? "text-warning-foreground" : "text-foreground";
 
     return (
-        <div className="flex flex-col gap-3 rounded-xl border border-border bg-muted/30 p-4">
+        <div className="flex flex-col gap-3 rounded-2xl border border-border bg-muted/30 p-4">
             <div className="flex items-start justify-between gap-3">
                 <div>
-                    <div className="mb-1 font-mono text-[10px] text-muted-foreground uppercase tracking-[0.16em]">{t("history.pity.cardLabel", { type: t(labelKey) })}</div>
+                    <Kicker className="mb-1 block">{t("history.pity.cardLabel", { type: t(labelKey) })}</Kicker>
                     <div className={`font-bold font-sans text-[32px] tabular-nums leading-none tracking-[-0.04em] ${statusColor}`}>
                         {pity}
                         <span className="ml-1 font-medium font-mono text-[13px] text-muted-foreground">{t("history.pity.pullsUnit")}</span>
@@ -89,23 +93,19 @@ function PityCard({ labelKey, pity, softPityAt, hardPityAt, color, total, reset,
                 </div>
                 <div className="flex flex-col items-end gap-1 text-right">
                     {reset ? (
-                        <span className="inline-flex items-center gap-1 rounded-md border border-border bg-muted px-2 py-0.5 font-mono text-[9.5px] text-muted-foreground uppercase tracking-[0.14em]">
-                            <span className="block h-1.5 w-1.5 rounded-full bg-current" aria-hidden />
-                            {t("history.pity.bannerEnded")}
-                        </span>
+                        <Badge variant="outline">{t("history.pity.bannerEnded")}</Badge>
                     ) : (
                         <>
                             {isSoftPity ? (
-                                <span className="inline-flex items-center gap-1 rounded-md border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 font-mono text-[9.5px] text-amber-600 uppercase tracking-[0.14em] dark:text-amber-400">
-                                    <span className="block h-1.5 w-1.5 rounded-full bg-current" aria-hidden />
+                                // Tone on the fill and border, foreground text: 17.20 light / 14.10 dark.
+                                <Badge style={{ "--tone": "var(--warning)" } as React.CSSProperties} variant="tint">
                                     {t("history.pity.softPity")}
-                                </span>
+                                </Badge>
                             ) : null}
                             {isNearHard ? (
-                                <span className="inline-flex items-center gap-1 rounded-md border border-red-500/30 bg-red-500/10 px-2 py-0.5 font-mono text-[9.5px] text-red-600 uppercase tracking-[0.14em] dark:text-red-400">
-                                    <span className="block h-1.5 w-1.5 rounded-full bg-current" aria-hidden />
+                                <Badge style={{ "--tone": "var(--destructive)" } as React.CSSProperties} variant="tint">
                                     {t("history.pity.nearGuaranteed")}
-                                </span>
+                                </Badge>
                             ) : null}
                         </>
                     )}
@@ -123,12 +123,12 @@ export function PityPanel({ records, bannersById, isLoading }: IPityPanelProps) 
 
     if (isLoading) {
         return (
-            <section className="flex flex-col gap-4 rounded-[14px] border border-border bg-card p-4.5 sm:p-[22px_24px]">
+            <section className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4.5 sm:p-[22px_24px]">
                 <Skeleton className="h-4 w-28 rounded" />
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
                     {Array.from({ length: 4 }).map((_, i) => (
                         // biome-ignore lint/suspicious/noArrayIndexKey: skeleton
-                        <Skeleton key={i} className="h-32 rounded-xl" />
+                        <Skeleton key={i} className="h-32 rounded-2xl" />
                     ))}
                 </div>
             </section>
@@ -147,7 +147,7 @@ export function PityPanel({ records, bannersById, isLoading }: IPityPanelProps) 
     });
 
     return (
-        <section className="flex flex-col gap-4 rounded-[14px] border border-border bg-card p-4.5 sm:p-[22px_24px]">
+        <section className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4.5 sm:p-[22px_24px]">
             <header>
                 <Kicker className="mb-1.5">{t("history.pity.kicker")}</Kicker>
                 <h2 className="m-0 font-sans font-semibold text-[20px] text-foreground leading-[1.15] tracking-[-0.02em] sm:text-[22px]">{t("history.pity.title")}</h2>

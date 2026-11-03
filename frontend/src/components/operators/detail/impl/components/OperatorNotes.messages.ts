@@ -4,7 +4,7 @@ export const namespace = "operators";
 
 export const messages = {
     "notes.title": {
-        text: "Operator Notes",
+        text: "Operator notes",
         description: "Heading of the collapsible panel holding this site's own written notes about an operator.",
     },
     "notes.pros": {

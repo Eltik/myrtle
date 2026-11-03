@@ -73,12 +73,14 @@ export function TermsPage() {
     return (
         <LegalContainer>
             <header className="mb-12 border-border border-b pb-8">
-                <div className="flex items-start justify-between gap-4">
+                {/* Below sm the version badge drops under the subtitle: beside it, it left the
+                    subtitle about 60% of a 375 px screen. */}
+                <div className="flex flex-col items-start gap-4 sm:flex-row sm:justify-between">
                     <div className="min-w-0">
                         <h1 className="m-0 mb-3.5 text-balance font-extrabold text-[clamp(36px,5vw,52px)] text-foreground leading-[1.05] tracking-[-0.02em]">{t("terms.hero.title")}</h1>
                         <p className="m-0 max-w-[56ch] font-sans text-[20px] text-muted-foreground leading-[1.55]">{t("terms.hero.subtitle")}</p>
                     </div>
-                    <div className="flex shrink-0 gap-2 pt-2">
+                    <div className="flex shrink-0 gap-2 sm:pt-2">
                         <Badge variant="outline" size="lg">
                             {t("terms.hero.version", { version: VERSION })}
                         </Badge>

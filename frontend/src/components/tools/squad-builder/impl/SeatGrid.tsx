@@ -7,6 +7,7 @@ import { cardVars } from "#/components/tools/release/impl/components/SkinCard";
 import { eliteIcon, moduleIconURL, potentialIcon, skillIconURL, specializedIcon } from "#/components/tools/shared/icons";
 import { Button } from "#/components/ui/button";
 import { Dialog, DialogDescription, DialogHeader, DialogPanel, DialogPopup, DialogTitle } from "#/components/ui/dialog";
+import { Kicker } from "#/components/ui/kicker";
 import { Menu, MenuItem, MenuPopup, MenuSeparator, MenuTrigger } from "#/components/ui/menu";
 import { Skeleton } from "#/components/ui/skeleton";
 import { operatorQueryOptions } from "#/lib/api/operators";
@@ -250,6 +251,8 @@ function SeatCard(props: ISeatCardProps): React.ReactElement {
     const { seat, member, resolved, op, width, compact, readOnly, focused, highlighted, dropTarget, dragging, onPointerDown, onClick, onMakeLeader, onMove, onRemove, onOpenDps, t } = props;
     const [menuOpen, setMenuOpen] = React.useState(false);
     const [artFailed, setArtFailed] = React.useState(false);
+    // The card's label names the seat; the build drawn on it (level, class, promotion, skill, module, potential) is its description.
+    const detailsId = React.useId();
     const isSupport = seat === SUPPORT_SEAT;
 
     if (!member) {
@@ -267,23 +270,23 @@ function SeatCard(props: ISeatCardProps): React.ReactElement {
             >
                 {!compact && !isSupport && seat !== 0 && <span className="absolute top-1.5 left-2 font-mono text-[10px] text-subtle-foreground tabular-nums">{t("squad.grid.seatTag", { seat: seat + 1 })}</span>}
                 {!compact && seat === 0 && (
-                    <span className="absolute top-1.5 left-2 flex items-center gap-1 font-semibold text-[10px] text-primary uppercase tracking-wide">
+                    <Kicker tone="accent" className="absolute top-1.5 left-2 mb-0 flex items-center gap-1">
                         <Crown aria-hidden="true" className="size-3" />
                         {t("squad.grid.leader")}
-                    </span>
+                    </Kicker>
                 )}
                 {!compact && isSupport && (
-                    <span className="absolute top-1.5 left-2 flex items-center gap-1 font-semibold text-[10px] text-info uppercase tracking-wide">
+                    <Kicker className="absolute top-1.5 left-2 mb-0 flex items-center gap-1 text-info-foreground">
                         <Handshake aria-hidden="true" className="size-3" />
                         {t("squad.grid.support")}
-                    </span>
+                    </Kicker>
                 )}
                 <span className="flex flex-1 flex-col items-center justify-center gap-2 px-2">
                     <span className={cn("flex items-center justify-center rounded-full border border-muted-foreground/40 border-dashed transition-colors group-hover/empty:border-primary/60", compact ? "size-6" : "size-10")}>
                         <Plus className={compact ? "size-3.5" : "size-5"} aria-hidden="true" />
                     </span>
-                    {!compact && <span className="text-center font-semibold text-[11px] uppercase leading-tight tracking-wide">{isSupport ? t("squad.grid.supportAdd") : t("squad.grid.add")}</span>}
-                    {compact && isSupport && <Handshake aria-hidden="true" className="size-3 text-info" />}
+                    {!compact && <span className="text-center font-semibold text-[12px] leading-tight">{isSupport ? t("squad.grid.supportAdd") : t("squad.grid.add")}</span>}
+                    {compact && isSupport && <Handshake aria-hidden="true" className="size-3 text-info-foreground" />}
                     {compact && seat === 0 && <Crown aria-hidden="true" className="size-3 text-primary" />}
                 </span>
             </button>
@@ -313,6 +316,7 @@ function SeatCard(props: ISeatCardProps): React.ReactElement {
             onClick={onClick}
             onContextMenu={onContextMenu}
             aria-label={ariaLabel}
+            aria-describedby={detailsId}
             title={`${op.name}, ${t("squad.grid.level", { level: build.level })}`}
             className={cn(
                 "relative block aspect-square w-full cursor-pointer touch-manipulation select-none overflow-hidden rounded-lg border border-border bg-muted outline-none transition-[border-color,box-shadow,opacity] [-webkit-touch-callout:none] hover:border-primary/50 focus-visible:ring-2 focus-visible:ring-ring",
@@ -323,7 +327,7 @@ function SeatCard(props: ISeatCardProps): React.ReactElement {
             style={{ boxShadow: `inset 0 -3px 0 ${color}` }}
         >
             <img alt="" draggable={false} src={getAvatarById(op.id)} className="size-full object-cover" loading="lazy" decoding="async" />
-            <span className="absolute inset-x-0 bottom-[3px] flex items-center justify-center gap-0.5 bg-background/80 px-0.5 font-mono text-[10px] text-foreground tabular-nums leading-4">
+            <span id={detailsId} className="absolute inset-x-0 bottom-[3px] flex items-center justify-center gap-0.5 bg-background/80 px-0.5 font-mono text-[10px] text-foreground tabular-nums leading-4">
                 {/* Below lg a minimized tile is 46px wide (768px, 13 columns): the number alone fits, the icon does not. */}
                 <img alt={eliteLabel} src={eliteIcon(build.phase)} className="icon-theme-aware hidden size-3 object-contain lg:block" />
                 <span className="truncate">{t("squad.grid.level", { level: build.level })}</span>
@@ -338,6 +342,7 @@ function SeatCard(props: ISeatCardProps): React.ReactElement {
             onClick={onClick}
             onContextMenu={onContextMenu}
             aria-label={ariaLabel}
+            aria-describedby={`${detailsId}-corner ${detailsId}-stars ${detailsId}-band`}
             title={`${op.name}, ${subProfessionLabel(op)}`}
             data-focused={focused || undefined}
             data-highlight={(highlighted && !focused) || undefined}
@@ -355,22 +360,24 @@ function SeatCard(props: ISeatCardProps): React.ReactElement {
                 )}
                 <span className={styles.shine} />
                 {/* The planner's corner block, carrying the build: level, class, promotion. */}
-                <span className={styles.corner}>
+                <span id={`${detailsId}-corner`} className={styles.corner}>
                     <span className={styles.level} title={t("squad.grid.level", { level: build.level })}>
-                        {build.level}
+                        <span aria-hidden="true">{build.level}</span>
+                        <span className="sr-only">{t("squad.grid.level", { level: build.level })}</span>
                     </span>
                     <span className={styles.classBox} title={subProfessionLabel(op)}>
                         <ClassIcon profession={op.profession} size={26} />
+                        <span className="sr-only">{subProfessionLabel(op)}</span>
                     </span>
                     <span className={styles.eliteBox} title={eliteLabel}>
                         <img alt={eliteLabel} src={eliteIcon(build.phase)} />
                     </span>
                 </span>
-                <span role="img" aria-label={t("squad.grid.rarityAria", { rarity: op.rarity })} className={styles.stars} style={{ "--star-color": rarityInk(op.rarity) } as React.CSSProperties}>
+                <span id={`${detailsId}-stars`} role="img" aria-label={t("squad.grid.rarityAria", { rarity: op.rarity })} className={styles.stars} style={{ "--star-color": rarityInk(op.rarity) } as React.CSSProperties}>
                     {"★".repeat(op.rarity)}
                 </span>
                 <RoleTag seat={seat} t={t} />
-                <span className={styles.band}>
+                <span id={`${detailsId}-band`} className={styles.band}>
                     <SeatLoadout resolved={resolved} op={op} t={t} />
                     <span className={styles.potential} title={potentialLabel}>
                         <img alt={potentialLabel} src={potentialIcon(build.potential)} />
@@ -394,7 +401,7 @@ function SeatCard(props: ISeatCardProps): React.ReactElement {
                         aria-label={t("squad.grid.menu")}
                         className={cn(
                             compact
-                                ? "absolute top-0.5 right-0.5 flex size-5 cursor-pointer items-center justify-center rounded-md bg-background/80 text-muted-foreground transition-[opacity,color] hover:text-foreground focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-ring data-popup-open:text-foreground data-popup-open:opacity-100 sm:opacity-0 sm:group-hover/seat:opacity-100"
+                                ? "pointer-coarse:after:-translate-1/2 absolute top-0.5 right-0.5 flex size-5 cursor-pointer items-center justify-center rounded-md bg-background/80 text-muted-foreground transition-[opacity,color] pointer-coarse:after:absolute pointer-coarse:after:top-1/2 pointer-coarse:after:left-1/2 pointer-coarse:after:size-11 hover:text-foreground focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-ring data-popup-open:text-foreground data-popup-open:opacity-100 sm:opacity-0 sm:group-hover/seat:opacity-100"
                                 : cn(styles.menu, "sm:opacity-70 sm:group-hover/seat:opacity-100"),
                         )}
                     >

@@ -51,13 +51,13 @@ export const messages = {
         text: "you vs expected",
         description: "Label on the chip comparing the viewer's own rate against the advertised one. Rendered uppercase in a tight row.",
     },
-    "community.rarity.bar.expected": {
-        text: "Expected {value}",
-        description: "Tooltip on the tick marking the advertised rate on a rarity bar. {value} is already a formatted percentage.",
+    "community.rarity.direction.above": {
+        text: "Above:",
+        description: "Screen-reader word read before a comparison such as '138% of expected' when the observed rate is higher than the one it is compared to. The visible cue is an up arrow.",
     },
-    "community.rarity.bar.you": {
-        text: "You {value}",
-        description: "Tooltip on the tick marking the viewer's own rate on a rarity bar. {value} is already a formatted percentage.",
+    "community.rarity.direction.below": {
+        text: "Below:",
+        description: "Screen-reader word read before a comparison such as '61% of expected' when the observed rate is lower than the one it is compared to. The visible cue is a down arrow.",
     },
     "community.rarity.legend.expected": {
         text: "expected (with pity)",
@@ -68,7 +68,7 @@ export const messages = {
         description: "Legend entry for the tick showing the viewer's own rate. Rendered uppercase.",
     },
     "community.rarity.legend.note": {
-        text: "expected rates fold 6★ soft pity into the advertised 2/8/50/40% base - long-run 6★ is ~2.89%, and lower rarities dip slightly because a pity 6★ takes their slot",
+        text: "expected rates fold 6★ soft pity into the advertised 2/8/50/40% base: long-run 6★ is ~2.89%, and lower rarities dip slightly because a pity 6★ takes their slot",
         description: "Legend footnote explaining how the expected rates were derived. 'Soft pity' is the game's rising 6-star chance after fifty pulls.",
     },
     "community.rarity.legend.scaleNote": {

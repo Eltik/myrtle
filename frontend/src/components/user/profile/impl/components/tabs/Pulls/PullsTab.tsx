@@ -22,7 +22,7 @@ interface IPullsTabProps {
 }
 
 function Note({ children }: { children: React.ReactNode }) {
-    return <div className="flex flex-col items-center justify-center gap-2 rounded-3xl border border-border bg-card px-8 py-12 text-center text-muted-foreground text-sm">{children}</div>;
+    return <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-border bg-card px-8 py-12 text-center text-muted-foreground text-sm">{children}</div>;
 }
 
 /**
@@ -72,8 +72,8 @@ export function PullsTab({ uid, profile, isOwner, pools, onPoolsChange }: IPulls
 
     return (
         <div className="flex flex-col gap-6">
-            {isOwner && profile.public_gacha !== true ? <p className="m-0 rounded-[14px] border border-border bg-muted/40 px-4 py-3 font-sans text-muted-foreground text-sm">{t("profile.pulls.ownerPrivate")}</p> : null}
-            <div className="flex flex-col gap-3 rounded-[14px] border border-border bg-card px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
+            {isOwner && profile.public_gacha !== true ? <p className="m-0 rounded-2xl border border-border bg-muted/40 px-4 py-3 font-sans text-muted-foreground text-sm">{t("profile.pulls.ownerPrivate")}</p> : null}
+            <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
                 <BannerFilter options={options} value={pools} onChange={onPoolsChange} onOpenChange={(open) => open && setWantAll(true)} />
                 {isOwner ? (
                     <div className="flex flex-wrap items-center gap-3 sm:gap-4">

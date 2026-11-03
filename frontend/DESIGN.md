@@ -80,6 +80,14 @@ user colours (tier-list flairs) never become text. A label painted ON a user col
 row's pill) takes black or white from `readableTextColor`, whichever has the higher WCAG
 ratio against it.
 
+Game rich-text spans in operator descriptions (`<@ba.kw>`, `<$ba.magic>`, `vup`, `vdown`,
+`rem`) take `--game-kw-ink` / `--game-vup-ink` / `--game-vdown-ink` / `--game-rem-ink`
+through `inkForTag` (operators/detail/impl/description.ts). Light: `oklch(0.5 0.12 194.3)`
+5.14 / 5.37 / 4.50, `oklch(0.52 0.12 261.3)` 5.34 / 5.57 / 4.67, `oklch(0.53 0.12 24.7)`
+5.37 / 5.61 / 4.70, `oklch(0.53 0.12 70.8)` 5.18 / 5.41 / 4.53 (background / card /
+muted; the game's #27e8e7 measured 1.5 there). Dark keeps the game's own colours, 5.83 to
+13.21 on background, card and muted. The story reader keeps `colorForTag` unchanged.
+
 Legacy tokens left from the TanStack starter (`--sea-ink-soft`, `--lagoon`,
 `--lagoon-deep`, `--palm`, `--surface`, `--bg-base`) survive only for the randomizer and
 the leaderboard constants; the rest were deleted on 2026-11-03 with zero users.

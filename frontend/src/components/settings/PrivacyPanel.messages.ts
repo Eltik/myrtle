@@ -16,8 +16,8 @@ export const messages = {
         description: "Card title over the visibility switches.",
     },
     "privacy.visibility.desc": {
-        text: "Who can see your roster and account stats. Backed by {column}.",
-        description: "Card description over the visibility switches. {column} is a database column name in monospace; move it wherever the sentence needs it.",
+        text: "Who can see your roster and account stats.",
+        description: "Card description over the visibility switches.",
     },
     "privacy.visibility.column": {
         text: "user_settings.public_profile",
@@ -36,8 +36,8 @@ export const messages = {
         description: "Label of the switch that opts into public rankings, and the switch's accessible name.",
     },
     "privacy.leaderboards.desc": {
-        text: "Opt in to ranked appearance on {path}. Scores are still calculated either way. Backed by {column}.",
-        description: "Caption under the leaderboard switch. {path} is a URL path and {column} a database column name, both in monospace; move either wherever the sentence needs it.",
+        text: "Lists you on {path}. Your score is calculated either way.",
+        description: "Caption under the leaderboard switch. {path} is a URL path in monospace; move it wherever the sentence needs it.",
     },
     "privacy.leaderboards.path": {
         text: "/user/leaderboard",
@@ -52,8 +52,8 @@ export const messages = {
         description: "Label of the switch that keeps a record of the visitor's pulls, and the switch's accessible name. 'Gacha' is the game's random-draw system.",
     },
     "privacy.gacha.desc": {
-        text: "Saves your synced pulls so you can browse them in Gacha → History and contribute aggregate stats. Backed by {column}.",
-        description: "Caption under the gacha switch. 'Gacha → History' names a menu path in this site's own navigation; {column} is a database column name in monospace, movable wherever the sentence needs it.",
+        text: "Saves your synced pulls so you can browse them in Gacha → History and contribute aggregate stats.",
+        description: "Caption under the gacha switch. 'Gacha → History' names a menu path in this site's own navigation.",
     },
     "privacy.gacha.column": {
         text: "store_gacha",
@@ -64,8 +64,8 @@ export const messages = {
         description: "Label of the switch that lets visitors see the player's pull history on their profile and through links they share, and the switch's accessible name. 'Pull' is one draw on a headhunting banner.",
     },
     "privacy.publicGacha.desc": {
-        text: "Shows your stored pulls on your profile's Pulls tab and through the links you share from Gacha → History. Off by default, and only on a public profile. Backed by {column}.",
-        description: "Caption under the public pull history switch. 'Gacha → History' names a menu path in this site's own navigation; {column} is a database column name in monospace, movable wherever the sentence needs it.",
+        text: "Shows your stored pulls on your profile's Pulls tab and through the links you share from Gacha → History. Off by default, and only on a public profile.",
+        description: "Caption under the public pull history switch. 'Gacha → History' names a menu path in this site's own navigation.",
     },
     "privacy.publicGacha.column": {
         text: "public_gacha",

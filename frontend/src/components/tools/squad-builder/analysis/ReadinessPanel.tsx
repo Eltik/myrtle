@@ -1,5 +1,6 @@
 import { useQueries } from "@tanstack/react-query";
 import type * as React from "react";
+import { LoadError } from "#/components/operators/detail/impl/components/LoadError";
 import { eliteIcon, moduleIconURL, potentialIcon, skillIconURL, specializedIcon } from "#/components/tools/shared/icons";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { operatorQueryOptions } from "#/lib/api/operators";
@@ -38,6 +39,7 @@ function ReadinessBody({ readiness, ctx, t }: { readiness: Readiness; ctx: IChip
         const d = details[i]?.data;
         if (d) detailById.set(id, d);
     });
+    const failed = details.filter((q) => q.isError);
     const s = readiness.stats;
 
     return (
@@ -48,7 +50,15 @@ function ReadinessBody({ readiness, ctx, t }: { readiness: Readiness; ctx: IChip
                 <StatCell label={t("squad.analysis.readiness.mastery")} value={f.number(s.mastery3)} caption={t("squad.analysis.readiness.mastery.caption", { count: s.chosen_skills })} />
                 <StatCell label={t("squad.analysis.readiness.modules")} value={f.number(s.modules_on)} caption={t("squad.analysis.readiness.modules.caption", { count: s.modules_possible })} />
             </StatStrip>
-            <ul className="divide-y divide-border/60 rounded-xl border border-border bg-card">
+            {failed.length > 0 && (
+                <LoadError
+                    message={t("squad.analysis.readiness.detailFailed")}
+                    onRetry={() => {
+                        for (const q of failed) void q.refetch();
+                    }}
+                />
+            )}
+            <ul className="divide-y divide-border/60 rounded-2xl border border-border bg-card">
                 {readiness.rows.map((row) => (
                     <ReadinessRowView key={row.seat} row={row} detail={detailById.get(row.char_id)} ctx={ctx} t={t} />
                 ))}

@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import type * as React from "react";
+import { LoadError } from "#/components/operators/detail/impl/components/LoadError";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import { Skeleton } from "#/components/ui/skeleton";
@@ -18,6 +19,9 @@ const SLOT_NUMBERS: readonly number[] = Array.from({ length: SLOT_LIMIT }, (_, i
 export interface ISlotBarProps {
     signedIn: boolean;
     isLoading: boolean;
+    /** The saved slots failed to load: shown as a failure, never as four empty slots to save over. */
+    isError: boolean;
+    onRetry: () => void;
     saved: ReadonlyArray<SavedSquad | null>;
     synced: readonly GameSquad[];
     activeSlot: number | null;
@@ -27,14 +31,14 @@ export interface ISlotBarProps {
     onSignIn: () => void;
 }
 
-export function SlotBar({ signedIn, isLoading, saved, synced, activeSlot, dirty, onLoadSlot, onLoadGame, onSignIn }: ISlotBarProps): React.ReactElement {
+export function SlotBar({ signedIn, isLoading, isError, onRetry, saved, synced, activeSlot, dirty, onLoadSlot, onLoadGame, onSignIn }: ISlotBarProps): React.ReactElement {
     const t: SlotT = useT("tools");
     const fmt = useFormatters();
     const latestSync = synced.reduce<string | null>((acc, s) => (!acc || s.synced_at > acc ? s.synced_at : acc), null);
 
     return (
         <div className={cn("grid gap-4", signedIn && "lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]")}>
-            <section className="rounded-xl border border-border bg-card p-3">
+            <section className="rounded-2xl border border-border bg-card p-3">
                 <h2 className="mb-2 font-semibold text-[13px]">{t("squad.slots.title")}</h2>
                 {!signedIn ? (
                     <div className="flex flex-wrap items-center gap-3 rounded-lg border border-border border-dashed px-3 py-3">
@@ -43,6 +47,8 @@ export function SlotBar({ signedIn, isLoading, saved, synced, activeSlot, dirty,
                             {t("squad.slots.signInButton")}
                         </Button>
                     </div>
+                ) : isError ? (
+                    <LoadError message={t("squad.slots.loadFailed")} onRetry={onRetry} />
                 ) : isLoading ? (
                     <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                         {SLOT_NUMBERS.map((slot) => (
@@ -97,7 +103,7 @@ export function SlotBar({ signedIn, isLoading, saved, synced, activeSlot, dirty,
             </section>
 
             {signedIn && (
-                <section className="rounded-xl border border-border bg-card p-3">
+                <section className="rounded-2xl border border-border bg-card p-3">
                     <div className="mb-2 flex items-baseline justify-between gap-2">
                         <h2 className="font-semibold text-[13px]">{t("squad.slots.game")}</h2>
                         {latestSync && <span className="truncate text-[10.5px] text-muted-foreground">{t("squad.slots.gameSynced", { date: fmt.date(latestSync) })}</span>}
@@ -130,7 +136,7 @@ export function SlotBar({ signedIn, isLoading, saved, synced, activeSlot, dirty,
                                                 </span>
                                                 <span className="flex -space-x-1.5 overflow-hidden">
                                                     {ids.slice(0, 8).map((id) => (
-                                                        <img key={id} alt="" src={getAvatarById(id)} className="size-6 rounded-full border border-card bg-muted object-cover" loading="lazy" />
+                                                        <img key={id} alt="" src={getAvatarById(id)} width={24} height={24} className="size-6 rounded-full border border-card bg-muted object-cover" loading="lazy" />
                                                     ))}
                                                 </span>
                                             </button>

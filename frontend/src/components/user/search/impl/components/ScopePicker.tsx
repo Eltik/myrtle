@@ -1,7 +1,7 @@
-import { Check } from "lucide-react";
 import { useMemo } from "react";
 import { ClassIcon } from "#/components/operators/list/impl/components/Icons";
 import { CLASSES } from "#/components/operators/list/impl/constants";
+import { FilterChip } from "#/components/ui/filter-chip";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -57,10 +57,6 @@ export function scopeProfession(scope: Scope | null, operators: IOperatorIndexEn
     return mapped === "OTHER" ? null : mapped;
 }
 
-const CHIP = "inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-lg border px-2.5 font-medium font-sans text-xs leading-none transition-colors pointer-coarse:h-11";
-const CHIP_ON = "border-primary/40 bg-[color-mix(in_srgb,var(--primary)_10%,transparent)] text-foreground [&>svg]:text-primary";
-const CHIP_OFF = "border-input bg-card text-foreground hover:border-foreground/20";
-
 /**
  * Eight class icons, then the archetypes of the chosen class as chips. A
  * class press selects the whole class (and, pressed again, clears it); an
@@ -114,19 +110,13 @@ export function ScopePicker({ scope, onChange, operators }: IScopePickerProps) {
                     ) : (
                         <ul className="m-0 flex list-none flex-wrap gap-1.5 p-0">
                             <li>
-                                <button type="button" aria-pressed={scope?.kind === "class"} onClick={() => onChange({ kind: "class", profession })} className={cn(CHIP, scope?.kind === "class" ? CHIP_ON : CHIP_OFF)}>
-                                    {scope?.kind === "class" ? <Check className="size-3" aria-hidden /> : null}
-                                    {t("search.scope.anyArchetype")}
-                                </button>
+                                <FilterChip label={t("search.scope.anyArchetype")} active={scope?.kind === "class"} onSelect={() => onChange({ kind: "class", profession })} />
                             </li>
                             {subs.map((id) => {
                                 const on = scope?.kind === "sub" && scope.subProfessionId === id;
                                 return (
                                     <li key={id}>
-                                        <button type="button" aria-pressed={on} onClick={() => onChange({ kind: "sub", subProfessionId: id })} className={cn(CHIP, on ? CHIP_ON : CHIP_OFF)}>
-                                            {on ? <Check className="size-3" aria-hidden /> : null}
-                                            {archetypeName(id)}
-                                        </button>
+                                        <FilterChip label={archetypeName(id)} active={on} onSelect={() => onChange({ kind: "sub", subProfessionId: id })} />
                                     </li>
                                 );
                             })}
@@ -140,5 +130,5 @@ export function ScopePicker({ scope, onChange, operators }: IScopePickerProps) {
 
 /** The fieldset's own name, styled as the popup's other group headings. */
 function Legend({ children }: { children: React.ReactNode }) {
-    return <legend className="mb-2 p-0 font-medium font-mono text-[10px] text-muted-foreground uppercase leading-none tracking-[0.16em]">{children}</legend>;
+    return <legend className="kicker mb-2 p-0 leading-none">{children}</legend>;
 }

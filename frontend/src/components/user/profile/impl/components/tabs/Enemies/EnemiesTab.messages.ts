@@ -32,7 +32,7 @@ export const messages = {
         description: "Empty-state body when the filters and search leave nothing.",
     },
     "profile.enemies.search.placeholder": {
-        text: "Search enemies...",
+        text: "Search enemies…",
         description: "Prompt inside the empty handbook search box. Keep the three dots as written.",
     },
     "profile.enemies.status.all": {
@@ -48,7 +48,7 @@ export const messages = {
         description: "Filter chip: only enemies the account has never met.",
     },
     "profile.enemies.level.all": {
-        text: "All Tiers",
+        text: "All tiers",
         description: "Filter chip: every enemy tier.",
     },
     "profile.enemies.level.normal": {

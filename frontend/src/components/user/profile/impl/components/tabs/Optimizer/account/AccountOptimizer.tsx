@@ -50,7 +50,7 @@ export function AccountOptimizer({ uid }: IOptimizerProps) {
 
     return (
         <div className="flex flex-col gap-3">
-            <div className="flex flex-wrap items-end justify-between gap-3 rounded-xl border border-border bg-card px-4 py-3">
+            <div className="flex flex-wrap items-end justify-between gap-3 rounded-2xl border border-border bg-card px-4 py-3">
                 <div className="flex max-w-xl flex-col gap-0.5">
                     <p className="font-medium text-[13px] text-foreground">{t("profile.account.maxLevel.title")}</p>
                     <p className="text-[12px] text-muted-foreground">{moduleTarget ? t("profile.account.maxLevel.blurbModule") : t("profile.account.maxLevel.blurb")}</p>
@@ -79,7 +79,7 @@ export function AccountOptimizer({ uid }: IOptimizerProps) {
             {query.isError && <p className="text-[12px] text-destructive">{t("profile.account.maxLevel.error")}</p>}
 
             {data && (
-                <div className="flex flex-wrap gap-6 rounded-xl border border-border bg-card px-4 py-3">
+                <div className="flex flex-wrap gap-6 rounded-2xl border border-border bg-card px-4 py-3">
                     <Headline label={t("profile.account.maxLevel.remaining")} value={`${data.operators_remaining} / ${data.operators_total}`} />
                     {/* Each currency reads needed, then short with the owned note,
                         in the same order; interleaved, neither the pairs nor the
@@ -93,7 +93,7 @@ export function AccountOptimizer({ uid }: IOptimizerProps) {
             )}
 
             {data && data.lmd_missing !== null && data.lmd_missing > 0 && (
-                <div className="flex flex-wrap gap-6 rounded-xl border border-border bg-card px-4 py-3">
+                <div className="flex flex-wrap gap-6 rounded-2xl border border-border bg-card px-4 py-3">
                     {/* What the account earns and how long the shortfall takes:
                         the base as stationed now plus the mission chests, then
                         the same count with a day's natural sanity spent on the
@@ -126,10 +126,10 @@ export function AccountOptimizer({ uid }: IOptimizerProps) {
             {data && data.operators_remaining === 0 && <p className="text-[12.5px] text-muted-foreground">{t("profile.account.maxLevel.allMaxed")}</p>}
 
             {data && data.operators_remaining > 0 && (
-                <div className="overflow-x-auto rounded-xl border border-border bg-card">
+                <div className="overflow-x-auto rounded-2xl border border-border bg-card">
                     <table className="w-full text-[12.5px]">
                         <thead>
-                            <tr className="text-[10px] text-muted-foreground uppercase tracking-wider">
+                            <tr className="kicker">
                                 <th className="px-3 py-2 text-left font-medium">{t("profile.account.maxLevel.col.operator")}</th>
                                 <th className="px-3 py-2 text-left font-medium">{t("profile.account.maxLevel.col.now")}</th>
                                 <th className="px-3 py-2 text-left font-medium">{moduleTarget ? t("profile.account.maxLevel.col.moduleTarget") : t("profile.account.maxLevel.col.target")}</th>
@@ -165,7 +165,7 @@ export function AccountOptimizer({ uid }: IOptimizerProps) {
                 </div>
             )}
 
-            <div className="rounded-xl border border-border border-dashed p-6 text-center">
+            <div className="rounded-2xl border border-border border-dashed p-6 text-center">
                 <p className="text-[12.5px] text-muted-foreground">{t("profile.account.rest")}</p>
             </div>
         </div>

@@ -20,7 +20,7 @@ export const messages = {
         description: "Page heading of the enemy list.",
     },
     "list.blurb": {
-        text: "View all {count} enemies catalogued in Arknights, sorted by Hypergryph's internal sort index by default.",
+        text: "View all {count} enemies cataloged in Arknights, sorted by Hypergryph's internal sort index by default.",
         description: "Paragraph under the enemy-list heading. {count} is the bold number of enemies and may move wherever the sentence needs it. 'Arknights' and 'Hypergryph' are the game and its developer; keep both names.",
     },
     "list.results.aria": {
@@ -124,11 +124,11 @@ export const messages = {
         description: "Empty-state heading when the filters and search match no enemy.",
     },
     "list.empty.body": {
-        text: "Adjust the chip rail or your search above, or clear everything and start fresh.",
+        text: "Change the filters or the search above, or clear them all.",
         description: "Empty-state paragraph. 'Chip rail' is the row of filter chips above the results.",
     },
     "list.empty.clear": {
-        text: "Clear all filters",
+        text: "Clear filters",
         description: "Empty-state button that drops every active filter.",
     },
     "list.locations.failed": {

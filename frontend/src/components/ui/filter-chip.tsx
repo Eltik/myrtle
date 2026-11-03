@@ -11,6 +11,9 @@ interface IFilterChipProps {
     onSelect: () => void;
     /** A CSS colour for the pressed tint and border, e.g. `var(--dmg-magic)`. Primary by default. */
     tone?: string;
+    disabled?: boolean;
+    /** Overrides the visible label as the accessible name, e.g. to spell out the count. */
+    "aria-label"?: string;
     className?: string;
 }
 
@@ -23,10 +26,12 @@ interface IFilterChipProps {
  * its own tint fails AA (1.66 to 3.96 in audit-002), and a check mark carries the pressed
  * state without relying on colour.
  */
-export function FilterChip({ label, active, count, onSelect, tone, className }: IFilterChipProps) {
+export function FilterChip({ label, active, count, onSelect, tone, disabled, "aria-label": ariaLabel, className }: IFilterChipProps) {
     return (
         <Toggle
+            aria-label={ariaLabel}
             className={cn("h-8 gap-1.5 px-3 [--tone:var(--primary)] data-pressed:inset-ring-0 data-pressed:border-(--tone)/50 data-pressed:bg-(--tone)/10 data-pressed:text-foreground data-pressed:hover:bg-(--tone)/15 dark:data-pressed:bg-(--tone)/10 dark:data-pressed:hover:bg-(--tone)/15", className)}
+            disabled={disabled}
             onPressedChange={() => onSelect()}
             pressed={active}
             size="sm"

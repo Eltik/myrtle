@@ -80,7 +80,7 @@ export const messages = {
         description: "Accessible name of the button that shows the lists as compact rows.",
     },
     "my.search.placeholder": {
-        text: "Search your lists...",
+        text: "Search your lists…",
         description: "Placeholder in the box that filters the player's own lists. Keep the three dots.",
     },
     "my.search.label": {

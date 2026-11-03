@@ -41,11 +41,12 @@ export interface IOperatorDetail {
  * fetch per picked operator, shared by every card showing it, instead of the
  * whole operator table up front.
  */
-export function useOperatorDetail(entry: IOperatorListEntry | undefined): IOperatorDetail {
-    const { data: op } = useQuery({ ...operatorQueryOptions(entry?.id ?? "", useGamedataServer()), enabled: !!entry });
+export function useOperatorDetail(entry: IOperatorListEntry | undefined): IOperatorDetail & { failed: boolean; retry: () => void } {
+    const { data: op, isError, refetch } = useQuery({ ...operatorQueryOptions(entry?.id ?? "", useGamedataServer()), enabled: !!entry });
     const t: DetailT = useT("tools");
-    // An unknown id resolves to `null`; the detail treats it like one not loaded yet.
-    return useMemo(() => buildDetail(op ?? undefined, entry, t), [op, entry, t]);
+    // An unknown id resolves to `null`; the detail treats it like one not loaded yet. A failed
+    // fetch is said as one (`failed`), so blank skill and module tiles do not read as "none".
+    return useMemo(() => ({ ...buildDetail(op ?? undefined, entry, t), failed: isError, retry: () => void refetch() }), [op, entry, t, isError, refetch]);
 }
 
 function buildDetail(op: IOperatorListItem | undefined, entry: IOperatorListEntry | undefined, t: DetailT): IOperatorDetail {

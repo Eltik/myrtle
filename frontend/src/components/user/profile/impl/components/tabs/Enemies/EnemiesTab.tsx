@@ -138,7 +138,7 @@ export function EnemiesTab({ encountered, isLoading }: IEnemiesTabProps) {
                 </div>
             </div>
 
-            {seenCount === 0 && total > 0 && <p className="rounded-xl border border-border/60 border-dashed bg-muted/30 px-4 py-3 text-muted-foreground text-sm">{t("profile.enemies.noneYet")}</p>}
+            {seenCount === 0 && total > 0 && <p className="rounded-2xl border border-border/60 border-dashed bg-muted/30 px-4 py-3 text-muted-foreground text-sm">{t("profile.enemies.noneYet")}</p>}
 
             {filtered.length === 0 ? <EnemiesEmpty body={t("profile.enemies.noMatch.body")} title={t("profile.enemies.noMatch.title")} /> : <VirtualizedEnemyGrid rows={filtered} />}
         </section>
@@ -251,7 +251,7 @@ function ProgressHeader({ seen, total, pct, avg, avgPct }: { seen: number; total
         <div className="flex flex-col gap-2.5 rounded-2xl border border-border/50 bg-card/40 p-5">
             <div className="flex items-end justify-between gap-4">
                 <div className="flex flex-col gap-1">
-                    <span className="font-mono font-semibold text-[10.5px] text-muted-foreground uppercase tracking-[0.14em]">{t("profile.enemies.kicker")}</span>
+                    <span className="kicker">{t("profile.enemies.kicker")}</span>
                     <div className="flex items-baseline gap-2">
                         <span className="font-bold text-2xl text-foreground tabular-nums leading-none">
                             {seen}
@@ -319,6 +319,7 @@ const EnemyHandbookCard = memo(function EnemyHandbookCard({ enemy, seen }: IEnem
             style={{ borderColor: seen && enemy.enemyLevel !== "NORMAL" ? tok.accentSoft : "color-mix(in oklch, var(--border) 80%, transparent)" }}
             title={seen ? t("profile.enemies.card.title", { name: enemy.name, index: enemy.enemyIndex }) : t("profile.enemies.card.titleMissing", { name: enemy.name, index: enemy.enemyIndex })}
         >
+            <span className="sr-only">{seen ? t("profile.enemies.card.title", { name: enemy.name, index: enemy.enemyIndex }) : t("profile.enemies.card.titleMissing", { name: enemy.name, index: enemy.enemyIndex })}</span>
             <div className="relative aspect-square w-full bg-[color-mix(in_oklch,var(--muted)_50%,transparent)]">
                 {hasPortrait && portraitSrc ? (
                     <img alt={t("profile.enemies.card.portraitAlt", { name: enemy.name })} className="block h-full w-full object-contain" decoding="async" loading="lazy" onError={() => setImgError(true)} src={portraitSrc} style={seen ? undefined : { filter: "grayscale(1)", opacity: 0.5 }} />
@@ -326,7 +327,7 @@ const EnemyHandbookCard = memo(function EnemyHandbookCard({ enemy, seen }: IEnem
                     <EnemyPlaceholder className="h-full w-full p-4" />
                 )}
 
-                <span className="absolute top-1.5 left-1.5 rounded-sm bg-background/85 px-1 py-0.5 font-medium font-mono text-[8.5px] text-muted-foreground uppercase leading-none tracking-[0.12em]">{enemy.enemyIndex}</span>
+                <span className="absolute top-1.5 left-1.5 rounded-sm bg-background/85 px-1 py-0.5 font-medium font-mono text-[8.5px] text-muted-foreground leading-none">{enemy.enemyIndex}</span>
 
                 {seen ? (
                     <span className="absolute top-1.5 right-1.5">
@@ -335,6 +336,7 @@ const EnemyHandbookCard = memo(function EnemyHandbookCard({ enemy, seen }: IEnem
                 ) : (
                     <span className="absolute top-1.5 right-1.5 inline-flex rounded-sm bg-background/80 p-0.5" title={t("profile.enemies.card.locked")}>
                         <Lock aria-hidden className="size-3 text-muted-foreground" />
+                        <span className="sr-only">{t("profile.enemies.card.locked")}</span>
                     </span>
                 )}
 
@@ -342,7 +344,7 @@ const EnemyHandbookCard = memo(function EnemyHandbookCard({ enemy, seen }: IEnem
             </div>
 
             <div className="px-2 pt-1.5 pb-2">
-                <h3 className={cn("m-0 line-clamp-1 font-sans font-semibold text-[11px] uppercase leading-tight tracking-[0.02em]", seen ? "text-foreground" : "text-muted-foreground")}>{enemy.name}</h3>
+                <h3 className={cn("m-0 line-clamp-1 font-sans font-semibold text-[11px] leading-tight", seen ? "text-foreground" : "text-muted-foreground")}>{enemy.name}</h3>
             </div>
         </div>
     );

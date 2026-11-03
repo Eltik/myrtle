@@ -4,7 +4,7 @@ export const namespace = "enemies";
 
 export const messages = {
     "appears.category.stages": {
-        text: "Story Stages",
+        text: "Story stages",
         description: "Heading of the bucket holding mainline campaign operations.",
     },
     "appears.category.events": {
@@ -12,7 +12,7 @@ export const messages = {
         description: "Heading of the bucket holding limited-time events and their reruns.",
     },
     "appears.category.modes": {
-        text: "Permanent Game Modes",
+        text: "Permanent game modes",
         description: "Heading of the bucket holding the game's always-available modes (Annihilation, Integrated Strategies and so on).",
     },
     "appears.sub.story": {
@@ -68,7 +68,7 @@ export const messages = {
         description: "Empty-state heading in the Appears In tab when no level file mentions this enemy.",
     },
     "appears.empty.body": {
-        text: "This enemy isn't listed in any of the currently extracted level files. Coverage grows as more content is processed.",
+        text: "This enemy isn't in any stage we have data for yet.",
         description: "Empty-state paragraph in the Appears In tab, explaining the gap is this site's coverage rather than the game's.",
     },
     "appears.found": {

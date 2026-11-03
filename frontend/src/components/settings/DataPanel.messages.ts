@@ -32,7 +32,7 @@ export const messages = {
         description: "Card title over the export and profile links. 'Myrtle' is this site's name.",
     },
     "data.yourData.desc": {
-        text: "Everything we store is visible on your profile page. For a portable copy or a GDPR request, email privacy directly.",
+        text: "Everything we store is visible on your profile page. For a portable copy or a GDPR request, email privacy@myrtle.moe.",
         description: "Card description under Your data on Myrtle. GDPR is the EU data-protection regulation.",
     },
     "data.viewProfile.title": {

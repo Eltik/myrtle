@@ -33,7 +33,7 @@ export function BaseOptimizer({ uid, roster, operatorsStatic }: IOptimizerProps)
 
     if (api.layout.length === 0) {
         return (
-            <div className="rounded-xl border border-border border-dashed p-8 text-center">
+            <div className="rounded-2xl border border-border border-dashed p-8 text-center">
                 <p className="text-muted-foreground text-sm">{t("profile.optimizer.noBaseData")}</p>
             </div>
         );

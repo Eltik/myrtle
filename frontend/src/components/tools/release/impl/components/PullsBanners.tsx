@@ -5,6 +5,7 @@ import { Button } from "#/components/ui/button";
 import { Card } from "#/components/ui/card";
 import { Collapsible, CollapsiblePanel, CollapsibleTrigger } from "#/components/ui/collapsible";
 import { Input } from "#/components/ui/input";
+import { Kicker } from "#/components/ui/kicker";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { releaseEventsQueryOptions } from "#/lib/api/release";
@@ -177,7 +178,7 @@ function Estimated({ row, t, onPreset, onAllocate }: { row: IPlanRow; t: PullsT;
     return (
         <Collapsible defaultOpen className="flex w-full min-w-0 flex-col gap-1 rounded-lg border border-border bg-muted/20 px-2.5 py-2">
             <CollapsibleTrigger className="group flex w-full items-baseline justify-between gap-3 text-left">
-                <span className="font-sans text-[11.5px] text-muted-foreground uppercase tracking-[0.06em]">{t("release.pulls.plan.estimated")}</span>
+                <Kicker className="mb-0">{t("release.pulls.plan.estimated")}</Kicker>
                 <span className="flex min-w-0 items-baseline gap-1.5">
                     {activeLabel ? <span className="min-w-0 truncate font-sans text-[11.5px] text-muted-foreground group-data-[panel-open]:hidden">{activeLabel}</span> : null}
                     <ChevronDown className="size-3.5 shrink-0 text-muted-foreground transition-transform group-data-[panel-open]:rotate-180" aria-hidden="true" />
@@ -266,19 +267,13 @@ function OperatorPot({ id, lookup, name, copies, onSet, t }: { id: string; looku
                 </span>
             )}
             <span className="ml-0.5 inline-flex shrink-0 items-center gap-0.5 rounded bg-background/60 p-0.5">
-                <button type="button" onClick={() => onSet(copies - 1)} disabled={copies <= 0} aria-label={t("release.pulls.plan.potLess", { operator: label.text })} className="inline-flex size-6 cursor-pointer items-center justify-center rounded hover:bg-accent disabled:cursor-default disabled:opacity-40">
-                    <Minus className="size-3" />
-                </button>
+                <Button variant="ghost" size="icon-xs" onClick={() => onSet(copies - 1)} disabled={copies <= 0} aria-label={t("release.pulls.plan.potLess", { operator: label.text })}>
+                    <Minus aria-hidden="true" className="size-3" />
+                </Button>
                 <span className={cn("min-w-8 text-center font-mono text-[12px] tabular-nums", active ? "font-bold text-foreground" : "text-muted-foreground")}>{active ? t("release.pulls.plan.potValue", { count: copies }) : t("release.pulls.plan.potNone")}</span>
-                <button
-                    type="button"
-                    onClick={() => onSet(copies + 1)}
-                    disabled={copies >= MAX_POT_COPIES}
-                    aria-label={t("release.pulls.plan.potMore", { operator: label.text })}
-                    className="inline-flex size-6 cursor-pointer items-center justify-center rounded hover:bg-accent disabled:cursor-default disabled:opacity-40"
-                >
-                    <Plus className="size-3" />
-                </button>
+                <Button variant="ghost" size="icon-xs" onClick={() => onSet(copies + 1)} disabled={copies >= MAX_POT_COPIES} aria-label={t("release.pulls.plan.potMore", { operator: label.text })}>
+                    <Plus aria-hidden="true" className="size-3" />
+                </Button>
             </span>
         </div>
     );
@@ -420,7 +415,7 @@ function PlanRow({ row, lookup, charNames, today, t, onAllocate, onPreset, onSet
                         {/* Label and first preset wrap together, and each preset names what it
                             is (bank, bonus copy, guarantee): bare numbers read as random stats. */}
                         <span className="inline-flex items-center gap-1">
-                            <span className="font-sans text-[11.5px] text-muted-foreground uppercase tracking-[0.06em]">{t("release.pulls.plan.setTo")}</span>
+                            <Kicker className="mb-0">{t("release.pulls.plan.setTo")}</Kicker>
                             <Tooltip>
                                 <TooltipTrigger render={<Button size="sm" variant="outline" className="h-7 px-2 font-mono text-[12px]" onClick={() => onPreset(row.key, targets.max)} disabled={targets.max === 0} aria-label={t("release.pulls.plan.max")} />}>
                                     {t("release.pulls.plan.maxLabel", { count: f.number(targets.max) })}
@@ -480,5 +475,5 @@ function FaceStrip({ ids, lookup }: { ids: string[]; lookup: OperatorLookup }): 
 function Face({ id, onEn, many }: { id: string; onEn: boolean; many: boolean }): React.ReactElement | null {
     const [failed, setFailed] = React.useState(false);
     if (failed) return null;
-    return <img src={getAvatarById(id, onEn ? undefined : "cn")} alt="" loading="lazy" onError={() => setFailed(true)} className={cn("h-full rounded-sm", many ? "min-w-0 flex-1 object-contain" : "aspect-square flex-none object-cover")} />;
+    return <img src={getAvatarById(id, onEn ? undefined : "cn")} alt="" width={64} height={64} loading="lazy" onError={() => setFailed(true)} className={cn("h-full rounded-sm", many ? "min-w-0 flex-1 object-contain" : "aspect-square flex-none object-cover")} />;
 }

@@ -33,7 +33,7 @@ export function ContributionCard({ score }: IProps) {
         <StatCard className="sm:col-span-2" color={gradeColor(score.grade)}>
             <div className={`${CARD_PADDING} flex flex-col gap-4`}>
                 <Kicker icon={PieChart} label={t("score.contribution.title")} />
-                <div className="flex h-3 w-full overflow-hidden rounded-full border border-border/40 bg-muted/25">
+                <div aria-hidden className="flex h-3 w-full overflow-hidden rounded-full border border-border/40 bg-muted/25">
                     {rows.map(({ sub, share, earned }) => (
                         <Tooltip key={sub.key}>
                             <TooltipTrigger render={<div className="relative h-full border-background/60 border-r last:border-r-0" style={{ width: `${share}%` }} />}>

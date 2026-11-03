@@ -76,9 +76,9 @@ describe("templateWithCnValues", () => {
 
     it("keeps the rich-text tags around the numbers", () => {
         const html = templateWithCnValues("ATK <@ba.vup>+{atk:0%}</>, <$ba.root>Bind</>", bb([["atk", 0.3]]), bb([["atk", 0.35]]));
-        expect(html).toContain(`<span style="color:#6495ED">+35%</span>`);
-        expect(html).toContain(`<span style="color:#6495ED">+30%</span>`);
-        expect(html).toContain(`<span style="color:#27e8e7">Bind</span>`);
+        expect(html).toContain(`<span style="color:var(--game-vup-ink)">+35%</span>`);
+        expect(html).toContain(`<span style="color:var(--game-vup-ink)">+30%</span>`);
+        expect(html).toContain(`<span style="color:var(--game-kw-ink)">Bind</span>`);
         expect(html).not.toContain("<@");
     });
 

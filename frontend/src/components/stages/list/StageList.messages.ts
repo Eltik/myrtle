@@ -16,11 +16,11 @@ export const messages = {
         description: "Last breadcrumb crumb: this page.",
     },
     "list.title": {
-        text: "Every operation, catalogued.",
+        text: "Every operation, cataloged.",
         description: "Page heading of the stage list. 'Operation' is the game's word for a stage.",
     },
     "list.blurb": {
-        text: "Browse by story arc and code - each stage opens to a faux-3D board and enemy-pathing simulator. Ordered by episode and code.",
+        text: "Browse by story arc and code. Each stage opens to a faux-3D board and enemy-pathing simulator. Ordered by episode and code.",
         description: "Paragraph under the stage-list heading, explaining what the list offers.",
     },
     "list.counts": {

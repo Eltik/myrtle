@@ -65,7 +65,7 @@ export function HistoryKpiStrip({ records, isLoading }: IHistoryKpiStripProps) {
                         <span>{t("history.kpi.bannerTypes", { count: bannerTypeCount })}</span>
                         {total > 0 ? (
                             <Tooltip>
-                                <TooltipTrigger render={<span />}>{t("history.kpi.orundum", { count: f.number(orundum) })}</TooltipTrigger>
+                                <TooltipTrigger render={<button type="button" className="cursor-help rounded-sm underline decoration-dotted underline-offset-2 outline-none focus-visible:ring-2 focus-visible:ring-ring" />}>{t("history.kpi.orundum", { count: f.number(orundum) })}</TooltipTrigger>
                                 <TooltipPopup className="max-w-72">{orundumTitle}</TooltipPopup>
                             </Tooltip>
                         ) : null}

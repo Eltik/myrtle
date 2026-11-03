@@ -16,11 +16,11 @@ export const messages = {
         description: "Title of the tier lists admin page for non-staff: only the lists they have been granted.",
     },
     "tierLists.head.subStaff": {
-        text: "Lists marked official appear in the site’s Official rail. Publishing saves a new version that visitors see.",
+        text: "Lists marked official appear in the site's Official rail. Publishing saves a new version that visitors see.",
         description: "Line under the 'Official tier lists' title. The 'Official rail' is the row of official lists on the public tier lists page.",
     },
     "tierLists.head.subOwn": {
-        text: "The tier lists you’ve been granted. Your level on each list decides whether you can publish.",
+        text: "The tier lists you've been granted. Your level on each list decides whether you can publish.",
         description: "Line under the 'My tier lists' title for a non-staff editor.",
     },
     "tierLists.head.newList": {
@@ -134,7 +134,7 @@ export const messages = {
         description: "Shown in the table when the search or filter hides every list.",
     },
     "tierLists.lists.empty.noAccess": {
-        text: "You don’t have access to any tier lists yet.",
+        text: "You don't have access to any tier lists yet.",
         description: "Shown in the table when the user holds no grant on any list.",
     },
     "tierLists.lists.empty.noLists": {
@@ -142,7 +142,7 @@ export const messages = {
         description: "Shown to staff when there are no lists of the chosen type (official or community) at all.",
     },
     "tierLists.lists.loadError": {
-        text: "Couldn’t load the tier lists. Try again in a moment.",
+        text: "Couldn't load the tier lists. Try again in a moment.",
         description: "Shown in place of the table when loading the lists failed.",
     },
 
@@ -188,7 +188,7 @@ export const messages = {
         description: "Body of the toast after publishing. {title} is the list's title, {version} the new version number.",
     },
     "tierLists.publish.failed": {
-        text: "Couldn’t publish",
+        text: "Couldn't publish",
         description: "Title of the error toast when publishing a version failed.",
     },
 
@@ -258,7 +258,7 @@ export const messages = {
         description: "Stands in for the granter's name when the account that created the grant no longer exists.",
     },
     "tierLists.access.changeLevel": {
-        text: "Change {name}’s level on {title}",
+        text: "Change {name}'s level on {title}",
         description: "Accessible name of the level badge button that opens the level menu. {name} is the player, {title} the list.",
     },
     "tierLists.access.profile": {
@@ -278,7 +278,7 @@ export const messages = {
         description: "Button that reloads the grants table after it failed to load.",
     },
     "tierLists.access.loadError": {
-        text: "Couldn’t load the grants.",
+        text: "Couldn't load the grants.",
         description: "Shown in place of the grants table when loading failed.",
     },
     "tierLists.access.toast.revoked": {
@@ -290,7 +290,7 @@ export const messages = {
         description: "Body of the toast after revoking. {name} is the player, {title} the list.",
     },
     "tierLists.access.toast.revokeFailed": {
-        text: "Couldn’t revoke access",
+        text: "Couldn't revoke access",
         description: "Title of the error toast when removing a grant failed.",
     },
     "tierLists.access.toast.levelChanged": {
@@ -302,7 +302,7 @@ export const messages = {
         description: "Body of the toast after granting or changing a level. {name} is the player, {level} a level name like Edit, {title} the list.",
     },
     "tierLists.access.toast.levelFailed": {
-        text: "Couldn’t change the level",
+        text: "Couldn't change the level",
         description: "Title of the error toast when changing a grant's level failed.",
     },
     "tierLists.access.toast.granted": {
@@ -310,7 +310,7 @@ export const messages = {
         description: "Title of the toast after a new grant is created.",
     },
     "tierLists.access.toast.grantFailed": {
-        text: "Couldn’t create the grant",
+        text: "Couldn't create the grant",
         description: "Title of the error toast when creating a grant failed.",
     },
 
@@ -372,7 +372,7 @@ export const messages = {
         description: "Label of the description field in the new-list dialog.",
     },
     "tierLists.new.descPlaceholder": {
-        text: "Optional. Shown under the title on the list’s page.",
+        text: "Optional. Shown under the title on the list's page.",
         description: "Placeholder of the description field in the new-list dialog.",
     },
     "tierLists.new.submit": {
@@ -388,7 +388,7 @@ export const messages = {
         description: "Body of the toast after creating a list.",
     },
     "tierLists.new.failed": {
-        text: "Couldn’t create the list",
+        text: "Couldn't create the list",
         description: "Title of the error toast when creating a list failed.",
     },
 
@@ -397,7 +397,7 @@ export const messages = {
         description: "Title of the dialog for changing a list's flair (coloured category tag).",
     },
     "tierLists.flair.desc": {
-        text: "The flair shows as a coloured tag on {title} across the site.",
+        text: "The flair shows as a colored tag on {title} across the site.",
         description: "Line under the flair dialog title. {title} is the list's title.",
     },
     "tierLists.flair.none": {
@@ -409,7 +409,7 @@ export const messages = {
         description: "Title of the toast after a list's flair is changed.",
     },
     "tierLists.flair.failed": {
-        text: "Couldn’t change the flair",
+        text: "Couldn't change the flair",
         description: "Title of the error toast when changing the flair failed.",
     },
 
@@ -418,7 +418,7 @@ export const messages = {
         description: "Title of the confirmation dialog for deleting a list. {title} is the list's title.",
     },
     "tierLists.delete.body": {
-        text: "The list, its tiers and every published version are removed for everyone. This can’t be undone.",
+        text: "The list, its tiers and every published version are removed for everyone. This can't be undone.",
         description: "Warning in the delete confirmation dialog.",
     },
     "tierLists.delete.submit": {
@@ -430,7 +430,7 @@ export const messages = {
         description: "Title of the toast after a list is deleted. The body is the list's title.",
     },
     "tierLists.delete.failed": {
-        text: "Couldn’t delete the list",
+        text: "Couldn't delete the list",
         description: "Title of the error toast when deleting a list failed.",
     },
 

@@ -104,11 +104,11 @@ export function SkinTileView({ skinId, charId, charName, skinName, skinNameEn, s
     const initial = (entry ? op.text : op.text.replace(/^char_\d+_/, "")).trim().charAt(0).toUpperCase() || "?";
     const body = (
         <>
-            <span className="relative block aspect-[3/5] w-full overflow-hidden rounded-md bg-zinc-900">
+            <span className="relative block aspect-[3/5] w-full overflow-hidden rounded-md bg-muted">
                 {art.src ? (
                     <img src={art.src} alt={t("release.popup.tileAlt", { operator: op.text, skin: skinName })} loading="lazy" onError={art.onError} className="absolute inset-0 h-full w-full object-cover object-top" />
                 ) : (
-                    <span className="absolute inset-0 flex items-center justify-center font-bold font-sans text-[28px] text-zinc-600">{initial}</span>
+                    <span className="absolute inset-0 flex items-center justify-center font-bold font-sans text-[28px] text-muted-foreground">{initial}</span>
                 )}
             </span>
             <span className={cn("mt-1 block truncate font-medium font-sans text-[12px] leading-tight", entry ? "text-foreground" : "text-muted-foreground")}>{op.text}</span>

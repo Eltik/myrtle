@@ -1,6 +1,7 @@
 import { useNavigate } from "@tanstack/react-router";
 import { ChevronRight } from "lucide-react";
 import { useEffect, useState } from "react";
+import { LoadFailed } from "#/components/gacha/LoadFailed";
 import { Pagination } from "#/components/operators/list/impl/components/Pagination";
 import { useAuth } from "#/hooks/use-auth";
 import { useDebounce } from "#/hooks/use-debounce";
@@ -74,7 +75,9 @@ export function Leaderboard() {
     };
 
     const youCard = user ? (
-        byItem && data.currentItem ? (
+        data.standingError ? (
+            <LoadFailed message={t("leaderboard.loadFailed.standing")} onRetry={data.refetchStanding} />
+        ) : byItem && data.currentItem ? (
             <StandingCard item={data.currentItem} me={{ uid: user.uid, server: user.server, nickname: user.nickname, avatar_id: user.avatar_id }} standing={data.itemStanding} isLoading={data.itemStandingLoading} />
         ) : (
             <YouCard standing={data.scoreStanding} rankedPlayers={data.population} />
@@ -92,6 +95,11 @@ export function Leaderboard() {
             </div>
 
             <Hero item={data.currentItem} rankedPlayers={data.population} topValue={data.topValue} updatedAt={data.updatedAt} isLoading={data.heroLoading} />
+            {data.heroError ? (
+                <div className="mt-2.5">
+                    <LoadFailed message={t("leaderboard.loadFailed.hero")} onRetry={data.refetchHero} />
+                </div>
+            ) : null}
 
             {/*
               One column below lg, two above. The "You" card is placed first in
@@ -121,7 +129,11 @@ export function Leaderboard() {
                     {youCard ? <div className="lg:hidden">{youCard}</div> : null}
 
                     <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-[0_1px_2px_rgb(0_0_0/0.04)]">
-                        {data.isLoading && data.rows.length === 0 ? (
+                        {data.isError ? (
+                            <div className="p-3 sm:p-4">
+                                <LoadFailed message={t(byItem ? "leaderboard.loadFailed.holders" : "leaderboard.loadFailed.players")} onRetry={data.refetch} />
+                            </div>
+                        ) : data.isLoading && data.rows.length === 0 ? (
                             <LeaderboardTableSkeleton />
                         ) : (
                             <LeaderboardTable rows={data.rows} ranking={ranking} onRanking={handleRanking} catalog={data.catalog} materials={data.materials} topValue={byItem ? data.topValue : null} isLoading={data.isLoading} intervalKey={intervalMeta.sinceKey} />
@@ -135,7 +147,13 @@ export function Leaderboard() {
 
                 {youCard ? <div className="hidden lg:col-start-2 lg:row-start-1 lg:block">{youCard}</div> : null}
                 <div className={youCard ? "flex flex-col gap-4 lg:col-start-2 lg:row-start-2 lg:gap-5" : "flex flex-col gap-4 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:gap-5"}>
-                    {byItem ? <MostHeldCard catalog={data.catalog.items} current={ranking.item} onItem={(item) => handleRanking({ kind: "item", item })} isLoading={data.catalogLoading} /> : <MoversCard movers={data.movers} isLoading={data.moversLoading} intervalKey={intervalMeta.subtitleKey} />}
+                    {(byItem ? data.catalogError : data.moversError) ? (
+                        <LoadFailed message={t(byItem ? "leaderboard.loadFailed.items" : "leaderboard.loadFailed.movers")} onRetry={byItem ? data.refetchCatalog : data.refetchMovers} />
+                    ) : byItem ? (
+                        <MostHeldCard catalog={data.catalog.items} current={ranking.item} onItem={(item) => handleRanking({ kind: "item", item })} isLoading={data.catalogLoading} />
+                    ) : (
+                        <MoversCard movers={data.movers} isLoading={data.moversLoading} intervalKey={intervalMeta.subtitleKey} />
+                    )}
                     {/* {distributionQuery.data ? <ServerSplitCard shares={distributionQuery.data} /> : null} */}
                 </div>
             </div>

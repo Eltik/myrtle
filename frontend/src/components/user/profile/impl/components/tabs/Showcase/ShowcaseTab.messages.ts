@@ -24,7 +24,7 @@ export const messages = {
         description: "Heading of the owner's empty showcase.",
     },
     "profile.showcase.empty.desc": {
-        text: "Pick favourite operators, skins, events or story chapters, and pin your grids, tier lists and plans. Visitors see your showcase first.",
+        text: "Pick favorite operators, skins, events or story chapters, and pin your grids, tier lists and plans. Visitors see your showcase first.",
         description: "Body of the owner's empty showcase, listing what a showcase can hold.",
     },
     "profile.showcase.empty.cta": {
@@ -94,6 +94,18 @@ export const messages = {
     "profile.showcase.removed.entity": {
         text: "Unknown entry {id}",
         description: "Accessible name and tooltip of a favourite the game data no longer knows. {id} is its raw game id. Shown only to the owner.",
+    },
+    "profile.showcase.blockFailed.grid": {
+        text: "This grid couldn't be loaded.",
+        description: "Shown in place of a grid block on a profile showcase when fetching the grid failed (not when it was deleted). A retry button follows.",
+    },
+    "profile.showcase.blockFailed.tierList": {
+        text: "This tier list couldn't be loaded.",
+        description: "Shown in place of a tier list block on a profile showcase when fetching the list failed (not when it was deleted). A retry button follows.",
+    },
+    "profile.showcase.blockFailed.plan": {
+        text: "This plan couldn't be loaded.",
+        description: "Shown in place of a plan block on a profile showcase when fetching the player's plans failed (not when the plan was deleted). A retry button follows.",
     },
 } satisfies MessageMap;
 

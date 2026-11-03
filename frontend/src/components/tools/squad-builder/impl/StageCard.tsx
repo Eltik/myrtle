@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { ExternalLink, Map as MapIcon, RefreshCw, X } from "lucide-react";
 import * as React from "react";
+import { LoadError } from "#/components/operators/detail/impl/components/LoadError";
 import { tallyEnemies } from "#/components/stages/detail/impl/helpers";
 import { Button } from "#/components/ui/button";
 import { Skeleton } from "#/components/ui/skeleton";
@@ -38,6 +39,9 @@ export interface IStageCardProps {
     detail: IStageDetail | null | undefined;
     context: IStageContext | null;
     isLoading: boolean;
+    /** The stage fetch failed: said as a failure to retry, not as "stage not found". */
+    isError: boolean;
+    onRetry: () => void;
     /** The challenge variant's id when the normal stage has one. */
     challengeId: string | null;
     normalId: string | null;
@@ -47,7 +51,7 @@ export interface IStageCardProps {
     onRemove: () => void;
 }
 
-export function StageCard({ stageId, detail, context, isLoading, challengeId, normalId, readOnly, onPick, onSwitch, onRemove }: IStageCardProps): React.ReactElement {
+export function StageCard({ stageId, detail, context, isLoading, isError, onRetry, challengeId, normalId, readOnly, onPick, onSwitch, onRemove }: IStageCardProps): React.ReactElement {
     const t: StageT = useT("tools");
     const fmt = useFormatters();
     const locale = useLocale();
@@ -58,7 +62,7 @@ export function StageCard({ stageId, detail, context, isLoading, challengeId, no
 
     if (!stageId) {
         return (
-            <section className="flex flex-col items-start gap-3 rounded-xl border border-border border-dashed bg-card/60 p-4 sm:flex-row sm:items-center">
+            <section className="flex flex-col items-start gap-3 rounded-2xl border border-border border-dashed bg-card/60 p-4 sm:flex-row sm:items-center">
                 <MapIcon className="size-5 shrink-0 text-muted-foreground" aria-hidden="true" />
                 <p className="flex-1 text-[13px] text-muted-foreground">{t("squad.stage.empty")}</p>
                 {!readOnly && (
@@ -72,8 +76,8 @@ export function StageCard({ stageId, detail, context, isLoading, challengeId, no
 
     if (isLoading || !context) {
         return (
-            <section className="rounded-xl border border-border bg-card p-4">
-                {isLoading ? <Skeleton className="h-16 w-full" /> : <p className="text-[13px] text-muted-foreground">{t("squad.stage.missing")}</p>}
+            <section className="rounded-2xl border border-border bg-card p-4">
+                {isLoading ? <Skeleton className="h-16 w-full" /> : isError ? <LoadError message={t("squad.stage.loadFailed")} onRetry={onRetry} /> : <p className="text-[13px] text-muted-foreground">{t("squad.stage.missing")}</p>}
                 {!isLoading && !readOnly && (
                     <div className="mt-3 flex gap-2">
                         <Button variant="outline" size="sm" onClick={onPick}>
@@ -100,7 +104,7 @@ export function StageCard({ stageId, detail, context, isLoading, challengeId, no
     const isChallenge = challengeId !== null && stageId === challengeId;
 
     return (
-        <section className="rounded-xl border border-border bg-card p-4">
+        <section className="rounded-2xl border border-border bg-card p-4">
             <div className="flex flex-wrap items-start gap-3">
                 <span className="flex h-10 min-w-14 items-center justify-center rounded-md border border-border bg-muted px-2 font-bold font-mono text-[14px]">{context.code}</span>
                 <div className="min-w-0 flex-1">

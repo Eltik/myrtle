@@ -1,6 +1,7 @@
 import { RotateCcw, X } from "lucide-react";
 import type * as React from "react";
 import { Button } from "#/components/ui/button";
+import { Kicker } from "#/components/ui/kicker";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import type { IRecruitmentTag } from "../types";
@@ -19,7 +20,7 @@ export function SelectedTagsBar({ selectedTags, resultCount, onRemove, onReset }
 
     return (
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 rounded-lg border bg-card px-3 py-2">
-            <span className="font-medium font-sans text-[11px] text-muted-foreground uppercase tracking-wide">{t("recruit.selected")}</span>
+            <Kicker className="mb-0">{t("recruit.selected")}</Kicker>
             <div className="flex flex-1 basis-full flex-wrap items-center gap-1.5 sm:basis-auto">
                 {selectedTags.map((tag) => (
                     <Button key={tag.id} size="xs" variant="secondary" onClick={() => onRemove(tag.id)} aria-label={t("recruit.selected.remove", { tag: tag.name })}>

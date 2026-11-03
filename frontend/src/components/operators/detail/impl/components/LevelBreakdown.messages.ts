@@ -20,7 +20,7 @@ export const messages = {
         description: "Small marker after the level label on the row the signed-in reader is at.",
     },
     "breakdown.rowTooltip": {
-        text: "{users} of {total} {cohort} ({pct}%){own, select, yes { - where you are} other {}}",
+        text: "{users} of {total} {cohort} ({pct}%){own, select, yes {, where you are} other {}}",
         description: "Hover text on one bar, e.g. '912 of 3,551 E2 owners (25.7%)'. {users} and {total} are formatted counts, {pct} is the share, and the trailing clause only appears on the reader's own row.",
     },
 } satisfies MessageMap;

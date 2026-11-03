@@ -3,6 +3,10 @@ import { defineMessages, type MessageMap } from "#/lib/i18n/messages";
 export const namespace = "user";
 
 export const messages = {
+    "profile.plans.loading": {
+        text: "Loading plans",
+        description: "Screen-reader status while the profile's public plans load; the skeleton cards are hidden from assistive tech.",
+    },
     "profile.plans.kicker": {
         text: "Plans",
         description: "Kicker over the empty state of the profile's plans tab. Rendered uppercase by CSS.",

@@ -2,9 +2,11 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Trash } from "lucide-react";
 import * as React from "react";
 
+import { LoadError } from "#/components/operators/detail/impl/components/LoadError";
 import { Button } from "#/components/ui/button";
 import { useErrorMessage } from "#/components/ui/error-message";
 import { Input } from "#/components/ui/input";
+import { Kicker } from "#/components/ui/kicker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { deletePlanPresetFn, type IPresetTarget, PLAN_PRESETS_QUERY_KEY, planPresetsQueryOptions, upsertPlanPresetFn } from "#/lib/api/planner";
@@ -23,7 +25,7 @@ export function PresetRow({ target, onLoad }: IPresetRowProps): React.ReactEleme
     const t: TypedT<typeof messages> = useT("tools");
     const errorMessage = useErrorMessage();
     const queryClient = useQueryClient();
-    const { data: presets = [] } = useQuery(planPresetsQueryOptions());
+    const { data: presets = [], isError: presetsFailed, refetch: refetchPresets } = useQuery(planPresetsQueryOptions());
     const [chosen, setChosen] = React.useState<string | null>(null);
     const [name, setName] = React.useState<string>("");
     const [isBusy, setIsBusy] = React.useState<boolean>(false);
@@ -71,8 +73,9 @@ export function PresetRow({ target, onLoad }: IPresetRowProps): React.ReactEleme
     };
 
     return (
-        <div className="space-y-3 rounded-xl border border-border bg-card/40 p-4">
-            <span className="font-semibold text-muted-foreground text-xs uppercase tracking-wider">{t("planner.bulk.preset")}</span>
+        <div className="space-y-3 rounded-2xl border border-border bg-card/40 p-4">
+            <Kicker className="mb-0 block">{t("planner.bulk.preset")}</Kicker>
+            {presetsFailed && <LoadError message={t("planner.bulk.presetLoadFailed")} onRetry={() => void refetchPresets()} />}
             <div className="flex items-center gap-2">
                 <Select value={chosen} onValueChange={(v: string | null) => handleChoose(v)}>
                     <SelectTrigger className="min-w-0 flex-1" aria-label={t("planner.bulk.preset")}>

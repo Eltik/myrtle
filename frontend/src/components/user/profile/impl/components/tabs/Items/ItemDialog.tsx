@@ -73,7 +73,7 @@ export function ItemDialog({ item }: IItemDialogProps) {
                         <div className="flex flex-wrap gap-1.5">
                             {recipes.map((r) => (
                                 <Badge key={`${r.roomType}-${r.formulaId}`} variant="outline" size="lg" className="gap-1.5 font-normal">
-                                    <span className="font-mono text-[10.5px] text-muted-foreground uppercase tracking-wider">{r.roomType}</span>
+                                    <span className="font-mono text-[10.5px] text-muted-foreground">{r.roomType}</span>
                                     <span className="font-mono tabular-nums">#{r.formulaId}</span>
                                 </Badge>
                             ))}

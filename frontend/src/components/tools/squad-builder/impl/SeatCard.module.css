@@ -445,3 +445,8 @@
         transform: none;
     }
 }
+
+/* The in-game card's uppercase role tag and name strip keep their Latin tracking; a CJK page drops it, as `.kicker` does. */
+:is(:lang(ko), :lang(ja), :lang(zh), :lang(th)) :is(.role, .name) {
+    letter-spacing: normal;
+}

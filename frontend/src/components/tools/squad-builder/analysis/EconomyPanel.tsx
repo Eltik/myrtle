@@ -116,7 +116,7 @@ function EconomyBody({ economy, startDp, onStartDpChange, startDpFrom, stage, ha
                 {economy.sources.length === 0 ? (
                     <p className="text-[13px] text-muted-foreground">{t("squad.analysis.economy.sources.empty")}</p>
                 ) : (
-                    <ul className="divide-y divide-border/60 rounded-xl border border-border bg-card">
+                    <ul className="divide-y divide-border/60 rounded-2xl border border-border bg-card">
                         {economy.sources.map((s) => (
                             <li key={`${s.seat}-${s.source.kind}-${s.source.name ?? ""}`} className="flex items-start gap-3 px-3 py-2" onMouseEnter={() => ctx.onHoverSeat(s.seat)} onMouseLeave={() => ctx.onHoverSeat(null)}>
                                 <div className="min-w-0 flex-1">

@@ -44,7 +44,7 @@ export const messages = {
         description: "Button that reloads the stage list after a failure.",
     },
     "squad.stagePicker.loading": {
-        text: "Loading stages...",
+        text: "Loading stages…",
         description: "Shown while the stage list loads.",
     },
 } satisfies MessageMap;

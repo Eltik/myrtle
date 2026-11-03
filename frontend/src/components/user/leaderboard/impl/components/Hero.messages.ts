@@ -16,7 +16,7 @@ export const messages = {
         description: "Pill beside the leaderboard heading saying the ranking covers a player's whole history rather than a season.",
     },
     "leaderboard.hero.blurb": {
-        text: "A composite ranking across roster depth, base efficiency, and combat scoring. Pulled from public profiles only.",
+        text: "A composite score across operators, base, Integrated Strategies, medals, stages and Reclamation Algorithm. Public profiles only.",
         description: "Paragraph under the leaderboard heading explaining what the ranking measures.",
     },
     "leaderboard.hero.stat.ranked": {
@@ -52,7 +52,7 @@ export const messages = {
         description: "Bold opening of the development-status notice under the leaderboard heading.",
     },
     "leaderboard.hero.notice": {
-        text: "{lead} - the leaderboard is in active development and the ranking formula is subject to change.",
+        text: "{lead}: the leaderboard is in active development and the ranking formula is subject to change.",
         description: "Development-status notice under the leaderboard heading. {lead} is the bold opening labelled by leaderboard.hero.notice.lead and may move wherever the sentence needs it.",
     },
     "leaderboard.hero.blurb.item": {

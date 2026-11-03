@@ -70,16 +70,16 @@ export function PanelShell({ title, question, state, collapsed, onToggle, stale 
             {!collapsed && (
                 <CardPanel id={bodyId} className={cn("pt-0 transition-opacity", stale && state === "ready" && "opacity-70")}>
                     {state === "empty" ? (
-                        <p className="rounded-xl border border-border border-dashed px-4 py-6 text-center text-[13px] text-muted-foreground">{t("squad.analysis.empty")}</p>
+                        <p className="rounded-2xl border border-border border-dashed px-4 py-6 text-center text-[13px] text-muted-foreground">{t("squad.analysis.empty")}</p>
                     ) : state === "loading" ? (
                         <div className="space-y-2" aria-busy="true">
                             <p className="text-[12px] text-muted-foreground">{t("squad.analysis.loading")}</p>
-                            <Skeleton className="h-14 w-full rounded-xl" />
+                            <Skeleton className="h-14 w-full rounded-2xl" />
                             <Skeleton className="h-6 w-4/5 rounded-md" />
                             <Skeleton className="h-6 w-3/5 rounded-md" />
                         </div>
                     ) : state === "error" ? (
-                        <p className="rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-[13px] text-destructive-foreground">{t("squad.analysis.error", { panel: title })}</p>
+                        <p className="rounded-2xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-[13px] text-destructive-foreground">{t("squad.analysis.error", { panel: title })}</p>
                     ) : (
                         children
                     )}
@@ -153,7 +153,7 @@ export function Pill({ tone = "muted", className, children, title }: { tone?: Pi
 /** One cell of a panel's stat strip. */
 export function StatCell({ label, value, caption, extra }: { label: string; value: React.ReactNode; caption?: React.ReactNode; extra?: React.ReactNode }): React.ReactElement {
     return (
-        <div className="min-w-0 rounded-xl border border-border bg-card px-3 py-2.5">
+        <div className="min-w-0 rounded-2xl border border-border bg-card px-3 py-2.5">
             <div className="truncate text-[11px] text-muted-foreground">{label}</div>
             <div className="mt-0.5 flex items-center gap-2 font-mono font-semibold text-[18px] text-foreground tabular-nums">{value}</div>
             {caption && <div className="mt-0.5 text-[11px] text-muted-foreground leading-snug">{caption}</div>}

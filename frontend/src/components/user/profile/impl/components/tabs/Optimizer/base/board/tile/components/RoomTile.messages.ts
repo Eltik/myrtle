@@ -4,7 +4,7 @@ export const namespace = "user";
 
 export const messages = {
     "profile.base.tile.notBuilt": {
-        text: "Not Built",
+        text: "Not built",
         description: "Tag on a board slot whose facility the account has not built yet.",
     },
 } satisfies MessageMap;

@@ -1,16 +1,22 @@
+import type React from "react";
+import { Badge } from "#/components/ui/badge";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
 import type { messages } from "./GradeBadge.messages";
 
-const GRADE_STYLES: Record<string, string> = {
-    "S+": "bg-[color-mix(in_srgb,oklch(0.7_0.22_25)_25%,var(--card))] text-[oklch(0.7_0.22_25)] border-[color-mix(in_srgb,oklch(0.7_0.22_25)_40%,transparent)]",
-    S: "bg-[color-mix(in_srgb,oklch(0.75_0.16_80)_22%,var(--card))] text-[oklch(0.7_0.16_80)] border-[color-mix(in_srgb,oklch(0.75_0.16_80)_40%,transparent)]",
-    A: "bg-[color-mix(in_srgb,oklch(0.7_0.16_145)_20%,var(--card))] text-[oklch(0.55_0.16_145)] border-[color-mix(in_srgb,oklch(0.7_0.16_145)_35%,transparent)]",
-    B: "bg-[color-mix(in_srgb,oklch(0.65_0.14_200)_20%,var(--card))] text-[oklch(0.55_0.14_200)] border-[color-mix(in_srgb,oklch(0.65_0.14_200)_35%,transparent)]",
-    C: "bg-[color-mix(in_srgb,oklch(0.6_0.04_280)_20%,var(--card))] text-muted-foreground border-border",
-    D: "bg-[color-mix(in_srgb,oklch(0.6_0.04_280)_14%,var(--card))] text-muted-foreground border-border",
-    F: "bg-muted text-muted-foreground border-border",
+/**
+ * Grade hue per band, as a `--tone` for the kit tint badge: the tone fills (12%) and draws the
+ * border, the letter stays foreground. The old tone-coloured letter on its own tint measured
+ * S+ 2.36, S 2.28, B 3.45, A 3.82 (light) and A 3.07, B 3.41 (dark) in audit-003.
+ */
+const GRADE_TONES: Record<string, string> = {
+    "S+": "oklch(0.7 0.22 25)",
+    S: "oklch(0.75 0.16 80)",
+    A: "oklch(0.7 0.16 145)",
+    B: "oklch(0.65 0.14 200)",
+    C: "oklch(0.6 0.04 280)",
+    D: "oklch(0.6 0.04 280)",
 };
 
 /**
@@ -33,15 +39,23 @@ const GRADE_BANDS: ReadonlyArray<{ grade: string; from: number; to: number }> = 
 export function GradeBadge({ grade, className }: { grade: string | null; className?: string }) {
     const t: TypedT<typeof messages> = useT("user");
     const label = grade ?? "-";
-    const style = GRADE_STYLES[label] ?? "bg-muted text-muted-foreground border-border";
+    const tone = GRADE_TONES[label];
     const band = GRADE_BANDS.find((b) => b.grade === label);
     // A plain `title` rather than the tooltip primitive: every badge sits inside
     // a row-wide `<Link>`, and a hover-triggered popup nested in a navigable
-    // anchor swallows the row's own hover and click targets.
+    // anchor swallows the row's own hover and click targets. The band itself is
+    // sr-only text, so it is not a hover-only hint.
     const explanation = band ? t("leaderboard.grade.tooltip", { grade: band.grade, from: band.from, to: band.to }) : t("leaderboard.grade.unknown");
+    const spoken = band ? t("leaderboard.grade.band", { grade: band.grade, from: band.from, to: band.to }) : t("leaderboard.grade.none");
     return (
-        <span className={cn("inline-flex size-7 shrink-0 cursor-help items-center justify-center rounded-md border font-bold font-sans text-[13px] tabular-nums leading-none tracking-tight", style, className)} title={explanation}>
-            {label}
-        </span>
+        <Badge
+            variant={tone ? "tint" : "secondary"}
+            className={cn("size-7 rounded-md font-bold font-sans text-[13px] tabular-nums leading-none tracking-tight sm:size-7 sm:text-[13px]", !tone && "border-border bg-muted text-muted-foreground", className)}
+            style={tone ? ({ "--tone": tone } as React.CSSProperties) : undefined}
+            title={explanation}
+        >
+            <span aria-hidden>{label}</span>
+            <span className="sr-only">{spoken}</span>
+        </Badge>
     );
 }

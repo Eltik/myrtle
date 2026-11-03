@@ -5,6 +5,7 @@ import { LoadError } from "#/components/operators/detail/impl/components/LoadErr
 import { ClassIcon, SubProfessionIcon } from "#/components/operators/list/impl/components/Icons";
 import { PROFESSION_ORDER } from "#/components/operators/list/impl/constants";
 import { eliteIcon, potentialIcon, specializedIcon } from "#/components/tools/shared/icons";
+import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import { Input } from "#/components/ui/input";
 import { Kbd } from "#/components/ui/kbd";
@@ -35,6 +36,9 @@ export interface IOperatorPickerProps {
     /** 0-11, or `SUPPORT_SEAT` for the support picker. */
     seat: number;
     operators: readonly IOperatorIndexEntry[];
+    /** The operator index failed to load: a retry, not "Loading operators..." for good. */
+    operatorsFailed: boolean;
+    onRetryOperators: () => void;
     /** By operator id, every form of a multi-form operator included (`rosterBuildsOf`). */
     roster: ReadonlyMap<string, IRosterBuild>;
     /** `char_id` -> seat it already sits in (`SUPPORT_SEAT` for the support). */
@@ -60,7 +64,7 @@ function currentFormsFirst(list: readonly IOperatorIndexEntry[], roster: Readonl
         .map((x) => x.op);
 }
 
-export function OperatorPicker({ seat, operators, roster, seated, onPick, onClose }: IOperatorPickerProps): React.ReactElement {
+export function OperatorPicker({ seat, operators, operatorsFailed, onRetryOperators, roster, seated, onPick, onClose }: IOperatorPickerProps): React.ReactElement {
     const t: PickerT = useT("tools");
     const { collator } = useFormatters();
     const isSupport = seat === SUPPORT_SEAT;
@@ -244,9 +248,9 @@ export function OperatorPicker({ seat, operators, roster, seated, onPick, onClos
     const sourceLabels: Record<AcquisitionFilter, string> = { any: t("squad.picker.source.any"), gachaless: t("squad.picker.source.gachaless"), welfare: t("squad.picker.source.welfare"), recruitment: t("squad.picker.source.recruitment") };
 
     return (
-        <section aria-label={title} onKeyDown={onSectionKeyDown} className="rounded-xl border border-border bg-card">
+        <section aria-label={title} onKeyDown={onSectionKeyDown} className="rounded-2xl border border-border bg-card">
             {/* Pinned under the site header from 640 px up, so the filters stay in reach down a long list. */}
-            <div className="z-20 flex flex-col gap-3 rounded-t-xl border-border border-b bg-card/95 p-3 backdrop-blur-md supports-[backdrop-filter]:bg-card/85 sm:sticky sm:top-16 sm:p-4">
+            <div className="z-20 flex flex-col gap-3 rounded-t-2xl border-border border-b bg-card/95 p-3 backdrop-blur-md supports-[backdrop-filter]:bg-card/85 sm:sticky sm:top-16 sm:p-4">
                 <div className="flex items-center justify-between gap-2">
                     <h3 className="font-semibold text-[15px]">{title}</h3>
                     <Button variant="ghost" size="icon" aria-label={t("squad.picker.close")} onClick={onClose} className="pointer-coarse:size-11">
@@ -352,7 +356,9 @@ export function OperatorPicker({ seat, operators, roster, seated, onPick, onClos
 
             <div className="p-3 sm:p-4">
                 {recruitFailed && <LoadError className="mb-3" message={t("squad.picker.recruitFailed")} onRetry={() => void refetchRecruitment()} />}
-                {operators.length === 0 ? (
+                {operators.length === 0 && operatorsFailed ? (
+                    <LoadError message={t("squad.picker.loadFailed")} onRetry={onRetryOperators} />
+                ) : operators.length === 0 ? (
                     <p className="py-8 text-center text-[13px] text-muted-foreground">{t("squad.picker.loading")}</p>
                 ) : shown.length === 0 ? (
                     <div className="flex flex-col items-center gap-3 py-8">
@@ -410,10 +416,13 @@ const PickerTile = React.memo(function PickerTile({ op, build, showOwnership, se
     const current = isCurrentForm(op.id, build);
     const branch = archetypeLabel(op);
     const color = rarityStarColor(op.rarity);
+    const detailsId = React.useId();
     return (
         <button
             type="button"
             data-picker-item=""
+            // The label names the pick; the stars, cost and build reach a screen reader as the description.
+            aria-describedby={detailsId}
             // Seated tiles stay focusable so the arrow keys walk through them; `aria-disabled` keeps them in the tab order.
             aria-disabled={seated || undefined}
             tabIndex={tabIndex}
@@ -436,21 +445,27 @@ const PickerTile = React.memo(function PickerTile({ op, build, showOwnership, se
             <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                 <span className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
                     <span className="break-words font-semibold text-[14px] text-foreground leading-snug">{op.name}</span>
-                    {current && <span className="rounded-sm bg-primary/15 px-1 font-semibold text-[10.5px] text-foreground uppercase leading-4 tracking-wide">{t("squad.picker.currentForm")}</span>}
+                    {current && (
+                        <Badge variant="tint" size="sm">
+                            {t("squad.picker.currentForm")}
+                        </Badge>
+                    )}
                 </span>
                 <span className="flex items-center gap-1 text-[12px] text-muted-foreground leading-tight">
                     <ClassIcon profession={op.profession} size={14} className="size-3.5! shrink-0" />
                     <span className="min-w-0">{branch}</span>
                 </span>
-                <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5 pt-0.5 text-[11.5px] leading-4">
+                <span id={detailsId} className="flex flex-wrap items-center gap-x-2 gap-y-0.5 pt-0.5 text-[11.5px] leading-4">
                     <span role="img" aria-label={t("squad.picker.stars", { rarity: op.rarity })} className="font-semibold text-[10px] tracking-[-1px]" style={{ color: rarityInk(op.rarity) }}>
                         {"★".repeat(op.rarity)}
                     </span>
                     {op.stats.cost > 0 && (
                         <span title={t("squad.picker.costTitle")} className="font-mono text-muted-foreground tabular-nums">
                             {t("squad.picker.cost", { cost: op.stats.cost })}
+                            <span className="sr-only">{`, ${t("squad.picker.costTitle")}`}</span>
                         </span>
                     )}
+                    {build && <BuildLine op={op} build={build} t={t} srOnly />}
                 </span>
                 {build ? <BuildLine op={op} build={build} t={t} /> : showOwnership && <span className="text-[11.5px] text-subtle-foreground italic leading-4">{t("squad.picker.notOwned")}</span>}
             </span>
@@ -459,15 +474,23 @@ const PickerTile = React.memo(function PickerTile({ op, build, showOwnership, se
 });
 
 /** The owned build in one line: promotion and level, potential, the selected skill and its mastery, the equipped module and its rank. */
-function BuildLine({ op, build, t }: { op: IOperatorIndexEntry; build: IRosterBuild; t: PickerT }): React.ReactElement {
+function BuildLine({ op, build, t, srOnly = false }: { op: IOperatorIndexEntry; build: IRosterBuild; t: PickerT; srOnly?: boolean }): React.ReactElement {
     const skill = build.default_skill !== null && build.default_skill >= 0 && build.default_skill < op.skillCount ? build.default_skill : null;
     const mastery = skill === null ? 0 : (build.masteries.find((m) => m.index === skill)?.mastery ?? 0);
     const equipped = build.current_equip ? advancedModules(op).find((m) => m.uniEquipId === build.current_equip) : undefined;
     const moduleRank = equipped ? (rosterModuleRanks(op, build).get(equipped.uniEquipId) ?? 0) : 0;
     const potential = build.potential + 1;
+    // The tile's description: the build in words, the hover titles included, for a screen reader and no one else.
+    if (srOnly) {
+        const parts = [t("squad.picker.elite", { phase: build.elite }), t("squad.picker.level", { level: build.level })];
+        if (op.potentialRankCount > 0) parts.push(t("squad.picker.potential", { rank: potential }));
+        if (skill !== null) parts.push(t("squad.picker.skillTitle", { skill: skill + 1, level: build.skill_level }), ...(mastery > 0 ? [t("squad.picker.mastery", { mastery })] : []));
+        if (equipped && moduleRank > 0) parts.push(t("squad.picker.moduleTitle", { type: moduleTypeLabel(equipped), rank: moduleRank }));
+        return <span className="sr-only">{`, ${parts.join(", ")}`}</span>;
+    }
     return (
-        <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5 font-mono text-[11.5px] text-muted-foreground tabular-nums leading-4">
-            <span className="flex items-center gap-0.5 text-foreground/90">
+        <span aria-hidden="true" className="flex flex-wrap items-center gap-x-2 gap-y-0.5 font-mono text-[11.5px] text-muted-foreground tabular-nums leading-4">
+            <span className="flex items-center gap-0.5 text-foreground">
                 <img alt={t("squad.picker.elite", { phase: build.elite })} src={eliteIcon(build.elite)} className="icon-theme-aware size-3.5 object-contain" />
                 {t("squad.picker.level", { level: build.level })}
             </span>

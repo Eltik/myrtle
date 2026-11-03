@@ -141,7 +141,7 @@ describe.each([
     it("shows one figure for a single-rarity pool", () => {
         const { container } = mount({ ...ROSTER, showNewOdds: true }, Card);
         expect(oddsText(container)).toBe("14% new");
-        expect(screen.getByRole("note").getAttribute("aria-label")).toBe("Among 4★ results, 1 of 7 operators is new to you.");
+        expect(container.querySelector('[data-slot="recruit-new-odds"]')?.getAttribute("aria-label")).toBe("Among 4★ results, 1 of 7 operators is new to you.");
     });
 
     it("splits a mixed pool by rarity and words the certainties", () => {

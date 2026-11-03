@@ -4,6 +4,7 @@ import { SlidersHorizontalIcon } from "lucide-react";
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { parseBannerParam } from "#/components/gacha/history/impl/banner-filter";
 import { Button } from "#/components/ui/button";
+import { Kicker } from "#/components/ui/kicker";
 import { Skeleton } from "#/components/ui/skeleton";
 import { useAuth } from "#/hooks/use-auth";
 import { useLocalStorageState } from "#/hooks/use-local-storage-state";
@@ -18,6 +19,7 @@ import { ProfileLayoutEditor } from "./impl/components/ProfileLayoutEditor";
 import type { messages as layoutMessages } from "./impl/components/ProfileLayoutEditor.messages";
 import { ProfileTabs } from "./impl/components/ProfileTabs";
 import { StatStrip } from "./impl/components/StatStrip";
+import { LoadFailed } from "./impl/components/tabs/LoadFailed";
 import { ScoreTabSkeleton } from "./impl/components/tabs/Score/ScoreTabSkeleton";
 import { rosterAccess } from "./impl/components/tabs/Showcase/favourites";
 import { StatsTab } from "./impl/components/tabs/Stats/StatsTab";
@@ -92,8 +94,8 @@ function GridSkeleton() {
 function ProfileSkeleton() {
     return (
         <div className="page-shell flex flex-1 flex-col gap-7 [--page-max:1440px]">
-            <div className="relative h-48 w-full overflow-hidden rounded-3xl border border-border/50 bg-card/40">
-                <Skeleton className="absolute inset-0 rounded-3xl opacity-60" />
+            <div className="relative h-48 w-full overflow-hidden rounded-2xl border border-border/50 bg-card/40">
+                <Skeleton className="absolute inset-0 rounded-2xl opacity-60" />
                 <div className="relative flex h-full items-center gap-6 p-6">
                     <Skeleton className="h-28 w-28 shrink-0 rounded-2xl" />
                     <div className="flex min-w-0 flex-1 flex-col gap-3">
@@ -151,13 +153,31 @@ function ProfileSkeleton() {
     );
 }
 
+/**
+ * `getUserFn` returns null for a 404 and throws `Failed to load user: <status>` for the rest. A 403
+ * is a private profile, which the not-found page already names; any other failure is an outage
+ * and must not read as "this profile does not exist".
+ */
+function isPrivateOrMissing(error: unknown): boolean {
+    return error instanceof Error && /\b403$/.test(error.message);
+}
+
+function ProfileLoadFailed({ onRetry }: { onRetry: () => void }) {
+    const t: TypedT<typeof messages> = useT("user");
+    return (
+        <div className="page-shell flex flex-1 flex-col gap-7 [--page-max:1440px]">
+            <LoadFailed message={t("profile.loadFailed.profile")} onRetry={onRetry} />
+        </div>
+    );
+}
+
 function ProfileNotFound({ id }: { id: string }) {
     const t: TypedT<typeof messages> = useT("user");
     const rt: TypedRichT<typeof messages> = useRichT("user");
     return (
         <div className="page-shell flex flex-1 flex-col gap-7 [--page-max:1440px]">
-            <div className="flex flex-col items-center justify-center gap-3 rounded-3xl border border-border bg-card px-8 py-16 text-center">
-                <span className="font-mono text-[11px] text-muted-foreground uppercase tracking-widest">{t("profile.notFound.eyebrow")}</span>
+            <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-border bg-card px-8 py-16 text-center">
+                <Kicker className="mb-0">{t("profile.notFound.eyebrow")}</Kicker>
                 <h1 className="font-bold text-2xl tracking-tight">{t("profile.notFound.title")}</h1>
                 <p className="max-w-sm text-muted-foreground text-sm">{rt("profile.notFound.desc", { id: <code className="font-mono">{id}</code> })}</p>
             </div>
@@ -190,7 +210,7 @@ export function UserProfile() {
     // The profile record and roster feed the hero, stat strip and several tab
     // counts, so they load up front (the roster unless its tab is hidden).
     // Everything else waits for its tab.
-    const { data, isLoading } = useQuery(userQueryOptions(id));
+    const { data, isLoading, isError, error, refetch } = useQuery(userQueryOptions(id));
 
     // With no layout saved (`null`) every line below reduces to the default page:
     // all tabs in canonical order, the remembered tab, the roster fetched for everyone.
@@ -214,7 +234,7 @@ export function UserProfile() {
     // A visitor whose owner hid the Roster tab is refused `/roster`, so it is not asked.
     const canReadRoster = memory === "stored" || shown.includes("roster");
 
-    const { data: roster } = useQuery({ ...userRosterQueryOptions(id), enabled: canReadRoster });
+    const { data: roster, isError: isRosterError, refetch: refetchRoster } = useQuery({ ...userRosterQueryOptions(id), enabled: canReadRoster });
     const showcaseRosterAccess = useMemo(() => rosterAccess(canReadRoster, roster), [canReadRoster, roster]);
     const gamedataServer = useGamedataServer();
     // The default Stats tab reads only the slim index, so the full table (23.9 MB
@@ -245,19 +265,24 @@ export function UserProfile() {
         [activeTab, loadTabChunk],
     );
 
-    const { data: inventory } = useQuery({ ...userInventoryQueryOptions(id), enabled: activeTab === "inventory" });
-    const { data: score, isLoading: isScoreLoading } = useQuery({ ...userScoreQueryOptions(id), enabled: activeTab === "score" });
+    const { data: inventory, isError: isInventoryError, refetch: refetchInventory } = useQuery({ ...userInventoryQueryOptions(id), enabled: activeTab === "inventory" });
+    const { data: score, isLoading: isScoreLoading, isError: isScoreError, refetch: refetchScore } = useQuery({ ...userScoreQueryOptions(id), enabled: activeTab === "score" });
     const { data: publicPlans } = useQuery({ ...publicPlansQueryOptions(id), enabled: activeTab === "plans" });
     const { data: operatorsStatic } = useQuery({
         ...operatorsRosterQueryOptions(gamedataServer),
         enabled: activeTab !== null && FULL_TABLE_TABS.has(activeTab) && loadedChunks.has(activeTab),
     });
     // Score tab only: a heavier payload than the headline score.
-    const { data: improvements, isLoading: isImprovementsLoading } = useQuery({
+    const {
+        data: improvements,
+        isLoading: isImprovementsLoading,
+        isError: isImprovementsError,
+        refetch: refetchImprovements,
+    } = useQuery({
         ...userImprovementsQueryOptions(id),
         enabled: activeTab === "score",
     });
-    const { data: encounteredEnemies, isLoading: isEnemiesLoading } = useQuery({ ...userEncounteredEnemiesQueryOptions(id), enabled: activeTab === "enemies" });
+    const { data: encounteredEnemies, isLoading: isEnemiesLoading, isError: isEnemiesError, refetch: refetchEnemies } = useQuery({ ...userEncounteredEnemiesQueryOptions(id), enabled: activeTab === "enemies" });
 
     const labels = useMemo<Record<TabId, string>>(
         () => ({
@@ -288,7 +313,10 @@ export function UserProfile() {
     }, [shown, labels, layout, data, roster, inventory, encounteredEnemies, publicPlans]);
 
     if (isLoading) return <ProfileSkeleton />;
+    if (isError && !isPrivateOrMissing(error)) return <ProfileLoadFailed onRetry={() => void refetch()} />;
     if (!data) return <ProfileNotFound id={id} />;
+    // A failed roster fetch would hand every tab below an empty roster, which reads as "owns no operators".
+    const rosterFailed = isRosterError && roster === undefined ? <LoadFailed message={t("profile.loadFailed.roster")} onRetry={() => void refetchRoster()} /> : null;
 
     // The owner's header and strip show the open editor's draft; everyone else, the saved one.
     const headerProfile = isOwner && editingHeader && headerPreview ? previewHeader(data, headerPreview) : data;
@@ -334,22 +362,30 @@ export function UserProfile() {
                     )
                 )}
                 {shown.length === 0 && (
-                    <div className="flex flex-col items-center justify-center gap-2 rounded-3xl border border-border bg-card px-8 py-12 text-center">
-                        <span className="font-mono text-[11px] text-muted-foreground uppercase tracking-widest">{t("profile.noTabs.eyebrow")}</span>
+                    <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-border bg-card px-8 py-12 text-center">
+                        <Kicker className="mb-0">{t("profile.noTabs.eyebrow")}</Kicker>
                         <p className="max-w-sm text-muted-foreground text-sm">{t("profile.noTabs.desc")}</p>
                     </div>
                 )}
-                {activeTab === "stats" && <StatsTab nonDefaultSkinCount={data.non_default_skin_count} operatorsIndex={operatorsIndex ?? []} roster={roster ?? []} server={data.server} uid={id} rosterPrivate={!canReadRoster} />}
+                {activeTab === "stats" && (rosterFailed ?? <StatsTab nonDefaultSkinCount={data.non_default_skin_count} operatorsIndex={operatorsIndex ?? []} roster={roster ?? []} server={data.server} uid={id} rosterPrivate={!canReadRoster} />)}
                 {activeTab !== null && activeTab !== "stats" && (
                     <Suspense fallback={activeTab === "score" ? <ScoreTabSkeleton /> : <GridSkeleton />}>
-                        {activeTab === "roster" && <RosterTab roster={roster ?? []} operatorsIndex={operatorsIndex ?? []} operatorsStatic={operatorsStatic ?? []} />}
-                        {activeTab === "inventory" && <ItemsTab inventory={inventory ?? []} />}
-                        {activeTab === "plans" && <PlansTab uid={id} roster={roster ?? []} />}
+                        {activeTab === "roster" && (rosterFailed ?? <RosterTab roster={roster ?? []} operatorsIndex={operatorsIndex ?? []} operatorsStatic={operatorsStatic ?? []} />)}
+                        {activeTab === "inventory" && (isInventoryError && inventory === undefined ? <LoadFailed message={t("profile.loadFailed.inventory")} onRetry={() => void refetchInventory()} /> : <ItemsTab inventory={inventory ?? []} />)}
+                        {activeTab === "plans" && (rosterFailed ?? <PlansTab uid={id} roster={roster ?? []} />)}
                         {activeTab === "pulls" && <PullsTab uid={id} profile={data} isOwner={isOwner} pools={pullsPools} onPoolsChange={setPullsPools} />}
-                        {activeTab === "enemies" && <EnemiesTab encountered={encounteredEnemies} isLoading={isEnemiesLoading} />}
-                        {activeTab === "score" && <ScoreTab score={score} isLoading={isScoreLoading} improvements={improvements} isImprovementsLoading={isImprovementsLoading} uid={id} server={data.server} />}
+                        {activeTab === "enemies" && (isEnemiesError && encounteredEnemies === undefined ? <LoadFailed message={t("profile.loadFailed.enemies")} onRetry={() => void refetchEnemies()} /> : <EnemiesTab encountered={encounteredEnemies} isLoading={isEnemiesLoading} />)}
+                        {activeTab === "score" &&
+                            (isScoreError && score === undefined ? (
+                                <LoadFailed message={t("profile.loadFailed.score")} onRetry={() => void refetchScore()} />
+                            ) : (
+                                <>
+                                    {isImprovementsError && improvements === undefined && <LoadFailed message={t("profile.loadFailed.improvements")} onRetry={() => void refetchImprovements()} />}
+                                    <ScoreTab score={score} isLoading={isScoreLoading} improvements={improvements} isImprovementsLoading={isImprovementsLoading} uid={id} server={data.server} />
+                                </>
+                            ))}
                         {activeTab === "showcase" && <ShowcaseTab uid={id} profile={data} isOwner={isOwner} roster={roster ?? []} rosterAccess={showcaseRosterAccess} />}
-                        {activeTab === "optimizer" && <OptimizerTab uid={id} roster={roster ?? []} operatorsStatic={operatorsStatic ?? []} />}
+                        {activeTab === "optimizer" && (rosterFailed ?? <OptimizerTab uid={id} roster={roster ?? []} operatorsStatic={operatorsStatic ?? []} />)}
                         {activeTab === "lookback" && <LookbackTab uid={id} server={data.server} operatorsIndex={operatorsIndex ?? []} rosterPrivate={!canReadRoster} />}
                     </Suspense>
                 )}

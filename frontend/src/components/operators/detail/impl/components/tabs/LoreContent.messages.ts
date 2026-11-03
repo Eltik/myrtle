@@ -17,11 +17,11 @@ export const messages = {
         description: "Blurb under the Lore tab heading, written in the voice of the in-game archive.",
     },
     "lore.archives": {
-        text: "Archive Files",
+        text: "Archive files",
         description: "Heading over the list of handbook sections. The section titles themselves come from the game data.",
     },
     "lore.empty.title": {
-        text: "No Records Available",
+        text: "No records",
         description: "Empty state heading when the game data carries no handbook text for this operator.",
     },
     "lore.empty.body": {

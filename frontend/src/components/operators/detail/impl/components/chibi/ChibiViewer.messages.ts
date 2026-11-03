@@ -4,7 +4,7 @@ export const namespace = "operators";
 
 export const messages = {
     "chibi.title": {
-        text: "Chibi Preview",
+        text: "Chibi preview",
         description: "Heading of the animated sprite viewer. 'Chibi' is the fan term for the small in-battle sprite, used as-is in English.",
     },
     "chibi.view": {
@@ -60,11 +60,11 @@ export const messages = {
         description: "One playback speed, e.g. '0.5×' for half speed.",
     },
     "chibi.error.noData": {
-        text: "No spine data available",
-        description: "Shown in the viewer when the chosen sprite set ships no animation files. 'Spine' is the animation format's name and stays as-is.",
+        text: "No chibi for this operator",
+        description: "Shown in the viewer when the chosen sprite set ships no animation files.",
     },
     "chibi.error.failed": {
-        text: "Failed to load chibi",
+        text: "Couldn't load the chibi",
         description: "Shown in the viewer when the animation files could not be fetched or parsed.",
     },
     "chibi.error.webgl": {

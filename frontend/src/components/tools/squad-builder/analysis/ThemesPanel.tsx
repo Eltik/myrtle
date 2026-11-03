@@ -79,7 +79,7 @@ function ShareSection({ title, hint, empty, rows, seatOps, ctx, t }: { title: st
             {rows.length === 0 ? (
                 <p className="text-[13px] text-muted-foreground">{empty}</p>
             ) : (
-                <ul className="divide-y divide-border/60 rounded-xl border border-border bg-card">
+                <ul className="divide-y divide-border/60 rounded-2xl border border-border bg-card">
                     {rows.map((row) => {
                         const value = valueText(row, t);
                         return (

@@ -38,7 +38,7 @@ export function GroupList({ plans, groups, pinDividerAt, isLoading, selection, e
         return (
             <div className="flex flex-col gap-4">
                 {["sk-grp-1", "sk-grp-2", "sk-grp-3"].map((key) => (
-                    <div key={key} className="flex items-center gap-3 rounded-xl border border-border/40 p-4">
+                    <div key={key} className="flex items-center gap-3 rounded-2xl border border-border/40 p-4">
                         <Skeleton className="size-4 rounded" />
                         <div className="flex flex-1 flex-col gap-1.5">
                             <Skeleton className="h-3.5 w-24 rounded" />
@@ -109,7 +109,7 @@ function GroupCard({ group, plans, isSelected, isFilterEngaged, isExpanded, onTo
         // plans' own checkboxes, and a role=button around them made every one a nested control. The
         // header label (checkbox plus name) is the selecting control.
         <div
-            className={cn("relative flex flex-col rounded-xl border p-4 transition-all hover:shadow-md", isExpanded ? "gap-4" : "gap-0", isSelected ? "border-primary bg-primary/5 shadow-sm ring-2 ring-primary/20" : isFilterEngaged ? "border-border/40 bg-card opacity-60 hover:opacity-100" : "border-border/40 bg-card")}
+            className={cn("relative flex flex-col rounded-2xl border p-4 transition-all hover:shadow-md", isExpanded ? "gap-4" : "gap-0", isSelected ? "border-primary bg-primary/5 shadow-sm ring-2 ring-primary/20" : isFilterEngaged ? "border-border/40 bg-card opacity-60 hover:opacity-100" : "border-border/40 bg-card")}
         >
             <div className={cn("flex items-center justify-between", isExpanded && "border-border/40 border-b pb-3")}>
                 {/* biome-ignore lint/a11y/noLabelWithoutControl: Checkbox renders the control inside this label */}
@@ -140,7 +140,7 @@ function GroupCard({ group, plans, isSelected, isFilterEngaged, isExpanded, onTo
                     <button type="button" aria-label={t("planner.group.rename", { name: group.name })} onClick={onRename} className={cn(iconButton, neutralButton)}>
                         <Pencil aria-hidden="true" className="size-3.5" />
                     </button>
-                    <button type="button" aria-label={t("planner.group.delete", { name: group.name })} onClick={onDelete} className={cn(iconButton, "border-red-500/20 bg-red-500/5 text-red-600 hover:border-red-500/40 hover:bg-red-500/15 dark:text-red-400")}>
+                    <button type="button" aria-label={t("planner.group.delete", { name: group.name })} onClick={onDelete} className={cn(iconButton, "border-destructive/20 bg-destructive/5 text-destructive-foreground hover:border-destructive/40 hover:bg-destructive/15")}>
                         <Trash aria-hidden="true" className="size-3.5" />
                     </button>
                 </div>

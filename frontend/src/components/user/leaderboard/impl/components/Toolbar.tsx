@@ -1,8 +1,10 @@
-import { ChevronDown, Search, TrendingUp, X } from "lucide-react";
+import { Check, ChevronDown, Search, TrendingUp, X } from "lucide-react";
 import type React from "react";
 import { Button } from "#/components/ui/button";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "#/components/ui/input-group";
+import { Kicker } from "#/components/ui/kicker";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "#/components/ui/menu";
+import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import type { IMaterials } from "#/lib/api/materials";
 import { useT } from "#/lib/i18n";
@@ -67,6 +69,7 @@ export function Toolbar({ ranking, onRanking, catalog, materials, scope, onScope
 
             <div className="flex flex-wrap items-center gap-2">
                 <Segmented
+                    label={t("leaderboard.toolbar.scope.label")}
                     value={scope}
                     onChange={onScope}
                     options={[
@@ -76,17 +79,19 @@ export function Toolbar({ ranking, onRanking, catalog, materials, scope, onScope
                 />
                 <DropdownMenu>
                     <DropdownMenuTrigger className={FILTER} aria-label={t("leaderboard.toolbar.serverLabel")}>
-                        <span className="font-medium font-mono text-[10.5px] text-muted-foreground uppercase leading-none tracking-[0.14em]">{t("leaderboard.toolbar.server")}</span>
+                        <Kicker className="mb-0">{t("leaderboard.toolbar.server")}</Kicker>
                         <span className="font-semibold text-foreground">{server === "All" ? t("leaderboard.toolbar.all") : server}</span>
                         <ChevronDown className="size-3 opacity-70" />
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="start" className="min-w-40">
-                        <DropdownMenuItem onClick={() => onServer("All")} className={cn("cursor-pointer", server === "All" && "font-semibold text-primary")}>
+                        <DropdownMenuItem onClick={() => onServer("All")} className={cn("cursor-pointer justify-between", server === "All" && "font-semibold")}>
                             {t("leaderboard.toolbar.allServers")}
+                            <MenuCheck on={server === "All"} />
                         </DropdownMenuItem>
                         {SERVERS.map((code) => (
-                            <DropdownMenuItem key={code} onClick={() => onServer(code)} className={cn("cursor-pointer", server === code && "font-semibold text-primary")}>
+                            <DropdownMenuItem key={code} onClick={() => onServer(code)} className={cn("cursor-pointer justify-between", server === code && "font-semibold")}>
                                 {code}
+                                <MenuCheck on={server === code} />
                             </DropdownMenuItem>
                         ))}
                     </DropdownMenuContent>
@@ -94,15 +99,16 @@ export function Toolbar({ ranking, onRanking, catalog, materials, scope, onScope
                 <DropdownMenu>
                     <HintWrap hint={movementHint}>
                         <DropdownMenuTrigger className={FILTER} aria-label={t("leaderboard.toolbar.intervalLabel")} disabled={!movementAvailable}>
-                            <span className="font-medium font-mono text-[10.5px] text-muted-foreground uppercase leading-none tracking-[0.14em]">{t("leaderboard.toolbar.interval")}</span>
+                            <Kicker className="mb-0">{t("leaderboard.toolbar.interval")}</Kicker>
                             <span className="font-semibold text-foreground tabular-nums">{t(intervalShortKey)}</span>
                             <ChevronDown className="size-3 opacity-70" />
                         </DropdownMenuTrigger>
                     </HintWrap>
                     <DropdownMenuContent align="start" className="min-w-44">
                         {INTERVALS.map((opt) => (
-                            <DropdownMenuItem key={opt.value} onClick={() => onInterval(opt.value)} className={cn("cursor-pointer", interval === opt.value && "font-semibold text-primary")}>
+                            <DropdownMenuItem key={opt.value} onClick={() => onInterval(opt.value)} className={cn("cursor-pointer justify-between", interval === opt.value && "font-semibold")}>
                                 {t(opt.labelKey)}
+                                <MenuCheck on={interval === opt.value} />
                             </DropdownMenuItem>
                         ))}
                     </DropdownMenuContent>
@@ -137,33 +143,24 @@ interface ISegmentedOption<T extends string> {
     hint?: string;
 }
 
-function Segmented<T extends string>({ value, onChange, options }: { value: T; onChange: (next: T) => void; options: ISegmentedOption<T>[] }) {
+/** Single-choice filter: a kit ToggleGroup, so it carries pressed state and a 44px coarse target, not tab roles without panels. */
+function Segmented<T extends string>({ label, value, onChange, options }: { label: string; value: T; onChange: (next: T) => void; options: ISegmentedOption<T>[] }) {
     return (
-        <div role="tablist" className="inline-flex h-9 pointer-coarse:h-11 items-center rounded-lg border border-border bg-muted p-0.75 sm:h-8">
-            {options.map((opt) => {
-                const isActive = opt.value === value;
-                return (
-                    <HintWrap key={opt.value} hint={opt.hint} className="h-full">
-                        <button
-                            type="button"
-                            role="tab"
-                            aria-selected={isActive}
-                            disabled={opt.disabled}
-                            onClick={() => !opt.disabled && onChange(opt.value)}
-                            className={cn(
-                                // The segment sits inside the track's padding, so its 44px touch area is an overlay, not its height.
-                                "relative inline-flex h-full items-center rounded-md px-3 font-medium font-sans text-xs leading-none transition-colors pointer-coarse:after:absolute pointer-coarse:after:inset-x-0 pointer-coarse:after:top-1/2 pointer-coarse:after:h-11 pointer-coarse:after:-translate-y-1/2",
-                                isActive ? "bg-card text-foreground shadow-[0_1px_2px_rgb(0_0_0/0.06)]" : "text-muted-foreground hover:text-foreground",
-                                opt.disabled && "cursor-not-allowed opacity-60",
-                            )}
-                        >
-                            {opt.label}
-                        </button>
-                    </HintWrap>
-                );
-            })}
-        </div>
+        <ToggleGroup aria-label={label} variant="outline" value={[value]} onValueChange={(next) => next[0] && onChange(next[0] as T)}>
+            {options.map((opt) => (
+                <HintWrap key={opt.value} hint={opt.hint}>
+                    <ToggleGroupItem value={opt.value} disabled={opt.disabled} className="px-3 text-xs sm:text-xs">
+                        {opt.label}
+                    </ToggleGroupItem>
+                </HintWrap>
+            ))}
+        </ToggleGroup>
     );
+}
+
+/** The chosen menu row: weight and a check mark, text stays foreground (primary text on the highlighted row measured 4.01 light). */
+function MenuCheck({ on }: { on: boolean }) {
+    return on ? <Check className="size-3.5 shrink-0" aria-hidden /> : <span className="size-3.5 shrink-0" aria-hidden />;
 }
 
 /**

@@ -1,3 +1,5 @@
+import { Check } from "lucide-react";
+import { Kicker } from "#/components/ui/kicker";
 import { ItemIcon } from "#/components/user/profile/impl/components/tabs/Items/ItemIcon";
 import { useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -21,9 +23,9 @@ export function MostHeldCard({ catalog, current, onItem, isLoading }: IMostHeldC
     const rows = catalog.slice(0, ROWS);
 
     return (
-        <aside className="rounded-xl border border-border bg-card p-4 shadow-[0_1px_2px_rgb(0_0_0/0.04)]">
+        <aside className="rounded-2xl border border-border bg-card p-4 shadow-[0_1px_2px_rgb(0_0_0/0.04)]">
             <div className="mb-3 flex flex-col gap-1">
-                <span className="font-medium font-mono text-[11px] text-muted-foreground uppercase leading-none tracking-[0.16em]">{t("leaderboard.mostHeld.title")}</span>
+                <Kicker className="mb-0">{t("leaderboard.mostHeld.title")}</Kicker>
                 <span className="font-sans text-[12px] text-muted-foreground leading-snug">{t("leaderboard.mostHeld.subtitle")}</span>
             </div>
             {isLoading && rows.length === 0 ? (
@@ -42,13 +44,19 @@ export function MostHeldCard({ catalog, current, onItem, isLoading }: IMostHeldC
                         const active = c.item_id === current;
                         return (
                             <li key={c.item_id}>
-                                <button type="button" onClick={() => onItem(c.item_id)} aria-pressed={active} className={cn("flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-1.5 py-1.5 text-left transition-colors hover:bg-accent", active && "bg-[color-mix(in_srgb,var(--primary)_8%,transparent)]")}>
+                                <button
+                                    type="button"
+                                    onClick={() => onItem(c.item_id)}
+                                    aria-pressed={active}
+                                    className={cn("flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-1.5 py-1.5 text-left transition-colors hover:bg-accent", active && "inset-ring inset-ring-primary/40 bg-[color-mix(in_srgb,var(--primary)_8%,transparent)]")}
+                                >
                                     <ItemIcon item={toIconEntry(c)} size={28} className="rounded-md" />
                                     <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                                        <span className={cn("truncate font-sans text-[13px] text-foreground leading-tight", active && "font-semibold text-primary")}>{c.name}</span>
+                                        <span className={cn("truncate font-sans text-[13px] text-foreground leading-tight", active && "font-semibold")}>{c.name}</span>
                                         <span className="truncate font-mono text-[10.5px] text-muted-foreground leading-none">{t("leaderboard.mostHeld.top", { top: f.compact(c.top) })}</span>
                                     </span>
                                     <span className="shrink-0 font-mono text-[11px] text-muted-foreground tabular-nums leading-none">{t("leaderboard.mostHeld.holders", { count: c.holders })}</span>
+                                    {active ? <Check className="size-3.5 shrink-0" aria-hidden /> : <span className="size-3.5 shrink-0" aria-hidden />}
                                 </button>
                             </li>
                         );

@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { RotateCcw, Users } from "lucide-react";
 import type React from "react";
 import { Button } from "#/components/ui/button";
+import { Kicker } from "#/components/ui/kicker";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { getAvatarById } from "#/lib/utils";
@@ -24,12 +25,12 @@ export function SquadSlab({ operators, squadSize, onReroll }: ISquadSlabProps): 
     return (
         <SlabFrame index="02" kicker={t("randomizer.squad.kicker")} accent="lagoon">
             <div className="flex items-start justify-between gap-3">
-                <div className="flex min-w-0 flex-1 items-center gap-2 text-[11px] text-muted-foreground uppercase tracking-[0.18em]">
+                <Kicker className="mb-0 flex min-w-0 flex-1 items-center gap-2">
                     <Users aria-hidden="true" className="h-3.5 w-3.5" />
                     <span>
-                        {t("randomizer.squad.deployment")} <span className="font-mono text-foreground/80 normal-case tracking-normal">{t("randomizer.squad.count", { filled, size: squadSize })}</span>
+                        {t("randomizer.squad.deployment")} <span className="font-mono text-foreground normal-case tracking-normal">{t("randomizer.squad.count", { filled, size: squadSize })}</span>
                     </span>
-                </div>
+                </Kicker>
                 <Button onClick={onReroll} size="xs" variant="outline" aria-label={t("randomizer.squad.rerollAria")}>
                     <RotateCcw aria-hidden="true" />
                     {t("randomizer.squad.reroll")}
@@ -69,7 +70,7 @@ function OperatorTile({ op, index, t }: { op: IRandomizerOperator; index: number
                 }}
             />
             <div className="absolute inset-x-0 bottom-0 h-1 bg-(--rarity-tint) mix-blend-multiply dark:mix-blend-screen" />
-            <div className="absolute inset-0 flex flex-col justify-end bg-linear-to-t from-black/72 via-transparent to-transparent opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100">
+            <div className="absolute inset-0 flex flex-col justify-end bg-linear-to-t from-black/72 via-transparent to-transparent opacity-0 pointer-coarse:opacity-100 transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100">
                 <p className="truncate px-1.5 pb-1 font-medium text-[10.5px] text-white">{op.name}</p>
             </div>
         </Link>

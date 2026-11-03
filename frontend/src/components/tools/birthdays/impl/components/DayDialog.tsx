@@ -32,7 +32,7 @@ export function DayDialog({ open, onOpenChange, date, ops, today }: IDayDialogPr
             <DialogContent className="max-w-md">
                 <DialogHeader>
                     <DialogTitle className="tracking-tight">{t("birthdays.day.title", { month: monthNames(locale)[date.month - 1], day: date.day })}</DialogTitle>
-                    <DialogDescription className="font-mono text-[11.5px] uppercase tracking-[0.08em]">{isTodayDate ? t("birthdays.day.metaToday", { weekday, count: ops.length }) : t("birthdays.day.meta", { weekday, count: ops.length })}</DialogDescription>
+                    <DialogDescription>{isTodayDate ? t("birthdays.day.metaToday", { weekday, count: ops.length }) : t("birthdays.day.meta", { weekday, count: ops.length })}</DialogDescription>
                 </DialogHeader>
 
                 {ops.length === 0 ? (

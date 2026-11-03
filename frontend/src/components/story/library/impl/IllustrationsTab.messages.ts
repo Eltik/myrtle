@@ -44,7 +44,7 @@ export const messages = {
         description: "Counter above the artwork grid: the artwork summed over every chapter shown.",
     },
     "illustrations.totalUnknown": {
-        text: "Counts not on the wire yet",
+        text: "Counts not available yet",
         description: "Shown in place of the counter when the served data carries no artwork counts.",
     },
     "illustrations.card.unknown": {
@@ -80,12 +80,12 @@ export const messages = {
         description: "Error state inside the artwork panel when the request fails.",
     },
     "illustrations.panel.unavailable": {
-        text: "This backend does not serve artwork yet.",
-        description: "Error state inside the artwork panel when the endpoint answers 404 because the running backend predates it.",
+        text: "Artwork for this chapter isn't available yet.",
+        description: "Error state inside the artwork panel when the live site does not serve artwork for this chapter yet.",
     },
     "illustrations.panel.unavailableNote": {
-        text: "The endpoint is GET /story/group/<id>/illustrations. Everything else on this page keeps working.",
-        description: "Second line of the 404 state in the artwork panel. Keep the endpoint path as it is.",
+        text: "Everything else on this page still works.",
+        description: "Second line of the unavailable state in the artwork panel (the server does not serve artwork for this chapter yet). Plain reader language; no API paths.",
     },
     "illustrations.panel.empty": {
         text: "No artwork in this chapter.",
@@ -96,7 +96,7 @@ export const messages = {
         description: "Header line of the artwork panel: how many pieces, over how many stories.",
     },
     "illustrations.panel.missing": {
-        text: "{count} not extracted",
+        text: "{count} not available yet",
         description: "Header line of the artwork panel: how many pieces resolve to no file on disk.",
     },
     "illustrations.item.usedIn": {
@@ -104,7 +104,7 @@ export const messages = {
         description: "Line under an artwork tile naming how many stories reference it.",
     },
     "illustrations.item.notExtracted": {
-        text: "Not extracted",
+        text: "Not available yet",
         description: "Shown in place of an artwork thumbnail whose file is missing from the served data.",
     },
     "illustrations.item.faces": {

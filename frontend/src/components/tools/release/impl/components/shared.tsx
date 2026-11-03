@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { SearchX } from "lucide-react";
 import * as React from "react";
+import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import { Card } from "#/components/ui/card";
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "#/components/ui/empty";
@@ -21,8 +22,17 @@ import type { messages } from "./shared.messages";
 
 type SharedT = TypedT<typeof messages>;
 
-export function Tag({ children, className }: { children: React.ReactNode; className?: string }): React.ReactElement {
-    return <span className={cn("inline-flex shrink-0 items-center rounded-sm bg-muted px-1.5 py-px font-medium font-mono text-[10px] text-muted-foreground uppercase tracking-[0.06em]", className)}>{children}</span>;
+/**
+ * A kind or type tag. With `tone` (a CSS colour) the hue tints the fill and border and the text
+ * stays foreground: the kind colours as text on the muted tag measured 2.46 (yellow-600) to 3.81
+ * (pink-600). Without a tone it is a plain outline tag.
+ */
+export function Tag({ children, className, tone }: { children: React.ReactNode; className?: string; tone?: string }): React.ReactElement {
+    return (
+        <Badge variant={tone ? "tint" : "outline"} size="sm" className={cn("font-mono", className)} style={tone ? ({ "--tone": tone } as React.CSSProperties) : undefined}>
+            {children}
+        </Badge>
+    );
 }
 
 const AUTO_TAG_KEYS: Record<AutoNameSource, { label: keyof typeof messages & string; title: keyof typeof messages & string }> = {

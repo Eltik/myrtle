@@ -34,7 +34,7 @@ export function BannerFilter({ options, value, onChange, onOpenChange, disabled 
 
     return (
         <Field className="min-w-0 max-w-full gap-1.5 sm:flex-row sm:items-center sm:gap-2">
-            <FieldLabel htmlFor={id} className="whitespace-nowrap font-bold font-mono text-[10.5px] text-muted-foreground uppercase leading-none tracking-[0.16em]">
+            <FieldLabel htmlFor={id} className="kicker whitespace-nowrap leading-none">
                 {t("history.filter.label")}
             </FieldLabel>
             <div className="flex min-w-0 items-center gap-1.5">

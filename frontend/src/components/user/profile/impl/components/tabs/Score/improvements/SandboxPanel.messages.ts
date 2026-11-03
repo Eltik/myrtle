@@ -4,7 +4,7 @@ export const namespace = "user";
 
 export const messages = {
     "score.improvements.sandbox.empty": {
-        text: "No RA progress detected. Play Reclamation Algorithm to begin tracking.",
+        text: "No Reclamation Algorithm progress synced yet. Play a run, then re-sync.",
         description: "Empty state in the RA panel. 'RA' abbreviates the game mode Reclamation Algorithm and keeps the game's own name.",
     },
     "score.improvements.sandbox.topicShare": {

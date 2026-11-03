@@ -37,7 +37,7 @@ export function EnemyHero({ enemy }: { enemy: IEnemyView }) {
                     <h1 className="m-0 font-bold font-sans text-[20px] text-foreground leading-[1.1] tracking-tight sm:text-[26px]">{enemy.name}</h1>
                     <LevelBadge level={enemy.enemyLevel} />
                 </div>
-                {meta && <div className="font-medium font-mono text-[10.5px] text-muted-foreground uppercase leading-none tracking-[0.14em] sm:text-[11px]">{meta}</div>}
+                {meta && <div className="font-medium font-mono text-[10.5px] text-muted-foreground uppercase leading-snug tracking-[0.14em] sm:text-[11px]">{meta}</div>}
 
                 {enemy.damageType.length > 0 && (
                     <div className="mt-1 flex flex-wrap gap-1.5">

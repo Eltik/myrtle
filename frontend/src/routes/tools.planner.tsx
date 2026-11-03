@@ -1,11 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { OperatorPlanner } from "#/components/tools/planner/OperatorPlanner";
+import { RouteError } from "#/components/ui/route-error";
 import { metaT } from "#/lib/meta";
 import { defaultOgURL } from "#/lib/og";
 import { seo } from "#/lib/seo";
 
 export const Route = createFileRoute("/tools/planner")({
     component: RouteComponent,
+    errorComponent: RouteError,
     head: ({ match }) => {
         const t = metaT(match.context.i18n);
         const { meta, links } = seo({

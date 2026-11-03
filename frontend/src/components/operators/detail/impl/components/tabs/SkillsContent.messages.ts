@@ -16,11 +16,11 @@ export const messages = {
         description: "Accessible name of the decorative icon in the no-skills empty state.",
     },
     "skills.empty.title": {
-        text: "No Skills",
+        text: "No skills",
         description: "Empty-state heading for an operator with no active skills.",
     },
     "skills.empty.body": {
-        text: "This operator has no active skills. They may rely solely on their talent or passive abilities.",
+        text: "This operator has no active skills.",
         description: "Empty-state body for an operator with no active skills.",
     },
     "skills.fallbackName": {
@@ -64,15 +64,15 @@ export const messages = {
         description: "Names the group the mastery bars are drawn from. 'E2' is the game's second promotion, the only stage at which mastery exists.",
     },
     "skills.compare.toggle": {
-        text: "Compare Skill Levels",
+        text: "Compare skill levels",
         description: "Label of the switch that turns the level-by-level comparison table on.",
     },
     "skills.level": {
-        text: "Skill Level",
+        text: "Skill level",
         description: "Label beside the slider that picks which skill level is shown.",
     },
     "skills.compare.selectLevels": {
-        text: "Select Levels",
+        text: "Select levels",
         description: "Label over the buttons choosing which skill levels the comparison shows.",
     },
     "skills.compare.selectedCount": {
@@ -80,11 +80,11 @@ export const messages = {
         description: "Count of chosen comparison levels, shown in brackets after the label.",
     },
     "skills.compare.showFull": {
-        text: "Show Full",
+        text: "Show full",
         description: "Button that switches the comparison back to full descriptions.",
     },
     "skills.compare.showDiff": {
-        text: "Show Diff",
+        text: "Show diff",
         description: "Button that switches the comparison to only what changed between levels. 'Diff' is short for difference.",
     },
     "skills.spCost": {
@@ -108,7 +108,7 @@ export const messages = {
         description: "Small uppercase heading over the tile grid the skill can hit.",
     },
     "skills.range.hideDiff": {
-        text: "Hide Diff",
+        text: "Hide diff",
         description: "Button that stops showing the skill's range beside the operator's normal range.",
     },
     "skills.range.original": {
@@ -124,7 +124,7 @@ export const messages = {
         description: "Column header of the comparison table.",
     },
     "skills.column.description": {
-        text: "Description / Changes",
+        text: "Description / changes",
         description: "Column header of the comparison table: the skill text, or only what changed in diff mode.",
     },
     "skills.column.sp": {

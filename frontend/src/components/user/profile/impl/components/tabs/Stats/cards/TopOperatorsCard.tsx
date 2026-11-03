@@ -122,13 +122,13 @@ function TopOperatorTile({ ranked, rank }: { ranked: IRanked; rank: number }) {
                         <span className="shrink-0 font-mono text-muted-foreground text-xs tabular-nums">{completenessPct}%</span>
                     </div>
                     {missing.length === 0 ? (
-                        <div className="flex items-center gap-1.5 font-medium text-emerald-500 text-xs">
+                        <div className="flex items-center gap-1.5 font-medium text-success-foreground text-xs">
                             <Check className="h-3.5 w-3.5" />
                             {t("profile.stats.top.fullyBuilt")}
                         </div>
                     ) : (
                         <div className="flex flex-col gap-1.5">
-                            <span className="font-medium text-[10px] text-subtle-foreground uppercase tracking-wide">{t("profile.stats.top.remaining")}</span>
+                            <span className="font-medium text-[10px] text-subtle-foreground">{t("profile.stats.top.remaining")}</span>
                             <ul className="flex flex-col gap-1">
                                 {missing.map((gap) => (
                                     <li className="flex items-center gap-2 text-foreground/80 text-xs" key={gap.tag}>

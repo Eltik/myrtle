@@ -8,23 +8,23 @@ export const messages = {
         description: "Kicker over the list of yes/no stage flags.",
     },
     "props.canPractice": {
-        text: "Can Practice",
+        text: "Can practice",
         description: "Stage flag: the operation can be run in practice mode, which costs no Sanity.",
     },
     "props.battleReplay": {
-        text: "Battle Replay",
+        text: "Battle replay",
         description: "Stage flag: a clear of this operation can be replayed.",
     },
     "props.autoDeploy": {
-        text: "Auto-Deploy (Multi)",
+        text: "Auto-deploy (multi)",
         description: "Stage flag: the operation supports the game's multi-run auto-deploy. Keep the parenthetical short.",
     },
     "props.storyOnly": {
-        text: "Story Only",
+        text: "Story only",
         description: "Stage flag: the operation is a story scene with no battle.",
     },
     "props.predefinedSquad": {
-        text: "Predefined Squad",
+        text: "Predefined squad",
         description: "Stage flag: the operation hands you a fixed roster.",
     },
     "props.predefinedSquad.hint": {
@@ -32,7 +32,7 @@ export const messages = {
         description: "Tooltip on the Predefined Squad flag.",
     },
     "props.trainingLevel": {
-        text: "Training Level",
+        text: "Training level",
         description: "Stage flag: the operation is a tutorial / practice level.",
     },
     "props.trainingLevel.hint": {
@@ -40,7 +40,7 @@ export const messages = {
         description: "Tooltip on the Training Level flag.",
     },
     "props.steeringEnabled": {
-        text: "Steering Enabled",
+        text: "Steering enabled",
         description: "Stage flag: the level file's enemy-pathfinding steering option.",
     },
     "props.steeringEnabled.hint": {
@@ -48,7 +48,7 @@ export const messages = {
         description: "Tooltip on the Steering Enabled flag.",
     },
     "props.cardsSelectable": {
-        text: "Cards Selectable",
+        text: "Cards selectable",
         description: "Stage flag: in a predefined-squad operation, whether the player picks which provided operators to deploy.",
     },
     "props.cardsSelectable.hint": {

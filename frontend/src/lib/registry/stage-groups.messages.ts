@@ -57,7 +57,7 @@ export const messages = {
         description: "Stage-group name: the catch-all group.",
     },
     "stageGroup.story.desc": {
-        text: "The mainline campaign - Rhodes Island's canonical operations, told episode by episode across Terra.",
+        text: "The mainline campaign: Rhodes Island's canonical operations, told episode by episode across Terra.",
         description: "Blurb for the Main Story group. 'Rhodes Island' and 'Terra' are in-game proper nouns; keep the game's own names for the region.",
     },
     "stageGroup.events.desc": {
@@ -65,7 +65,7 @@ export const messages = {
         description: "Blurb for the Events group. 'Side story', 'intermezzi' and 'rerun' name in-game event categories.",
     },
     "stageGroup.annihilation.desc": {
-        text: "Endless-wave defense operations scored by total kills - the weekly source of Orundum.",
+        text: "Endless-wave defense operations scored by total kills, and the weekly source of Orundum.",
         description: "Blurb for the Annihilation game mode. 'Orundum' is an in-game currency; keep the game's own name.",
     },
     "stageGroup.is.desc": {
@@ -73,7 +73,7 @@ export const messages = {
         description: "Blurb for the Integrated Strategies game mode.",
     },
     "stageGroup.ra.desc": {
-        text: "A survival sandbox - scout the wilds, gather resources, build defenses and endure each cycle.",
+        text: "A survival sandbox: scout the wilds, gather resources, build defenses and endure each cycle.",
         description: "Blurb for the Reclamation Algorithm game mode.",
     },
     "stageGroup.sss.desc": {
@@ -85,7 +85,7 @@ export const messages = {
         description: "Blurb for the Paradox Simulation game mode. A 'kit' is an operator's set of skills and talents.",
     },
     "stageGroup.cc.desc": {
-        text: "Score-attack contracts - stack risk modifiers on a fixed map for higher rewards.",
+        text: "Score-attack contracts: stack risk modifiers on a fixed map for higher rewards.",
         description: "Blurb for the Contingency Contract game mode. 'Risk' is the in-game difficulty score.",
     },
     "stageGroup.supplies.desc": {

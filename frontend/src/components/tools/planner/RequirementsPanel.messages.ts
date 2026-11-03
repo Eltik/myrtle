@@ -8,8 +8,8 @@ export const messages = {
         description: "Heading of the panel listing everything the selected plans need.",
     },
     "planner.req.search": {
-        text: "Search requirements...",
-        description: "Placeholder in the requirement search box. Three full stops, not an ellipsis character.",
+        text: "Search requirements…",
+        description: "Placeholder in the requirement search box. Ends in an ellipsis character.",
     },
     "planner.req.view": {
         text: "Requirements view",
@@ -84,8 +84,8 @@ export const messages = {
         description: "Shown in the Missing column when the shortfall is craftable. Lowercase on purpose; the column is narrow.",
     },
     "planner.req.craftTitle": {
-        text: "You have {have} of {required} - the remaining {shortfall} must be crafted",
-        description: "Native tooltip on a craftable shortfall. All three numbers are item counts; the dash is a plain hyphen.",
+        text: "You have {have} of {required}; the remaining {shortfall} must be crafted",
+        description: "Native tooltip on a craftable shortfall. All three numbers are item counts.",
     },
     "planner.req.noneForPlans": {
         text: "No requirements for the selected plans.",

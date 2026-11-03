@@ -28,7 +28,7 @@ export const messages = {
         description: "Accessible name of the region holding the result grid and its toolbar.",
     },
     "list.search.placeholder": {
-        text: "Search operators...",
+        text: "Search operators…",
         description: "Prompt inside the empty search box. Keep the three dots as written.",
     },
     "list.search.aria": {
@@ -136,7 +136,7 @@ export const messages = {
         description: "Shown above the Upcoming (CN) view when its list failed to load, beside a Try again button. Distinct from the empty state: nothing was filtered out, the data never arrived.",
     },
     "list.clearFilters": {
-        text: "Clear all filters",
+        text: "Clear filters",
         description: "Link under the empty state that resets every filter.",
     },
     "list.column.name": {

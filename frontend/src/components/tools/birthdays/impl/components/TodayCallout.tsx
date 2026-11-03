@@ -22,10 +22,10 @@ export function TodayCallout({ ops, today }: ITodayCalloutProps): React.ReactEle
     const dateLabel = f.calendarDay(today, { month: "long", day: "numeric", weekday: "long" });
 
     return (
-        <div className="relative mt-5.5 overflow-hidden rounded-[18px] border border-primary/20 bg-[linear-gradient(90deg,color-mix(in_oklab,var(--primary),transparent_92%)_0%,transparent_55%)] bg-card p-5 shadow-xs/5">
+        <div className="relative mt-5.5 overflow-hidden rounded-2xl border border-primary/20 bg-card p-5 shadow-xs/5">
             <div className="relative mb-3 flex items-center gap-2.5">
                 <Kicker className="mb-0">{t("birthdays.today.kicker")}</Kicker>
-                <span className="font-medium font-mono text-[11px] text-muted-foreground uppercase tracking-[0.08em]">{dateLabel}</span>
+                <span className="text-[12px] text-muted-foreground">{dateLabel}</span>
             </div>
             <div className="relative flex flex-wrap gap-3.5">
                 {ops.map((b) => {
@@ -35,7 +35,7 @@ export function TodayCallout({ ops, today }: ITodayCalloutProps): React.ReactEle
                             <OpChip operator={b.operator} size="lg" />
                             <div>
                                 <div className="font-sans font-semibold text-[13.5px] text-foreground">{displayName}</div>
-                                <div className="font-medium font-mono text-[11px] text-muted-foreground uppercase tracking-[0.08em]">{t("birthdays.today.rarityClass", { rarity: operatorRarity(b.operator), class: professionLabel(b.operator) })}</div>
+                                <div className="text-[12px] text-muted-foreground">{t("birthdays.today.rarityClass", { rarity: operatorRarity(b.operator), class: professionLabel(b.operator) })}</div>
                             </div>
                         </div>
                     );

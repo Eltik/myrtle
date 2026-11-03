@@ -296,7 +296,7 @@ export const messages = {
         description: "Under 'What you can do' for a tier list admin.",
     },
     "home.access.note.superAdmin": {
-        text: "Change anyone’s role and grants from People.",
+        text: "Change anyone's role and grants from People.",
         description: "Under 'What you can do' for a super-admin.",
     },
     "home.access.everything": {

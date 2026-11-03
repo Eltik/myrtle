@@ -35,7 +35,7 @@ interface IStatCardProps {
 
 export function StatCard({ children, color, className }: IStatCardProps) {
     return (
-        <div className={cn("relative overflow-hidden rounded-xl border border-border bg-card sm:rounded-2xl", "shadow-[0_1px_2px_rgb(0_0_0/0.04)] transition-colors duration-200 hover:border-foreground/15", className)}>
+        <div className={cn("relative overflow-hidden rounded-2xl border border-border bg-card", "shadow-[0_1px_2px_rgb(0_0_0/0.04)] transition-colors duration-200 hover:border-foreground/15", className)}>
             <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 z-10 h-px" style={{ background: lineGradient(color) }} />
             {children}
         </div>
@@ -146,7 +146,7 @@ export function GapList({ items, label }: IGapListProps) {
         return (
             <div className="flex items-center gap-1.5">
                 <span aria-hidden className="h-1 w-1 rounded-full bg-emerald-500/70" />
-                <span className={cn(KICKER_TEXT, "text-emerald-500/80")}>{t("profile.stats.gaps.allComplete")}</span>
+                <span className={cn(KICKER_TEXT, "text-success-foreground")}>{t("profile.stats.gaps.allComplete")}</span>
             </div>
         );
     }

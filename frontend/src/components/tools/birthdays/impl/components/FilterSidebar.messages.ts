@@ -16,7 +16,7 @@ export const messages = {
         description: "Caption under the big number of kept operators. Lowercase; it is set in small caps.",
     },
     "birthdays.sidebar.reset": {
-        text: "Reset filters",
+        text: "Clear filters",
         description: "Link that clears every filter.",
     },
 } satisfies MessageMap;

@@ -105,7 +105,7 @@ export function ProfileLayoutEditor({ profile, labels, onClose }: IProfileLayout
                                 setDragFrom(null);
                                 setDragOver(null);
                             }}
-                            className={cn("flex items-center gap-2 rounded-xl border border-border/50 bg-background/60 py-1.5 pr-1.5 pl-2 transition-colors", dragFrom === i && "opacity-50", dragOver === i && dragFrom !== i && "border-primary/60 bg-primary/5")}
+                            className={cn("flex items-center gap-2 rounded-lg border border-border/50 bg-background/60 py-1.5 pr-1.5 pl-2 transition-colors", dragFrom === i && "opacity-50", dragOver === i && dragFrom !== i && "border-primary/60 bg-primary/5")}
                         >
                             <GripVerticalIcon aria-hidden="true" className="size-4 shrink-0 cursor-grab text-muted-foreground active:cursor-grabbing" />
                             <span className={cn("min-w-0 flex-1 truncate font-medium text-sm", !tab.visible && "text-muted-foreground")}>{label}</span>

@@ -1,3 +1,4 @@
+import { ArrowDown, ArrowUp } from "lucide-react";
 import { Kicker } from "#/components/ui/kicker";
 import type { IGachaEnhancedStats } from "#/lib/api/gacha";
 import { useFormatters, useT } from "#/lib/i18n";
@@ -52,14 +53,14 @@ export function RarityPanel({ data, personal }: IRarityPanelProps) {
     const showPersonal = personal != null && personalTotal > 0;
 
     return (
-        <section className="flex flex-col gap-4 rounded-[14px] border border-border bg-card p-[18px_18px] sm:p-[22px_24px]">
+        <section className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-[18px_18px] sm:p-[22px_24px]">
             <header className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                 <div>
                     <Kicker className="mb-1.5">{cs ? t("community.rarity.kicker.withTotal", { count: f.compact(total) }) : t("community.rarity.kicker")}</Kicker>
                     <h2 className="m-0 text-balance font-sans font-semibold text-[20px] text-foreground leading-[1.15] tracking-[-0.02em] sm:text-[22px]">{t("community.rarity.title")}</h2>
                 </div>
                 {showPersonal ? (
-                    <div className="inline-flex shrink-0 items-center gap-1.5 self-start rounded-md border border-primary/30 bg-primary/8 px-2.5 py-1 font-mono text-[10px] text-foreground/80 uppercase tracking-[0.14em] sm:self-auto">
+                    <div className="inline-flex shrink-0 items-center gap-1.5 self-start rounded-md border border-primary/30 bg-primary/8 px-2.5 py-1 font-mono text-[11px] text-foreground sm:self-auto">
                         <span className="block h-1.5 w-1.5 rounded-full bg-primary" aria-hidden />
                         {t("community.rarity.you", { count: f.compact(personalTotal) })}
                     </div>
@@ -112,7 +113,7 @@ function RarityRow({ row, count, observed, hasData, personal }: { row: IRarityRo
                     <span style={{ color: row.starColor }} className="whitespace-nowrap text-base tracking-wider">
                         {"★".repeat(row.rarity)}
                     </span>
-                    <span className="font-mono text-[10px] text-muted-foreground uppercase tracking-[0.14em]">{t(row.rateHintKey)}</span>
+                    <span className="kicker mb-0">{t(row.rateHintKey)}</span>
                 </div>
                 <div className="flex shrink-0 items-baseline gap-3 font-mono text-[11px] text-muted-foreground tabular-nums">
                     <span className="whitespace-nowrap font-sans font-semibold text-base text-foreground">{hasData ? fmtPct(observed, 2) : "-"}</span>
@@ -123,17 +124,23 @@ function RarityRow({ row, count, observed, hasData, personal }: { row: IRarityRo
 
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[10.5px] text-muted-foreground">
                 <span className="tabular-nums">{hasData ? t("community.rarity.pulls", { count: f.number(count) }) : "-"}</span>
-                <span className="opacity-50">·</span>
+                <span className="text-subtle-foreground" aria-hidden>
+                    ·
+                </span>
                 <ComparisonChip label={t("community.rarity.chip.vsExpected")} baseline={row.expected} comparison={vsExpected} />
                 {personal != null && personalVsCommunity != null ? (
                     <>
-                        <span className="opacity-50">·</span>
+                        <span className="text-subtle-foreground" aria-hidden>
+                            ·
+                        </span>
                         <ComparisonChip label={t("community.rarity.chip.youVsCommunity")} baseline={observed} comparison={personalVsCommunity} highlight />
                     </>
                 ) : null}
                 {personal != null && personalVsExpected != null ? (
                     <>
-                        <span className="opacity-50">·</span>
+                        <span className="text-subtle-foreground" aria-hidden>
+                            ·
+                        </span>
                         <ComparisonChip label={t("community.rarity.chip.youVsExpected")} baseline={row.expected} comparison={personalVsExpected} highlight />
                     </>
                 ) : null}
@@ -143,28 +150,35 @@ function RarityRow({ row, count, observed, hasData, personal }: { row: IRarityRo
 }
 
 function ComparisonChip({ label, baseline, comparison, highlight }: { label: string; baseline: number; comparison: ReturnType<typeof compareRate>; highlight?: boolean }) {
+    const t: RarityT = useT("gacha");
     if (!comparison) {
         return (
             <span className="inline-flex items-center gap-1.5">
-                <span className="uppercase tracking-[0.12em] opacity-70">{label}</span>
+                <span className="kicker mb-0">{label}</span>
                 <span className="text-subtle-foreground">-</span>
             </span>
         );
     }
-    const colorClass = comparison.direction === "on" ? "text-foreground/80" : comparison.direction === "above" ? "text-[oklch(0.78_0.18_152)]" : "text-[oklch(0.78_0.18_25)]";
+    // Status tokens with an arrow, so the direction is not carried by hue alone. On the card:
+    // success 5.37 light / 9.90 dark, destructive 6.42 / 6.61 (the oklch(0.78) literals were 1.87 / 2.40 light).
+    const colorClass = comparison.direction === "on" ? "text-foreground" : comparison.direction === "above" ? "text-success-foreground" : "text-destructive-foreground";
+    const Arrow = comparison.direction === "above" ? ArrowUp : comparison.direction === "below" ? ArrowDown : null;
     const baseClass = highlight ? "rounded-md border border-primary/20 bg-primary/6 px-1.5 py-0.5" : "";
 
     return (
         <span className={`inline-flex items-center gap-1.5 ${baseClass}`}>
-            <span className="uppercase tracking-[0.12em] opacity-70">{label}</span>
-            <span className={`font-semibold tabular-nums ${colorClass}`}>{comparison.ratioLabel}</span>
-            <span className="tabular-nums opacity-60">({fmtPct(baseline, baseline >= 0.1 ? 0 : 2)})</span>
+            <span className="kicker mb-0">{label}</span>
+            <span className={`inline-flex items-center gap-0.5 font-semibold tabular-nums ${colorClass}`}>
+                {Arrow ? <Arrow aria-hidden className="size-3" /> : null}
+                {comparison.direction === "on" ? null : <span className="sr-only">{t(comparison.direction === "above" ? "community.rarity.direction.above" : "community.rarity.direction.below")}</span>}
+                {comparison.ratioLabel}
+            </span>
+            <span className="text-subtle-foreground tabular-nums">({fmtPct(baseline, baseline >= 0.1 ? 0 : 2)})</span>
         </span>
     );
 }
 
 function BaselineBar({ observed, baseline, fillColor, personalObserved, hasData }: { observed: number; baseline: number; fillColor: string; personalObserved?: number; hasData: boolean }) {
-    const t: RarityT = useT("gacha");
     // Bar scales to whichever value is largest, so a 65% 3★ bar sits next to a 2% 6★ bar without dwarfing it. Bars share a max within their own row.
     const max = Math.max(observed, baseline, personalObserved ?? 0, 0.001);
     const observedPct = hasData ? (observed / max) * 100 : 0;
@@ -176,8 +190,8 @@ function BaselineBar({ observed, baseline, fillColor, personalObserved, hasData 
             <div className="h-full overflow-hidden rounded-full">
                 <div className="h-full" style={{ width: `${observedPct}%`, background: fillColor }} />
             </div>
-            <div className="pointer-events-none absolute inset-y-0 w-px bg-foreground/60" style={{ left: `${baselineLeftPct}%` }} title={t("community.rarity.bar.expected", { value: fmtPct(baseline, 2) })} aria-hidden />
-            {personalLeftPct != null ? <div className="pointer-events-none absolute -top-1 h-4 w-0.5 rounded-full bg-primary shadow-[0_0_0_2px_var(--card)]" style={{ left: `calc(${personalLeftPct}% - 1px)` }} title={t("community.rarity.bar.you", { value: fmtPct(personalObserved ?? 0, 2) })} aria-hidden /> : null}
+            <div className="pointer-events-none absolute inset-y-0 w-px bg-foreground/60" style={{ left: `${baselineLeftPct}%` }} aria-hidden />
+            {personalLeftPct != null ? <div className="pointer-events-none absolute -top-1 h-4 w-0.5 rounded-full bg-primary shadow-[0_0_0_2px_var(--card)]" style={{ left: `calc(${personalLeftPct}% - 1px)` }} aria-hidden /> : null}
         </div>
     );
 }
@@ -186,7 +200,7 @@ function Legend({ showPersonal }: { showPersonal: boolean }) {
     const t: RarityT = useT("gacha");
 
     return (
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 border-border/60 border-t pt-3 font-mono text-[10px] text-muted-foreground uppercase tracking-[0.12em]">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 border-border/60 border-t pt-3 font-mono text-[11px] text-muted-foreground">
             <span className="inline-flex items-center gap-1.5">
                 <span className="block h-2 w-2 rounded-full bg-foreground/60" aria-hidden /> {t("community.rarity.legend.expected")}
             </span>
@@ -195,8 +209,8 @@ function Legend({ showPersonal }: { showPersonal: boolean }) {
                     <span className="block h-2 w-2 rounded-full bg-primary" aria-hidden /> {t("community.rarity.legend.you")}
                 </span>
             ) : null}
-            <span className="opacity-60">{t("community.rarity.legend.note")}</span>
-            <span className="opacity-60">{t("community.rarity.legend.scaleNote")}</span>
+            <span className="text-subtle-foreground">{t("community.rarity.legend.note")}</span>
+            <span className="text-subtle-foreground">{t("community.rarity.legend.scaleNote")}</span>
         </div>
     );
 }

@@ -173,10 +173,17 @@ interface IVirtualStageTreeProps {
     onScrolled: () => void;
 }
 
+/** The viewport width the server lays the stage tree out for. */
+const SSR_VIEWPORT_WIDTH = 1280;
+
 function VirtualStageTree({ groups, searching, open, closedSections, onToggleSection, onToggleZone, onDetails, scrollZone, onScrolled }: IVirtualStageTreeProps) {
-    const [viewportWidth, setViewportWidth] = useState(() => (typeof window === "undefined" ? 1280 : window.innerWidth));
+    // The server renders at 1280 and the first client render must match it: reading
+    // window.innerWidth here gave a phone the small-screen gaps on hydration
+    // (17764px against the server's 17818px at 375). The real width lands in the effect.
+    const [viewportWidth, setViewportWidth] = useState(SSR_VIEWPORT_WIDTH);
     useEffect(() => {
         const onResize = () => setViewportWidth(window.innerWidth);
+        onResize();
         window.addEventListener("resize", onResize, { passive: true });
         return () => window.removeEventListener("resize", onResize);
     }, []);

@@ -20,7 +20,7 @@ export const messages = {
         description: "Name of the optimizer that ranks account-wide investments. Also the tab's label.",
     },
     "profile.optimizer.account.blurb": {
-        text: "Where to spend next across the account - promotions, masteries and modules, ranked by what each actually returns.",
+        text: "Where to spend next across the account: promotions, masteries and modules, ranked by what each actually returns.",
         description: "One-line blurb under the Account Optimizer tab. Promotion, mastery and module are the game's progression systems.",
     },
 } satisfies MessageMap;

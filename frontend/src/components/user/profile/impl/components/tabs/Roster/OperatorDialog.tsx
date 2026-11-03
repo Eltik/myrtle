@@ -159,22 +159,22 @@ export function OperatorDialog({ entry }: { entry: IOwnedEntry }) {
                     </div>
                 </div>
                 <div ref={pillsRef} className="relative z-5 -mt-6 truncate px-6" style={{ transform: "translate3d(0, 0, 0)" }}>
-                    <div className="grid grid-cols-4 gap-2 rounded-xl border border-border/60 bg-card/80 p-2 shadow-lg backdrop-blur">
+                    <div className="grid grid-cols-4 gap-2 rounded-2xl border border-border/60 bg-card/95 p-2 shadow-lg">
                         <div className="flex flex-col items-center justify-center gap-1 rounded-lg bg-muted/40 px-2 py-2">
                             <img alt={t("profile.roster.card.eliteAlt", { elite: entry.elite })} className="icon-theme-aware h-6 w-6 object-contain" decoding="async" src={eliteIcon(entry.elite)} />
-                            <span className="text-[0.625rem] text-muted-foreground uppercase tracking-wide">{t("profile.roster.dialog.elite")}</span>
+                            <span className="kicker">{t("profile.roster.dialog.elite")}</span>
                         </div>
                         <div className="flex flex-col items-center justify-center gap-1 rounded-lg bg-muted/40 px-2 py-2">
                             <span className="font-semibold text-base text-foreground tabular-nums">{entry.level}</span>
-                            <span className="text-[0.625rem] text-muted-foreground uppercase tracking-wide">{t("profile.roster.card.level")}</span>
+                            <span className="kicker">{t("profile.roster.card.level")}</span>
                         </div>
                         <div className="flex flex-col items-center justify-center gap-1 rounded-lg bg-muted/40 px-2 py-2">
                             <img alt={t("profile.roster.card.potentialAlt", { rank: entry.potential + 1 })} className="icon-theme-aware h-6 w-6 object-contain" decoding="async" src={potentialIcon(entry.potential)} />
-                            <span className="text-[0.625rem] text-muted-foreground uppercase tracking-wide">{t("profile.roster.card.potential")}</span>
+                            <span className="kicker">{t("profile.roster.card.potential")}</span>
                         </div>
                         <div className="flex flex-col items-center justify-center gap-1 rounded-lg bg-muted/40 px-2 py-2">
                             <span className="font-semibold text-base text-foreground tabular-nums">{`${trustPct}%`}</span>
-                            <span className="text-[0.625rem] text-muted-foreground uppercase tracking-wide">{t("profile.roster.card.trust")}</span>
+                            <span className="kicker">{t("profile.roster.card.trust")}</span>
                         </div>
                     </div>
                 </div>
@@ -184,7 +184,7 @@ export function OperatorDialog({ entry }: { entry: IOwnedEntry }) {
                         <section>
                             <header className="mb-3 flex items-center gap-3">
                                 <span className="h-4 w-1 rounded-full bg-primary" />
-                                <h3 className="font-semibold text-foreground text-xs uppercase tracking-wider">{t("profile.roster.dialog.combatStats")}</h3>
+                                <h3 className="kicker">{t("profile.roster.dialog.combatStats")}</h3>
                                 <Separator className="flex-1" />
                             </header>
                             <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
@@ -209,8 +209,8 @@ export function OperatorDialog({ entry }: { entry: IOwnedEntry }) {
                     <section>
                         <header className="mb-3 flex items-center gap-3">
                             <span className="h-4 w-1 rounded-full bg-primary" />
-                            <h3 className="font-semibold text-foreground text-xs uppercase tracking-wider">{t("profile.roster.card.skills")}</h3>
-                            <span className="rounded-full border border-border/60 bg-muted/40 px-2 py-0.5 text-[0.625rem] text-muted-foreground uppercase tracking-wide">{t("profile.roster.dialog.skillLevelBadge", { level: entry.skill_level })}</span>
+                            <h3 className="kicker">{t("profile.roster.card.skills")}</h3>
+                            <span className="rounded-full border border-border/60 bg-muted/40 px-2 py-0.5 text-[0.625rem] text-muted-foreground">{t("profile.roster.dialog.skillLevelBadge", { level: entry.skill_level })}</span>
                             <Separator className="flex-1" />
                         </header>
                         {skills.length > 0 ? (
@@ -225,7 +225,7 @@ export function OperatorDialog({ entry }: { entry: IOwnedEntry }) {
                                                 <p className="truncate font-medium text-sm" title={name}>
                                                     {name}
                                                 </p>
-                                                {isDefault && <span className="text-[0.625rem] text-primary uppercase tracking-wide">{t("profile.roster.dialog.default")}</span>}
+                                                {isDefault && <span className="text-[0.625rem] text-primary">{t("profile.roster.dialog.default")}</span>}
                                             </div>
                                             <div className="flex items-center gap-1.5 text-muted-foreground text-xs">
                                                 <span className="tabular-nums">{t("profile.roster.card.skillLevel", { level: entry.skill_level })}</span>
@@ -242,7 +242,7 @@ export function OperatorDialog({ entry }: { entry: IOwnedEntry }) {
                     <section>
                         <header className="mb-3 flex items-center gap-3">
                             <span className="h-4 w-1 rounded-full bg-primary" />
-                            <h3 className="font-semibold text-foreground text-xs uppercase tracking-wider">{t("profile.roster.card.modules")}</h3>
+                            <h3 className="kicker">{t("profile.roster.card.modules")}</h3>
                             <Separator className="flex-1" />
                         </header>
                         {modules.length > 0 ? (
@@ -254,7 +254,7 @@ export function OperatorDialog({ entry }: { entry: IOwnedEntry }) {
                                             <p className="truncate font-medium text-sm" title={module.uniEquipName}>
                                                 {module.uniEquipName}
                                             </p>
-                                            {isEquipped && <span className="text-[0.625rem] text-primary uppercase tracking-wide">{t("profile.roster.dialog.equipped")}</span>}
+                                            {isEquipped && <span className="text-[0.625rem] text-primary">{t("profile.roster.dialog.equipped")}</span>}
                                         </div>
                                         <div className="flex shrink-0 items-center gap-1.5 text-muted-foreground text-xs">
                                             <span className="rounded bg-background/60 px-1.5 py-0.5">{moduleTypeLabel(module)}</span>
@@ -270,7 +270,7 @@ export function OperatorDialog({ entry }: { entry: IOwnedEntry }) {
                     <section>
                         <header className="mb-3 flex items-center gap-3">
                             <span className="h-4 w-1 rounded-full bg-primary" />
-                            <h3 className="font-semibold text-foreground text-xs uppercase tracking-wider">{t("profile.roster.dialog.info")}</h3>
+                            <h3 className="kicker">{t("profile.roster.dialog.info")}</h3>
                             <Separator className="flex-1" />
                         </header>
                         <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">

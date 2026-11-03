@@ -12,7 +12,7 @@ export const messages = {
         description: "Blurb under the Audio tab heading.",
     },
     "audio.tab.voice": {
-        text: "Voice Lines",
+        text: "Voice lines",
         description: "Tab switching to the operator's recorded dialogue.",
     },
     "audio.tab.sfx": {
@@ -68,7 +68,7 @@ export const messages = {
         description: "First tab in both audio lists: every clip, unfiltered.",
     },
     "audio.search.voice.placeholder": {
-        text: "Search voice lines...",
+        text: "Search voice lines…",
         description: "Prompt inside the empty voice-line search box. Keep the three dots as written.",
     },
     "audio.search.voice.label": {
@@ -76,7 +76,7 @@ export const messages = {
         description: "Accessible name of the voice-line search box.",
     },
     "audio.search.sfx.placeholder": {
-        text: "Search sound effects...",
+        text: "Search sound effects…",
         description: "Prompt inside the empty sound-effect search box. Keep the three dots as written.",
     },
     "audio.search.sfx.label": {
@@ -140,11 +140,11 @@ export const messages = {
         description: "Row label for the sound of placing the operator on the map.",
     },
     "audio.sfx.skillSlotVoice": {
-        text: "Skill {slot} Voice",
+        text: "Skill {slot} voice",
         description: "Row label for the line the operator says when a numbered skill fires.",
     },
     "audio.sfx.battleVoice": {
-        text: "Battle Voice",
+        text: "Battle voice",
         description: "Row label for in-combat lines not tied to a numbered skill.",
     },
 } satisfies MessageMap;

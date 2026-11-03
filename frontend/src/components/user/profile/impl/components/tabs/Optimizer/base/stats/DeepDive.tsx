@@ -147,16 +147,16 @@ export function DeepDive() {
 
     return (
         <Collapsible onOpenChange={setOpen} open={open}>
-            <CollapsibleTrigger className="flex w-full items-center justify-between rounded-xl border border-border bg-card px-4 py-2.5 transition-colors hover:bg-muted/40">
+            <CollapsibleTrigger className="flex w-full items-center justify-between rounded-2xl border border-border bg-card px-4 py-2.5 transition-colors hover:bg-muted/40">
                 <span className="font-medium text-[13px]">{t("profile.base.deep.title")}</span>
                 <ChevronDown className={cn("size-4 text-muted-foreground transition-transform", open && "rotate-180")} />
             </CollapsibleTrigger>
 
             <CollapsibleContent>
-                <div className="mt-2 flex flex-col gap-4 rounded-xl border border-border bg-card px-4 py-3">
+                <div className="mt-2 flex flex-col gap-4 rounded-2xl border border-border bg-card px-4 py-3">
                     {claim && (
                         <section className="flex flex-col gap-2">
-                            <h3 className="font-medium text-[10px] text-muted-foreground uppercase tracking-wider">{t("profile.base.deep.checkin")}</h3>
+                            <h3 className="kicker">{t("profile.base.deep.checkin")}</h3>
                             <div className="flex flex-wrap items-center justify-between gap-3">
                                 <div className="flex flex-col gap-0.5">
                                     <span className="text-[12px]">{rt("profile.base.deep.logInBefore", { time: <span className="font-semibold text-foreground">{clockAfter(claim.next_full_hours, f)}</span> })}</span>
@@ -263,7 +263,7 @@ export function DeepDive() {
 
                     {(evaluation.dorms.per_dorm ?? []).some((d) => (d.comfort_upside_per_hour ?? 0) > 0.05) && (
                         <section className="flex flex-col gap-1">
-                            <h3 className="font-medium text-[10px] text-muted-foreground uppercase tracking-wider">{t("profile.base.deep.furniture")}</h3>
+                            <h3 className="kicker">{t("profile.base.deep.furniture")}</h3>
                             {(evaluation.dorms.per_dorm ?? [])
                                 .filter((d) => (d.comfort_upside_per_hour ?? 0) > 0.05)
                                 .map((d) => (
@@ -284,7 +284,7 @@ export function DeepDive() {
 
                     {rooms.length > 0 && (
                         <section className="flex flex-col gap-2">
-                            <h3 className="font-medium text-[10px] text-muted-foreground uppercase tracking-wider">{t("profile.base.deep.outputByFacility")}</h3>
+                            <h3 className="kicker">{t("profile.base.deep.outputByFacility")}</h3>
                             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                                 {rooms.map((room) => {
                                     const daily =
@@ -298,7 +298,7 @@ export function DeepDive() {
                                         <div className="flex flex-col gap-1 rounded-lg border border-border/60 bg-muted/10 px-3 py-2" key={room.slot_id}>
                                             <div className="flex items-baseline justify-between gap-2">
                                                 <span className="min-w-0 truncate font-medium text-[12px]">{roomLabel(room.room_type, api.catalog)}</span>
-                                                <span className="shrink-0 text-[10px] text-muted-foreground uppercase tracking-wide">{productLabel(room, t)}</span>
+                                                <span className="shrink-0 text-[10px] text-muted-foreground">{productLabel(room, t)}</span>
                                             </div>
                                             <div className="flex items-baseline justify-between gap-2">
                                                 <span className="font-mono font-semibold text-[13px] tabular-nums">
@@ -320,7 +320,7 @@ export function DeepDive() {
 
                     <section className="flex flex-col gap-1.5">
                         <div className="flex items-center justify-between gap-3">
-                            <h3 className="font-medium text-[10px] text-muted-foreground uppercase tracking-wider">{t("profile.base.deep.compare")}</h3>
+                            <h3 className="kicker">{t("profile.base.deep.compare")}</h3>
                             <div className="flex items-center gap-1.5">
                                 <Button
                                     disabled={!api.rotation}
@@ -370,14 +370,14 @@ export function DeepDive() {
 
                     {api.rotationLoading && !sustainability && (
                         <section className="flex flex-col gap-1">
-                            <h3 className="font-medium text-[10px] text-muted-foreground uppercase tracking-wider">{t("profile.base.deep.simulating.title")}</h3>
+                            <h3 className="kicker">{t("profile.base.deep.simulating.title")}</h3>
                             <span className="animate-pulse text-[11.5px] text-muted-foreground">{t("profile.base.deep.simulating")}</span>
                         </section>
                     )}
 
                     {sustainability?.facilities && sustainability.facilities.length > 0 && (
                         <section className="flex flex-col gap-1.5">
-                            <h3 className="font-medium text-[10px] text-muted-foreground uppercase tracking-wider">{t("profile.base.deep.simulated.title", { days: Math.round(sustainability.horizon_hours / 24) })}</h3>
+                            <h3 className="kicker">{t("profile.base.deep.simulated.title", { days: Math.round(sustainability.horizon_hours / 24) })}</h3>
                             <div className="flex flex-col divide-y divide-border/60">
                                 {sustainability.facilities.map((facility) => {
                                     const produced =
@@ -404,7 +404,7 @@ export function DeepDive() {
 
                     {evaluation.unrotated && (
                         <section className="flex flex-col gap-1">
-                            <h3 className="font-medium text-[10px] text-muted-foreground uppercase tracking-wider">{t("profile.base.deep.unrotated.title", { days: Math.round(evaluation.unrotated.horizon_hours / 24) })}</h3>
+                            <h3 className="kicker">{t("profile.base.deep.unrotated.title", { days: Math.round(evaluation.unrotated.horizon_hours / 24) })}</h3>
                             {evaluation.unrotated.depleted.length === 0 ? (
                                 <span className="text-[11.5px] text-muted-foreground">{t("profile.base.deep.unrotated.fine")}</span>
                             ) : (
@@ -421,7 +421,7 @@ export function DeepDive() {
 
                     {sustainability && (
                         <section className="flex flex-col gap-1.5">
-                            <h3 className="font-medium text-[10px] text-muted-foreground uppercase tracking-wider">{t("profile.base.deep.events.title", { days: Math.round(sustainability.horizon_hours / 24) })}</h3>
+                            <h3 className="kicker">{t("profile.base.deep.events.title", { days: Math.round(sustainability.horizon_hours / 24) })}</h3>
                             {sustainability.depleted.length === 0 ? (
                                 <span className="text-[11.5px] text-muted-foreground">{t("profile.base.deep.events.none")}</span>
                             ) : (

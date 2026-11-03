@@ -76,8 +76,8 @@ export const messages = {
         description: "Shown when the backend does not serve the character gallery route.",
     },
     "sprites.unavailableNote": {
-        text: "The server answering this page predates it; it appears after the next backend restart.",
-        description: "Second line under the gallery's unavailable state, for a backend that predates the route.",
+        text: "It hasn't reached the live site yet. Check back later.",
+        description: "Second line under the gallery's unavailable state, shown while the live site does not serve the character gallery yet.",
     },
     "sprites.card.open": {
         text: "Open {name}'s expressions",

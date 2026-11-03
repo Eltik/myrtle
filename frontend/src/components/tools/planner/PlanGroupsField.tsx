@@ -10,6 +10,7 @@ import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { compactForSearch } from "#/lib/search/fuzzy";
 import { CheckMark } from "./CheckMark";
+import type { messages as plannerMessages } from "./OperatorPlanner.messages";
 import type { messages } from "./OperatorPlannerDialog.messages";
 
 interface IPlanGroupsFieldProps {
@@ -30,6 +31,7 @@ interface IPlanGroupsFieldProps {
  */
 export function PlanGroupsField({ groupNames, selectedGroups, onSelectedGroupsChange }: IPlanGroupsFieldProps): React.ReactElement {
     const t: TypedT<typeof messages> = useT("tools");
+    const tg: TypedT<typeof plannerMessages> = useT("tools");
     const queryClient = useQueryClient();
     const [searchQuery, setSearchQuery] = React.useState<string>("");
     const [isOpen, setIsOpen] = React.useState<boolean>(false);
@@ -170,13 +172,13 @@ export function PlanGroupsField({ groupNames, selectedGroups, onSelectedGroupsCh
                                         <CheckMark checked={isSelected} />
                                         <span>{name}</span>
                                     </div>
-                                    <div className="flex items-center gap-1">
-                                        <button type="button" onClick={rowAction(() => handleRename(name))} className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground">
-                                            <Pencil className="h-3.5 w-3.5" />
-                                        </button>
-                                        <button type="button" onClick={rowAction(() => handleDelete(name))} className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-destructive">
-                                            <Trash className="h-3.5 w-3.5" />
-                                        </button>
+                                    <div className="flex items-center gap-1 pointer-coarse:gap-4">
+                                        <Button type="button" variant="ghost" size="icon-xs" onClick={rowAction(() => handleRename(name))} aria-label={tg("planner.group.rename", { name })} className="text-muted-foreground hover:text-foreground">
+                                            <Pencil aria-hidden />
+                                        </Button>
+                                        <Button type="button" variant="ghost" size="icon-xs" onClick={rowAction(() => handleDelete(name))} aria-label={tg("planner.group.delete", { name })} className="text-muted-foreground hover:text-destructive-foreground">
+                                            <Trash aria-hidden />
+                                        </Button>
                                     </div>
                                 </ComboboxPrimitive.Item>
                             );

@@ -8,7 +8,7 @@ export const messages = {
         description: "Default label in front of the row of remaining-work pills on a stats card.",
     },
     "profile.stats.gaps.allComplete": {
-        text: "All Complete",
+        text: "All complete",
         description: "Replaces the remaining-work pills when nothing is left to do on that card.",
     },
     "profile.stats.gaps.showAria": {

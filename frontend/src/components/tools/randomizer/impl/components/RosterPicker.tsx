@@ -126,14 +126,14 @@ export function RosterPicker({ allOperators, visibleOperators, selected, isExpli
                     <Search aria-hidden="true" className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
                     <Input value={query} onChange={(e) => setQuery(e.currentTarget.value)} placeholder={t("randomizer.roster.search")} size="sm" className="rounded-md border-input pl-7" />
                     {query && (
-                        <button type="button" onClick={() => setQuery("")} className="absolute top-1/2 right-1.5 inline-flex size-5 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground" aria-label={t("randomizer.roster.clearSearch")}>
-                            <X className="size-3" />
-                        </button>
+                        <Button onClick={() => setQuery("")} size="icon-xs" variant="ghost" className="absolute top-1/2 right-1 -translate-y-1/2 text-muted-foreground" aria-label={t("randomizer.roster.clearSearch")}>
+                            <X aria-hidden="true" />
+                        </Button>
                     )}
                 </div>
             </div>
 
-            <div className="flex flex-wrap items-center justify-between gap-2 font-mono text-[11px] text-muted-foreground uppercase tracking-[0.16em]">
+            <div className="flex flex-wrap items-center justify-between gap-2 font-mono text-[11px] text-muted-foreground">
                 <div className="flex flex-col gap-0.5">
                     <span>
                         <span className="text-foreground">{visibleSelectedCount}</span> / {visibleOperators.length} {hasActiveFilters ? t("randomizer.roster.inView") : t("randomizer.roster.selected")}
@@ -191,17 +191,17 @@ export function RosterPicker({ allOperators, visibleOperators, selected, isExpli
                                         className="group flex min-w-0 flex-1 items-center gap-2 rounded-md px-2 py-1.5 text-left transition-colors hover:bg-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                                     >
                                         <ChevronDown aria-hidden="true" className={cn("size-3.5 shrink-0 text-muted-foreground transition-transform", isCollapsed && "-rotate-90")} />
-                                        <span className="font-mono text-[11px] uppercase tracking-[0.18em]" style={{ color: `var(--rarity-${rarity}-ink)` }}>
+                                        <span className="kicker" style={{ color: `var(--rarity-${rarity}-ink)` }}>
                                             {RARITY_LABELS[rarity]}
                                         </span>
-                                        <span className="font-mono text-[10.5px] text-subtle-foreground uppercase tracking-[0.16em]">{t("randomizer.roster.groupCount", { selected: groupSelected, total: ops.length })}</span>
+                                        <span className="font-mono text-[11px] text-subtle-foreground">{t("randomizer.roster.groupCount", { selected: groupSelected, total: ops.length })}</span>
                                     </button>
                                     <Button
                                         type="button"
                                         onClick={onToggleGroup}
                                         size="xs"
                                         variant="outline"
-                                        className="shrink-0 px-2.5 font-mono text-[10.5px] uppercase tracking-[0.16em]"
+                                        className="shrink-0 px-2.5 font-mono text-[11px]"
                                         aria-label={allGroupSelected ? t("randomizer.roster.groupClear.aria", { rarity: RARITY_LABELS[rarity] }) : t("randomizer.roster.groupAll.aria", { rarity: RARITY_LABELS[rarity] })}
                                     >
                                         {allGroupSelected ? t("randomizer.roster.groupClear") : t("randomizer.roster.groupAll")}

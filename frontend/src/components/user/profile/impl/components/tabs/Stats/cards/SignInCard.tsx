@@ -64,7 +64,15 @@ function relativeTime(date: Date, f: IFormatters): string {
 function StatRow({ label, value, title }: { label: string; value: string; title?: string }) {
     return (
         <Tooltip disabled={!title}>
-            <TooltipTrigger render={<div className="flex items-center justify-between gap-2 border-border/40 border-t pt-2.5" />}>
+            <TooltipTrigger
+                render={
+                    title ? (
+                        <button type="button" className="flex w-full cursor-default items-center justify-between gap-2 border-border/40 border-t pt-2.5 text-left focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2" />
+                    ) : (
+                        <div className="flex items-center justify-between gap-2 border-border/40 border-t pt-2.5" />
+                    )
+                }
+            >
                 <span className={KICKER_TEXT}>{label}</span>
                 <span className="font-mono text-[11px] text-foreground tabular-nums">{value}</span>
             </TooltipTrigger>
@@ -162,7 +170,7 @@ export function SignInCalendarCard({ checkin, server }: ICardProps) {
                 <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
                     <Kicker icon={CalendarCheck} label={t("profile.stats.signin.calendar.title")} />
                     <Tooltip>
-                        <TooltipTrigger render={<span className="inline-flex items-center gap-1.5 font-medium text-[11px] text-muted-foreground" />}>
+                        <TooltipTrigger render={<button type="button" className="inline-flex cursor-default items-center gap-1.5 rounded-sm text-left font-medium text-[11px] text-muted-foreground focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2" />}>
                             <Clock aria-hidden className="size-3" />
                             {t("profile.stats.signin.synced", { ago: relativeTime(sync, f) })}
                         </TooltipTrigger>
@@ -217,7 +225,7 @@ export function SignInCalendarCard({ checkin, server }: ICardProps) {
                 </div>
 
                 {/* Legend - state is not conveyed by color alone. */}
-                <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 font-mono text-[9.5px] text-subtle-foreground uppercase tracking-wide">
+                <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 font-mono text-[9.5px] text-subtle-foreground">
                     <span className="inline-flex items-center gap-1.5">
                         <LegendSwatch state="claimed" /> {t("profile.stats.signin.state.claimed")}
                     </span>
@@ -232,7 +240,15 @@ export function SignInCalendarCard({ checkin, server }: ICardProps) {
                 <div className="mt-auto flex items-center justify-between gap-2 border-border/40 border-t pt-2.5">
                     <span className={KICKER_TEXT}>{t("profile.stats.signin.behind")}</span>
                     <Tooltip disabled={cardDays <= 0}>
-                        <TooltipTrigger render={<span className="font-mono text-[11px] text-foreground tabular-nums" />}>
+                        <TooltipTrigger
+                            render={
+                                cardDays > 0 ? (
+                                    <button type="button" className="cursor-default rounded-sm text-left font-mono text-[11px] text-foreground tabular-nums focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2" />
+                                ) : (
+                                    <span className="font-mono text-[11px] text-foreground tabular-nums" />
+                                )
+                            }
+                        >
                             {behind === 0 ? (
                                 <span className="font-semibold" style={{ color: SIGNIN }}>
                                     {t("profile.stats.signin.caughtUp")}

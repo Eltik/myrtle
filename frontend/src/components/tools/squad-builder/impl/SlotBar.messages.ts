@@ -7,6 +7,10 @@ export const messages = {
         text: "Your squads",
         description: "Heading over the player's saved squad slots.",
     },
+    "squad.slots.loadFailed": {
+        text: "Couldn't load your saved squads. Saving is off until they load.",
+        description: "Shown in place of the saved squad slots when they failed to load; saving is blocked so it cannot replace a squad the player cannot see.",
+    },
     "squad.slots.signIn": {
         text: "Sign in to save squads. The squad below still works without an account.",
         description: "Shown in place of the saved slots when signed out.",

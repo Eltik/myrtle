@@ -8,8 +8,8 @@ export const messages = {
         description: "Title of the panel that constrains what the randomizer may draw.",
     },
     "randomizer.settings.desc": {
-        text: "Constrain the randomizer - by class, rarity, owned operators, or stage availability.",
-        description: "Caption under the Settings title. 'Class' and 'rarity' are the game's own operator attributes; the dash is a plain hyphen.",
+        text: "Constrain the randomizer by class, rarity, owned operators, or stage availability.",
+        description: "Caption under the Settings title. 'Class' and 'rarity' are the game's own operator attributes.",
     },
     "randomizer.settings.tab.operators": {
         text: "Operators",

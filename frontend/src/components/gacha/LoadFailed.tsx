@@ -19,7 +19,7 @@ interface ILoadFailedProps {
 export function LoadFailed({ message, onRetry }: ILoadFailedProps): React.ReactElement {
     const t: TypedT<typeof messages> = useT("gacha");
     return (
-        <div role="alert" className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-[14px] border border-border bg-card px-5 py-4">
+        <div role="alert" className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-2xl border border-border bg-card px-5 py-4">
             <p className="m-0 font-sans text-muted-foreground text-sm">{message}</p>
             <Button type="button" variant="outline" size="sm" onClick={onRetry}>
                 <RotateCwIcon aria-hidden="true" />

@@ -128,7 +128,7 @@ export const messages = {
         description: "Caption under the spoilers switch. 'Faction' is the game's word for a nation, group or team an operator belongs to.",
     },
     "appearance.cnUpdates.title": {
-        text: "CN Updates",
+        text: "CN updates",
         description: "Card title over the option that shows CN-server changes on operator pages. 'CN' is the Chinese game server, which receives content months before the others.",
     },
     "appearance.cnUpdates.desc": {
@@ -144,7 +144,7 @@ export const messages = {
         description: "Caption under the CN updates switch. 'Modules' is the game's word for an operator's equipment upgrades. 'CN's own text' means Chinese game text, untranslated. 'Upcoming' is the name of the operator list's view of CN-server operators.",
     },
     "appearance.topBar.title": {
-        text: "Top Bar",
+        text: "Top bar",
         description: "Card title over the options for what shows up in the bar at the top of every page.",
     },
     "appearance.topBar.desc": {
@@ -160,7 +160,7 @@ export const messages = {
         description: "Caption under the maintenance countdown switch. 'Yostar' is the game's publisher; 'Home' is the site's landing page.",
     },
     "appearance.dataSaver.title": {
-        text: "Data Saver",
+        text: "Data saver",
         description: "Card title over the option that cuts how much artwork the site downloads.",
     },
     "appearance.dataSaver.desc": {
@@ -168,7 +168,7 @@ export const messages = {
         description: "Card description under the Data Saver title.",
     },
     "appearance.dataSaver.rowTitle": {
-        text: "Data Saver Mode",
+        text: "Data saver mode",
         description: "Label of the switch that turns data saver on, and the switch's accessible name.",
     },
     "appearance.dataSaver.rowDesc": {

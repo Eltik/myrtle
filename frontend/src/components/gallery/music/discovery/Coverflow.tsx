@@ -474,17 +474,24 @@ export function Coverflow({ albums, onOpen }: { albums: readonly IAlbum[]; onOpe
                 {current ? <span className="font-mono text-[10.5px] text-primary uppercase tracking-[0.14em]">{t("music.list.trackCount", { count: current.trackCount })}</span> : null}
             </div>
             <p className="mt-2 mb-0 text-center font-sans text-[11.5px] text-muted-foreground">
-                <span className="pointer-coarse:hidden">
-                    {t("music.discovery.hint.browse")}
+                {/* Each separator rides with the item after it, so a wrap never strands one at a
+                    line end. The key hints only show to a fine pointer from sm up; touch and
+                    phone widths get the drag hint alone. */}
+                <span className="whitespace-nowrap">{t("music.discovery.hint.browse")}</span>
+                <span className="hidden whitespace-nowrap pointer-fine:sm:inline">
                     <span aria-hidden="true"> · </span>
                     {t("music.discovery.hint.step")}
+                </span>
+                <span className="hidden whitespace-nowrap pointer-fine:sm:inline">
                     <span aria-hidden="true"> · </span>
                     {t("music.discovery.hint.open")}
-                    <span aria-hidden="true"> · </span>
+                </span>{" "}
+                <span className="whitespace-nowrap">
+                    <span aria-hidden="true">· </span>
+                    <button type="button" onClick={() => setPaletteOpen(true)} className="cursor-pointer text-primary underline-offset-2 hover:underline max-sm:min-h-11">
+                        {t("music.discovery.jump")}
+                    </button>
                 </span>
-                <button type="button" onClick={() => setPaletteOpen(true)} className="cursor-pointer text-primary underline-offset-2 hover:underline max-sm:min-h-11">
-                    {t("music.discovery.jump")}
-                </button>
             </p>
             <JumpPalette
                 open={paletteOpen}

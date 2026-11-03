@@ -142,8 +142,10 @@ function ModeButton({ active, icon, label, lang, onClick }: { active: boolean; i
             aria-pressed={active}
             lang={lang}
             className={cn(
-                "inline-flex h-8 min-w-0 grow items-center justify-center gap-1.5 rounded-md border border-transparent px-1.5 font-medium text-foreground text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                active ? "border-border bg-accent" : "hover:bg-accent/60",
+                // The coarse ::after makes the 32px row a 44px touch target; the pressed one gets the
+                // a foreground/50 border (3.72 light / 5.16 dark on the popover), so the state is not carried by the fill alone.
+                "relative inline-flex h-8 min-w-0 grow items-center justify-center gap-1.5 rounded-md border border-transparent px-1.5 font-medium text-foreground text-xs transition-colors pointer-coarse:after:absolute pointer-coarse:after:inset-x-0 pointer-coarse:after:top-1/2 pointer-coarse:after:h-11 pointer-coarse:after:-translate-y-1/2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                active ? "border-foreground/50 bg-accent" : "hover:bg-accent/60",
             )}
         >
             {icon}

@@ -47,7 +47,7 @@ export function MoraleTimeline({ catalog, timeline }: { catalog: Catalog; timeli
                             </span>
                             <Sparkline samples={row.samples} />
                         </div>
-                        <span className={cn("shrink-0 font-mono font-semibold text-[11px] tabular-nums", low ? "text-red-500/90" : "text-foreground/80")}>
+                        <span className={cn("shrink-0 font-mono font-semibold text-[11px] tabular-nums", low ? "text-destructive-foreground" : "text-foreground/80")}>
                             {row.end.toFixed(1)}
                             <span className="text-[9px] text-subtle-foreground">/{MORALE_MAX}</span>
                         </span>

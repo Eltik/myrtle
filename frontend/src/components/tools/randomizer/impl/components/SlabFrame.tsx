@@ -21,7 +21,7 @@ export function SlabFrame({ index, kicker, children, className, accent = "primar
             <div className="flex min-w-0">
                 <aside className="relative flex w-12 shrink-0 flex-col items-center justify-between border-border/60 border-r bg-muted/30 py-4 sm:w-14 sm:py-5">
                     <span className="font-mono text-[11px] text-subtle-foreground tracking-[0.18em] sm:text-[12px]">{index}</span>
-                    <span className="rotate-180 font-mono text-[10px] text-foreground/70 uppercase tracking-[0.22em] [writing-mode:vertical-rl] sm:text-[11px]">{kicker}</span>
+                    <span className="kicker rotate-180 [writing-mode:vertical-rl]">{kicker}</span>
                     <span className="font-mono text-[11px] text-subtle-foreground tracking-[0.18em] sm:text-[12px]">- -</span>
                 </aside>
                 <div className="min-w-0 flex-1 p-4 sm:p-6">{children}</div>

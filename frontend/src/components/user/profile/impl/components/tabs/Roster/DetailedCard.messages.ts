@@ -8,7 +8,7 @@ export const messages = {
         description: "Accessible name of the button laid over an operator card's art, which opens that operator's dialog. {name} comes from the game data.",
     },
     "profile.roster.detailed.currentPotential": {
-        text: "Current Potential",
+        text: "Current potential",
         description: "Row label inside the card's Potential section, over the rank the operator has reached.",
     },
     "profile.roster.detailed.loadingSkills": {

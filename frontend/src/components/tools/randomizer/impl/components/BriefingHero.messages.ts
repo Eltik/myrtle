@@ -8,7 +8,7 @@ export const messages = {
         description: "Page heading of the squad randomizer.",
     },
     "randomizer.hero.intro": {
-        text: "Roll a random stage, squad, and challenge modifier. Logged-in users can restrict the draw to operators they own and stages they've completed.",
+        text: "Roll a random stage, squad, and challenge modifier. Signed in, you can limit the draw to operators you own and stages you've cleared.",
         description: "Blurb under the page heading. 'Roll' and 'draw' are dice metaphors for picking at random.",
     },
     "randomizer.hero.roster": {

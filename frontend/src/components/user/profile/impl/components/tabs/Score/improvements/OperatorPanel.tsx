@@ -200,7 +200,7 @@ function ScoreBreakdown({ dims, accent }: { dims: IScoreDimension[] | undefined;
                     const titleValues = { label, share: sharePct.toFixed(1), completion: completionPct.toFixed(0), earned: earnedPct.toFixed(1) };
                     return (
                         <Tooltip key={d.kind}>
-                            <TooltipTrigger render={<div className="grid grid-cols-[5.5rem_1fr_auto] items-center gap-2.5" />}>
+                            <TooltipTrigger render={<button type="button" className="grid w-full cursor-default grid-cols-[5.5rem_1fr_auto] items-center gap-2.5 rounded-sm text-left focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2" />}>
                                 <span className={cn(TEXT_BADGE, "truncate text-muted-foreground")}>{label}</span>
                                 <div className="h-1 w-full overflow-hidden rounded-full bg-muted/40">
                                     <div
@@ -253,9 +253,13 @@ function RarityBucket({ rarity, ops, defaultOpen, accent }: IBucketProps) {
                 <span className={cn(TEXT_KICKER, "text-subtle-foreground")}>{t("score.improvements.operator.bucket.toUpgrade")}</span>
                 {bucketGain > 0.01 && (
                     <Tooltip>
-                        <TooltipTrigger render={<span className={cn(TEXT_BADGE, "rounded-sm border border-border/40 bg-background px-1 py-px font-semibold tabular-nums")} style={{ color: `color-mix(in oklch, ${accent} 70%, var(--foreground))` }} />}>+{bucketGain.toFixed(1)}%</TooltipTrigger>
+                        <TooltipTrigger render={<span aria-hidden className={cn(TEXT_BADGE, "rounded-sm border border-border/40 bg-background px-1 py-px font-semibold tabular-nums")} style={{ color: `color-mix(in oklch, ${accent} 70%, var(--foreground))` }} />}>+{bucketGain.toFixed(1)}%</TooltipTrigger>
                         <TooltipPopup>{t("score.improvements.operator.bucket.gainTitle", { rarity, gain: bucketGain.toFixed(1) })}</TooltipPopup>
                     </Tooltip>
+                )}
+                {bucketGain > 0.01 && (
+                    // Inside the bucket's own toggle button, so the hint cannot be a focusable trigger: its sentence is read as part of the button instead.
+                    <span className="sr-only">{t("score.improvements.operator.bucket.gainTitle", { rarity, gain: bucketGain.toFixed(1) })}</span>
                 )}
                 <span className="ml-auto flex items-center gap-2">
                     <PreviewStrip ops={ops.slice(0, 5)} color={color} dim={open} />
@@ -330,7 +334,17 @@ const OperatorRow = memo(function OperatorRow({ op, color, accent }: { op: IOper
                     </span>
                     {subscoreGainPct >= SHOW_DELTA_THRESHOLD_PCT && (
                         <Tooltip>
-                            <TooltipTrigger render={<span className={cn(TEXT_BADGE, "shrink-0 rounded-sm border border-border/40 bg-background px-1 py-px font-semibold tabular-nums")} style={{ color: `color-mix(in oklch, ${accent} 70%, var(--foreground))` }} />}>+{subscoreGainPct.toFixed(2)}</TooltipTrigger>
+                            <TooltipTrigger
+                                render={
+                                    <button
+                                        type="button"
+                                        className={cn(TEXT_BADGE, "shrink-0 cursor-default rounded-sm border border-border/40 bg-background px-1 py-px text-left font-semibold tabular-nums focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2")}
+                                        style={{ color: `color-mix(in oklch, ${accent} 70%, var(--foreground))` }}
+                                    />
+                                }
+                            >
+                                +{subscoreGainPct.toFixed(2)}
+                            </TooltipTrigger>
                             <TooltipPopup>{t("score.improvements.operator.row.gainTitle", { name: op.name, section: subscoreGainPct.toFixed(2), overall: totalScoreGainPct.toFixed(2) })}</TooltipPopup>
                         </Tooltip>
                     )}
@@ -358,7 +372,15 @@ const OperatorRow = memo(function OperatorRow({ op, color, accent }: { op: IOper
                                 : t(TAG_DESC[tag]);
                             return (
                                 <Tooltip key={tag}>
-                                    <TooltipTrigger render={<span className={cn("rounded-sm border border-border/40 bg-background px-1 py-px font-semibold", TEXT_BADGE)} style={{ color: `color-mix(in oklch, ${color} 65%, var(--foreground))` }} />}>
+                                    <TooltipTrigger
+                                        render={
+                                            <button
+                                                type="button"
+                                                className={cn("cursor-default rounded-sm border border-border/40 bg-background px-1 py-px text-left font-semibold focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2", TEXT_BADGE)}
+                                                style={{ color: `color-mix(in oklch, ${color} 65%, var(--foreground))` }}
+                                            />
+                                        }
+                                    >
                                         {t(TAG_LABEL[tag])}
                                         {showNumber ? <span className="ml-1 font-mono text-subtle-foreground">+{tagDeltaPct.toFixed(2)}</span> : <span className="ml-1 text-subtle-foreground">·</span>}
                                     </TooltipTrigger>

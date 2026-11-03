@@ -104,7 +104,7 @@ export const messages = {
         description: "Auto-save status after an automatic save failed; auto-save waits until the author retries. Rendered uppercase.",
     },
     "edit.hero.autosaveRetry": {
-        text: "Retry",
+        text: "Try again",
         description: "Button next to the failed auto-save status that tries the save again.",
     },
     "edit.hero.autosaveConflict": {

@@ -4,7 +4,7 @@ export const namespace = "user";
 
 export const messages = {
     "profile.roster.unowned.badge": {
-        text: "Not Owned",
+        text: "Not owned",
         description: "Badge across an operator the account does not have.",
     },
 } satisfies MessageMap;

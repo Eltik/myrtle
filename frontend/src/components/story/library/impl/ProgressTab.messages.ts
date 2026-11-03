@@ -109,7 +109,7 @@ export const messages = {
         description: "Button that starts a sync immediately.",
     },
     "progress.sync.retry": {
-        text: "Retry",
+        text: "Try again",
         description: "Button that starts a sync again after one failed.",
     },
     "progress.backup": {

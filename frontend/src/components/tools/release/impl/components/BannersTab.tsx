@@ -135,7 +135,7 @@ function FaceStrip({ ids, lookup, alt, t }: { ids: string[]; lookup: OperatorLoo
 function FaceAvatar({ id, onEn, tight }: { id: string; onEn: boolean; tight: boolean }): React.ReactElement | null {
     const [failed, setFailed] = React.useState(false);
     if (failed) return null;
-    return <img src={getAvatarById(id, onEn ? undefined : "cn")} alt="" loading="lazy" onError={() => setFailed(true)} className={cn("h-full rounded-sm object-cover", tight ? "min-w-0 flex-1" : "aspect-square flex-none")} />;
+    return <img src={getAvatarById(id, onEn ? undefined : "cn")} alt="" width={64} height={64} loading="lazy" onError={() => setFailed(true)} className={cn("h-full rounded-sm object-cover", tight ? "min-w-0 flex-1" : "aspect-square flex-none")} />;
 }
 
 interface IBannerRowProps {
@@ -184,7 +184,7 @@ function BannerRow({ banner, lookup, charNames, eventNames, eventsByDay, eventTi
             <CnName cn={banner.nameCn} auto={banner.nameEnAuto} primaryClassName="font-sans font-semibold text-[13.5px] text-foreground">
                 <Tag>{tagLabel(banner.ruleType)}</Tag>
                 <span className="font-mono text-[11.5px] text-muted-foreground tabular-nums">
-                    <span className="mr-1 uppercase tracking-[0.06em]">{t("release.banners.cn")}</span>
+                    <span className="mr-1">{t("release.banners.cn")}</span>
                     {formatDate(banner.cnOpen, locale)}
                 </span>
             </CnName>
@@ -215,7 +215,7 @@ function BannerRow({ banner, lookup, charNames, eventNames, eventsByDay, eventTi
                         case says "guess" in the phrase itself, not only in a label beside it. */}
                     {banner.anchorActivity && (
                         <span title={banner.anchorActivity}>
-                            {banner.alignment.method === "anchor" ? rt("release.banners.probablyWith", { event: <span className={anchor ? "text-foreground/80" : "font-mono"}>{anchorName}</span> }) : rt("release.banners.with", { event: <span className={anchor ? "text-foreground/80" : "font-mono"}>{anchorName}</span> })}
+                            {banner.alignment.method === "anchor" ? rt("release.banners.probablyWith", { event: <span className={anchor ? "text-foreground" : "font-mono"}>{anchorName}</span> }) : rt("release.banners.with", { event: <span className={anchor ? "text-foreground" : "font-mono"}>{anchorName}</span> })}
                         </span>
                     )}
                 </div>

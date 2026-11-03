@@ -32,16 +32,16 @@ export const messages = {
         description: "Bold term opening a definition line in the explanation popover.",
     },
     "hps.help.baseHps.desc": {
-        text: "is always-on healing during SP recharge - it's 0 for burst healers that only heal on activation.",
-        description: "Completes the sentence begun by the bold term 'Base HPS'. 'SP' is the game's skill-point resource; the dash is a plain hyphen.",
+        text: "is always-on healing during SP recharge. It's 0 for burst healers that only heal on activation.",
+        description: "Completes the sentence begun by the bold term 'Base HPS'. 'SP' is the game's skill-point resource.",
     },
     "hps.help.averageHps.term": {
         text: "Average HPS",
         description: "Bold term opening a definition line in the explanation popover.",
     },
     "hps.help.averageHps.desc": {
-        text: "averages skill uptime against SP recharge - the long-run sustainable rate.",
-        description: "Completes the sentence begun by the bold term 'Average HPS'. The dash is a plain hyphen.",
+        text: "averages skill uptime against SP recharge: the long-run sustainable rate.",
+        description: "Completes the sentence begun by the bold term 'Average HPS'.",
     },
     "hps.help.sweep": {
         text: "Healing ignores enemy DEF/RES, so the chart sweeps a team variable instead: target count, ATK buff, or ASPD. Single-target vs. AoE healers diverge most along the Targets axis.",
@@ -60,7 +60,7 @@ export const messages = {
         description: "Link text: the GitHub username of the author of the healing formulas, in the possessive. The name itself is never translated; only the possessive marking should adapt.",
     },
     "hps.note.credit": {
-        text: "All calculations go to the credit of {link} GitHub repository.",
+        text: "Calculation credit: the {link} GitHub repository.",
         description: "Attribution sentence under the page blurb. {link} is the author's GitHub username, labelled by hps.note.creditLink and linked to the repository, and may move wherever the sentence needs it.",
     },
     "hps.clearAll": {
@@ -124,8 +124,8 @@ export const messages = {
         description: "Accessible name of the region holding the per-healer build cards.",
     },
     "hps.baseHps.burstHint": {
-        text: "Burst healer - heals only on skill activation, so there's no off-skill (base) healing.",
-        description: "Tooltip on a Base HPS figure of zero, explaining why. The dash is a plain hyphen.",
+        text: "Burst healer: heals only on skill activation, so there's no off-skill (base) healing.",
+        description: "Tooltip on a Base HPS figure of zero, explaining why.",
     },
     "hps.tooltip.targets": {
         text: "{count, plural, one {# target} other {# targets}}",
@@ -169,7 +169,11 @@ export const messages = {
     },
     "hps.export.failed": {
         text: "Couldn't export chart: {error}",
-        description: "Browser alert when saving the chart image failed. {error} is the underlying message and is not translated.",
+        description: "Error toast when saving the chart image failed. {error} is the underlying message and is not translated.",
+    },
+    "hps.chart.loadFailed": {
+        text: "Couldn't calculate the curves. The chart may be missing lines.",
+        description: "Shown above the chart when a request for the healing curves failed, beside a retry button.",
     },
 } satisfies MessageMap;
 

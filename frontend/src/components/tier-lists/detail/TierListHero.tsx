@@ -107,11 +107,12 @@ export function TierListHero({ detail }: ITierListHeroProps) {
                                 </span>
                             )}
 
-                            <span className="opacity-50 max-sm:hidden" aria-hidden="true">
-                                ·
-                            </span>
-
+                            {/* Each separator is the first child of the item after it, so a wrap carries it
+                                to the next line instead of leaving it at the end of this one. */}
                             <span className="inline-flex items-center gap-1.5">
+                                <span className="me-2.5 opacity-50 max-sm:hidden" aria-hidden="true">
+                                    ·
+                                </span>
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5 opacity-70" aria-hidden="true">
                                     <circle cx="12" cy="12" r="10" />
                                     <path d="M12 6v6l4 2" />
@@ -121,11 +122,11 @@ export function TierListHero({ detail }: ITierListHeroProps) {
 
                             {stats && (
                                 <>
-                                    <span className="opacity-50" aria-hidden="true">
-                                        ·
-                                    </span>
                                     <Tooltip>
                                         <TooltipTrigger render={<span className="inline-flex items-center gap-1.5" />}>
+                                            <span className="me-2.5 opacity-50" aria-hidden="true">
+                                                ·
+                                            </span>
                                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5 opacity-70" aria-hidden="true">
                                                 <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
                                                 <circle cx="12" cy="12" r="3" />

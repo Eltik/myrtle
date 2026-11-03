@@ -12,7 +12,7 @@ export const messages = {
         description: "Count badge on a medal list heading. {n} is how many medals in that group the account is missing.",
     },
     "score.improvements.medal.event.title": {
-        text: "Event medals - limited time",
+        text: "Event medals (limited time)",
         description: "Heading of the group of medals that can only be earned while their event runs.",
     },
     "score.improvements.medal.event.subtitle": {
@@ -56,11 +56,11 @@ export const messages = {
         description: "Small tag on a medal whose unlock condition the game does not reveal.",
     },
     "score.improvements.medal.hidden.tooltip": {
-        text: "Hidden medal - unlock condition isn't shown in-game.",
+        text: "Hidden medal: the unlock condition isn't shown in-game.",
         description: "Tooltip on the 'Hidden' tag.",
     },
     "score.improvements.medal.ownedTooltip": {
-        text: "Earned by {pct}% of synced players on your server who share stats - how rare this medal is in the community.",
+        text: "Earned by {pct}% of synced players on your server who share stats. This is how rare the medal is in the community.",
         description: "Tooltip on the owners figure of a medal row. {pct} is the share of players who have it.",
     },
     "score.improvements.medal.endingNow": {

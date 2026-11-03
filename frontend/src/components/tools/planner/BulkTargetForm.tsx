@@ -2,6 +2,7 @@ import type * as React from "react";
 
 import { eliteIcon, specializedIcon } from "#/components/operators/detail/impl/assets";
 import { Input } from "#/components/ui/input";
+import { Kicker } from "#/components/ui/kicker";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import type { IPresetTarget } from "#/lib/api/planner";
 import { useT } from "#/lib/i18n";
@@ -32,8 +33,8 @@ export function BulkTargetForm({ target, onChange }: IBulkTargetFormProps): Reac
     const changeLevel = (raw: number) => onChange(withPresetChange(target, { field: "level", value: Number.isNaN(raw) ? 1 : raw }));
 
     return (
-        <div className="space-y-5 rounded-xl border border-border bg-card/40 p-4">
-            <span className="font-semibold text-muted-foreground text-xs uppercase tracking-wider">{t("planner.bulk.target")}</span>
+        <div className="space-y-5 rounded-2xl border border-border bg-card/40 p-4">
+            <Kicker className="mb-0 block">{t("planner.bulk.target")}</Kicker>
 
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-[auto_1fr]">
                 <FieldBlock label={t("planner.dialog.promotion")}>

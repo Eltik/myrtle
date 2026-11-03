@@ -4,7 +4,7 @@ export const namespace = "user";
 
 export const messages = {
     "profile.stats.classes.title": {
-        text: "Class Breakdown",
+        text: "Class breakdown",
         description: "Heading of the card breaking the roster down by operator class. The class and archetype names themselves come from the game data.",
     },
 } satisfies MessageMap;

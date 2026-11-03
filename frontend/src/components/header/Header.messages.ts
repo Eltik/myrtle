@@ -53,7 +53,7 @@ export const messages = {
         description: "Collection menu entry for the operator (playable character) browser.",
     },
     "header.collection.operators.desc": {
-        text: "Every operator released in Arknights.",
+        text: "Every operator released in Arknights",
         description: "Blurb under the Operators entry in the Collection menu. 'Arknights' is the game's name.",
     },
     "header.collection.enemies.label": {
@@ -61,7 +61,7 @@ export const messages = {
         description: "Collection menu entry for the enemy browser.",
     },
     "header.collection.enemies.desc": {
-        text: "Every enemy catalogued, with stats and traits.",
+        text: "Every enemy cataloged, with stats and traits",
         description: "Blurb under the Enemies entry in the Collection menu.",
     },
     "header.collection.stages.label": {
@@ -69,7 +69,7 @@ export const messages = {
         description: "Collection menu entry for the stage (mission map) browser.",
     },
     "header.collection.stages.desc": {
-        text: "Every stage, mapped with an enemy-pathing simulator.",
+        text: "Every stage, mapped with an enemy-pathing simulator",
         description: "Blurb under the Stages entry in the Collection menu.",
     },
     "header.collection.stories.label": {
@@ -77,7 +77,7 @@ export const messages = {
         description: "Collection menu entry for the story reader and its library.",
     },
     "header.collection.stories.desc": {
-        text: "Read every story in the game, with your progress synced.",
+        text: "Read every story in the game, with your progress synced",
         description: "Blurb under the Stories entry in the Collection menu.",
     },
     "header.collection.music.label": {
@@ -85,7 +85,7 @@ export const messages = {
         description: "Collection menu entry for the gallery page that lists every piece of music in the game.",
     },
     "header.collection.music.desc": {
-        text: "Every track in the game, where it plays, and a player that loops it like the game does.",
+        text: "Every track in the game, where it plays, and a player that loops it like the game does",
         description: "Blurb under the In-Game Music entry in the Collection menu.",
     },
     "header.collection.news.label": {
@@ -101,7 +101,7 @@ export const messages = {
         description: "Collection menu entry for the Archives: personnel files, the faction network and roster statistics.",
     },
     "header.collection.archives.desc": {
-        text: "Personnel files, the faction network and the roster counted up.",
+        text: "Personnel files, the faction network and the roster counted up",
         description: "Blurb under the Archives entry in the Collection menu.",
     },
     "header.gacha.community.label": {

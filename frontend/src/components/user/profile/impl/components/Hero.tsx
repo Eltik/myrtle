@@ -30,33 +30,6 @@ interface IHeroProps {
     isOwner?: boolean;
 }
 
-/** The header's tint, half of its plain look. */
-function HeroTint() {
-    return (
-        <div
-            className="pointer-events-none absolute inset-0"
-            style={{
-                background: "radial-gradient(ellipse 80% 60% at 60% 40%, color-mix(in oklab, var(--primary) 7%, transparent), transparent 70%), radial-gradient(ellipse 60% 80% at 80% 20%, oklch(0.696 0.17 162 / 0.06), transparent 70%)",
-            }}
-        />
-    );
-}
-
-/** The header's faint grid, the other half. */
-function HeroGrid() {
-    return (
-        <div
-            className="pointer-events-none absolute inset-0 opacity-[0.06]"
-            style={{
-                backgroundImage: "linear-gradient(var(--border) 1px, transparent 1px), linear-gradient(90deg, var(--border) 1px, transparent 1px)",
-                backgroundSize: "44px 44px",
-                maskImage: "radial-gradient(ellipse 60% 50% at 30% 50%, black 0%, transparent 80%)",
-                WebkitMaskImage: "radial-gradient(ellipse 60% 50% at 30% 50%, black 0%, transparent 80%)",
-            }}
-        />
-    );
-}
-
 async function copyToClipboard(text: string, successTitle: string, successDescription: string, errorTitle: string, errorDescription: string) {
     try {
         await navigator.clipboard.writeText(text);
@@ -107,23 +80,8 @@ export function Hero({ profile, background, onChangeBackground, onEditHeader, is
     const showSignIn = typeof profile.cumulative_signin === "number" && profile.cumulative_signin > 0;
 
     return (
-        <section className="relative overflow-hidden rounded-2xl border border-[oklch(0.28_0.005_285)] bg-card shadow-sm sm:rounded-3xl">
-            {/* Two slots, as the two decoration layers were before backgrounds, so with none the markup (base-ui's generated ids included) is byte-identical to it. */}
-            {background ? (
-                <HeroArt
-                    key={`${background.kind}:${background.id}:${background.elite ?? ""}`}
-                    background={background}
-                    fallback={
-                        <>
-                            <HeroTint />
-                            <HeroGrid />
-                        </>
-                    }
-                />
-            ) : (
-                <HeroTint />
-            )}
-            {background ? null : <HeroGrid />}
+        <section className="relative overflow-hidden rounded-2xl border border-[oklch(0.28_0.005_285)] bg-card shadow-sm">
+            {background && <HeroArt key={`${background.kind}:${background.id}:${background.elite ?? ""}`} background={background} fallback={null} />}
 
             <div className="relative grid grid-cols-[auto_1fr] items-start gap-4 px-5 pt-5 pb-5 sm:grid-cols-[auto_1fr_auto] sm:items-center sm:gap-6 sm:px-7 sm:pt-7 sm:pb-6 lg:gap-7 lg:px-8 lg:pt-8 lg:pb-7">
                 <div className="relative">

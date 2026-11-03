@@ -68,7 +68,7 @@ export const messages = {
         description: "Heading of the Annihilation maps that have rotated out of the weekly schedule.",
     },
     "score.improvements.stage.annihilation.lockedSubtitle": {
-        text: "Rotating maps that aren't playable right now, so they can't be maxed until their rotation returns. These are scored on a recency curve rather than as permanent gaps - shown for reference.",
+        text: "Rotating maps that aren't playable right now, so they can't be maxed until their rotation returns. These are scored on a recency curve rather than as permanent gaps, and shown for reference.",
         description: "Blurb under 'Not in rotation'.",
     },
     "score.improvements.stage.total": {
@@ -80,7 +80,7 @@ export const messages = {
         description: "Native tooltip on an operation chip: the operation's code and its name, both from the game data.",
     },
     "score.improvements.stage.chip.lockedTitle": {
-        text: "{label} - rotated out, not currently playable",
+        text: "{label}: rotated out, not currently playable",
         description: "Native tooltip on a rotated-out Annihilation chip. {label} is the operation's code and name.",
     },
     "score.improvements.stage.annihilation.title": {

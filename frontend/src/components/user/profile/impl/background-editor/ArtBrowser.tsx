@@ -10,7 +10,7 @@ import type { ProfileBackgroundKind } from "#/types/generated/ProfileBackgroundK
 import { GALLERY_KINDS, type GalleryKind, isGalleryKind } from "../background";
 import { archivePictureCategory, type IGalleryFilter, NO_GALLERY_FILTER } from "../gallery";
 import type { messages } from "./ArtBrowser.messages";
-import { COUNT, SEGMENT_ITEM, sourceTab } from "./chips";
+import { COUNT, SEGMENT_ITEM } from "./chips";
 import { RailLabel, RailRow } from "./rail";
 import { CharacterArt } from "./sources/CharacterArt";
 import { GalleryBar, GalleryResultsHeader, GalleryTiles, galleryFilterActions, useGalleryView } from "./sources/Gallery";
@@ -165,19 +165,19 @@ export const ArtBrowser = memo(function ArtBrowser({ selected, onPick }: IArtBro
     return (
         <section className={cn("flex flex-col", pinned && `${STICKY_UNDER_STRIP} ${UNDER_STRIP}`)}>
             <div className={cn("z-20 flex shrink-0 flex-col gap-2.5 border-b bg-background px-4 py-3", !pinned && STICKY_UNDER_STRIP)}>
-                <div className="-mx-4 overflow-x-auto px-4 [scrollbar-width:none]">
-                    <div className="inline-flex w-max gap-0.5 rounded-lg bg-muted/70 p-1" role="tablist" aria-label={t("profile.background.source")}>
+                <div className="-mx-4 -my-1.5 overflow-x-auto px-4 py-1.5 [scrollbar-width:none]">
+                    <ToggleGroup value={[source]} onValueChange={(next) => next[0] && setSource(next[0] as Source)} variant="outline" size="sm" aria-label={t("profile.background.source")} className="w-max">
                         {SOURCES.map((s) => {
                             const n = count(s);
                             return (
-                                <button key={s} type="button" role="tab" aria-selected={source === s} onClick={() => setSource(s)} className={sourceTab(source === s)}>
+                                <ToggleGroupItem key={s} value={s} className={cn(SEGMENT_ITEM, "gap-2 px-3")}>
                                     {icon(s)}
                                     {label(s)}
                                     {n !== null && <span className={COUNT}>{n}</span>}
-                                </button>
+                                </ToggleGroupItem>
                             );
                         })}
-                    </div>
+                    </ToggleGroup>
                 </div>
                 {source !== "characters" && <GalleryBar view={view} query={chosen.query} actions={actions} />}
             </div>

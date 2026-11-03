@@ -32,15 +32,15 @@ export const messages = {
         description: "Menu item linking to the donation page. 'Support' here means financially supporting the site.",
     },
     "userMenu.adminPanel": {
-        text: "Admin Panel",
+        text: "Admin",
         description: "Menu item shown only to staff, linking to the moderation and translation tools.",
     },
     "userMenu.logout": {
-        text: "Logout",
+        text: "Sign out",
         description: "Menu item that signs the visitor out.",
     },
     "userMenu.login": {
-        text: "Login",
+        text: "Sign in",
         description: "Button shown to signed-out visitors, opening the sign-in dialog.",
     },
 } satisfies MessageMap;

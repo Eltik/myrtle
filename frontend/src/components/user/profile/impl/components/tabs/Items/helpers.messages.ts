@@ -37,7 +37,7 @@ export const messages = {
         description: "Category chip: the items that raise skill levels.",
     },
     "profile.items.category.module": {
-        text: "Module Mats",
+        text: "Module mats",
         description: "Category chip: the materials for module upgrades. 'Mats' is short for materials; the chip is narrow.",
     },
     "profile.items.category.chip": {

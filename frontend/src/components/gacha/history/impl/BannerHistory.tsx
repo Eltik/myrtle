@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState } from "react";
 import { Button } from "#/components/ui/button";
+import { FilterChip } from "#/components/ui/filter-chip";
 import { Kicker } from "#/components/ui/kicker";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { Skeleton } from "#/components/ui/skeleton";
@@ -93,10 +94,10 @@ function PullTable({
                 <table className="w-full border-collapse">
                     <thead className="sticky top-0 z-10 bg-card">
                         <tr>
-                            <th className="w-10 border-border border-b bg-card px-1.5 py-2 text-left font-medium font-mono text-[9.5px] text-muted-foreground uppercase tracking-[0.14em] sm:px-2">#</th>
-                            <th className="border-border border-b bg-card px-1.5 py-2 text-left font-medium font-mono text-[9.5px] text-muted-foreground uppercase tracking-[0.14em] sm:px-2">{t("history.banners.col.operator")}</th>
-                            <th className="hidden border-border border-b bg-card px-2 py-2 text-left font-medium font-mono text-[9.5px] text-muted-foreground uppercase tracking-[0.14em] sm:table-cell">{t("history.banners.col.banner")}</th>
-                            <th className="hidden border-border border-b bg-card px-2 py-2 text-right font-medium font-mono text-[9.5px] text-muted-foreground uppercase tracking-[0.14em] md:table-cell">{t("history.banners.col.date")}</th>
+                            <th className="kicker w-10 border-border border-b bg-card px-1.5 py-2 text-left sm:px-2">#</th>
+                            <th className="kicker border-border border-b bg-card px-1.5 py-2 text-left sm:px-2">{t("history.banners.col.operator")}</th>
+                            <th className="kicker hidden border-border border-b bg-card px-2 py-2 text-left sm:table-cell">{t("history.banners.col.banner")}</th>
+                            <th className="kicker hidden border-border border-b bg-card px-2 py-2 text-right md:table-cell">{t("history.banners.col.date")}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -118,7 +119,7 @@ function PullTable({
                                                 <OperatorAvatar charId={item.charId} name={name} className="block h-full w-full object-cover" />
                                             </span>
                                             <div className="min-w-0">
-                                                <div className={`truncate font-sans font-semibold text-[12.5px] leading-snug sm:text-sm ${isSixStar ? "text-amber-600 dark:text-amber-400" : "text-foreground"}`}>{name}</div>
+                                                <div className={`truncate font-sans font-semibold text-[12.5px] leading-snug sm:text-sm ${isSixStar ? "text-rarity-6-ink" : "text-foreground"}`}>{name}</div>
                                                 <div className="mt-0.5 flex items-center gap-1.5 font-mono text-[10px] text-muted-foreground">
                                                     <span style={{ color: rarityInk(star) }} className="tracking-wider">
                                                         {"★".repeat(star)}
@@ -143,25 +144,15 @@ function PullTable({
                 <div className="flex items-center justify-between border-border border-t pt-3">
                     <span className="font-mono text-[11px] text-muted-foreground tabular-nums">{t("history.banners.range", { from: page * PAGE_SIZE + 1, to: Math.min((page + 1) * PAGE_SIZE, sorted.length), total: f.number(sorted.length) })}</span>
                     <div className="flex items-center gap-1.5">
-                        <button
-                            type="button"
-                            onClick={() => setPage((p) => Math.max(0, p - 1))}
-                            disabled={page === 0}
-                            className="flex h-7 items-center rounded-md border border-border bg-card px-2.5 font-mono text-[11px] text-muted-foreground transition-colors hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
-                        >
+                        <Button disabled={page === 0} onClick={() => setPage((p) => Math.max(0, p - 1))} size="sm" variant="outline">
                             {t("history.banners.prev")}
-                        </button>
+                        </Button>
                         <span className="px-1 font-mono text-[11px] text-muted-foreground tabular-nums">
                             {page + 1} / {pageCount}
                         </span>
-                        <button
-                            type="button"
-                            onClick={() => setPage((p) => Math.min(pageCount - 1, p + 1))}
-                            disabled={page >= pageCount - 1}
-                            className="flex h-7 items-center rounded-md border border-border bg-card px-2.5 font-mono text-[11px] text-muted-foreground transition-colors hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
-                        >
+                        <Button disabled={page >= pageCount - 1} onClick={() => setPage((p) => Math.min(pageCount - 1, p + 1))} size="sm" variant="outline">
                             {t("history.banners.next")}
-                        </button>
+                        </Button>
                     </div>
                 </div>
             ) : null}
@@ -270,7 +261,7 @@ export function BannerHistory({ records, operatorsById, bannersById, isLoading }
 
     if (isLoading) {
         return (
-            <section className="flex flex-col gap-4 rounded-[14px] border border-border bg-card p-4.5 sm:p-[22px_24px]">
+            <section className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4.5 sm:p-[22px_24px]">
                 <Skeleton className="h-4 w-28 rounded" />
                 <div className="flex gap-2 border-border border-b pb-0">
                     {Array.from({ length: 3 }).map((_, i) => (
@@ -298,7 +289,7 @@ export function BannerHistory({ records, operatorsById, bannersById, isLoading }
     if (!records) return null;
 
     return (
-        <section className="flex flex-col gap-4 rounded-[14px] border border-border bg-card p-4.5 sm:p-[22px_24px]">
+        <section className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4.5 sm:p-[22px_24px]">
             <header>
                 <Kicker className="mb-1.5">{t("history.banners.kicker")}</Kicker>
                 <h2 className="m-0 font-sans font-semibold text-[20px] text-foreground leading-[1.15] tracking-[-0.02em] sm:text-[22px]">{t("history.banners.title")}</h2>
@@ -321,6 +312,7 @@ export function BannerHistory({ records, operatorsById, bannersById, isLoading }
                         <button
                             key={tab}
                             type="button"
+                            aria-pressed={isActive}
                             onClick={() => setActiveTab(tab)}
                             className={`relative flex shrink-0 cursor-pointer items-center gap-1 whitespace-nowrap border-none bg-none px-2 py-2 font-medium font-sans text-[12px] transition-colors sm:gap-1.5 sm:px-3 sm:text-[13px] ${isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}
                         >
@@ -333,9 +325,9 @@ export function BannerHistory({ records, operatorsById, bannersById, isLoading }
             </div>
 
             <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-                <span className="font-medium font-mono text-[10px] text-muted-foreground uppercase tracking-[0.14em]">{t("history.banners.rarityLabel")}</span>
+                <span className="kicker">{t("history.banners.rarityLabel")}</span>
                 {/* flex-wrap only matters below ~320px, where an unbreakable row would clip the last chip out of reach. */}
-                <div ref={rarityGroupRef} className="inline-flex flex-wrap gap-0.75 rounded-[9px] border border-border bg-muted p-0.75">
+                <div ref={rarityGroupRef} className="flex flex-wrap gap-1.5">
                     {RARITY_FILTERS.map((rarity) => {
                         const isActive = activeRarities.has(rarity);
                         const count = rarityCounts.get(rarity) ?? 0;
@@ -343,22 +335,7 @@ export function BannerHistory({ records, operatorsById, bannersById, isLoading }
                         // filtering to 6* and switching to a tab without any greys out the
                         // one control that would undo it.
                         const isDisabled = count === 0 && !isActive;
-                        return (
-                            <button
-                                key={rarity}
-                                type="button"
-                                aria-pressed={isActive}
-                                aria-label={t("history.banners.rarityChip", { rarity, count })}
-                                disabled={isDisabled}
-                                onClick={() => toggleRarity(rarity)}
-                                className={`flex h-7 cursor-pointer items-center gap-1.5 rounded-md px-2.5 font-medium font-sans text-xs transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${isActive ? "bg-card text-foreground shadow-[0_1px_2px_oklch(0_0_0/0.4)]" : "bg-transparent text-muted-foreground hover:enabled:text-foreground"}`}
-                            >
-                                <span className="tabular-nums" style={isActive ? { color: rarityInk(rarity) } : undefined}>
-                                    {rarity}★
-                                </span>
-                                <span className={`inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1 font-mono text-[9.5px] tabular-nums ${isActive ? "bg-primary/15 text-foreground" : "bg-muted-foreground/15 text-muted-foreground"}`}>{f.number(count)}</span>
-                            </button>
-                        );
+                        return <FilterChip key={rarity} active={isActive} aria-label={t("history.banners.rarityChip", { rarity, count })} count={count} disabled={isDisabled} label={`${rarity}★`} onSelect={() => toggleRarity(rarity)} tone={`var(--rarity-${rarity})`} />;
                     })}
                 </div>
             </div>

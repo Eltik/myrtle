@@ -28,7 +28,7 @@ export const messages = {
         description: "Tooltip on the Max Lv tile.",
     },
     "profile.stats.modules.unlockRate": {
-        text: "Unlock Rate",
+        text: "Unlock rate",
         description: "Label over the module-unlock bar.",
     },
     "profile.stats.modules.gap.locked": {
@@ -52,7 +52,7 @@ export const messages = {
         description: "Heading of the bottom half of the card, covering cosmetic outfits.",
     },
     "profile.stats.skins.collected": {
-        text: "Skins Collected",
+        text: "Skins collected",
         description: "Tile caption: outfits owned out of those available. Rendered uppercase by CSS.",
     },
     "profile.stats.skins.collected.tooltip": {

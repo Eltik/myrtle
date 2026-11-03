@@ -1,8 +1,10 @@
 import { ArrowDown, ArrowUp, ChevronDown, ChevronUp, Copy, Eye, EyeOff, X } from "lucide-react";
 import * as React from "react";
+import { LoadError } from "#/components/operators/detail/impl/components/LoadError";
+import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import { Card, CardHeader, CardPanel } from "#/components/ui/card";
-import { Collapsible, CollapsibleContent } from "#/components/ui/collapsible";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "#/components/ui/collapsible";
 import { Label } from "#/components/ui/label";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { Slider } from "#/components/ui/slider";
@@ -97,7 +99,7 @@ export function InstanceCard({ inst, index, isFirst, isLast, onUpdate, onToggleC
                     <IconButton label={t("calc.instance.duplicate")} onClick={onDuplicate}>
                         <Copy />
                     </IconButton>
-                    <IconButton label={collapsed ? t("calc.instance.expand") : t("calc.instance.collapse")} onClick={onToggleCollapsed}>
+                    <IconButton label={collapsed ? t("calc.instance.expand") : t("calc.instance.collapse")} expanded={!collapsed} onClick={onToggleCollapsed}>
                         {collapsed ? <ChevronDown /> : <ChevronUp />}
                     </IconButton>
                     <IconButton label={t("calc.instance.remove")} onClick={onRemove}>
@@ -107,6 +109,7 @@ export function InstanceCard({ inst, index, isFirst, isLast, onUpdate, onToggleC
             </CardHeader>
             {!collapsed && (
                 <CardPanel className="space-y-3.5 px-4 pt-0 pb-3">
+                    {detail.failed && <LoadError message={t("calc.instance.detailFailed")} onRetry={detail.retry} />}
                     <FieldRow label={t("calc.instance.promotion")}>
                         <div className="flex flex-wrap gap-1.5">
                             {Array.from({ length: detail.phaseCount }, (_, i) => i).map((p) => (
@@ -148,8 +151,9 @@ export function InstanceCard({ inst, index, isFirst, isLast, onUpdate, onToggleC
                                                 type="button"
                                                 onClick={() => onUpdate({ potential: p })}
                                                 aria-label={t("calc.instance.potentialAria", { rank: p })}
+                                                aria-pressed={config.potential === p}
                                                 className={cn(
-                                                    "flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-md border bg-card outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
+                                                    "flex pointer-coarse:size-11 size-8 shrink-0 cursor-pointer items-center justify-center rounded-md border bg-card outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
                                                     config.potential === p ? "border-primary bg-primary/10 ring-1 ring-primary/30" : "border-border hover:border-primary/50",
                                                 )}
                                             >
@@ -178,8 +182,9 @@ export function InstanceCard({ inst, index, isFirst, isLast, onUpdate, onToggleC
                                                         type="button"
                                                         onClick={() => onUpdate({ skillIndex: s })}
                                                         aria-label={t("calc.instance.useSkill", { skill: skillName })}
+                                                        aria-pressed={config.skillIndex === s}
                                                         className={cn(
-                                                            "flex min-w-0 cursor-pointer flex-col items-center gap-1 rounded-md border bg-card px-1 py-1.5 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
+                                                            "flex pointer-coarse:min-h-11 min-w-0 cursor-pointer flex-col items-center gap-1 rounded-md border bg-card px-1 py-1.5 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
                                                             config.skillIndex === s ? "border-primary bg-primary/10 ring-1 ring-primary/30" : "border-border hover:border-primary/50",
                                                         )}
                                                     >
@@ -219,8 +224,9 @@ export function InstanceCard({ inst, index, isFirst, isLast, onUpdate, onToggleC
                                 <button
                                     type="button"
                                     onClick={() => onUpdate({ moduleIndex: 0 })}
+                                    aria-pressed={config.moduleIndex === 0}
                                     className={cn(
-                                        "flex min-w-16 cursor-pointer items-center justify-center rounded-md border bg-card px-2 py-1.5 font-medium text-[11px] outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
+                                        "flex pointer-coarse:min-h-11 min-w-16 cursor-pointer items-center justify-center rounded-md border bg-card px-2 py-1.5 font-medium text-[11px] outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
                                         config.moduleIndex === 0 ? "border-primary bg-primary/10 ring-1 ring-primary/30" : "border-border hover:border-primary/50",
                                     )}
                                 >
@@ -237,8 +243,9 @@ export function InstanceCard({ inst, index, isFirst, isLast, onUpdate, onToggleC
                                                         {...triggerProps}
                                                         type="button"
                                                         onClick={() => onUpdate({ moduleIndex: m })}
+                                                        aria-pressed={config.moduleIndex === m}
                                                         className={cn(
-                                                            "flex cursor-pointer items-center gap-1.5 rounded-md border bg-card px-1.5 py-1 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
+                                                            "flex pointer-coarse:min-h-11 cursor-pointer items-center gap-1.5 rounded-md border bg-card px-1.5 py-1 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
                                                             config.moduleIndex === m ? "border-primary bg-primary/10 ring-1 ring-primary/30" : "border-border hover:border-primary/50",
                                                         )}
                                                     >
@@ -267,8 +274,9 @@ export function InstanceCard({ inst, index, isFirst, isLast, onUpdate, onToggleC
                                         key={`ml-${l}`}
                                         type="button"
                                         onClick={() => onUpdate({ moduleLevel: l })}
+                                        aria-pressed={config.moduleLevel === l}
                                         className={cn(
-                                            "flex h-8 min-w-10 cursor-pointer items-center justify-center rounded-md border bg-card px-2 font-medium font-mono text-[11px] transition-colors",
+                                            "flex h-8 pointer-coarse:h-11 min-w-10 pointer-coarse:min-w-11 cursor-pointer items-center justify-center rounded-md border bg-card px-2 font-medium font-mono text-[11px] outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
                                             config.moduleLevel === l ? "border-primary bg-primary/10 ring-1 ring-primary/30" : "border-border hover:border-primary/50",
                                         )}
                                     >
@@ -322,13 +330,17 @@ export function InstanceCard({ inst, index, isFirst, isLast, onUpdate, onToggleC
 
                     {buffsSection && (
                         <Collapsible open={buffsOpen} onOpenChange={setBuffsOpen}>
-                            <button type="button" className="flex w-full cursor-pointer items-center justify-between rounded py-1 text-left font-medium text-[11px] text-muted-foreground hover:text-foreground" onClick={() => setBuffsOpen((v) => !v)}>
+                            <CollapsibleTrigger className="flex pointer-coarse:min-h-11 w-full items-center justify-between rounded py-1 text-left font-medium text-[11px] text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring">
                                 <span className="flex items-center gap-1.5">
                                     {t("calc.instance.externalBuffs")}
-                                    {buffsSetCount > 0 && <span className="rounded bg-primary/15 px-1.5 py-0.5 font-mono text-[9.5px] text-foreground">{t("calc.instance.externalBuffs.count", { count: buffsSetCount })}</span>}
+                                    {buffsSetCount > 0 && (
+                                        <Badge variant="tint" size="sm" className="font-mono">
+                                            {t("calc.instance.externalBuffs.count", { count: buffsSetCount })}
+                                        </Badge>
+                                    )}
                                 </span>
-                                {buffsOpen ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
-                            </button>
+                                {buffsOpen ? <ChevronUp aria-hidden="true" className="size-3.5" /> : <ChevronDown aria-hidden="true" className="size-3.5" />}
+                            </CollapsibleTrigger>
                             <CollapsibleContent>
                                 <div className="pt-1.5">{buffsSection}</div>
                             </CollapsibleContent>
@@ -364,7 +376,7 @@ function RankChip({ rank, selected, lockReason, onSelect, t }: IRankChipProps): 
                         aria-pressed={selected}
                         onClick={() => !locked && onSelect()}
                         className={cn(
-                            "flex h-8 min-w-8 shrink-0 items-center justify-center rounded-md border bg-card px-1.5 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
+                            "flex h-8 pointer-coarse:h-11 min-w-8 pointer-coarse:min-w-11 shrink-0 items-center justify-center rounded-md border bg-card px-1.5 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
                             locked ? "cursor-not-allowed border-border/60 opacity-40" : "cursor-pointer",
                             selected ? "border-primary bg-primary/10 ring-1 ring-primary/30" : !locked && "border-border hover:border-primary/50",
                         )}
@@ -402,7 +414,7 @@ function IconChip({ selected, label, iconURL, onClick }: IIconChipProps): React.
             aria-label={label}
             aria-pressed={selected}
             className={cn(
-                "flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-md border bg-card outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
+                "flex pointer-coarse:size-11 h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-md border bg-card outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
                 selected ? "border-primary bg-primary/10 ring-1 ring-primary/30" : "border-border hover:border-primary/50",
             )}
         >
@@ -411,12 +423,12 @@ function IconChip({ selected, label, iconURL, onClick }: IIconChipProps): React.
     );
 }
 
-function IconButton({ label, onClick, children }: { label: string; onClick: () => void; children: React.ReactNode }): React.ReactElement {
+function IconButton({ label, expanded, onClick, children }: { label: string; expanded?: boolean; onClick: () => void; children: React.ReactNode }): React.ReactElement {
     return (
         <Tooltip>
             <TooltipTrigger
                 render={(p) => (
-                    <Button {...p} aria-label={label} size="icon-xs" variant="ghost" onClick={onClick}>
+                    <Button {...p} aria-label={label} aria-expanded={expanded} size="icon-xs" variant="ghost" onClick={onClick}>
                         {children}
                     </Button>
                 )}

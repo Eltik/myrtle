@@ -176,7 +176,7 @@ export const messages = {
         description: "Accessible label of the scene area.",
     },
     "reader.error.noScript": {
-        text: "This story has no script file in the served data.",
+        text: "This story's script isn't available yet.",
         description: "Shown when the library lists a story but the backend has no script for it.",
     },
     "reader.error.notFound": {
@@ -376,11 +376,11 @@ export const messages = {
         description: "Error shown when an uploaded font exceeds the size limit. `{mb}` is a whole number of megabytes.",
     },
     "settings.textColor": {
-        text: "Text colour",
+        text: "Text color",
         description: "Settings row label for the dialogue and narration colour.",
     },
     "settings.textColorHint": {
-        text: "Every swatch clears 4.5:1 on both the dark and the light box. The speaker's name keeps its own colour.",
+        text: "Every swatch clears 4.5:1 on both the dark and the light box. The speaker's name keeps its own color.",
         description: "Hint under the text colour row.",
     },
     "settings.textColor.default": {
@@ -388,19 +388,19 @@ export const messages = {
         description: "Swatch that restores the box's own text colour.",
     },
     "settings.textColor.swatch": {
-        text: "Colour {number}",
+        text: "Color {number}",
         description: "Accessible label of a curated colour swatch. `{number}` is 1-based.",
     },
     "settings.textColor.custom": {
-        text: "Custom colour",
+        text: "Custom color",
         description: "Accessible label of the native colour input beside the swatches.",
     },
     "settings.speakerTint": {
-        text: "Speaker colour",
+        text: "Speaker color",
         description: "Settings row label for where the speaker's own colour is applied.",
     },
     "settings.speakerTintHint": {
-        text: "The colour is sampled from the speaker's sprite on stage, and a speaker with nobody on stage keeps a hue hashed from their name. Either way it is kept readable at 4.5:1 on the box, and narration keeps the text colour.",
+        text: "The color is sampled from the speaker's sprite on stage, and a speaker with nobody on stage keeps a hue hashed from their name. Either way it is kept readable at 4.5:1 on the box, and narration keeps the text color.",
         description: "Hint under the speaker colour row: where the colour comes from and that contrast is preserved.",
     },
     "settings.speakerTint.off": {
@@ -432,7 +432,7 @@ export const messages = {
         description: "The box position read out beside its row. `{x}` and `{y}` are percentages across and up the stage.",
     },
     "settings.boxPreset.bottomCentre": {
-        text: "Bottom centre",
+        text: "Bottom center",
         description: "Text box position preset: the default, centred against the bottom margin.",
     },
     "settings.boxPreset.bottomLeft": {
@@ -444,11 +444,11 @@ export const messages = {
         description: "Text box position preset.",
     },
     "settings.boxPreset.centre": {
-        text: "Centre",
+        text: "Center",
         description: "Text box position preset: halfway up the stage, centred.",
     },
     "settings.boxPreset.topCentre": {
-        text: "Top centre",
+        text: "Top center",
         description: "Text box position preset: as high as the box goes, centred.",
     },
     "settings.boxPreset.reset": {

@@ -16,7 +16,7 @@ export const messages = {
         description: "Sentence under the heading when the player has at least one list. {total} is the formatted count, rendered in a monospace box, and may move wherever the sentence needs it; {count} is the same number again, used only to pick the plural form.",
     },
     "my.hero.blurbEmpty": {
-        text: "You haven't created any tier lists yet. Spin up your first one - drafts publish instantly to your share link.",
+        text: "You haven't made a tier list yet. Saved changes show on its share link right away.",
         description: "Sentence under the heading when the player has no lists yet.",
     },
     "my.hero.create": {

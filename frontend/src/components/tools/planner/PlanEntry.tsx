@@ -59,7 +59,7 @@ export function PlanEntry({ plan, variant, context }: IPlanEntryProps): React.Re
 
     return (
         /* biome-ignore lint/a11y/noLabelWithoutControl: PlanCardHeader renders the plan's Checkbox inside this label */
-        <label className={cn("relative flex cursor-pointer flex-col gap-4 rounded-xl border p-4 transition-all hover:shadow-md", isActive ? "border-primary bg-primary/5 shadow-sm ring-2 ring-primary/20" : "border-border/40 bg-muted/20 opacity-60")}>
+        <label className={cn("relative flex cursor-pointer flex-col gap-4 rounded-2xl border p-4 transition-all hover:shadow-md", isActive ? "border-primary bg-primary/5 shadow-sm ring-2 ring-primary/20" : "border-border/40 bg-muted/20 opacity-60")}>
             {header}
             {isExpanded && <PlanDetails plan={plan} op={op} rosterEntry={rosterEntry} className="border-border/40 border-t pt-3" />}
             <PlanActions onEdit={onEdit} onDelete={onDelete} className="mt-auto border-border/40 border-t pt-3" />
@@ -154,7 +154,7 @@ interface IPlanActionsProps {
 
 function PlanActions({ onEdit, onDelete, className, dense = false }: IPlanActionsProps): React.ReactElement {
     const t: PlannerT = useT("tools");
-    const buttonBase = cn("flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg border font-medium font-sans text-xs transition-all", dense ? "py-1" : "py-1.5");
+    const buttonBase = cn("flex pointer-coarse:min-h-11 flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg border font-medium font-sans text-xs transition-all", dense ? "py-1" : "py-1.5");
 
     return (
         <div className={cn("flex items-center gap-2", className)}>
@@ -162,7 +162,7 @@ function PlanActions({ onEdit, onDelete, className, dense = false }: IPlanAction
                 <Pencil className="size-3.5" />
                 <span>{t("planner.card.edit")}</span>
             </button>
-            <button type="button" onClick={handled(onDelete)} className={cn(buttonBase, "border-red-500/20 bg-red-500/5 text-red-600 hover:border-red-500/40 hover:bg-red-500/15 dark:text-red-400")}>
+            <button type="button" onClick={handled(onDelete)} className={cn(buttonBase, "border-destructive/20 bg-destructive/5 text-destructive-foreground hover:border-destructive/40 hover:bg-destructive/15")}>
                 <Trash className="size-3.5" />
                 <span>{t("planner.card.delete")}</span>
             </button>

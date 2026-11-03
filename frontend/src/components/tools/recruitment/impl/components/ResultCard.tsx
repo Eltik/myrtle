@@ -1,20 +1,23 @@
 import type * as React from "react";
 import { potentialIcon } from "#/components/operators/detail/impl/assets";
 import { Badge } from "#/components/ui/badge";
+import { Kicker } from "#/components/ui/kicker";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { Popover, PopoverPopup, PopoverTrigger } from "#/components/ui/popover";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import { cn, RARITY_HEX_MUTED } from "#/lib/utils";
+import { cn, RARITY_HEX_MUTED, rarityInk } from "#/lib/utils";
 import { guaranteedFloorRarity } from "../calculator";
-import { RARITY_COLORS } from "../constants";
 import { getStarsDisplay } from "../helpers";
 import { type IRarityNewOdds, newOddsPercent, newOperatorOdds } from "../newOperatorOdds";
 import type { IRecruitableOperator, IRosterOverlay, ITagCombinationResult, ResultLayout } from "../types";
 import type { messages } from "./ResultCard.messages";
 
 export type ResultT = TypedT<typeof messages>;
+
+/** A 44px-tall tap area on a coarse pointer for the inline hint buttons, without moving the row. */
+const INLINE_HIT = "relative rounded-sm focus-visible:outline-2 focus-visible:outline-ring pointer-coarse:after:absolute pointer-coarse:after:inset-x-0 pointer-coarse:after:top-1/2 pointer-coarse:after:h-11 pointer-coarse:after:-translate-y-1/2";
 
 interface IResultCardProps {
     result: ITagCombinationResult;
@@ -72,17 +75,23 @@ function floorLabel(rarity: number, t: ResultT): string {
 export function GuaranteedBadge({ result, layout }: { result: ITagCombinationResult; layout: ResultLayout }): React.ReactElement {
     const t: ResultT = useT("tools");
     const floor = guaranteedFloorRarity(result);
-    const colors = RARITY_COLORS[floor];
 
     if (floor >= 5) {
-        return <span className={cn("inline-flex h-5.5 shrink-0 items-center whitespace-nowrap rounded-sm border px-1.5 font-medium text-sm sm:h-4.5 sm:text-xs", layout === "compact" && "max-sm:ml-auto", colors?.border, colors?.bg, colors?.text)}>{t("recruit.result.guaranteed", { rarity: floor })}</span>;
+        return (
+            <Badge className={cn("px-1.5", layout === "compact" && "max-sm:ml-auto")} style={{ "--tone": `var(--rarity-${floor})` } as React.CSSProperties} variant="tint">
+                {t("recruit.result.guaranteed", { rarity: floor })}
+            </Badge>
+        );
     }
 
+    // A button with no action of its own, so the kit Tooltip opens on a tap and a keyboard reaches it.
     return (
         <Tooltip>
-            <TooltipTrigger render={<span className={cn("inline-flex h-5.5 shrink-0 items-center gap-1 whitespace-nowrap px-0.5 font-medium text-xs sm:h-4.5 sm:text-[11px]", layout === "compact" ? "max-sm:ml-auto" : "ml-auto")} />}>
+            <TooltipTrigger render={<button type="button" className={cn("inline-flex h-5.5 shrink-0 cursor-help items-center gap-1 whitespace-nowrap px-0.5 font-medium text-xs sm:h-4.5 sm:text-[11px]", INLINE_HIT, layout === "compact" ? "max-sm:ml-auto" : "ml-auto")} />}>
                 <span className="text-muted-foreground">{t("recruit.result.min")}</span>
-                <span className={cn("font-mono", colors?.text)}>{floorLabel(floor, t)}</span>
+                <span className="font-mono" style={{ color: rarityInk(floor) }}>
+                    {floorLabel(floor, t)}
+                </span>
             </TooltipTrigger>
             <TooltipPopup>{t("recruit.result.minTitle", { floor: floorLabel(floor, t) })}</TooltipPopup>
         </Tooltip>
@@ -118,7 +127,7 @@ export function NewOddsLabel({ result, roster }: { result: ITagCombinationResult
 
     return (
         <Tooltip>
-            <TooltipTrigger render={<span data-slot="recruit-new-odds" role="note" aria-label={summary} className="inline-flex min-h-5.5 min-w-0 max-w-full flex-wrap items-center gap-x-1 px-0.5 font-medium text-xs sm:min-h-4.5 sm:text-[11px]" />}>
+            <TooltipTrigger render={<button type="button" data-slot="recruit-new-odds" aria-label={summary} className={cn("inline-flex min-h-5.5 min-w-0 max-w-full cursor-help flex-wrap items-center gap-x-1 px-0.5 text-left font-medium text-xs sm:min-h-4.5 sm:text-[11px]", INLINE_HIT)} />}>
                 {odds.map((o, i) => (
                     <span key={o.rarity} className="inline-flex items-center gap-1 whitespace-nowrap">
                         {i > 0 ? (
@@ -145,7 +154,11 @@ export function NewOddsLabel({ result, roster }: { result: ITagCombinationResult
 function OddsSegment({ odds, withRarity, t }: { odds: IRarityNewOdds; withRarity: boolean; t: ResultT }): React.ReactElement {
     const pct = newOddsPercent(odds);
     const text = oddsText(odds, withRarity, t);
-    return <span className={cn("font-mono", pct === 0 ? "text-muted-foreground" : withRarity ? RARITY_COLORS[odds.rarity]?.text : "text-foreground")}>{text}</span>;
+    return (
+        <span className={cn("font-mono", pct === 0 ? "text-muted-foreground" : !withRarity && "text-foreground")} style={pct !== 0 && withRarity ? { color: rarityInk(odds.rarity) } : undefined}>
+            {text}
+        </span>
+    );
 }
 
 export function OperatorTagList({ tags }: { tags: string[] }): React.ReactElement {
@@ -183,7 +196,7 @@ function signed(value: number): string {
 type UpgradeTone = "gain" | "unowned" | "maxed";
 
 export const UPGRADE_TONE_CLASS: Record<UpgradeTone, string> = {
-    gain: "text-foreground/80",
+    gain: "text-foreground",
     unowned: "text-foreground",
     maxed: "text-muted-foreground",
 };
@@ -224,7 +237,6 @@ function rarityHex(rarity: number): string {
 function OperatorTile({ operator, roster }: { operator: IRecruitableOperator; roster: IRosterOverlay | null }): React.ReactElement {
     const t: ResultT = useT("tools");
     const hex = rarityHex(operator.rarity);
-    const colors = RARITY_COLORS[operator.rarity];
     const profession = operator.professionName;
 
     const potential = roster?.potentialByOperator.get(operator.id);
@@ -262,7 +274,9 @@ function OperatorTile({ operator, roster }: { operator: IRecruitableOperator; ro
                         <div className="flex flex-col gap-0.5">
                             <div className="font-medium text-[13px] text-foreground leading-tight">{operator.name}</div>
                             <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-muted-foreground">
-                                <span className={cn("font-mono", colors?.text)}>{getStarsDisplay(operator.rarity)}</span>
+                                <span className="font-mono" style={{ color: rarityInk(operator.rarity) }}>
+                                    {getStarsDisplay(operator.rarity)}
+                                </span>
                                 <span>·</span>
                                 <span>{profession}</span>
                                 {potentialLabel && (
@@ -279,7 +293,7 @@ function OperatorTile({ operator, roster }: { operator: IRecruitableOperator; ro
                             )}
                         </div>
                         <div className="flex flex-col gap-1.5 border-border/60 border-t pt-2">
-                            <div className="font-medium text-[10.5px] text-muted-foreground uppercase tracking-wider">{t("recruit.result.tags")}</div>
+                            <Kicker className="mb-0">{t("recruit.result.tags")}</Kicker>
                             <OperatorTagList tags={operator.tagList} />
                         </div>
                     </div>

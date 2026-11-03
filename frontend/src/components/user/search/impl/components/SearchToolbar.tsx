@@ -1,8 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
-import { ArrowDownWideNarrow, ArrowUpNarrowWide, Check, ChevronDown, X } from "lucide-react";
+import { ArrowDownWideNarrow, ArrowUpNarrowWide, ChevronDown, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { LoadError } from "#/components/operators/detail/impl/components/LoadError";
 import { Button } from "#/components/ui/button";
+import { FilterChip } from "#/components/ui/filter-chip";
 import { Popover, PopoverPopup, PopoverTrigger } from "#/components/ui/popover";
 import { operatorsIndexQueryOptions } from "#/lib/api/operators";
 import { useGamedataServer, useT } from "#/lib/i18n";
@@ -21,8 +22,8 @@ type ToolbarT = TypedT<typeof messages & typeof sortMessages>;
 
 /** Filter trigger: 44px under a coarse pointer, 36px on narrow screens, the site's 32px on desktop. */
 const FILTER = "inline-flex h-9 cursor-pointer items-center gap-2 rounded-lg border border-input bg-card px-2.5 font-medium font-sans text-foreground text-xs leading-none transition-colors hover:border-foreground/20 sm:h-8 pointer-coarse:h-11";
-const KICKER = "shrink-0 font-medium font-mono text-[10.5px] text-muted-foreground uppercase leading-none tracking-[0.14em]";
-const GROUP_HEADING = "font-medium font-mono text-[10px] text-muted-foreground uppercase leading-none tracking-[0.16em]";
+const KICKER = "kicker shrink-0 leading-none";
+const GROUP_HEADING = "kicker leading-none";
 
 /**
  * The game's name for a scope, the class or the archetype, in the server's own wording read off the operator index
@@ -137,18 +138,7 @@ function SortPicker({ sort, onSort, operators }: { sort: string; onSort: (next: 
                             const active = sort === key;
                             return (
                                 <li key={key}>
-                                    <button
-                                        type="button"
-                                        aria-pressed={active}
-                                        onClick={() => chooseMetric(key)}
-                                        className={cn(
-                                            "inline-flex h-8 pointer-coarse:h-11 cursor-pointer items-center gap-1.5 rounded-lg border px-2.5 font-medium font-sans text-xs leading-none transition-colors",
-                                            active ? "border-primary/40 bg-[color-mix(in_srgb,var(--primary)_10%,transparent)] text-foreground [&>svg]:text-primary" : "border-input bg-card text-foreground hover:border-foreground/20",
-                                        )}
-                                    >
-                                        {active ? <Check className="size-3" aria-hidden /> : null}
-                                        {t(METRIC_SORT_LABEL_KEYS[key])}
-                                    </button>
+                                    <FilterChip label={t(METRIC_SORT_LABEL_KEYS[key])} active={active} onSelect={() => chooseMetric(key)} />
                                 </li>
                             );
                         })}

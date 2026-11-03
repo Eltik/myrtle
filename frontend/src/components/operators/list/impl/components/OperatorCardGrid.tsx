@@ -31,8 +31,13 @@ export function OperatorCardGrid({ operator, statMetric }: IOperatorCardGridProp
             <HoverCardTrigger
                 render={
                     <Link to="/operators/$id" params={{ id: operator.id ?? "" }} preload={dataSaver ? false : undefined} className={cn("group relative flex aspect-2/3 overflow-clip rounded-md border border-muted/50 bg-card contain-content hover:rounded-lg", styles["card-hover-transition"])}>
-                        {operator.ownership && <OwnershipBadge info={operator.ownership} metric={statMetric} color={RARITY_COLORS[rarityToNumber(operator.rarity)]} className="absolute top-1 left-1 z-20" />}
-                        {operator.cnChanges && <CnUpdateBadge changes={operator.cnChanges} className="absolute top-1 right-1 z-20" />}
+                        {/* One wrapping row: on a three-column phone grid the two pills side by side ran past the card's edge. */}
+                        {operator.ownership || operator.cnChanges ? (
+                            <div className="pointer-events-none absolute inset-x-1 top-1 z-20 flex flex-wrap items-start gap-1 [&>*]:pointer-events-auto">
+                                {operator.ownership && <OwnershipBadge info={operator.ownership} metric={statMetric} color={RARITY_COLORS[rarityToNumber(operator.rarity)]} />}
+                                {operator.cnChanges && <CnUpdateBadge changes={operator.cnChanges} className="ms-auto" />}
+                            </div>
+                        ) : null}
                         <div className="absolute -translate-x-8 -translate-y-4">
                             <CampIcon groupId={logoId} className="opacity-5 transition-opacity group-hover:opacity-10" size={360} />
                         </div>

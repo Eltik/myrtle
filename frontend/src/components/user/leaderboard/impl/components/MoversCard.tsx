@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { ChevronDown, ChevronUp, Minus } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "#/components/ui/avatar";
+import { Kicker } from "#/components/ui/kicker";
 import type { ILeaderboardMover } from "#/lib/api/user";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -13,11 +14,11 @@ export function MoversCard({ movers, isLoading, intervalKey = "leaderboard.inter
     const t: TypedT<typeof messages & typeof constantsMessages> = useT("user");
 
     return (
-        <aside className="rounded-xl border border-border bg-card p-4 shadow-[0_1px_2px_rgb(0_0_0/0.04)]">
+        <aside className="rounded-2xl border border-border bg-card p-4 shadow-[0_1px_2px_rgb(0_0_0/0.04)]">
             {/* min-w-0 lets a long heading wrap (Russian "Наибольшие изменения · сегодня" ran into "ПОЗИЦИЯ"), shrink-0 keeps the label whole, the gap stops them touching. */}
             <div className="mb-2.5 flex items-baseline justify-between gap-2">
                 <span className="min-w-0 font-sans font-semibold text-[13.5px] text-foreground leading-tight tracking-tight">{t("leaderboard.movers.title", { interval: t(intervalKey) })}</span>
-                <span className="shrink-0 font-medium font-mono text-[10px] text-muted-foreground uppercase leading-none tracking-[0.14em]">{t("leaderboard.deltaRank")}</span>
+                <Kicker className="mb-0 shrink-0">{t("leaderboard.deltaRank")}</Kicker>
             </div>
             <div className="flex flex-col gap-2.5">
                 {isLoading && movers.length === 0 ? (

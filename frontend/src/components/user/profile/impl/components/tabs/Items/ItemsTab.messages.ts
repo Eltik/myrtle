@@ -13,7 +13,7 @@ export const messages = {
         description: "Accessible name of the inventory section of a profile.",
     },
     "profile.items.search.placeholder": {
-        text: "Search items...",
+        text: "Search items…",
         description: "Prompt inside the empty inventory search box. Keep the three dots as written.",
     },
     "profile.items.sort.placeholder": {
@@ -21,19 +21,19 @@ export const messages = {
         description: "Shown in the sort select before anything is chosen.",
     },
     "profile.items.sort.rarity": {
-        text: "Sort by Rarity",
+        text: "Sort by rarity",
         description: "Sort option: by the item's star rating.",
     },
     "profile.items.sort.qty": {
-        text: "Sort by Quantity",
+        text: "Sort by quantity",
         description: "Sort option: by how many the account holds.",
     },
     "profile.items.sort.name": {
-        text: "Sort by Name",
+        text: "Sort by name",
         description: "Sort option: alphabetically.",
     },
     "profile.items.sort.category": {
-        text: "Sort by Category",
+        text: "Sort by category",
         description: "Sort option: grouped by inventory category.",
     },
     "profile.items.sort.asc": {
@@ -45,11 +45,11 @@ export const messages = {
         description: "Label on the sort-direction button while the order is largest-first. Abbreviated from 'descending'; little room.",
     },
     "profile.items.rarity.placeholder": {
-        text: "Filter by Rarity",
+        text: "Filter by rarity",
         description: "Shown in the rarity select before anything is chosen.",
     },
     "profile.items.rarity.all": {
-        text: "All Rarities",
+        text: "All rarities",
         description: "Rarity filter: every star rating.",
     },
     "profile.items.rarity.5": {

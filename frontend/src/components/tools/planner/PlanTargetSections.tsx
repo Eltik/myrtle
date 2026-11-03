@@ -5,6 +5,7 @@ import { eliteIcon, moduleIconURL, skillIconURL, specializedIcon } from "#/compo
 import { getSkillTypeLabel, getSpTypeLabel, type HelperT } from "#/components/operators/detail/impl/helpers";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "#/components/ui/collapsible";
 import { Input } from "#/components/ui/input";
+import { Kicker } from "#/components/ui/kicker";
 import { Slider } from "#/components/ui/slider";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useT } from "#/lib/i18n";
@@ -32,9 +33,9 @@ export function PromotionLevelPanel({ targets }: IPromotionLevelPanelProps): Rea
     const { elite, level, maxElite, maxLevel, minLevel, floor, changeElite, changeLevel } = targets;
 
     return (
-        <div className="grid grid-cols-1 items-center gap-6 rounded-xl border border-border bg-card/40 p-4 sm:grid-cols-[auto_1fr]">
+        <div className="grid grid-cols-1 items-center gap-6 rounded-2xl border border-border bg-card/40 p-4 sm:grid-cols-[auto_1fr]">
             <div className="flex flex-col gap-2">
-                <span className="font-semibold text-muted-foreground text-xs uppercase tracking-wider">{t("planner.dialog.promotion")}</span>
+                <Kicker className="mb-0">{t("planner.dialog.promotion")}</Kicker>
                 <div className="mt-1 flex items-center gap-2">
                     {ELITE_PHASES.filter((e) => e <= maxElite).map((e) => {
                         const isReached = isEliteBelowFloor(floor, e);
@@ -59,7 +60,7 @@ export function PromotionLevelPanel({ targets }: IPromotionLevelPanelProps): Rea
             </div>
 
             <div className="flex w-full flex-col gap-2">
-                <span className="font-semibold text-muted-foreground text-xs uppercase tracking-wider">{t("planner.dialog.level", { max: maxLevel })}</span>
+                <Kicker className="mb-0">{t("planner.dialog.level", { max: maxLevel })}</Kicker>
                 <div className="mt-2 flex items-center gap-4">
                     <Slider value={[level]} onValueChange={(vals) => changeLevel(Array.isArray(vals) ? (vals[0] ?? 1) : vals)} min={minLevel} max={maxLevel} className="flex-1" />
                     <Input type="number" min={minLevel} max={maxLevel} value={level} onChange={(e) => changeLevel(Number.parseInt(e.target.value, 10))} className="w-16 text-center font-mono" />
@@ -106,7 +107,7 @@ interface ITargetRowProps {
 /** One skill or module: icon, name and subtitle on the left, its step buttons on the right (below on mobile). */
 function TargetRow({ iconSrc, name, meta, metaClassName, stepsClassName, children }: ITargetRowProps): React.ReactElement {
     return (
-        <div className="grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-1.5 rounded-xl border border-border bg-card p-4 sm:grid-cols-[auto_1fr_auto]">
+        <div className="grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-1.5 rounded-2xl border border-border bg-card p-4 sm:grid-cols-[auto_1fr_auto]">
             <img src={iconSrc} alt={name} className="col-start-1 row-span-2 row-start-1 size-12 rounded-lg border border-border bg-muted/30 object-contain p-0.5" />
 
             <div className="col-start-2 row-start-1 flex items-center gap-2">

@@ -29,15 +29,15 @@ export const messages = {
     },
     "leaderboard.table.movement.none": {
         text: "No change in rank {interval}",
-        description: "Tooltip on a flat rank indicator. {interval} is a phrase like 'since yesterday' or 'in the past 7 days'.",
+        description: "Screen-reader text on a flat rank indicator (the visible part is a dash and 0). {interval} is a phrase like 'since yesterday' or 'in the past 7 days'.",
     },
     "leaderboard.table.movement.up": {
         text: "Climbed {count, plural, one {# rank} other {# ranks}} {interval}",
-        description: "Tooltip on an upward rank indicator. {interval} is a phrase like 'since yesterday' or 'in the past 7 days'.",
+        description: "Screen-reader text on an upward rank indicator (the visible part is an arrow and the number). {interval} is a phrase like 'since yesterday' or 'in the past 7 days'.",
     },
     "leaderboard.table.movement.down": {
         text: "Fell {count, plural, one {# rank} other {# ranks}} {interval}",
-        description: "Tooltip on a downward rank indicator. {interval} is a phrase like 'since yesterday' or 'in the past 7 days'.",
+        description: "Screen-reader text on a downward rank indicator (the visible part is an arrow and the number). {interval} is a phrase like 'since yesterday' or 'in the past 7 days'.",
     },
     "leaderboard.table.viewProfile": {
         text: "View {nickname} profile",
@@ -53,7 +53,7 @@ export const messages = {
     },
     "leaderboard.table.share": {
         text: "{pct}% of the top holding",
-        description: "Tooltip on a row's quantity bar while ranked by an item. {pct} is the player's quantity as a percentage of the largest holding, 0 to 100.",
+        description: "Screen-reader text after a row's quantity while ranked by an item, describing its bar. {pct} is the player's quantity as a percentage of the largest holding, 0 to 100.",
     },
 } satisfies MessageMap;
 

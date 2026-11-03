@@ -95,7 +95,7 @@ function EventRow({ event, today, t, overridden, onOverride }: IEventRowProps): 
                 <Tag>{tagLabel(event.activityType)}</Tag>
             </CnName>
             <div className="font-mono text-[11.5px] text-muted-foreground tabular-nums">
-                <span className="mr-1 uppercase tracking-[0.06em]">{t("release.events.cn")}</span>
+                <span className="mr-1">{t("release.events.cn")}</span>
                 {formatDateRange(event.cnStart, event.cnEnd, locale, t)}
             </div>
             <FarmStages stages={event.farmStages} compact />

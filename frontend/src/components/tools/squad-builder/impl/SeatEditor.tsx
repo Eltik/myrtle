@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { ChevronDown, FlaskConical, Trash2, Undo2, X } from "lucide-react";
 import * as React from "react";
+import { LoadError } from "#/components/operators/detail/impl/components/LoadError";
 import { ClassIcon } from "#/components/operators/list/impl/components/Icons";
 import { eliteIcon, moduleIconURL, potentialIcon, skillIconURL } from "#/components/tools/shared/icons";
 import { Badge } from "#/components/ui/badge";
@@ -65,7 +66,7 @@ function phaseNumber(phase: string | null | undefined): number {
 export function SeatEditor({ seat, resolved, op, roster, readOnly, squadmates, labOpen, onLabOpenChange, onOpenLab, onChange, onRemove, onClose }: ISeatEditorProps): React.ReactElement {
     const t: EditorT = useT("tools");
     const server = useGamedataServer();
-    const { data: detail } = useQuery(operatorQueryOptions(op.id, server));
+    const { data: detail, isError: detailFailed, refetch: refetchDetail } = useQuery(operatorQueryOptions(op.id, server));
     const { member, build, source } = resolved;
     const isSupport = seat === SUPPORT_SEAT;
     const modules = advancedModules(op);
@@ -102,7 +103,7 @@ export function SeatEditor({ seat, resolved, op, roster, readOnly, squadmates, l
     const sourceVariant = source === "roster" ? "success" : source === "hand" ? "info" : "secondary";
 
     return (
-        <section aria-label={op.name} className="rounded-xl border border-border bg-card p-4">
+        <section aria-label={op.name} className="rounded-2xl border border-border bg-card p-4">
             <div className="flex items-start gap-3">
                 <span className="relative size-14 shrink-0 overflow-hidden rounded-lg border border-border bg-muted" style={{ boxShadow: `inset 0 -3px 0 ${rarityStarColor(op.rarity)}` }}>
                     <img alt="" src={getAvatarById(op.id)} className="size-full object-cover" />
@@ -122,6 +123,7 @@ export function SeatEditor({ seat, resolved, op, roster, readOnly, squadmates, l
                 </Button>
             </div>
 
+            {detailFailed && <LoadError className="mt-3" message={t("squad.editor.detailFailed")} onRetry={() => void refetchDetail()} />}
             {readOnly && <p className="mt-3 rounded-lg border border-border bg-muted/40 px-3 py-2 text-[12.5px] text-muted-foreground">{t("squad.editor.readOnly")}</p>}
 
             <fieldset disabled={readOnly} className="mt-4 grid gap-x-6 gap-y-4 disabled:opacity-80 md:grid-cols-2">
@@ -362,7 +364,7 @@ function Segmented({ options, value, onChange, render }: { options: number[]; va
                     type="button"
                     onClick={() => onChange(o)}
                     aria-pressed={value === o}
-                    className={cn("flex h-9 min-w-10 cursor-pointer items-center justify-center rounded-md border bg-background/40 px-2 font-medium font-mono text-[12px] outline-none focus-visible:ring-2 focus-visible:ring-ring", pressedClass(value === o))}
+                    className={cn("flex h-9 pointer-coarse:h-11 min-w-10 pointer-coarse:min-w-11 cursor-pointer items-center justify-center rounded-md border bg-background/40 px-2 font-medium font-mono text-[12px] outline-none focus-visible:ring-2 focus-visible:ring-ring", pressedClass(value === o))}
                 >
                     {render(o)}
                 </button>

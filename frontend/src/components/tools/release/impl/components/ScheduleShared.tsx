@@ -1,7 +1,9 @@
 import { X } from "lucide-react";
 import * as React from "react";
 import { itemIcon } from "#/components/operators/detail/impl/assets";
+import { Button } from "#/components/ui/button";
 import { Card } from "#/components/ui/card";
+import { FilterChip } from "#/components/ui/filter-chip";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { type TypedRichT, useLocale, useRichT, useT } from "#/lib/i18n";
@@ -43,7 +45,7 @@ function occLabel(occ: string, t: ScheduleSharedT): string {
 }
 
 /**
- * Per-kind colour, in three roles.
+ * Per-kind colour, in four roles.
  *
  * `pill` tints are 22-30% with a matching 1px INSET RING at 45-55%, so a pill carries its hue on
  * its own edge whether or not it drew a dot. At 12-15% a sky pill and a pink pill were both
@@ -54,37 +56,40 @@ function occLabel(occ: string, t: ScheduleSharedT): string {
  *
  * `swatch` is what the legend uses: the pill's own tint inside the pill's own border. A fully
  * opaque `dot` square beside the tinted pills is the same hue and visibly a different colour.
+ *
+ * `tone` is the hue as a CSS colour for the kind tag and filter chip, which tint with it and keep
+ * foreground text.
  */
-export const KIND_STYLE: Record<ScheduleKind, { pill: string; swatch: string; dot: string; text: string }> = {
+export const KIND_STYLE: Record<ScheduleKind, { pill: string; swatch: string; dot: string; tone: string }> = {
     event: {
         pill: "ring-1 ring-inset ring-sky-500/45 bg-sky-500/22 text-sky-950 hover:bg-sky-500/35 dark:ring-sky-400/45 dark:bg-sky-400/25 dark:text-sky-100 dark:hover:bg-sky-400/40",
         swatch: "border-sky-500/55 bg-sky-500/22 dark:border-sky-400/55 dark:bg-sky-400/25",
         dot: "bg-sky-500",
-        text: "text-sky-600 dark:text-sky-400",
+        tone: "var(--color-sky-500)",
     },
     banner: {
         pill: "ring-1 ring-inset ring-yellow-500/50 bg-yellow-400/30 text-yellow-950 hover:bg-yellow-400/45 dark:ring-yellow-300/45 dark:bg-yellow-300/25 dark:text-yellow-100 dark:hover:bg-yellow-300/40",
         swatch: "border-yellow-500/60 bg-yellow-400/30 dark:border-yellow-300/55 dark:bg-yellow-300/25",
         dot: "bg-yellow-400",
-        text: "text-yellow-600 dark:text-yellow-300",
+        tone: "var(--color-yellow-500)",
     },
     skin: {
         pill: "ring-1 ring-inset ring-pink-500/45 bg-pink-500/22 text-pink-950 hover:bg-pink-500/35 dark:ring-pink-400/45 dark:bg-pink-400/25 dark:text-pink-100 dark:hover:bg-pink-400/40",
         swatch: "border-pink-500/55 bg-pink-500/22 dark:border-pink-400/55 dark:bg-pink-400/25",
         dot: "bg-pink-500",
-        text: "text-pink-600 dark:text-pink-400",
+        tone: "var(--color-pink-500)",
     },
     rerun: {
         pill: "ring-1 ring-inset ring-violet-500/45 bg-violet-500/22 text-violet-950 hover:bg-violet-500/35 dark:ring-violet-400/45 dark:bg-violet-400/25 dark:text-violet-100 dark:hover:bg-violet-400/40",
         swatch: "border-violet-500/55 bg-violet-500/22 dark:border-violet-400/55 dark:bg-violet-400/25",
         dot: "bg-violet-500",
-        text: "text-violet-600 dark:text-violet-400",
+        tone: "var(--color-violet-500)",
     },
     review: {
         pill: "ring-1 ring-inset ring-teal-500/45 bg-teal-500/22 text-teal-950 hover:bg-teal-500/35 dark:ring-teal-400/45 dark:bg-teal-400/25 dark:text-teal-100 dark:hover:bg-teal-400/40",
         swatch: "border-teal-500/55 bg-teal-500/22 dark:border-teal-400/55 dark:bg-teal-400/25",
         dot: "bg-teal-500",
-        text: "text-teal-600 dark:text-teal-400",
+        tone: "var(--color-teal-500)",
     },
 };
 
@@ -120,18 +125,26 @@ export function ScheduleControls({ kinds, onKindsChange, stageOnly, onStageOnlyC
             {ALL_KINDS.map((k) => {
                 const on = kinds.has(k);
                 return (
-                    <button key={k} type="button" aria-pressed={on} onClick={() => toggle(k)} className={cn("inline-flex cursor-pointer items-center gap-1.5 font-sans text-[12.5px] transition-colors", on ? "text-foreground" : "text-muted-foreground")}>
-                        <span className={cn("size-3.5 rounded-sm border transition-colors", on ? KIND_STYLE[k].swatch : "border-muted-foreground/50")} />
-                        {t(KIND_LABEL_KEYS[k])}
-                        <span className="font-mono text-[10.5px] text-muted-foreground tabular-nums">{counts[k]}</span>
-                    </button>
+                    <FilterChip
+                        key={k}
+                        active={on}
+                        onSelect={() => toggle(k)}
+                        tone={KIND_STYLE[k].tone}
+                        count={counts[k]}
+                        label={
+                            <span className="inline-flex items-center gap-1.5">
+                                <span aria-hidden="true" className={cn("size-3 rounded-sm border", KIND_STYLE[k].swatch)} />
+                                {t(KIND_LABEL_KEYS[k])}
+                            </span>
+                        }
+                    />
                 );
             })}
             <ToggleField id="schedule-stage-only" label={t("release.controls.stageOnly")} checked={stageOnly} onChange={onStageOnlyChange} />
             {/* Not 11px `text-muted-foreground`: it explains the one mark on the calendar that
                 separates a confirmed date from an estimated one, so it is not secondary text:
-                14px, at the body foreground's 80%. */}
-            <span className="font-sans text-[14px] text-foreground/80">{t("release.controls.dotLegend")}</span>
+                14px, in the body foreground. */}
+            <span className="font-sans text-[14px] text-foreground">{t("release.controls.dotLegend")}</span>
         </div>
     );
 }
@@ -146,7 +159,7 @@ export function AnchorCaption({ anchor }: { anchor: EventAnchor }): React.ReactE
             <TooltipTrigger render={<span />}>
                 {rt("release.anchor.with", {
                     event: (
-                        <span className="text-foreground/80" lang={name.untranslated ? "zh-CN" : undefined} translate={name.untranslated ? "yes" : undefined}>
+                        <span className="text-foreground" lang={name.untranslated ? "zh-CN" : undefined} translate={name.untranslated ? "yes" : undefined}>
                             {name.text}
                         </span>
                     ),
@@ -183,19 +196,19 @@ export function ScheduleDetail({ item, lookup, today, onClose }: IScheduleDetail
     return (
         <Card className="relative gap-0 overflow-hidden p-3 pl-4 sm:p-4 sm:pl-5">
             <span aria-hidden="true" className={cn("absolute inset-y-0 left-0 w-1", style.dot)} />
-            <button type="button" onClick={onClose} aria-label={t("release.detail.close")} className="absolute top-2 right-2 flex size-7 cursor-pointer items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground">
-                <X className="size-4" />
-            </button>
+            <Button variant="ghost" size="icon-sm" onClick={onClose} aria-label={t("release.detail.close")} className="absolute top-2 right-2 text-muted-foreground">
+                <X aria-hidden="true" />
+            </Button>
             <div className={cn("grid grid-cols-1 gap-x-4 gap-y-2 sm:items-start", showArt ? "sm:grid-cols-[200px_minmax(0,1fr)_minmax(240px,auto)]" : "sm:grid-cols-[minmax(0,1fr)_minmax(240px,auto)]")}>
                 {showArt && <img src={art.src ?? undefined} alt={name} onError={art.onError} className="aspect-[5/2] w-full rounded-md bg-muted object-cover sm:w-50" />}
                 <div className="flex min-w-0 flex-col gap-1.5 pr-8 sm:pr-0">
                     <CnName cn={item.nameCn} en={item.nameEn} auto={item.nameAuto} primaryClassName="font-sans font-semibold text-[14px] text-foreground">
-                        <Tag className={style.text}>{t(KIND_LABEL_KEYS[item.kind])}</Tag>
+                        <Tag tone={style.tone}>{t(KIND_LABEL_KEYS[item.kind])}</Tag>
                         {!isSkin && <Tag>{tagLabel(item.tag)}</Tag>}
                     </CnName>
                     {item.cnStart > 0 && (
                         <div className="font-mono text-[11.5px] text-muted-foreground tabular-nums">
-                            <span className="mr-1 uppercase tracking-[0.06em]">{cnLabel}</span>
+                            <span className="mr-1">{cnLabel}</span>
                             {formatDateRange(item.cnStart, item.cnEnd, locale, t)}
                         </div>
                     )}

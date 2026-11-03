@@ -2,6 +2,7 @@ import { Check, ChevronDown, Search, X } from "lucide-react";
 import { useDeferredValue, useMemo, useState } from "react";
 import { Button } from "#/components/ui/button";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "#/components/ui/input-group";
+import { Kicker } from "#/components/ui/kicker";
 import { Popover, PopoverPopup, PopoverTrigger } from "#/components/ui/popover";
 import { ItemIcon } from "#/components/user/profile/impl/components/tabs/Items/ItemIcon";
 import type { IMaterials } from "#/lib/api/materials";
@@ -75,12 +76,12 @@ export function RankByPicker({ ranking, onRanking, catalog, materials, variant, 
                 className={cn("inline-flex h-9 pointer-coarse:h-11 min-w-0 cursor-pointer items-center gap-2 rounded-lg border border-input bg-card pr-2.5 pl-2 font-medium font-sans text-foreground text-xs leading-none transition-colors hover:border-foreground/20 sm:h-8", className)}
             >
                 {activeItem ? <ItemIcon item={toIconEntry(activeItem)} size={20} className="rounded" /> : null}
-                <span className="shrink-0 font-medium font-mono text-[10.5px] text-muted-foreground uppercase leading-none tracking-[0.14em]">{t("leaderboard.rankBy.label")}</span>
+                <Kicker className="mb-0 shrink-0">{t("leaderboard.rankBy.label")}</Kicker>
                 <span className="min-w-0 truncate font-semibold text-foreground">{label}</span>
                 <ChevronDown className="size-3 shrink-0 opacity-70" aria-hidden />
             </PopoverTrigger>
         ) : (
-            <PopoverTrigger aria-label={t("leaderboard.rankBy.aria")} className={cn("inline-flex min-w-0 max-w-full shrink-0 cursor-pointer items-center gap-1 whitespace-nowrap font-medium font-mono text-[11px] text-foreground uppercase leading-none tracking-[0.16em] transition-colors hover:text-primary", className)}>
+            <PopoverTrigger aria-label={t("leaderboard.rankBy.aria")} className={cn("kicker inline-flex min-w-0 max-w-full shrink-0 cursor-pointer items-center gap-1 whitespace-nowrap text-foreground leading-none transition-colors hover:text-primary", className)}>
                 <span className="truncate">{label}</span>
                 <ChevronDown className="size-3 shrink-0 opacity-70" aria-hidden />
             </PopoverTrigger>
@@ -213,7 +214,7 @@ function Slash() {
 function GroupHeading({ children, hint }: { children: React.ReactNode; hint?: string }) {
     return (
         <div className="flex items-baseline justify-between gap-2 px-2 pt-1.5 pb-1">
-            <span className="font-medium font-mono text-[10px] text-muted-foreground uppercase leading-none tracking-[0.16em]">{children}</span>
+            <Kicker className="mb-0">{children}</Kicker>
             {hint ? <span className="min-w-0 truncate font-sans text-[11px] text-muted-foreground leading-none">{hint}</span> : null}
         </div>
     );

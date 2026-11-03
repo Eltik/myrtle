@@ -25,7 +25,7 @@ export const messages = {
         description: "Document title of the 404 page, shown when no page exists at the address. The site name is appended as `Page not found • Myrtle`.",
     },
     "root.description": {
-        text: "Arknights companion - operators, rosters, tier lists.",
+        text: "Arknights companion: operators, rosters, tier lists.",
         description: "Site-wide meta description, used on any page that does not set its own.",
     },
 
@@ -34,7 +34,7 @@ export const messages = {
         description: "Document title of the landing page. The site name on its own, deliberately.",
     },
     "home.description": {
-        text: "Track your roster, scout community pulls, and explore every operator.",
+        text: "Track your roster, scout community pulls, and look up every operator.",
         description: "Meta description of the landing page.",
     },
 
@@ -56,7 +56,7 @@ export const messages = {
         description: "Document title of the enemy index.",
     },
     "enemies.description": {
-        text: "View every enemy catalogued in Arknights.",
+        text: "View every enemy cataloged in Arknights.",
         description: "Meta description of the enemy index.",
     },
     "enemy.fallbackTitle": {
@@ -213,7 +213,7 @@ export const messages = {
         description: "Document title of community-wide gacha statistics. The separator is a middle dot.",
     },
     "gachaCommunity.description": {
-        text: "Community-wide gacha statistics - pull rates, most-pulled operators, and pull timing across opted-in players.",
+        text: "Community-wide gacha statistics: pull rates, most-pulled operators, and pull timing across opted-in players.",
         description: "Meta description of community-wide gacha statistics.",
     },
     "gachaHistory.title": {
@@ -266,7 +266,7 @@ export const messages = {
         description: "Document title of the privacy policy.",
     },
     "privacy.description": {
-        text: "Your privacy matters. Here's how Myrtle protects and handles your personal information.",
+        text: "What Myrtle stores about you, who can see it, and how to delete it.",
         description: "Meta description of the privacy policy.",
     },
     "terms.title": {
@@ -307,7 +307,7 @@ export const messages = {
         description: "Document title of the recruitment tag calculator.",
     },
     "toolsRecruitment.description": {
-        text: "Calculate optimal tag combinations for Arknights recruitment. Find guaranteed 5-star and 6-star operators with the best tag combos.",
+        text: "Pick your Arknights recruitment tags and see every combination, ranked by the lowest rarity it guarantees.",
         description: "Meta description of the recruitment tag calculator.",
     },
     "toolsPlanner.title": {
@@ -323,7 +323,7 @@ export const messages = {
         description: "Document title of the random stage/squad roller.",
     },
     "toolsRandomizer.description": {
-        text: "Roll a random Arknights stage, squad, and challenge modifier. Logged-in users can constrain rolls to stages they've cleared and operators they own.",
+        text: "Roll a random Arknights stage, squad, and challenge modifier. Signed in, you can limit rolls to stages you've cleared and operators you own.",
         description: "Meta description of the random stage/squad roller.",
     },
     "toolsBirthdays.title": {

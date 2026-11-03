@@ -32,8 +32,8 @@ export const messages = {
         description: "Bold term opening a definition line in the explanation popover.",
     },
     "dps.help.averageDps.desc": {
-        text: "averages skill uptime against SP recharge - the long-run sustainable rate.",
-        description: "Completes the sentence begun by the bold term 'Average DPS'. 'SP' is the game's skill-point resource; the dash is a plain hyphen.",
+        text: "averages skill uptime against SP recharge: the long-run sustainable rate.",
+        description: "Completes the sentence begun by the bold term 'Average DPS'. 'SP' is the game's skill-point resource.",
     },
     "dps.help.totalDamage.term": {
         text: "Total Damage",
@@ -60,7 +60,7 @@ export const messages = {
         description: "Link text: the GitHub username of the author of the damage formulas, in the possessive. The name itself is never translated; only the possessive marking should adapt.",
     },
     "dps.note.credit": {
-        text: "All calculations go to the credit of {link} GitHub repository.",
+        text: "Calculation credit: the {link} GitHub repository.",
         description: "Attribution sentence under the page blurb. {link} is the author's GitHub username, labelled by dps.note.creditLink and linked to the repository, and may move wherever the sentence needs it.",
     },
     "dps.clearAll": {
@@ -165,7 +165,15 @@ export const messages = {
     },
     "dps.export.failed": {
         text: "Couldn't export chart: {error}",
-        description: "Browser alert when saving the chart image failed. {error} is the underlying message and is not translated.",
+        description: "Error toast when saving the chart image failed. {error} is the underlying message and is not translated.",
+    },
+    "dps.chart.loadFailed": {
+        text: "Couldn't calculate the curves. The chart may be missing lines.",
+        description: "Shown above the chart when a request for the damage curves failed, beside a retry button.",
+    },
+    "dps.import.failed": {
+        text: "Couldn't load the operator list, so your squad wasn't added yet.",
+        description: "Error toast when the Squad Builder sent squadmates over but the calculator's operator list failed to load. The toast has a retry button.",
     },
     "dps.import.added": {
         text: "{count, plural, one {Added # operator from your squad} other {Added # operators from your squad}}",

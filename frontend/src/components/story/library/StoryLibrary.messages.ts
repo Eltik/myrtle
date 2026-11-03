@@ -40,7 +40,7 @@ export const messages = {
         description: "First mode tab: the chapter sections.",
     },
     "library.tab.reading": {
-        text: "Reading Order",
+        text: "Reading order",
         description: "Top-level tab holding the reading orders the data can derive.",
     },
     "library.tab.illustrations": {

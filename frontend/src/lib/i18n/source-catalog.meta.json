@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-11-03T15:08:33.644Z",
+    "generatedAt": "2026-11-03T15:34:20.182Z",
     "entries": [
         {
             "key": "admin.home.access.everyList",
@@ -19,7 +19,7 @@
         {
             "key": "admin.home.access.note.superAdmin",
             "namespace": "admin",
-            "source_text": "Change anyone’s role and grants from People.",
+            "source_text": "Change anyone's role and grants from People.",
             "description": "Under 'What you can do' for a super-admin.",
             "placeholders": []
         },
@@ -2891,7 +2891,7 @@
         {
             "key": "admin.tierLists.access.changeLevel",
             "namespace": "admin",
-            "source_text": "Change {name}’s level on {title}",
+            "source_text": "Change {name}'s level on {title}",
             "description": "Accessible name of the level badge button that opens the level menu. {name} is the player, {title} the list.",
             "placeholders": [
                 "name",
@@ -2932,7 +2932,7 @@
         {
             "key": "admin.tierLists.access.loadError",
             "namespace": "admin",
-            "source_text": "Couldn’t load the grants.",
+            "source_text": "Couldn't load the grants.",
             "description": "Shown in place of the grants table when loading failed.",
             "placeholders": []
         },
@@ -3002,7 +3002,7 @@
         {
             "key": "admin.tierLists.access.toast.grantFailed",
             "namespace": "admin",
-            "source_text": "Couldn’t create the grant",
+            "source_text": "Couldn't create the grant",
             "description": "Title of the error toast when creating a grant failed.",
             "placeholders": []
         },
@@ -3034,14 +3034,14 @@
         {
             "key": "admin.tierLists.access.toast.levelFailed",
             "namespace": "admin",
-            "source_text": "Couldn’t change the level",
+            "source_text": "Couldn't change the level",
             "description": "Title of the error toast when changing a grant's level failed.",
             "placeholders": []
         },
         {
             "key": "admin.tierLists.access.toast.revokeFailed",
             "namespace": "admin",
-            "source_text": "Couldn’t revoke access",
+            "source_text": "Couldn't revoke access",
             "description": "Title of the error toast when removing a grant failed.",
             "placeholders": []
         },
@@ -3095,14 +3095,14 @@
         {
             "key": "admin.tierLists.delete.body",
             "namespace": "admin",
-            "source_text": "The list, its tiers and every published version are removed for everyone. This can’t be undone.",
+            "source_text": "The list, its tiers and every published version are removed for everyone. This can't be undone.",
             "description": "Warning in the delete confirmation dialog.",
             "placeholders": []
         },
         {
             "key": "admin.tierLists.delete.failed",
             "namespace": "admin",
-            "source_text": "Couldn’t delete the list",
+            "source_text": "Couldn't delete the list",
             "description": "Title of the error toast when deleting a list failed.",
             "placeholders": []
         },
@@ -3132,7 +3132,7 @@
         {
             "key": "admin.tierLists.flair.desc",
             "namespace": "admin",
-            "source_text": "The flair shows as a coloured tag on {title} across the site.",
+            "source_text": "The flair shows as a colored tag on {title} across the site.",
             "description": "Line under the flair dialog title. {title} is the list's title.",
             "placeholders": [
                 "title"
@@ -3141,7 +3141,7 @@
         {
             "key": "admin.tierLists.flair.failed",
             "namespace": "admin",
-            "source_text": "Couldn’t change the flair",
+            "source_text": "Couldn't change the flair",
             "description": "Title of the error toast when changing the flair failed.",
             "placeholders": []
         },
@@ -3248,14 +3248,14 @@
         {
             "key": "admin.tierLists.head.subOwn",
             "namespace": "admin",
-            "source_text": "The tier lists you’ve been granted. Your level on each list decides whether you can publish.",
+            "source_text": "The tier lists you've been granted. Your level on each list decides whether you can publish.",
             "description": "Line under the 'My tier lists' title for a non-staff editor.",
             "placeholders": []
         },
         {
             "key": "admin.tierLists.head.subStaff",
             "namespace": "admin",
-            "source_text": "Lists marked official appear in the site’s Official rail. Publishing saves a new version that visitors see.",
+            "source_text": "Lists marked official appear in the site's Official rail. Publishing saves a new version that visitors see.",
             "description": "Line under the 'Official tier lists' title. The 'Official rail' is the row of official lists on the public tier lists page.",
             "placeholders": []
         },
@@ -3318,7 +3318,7 @@
         {
             "key": "admin.tierLists.lists.empty.noAccess",
             "namespace": "admin",
-            "source_text": "You don’t have access to any tier lists yet.",
+            "source_text": "You don't have access to any tier lists yet.",
             "description": "Shown in the table when the user holds no grant on any list.",
             "placeholders": []
         },
@@ -3357,7 +3357,7 @@
         {
             "key": "admin.tierLists.lists.loadError",
             "namespace": "admin",
-            "source_text": "Couldn’t load the tier lists. Try again in a moment.",
+            "source_text": "Couldn't load the tier lists. Try again in a moment.",
             "description": "Shown in place of the table when loading the lists failed.",
             "placeholders": []
         },
@@ -3534,14 +3534,14 @@
         {
             "key": "admin.tierLists.new.descPlaceholder",
             "namespace": "admin",
-            "source_text": "Optional. Shown under the title on the list’s page.",
+            "source_text": "Optional. Shown under the title on the list's page.",
             "description": "Placeholder of the description field in the new-list dialog.",
             "placeholders": []
         },
         {
             "key": "admin.tierLists.new.failed",
             "namespace": "admin",
-            "source_text": "Couldn’t create the list",
+            "source_text": "Couldn't create the list",
             "description": "Title of the error toast when creating a list failed.",
             "placeholders": []
         },
@@ -3611,7 +3611,7 @@
         {
             "key": "admin.tierLists.publish.failed",
             "namespace": "admin",
-            "source_text": "Couldn’t publish",
+            "source_text": "Couldn't publish",
             "description": "Title of the error toast when publishing a version failed.",
             "placeholders": []
         },
@@ -5117,7 +5117,7 @@
         {
             "key": "announcements.error.body",
             "namespace": "announcements",
-            "source_text": "Something went wrong reaching the server. Give it another try.",
+            "source_text": "The server didn't answer. Try again in a moment.",
             "description": "Body of the game news error state.",
             "placeholders": []
         },
@@ -5558,7 +5558,7 @@
         {
             "key": "archives.file.examMissing",
             "namespace": "archives",
-            "source_text": "{count, plural, one {# of the six ratings isn't on file, so that corner sits at the centre.} other {# of the six ratings aren't on file, so those corners sit at the centre.}}",
+            "source_text": "{count, plural, one {# of the six ratings isn't on file, so that corner sits at the center.} other {# of the six ratings aren't on file, so those corners sit at the center.}}",
             "description": "Note under the exam radar.",
             "placeholders": [
                 "count"
@@ -6260,7 +6260,7 @@
         {
             "key": "archives.numbers.infectionByNote",
             "namespace": "archives",
-            "source_text": "The gap between the two colours is files that say something neither reading can settle. Groups of fewer than {threshold} are left out.",
+            "source_text": "The gap between the two colors is files that say something neither reading can settle. Groups of fewer than {threshold} are left out.",
             "description": "Note under the infection-by charts.",
             "placeholders": [
                 "threshold"
@@ -6804,14 +6804,14 @@
         {
             "key": "changelog.error.body",
             "namespace": "changelog",
-            "source_text": "We couldn't reach GitHub to fetch the latest commits. This is usually a temporary network hiccup or an API rate limit - try again in a moment.",
+            "source_text": "We couldn't reach GitHub to fetch the latest commits. This is usually a temporary network hiccup or an API rate limit, so try again in a moment.",
             "description": "Explanation under the changelog error heading. 'GitHub' is a product name and stays as-is.",
             "placeholders": []
         },
         {
             "key": "changelog.error.home",
             "namespace": "changelog",
-            "source_text": "Return home",
+            "source_text": "Go to the home page",
             "description": "Secondary button on the changelog error screen; goes to the landing page.",
             "placeholders": []
         },
@@ -6832,7 +6832,7 @@
         {
             "key": "changelog.error.unexpected",
             "namespace": "changelog",
-            "source_text": "An unexpected error occurred.",
+            "source_text": "No details were given.",
             "description": "Stand-in shown in the changelog error screen's detail box when the failure carried no message of its own.",
             "placeholders": []
         },
@@ -8898,7 +8898,7 @@
         {
             "key": "changelog.page.truncated",
             "namespace": "changelog",
-            "source_text": "Older history is capped - see the full log on GitHub.",
+            "source_text": "Older history is capped. See the full log on GitHub.",
             "description": "Note under the commit feed when the fetch window hit its cap. 'GitHub' is a product name and stays as-is.",
             "placeholders": []
         },
@@ -8926,8 +8926,8 @@
         {
             "key": "changelog.range.month.label",
             "namespace": "changelog",
-            "source_text": "This Month",
-            "description": "Time-window tab covering the last thirty days. Title case in the source.",
+            "source_text": "This month",
+            "description": "Time-window tab covering the last thirty days.",
             "placeholders": []
         },
         {
@@ -8947,8 +8947,8 @@
         {
             "key": "changelog.range.quarter.label",
             "namespace": "changelog",
-            "source_text": "3 Months",
-            "description": "Time-window tab covering the last ninety days. Title case in the source.",
+            "source_text": "3 months",
+            "description": "Time-window tab covering the last ninety days.",
             "placeholders": []
         },
         {
@@ -8968,8 +8968,8 @@
         {
             "key": "changelog.range.week.label",
             "namespace": "changelog",
-            "source_text": "This Week",
-            "description": "Time-window tab covering the last seven days. Title case in the source.",
+            "source_text": "This week",
+            "description": "Time-window tab covering the last seven days.",
             "placeholders": []
         },
         {
@@ -9715,7 +9715,7 @@
         {
             "key": "common.searchCommand.operatorsFailed",
             "namespace": "common",
-            "source_text": "Failed to load operators. Try reopening the palette.",
+            "source_text": "Couldn't load operators. Try reopening the palette.",
             "description": "Shown in place of the operator list when its request failed.",
             "placeholders": []
         },
@@ -9778,7 +9778,7 @@
         {
             "key": "common.sidebar.toggle",
             "namespace": "common",
-            "source_text": "Toggle Sidebar",
+            "source_text": "Toggle sidebar",
             "description": "Accessible name and tooltip of the control that collapses or expands the sidebar. A verb: one control does both directions.",
             "placeholders": []
         },
@@ -9806,14 +9806,14 @@
         {
             "key": "enemies.appears.category.modes",
             "namespace": "enemies",
-            "source_text": "Permanent Game Modes",
+            "source_text": "Permanent game modes",
             "description": "Heading of the bucket holding the game's always-available modes (Annihilation, Integrated Strategies and so on).",
             "placeholders": []
         },
         {
             "key": "enemies.appears.category.stages",
             "namespace": "enemies",
-            "source_text": "Story Stages",
+            "source_text": "Story stages",
             "description": "Heading of the bucket holding mainline campaign operations.",
             "placeholders": []
         },
@@ -9843,7 +9843,7 @@
         {
             "key": "enemies.appears.empty.body",
             "namespace": "enemies",
-            "source_text": "This enemy isn't listed in any of the currently extracted level files. Coverage grows as more content is processed.",
+            "source_text": "This enemy isn't in any stage we have data for yet.",
             "description": "Empty-state paragraph in the Appears In tab, explaining the gap is this site's coverage rather than the game's.",
             "placeholders": []
         },
@@ -10028,7 +10028,7 @@
         {
             "key": "enemies.chibi.error",
             "namespace": "enemies",
-            "source_text": "Failed to load chibi data.",
+            "source_text": "Couldn't load the chibi.",
             "description": "Shown in the Chibi tab when the chibi index request fails. 'Chibi' is the game's small animated sprite.",
             "placeholders": []
         },
@@ -10126,7 +10126,7 @@
         {
             "key": "enemies.detail.notFound.back",
             "namespace": "enemies",
-            "source_text": "Back to Enemy Database",
+            "source_text": "Back to enemies",
             "description": "Link out of the enemy-not-found page, back to the enemy list.",
             "placeholders": []
         },
@@ -10275,7 +10275,7 @@
         {
             "key": "enemies.list.blurb",
             "namespace": "enemies",
-            "source_text": "View all {count} enemies catalogued in Arknights, sorted by Hypergryph's internal sort index by default.",
+            "source_text": "View all {count} enemies cataloged in Arknights, sorted by Hypergryph's internal sort index by default.",
             "description": "Paragraph under the enemy-list heading. {count} is the bold number of enemies and may move wherever the sentence needs it. 'Arknights' and 'Hypergryph' are the game and its developer; keep both names.",
             "placeholders": [
                 "count"
@@ -10342,14 +10342,14 @@
         {
             "key": "enemies.list.empty.body",
             "namespace": "enemies",
-            "source_text": "Adjust the chip rail or your search above, or clear everything and start fresh.",
+            "source_text": "Change the filters or the search above, or clear them all.",
             "description": "Empty-state paragraph. 'Chip rail' is the row of filter chips above the results.",
             "placeholders": []
         },
         {
             "key": "enemies.list.empty.clear",
             "namespace": "enemies",
-            "source_text": "Clear all filters",
+            "source_text": "Clear filters",
             "description": "Empty-state button that drops every active filter.",
             "placeholders": []
         },
@@ -11005,7 +11005,7 @@
         {
             "key": "enemies.stats.forms.note",
             "namespace": "enemies",
-            "source_text": "This enemy transforms across {forms} forms in-fight, but Hypergryph's data ships {count, plural, one {a single stat block} other {# stat blocks}}. Subsequent forms modify behavior through skill triggers rather than swapping the base HP/ATK/DEF - see {traits} for the form descriptions.",
+            "source_text": "This enemy transforms across {forms} forms in-fight, but Hypergryph's data ships {count, plural, one {a single stat block} other {# stat blocks}}. Subsequent forms modify behavior through skill triggers rather than swapping the base HP/ATK/DEF; see {traits} for the form descriptions.",
             "description": "Note explaining why an enemy with several narrative forms has fewer stat blocks. {forms} is the bold form count and {traits} the bold pointer labelled by stats.forms.note.traits; both may move wherever the sentence needs them. 'Hypergryph' is the game's developer; keep the name.",
             "placeholders": [
                 "count",
@@ -11462,7 +11462,7 @@
         {
             "key": "gacha.community.header.title",
             "namespace": "gacha",
-            "source_text": "What everyone’s {emphasis}.",
+            "source_text": "What everyone's {emphasis}.",
             "description": "Heading of the community gacha page. {emphasis} is the accent-coloured word labelled by community.header.titleEmphasis and may sit anywhere the sentence needs it. Keep the full stop.",
             "placeholders": [
                 "emphasis"
@@ -11585,29 +11585,18 @@
             "placeholders": []
         },
         {
+            "key": "gacha.community.leaderboard.rarityFilter",
+            "namespace": "gacha",
+            "source_text": "Rarity",
+            "description": "Accessible name of the 6★ / 5★ / 4★ switch that picks which rarity the most-pulled table lists.",
+            "placeholders": []
+        },
+        {
             "key": "gacha.community.leaderboard.title",
             "namespace": "gacha",
             "source_text": "The top of the pile.",
             "description": "Heading of the panel ranking the operators the community pulled most often.",
             "placeholders": []
-        },
-        {
-            "key": "gacha.community.rarity.bar.expected",
-            "namespace": "gacha",
-            "source_text": "Expected {value}",
-            "description": "Tooltip on the tick marking the advertised rate on a rarity bar. {value} is already a formatted percentage.",
-            "placeholders": [
-                "value"
-            ]
-        },
-        {
-            "key": "gacha.community.rarity.bar.you",
-            "namespace": "gacha",
-            "source_text": "You {value}",
-            "description": "Tooltip on the tick marking the viewer's own rate on a rarity bar. {value} is already a formatted percentage.",
-            "placeholders": [
-                "value"
-            ]
         },
         {
             "key": "gacha.community.rarity.chip.vsExpected",
@@ -11628,6 +11617,20 @@
             "namespace": "gacha",
             "source_text": "you vs expected",
             "description": "Label on the chip comparing the viewer's own rate against the advertised one. Rendered uppercase in a tight row.",
+            "placeholders": []
+        },
+        {
+            "key": "gacha.community.rarity.direction.above",
+            "namespace": "gacha",
+            "source_text": "Above:",
+            "description": "Screen-reader word read before a comparison such as '138% of expected' when the observed rate is higher than the one it is compared to. The visible cue is an up arrow.",
+            "placeholders": []
+        },
+        {
+            "key": "gacha.community.rarity.direction.below",
+            "namespace": "gacha",
+            "source_text": "Below:",
+            "description": "Screen-reader word read before a comparison such as '61% of expected' when the observed rate is lower than the one it is compared to. The visible cue is a down arrow.",
             "placeholders": []
         },
         {
@@ -11684,7 +11687,7 @@
         {
             "key": "gacha.community.rarity.legend.note",
             "namespace": "gacha",
-            "source_text": "expected rates fold 6★ soft pity into the advertised 2/8/50/40% base - long-run 6★ is ~2.89%, and lower rarities dip slightly because a pity 6★ takes their slot",
+            "source_text": "expected rates fold 6★ soft pity into the advertised 2/8/50/40% base: long-run 6★ is ~2.89%, and lower rarities dip slightly because a pity 6★ takes their slot",
             "description": "Legend footnote explaining how the expected rates were derived. 'Soft pity' is the game's rising 6-star chance after fifty pulls.",
             "placeholders": []
         },
@@ -12504,7 +12507,7 @@
         {
             "key": "gacha.history.error.load",
             "namespace": "gacha",
-            "source_text": "Couldn’t load pull records.",
+            "source_text": "Couldn't load pull records.",
             "description": "Bold lead-in of the error banner on the pull-history page; the server's own message follows it on the same line.",
             "placeholders": []
         },
@@ -12518,7 +12521,7 @@
         {
             "key": "gacha.history.error.unknown",
             "namespace": "gacha",
-            "source_text": "Unknown error.",
+            "source_text": "No details were given.",
             "description": "Stand-in for the server's error message when the failed request carried none.",
             "placeholders": []
         },
@@ -12850,8 +12853,8 @@
         {
             "key": "gacha.history.refresh.errBody",
             "namespace": "gacha",
-            "source_text": "Try signing in again.",
-            "description": "Toast body suggesting a fix when the refresh failed and the server sent no message of its own.",
+            "source_text": "Your records didn't refresh. Try again in a moment.",
+            "description": "Toast body when the refresh failed with no detail of any kind (otherwise the shared error describer names the cause).",
             "placeholders": []
         },
         {
@@ -12880,7 +12883,7 @@
         {
             "key": "gacha.history.refresh.storageOff",
             "namespace": "gacha",
-            "source_text": "“Store gacha history” is off, so new pulls aren’t synced. Pulls already saved stay here.",
+            "source_text": "“Store gacha history” is off, so new pulls aren't synced. Pulls already saved stay here.",
             "description": "Note beside the disabled refresh button when the player turned off storing their pulls. “Store gacha history” is the exact label of that switch on the settings page (privacy.gacha.title); keep it quoted.",
             "placeholders": []
         },
@@ -12959,7 +12962,7 @@
         {
             "key": "gacha.history.share.profilePrivate.action",
             "namespace": "gacha",
-            "source_text": "Open Settings",
+            "source_text": "Open settings",
             "description": "Link in the share dialog to the settings page, where the profile can be made public.",
             "placeholders": []
         },
@@ -13036,6 +13039,13 @@
             "placeholders": []
         },
         {
+            "key": "gacha.history.top.rarityFilter",
+            "namespace": "gacha",
+            "source_text": "Rarity",
+            "description": "Accessible name of the 6★ / 5★ / 4★ switch that picks which rarity the top-operators table lists.",
+            "placeholders": []
+        },
+        {
             "key": "gacha.history.top.title",
             "namespace": "gacha",
             "source_text": "Your top operators.",
@@ -13087,7 +13097,7 @@
         {
             "key": "gallery.music.album.failed",
             "namespace": "gallery",
-            "source_text": "This album could not be loaded. Close it and open it again to try again.",
+            "source_text": "Couldn't load this album. Close it and open it again.",
             "description": "Shown in the album window when the album is not in the catalogue.",
             "placeholders": []
         },
@@ -13213,7 +13223,7 @@
         {
             "key": "gallery.music.charts.failed",
             "namespace": "gallery",
-            "source_text": "Couldn't load the charts. Try again in a bit.",
+            "source_text": "Couldn't load the charts. Try again in a moment.",
             "description": "Shown in place of a ranking when its request failed.",
             "placeholders": []
         },
@@ -13442,7 +13452,7 @@
         {
             "key": "gallery.music.counts.noSiren",
             "namespace": "gallery",
-            "source_text": "The server doesn't have the Monster Siren Records catalogue yet, so only the game's {tracks, plural, one {# track} other {# tracks}} are here.",
+            "source_text": "The server doesn't have the Monster Siren Records catalog yet, so only the game's {tracks, plural, one {# track} other {# tracks}} are here.",
             "description": "Line under the music page heading when the running backend has no label catalogue route.",
             "placeholders": [
                 "tracks"
@@ -13460,8 +13470,8 @@
         {
             "key": "gallery.music.counts.syncing",
             "namespace": "gallery",
-            "source_text": "Syncing the label catalogue… This takes a minute the first time the server starts.",
-            "description": "Shown while the backend is still copying the Monster Siren Records catalogue for the first time; the page retries on its own.",
+            "source_text": "Loading the label catalog… The first load can take a minute.",
+            "description": "Shown while the Monster Siren Records catalog loads for the first time; the page retries on its own. Keep the single-character ellipsis.",
             "placeholders": []
         },
         {
@@ -13557,7 +13567,7 @@
         {
             "key": "gallery.music.download.failedTrack",
             "namespace": "gallery",
-            "source_text": "Couldn't download {name}. Try again in a bit.",
+            "source_text": "Couldn't download {name}. Try again in a moment.",
             "description": "Error toast when a track download failed. {name} is the track title.",
             "placeholders": [
                 "name"
@@ -13646,7 +13656,7 @@
         {
             "key": "gallery.music.failed",
             "namespace": "gallery",
-            "source_text": "Couldn't load the music list. Try again in a bit.",
+            "source_text": "Couldn't load the music list. Try again in a moment.",
             "description": "Shown in place of the list when the request for it fails.",
             "placeholders": []
         },
@@ -13888,7 +13898,7 @@
         {
             "key": "gallery.music.list.missing",
             "namespace": "gallery",
-            "source_text": "{count, plural, one {# track isn't} other {# tracks aren't}} in the catalogue right now.",
+            "source_text": "{count, plural, one {# track isn't} other {# tracks aren't}} in the catalog right now.",
             "description": "Note over a playlist or Recently Played when some tracks are unknown to the current catalogue.",
             "placeholders": [
                 "count"
@@ -13897,7 +13907,7 @@
         {
             "key": "gallery.music.list.missingLiked",
             "namespace": "gallery",
-            "source_text": "{count, plural, one {# liked track isn't} other {# liked tracks aren't}} in the catalogue right now.",
+            "source_text": "{count, plural, one {# liked track isn't} other {# liked tracks aren't}} in the catalog right now.",
             "description": "Note over Liked Songs when some liked tracks are unknown to the current catalogue.",
             "placeholders": [
                 "count"
@@ -14537,7 +14547,7 @@
         {
             "key": "gallery.music.playlist.createFailed",
             "namespace": "gallery",
-            "source_text": "Couldn't make the playlist. Try again in a bit.",
+            "source_text": "Couldn't make the playlist. Try again in a moment.",
             "description": "Toast when creating a playlist fails or the limit is reached.",
             "placeholders": []
         },
@@ -14812,14 +14822,14 @@
         {
             "key": "gallery.music.rail.history",
             "namespace": "gallery",
-            "source_text": "Recently Played",
+            "source_text": "Recently played",
             "description": "Library section: tracks played lately.",
             "placeholders": []
         },
         {
             "key": "gallery.music.rail.liked",
             "namespace": "gallery",
-            "source_text": "Liked Songs",
+            "source_text": "Liked songs",
             "description": "Library section: tracks the listener liked.",
             "placeholders": []
         },
@@ -14840,14 +14850,14 @@
         {
             "key": "gallery.music.rail.songs",
             "namespace": "gallery",
-            "source_text": "All Songs",
+            "source_text": "All songs",
             "description": "Library section: every label track.",
             "placeholders": []
         },
         {
             "key": "gallery.music.rail.stats",
             "namespace": "gallery",
-            "source_text": "Your Stats",
+            "source_text": "Your stats",
             "description": "Library section: listening statistics.",
             "placeholders": []
         },
@@ -15379,14 +15389,14 @@
         {
             "key": "gallery.music.siren.failed",
             "namespace": "gallery",
-            "source_text": "Couldn't load the Monster Siren Records catalogue. Try again in a bit.",
+            "source_text": "Couldn't load the Monster Siren Records catalog. Try again in a moment.",
             "description": "Shown when the request for the label catalogue fails.",
             "placeholders": []
         },
         {
             "key": "gallery.music.siren.missing",
             "namespace": "gallery",
-            "source_text": "The server doesn't have the Monster Siren Records catalogue yet.",
+            "source_text": "The server doesn't have the Monster Siren Records catalog yet.",
             "description": "Shown in place of label albums and songs when the running backend has no label catalogue route.",
             "placeholders": []
         },
@@ -15616,7 +15626,7 @@
         {
             "key": "grids.browse.error",
             "namespace": "grids",
-            "source_text": "Grids could not be loaded.",
+            "source_text": "Couldn't load grids.",
             "description": "Shown when the grid list failed to load.",
             "placeholders": []
         },
@@ -15736,7 +15746,7 @@
         {
             "key": "grids.cell.addItem",
             "namespace": "grids",
-            "source_text": "Add Item",
+            "source_text": "Add item",
             "description": "Centred in an empty cell's grey square in the grid editor; clicking it opens the picker. Keep it short: cells can be under 50 pixels wide.",
             "placeholders": []
         },
@@ -16203,7 +16213,7 @@
         {
             "key": "grids.edit.toast.saveFailedTitle",
             "namespace": "grids",
-            "source_text": "Could not save",
+            "source_text": "Couldn't save the grid",
             "description": "Toast title when saving the grid failed; the body is the error.",
             "placeholders": []
         },
@@ -16442,7 +16452,7 @@
         {
             "key": "grids.my.error",
             "namespace": "grids",
-            "source_text": "Your grids could not be loaded.",
+            "source_text": "Couldn't load your grids.",
             "description": "Shown when the user's grids failed to load.",
             "placeholders": []
         },
@@ -16521,7 +16531,7 @@
         {
             "key": "grids.picker.error",
             "namespace": "grids",
-            "source_text": "This list could not be loaded.",
+            "source_text": "Couldn't load this list.",
             "description": "Shown in the picker when the current tab's list failed to load.",
             "placeholders": []
         },
@@ -16574,7 +16584,7 @@
         {
             "key": "grids.picker.retry",
             "namespace": "grids",
-            "source_text": "Retry",
+            "source_text": "Try again",
             "description": "Button that reloads the picker's failed list.",
             "placeholders": []
         },
@@ -16742,7 +16752,7 @@
         {
             "key": "grids.view.copy.errTitle",
             "namespace": "grids",
-            "source_text": "Could not copy the link",
+            "source_text": "Couldn't copy the link",
             "description": "Toast when the clipboard refused the link.",
             "placeholders": []
         },
@@ -16798,7 +16808,7 @@
         {
             "key": "grids.view.fork.errTitle",
             "namespace": "grids",
-            "source_text": "Could not copy this grid",
+            "source_text": "Couldn't copy this grid",
             "description": "Toast title when 'Use this template' failed; the body is the error.",
             "placeholders": []
         },
@@ -18842,7 +18852,7 @@
         {
             "key": "meta.enemies.description",
             "namespace": "meta",
-            "source_text": "View every enemy catalogued in Arknights.",
+            "source_text": "View every enemy cataloged in Arknights.",
             "description": "Meta description of the enemy index.",
             "placeholders": []
         },
@@ -18872,7 +18882,7 @@
         {
             "key": "meta.gachaCommunity.description",
             "namespace": "meta",
-            "source_text": "Community-wide gacha statistics - pull rates, most-pulled operators, and pull timing across opted-in players.",
+            "source_text": "Community-wide gacha statistics: pull rates, most-pulled operators, and pull timing across opted-in players.",
             "description": "Meta description of community-wide gacha statistics.",
             "placeholders": []
         },
@@ -18932,7 +18942,7 @@
         {
             "key": "meta.home.description",
             "namespace": "meta",
-            "source_text": "Track your roster, scout community pulls, and explore every operator.",
+            "source_text": "Track your roster, scout community pulls, and look up every operator.",
             "description": "Meta description of the landing page.",
             "placeholders": []
         },
@@ -19016,7 +19026,7 @@
         {
             "key": "meta.og.enemies.subtitle",
             "namespace": "meta",
-            "source_text": "Every enemy catalogued in Arknights.",
+            "source_text": "Every enemy cataloged in Arknights.",
             "description": "Subtitle on the enemy index social card.",
             "placeholders": []
         },
@@ -19072,7 +19082,7 @@
         {
             "key": "meta.og.home.subtitle",
             "namespace": "meta",
-            "source_text": "Track your roster, scout community pulls, and explore every operator.",
+            "source_text": "Track your roster, scout community pulls, and look up every operator.",
             "description": "Subtitle under the headline on the landing page's social card.",
             "placeholders": []
         },
@@ -19093,7 +19103,7 @@
         {
             "key": "meta.og.login.title",
             "namespace": "meta",
-            "source_text": "Log in to Myrtle",
+            "source_text": "Sign in to Myrtle",
             "description": "Headline on the sign-in social card.",
             "placeholders": []
         },
@@ -19492,7 +19502,7 @@
         {
             "key": "meta.privacy.description",
             "namespace": "meta",
-            "source_text": "Your privacy matters. Here's how Myrtle protects and handles your personal information.",
+            "source_text": "What Myrtle stores about you, who can see it, and how to delete it.",
             "description": "Meta description of the privacy policy.",
             "placeholders": []
         },
@@ -19506,7 +19516,7 @@
         {
             "key": "meta.root.description",
             "namespace": "meta",
-            "source_text": "Arknights companion - operators, rosters, tier lists.",
+            "source_text": "Arknights companion: operators, rosters, tier lists.",
             "description": "Site-wide meta description, used on any page that does not set its own.",
             "placeholders": []
         },
@@ -19720,7 +19730,7 @@
         {
             "key": "meta.toolsRandomizer.description",
             "namespace": "meta",
-            "source_text": "Roll a random Arknights stage, squad, and challenge modifier. Logged-in users can constrain rolls to stages they've cleared and operators they own.",
+            "source_text": "Roll a random Arknights stage, squad, and challenge modifier. Signed in, you can limit rolls to stages you've cleared and operators you own.",
             "description": "Meta description of the random stage/squad roller.",
             "placeholders": []
         },
@@ -19734,7 +19744,7 @@
         {
             "key": "meta.toolsRecruitment.description",
             "namespace": "meta",
-            "source_text": "Calculate optimal tag combinations for Arknights recruitment. Find guaranteed 5-star and 6-star operators with the best tag combos.",
+            "source_text": "Pick your Arknights recruitment tags and see every combination, ranked by the lowest rarity it guarantees.",
             "description": "Meta description of the recruitment tag calculator.",
             "placeholders": []
         },
@@ -19830,7 +19840,7 @@
         {
             "key": "nav.authDialog.biliSmsExperimental",
             "namespace": "nav",
-            "source_text": "Experimental: this endpoint hasn't been confirmed against a real response, so it may fail even with a correct code.",
+            "source_text": "Experimental: Bilibili SMS sign-in hasn't been tested with a real account, so it may fail even with a correct code.",
             "description": "Warning above the Bilibili SMS form that the flow is untested.",
             "placeholders": []
         },
@@ -19872,14 +19882,14 @@
         {
             "key": "nav.authDialog.description.bili",
             "namespace": "nav",
-            "source_text": "Log in with your Bilibili account. Your password is used once to sign in and never stored.",
+            "source_text": "Sign in with your Bilibili account. Your password is used once to sign in and never stored.",
             "description": "Dialog subtitle for the Bilibili server. 'Bilibili' is the Chinese publisher's name. It must stay true: the password is never stored.",
             "placeholders": []
         },
         {
             "key": "nav.authDialog.description.cn",
             "namespace": "nav",
-            "source_text": "Experimental: logs in with your Hypergryph (CN) account through the same passport flow the Skland app uses. Untested against a real account, so it may fail even with correct credentials. Your password or code is used once to sign in and never stored.",
+            "source_text": "Experimental: signs in with your Hypergryph (CN) account through the same passport flow the Skland app uses. Untested against a real account, so it may fail even with correct credentials. Your password or code is used once to sign in and never stored.",
             "description": "Dialog subtitle for the Chinese server. 'Hypergryph' is the developer and 'Skland' its companion app; both stay as-is.",
             "placeholders": []
         },
@@ -19900,14 +19910,14 @@
         {
             "key": "nav.authDialog.loggingIn",
             "namespace": "nav",
-            "source_text": "Logging in...",
-            "description": "Submit-button label while the sign-in request is in flight. Three full stops, not an ellipsis character.",
+            "source_text": "Signing in…",
+            "description": "Submit-button label while the sign-in request is in flight. Ends in an ellipsis character.",
             "placeholders": []
         },
         {
             "key": "nav.authDialog.login",
             "namespace": "nav",
-            "source_text": "Login",
+            "source_text": "Sign in",
             "description": "Submit-button label that completes sign-in.",
             "placeholders": []
         },
@@ -19982,15 +19992,15 @@
         {
             "key": "nav.authDialog.sendCode",
             "namespace": "nav",
-            "source_text": "Send Code",
+            "source_text": "Send code",
             "description": "Submit-button label that requests a verification code.",
             "placeholders": []
         },
         {
             "key": "nav.authDialog.sending",
             "namespace": "nav",
-            "source_text": "Sending...",
-            "description": "Submit-button label while the verification code is being sent. Three full stops, not an ellipsis character.",
+            "source_text": "Sending…",
+            "description": "Submit-button label while the verification code is being sent. Ends in an ellipsis character.",
             "placeholders": []
         },
         {
@@ -20010,15 +20020,15 @@
         {
             "key": "nav.authDialog.title",
             "namespace": "nav",
-            "source_text": "Login",
+            "source_text": "Sign in",
             "description": "Title of the sign-in dialog.",
             "placeholders": []
         },
         {
             "key": "nav.authDialog.toast.codeError",
             "namespace": "nav",
-            "source_text": "There was an error sending a code:\n{error}",
-            "description": "Error toast body when an SMS code could not be sent. {error} is the server's own message, on its own line.",
+            "source_text": "{error}",
+            "description": "Error toast body when an SMS code could not be sent. {error} is the server's own message; keep it as the whole body.",
             "placeholders": [
                 "error"
             ]
@@ -20026,21 +20036,21 @@
         {
             "key": "nav.authDialog.toast.error",
             "namespace": "nav",
-            "source_text": "Error",
-            "description": "Generic error toast title used when sending a code fails.",
+            "source_text": "Couldn't send the code",
+            "description": "Error toast title used when sending a sign-in code fails.",
             "placeholders": []
         },
         {
             "key": "nav.authDialog.toast.loggedIn",
             "namespace": "nav",
-            "source_text": "Logged in successfully.",
+            "source_text": "Signed in",
             "description": "Success toast title after signing in.",
             "placeholders": []
         },
         {
             "key": "nav.authDialog.toast.loginFailed",
             "namespace": "nav",
-            "source_text": "Login failed",
+            "source_text": "Couldn't sign in",
             "description": "Error toast title when signing in was rejected.",
             "placeholders": []
         },
@@ -20056,8 +20066,8 @@
         {
             "key": "nav.authDialog.toast.otpError",
             "namespace": "nav",
-            "source_text": "There was an error sending an OTP:\n{error}",
-            "description": "Error toast body when the one-time password could not be emailed. {error} is the server's own message, on its own line.",
+            "source_text": "{error}",
+            "description": "Error toast body when the one-time code could not be emailed. {error} is the server's own message; keep it as the whole body.",
             "placeholders": [
                 "error"
             ]
@@ -20065,21 +20075,21 @@
         {
             "key": "nav.authDialog.toast.sentCode",
             "namespace": "nav",
-            "source_text": "Sent code",
+            "source_text": "Code sent",
             "description": "Success toast title after a verification code goes out.",
             "placeholders": []
         },
         {
             "key": "nav.authDialog.toast.sentOtpEmail",
             "namespace": "nav",
-            "source_text": "Sent OTP code to your email.",
+            "source_text": "Check your email for the code.",
             "description": "Success toast body after emailing a one-time password.",
             "placeholders": []
         },
         {
             "key": "nav.authDialog.toast.sentSms",
             "namespace": "nav",
-            "source_text": "Sent SMS code to your phone.",
+            "source_text": "Check your phone for the code.",
             "description": "Success toast body after texting a verification code.",
             "placeholders": []
         },
@@ -20107,7 +20117,7 @@
         {
             "key": "nav.header.collection.archives.desc",
             "namespace": "nav",
-            "source_text": "Personnel files, the faction network and the roster counted up.",
+            "source_text": "Personnel files, the faction network and the roster counted up",
             "description": "Blurb under the Archives entry in the Collection menu.",
             "placeholders": []
         },
@@ -20121,7 +20131,7 @@
         {
             "key": "nav.header.collection.enemies.desc",
             "namespace": "nav",
-            "source_text": "Every enemy catalogued, with stats and traits.",
+            "source_text": "Every enemy cataloged, with stats and traits",
             "description": "Blurb under the Enemies entry in the Collection menu.",
             "placeholders": []
         },
@@ -20135,7 +20145,7 @@
         {
             "key": "nav.header.collection.music.desc",
             "namespace": "nav",
-            "source_text": "Every track in the game, where it plays, and a player that loops it like the game does.",
+            "source_text": "Every track in the game, where it plays, and a player that loops it like the game does",
             "description": "Blurb under the In-Game Music entry in the Collection menu.",
             "placeholders": []
         },
@@ -20163,7 +20173,7 @@
         {
             "key": "nav.header.collection.operators.desc",
             "namespace": "nav",
-            "source_text": "Every operator released in Arknights.",
+            "source_text": "Every operator released in Arknights",
             "description": "Blurb under the Operators entry in the Collection menu. 'Arknights' is the game's name.",
             "placeholders": []
         },
@@ -20198,7 +20208,7 @@
         {
             "key": "nav.header.collection.stages.desc",
             "namespace": "nav",
-            "source_text": "Every stage, mapped with an enemy-pathing simulator.",
+            "source_text": "Every stage, mapped with an enemy-pathing simulator",
             "description": "Blurb under the Stages entry in the Collection menu.",
             "placeholders": []
         },
@@ -20212,7 +20222,7 @@
         {
             "key": "nav.header.collection.stories.desc",
             "namespace": "nav",
-            "source_text": "Read every story in the game, with your progress synced.",
+            "source_text": "Read every story in the game, with your progress synced",
             "description": "Blurb under the Stories entry in the Collection menu.",
             "placeholders": []
         },
@@ -20456,14 +20466,14 @@
         {
             "key": "nav.mobileNav.login",
             "namespace": "nav",
-            "source_text": "Login",
+            "source_text": "Sign in",
             "description": "Action that opens the sign-in dialog.",
             "placeholders": []
         },
         {
             "key": "nav.mobileNav.logout",
             "namespace": "nav",
-            "source_text": "Logout",
+            "source_text": "Sign out",
             "description": "Action that signs the visitor out.",
             "placeholders": []
         },
@@ -20673,7 +20683,7 @@
         {
             "key": "nav.stageGroup.annihilation.desc",
             "namespace": "nav",
-            "source_text": "Endless-wave defense operations scored by total kills - the weekly source of Orundum.",
+            "source_text": "Endless-wave defense operations scored by total kills, and the weekly source of Orundum.",
             "description": "Blurb for the Annihilation game mode. 'Orundum' is an in-game currency; keep the game's own name.",
             "placeholders": []
         },
@@ -20687,7 +20697,7 @@
         {
             "key": "nav.stageGroup.cc.desc",
             "namespace": "nav",
-            "source_text": "Score-attack contracts - stack risk modifiers on a fixed map for higher rewards.",
+            "source_text": "Score-attack contracts: stack risk modifiers on a fixed map for higher rewards.",
             "description": "Blurb for the Contingency Contract game mode. 'Risk' is the in-game difficulty score.",
             "placeholders": []
         },
@@ -20757,7 +20767,7 @@
         {
             "key": "nav.stageGroup.ra.desc",
             "namespace": "nav",
-            "source_text": "A survival sandbox - scout the wilds, gather resources, build defenses and endure each cycle.",
+            "source_text": "A survival sandbox: scout the wilds, gather resources, build defenses and endure each cycle.",
             "description": "Blurb for the Reclamation Algorithm game mode.",
             "placeholders": []
         },
@@ -20785,7 +20795,7 @@
         {
             "key": "nav.stageGroup.story.desc",
             "namespace": "nav",
-            "source_text": "The mainline campaign - Rhodes Island's canonical operations, told episode by episode across Terra.",
+            "source_text": "The mainline campaign: Rhodes Island's canonical operations, told episode by episode across Terra.",
             "description": "Blurb for the Main Story group. 'Rhodes Island' and 'Terra' are in-game proper nouns; keep the game's own names for the region.",
             "placeholders": []
         },
@@ -21064,7 +21074,7 @@
         {
             "key": "nav.userMenu.adminPanel",
             "namespace": "nav",
-            "source_text": "Admin Panel",
+            "source_text": "Admin",
             "description": "Menu item shown only to staff, linking to the moderation and translation tools.",
             "placeholders": []
         },
@@ -21087,14 +21097,14 @@
         {
             "key": "nav.userMenu.login",
             "namespace": "nav",
-            "source_text": "Login",
+            "source_text": "Sign in",
             "description": "Button shown to signed-out visitors, opening the sign-in dialog.",
             "placeholders": []
         },
         {
             "key": "nav.userMenu.logout",
             "namespace": "nav",
-            "source_text": "Logout",
+            "source_text": "Sign out",
             "description": "Menu item that signs the visitor out.",
             "placeholders": []
         },
@@ -21345,7 +21355,7 @@
         {
             "key": "operators.audio.search.sfx.placeholder",
             "namespace": "operators",
-            "source_text": "Search sound effects...",
+            "source_text": "Search sound effects…",
             "description": "Prompt inside the empty sound-effect search box. Keep the three dots as written.",
             "placeholders": []
         },
@@ -21359,14 +21369,14 @@
         {
             "key": "operators.audio.search.voice.placeholder",
             "namespace": "operators",
-            "source_text": "Search voice lines...",
+            "source_text": "Search voice lines…",
             "description": "Prompt inside the empty voice-line search box. Keep the three dots as written.",
             "placeholders": []
         },
         {
             "key": "operators.audio.sfx.battleVoice",
             "namespace": "operators",
-            "source_text": "Battle Voice",
+            "source_text": "Battle voice",
             "description": "Row label for in-combat lines not tied to a numbered skill.",
             "placeholders": []
         },
@@ -21396,7 +21406,7 @@
         {
             "key": "operators.audio.sfx.skillSlotVoice",
             "namespace": "operators",
-            "source_text": "Skill {slot} Voice",
+            "source_text": "Skill {slot} voice",
             "description": "Row label for the line the operator says when a numbered skill fires.",
             "placeholders": [
                 "slot"
@@ -21433,7 +21443,7 @@
         {
             "key": "operators.audio.tab.voice",
             "namespace": "operators",
-            "source_text": "Voice Lines",
+            "source_text": "Voice lines",
             "description": "Tab switching to the operator's recorded dialogue.",
             "placeholders": []
         },
@@ -21614,7 +21624,7 @@
         {
             "key": "operators.breakdown.rowTooltip",
             "namespace": "operators",
-            "source_text": "{users} of {total} {cohort} ({pct}%){own, select, yes { - where you are} other {}}",
+            "source_text": "{users} of {total} {cohort} ({pct}%){own, select, yes {, where you are} other {}}",
             "description": "Hover text on one bar, e.g. '912 of 3,551 E2 owners (25.7%)'. {users} and {total} are formatted counts, {pct} is the share, and the trailing clause only appears on the reader's own row.",
             "placeholders": [
                 "cohort",
@@ -21689,15 +21699,15 @@
         {
             "key": "operators.chibi.error.failed",
             "namespace": "operators",
-            "source_text": "Failed to load chibi",
+            "source_text": "Couldn't load the chibi",
             "description": "Shown in the viewer when the animation files could not be fetched or parsed.",
             "placeholders": []
         },
         {
             "key": "operators.chibi.error.noData",
             "namespace": "operators",
-            "source_text": "No spine data available",
-            "description": "Shown in the viewer when the chosen sprite set ships no animation files. 'Spine' is the animation format's name and stays as-is.",
+            "source_text": "No chibi for this operator",
+            "description": "Shown in the viewer when the chosen sprite set ships no animation files.",
             "placeholders": []
         },
         {
@@ -21757,7 +21767,7 @@
         {
             "key": "operators.chibi.title",
             "namespace": "operators",
-            "source_text": "Chibi Preview",
+            "source_text": "Chibi preview",
             "description": "Heading of the animated sprite viewer. 'Chibi' is the fan term for the small in-battle sprite, used as-is in English.",
             "placeholders": []
         },
@@ -21908,7 +21918,7 @@
         {
             "key": "operators.chibiExport.frameRate",
             "namespace": "operators",
-            "source_text": "Frame Rate",
+            "source_text": "Frame rate",
             "description": "Label over the frames-per-second choices.",
             "placeholders": []
         },
@@ -22025,7 +22035,7 @@
         {
             "key": "operators.chibiStage.bg.custom",
             "namespace": "operators",
-            "source_text": "Custom colour",
+            "source_text": "Custom color",
             "description": "Backdrop swatch that opens a colour picker.",
             "placeholders": []
         },
@@ -23011,7 +23021,7 @@
         {
             "key": "operators.filters.voiceActor",
             "namespace": "operators",
-            "source_text": "Voice Actor",
+            "source_text": "Voice actor",
             "description": "Field label for the voice-actor filter. The names themselves are never translated.",
             "placeholders": []
         },
@@ -23130,14 +23140,14 @@
         {
             "key": "operators.info.combatStats",
             "namespace": "operators",
-            "source_text": "Combat Stats",
+            "source_text": "Combat stats",
             "description": "Heading over the two-column table of the operator's stats.",
             "placeholders": []
         },
         {
             "key": "operators.info.controls",
             "namespace": "operators",
-            "source_text": "Operator Controls",
+            "source_text": "Operator controls",
             "description": "Heading of the collapsible panel holding the level, promotion, potential, module and trust controls.",
             "placeholders": []
         },
@@ -23246,7 +23256,7 @@
         {
             "key": "operators.info.module.none",
             "namespace": "operators",
-            "source_text": "No Module",
+            "source_text": "No module",
             "description": "Module option meaning no module is equipped.",
             "placeholders": []
         },
@@ -23270,14 +23280,14 @@
         {
             "key": "operators.info.moduleDetails",
             "namespace": "operators",
-            "source_text": "Module Details",
+            "source_text": "Module details",
             "description": "Heading of the collapsible panel describing the selected module.",
             "placeholders": []
         },
         {
             "key": "operators.info.moduleDetails.levelStats",
             "namespace": "operators",
-            "source_text": "Level {level} Stats",
+            "source_text": "Level {level} stats",
             "description": "Heading over the stat bonuses a module grants at the chosen level.",
             "placeholders": [
                 "level"
@@ -23412,7 +23422,7 @@
         {
             "key": "operators.info.talentChanges",
             "namespace": "operators",
-            "source_text": "Talent Changes",
+            "source_text": "Talent changes",
             "description": "Heading over what the module changes about the operator's talents.",
             "placeholders": []
         },
@@ -23449,21 +23459,21 @@
         {
             "key": "operators.info.talents.unnamed",
             "namespace": "operators",
-            "source_text": "Unnamed Talent",
+            "source_text": "Unnamed talent",
             "description": "Stand-in heading for a talent the game data does not name.",
             "placeholders": []
         },
         {
             "key": "operators.info.title",
             "namespace": "operators",
-            "source_text": "Operator Information",
+            "source_text": "Operator information",
             "description": "Heading of the Information tab. The blurb under it is the operator's trait text from the game data.",
             "placeholders": []
         },
         {
             "key": "operators.info.traitChanges",
             "namespace": "operators",
-            "source_text": "Trait Changes",
+            "source_text": "Trait changes",
             "description": "Heading over what the module changes about the operator's trait. 'Trait' is the game's always-on class ability.",
             "placeholders": []
         },
@@ -23646,7 +23656,7 @@
         {
             "key": "operators.levelup.section.operatorLevel",
             "namespace": "operators",
-            "source_text": "Operator Level",
+            "source_text": "Operator level",
             "description": "Section heading: the cost of levelling, as opposed to promoting.",
             "placeholders": []
         },
@@ -23660,7 +23670,7 @@
         {
             "key": "operators.levelup.section.skillLevels",
             "namespace": "operators",
-            "source_text": "Skill Levels",
+            "source_text": "Skill levels",
             "description": "Section heading: the cost of raising all skills from level 1 to 7 together.",
             "placeholders": []
         },
@@ -23674,7 +23684,7 @@
         {
             "key": "operators.levelup.section.total",
             "namespace": "operators",
-            "source_text": "Grand Total",
+            "source_text": "Grand total",
             "description": "Section heading: every material added together.",
             "placeholders": []
         },
@@ -23732,7 +23742,7 @@
         {
             "key": "operators.list.clearFilters",
             "namespace": "operators",
-            "source_text": "Clear all filters",
+            "source_text": "Clear filters",
             "description": "Link under the empty state that resets every filter.",
             "placeholders": []
         },
@@ -23858,7 +23868,7 @@
         {
             "key": "operators.list.search.placeholder",
             "namespace": "operators",
-            "source_text": "Search operators...",
+            "source_text": "Search operators…",
             "description": "Prompt inside the empty search box. Keep the three dots as written.",
             "placeholders": []
         },
@@ -23990,7 +24000,7 @@
         {
             "key": "operators.lore.archives",
             "namespace": "operators",
-            "source_text": "Archive Files",
+            "source_text": "Archive files",
             "description": "Heading over the list of handbook sections. The section titles themselves come from the game data.",
             "placeholders": []
         },
@@ -24004,7 +24014,7 @@
         {
             "key": "operators.lore.empty.title",
             "namespace": "operators",
-            "source_text": "No Records Available",
+            "source_text": "No records",
             "description": "Empty state heading when the game data carries no handbook text for this operator.",
             "placeholders": []
         },
@@ -24074,7 +24084,7 @@
         {
             "key": "operators.notes.title",
             "namespace": "operators",
-            "source_text": "Operator Notes",
+            "source_text": "Operator notes",
             "description": "Heading of the collapsible panel holding this site's own written notes about an operator.",
             "placeholders": []
         },
@@ -24378,7 +24388,7 @@
         {
             "key": "operators.scene.error",
             "namespace": "operators",
-            "source_text": "Failed to load animation",
+            "source_text": "Couldn't load the animation",
             "description": "Badge in the corner of the canvas when the animated illustration could not be loaded.",
             "placeholders": []
         },
@@ -24546,7 +24556,7 @@
         {
             "key": "operators.share.tooltip",
             "namespace": "operators",
-            "source_text": "{users} of {total} {cohort}{top, select, yes { - the most common choice} other {}}",
+            "source_text": "{users} of {total} {cohort}{top, select, yes {, the most common choice} other {}}",
             "description": "Hover text on the community share pill, e.g. '1,204 of 3,551 E2 owners use this skill - the most common choice'. {users} and {total} are formatted counts, {cohort} names the group in the reader's terms, and the trailing clause only appears for the most-picked option.",
             "placeholders": [
                 "cohort",
@@ -24632,7 +24642,7 @@
         {
             "key": "operators.skills.column.description",
             "namespace": "operators",
-            "source_text": "Description / Changes",
+            "source_text": "Description / changes",
             "description": "Column header of the comparison table: the skill text, or only what changed in diff mode.",
             "placeholders": []
         },
@@ -24667,7 +24677,7 @@
         {
             "key": "operators.skills.compare.selectLevels",
             "namespace": "operators",
-            "source_text": "Select Levels",
+            "source_text": "Select levels",
             "description": "Label over the buttons choosing which skill levels the comparison shows.",
             "placeholders": []
         },
@@ -24683,21 +24693,21 @@
         {
             "key": "operators.skills.compare.showDiff",
             "namespace": "operators",
-            "source_text": "Show Diff",
+            "source_text": "Show diff",
             "description": "Button that switches the comparison to only what changed between levels. 'Diff' is short for difference.",
             "placeholders": []
         },
         {
             "key": "operators.skills.compare.showFull",
             "namespace": "operators",
-            "source_text": "Show Full",
+            "source_text": "Show full",
             "description": "Button that switches the comparison back to full descriptions.",
             "placeholders": []
         },
         {
             "key": "operators.skills.compare.toggle",
             "namespace": "operators",
-            "source_text": "Compare Skill Levels",
+            "source_text": "Compare skill levels",
             "description": "Label of the switch that turns the level-by-level comparison table on.",
             "placeholders": []
         },
@@ -24720,7 +24730,7 @@
         {
             "key": "operators.skills.empty.body",
             "namespace": "operators",
-            "source_text": "This operator has no active skills. They may rely solely on their talent or passive abilities.",
+            "source_text": "This operator has no active skills.",
             "description": "Empty-state body for an operator with no active skills.",
             "placeholders": []
         },
@@ -24734,7 +24744,7 @@
         {
             "key": "operators.skills.empty.title",
             "namespace": "operators",
-            "source_text": "No Skills",
+            "source_text": "No skills",
             "description": "Empty-state heading for an operator with no active skills.",
             "placeholders": []
         },
@@ -24764,7 +24774,7 @@
         {
             "key": "operators.skills.level",
             "namespace": "operators",
-            "source_text": "Skill Level",
+            "source_text": "Skill level",
             "description": "Label beside the slider that picks which skill level is shown.",
             "placeholders": []
         },
@@ -24834,7 +24844,7 @@
         {
             "key": "operators.skills.range.hideDiff",
             "namespace": "operators",
-            "source_text": "Hide Diff",
+            "source_text": "Hide diff",
             "description": "Button that stops showing the skill's range beside the operator's normal range.",
             "placeholders": []
         },
@@ -25167,7 +25177,7 @@
         {
             "key": "operators.tab.levelup",
             "namespace": "operators",
-            "source_text": "Level-Up Cost",
+            "source_text": "Level-up cost",
             "description": "Operator-detail tab: the materials needed to promote and upgrade.",
             "placeholders": []
         },
@@ -25512,7 +25522,7 @@
         {
             "key": "settings.appearance.cnUpdates.title",
             "namespace": "settings",
-            "source_text": "CN Updates",
+            "source_text": "CN updates",
             "description": "Card title over the option that shows CN-server changes on operator pages. 'CN' is the Chinese game server, which receives content months before the others.",
             "placeholders": []
         },
@@ -25533,14 +25543,14 @@
         {
             "key": "settings.appearance.dataSaver.rowTitle",
             "namespace": "settings",
-            "source_text": "Data Saver Mode",
+            "source_text": "Data saver mode",
             "description": "Label of the switch that turns data saver on, and the switch's accessible name.",
             "placeholders": []
         },
         {
             "key": "settings.appearance.dataSaver.title",
             "namespace": "settings",
-            "source_text": "Data Saver",
+            "source_text": "Data saver",
             "description": "Card title over the option that cuts how much artwork the site downloads.",
             "placeholders": []
         },
@@ -25724,7 +25734,7 @@
         {
             "key": "settings.appearance.topBar.title",
             "namespace": "settings",
-            "source_text": "Top Bar",
+            "source_text": "Top bar",
             "description": "Card title over the options for what shows up in the bar at the top of every page.",
             "placeholders": []
         },
@@ -25961,7 +25971,7 @@
         {
             "key": "settings.data.yourData.desc",
             "namespace": "settings",
-            "source_text": "Everything we store is visible on your profile page. For a portable copy or a GDPR request, email privacy directly.",
+            "source_text": "Everything we store is visible on your profile page. For a portable copy or a GDPR request, email privacy@myrtle.moe.",
             "description": "Card description under Your data on Myrtle. GDPR is the EU data-protection regulation.",
             "placeholders": []
         },
@@ -26024,11 +26034,9 @@
         {
             "key": "settings.privacy.gacha.desc",
             "namespace": "settings",
-            "source_text": "Saves your synced pulls so you can browse them in Gacha → History and contribute aggregate stats. Backed by {column}.",
-            "description": "Caption under the gacha switch. 'Gacha → History' names a menu path in this site's own navigation; {column} is a database column name in monospace, movable wherever the sentence needs it.",
-            "placeholders": [
-                "column"
-            ]
+            "source_text": "Saves your synced pulls so you can browse them in Gacha → History and contribute aggregate stats.",
+            "description": "Caption under the gacha switch. 'Gacha → History' names a menu path in this site's own navigation.",
+            "placeholders": []
         },
         {
             "key": "settings.privacy.gacha.title",
@@ -26047,10 +26055,9 @@
         {
             "key": "settings.privacy.leaderboards.desc",
             "namespace": "settings",
-            "source_text": "Opt in to ranked appearance on {path}. Scores are still calculated either way. Backed by {column}.",
-            "description": "Caption under the leaderboard switch. {path} is a URL path and {column} a database column name, both in monospace; move either wherever the sentence needs it.",
+            "source_text": "Lists you on {path}. Your score is calculated either way.",
+            "description": "Caption under the leaderboard switch. {path} is a URL path in monospace; move it wherever the sentence needs it.",
             "placeholders": [
-                "column",
                 "path"
             ]
         },
@@ -26078,11 +26085,9 @@
         {
             "key": "settings.privacy.publicGacha.desc",
             "namespace": "settings",
-            "source_text": "Shows your stored pulls on your profile's Pulls tab and through the links you share from Gacha → History. Off by default, and only on a public profile. Backed by {column}.",
-            "description": "Caption under the public pull history switch. 'Gacha → History' names a menu path in this site's own navigation; {column} is a database column name in monospace, movable wherever the sentence needs it.",
-            "placeholders": [
-                "column"
-            ]
+            "source_text": "Shows your stored pulls on your profile's Pulls tab and through the links you share from Gacha → History. Off by default, and only on a public profile.",
+            "description": "Caption under the public pull history switch. 'Gacha → History' names a menu path in this site's own navigation.",
+            "placeholders": []
         },
         {
             "key": "settings.privacy.publicGacha.title",
@@ -26115,11 +26120,9 @@
         {
             "key": "settings.privacy.visibility.desc",
             "namespace": "settings",
-            "source_text": "Who can see your roster and account stats. Backed by {column}.",
-            "description": "Card description over the visibility switches. {column} is a database column name in monospace; move it wherever the sentence needs it.",
-            "placeholders": [
-                "column"
-            ]
+            "source_text": "Who can see your roster and account stats.",
+            "description": "Card description over the visibility switches.",
+            "placeholders": []
         },
         {
             "key": "settings.privacy.visibility.title",
@@ -26933,7 +26936,7 @@
         {
             "key": "stages.detail.notFound.back",
             "namespace": "stages",
-            "source_text": "Back to Stages",
+            "source_text": "Back to stages",
             "description": "Link out of the stage-not-found page, back to the stage list.",
             "placeholders": []
         },
@@ -27288,7 +27291,7 @@
         {
             "key": "stages.list.blurb",
             "namespace": "stages",
-            "source_text": "Browse by story arc and code - each stage opens to a faux-3D board and enemy-pathing simulator. Ordered by episode and code.",
+            "source_text": "Browse by story arc and code. Each stage opens to a faux-3D board and enemy-pathing simulator. Ordered by episode and code.",
             "description": "Paragraph under the stage-list heading, explaining what the list offers.",
             "placeholders": []
         },
@@ -27492,7 +27495,7 @@
         {
             "key": "stages.list.title",
             "namespace": "stages",
-            "source_text": "Every operation, catalogued.",
+            "source_text": "Every operation, cataloged.",
             "description": "Page heading of the stage list. 'Operation' is the game's word for a stage.",
             "placeholders": []
         },
@@ -27581,7 +27584,7 @@
         {
             "key": "stages.mapSettings.showEnemyIcons",
             "namespace": "stages",
-            "source_text": "Enemy Icons",
+            "source_text": "Enemy icons",
             "description": "Map layer toggle: show each spawning enemy's icon on its route.",
             "placeholders": []
         },
@@ -27595,7 +27598,7 @@
         {
             "key": "stages.mapSettings.showMovement",
             "namespace": "stages",
-            "source_text": "Enemy Movement",
+            "source_text": "Enemy movement",
             "description": "Map layer toggle: animate the enemy icon along its route.",
             "placeholders": []
         },
@@ -27609,7 +27612,7 @@
         {
             "key": "stages.mapSettings.showRoutes",
             "namespace": "stages",
-            "source_text": "Route Lines",
+            "source_text": "Route lines",
             "description": "Map layer toggle: draw the enemy route lines.",
             "placeholders": []
         },
@@ -27623,7 +27626,7 @@
         {
             "key": "stages.mapSettings.showTimers",
             "namespace": "stages",
-            "source_text": "Wait Timers",
+            "source_text": "Wait timers",
             "description": "Map layer toggle: show the wait-duration badges on routes.",
             "placeholders": []
         },
@@ -27644,7 +27647,7 @@
         {
             "key": "stages.mapSettings.walkingChibis",
             "namespace": "stages",
-            "source_text": "Walking Chibis",
+            "source_text": "Walking chibis",
             "description": "Map layer toggle: render the enemy's animated chibi walking its route. 'Chibi' is the game's small animated sprite.",
             "placeholders": []
         },
@@ -27721,7 +27724,7 @@
         {
             "key": "stages.overview.dpTick.info",
             "namespace": "stages",
-            "source_text": "How often you passively gain 1 DP - a lower number means DP regenerates faster.",
+            "source_text": "How often you passively gain 1 DP. A lower number means DP regenerates faster.",
             "description": "Tooltip on the DP / Tick stat card.",
             "placeholders": []
         },
@@ -27798,28 +27801,28 @@
         {
             "key": "stages.props.autoDeploy",
             "namespace": "stages",
-            "source_text": "Auto-Deploy (Multi)",
+            "source_text": "Auto-deploy (multi)",
             "description": "Stage flag: the operation supports the game's multi-run auto-deploy. Keep the parenthetical short.",
             "placeholders": []
         },
         {
             "key": "stages.props.battleReplay",
             "namespace": "stages",
-            "source_text": "Battle Replay",
+            "source_text": "Battle replay",
             "description": "Stage flag: a clear of this operation can be replayed.",
             "placeholders": []
         },
         {
             "key": "stages.props.canPractice",
             "namespace": "stages",
-            "source_text": "Can Practice",
+            "source_text": "Can practice",
             "description": "Stage flag: the operation can be run in practice mode, which costs no Sanity.",
             "placeholders": []
         },
         {
             "key": "stages.props.cardsSelectable",
             "namespace": "stages",
-            "source_text": "Cards Selectable",
+            "source_text": "Cards selectable",
             "description": "Stage flag: in a predefined-squad operation, whether the player picks which provided operators to deploy.",
             "placeholders": []
         },
@@ -27868,7 +27871,7 @@
         {
             "key": "stages.props.predefinedSquad",
             "namespace": "stages",
-            "source_text": "Predefined Squad",
+            "source_text": "Predefined squad",
             "description": "Stage flag: the operation hands you a fixed roster.",
             "placeholders": []
         },
@@ -27882,7 +27885,7 @@
         {
             "key": "stages.props.steeringEnabled",
             "namespace": "stages",
-            "source_text": "Steering Enabled",
+            "source_text": "Steering enabled",
             "description": "Stage flag: the level file's enemy-pathfinding steering option.",
             "placeholders": []
         },
@@ -27896,7 +27899,7 @@
         {
             "key": "stages.props.storyOnly",
             "namespace": "stages",
-            "source_text": "Story Only",
+            "source_text": "Story only",
             "description": "Stage flag: the operation is a story scene with no battle.",
             "placeholders": []
         },
@@ -27910,7 +27913,7 @@
         {
             "key": "stages.props.trainingLevel",
             "namespace": "stages",
-            "source_text": "Training Level",
+            "source_text": "Training level",
             "description": "Stage flag: the operation is a tutorial / practice level.",
             "placeholders": []
         },
@@ -27989,14 +27992,14 @@
         {
             "key": "stages.spawns.hiddenRoutes",
             "namespace": "stages",
-            "source_text": "Hidden Routes",
+            "source_text": "Hidden routes",
             "description": "Label before the pills naming spawn groups the game hides until a condition is met.",
             "placeholders": []
         },
         {
             "key": "stages.spawns.title",
             "namespace": "stages",
-            "source_text": "Spawn Schedule",
+            "source_text": "Spawn schedule",
             "description": "Kicker over the table of enemy spawns, ordered by the second they appear.",
             "placeholders": []
         },
@@ -28466,7 +28469,7 @@
         {
             "key": "stats.page.catalog.blurb",
             "namespace": "stats",
-            "source_text": "A faithful mirror of Hypergryph’s gamedata, recomputed on every build.",
+            "source_text": "Counted from Hypergryph's game data each time the site updates.",
             "description": "Caption under the game-catalog heading. 'Hypergryph' is the game's developer and stays as-is.",
             "placeholders": []
         },
@@ -28573,28 +28576,28 @@
         {
             "key": "stats.page.community.title",
             "namespace": "stats",
-            "source_text": "The community’s working notes.",
+            "source_text": "The community's working notes.",
             "description": "Heading of the community tier-list section of the stats page.",
             "placeholders": []
         },
         {
             "key": "stats.page.error.load",
             "namespace": "stats",
-            "source_text": "Couldn’t load site stats.",
+            "source_text": "Couldn't load site stats.",
             "description": "Bold lead of the stats-page error banner; the request's own message follows it.",
             "placeholders": []
         },
         {
             "key": "stats.page.error.unknown",
             "namespace": "stats",
-            "source_text": "Unknown error.",
+            "source_text": "No details were given.",
             "description": "Stand-in used in the stats-page error banner when the failure carried no message.",
             "placeholders": []
         },
         {
             "key": "stats.page.footer",
             "namespace": "stats",
-            "source_text": "Looking for gacha rates, most-pulled operators, or pull timing? Those live on {link}. This page is the meta-count - just the shape of what we host.",
+            "source_text": "Looking for gacha rates, most-pulled operators, or pull timing? Those live on {link}. This page is the meta-count: just the shape of what we host.",
             "description": "Closing note on the stats page. {link} is a link whose label is the literal URL path /gacha/community; move it wherever the sentence needs it. 'Gacha' is the game's randomised recruitment system and a 'pull' is one draw from it.",
             "placeholders": [
                 "link"
@@ -29156,8 +29159,8 @@
         {
             "key": "story.browse.fallback",
             "namespace": "story",
-            "source_text": "The running backend sends no storyline shelves yet, so the page is grouped by chapter order and release year instead of by the game's own themes. A backend restart fills them in.",
-            "description": "Notice shown when the wire carries no storylines and the fallback sectioning is in use.",
+            "source_text": "Storyline groups aren't available right now, so stories are grouped by chapter order and release year instead of the game's own themes.",
+            "description": "Notice shown when no storyline groups are available and the page falls back to chapter order and release year.",
             "placeholders": []
         },
         {
@@ -29682,7 +29685,7 @@
         {
             "key": "story.community.empty.body",
             "namespace": "story",
-            "source_text": "This server has not computed what the community has read. It appears here once it does.",
+            "source_text": "Community reading counts haven't been calculated yet. Check back later.",
             "description": "Explanation under the Community tab's empty-state heading.",
             "placeholders": []
         },
@@ -29903,7 +29906,7 @@
         {
             "key": "story.export.cancelled",
             "namespace": "story",
-            "source_text": "Export cancelled.",
+            "source_text": "Export canceled.",
             "description": "Status line after the reader cancelled an export.",
             "placeholders": []
         },
@@ -30498,7 +30501,7 @@
         {
             "key": "story.illustrations.item.notExtracted",
             "namespace": "story",
-            "source_text": "Not extracted",
+            "source_text": "Not available yet",
             "description": "Shown in place of an artwork thumbnail whose file is missing from the served data.",
             "placeholders": []
         },
@@ -30593,7 +30596,7 @@
         {
             "key": "story.illustrations.panel.missing",
             "namespace": "story",
-            "source_text": "{count} not extracted",
+            "source_text": "{count} not available yet",
             "description": "Header line of the artwork panel: how many pieces resolve to no file on disk.",
             "placeholders": [
                 "count"
@@ -30623,15 +30626,15 @@
         {
             "key": "story.illustrations.panel.unavailable",
             "namespace": "story",
-            "source_text": "This backend does not serve artwork yet.",
-            "description": "Error state inside the artwork panel when the endpoint answers 404 because the running backend predates it.",
+            "source_text": "Artwork for this chapter isn't available yet.",
+            "description": "Error state inside the artwork panel when the live site does not serve artwork for this chapter yet.",
             "placeholders": []
         },
         {
             "key": "story.illustrations.panel.unavailableNote",
             "namespace": "story",
-            "source_text": "The endpoint is GET /story/group/<id>/illustrations. Everything else on this page keeps working.",
-            "description": "Second line of the 404 state in the artwork panel. Keep the endpoint path as it is.",
+            "source_text": "Everything else on this page still works.",
+            "description": "Second line of the unavailable state in the artwork panel (the server does not serve artwork for this chapter yet). Plain reader language; no API paths.",
             "placeholders": []
         },
         {
@@ -30646,7 +30649,7 @@
         {
             "key": "story.illustrations.totalUnknown",
             "namespace": "story",
-            "source_text": "Counts not on the wire yet",
+            "source_text": "Counts not available yet",
             "description": "Shown in place of the counter when the served data carries no artwork counts.",
             "placeholders": []
         },
@@ -30737,7 +30740,7 @@
         {
             "key": "story.library.tab.reading",
             "namespace": "story",
-            "source_text": "Reading Order",
+            "source_text": "Reading order",
             "description": "Top-level tab holding the reading orders the data can derive.",
             "placeholders": []
         },
@@ -30970,7 +30973,7 @@
         {
             "key": "story.operators.dialog.modules.emptyNote",
             "namespace": "story",
-            "source_text": "This operator's modules carry no story text on the wire, or they have none yet.",
+            "source_text": "This operator's modules have no story text yet.",
             "description": "Explanation under the Modules tab's empty state in the operator dialog.",
             "placeholders": []
         },
@@ -31033,7 +31036,7 @@
         {
             "key": "story.operators.dialog.tab.voices",
             "namespace": "story",
-            "source_text": "Voice Lines",
+            "source_text": "Voice lines",
             "description": "Tab in the operator dialog holding the operator's voice lines.",
             "placeholders": []
         },
@@ -31514,7 +31517,7 @@
         {
             "key": "story.progress.sync.retry",
             "namespace": "story",
-            "source_text": "Retry",
+            "source_text": "Try again",
             "description": "Button that starts a sync again after one failed.",
             "placeholders": []
         },
@@ -31649,7 +31652,7 @@
         {
             "key": "story.reader.error.noScript",
             "namespace": "story",
-            "source_text": "This story has no script file in the served data.",
+            "source_text": "This story's script isn't available yet.",
             "description": "Shown when the library lists a story but the backend has no script for it.",
             "placeholders": []
         },
@@ -32004,7 +32007,7 @@
         {
             "key": "story.reading.row.noneExtracted",
             "namespace": "story",
-            "source_text": "{count} not extracted",
+            "source_text": "{count} not available yet",
             "description": "Shown on a reading order row whose stories all lack a script.",
             "placeholders": [
                 "count"
@@ -32097,7 +32100,7 @@
         {
             "key": "story.reading.timeline.body",
             "namespace": "story",
-            "source_text": "A timeline order says when each story happens in Terra, and no field in the game's data says that. The reference site's timeline is written by hand, story by story, so this site would be copying a judgement rather than deriving one, and a wrong guess reads as a spoiler. Release order and storyline order below are both derived from the data and are shown instead.",
+            "source_text": "A timeline order says when each story happens in Terra, and no field in the game's data says that. The reference site's timeline is written by hand, story by story, so this site would be copying a judgment rather than deriving one, and a wrong guess reads as a spoiler. Release order and storyline order below are both derived from the data and are shown instead.",
             "description": "Explanation in the Timeline order panel of why the site offers no in-world timeline.",
             "placeholders": []
         },
@@ -32193,7 +32196,7 @@
         {
             "key": "story.settings.boxPreset.bottomCentre",
             "namespace": "story",
-            "source_text": "Bottom centre",
+            "source_text": "Bottom center",
             "description": "Text box position preset: the default, centred against the bottom margin.",
             "placeholders": []
         },
@@ -32214,7 +32217,7 @@
         {
             "key": "story.settings.boxPreset.centre",
             "namespace": "story",
-            "source_text": "Centre",
+            "source_text": "Center",
             "description": "Text box position preset: halfway up the stage, centred.",
             "placeholders": []
         },
@@ -32228,7 +32231,7 @@
         {
             "key": "story.settings.boxPreset.topCentre",
             "namespace": "story",
-            "source_text": "Top centre",
+            "source_text": "Top center",
             "description": "Text box position preset: as high as the box goes, centred.",
             "placeholders": []
         },
@@ -32747,7 +32750,7 @@
         {
             "key": "story.settings.speakerTint",
             "namespace": "story",
-            "source_text": "Speaker colour",
+            "source_text": "Speaker color",
             "description": "Settings row label for where the speaker's own colour is applied.",
             "placeholders": []
         },
@@ -32775,7 +32778,7 @@
         {
             "key": "story.settings.speakerTintHint",
             "namespace": "story",
-            "source_text": "The colour is sampled from the speaker's sprite on stage, and a speaker with nobody on stage keeps a hue hashed from their name. Either way it is kept readable at 4.5:1 on the box, and narration keeps the text colour.",
+            "source_text": "The color is sampled from the speaker's sprite on stage, and a speaker with nobody on stage keeps a hue hashed from their name. Either way it is kept readable at 4.5:1 on the box, and narration keeps the text color.",
             "description": "Hint under the speaker colour row: where the colour comes from and that contrast is preserved.",
             "placeholders": []
         },
@@ -32831,14 +32834,14 @@
         {
             "key": "story.settings.textColor",
             "namespace": "story",
-            "source_text": "Text colour",
+            "source_text": "Text color",
             "description": "Settings row label for the dialogue and narration colour.",
             "placeholders": []
         },
         {
             "key": "story.settings.textColor.custom",
             "namespace": "story",
-            "source_text": "Custom colour",
+            "source_text": "Custom color",
             "description": "Accessible label of the native colour input beside the swatches.",
             "placeholders": []
         },
@@ -32852,7 +32855,7 @@
         {
             "key": "story.settings.textColor.swatch",
             "namespace": "story",
-            "source_text": "Colour {number}",
+            "source_text": "Color {number}",
             "description": "Accessible label of a curated colour swatch. `{number}` is 1-based.",
             "placeholders": [
                 "number"
@@ -32861,7 +32864,7 @@
         {
             "key": "story.settings.textColorHint",
             "namespace": "story",
-            "source_text": "Every swatch clears 4.5:1 on both the dark and the light box. The speaker's name keeps its own colour.",
+            "source_text": "Every swatch clears 4.5:1 on both the dark and the light box. The speaker's name keeps its own color.",
             "description": "Hint under the text colour row.",
             "placeholders": []
         },
@@ -33328,8 +33331,8 @@
         {
             "key": "story.sprites.unavailableNote",
             "namespace": "story",
-            "source_text": "The server answering this page predates it; it appears after the next backend restart.",
-            "description": "Second line under the gallery's unavailable state, for a backend that predates the route.",
+            "source_text": "It hasn't reached the live site yet. Check back later.",
+            "description": "Second line under the gallery's unavailable state, shown while the live site does not serve the character gallery yet.",
             "placeholders": []
         },
         {
@@ -33556,7 +33559,7 @@
         {
             "key": "story.stories.card.noneExtracted",
             "namespace": "story",
-            "source_text": "{count} not extracted",
+            "source_text": "{count} not available yet",
             "description": "Stands in for the read fraction on a chapter whose stories all lack a script, so none of them can be read.",
             "placeholders": [
                 "count"
@@ -33615,7 +33618,7 @@
         {
             "key": "story.stories.panel.notExtracted",
             "namespace": "story",
-            "source_text": "Not extracted",
+            "source_text": "Not available yet",
             "description": "Badge on a story whose script file is missing from the served data.",
             "placeholders": []
         },
@@ -33825,7 +33828,7 @@
         {
             "key": "tierLists.browse.error",
             "namespace": "tierLists",
-            "source_text": "Failed to load tier lists.",
+            "source_text": "Couldn't load tier lists.",
             "description": "Shown in place of the grid when the tier lists could not be fetched.",
             "placeholders": []
         },
@@ -33907,7 +33910,7 @@
         {
             "key": "tierLists.browse.hero.blurb",
             "namespace": "tierLists",
-            "source_text": "{count, plural, one {list} other {lists}} from the team and the community. Sort, filter, or browse what's hot right now.",
+            "source_text": "{count, plural, one {list} other {lists}} from the team and the community. Sort and filter by type, flair or author.",
             "description": "Sentence under the browse heading; the count itself is rendered just before it, so this starts with the noun it counts.",
             "placeholders": [
                 "count"
@@ -33916,7 +33919,7 @@
         {
             "key": "tierLists.browse.hero.blurbEmpty",
             "namespace": "tierLists",
-            "source_text": "Curated picks from the team alongside community-built rankings. Sort, filter, or browse what's hot right now.",
+            "source_text": "Official lists from the team and lists from the community. Sort and filter by type, flair or author.",
             "description": "Sentence under the browse heading while no lists have loaded, so there is no count to lead with.",
             "placeholders": []
         },
@@ -33944,7 +33947,7 @@
         {
             "key": "tierLists.browse.hero.title",
             "namespace": "tierLists",
-            "source_text": "Find the meta. Build your own.",
+            "source_text": "Tier lists",
             "description": "Heading of the tier-list browse page. 'The meta' is the community's current consensus on what is strong.",
             "placeholders": []
         },
@@ -33993,14 +33996,14 @@
         {
             "key": "tierLists.browse.retry",
             "namespace": "tierLists",
-            "source_text": "Retry",
+            "source_text": "Try again",
             "description": "Button that re-runs the failed request for the tier lists.",
             "placeholders": []
         },
         {
             "key": "tierLists.browse.retrying",
             "namespace": "tierLists",
-            "source_text": "Retrying…",
+            "source_text": "Trying again…",
             "description": "The retry button's label while the request is in flight. Keep the single-character ellipsis.",
             "placeholders": []
         },
@@ -34021,7 +34024,7 @@
         {
             "key": "tierLists.browse.search.placeholder",
             "namespace": "tierLists",
-            "source_text": "Search lists...",
+            "source_text": "Search lists…",
             "description": "Placeholder in the box that filters lists by title, description or author. Keep the three dots.",
             "placeholders": []
         },
@@ -34177,7 +34180,7 @@
         {
             "key": "tierLists.detail.actions.download.errBody",
             "namespace": "tierLists",
-            "source_text": "Something went wrong while preparing the image. Try again in a moment.",
+            "source_text": "The image couldn't be drawn. Try again in a moment.",
             "description": "Toast body when rendering the tier-list image failed.",
             "placeholders": []
         },
@@ -34233,7 +34236,7 @@
         {
             "key": "tierLists.detail.actions.favorite.errBody",
             "namespace": "tierLists",
-            "source_text": "Something went wrong. Try again in a moment.",
+            "source_text": "The favorite didn't save. Try again in a moment.",
             "description": "Toast body when saving or unsaving the list failed.",
             "placeholders": []
         },
@@ -35190,7 +35193,7 @@
         {
             "key": "tierLists.edit.hero.autosaveRetry",
             "namespace": "tierLists",
-            "source_text": "Retry",
+            "source_text": "Try again",
             "description": "Button next to the failed auto-save status that tries the save again.",
             "placeholders": []
         },
@@ -37056,7 +37059,7 @@
         {
             "key": "tierLists.edit.toast.flairFailedTitle",
             "namespace": "tierLists",
-            "source_text": "Flair failed",
+            "source_text": "Couldn't change the flair",
             "description": "Toast title when changing the topic tag failed.",
             "placeholders": []
         },
@@ -37093,7 +37096,7 @@
         {
             "key": "tierLists.edit.toast.publicBody",
             "namespace": "tierLists",
-            "source_text": "This list appears on /tier-lists.",
+            "source_text": "This list now shows in the tier list browser.",
             "description": "Toast body after the list was made public. '/tier-lists' is the site's own path and stays as-is.",
             "placeholders": []
         },
@@ -37151,7 +37154,7 @@
         {
             "key": "tierLists.edit.toast.visibilityFailedTitle",
             "namespace": "tierLists",
-            "source_text": "Visibility failed",
+            "source_text": "Couldn't change who can see this list",
             "description": "Toast title when changing the list's visibility failed.",
             "placeholders": []
         },
@@ -37724,7 +37727,7 @@
         {
             "key": "tierLists.my.card.editBoard",
             "namespace": "tierLists",
-            "source_text": "Edit Tierlist",
+            "source_text": "Edit list",
             "description": "Menu item that opens the tier board editor, where operators are placed.",
             "placeholders": []
         },
@@ -38031,7 +38034,7 @@
         {
             "key": "tierLists.my.hero.blurbEmpty",
             "namespace": "tierLists",
-            "source_text": "You haven't created any tier lists yet. Spin up your first one - drafts publish instantly to your share link.",
+            "source_text": "You haven't made a tier list yet. Saved changes show on its share link right away.",
             "description": "Sentence under the heading when the player has no lists yet.",
             "placeholders": []
         },
@@ -38124,7 +38127,7 @@
         {
             "key": "tierLists.my.retry",
             "namespace": "tierLists",
-            "source_text": "Retry",
+            "source_text": "Try again",
             "description": "Button that re-runs the failed request for the player's lists.",
             "placeholders": []
         },
@@ -38159,7 +38162,7 @@
         {
             "key": "tierLists.my.row.editBoard",
             "namespace": "tierLists",
-            "source_text": "Edit Tierlist",
+            "source_text": "Edit list",
             "description": "Menu item that opens the tier board editor, where operators are placed.",
             "placeholders": []
         },
@@ -38233,7 +38236,7 @@
         {
             "key": "tierLists.my.search.placeholder",
             "namespace": "tierLists",
-            "source_text": "Search your lists...",
+            "source_text": "Search your lists…",
             "description": "Placeholder in the box that filters the player's own lists. Keep the three dots.",
             "placeholders": []
         },
@@ -38354,7 +38357,7 @@
         {
             "key": "tierLists.my.toast.createFailed",
             "namespace": "tierLists",
-            "source_text": "Couldn't create list.",
+            "source_text": "Couldn't create the list",
             "description": "Stand-in message when creating the list failed and the server sent none of its own.",
             "placeholders": []
         },
@@ -38377,7 +38380,7 @@
         {
             "key": "tierLists.my.toast.deleteFailed",
             "namespace": "tierLists",
-            "source_text": "Couldn't delete list.",
+            "source_text": "Couldn't delete the list",
             "description": "Stand-in message when deleting the list failed and the server sent none of its own.",
             "placeholders": []
         },
@@ -38407,7 +38410,7 @@
         {
             "key": "tierLists.my.toast.updateFailed",
             "namespace": "tierLists",
-            "source_text": "Couldn't save changes.",
+            "source_text": "Couldn't save the changes",
             "description": "Stand-in message when saving the details failed and the server sent none of its own.",
             "placeholders": []
         },
@@ -38822,7 +38825,7 @@
         {
             "key": "tools.birthdays.sidebar.reset",
             "namespace": "tools",
-            "source_text": "Reset filters",
+            "source_text": "Clear filters",
             "description": "Link that clears every filter.",
             "placeholders": []
         },
@@ -40694,6 +40697,13 @@
             "placeholders": []
         },
         {
+            "key": "tools.calc.instance.detailFailed",
+            "namespace": "tools",
+            "source_text": "Couldn't load this operator's skills, modules and potentials.",
+            "description": "Shown in a calculator operator card when the operator's detail failed to load; the skill and module buttons then show S1/M1 placeholders. A retry button follows.",
+            "placeholders": []
+        },
+        {
             "key": "tools.calc.instance.duplicate",
             "namespace": "tools",
             "source_text": "Duplicate",
@@ -40976,8 +40986,8 @@
         {
             "key": "tools.calc.picker.loading",
             "namespace": "tools",
-            "source_text": "{noun, select, healer {Loading healers...} other {Loading operators...}}",
-            "description": "Placeholder in the picker's search box while the list is still loading. Three full stops, not an ellipsis character.",
+            "source_text": "{noun, select, healer {Loading healers…} other {Loading operators…}}",
+            "description": "Placeholder in the picker's search box while the list is still loading. Ends in an ellipsis character.",
             "placeholders": [
                 "noun"
             ]
@@ -40994,8 +41004,8 @@
         {
             "key": "tools.calc.picker.search",
             "namespace": "tools",
-            "source_text": "{noun, select, healer {Search {count, plural, one {# healer} other {# healers}}...} other {Search {count, plural, one {# operator} other {# operators}}...}}",
-            "description": "Placeholder in the picker's search box, e.g. 'Search 287 operators...'. Three full stops, not an ellipsis character.",
+            "source_text": "{noun, select, healer {Search {count, plural, one {# healer} other {# healers}}…} other {Search {count, plural, one {# operator} other {# operators}}…}}",
+            "description": "Placeholder in the picker's search box, e.g. 'Search 287 operators…'. Ends in an ellipsis character.",
             "placeholders": [
                 "count",
                 "noun"
@@ -41152,6 +41162,13 @@
             "placeholders": []
         },
         {
+            "key": "tools.dps.chart.loadFailed",
+            "namespace": "tools",
+            "source_text": "Couldn't calculate the curves. The chart may be missing lines.",
+            "description": "Shown above the chart when a request for the damage curves failed, beside a retry button.",
+            "placeholders": []
+        },
+        {
             "key": "tools.dps.clearAll",
             "namespace": "tools",
             "source_text": "Clear all",
@@ -41249,7 +41266,7 @@
         {
             "key": "tools.dps.detail.spNotModelled",
             "namespace": "tools",
-            "source_text": "SP on hit not modelled",
+            "source_text": "SP on hit not modeled",
             "description": "Caveat badge: this skill charges SP when the operator is hit, which the cycle model does not simulate; the classic average is shown.",
             "placeholders": []
         },
@@ -41474,7 +41491,7 @@
             "key": "tools.dps.export.failed",
             "namespace": "tools",
             "source_text": "Couldn't export chart: {error}",
-            "description": "Browser alert when saving the chart image failed. {error} is the underlying message and is not translated.",
+            "description": "Error toast when saving the chart image failed. {error} is the underlying message and is not translated.",
             "placeholders": [
                 "error"
             ]
@@ -41521,8 +41538,8 @@
         {
             "key": "tools.dps.help.averageDps.desc",
             "namespace": "tools",
-            "source_text": "averages skill uptime against SP recharge - the long-run sustainable rate.",
-            "description": "Completes the sentence begun by the bold term 'Average DPS'. 'SP' is the game's skill-point resource; the dash is a plain hyphen.",
+            "source_text": "averages skill uptime against SP recharge: the long-run sustainable rate.",
+            "description": "Completes the sentence begun by the bold term 'Average DPS'. 'SP' is the game's skill-point resource.",
             "placeholders": []
         },
         {
@@ -41759,6 +41776,13 @@
             ]
         },
         {
+            "key": "tools.dps.import.failed",
+            "namespace": "tools",
+            "source_text": "Couldn't load the operator list, so your squad wasn't added yet.",
+            "description": "Error toast when the Squad Builder sent squadmates over but the calculator's operator list failed to load. The toast has a retry button.",
+            "placeholders": []
+        },
+        {
             "key": "tools.dps.import.skipped",
             "namespace": "tools",
             "source_text": "{count, plural, one {# squadmate is not in the DPS calculator yet} other {# squadmates are not in the DPS calculator yet}}",
@@ -41826,7 +41850,7 @@
         {
             "key": "tools.dps.note.credit",
             "namespace": "tools",
-            "source_text": "All calculations go to the credit of {link} GitHub repository.",
+            "source_text": "Calculation credit: the {link} GitHub repository.",
             "description": "Attribution sentence under the page blurb. {link} is the author's GitHub username, labelled by dps.note.creditLink and linked to the repository, and may move wherever the sentence needs it.",
             "placeholders": [
                 "link"
@@ -42818,8 +42842,8 @@
         {
             "key": "tools.hps.baseHps.burstHint",
             "namespace": "tools",
-            "source_text": "Burst healer - heals only on skill activation, so there's no off-skill (base) healing.",
-            "description": "Tooltip on a Base HPS figure of zero, explaining why. The dash is a plain hyphen.",
+            "source_text": "Burst healer: heals only on skill activation, so there's no off-skill (base) healing.",
+            "description": "Tooltip on a Base HPS figure of zero, explaining why.",
             "placeholders": []
         },
         {
@@ -42897,6 +42921,13 @@
             "namespace": "tools",
             "source_text": "Cancel",
             "description": "Button that dismisses the clear-all confirmation dialog without removing anything.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.hps.chart.loadFailed",
+            "namespace": "tools",
+            "source_text": "Couldn't calculate the curves. The chart may be missing lines.",
+            "description": "Shown above the chart when a request for the healing curves failed, beside a retry button.",
             "placeholders": []
         },
         {
@@ -43005,7 +43036,7 @@
             "key": "tools.hps.export.failed",
             "namespace": "tools",
             "source_text": "Couldn't export chart: {error}",
-            "description": "Browser alert when saving the chart image failed. {error} is the underlying message and is not translated.",
+            "description": "Error toast when saving the chart image failed. {error} is the underlying message and is not translated.",
             "placeholders": [
                 "error"
             ]
@@ -43087,8 +43118,8 @@
         {
             "key": "tools.hps.help.averageHps.desc",
             "namespace": "tools",
-            "source_text": "averages skill uptime against SP recharge - the long-run sustainable rate.",
-            "description": "Completes the sentence begun by the bold term 'Average HPS'. The dash is a plain hyphen.",
+            "source_text": "averages skill uptime against SP recharge: the long-run sustainable rate.",
+            "description": "Completes the sentence begun by the bold term 'Average HPS'.",
             "placeholders": []
         },
         {
@@ -43101,8 +43132,8 @@
         {
             "key": "tools.hps.help.baseHps.desc",
             "namespace": "tools",
-            "source_text": "is always-on healing during SP recharge - it's 0 for burst healers that only heal on activation.",
-            "description": "Completes the sentence begun by the bold term 'Base HPS'. 'SP' is the game's skill-point resource; the dash is a plain hyphen.",
+            "source_text": "is always-on healing during SP recharge. It's 0 for burst healers that only heal on activation.",
+            "description": "Completes the sentence begun by the bold term 'Base HPS'. 'SP' is the game's skill-point resource.",
             "placeholders": []
         },
         {
@@ -43220,7 +43251,7 @@
         {
             "key": "tools.hps.note.credit",
             "namespace": "tools",
-            "source_text": "All calculations go to the credit of {link} GitHub repository.",
+            "source_text": "Calculation credit: the {link} GitHub repository.",
             "description": "Attribution sentence under the page blurb. {link} is the author's GitHub username, labelled by hps.note.creditLink and linked to the repository, and may move wherever the sentence needs it.",
             "placeholders": [
                 "link"
@@ -43463,6 +43494,13 @@
             "placeholders": []
         },
         {
+            "key": "tools.planner.bulk.presetLoadFailed",
+            "namespace": "tools",
+            "source_text": "Couldn't load your saved presets.",
+            "description": "Shown over the preset picker, beside a retry button, when the user's saved presets failed to load. The picker would otherwise read as having no presets.",
+            "placeholders": []
+        },
+        {
             "key": "tools.planner.bulk.presetName",
             "namespace": "tools",
             "source_text": "Preset name",
@@ -43557,8 +43595,8 @@
         {
             "key": "tools.planner.bulk.status.loading",
             "namespace": "tools",
-            "source_text": "Loading...",
-            "description": "Preview row status while that operator's data loads. Three full stops, not an ellipsis character.",
+            "source_text": "Loading…",
+            "description": "Preview row status while that operator's data loads. Ends in an ellipsis character.",
             "placeholders": []
         },
         {
@@ -43906,7 +43944,7 @@
         {
             "key": "tools.planner.deleteFailed",
             "namespace": "tools",
-            "source_text": "Failed to delete. Please try again.",
+            "source_text": "Couldn't delete. Try again.",
             "description": "Error shown in the delete dialog when the request failed.",
             "placeholders": []
         },
@@ -44031,7 +44069,7 @@
         {
             "key": "tools.planner.dialog.groups.deleteConfirm",
             "namespace": "tools",
-            "source_text": "Are you sure you want to delete group \"{name}\"?",
+            "source_text": "Delete the group \"{name}\"?",
             "description": "Question in the browser dialog confirming a group deletion; {name} is the group's own name, in quotes.",
             "placeholders": [
                 "name"
@@ -44040,8 +44078,8 @@
         {
             "key": "tools.planner.dialog.groups.newName",
             "namespace": "tools",
-            "source_text": "New group name...",
-            "description": "Placeholder in the box for naming a new group. Three full stops, not an ellipsis character.",
+            "source_text": "New group name…",
+            "description": "Placeholder in the box for naming a new group. Ends in an ellipsis character.",
             "placeholders": []
         },
         {
@@ -44054,8 +44092,8 @@
         {
             "key": "tools.planner.dialog.groups.placeholder",
             "namespace": "tools",
-            "source_text": "Select plan groups...",
-            "description": "Placeholder in the group picker. Three full stops, not an ellipsis character.",
+            "source_text": "Select plan groups…",
+            "description": "Placeholder in the group picker. Ends in an ellipsis character.",
             "placeholders": []
         },
         {
@@ -44077,15 +44115,15 @@
         {
             "key": "tools.planner.dialog.loadingDetails",
             "namespace": "tools",
-            "source_text": "Loading operator details...",
-            "description": "Shown while the chosen operator's data loads. Three full stops, not an ellipsis character.",
+            "source_text": "Loading operator details…",
+            "description": "Shown while the chosen operator's data loads. Ends in an ellipsis character.",
             "placeholders": []
         },
         {
             "key": "tools.planner.dialog.loadingOperators",
             "namespace": "tools",
-            "source_text": "Loading operators...",
-            "description": "Placeholder in the operator picker while the list loads. Three full stops, not an ellipsis character.",
+            "source_text": "Loading operators…",
+            "description": "Placeholder in the operator picker while the list loads. Ends in an ellipsis character.",
             "placeholders": []
         },
         {
@@ -44156,7 +44194,7 @@
         {
             "key": "tools.planner.dialog.pickOperator",
             "namespace": "tools",
-            "source_text": "Please select an operator to customize targets.",
+            "source_text": "Pick an operator to set targets.",
             "description": "Shown in place of the plan form before an operator has been chosen. Rendered in italics.",
             "placeholders": []
         },
@@ -44170,7 +44208,7 @@
         {
             "key": "tools.planner.dialog.radian",
             "namespace": "tools",
-            "source_text": "Raidian's upgrades are dependent on Integrated Strategies 6 - Sui's Garden of Grotesqueries progression and cannot be planned.",
+            "source_text": "Raidian's upgrades depend on Integrated Strategies 6: Sui's Garden of Grotesqueries progression and cannot be planned.",
             "description": "Notice for the one operator whose progression this tool cannot model. The operator name and the game mode 'Integrated Strategies 6 - Sui's Garden of Grotesqueries' both come from the game and keep the game's own wording.",
             "placeholders": []
         },
@@ -44204,21 +44242,21 @@
         {
             "key": "tools.planner.dialog.saving",
             "namespace": "tools",
-            "source_text": "Saving...",
-            "description": "Footer button label while the plan is being saved. Three full stops, not an ellipsis character.",
+            "source_text": "Saving…",
+            "description": "Footer button label while the plan is being saved. Ends in an ellipsis character.",
             "placeholders": []
         },
         {
             "key": "tools.planner.dialog.searchOperators",
             "namespace": "tools",
-            "source_text": "Search operators by name, class, or tag...",
-            "description": "Placeholder in the operator picker. 'Class' and 'tag' are the game's own operator attributes. Three full stops, not an ellipsis character.",
+            "source_text": "Search operators by name, class, or tag…",
+            "description": "Placeholder in the operator picker. 'Class' and 'tag' are the game's own operator attributes. Ends in an ellipsis character.",
             "placeholders": []
         },
         {
             "key": "tools.planner.dialog.selectOperator",
             "namespace": "tools",
-            "source_text": "Select Operator",
+            "source_text": "Pick an operator",
             "description": "Label over the operator picker.",
             "placeholders": []
         },
@@ -44319,7 +44357,7 @@
         {
             "key": "tools.planner.group.deleteConfirm",
             "namespace": "tools",
-            "source_text": "Are you sure you want to delete group \"{name}\"?",
+            "source_text": "Delete the group \"{name}\"?",
             "description": "Question in the browser dialog confirming a group deletion; {name} is the group's own name, in quotes.",
             "placeholders": [
                 "name"
@@ -44390,6 +44428,13 @@
             "placeholders": []
         },
         {
+            "key": "tools.planner.plansLoadFailed",
+            "namespace": "tools",
+            "source_text": "Couldn't load your plans.",
+            "description": "Shown in place of the plan list when the request for the user's plans failed, beside a retry button.",
+            "placeholders": []
+        },
+        {
             "key": "tools.planner.req.col.craftable",
             "namespace": "tools",
             "source_text": "Craftable",
@@ -44452,8 +44497,8 @@
         {
             "key": "tools.planner.req.craftTitle",
             "namespace": "tools",
-            "source_text": "You have {have} of {required} - the remaining {shortfall} must be crafted",
-            "description": "Native tooltip on a craftable shortfall. All three numbers are item counts; the dash is a plain hyphen.",
+            "source_text": "You have {have} of {required}; the remaining {shortfall} must be crafted",
+            "description": "Native tooltip on a craftable shortfall. All three numbers are item counts.",
             "placeholders": [
                 "have",
                 "required",
@@ -44571,8 +44616,8 @@
         {
             "key": "tools.planner.req.search",
             "namespace": "tools",
-            "source_text": "Search requirements...",
-            "description": "Placeholder in the requirement search box. Three full stops, not an ellipsis character.",
+            "source_text": "Search requirements…",
+            "description": "Placeholder in the requirement search box. Ends in an ellipsis character.",
             "placeholders": []
         },
         {
@@ -44638,6 +44683,20 @@
             "namespace": "tools",
             "source_text": "Grouped view",
             "description": "Accessible name of the button that groups requirements by item category.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.planner.requirementsLoadFailed",
+            "namespace": "tools",
+            "source_text": "Couldn't load the materials these plans need.",
+            "description": "Shown in place of the requirements panel when the request for the selected plans' combined materials failed, beside a retry button.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.planner.rosterLoadFailed",
+            "namespace": "tools",
+            "source_text": "Couldn't load your roster, so progress toward each plan isn't shown.",
+            "description": "Shown above the plan list when the user's synced roster failed to load, beside a retry button. Plan progress is measured against the roster.",
             "placeholders": []
         },
         {
@@ -44820,7 +44879,7 @@
         {
             "key": "tools.randomizer.challenge.annihilationOneOperator.desc",
             "namespace": "tools",
-            "source_text": "You must do a 1 operator relay (eg. only one operator deployed at a time).",
+            "source_text": "Relay with one operator: only one operator deployed at a time.",
             "description": "A 'relay' means retreating one operator before deploying the next. Keep 'eg.' as the abbreviation it is.",
             "placeholders": []
         },
@@ -45235,7 +45294,7 @@
         {
             "key": "tools.randomizer.empty.hintKey",
             "namespace": "tools",
-            "source_text": "Roll Squad",
+            "source_text": "Roll squad",
             "description": "The button name shown in a key-cap box inside the empty-state hint. It must match the main button's label.",
             "placeholders": []
         },
@@ -45249,8 +45308,8 @@
         {
             "key": "tools.randomizer.empty.title",
             "namespace": "tools",
-            "source_text": "Awaiting randomizer.",
-            "description": "Large empty-state line, written as a clipped status report. Keep the full stop.",
+            "source_text": "Nothing rolled yet.",
+            "description": "Large empty-state line before the first roll. Keep the full stop.",
             "placeholders": []
         },
         {
@@ -45270,7 +45329,7 @@
         {
             "key": "tools.randomizer.hero.intro",
             "namespace": "tools",
-            "source_text": "Roll a random stage, squad, and challenge modifier. Logged-in users can restrict the draw to operators they own and stages they've completed.",
+            "source_text": "Roll a random stage, squad, and challenge modifier. Signed in, you can limit the draw to operators you own and stages you've cleared.",
             "description": "Blurb under the page heading. 'Roll' and 'draw' are dice metaphors for picking at random.",
             "placeholders": []
         },
@@ -45556,7 +45615,7 @@
         {
             "key": "tools.randomizer.ops.tierList.loading",
             "namespace": "tools",
-            "source_text": "Loading tiers...",
+            "source_text": "Loading tiers…",
             "description": "Shown while the chosen tier list loads.",
             "placeholders": []
         },
@@ -45856,8 +45915,8 @@
         {
             "key": "tools.randomizer.settings.desc",
             "namespace": "tools",
-            "source_text": "Constrain the randomizer - by class, rarity, owned operators, or stage availability.",
-            "description": "Caption under the Settings title. 'Class' and 'rarity' are the game's own operator attributes; the dash is a plain hyphen.",
+            "source_text": "Constrain the randomizer by class, rarity, owned operators, or stage availability.",
+            "description": "Caption under the Settings title. 'Class' and 'rarity' are the game's own operator attributes.",
             "placeholders": []
         },
         {
@@ -45908,8 +45967,8 @@
         {
             "key": "tools.randomizer.squad.empty",
             "namespace": "tools",
-            "source_text": "No matching operators - relax your filters.",
-            "description": "Shown in place of the squad when the filters leave nothing to draw. The dash is a plain hyphen.",
+            "source_text": "No matching operators. Relax your filters.",
+            "description": "Shown in place of the squad when the filters leave nothing to draw.",
             "placeholders": []
         },
         {
@@ -46268,8 +46327,8 @@
         {
             "key": "tools.recruit.intro",
             "namespace": "tools",
-            "source_text": "Pick the tags shown in your recruitment screen - up to {max}. Combinations are ranked by guaranteed minimum rarity - the best worst case first. Six-star operators only appear in combinations that include \"Top Operator\".",
-            "description": "Blurb under the page heading. 'Top Operator' is a recruitment tag name from the game data, so use whatever the game calls that tag in this region, in the game's own quotes. The dashes are plain hyphens.",
+            "source_text": "Pick the tags shown in your recruitment screen, up to {max}. Combinations are ranked by guaranteed minimum rarity, best worst case first. Six-star operators only appear in combinations that include \"Top Operator\".",
+            "description": "Blurb under the page heading. 'Top Operator' is a recruitment tag name from the game data, so use whatever the game calls that tag in this region, in the game's own quotes.",
             "placeholders": [
                 "max"
             ]
@@ -46634,6 +46693,13 @@
             "placeholders": []
         },
         {
+            "key": "tools.recruit.rosterLoadFailed",
+            "namespace": "tools",
+            "source_text": "Couldn't load your roster, so ownership and potentials aren't shown.",
+            "description": "Shown above the calculator, beside a Retry button, when the signed-in user's roster failed to load. The roster toggles are hidden until it loads, rather than showing every operator as unowned.",
+            "placeholders": []
+        },
+        {
             "key": "tools.recruit.selected",
             "namespace": "tools",
             "source_text": "Selected",
@@ -46912,7 +46978,7 @@
         {
             "key": "tools.release.banners.empty.none",
             "namespace": "tools",
-            "source_text": "The backend returned no CN pools.",
+            "source_text": "No CN banners to show yet.",
             "description": "Empty-state body when the server sent nothing at all. 'Pool' is the game's own word for one banner.",
             "placeholders": []
         },
@@ -47045,7 +47111,7 @@
         {
             "key": "tools.release.calendar.empty.desc",
             "namespace": "tools",
-            "source_text": "The backend returned no rows with an EN date.",
+            "source_text": "Nothing has an EN date yet.",
             "description": "Empty-state body when no row has an English date. 'EN' is the English game server.",
             "placeholders": []
         },
@@ -47306,7 +47372,7 @@
         {
             "key": "tools.release.events.empty.none",
             "namespace": "tools",
-            "source_text": "The backend returned no CN activities.",
+            "source_text": "No CN events to show yet.",
             "description": "Empty-state body when the server sent nothing at all. 'CN' is the Chinese game server; 'activity' is its own word for an event.",
             "placeholders": []
         },
@@ -47523,7 +47589,7 @@
         {
             "key": "tools.release.loadFailed",
             "namespace": "tools",
-            "source_text": "Failed to load.",
+            "source_text": "Couldn't load this tab.",
             "description": "Fallback error line when the request failed with no message of its own.",
             "placeholders": []
         },
@@ -48631,7 +48697,7 @@
         {
             "key": "tools.release.popup.loadFailed",
             "namespace": "tools",
-            "source_text": "Couldn't load this outfit.",
+            "source_text": "Couldn't load this skin.",
             "description": "Shown in the outfit popup, beside a Try again button, when the outfit index failed to load. Distinct from the 'missing' line, which means the outfit is not in the index.",
             "placeholders": []
         },
@@ -49053,7 +49119,7 @@
         {
             "key": "tools.release.pulls.modelNote",
             "namespace": "tools",
-            "source_text": "Rates come from the game's own banner data: a 2% base 6★ rate, +2% per roll after 50 without one, and the rate-up split declared for each banner type. Recurring income is modelled; one-off event Orundum is not, so add it under Extra per day.",
+            "source_text": "Rates come from the game's own banner data: a 2% base 6★ rate, +2% per roll after 50 without one, and the rate-up split declared for each banner type. Recurring income is modeled; one-off event Orundum is not, so add it under Extra per day.",
             "description": "Explains where the numbers come from and what the model leaves out. '6★' means a six-star operator; 'rate-up' is the boosted-chance operator on a banner.",
             "placeholders": []
         },
@@ -50022,7 +50088,7 @@
         {
             "key": "tools.release.retry",
             "namespace": "tools",
-            "source_text": "Retry",
+            "source_text": "Try again",
             "description": "Button that tries the failed request again.",
             "placeholders": []
         },
@@ -51246,6 +51312,13 @@
             "placeholders": []
         },
         {
+            "key": "tools.squad.analysis.readiness.detailFailed",
+            "namespace": "tools",
+            "source_text": "Couldn't load some operators' skill and module icons.",
+            "description": "Shown over the readiness list when one or more operators' details failed to load; the rows then show S1/S2/S3 in place of the icons. A retry button follows.",
+            "placeholders": []
+        },
+        {
             "key": "tools.squad.analysis.readiness.elite",
             "namespace": "tools",
             "source_text": "Elite {n}",
@@ -51615,7 +51688,7 @@
         {
             "key": "tools.squad.analysis.synergy.lead.unread",
             "namespace": "tools",
-            "source_text": "This operator is not on the EN server yet, so who this talent reaches is not read.",
+            "source_text": "This operator is not on the EN server yet, so this talent's targets aren't known yet.",
             "description": "A talent the page cannot place: its wording is read from the EN server's text, which does not have this operator yet.",
             "placeholders": []
         },
@@ -52264,6 +52337,13 @@
             "placeholders": []
         },
         {
+            "key": "tools.squad.editor.detailFailed",
+            "namespace": "tools",
+            "source_text": "Couldn't load this operator's skills and modules.",
+            "description": "Shown in the seat editor when the operator's detail failed to load, so the skill and module pickers show names and icons only after a retry.",
+            "placeholders": []
+        },
+        {
             "key": "tools.squad.editor.hint.module",
             "namespace": "tools",
             "source_text": "The module unlocks at Elite {phase} Lv {level}",
@@ -52598,7 +52678,7 @@
         {
             "key": "tools.squad.grid.move",
             "namespace": "tools",
-            "source_text": "Move to seat...",
+            "source_text": "Move to seat…",
             "description": "Seat menu item: pick another seat number to swap with. The keyboard alternative to dragging.",
             "placeholders": []
         },
@@ -52916,9 +52996,16 @@
             ]
         },
         {
+            "key": "tools.squad.picker.loadFailed",
+            "namespace": "tools",
+            "source_text": "Couldn't load the operator list.",
+            "description": "Shown in the picker when the operator list failed to load; a retry button follows.",
+            "placeholders": []
+        },
+        {
             "key": "tools.squad.picker.loading",
             "namespace": "tools",
-            "source_text": "Loading operators...",
+            "source_text": "Loading operators…",
             "description": "Shown in the picker while the operator list loads.",
             "placeholders": []
         },
@@ -53316,7 +53403,7 @@
         {
             "key": "tools.squad.share.rendering",
             "namespace": "tools",
-            "source_text": "Drawing the image...",
+            "source_text": "Drawing the image…",
             "description": "Shown while the share image renders.",
             "placeholders": []
         },
@@ -53479,6 +53566,13 @@
             ]
         },
         {
+            "key": "tools.squad.slots.loadFailed",
+            "namespace": "tools",
+            "source_text": "Couldn't load your saved squads. Saving is off until they load.",
+            "description": "Shown in place of the saved squad slots when they failed to load; saving is blocked so it cannot replace a squad the player cannot see.",
+            "placeholders": []
+        },
+        {
             "key": "tools.squad.slots.saved",
             "namespace": "tools",
             "source_text": "Saved {date}",
@@ -53596,6 +53690,13 @@
             "namespace": "tools",
             "source_text": "Life points",
             "description": "Fact label: how many enemies may get through before the stage is lost.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.squad.stage.loadFailed",
+            "namespace": "tools",
+            "source_text": "Couldn't load this stage.",
+            "description": "Shown on the stage card when the picked stage's data failed to load; a retry button follows.",
             "placeholders": []
         },
         {
@@ -53786,7 +53887,7 @@
         {
             "key": "tools.squad.stagePicker.loading",
             "namespace": "tools",
-            "source_text": "Loading stages...",
+            "source_text": "Loading stages…",
             "description": "Shown while the stage list loads.",
             "placeholders": []
         },
@@ -53856,6 +53957,13 @@
             "placeholders": [
                 "slot"
             ]
+        },
+        {
+            "key": "tools.squad.toast.slotsUnavailable",
+            "namespace": "tools",
+            "source_text": "Your saved squads haven't loaded, so nothing was saved",
+            "description": "Toast when the player tries to save before their saved squad slots have loaded (or after they failed to load). Saving then could replace a squad they cannot see.",
+            "placeholders": []
         },
         {
             "key": "tools.squad.toast.stageFailed",
@@ -54042,6 +54150,24 @@
             "placeholders": []
         },
         {
+            "key": "user.leaderboard.grade.band",
+            "namespace": "user",
+            "source_text": "Grade {grade}, score {from}-{to}%",
+            "description": "Screen-reader text for a grade badge, read inside the player row in place of the hover explanation. {grade} is the letter (S+, S, A, B, C, D, F); {from} and {to} are the percentage bounds of that band.",
+            "placeholders": [
+                "from",
+                "grade",
+                "to"
+            ]
+        },
+        {
+            "key": "user.leaderboard.grade.none",
+            "namespace": "user",
+            "source_text": "Not graded yet",
+            "description": "Screen-reader text for the placeholder shown in place of a grade badge when a user has no grade.",
+            "placeholders": []
+        },
+        {
             "key": "user.leaderboard.grade.tooltip",
             "namespace": "user",
             "source_text": "Grade {grade}: composite score {from}-{to}%, weighted across operators, base, Integrated Strategies, medals, stages and Reclamation Algorithm.",
@@ -54055,7 +54181,7 @@
         {
             "key": "user.leaderboard.grade.unknown",
             "namespace": "user",
-            "source_text": "Not graded yet - this account has not been scored.",
+            "source_text": "Not graded yet: this account has not been scored.",
             "description": "Hover explanation on the placeholder shown in place of a grade badge when a user has no grade.",
             "placeholders": []
         },
@@ -54069,7 +54195,7 @@
         {
             "key": "user.leaderboard.hero.blurb",
             "namespace": "user",
-            "source_text": "A composite ranking across roster depth, base efficiency, and combat scoring. Pulled from public profiles only.",
+            "source_text": "A composite score across operators, base, Integrated Strategies, medals, stages and Reclamation Algorithm. Public profiles only.",
             "description": "Paragraph under the leaderboard heading explaining what the ranking measures.",
             "placeholders": []
         },
@@ -54092,7 +54218,7 @@
         {
             "key": "user.leaderboard.hero.notice",
             "namespace": "user",
-            "source_text": "{lead} - the leaderboard is in active development and the ranking formula is subject to change.",
+            "source_text": "{lead}: the leaderboard is in active development and the ranking formula is subject to change.",
             "description": "Development-status notice under the leaderboard heading. {lead} is the bold opening labelled by leaderboard.hero.notice.lead and may move wherever the sentence needs it.",
             "placeholders": [
                 "lead"
@@ -54335,6 +54461,48 @@
             "namespace": "user",
             "source_text": "View profile",
             "description": "Button linking to the signed-in player's own profile.",
+            "placeholders": []
+        },
+        {
+            "key": "user.leaderboard.loadFailed.hero",
+            "namespace": "user",
+            "source_text": "The ranked-player count and top value did not load.",
+            "description": "Failure line under the leaderboard header when the query behind its player count and top score or top holding failed, beside a Try again button.",
+            "placeholders": []
+        },
+        {
+            "key": "user.leaderboard.loadFailed.holders",
+            "namespace": "user",
+            "source_text": "The holders of this item did not load.",
+            "description": "Failure line in place of the inventory-ranked table when the page of item holders could not be fetched, above a Try again button.",
+            "placeholders": []
+        },
+        {
+            "key": "user.leaderboard.loadFailed.items",
+            "namespace": "user",
+            "source_text": "The item list did not load.",
+            "description": "Failure line in place of the sidebar card listing the most-held items, when the item catalog or item names failed to load, beside a Try again button.",
+            "placeholders": []
+        },
+        {
+            "key": "user.leaderboard.loadFailed.movers",
+            "namespace": "user",
+            "source_text": "The biggest movers did not load.",
+            "description": "Failure line in place of the sidebar card listing the players whose rank rose most, beside a Try again button.",
+            "placeholders": []
+        },
+        {
+            "key": "user.leaderboard.loadFailed.players",
+            "namespace": "user",
+            "source_text": "The leaderboard did not load.",
+            "description": "Failure line in place of the ranked table when the page of players could not be fetched (network or server error), above a Try again button.",
+            "placeholders": []
+        },
+        {
+            "key": "user.leaderboard.loadFailed.standing",
+            "namespace": "user",
+            "source_text": "Your standing did not load.",
+            "description": "Failure line in place of the sidebar card with the signed-in player's own rank, beside a Try again button.",
             "placeholders": []
         },
         {
@@ -54592,7 +54760,7 @@
             "key": "user.leaderboard.table.movement.down",
             "namespace": "user",
             "source_text": "Fell {count, plural, one {# rank} other {# ranks}} {interval}",
-            "description": "Tooltip on a downward rank indicator. {interval} is a phrase like 'since yesterday' or 'in the past 7 days'.",
+            "description": "Screen-reader text on a downward rank indicator (the visible part is an arrow and the number). {interval} is a phrase like 'since yesterday' or 'in the past 7 days'.",
             "placeholders": [
                 "count",
                 "interval"
@@ -54602,7 +54770,7 @@
             "key": "user.leaderboard.table.movement.none",
             "namespace": "user",
             "source_text": "No change in rank {interval}",
-            "description": "Tooltip on a flat rank indicator. {interval} is a phrase like 'since yesterday' or 'in the past 7 days'.",
+            "description": "Screen-reader text on a flat rank indicator (the visible part is a dash and 0). {interval} is a phrase like 'since yesterday' or 'in the past 7 days'.",
             "placeholders": [
                 "interval"
             ]
@@ -54611,7 +54779,7 @@
             "key": "user.leaderboard.table.movement.up",
             "namespace": "user",
             "source_text": "Climbed {count, plural, one {# rank} other {# ranks}} {interval}",
-            "description": "Tooltip on an upward rank indicator. {interval} is a phrase like 'since yesterday' or 'in the past 7 days'.",
+            "description": "Screen-reader text on an upward rank indicator (the visible part is an arrow and the number). {interval} is a phrase like 'since yesterday' or 'in the past 7 days'.",
             "placeholders": [
                 "count",
                 "interval"
@@ -54621,7 +54789,7 @@
             "key": "user.leaderboard.table.share",
             "namespace": "user",
             "source_text": "{pct}% of the top holding",
-            "description": "Tooltip on a row's quantity bar while ranked by an item. {pct} is the player's quantity as a percentage of the largest holding, 0 to 100.",
+            "description": "Screen-reader text after a row's quantity while ranked by an item, describing its bar. {pct} is the player's quantity as a percentage of the largest holding, 0 to 100.",
             "placeholders": [
                 "pct"
             ]
@@ -54748,6 +54916,13 @@
             "placeholders": []
         },
         {
+            "key": "user.leaderboard.toolbar.scope.label",
+            "namespace": "user",
+            "source_text": "Players to rank",
+            "description": "Accessible name of the two-choice group (Global / Friends) at the start of the leaderboard filter row.",
+            "placeholders": []
+        },
+        {
             "key": "user.leaderboard.toolbar.search.clear",
             "namespace": "user",
             "source_text": "Clear search",
@@ -54764,7 +54939,7 @@
         {
             "key": "user.leaderboard.toolbar.search.placeholder",
             "namespace": "user",
-            "source_text": "Search player name or UID…",
+            "source_text": "Search by nickname or UID…",
             "description": "Placeholder in the leaderboard's filter box. 'UID' is the in-game account number. Keep the single-character ellipsis.",
             "placeholders": []
         },
@@ -55533,7 +55708,7 @@
         {
             "key": "user.profile.background.gallery.clearFilters",
             "namespace": "user",
-            "source_text": "Clear all",
+            "source_text": "Clear filters",
             "description": "Button beside the active-filter chips that turns off every category, story and search filter of the gallery.",
             "placeholders": []
         },
@@ -55586,7 +55761,7 @@
         {
             "key": "user.profile.background.gallery.retry",
             "namespace": "user",
-            "source_text": "Retry",
+            "source_text": "Try again",
             "description": "Button that loads the gallery pictures again after a failure.",
             "placeholders": []
         },
@@ -55926,7 +56101,7 @@
         {
             "key": "user.profile.base.deep.conservative.tooltip",
             "namespace": "user",
-            "source_text": "Order sizes are modeled conservatively (small orders, fast turnover), so real deadlines can be later than shown - never earlier. Trading posts are assumed gold-supplied.",
+            "source_text": "Order sizes are modeled conservatively (small orders, fast turnover), so real deadlines can be later than shown, never earlier. Trading posts are assumed gold-supplied.",
             "description": "Tooltip on the word 'conservative'. 'Trading post' is the game's own room name.",
             "placeholders": []
         },
@@ -56054,7 +56229,7 @@
         {
             "key": "user.profile.base.deep.dronesFilling",
             "namespace": "user",
-            "source_text": "Drones {meter} - full in {when}, spend before then",
+            "source_text": "Drones {meter}: full in {when}, spend before then",
             "description": "The drone line while the meter is still filling. {meter} is the highlighted 'current/max' pair and {when} the highlighted time until it is full; both may move wherever the sentence needs them. 'Drones' are the game's base helpers.",
             "placeholders": [
                 "meter",
@@ -56071,7 +56246,7 @@
         {
             "key": "user.profile.base.deep.events.none",
             "namespace": "user",
-            "source_text": "Nobody runs dry - every operator survives the recommended rotation.",
+            "source_text": "Nobody runs dry: every operator survives the recommended rotation.",
             "description": "Shown under that heading when the rotation holds up.",
             "placeholders": []
         },
@@ -56131,7 +56306,7 @@
         {
             "key": "user.profile.base.deep.furniture.line",
             "namespace": "user",
-            "source_text": "Dormitory Lv{level} ambience {meter} - {rate} recovery sitting in the furniture shop.",
+            "source_text": "Dormitory Lv{level} ambience {meter}: {rate} recovery sitting in the furniture shop.",
             "description": "One dormitory's furniture line. {meter} is the highlighted 'comfort/limit' pair and {rate} the highlighted per-hour gain labelled by profile.base.deep.furniture.rate; both may move wherever the sentence needs them. 'Ambience' is the game's own name for a dormitory's comfort rating, 'Lv' its level abbreviation, and the 'furniture shop' is the in-game store.",
             "placeholders": [
                 "level",
@@ -56364,7 +56539,7 @@
         {
             "key": "user.profile.base.deep.simulating",
             "namespace": "user",
-            "source_text": "Simulating the rotation - this is the slow part…",
+            "source_text": "Simulating the rotation. This is the slow part…",
             "description": "Placeholder under that heading. Ends with an ellipsis character.",
             "placeholders": []
         },
@@ -56385,14 +56560,14 @@
         {
             "key": "user.profile.base.deep.snapshotHint",
             "namespace": "user",
-            "source_text": "Snapshot the current numbers, then edit the board or run the optimizer - the difference tracks live.",
+            "source_text": "Snapshot the current numbers, then edit the board or run the optimizer. The difference tracks live.",
             "description": "Shown in place of the comparison table before a snapshot is taken.",
             "placeholders": []
         },
         {
             "key": "user.profile.base.deep.stalls",
             "namespace": "user",
-            "source_text": "{room} stalls {duration} after a claim - buffers below.",
+            "source_text": "{room} stalls {duration} after a claim. Buffers below.",
             "description": "Sentence under the deadline: which room fills up first and how long that takes. A 'claim' is collecting what the base has produced.",
             "placeholders": [
                 "duration",
@@ -56402,7 +56577,7 @@
         {
             "key": "user.profile.base.deep.title",
             "namespace": "user",
-            "source_text": "Deep Dive",
+            "source_text": "Deep dive",
             "description": "Label on the collapsible panel of check-in economics and simulation detail.",
             "placeholders": []
         },
@@ -56448,7 +56623,7 @@
         {
             "key": "user.profile.base.deep.unrotated.line",
             "namespace": "user",
-            "source_text": "{count} if you never swap - first at {hours}h ({name}). Rotate or lose the hours.",
+            "source_text": "{count} if you never swap, first at {hours}h ({name}). Rotate or lose the hours.",
             "description": "Sentence under that heading when at least one operator runs out of morale. {count} is the highlighted opener labelled by profile.base.deep.unrotated.dry and may move wherever the sentence needs it. {name} is an operator's name; 'h' abbreviates hour.",
             "placeholders": [
                 "count",
@@ -56491,7 +56666,7 @@
         {
             "key": "user.profile.base.facts.recruitSlots.tooltip",
             "namespace": "user",
-            "source_text": "Recruitment slots you have purchased beyond the first - account state the sync cannot read. Declaring it prices skills like Lin’s Meritocracy (+10% HR speed per slot); left at +0 they honestly count as zero.",
+            "source_text": "Recruitment slots you have purchased beyond the first. The sync cannot read this. Declaring it prices skills like Lin's Meritocracy (+10% HR speed per slot); left at +0 they honestly count as zero.",
             "description": "Tooltip over the account-facts row. 'Lin' is an operator and 'Meritocracy' her base skill - both keep the game's names; 'HR' is the base's hiring office. The apostrophe is a typographic one.",
             "placeholders": []
         },
@@ -56609,7 +56784,7 @@
         {
             "key": "user.profile.base.ignorePromotion.tooltip",
             "namespace": "user",
-            "source_text": "Plan with every operator’s highest base skills, even the ones they are not promoted far enough to use. Skills you have not unlocked yet show greyed out.",
+            "source_text": "Plan with every operator's highest base skills, even the ones they are not promoted far enough to use. Skills you have not unlocked yet show greyed out.",
             "description": "Tooltip on the 'Ignore promotion' switch. 'Base skills' are the game's own term for an operator's RIIC abilities. The apostrophe is a typographic one.",
             "placeholders": []
         },
@@ -56729,7 +56904,7 @@
         {
             "key": "user.profile.base.nerds.dormList",
             "namespace": "user",
-            "source_text": "Dormitories - best first, game rates",
+            "source_text": "Dormitories (best first, game rates)",
             "description": "Section heading over the per-dormitory list. 'Game rates' means the figures use the game's own recovery numbers. Rendered uppercase by CSS.",
             "placeholders": []
         },
@@ -56931,7 +57106,7 @@
         {
             "key": "user.profile.base.nerds.title",
             "namespace": "user",
-            "source_text": "Stats for Nerds",
+            "source_text": "Stats for nerds",
             "description": "Label on the collapsed panel of raw numbers. A knowing nod to the same phrase in video players.",
             "placeholders": []
         },
@@ -57003,7 +57178,7 @@
         {
             "key": "user.profile.base.room.bench.tooltip",
             "namespace": "user",
-            "source_text": "Spare seat: this operator fills a free seat at the lowest opportunity cost. They were not chosen for their skills - any effect that still applies is a bonus.",
+            "source_text": "Spare seat: this operator fills a free seat at the lowest opportunity cost. They were not chosen for their skills; any effect that still applies is a bonus.",
             "description": "Tooltip on the 'Bench' tag.",
             "placeholders": []
         },
@@ -57024,7 +57199,7 @@
         {
             "key": "user.profile.base.room.disposition.capacity.hint",
             "namespace": "user",
-            "source_text": "This skill raises the room's order capacity, not its speed - it buys longer gaps between check-ins.",
+            "source_text": "This skill raises the room's order capacity, not its speed. It buys longer gaps between check-ins.",
             "description": "Tooltip on the 'capacity' marker.",
             "placeholders": []
         },
@@ -57038,7 +57213,7 @@
         {
             "key": "user.profile.base.room.disposition.covered.hint",
             "namespace": "user",
-            "source_text": "A stronger skill of the same type is already active in this crew - the game only applies the most effective one, so this copy adds nothing on top.",
+            "source_text": "A stronger skill of the same type is already active in this crew. The game only applies the most effective one, so this copy adds nothing on top.",
             "description": "Tooltip on the 'covered' marker.",
             "placeholders": []
         },
@@ -57066,7 +57241,7 @@
         {
             "key": "user.profile.base.room.disposition.morale.hint",
             "namespace": "user",
-            "source_text": "This skill changes morale drain or recovery - it shows up in the sustainability simulation, not in this room's efficiency.",
+            "source_text": "This skill changes morale drain or recovery. It shows up in the sustainability simulation, not in this room's efficiency.",
             "description": "Tooltip on the 'morale' marker.",
             "placeholders": []
         },
@@ -57080,7 +57255,7 @@
         {
             "key": "user.profile.base.room.disposition.non_production.hint",
             "namespace": "user",
-            "source_text": "Non-production value (clues, training, HR) - counted in its own units, never folded into the efficiency number.",
+            "source_text": "Non-production value (clues, training, HR), counted in its own units and never folded into the efficiency number.",
             "description": "Tooltip on the 'reception / HR' marker. 'Clues' are the in-game Reception Room's collectibles.",
             "placeholders": []
         },
@@ -57094,7 +57269,7 @@
         {
             "key": "user.profile.base.room.disposition.per_room.hint",
             "namespace": "user",
-            "source_text": "Active - this skill buffs matching operators in the rooms that satisfy it, so its value is counted inside those rooms' numbers. Open those rooms to see the credit.",
+            "source_text": "Active: this skill buffs matching operators in the rooms that satisfy it, so its value is counted inside those rooms' numbers. Open those rooms to see the credit.",
             "description": "Tooltip on the 'per-room' marker.",
             "placeholders": []
         },
@@ -57181,7 +57356,7 @@
         {
             "key": "user.profile.base.room.marginalNote",
             "namespace": "user",
-            "source_text": "Values are marginals - what this room loses if that one skill is removed. Coupled skills overlap, so they don’t sum to the room total.",
+            "source_text": "Values are marginals: what this room loses if that one skill is removed. Coupled skills overlap, so they don't sum to the room total.",
             "description": "Footnote under a room's skill ledger. The apostrophe is a typographic one.",
             "placeholders": []
         },
@@ -57432,14 +57607,14 @@
         {
             "key": "user.profile.base.tile.notBuilt",
             "namespace": "user",
-            "source_text": "Not Built",
+            "source_text": "Not built",
             "description": "Tag on a board slot whose facility the account has not built yet.",
             "placeholders": []
         },
         {
             "key": "user.profile.base.wip",
             "namespace": "user",
-            "source_text": "The base optimizer is a work in progress. If a recommendation looks wrong, please report it on Discord.",
+            "source_text": "The base optimizer is a work in progress. If a recommendation looks wrong, report it on Discord.",
             "description": "Disclaimer shown at the top of the base optimizer tab. 'Discord' is a link to the community server.",
             "placeholders": []
         },
@@ -57551,7 +57726,7 @@
         {
             "key": "user.profile.enemies.level.all",
             "namespace": "user",
-            "source_text": "All Tiers",
+            "source_text": "All tiers",
             "description": "Filter chip: every enemy tier.",
             "placeholders": []
         },
@@ -57628,7 +57803,7 @@
         {
             "key": "user.profile.enemies.search.placeholder",
             "namespace": "user",
-            "source_text": "Search enemies...",
+            "source_text": "Search enemies…",
             "description": "Prompt inside the empty handbook search box. Keep the three dots as written.",
             "placeholders": []
         },
@@ -58157,7 +58332,7 @@
         {
             "key": "user.profile.items.category.module",
             "namespace": "user",
-            "source_text": "Module Mats",
+            "source_text": "Module mats",
             "description": "Category chip: the materials for module upgrades. 'Mats' is short for materials; the chip is narrow.",
             "placeholders": []
         },
@@ -58425,21 +58600,21 @@
         {
             "key": "user.profile.items.rarity.all",
             "namespace": "user",
-            "source_text": "All Rarities",
+            "source_text": "All rarities",
             "description": "Rarity filter: every star rating.",
             "placeholders": []
         },
         {
             "key": "user.profile.items.rarity.placeholder",
             "namespace": "user",
-            "source_text": "Filter by Rarity",
+            "source_text": "Filter by rarity",
             "description": "Shown in the rarity select before anything is chosen.",
             "placeholders": []
         },
         {
             "key": "user.profile.items.search.placeholder",
             "namespace": "user",
-            "source_text": "Search items...",
+            "source_text": "Search items…",
             "description": "Prompt inside the empty inventory search box. Keep the three dots as written.",
             "placeholders": []
         },
@@ -58453,7 +58628,7 @@
         {
             "key": "user.profile.items.sort.category",
             "namespace": "user",
-            "source_text": "Sort by Category",
+            "source_text": "Sort by category",
             "description": "Sort option: grouped by inventory category.",
             "placeholders": []
         },
@@ -58467,7 +58642,7 @@
         {
             "key": "user.profile.items.sort.name",
             "namespace": "user",
-            "source_text": "Sort by Name",
+            "source_text": "Sort by name",
             "description": "Sort option: alphabetically.",
             "placeholders": []
         },
@@ -58481,14 +58656,14 @@
         {
             "key": "user.profile.items.sort.qty",
             "namespace": "user",
-            "source_text": "Sort by Quantity",
+            "source_text": "Sort by quantity",
             "description": "Sort option: by how many the account holds.",
             "placeholders": []
         },
         {
             "key": "user.profile.items.sort.rarity",
             "namespace": "user",
-            "source_text": "Sort by Rarity",
+            "source_text": "Sort by rarity",
             "description": "Sort option: by the item's star rating.",
             "placeholders": []
         },
@@ -58645,10 +58820,52 @@
             ]
         },
         {
+            "key": "user.profile.loadFailed.enemies",
+            "namespace": "user",
+            "source_text": "This player's encountered enemies could not be loaded.",
+            "description": "Shown in place of the profile's Enemies tab when loading which enemies the player has met failed. A retry button follows.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.loadFailed.improvements",
+            "namespace": "user",
+            "source_text": "Upgrade suggestions could not be loaded, so the panels below show none.",
+            "description": "Shown above the Score tab's cards when the suggestions of what to upgrade next failed to load; the score itself loaded. A retry button follows.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.loadFailed.inventory",
+            "namespace": "user",
+            "source_text": "This player's items could not be loaded.",
+            "description": "Shown in place of the profile's Inventory tab when loading the items failed. A retry button follows.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.loadFailed.profile",
+            "namespace": "user",
+            "source_text": "This profile could not be loaded. The site may be having trouble; try again in a moment.",
+            "description": "Shown in place of a profile page when loading it failed for a reason other than the profile not existing or being private (a network error or server outage). A retry button follows.",
+            "placeholders": []
+        },
+        {
             "key": "user.profile.loadFailed.retry",
             "namespace": "user",
             "source_text": "Try again",
             "description": "Button under the failure line on a profile tab (Stats, Lookback, Plans) that reloads what failed to load.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.loadFailed.roster",
+            "namespace": "user",
+            "source_text": "This player's operators could not be loaded.",
+            "description": "Shown in place of a profile tab that needs the player's operator list (Stats, Roster, Plans, Optimizer) when loading that list failed. A retry button follows.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.loadFailed.score",
+            "namespace": "user",
+            "source_text": "This player's score could not be loaded.",
+            "description": "Shown in place of the profile's Score tab when loading the score failed. A retry button follows.",
             "placeholders": []
         },
         {
@@ -58691,7 +58908,7 @@
         {
             "key": "user.profile.optimizer.account.blurb",
             "namespace": "user",
-            "source_text": "Where to spend next across the account - promotions, masteries and modules, ranked by what each actually returns.",
+            "source_text": "Where to spend next across the account: promotions, masteries and modules, ranked by what each actually returns.",
             "description": "One-line blurb under the Account Optimizer tab. Promotion, mastery and module are the game's progression systems.",
             "placeholders": []
         },
@@ -58781,6 +58998,13 @@
             "namespace": "user",
             "source_text": "Level",
             "description": "Row label over an operator's current and target level.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.plans.loading",
+            "namespace": "user",
+            "source_text": "Loading plans",
+            "description": "Screen-reader status while the profile's public plans load; the skeleton cards are hidden from assistive tech.",
             "placeholders": []
         },
         {
@@ -59130,7 +59354,7 @@
         {
             "key": "user.profile.roster.detailed.currentPotential",
             "namespace": "user",
-            "source_text": "Current Potential",
+            "source_text": "Current potential",
             "description": "Row label inside the card's Potential section, over the rank the operator has reached.",
             "placeholders": []
         },
@@ -59160,7 +59384,7 @@
         {
             "key": "user.profile.roster.dialog.combatStats",
             "namespace": "user",
-            "source_text": "Combat Stats",
+            "source_text": "Combat stats",
             "description": "Section heading over the operator's battle attributes. Rendered uppercase by CSS.",
             "placeholders": []
         },
@@ -59352,7 +59576,7 @@
         {
             "key": "user.profile.roster.search.placeholder",
             "namespace": "user",
-            "source_text": "Search operators...",
+            "source_text": "Search operators…",
             "description": "Prompt inside the empty roster search box. Keep the three dots as written.",
             "placeholders": []
         },
@@ -59383,28 +59607,28 @@
         {
             "key": "user.profile.roster.sort.investment",
             "namespace": "user",
-            "source_text": "Sort by Investment",
+            "source_text": "Sort by investment",
             "description": "Sort option: how far each operator is along its own ceiling (promotion, level, skill, masteries, modules, potential), so a finished lower-rarity operator outranks an untouched higher-rarity one.",
             "placeholders": []
         },
         {
             "key": "user.profile.roster.sort.level",
             "namespace": "user",
-            "source_text": "Sort by Level",
+            "source_text": "Sort by level",
             "description": "Sort option: by operator level.",
             "placeholders": []
         },
         {
             "key": "user.profile.roster.sort.maxed",
             "namespace": "user",
-            "source_text": "Sort by Maxed",
+            "source_text": "Sort by maxed",
             "description": "Sort option: fully invested operators first.",
             "placeholders": []
         },
         {
             "key": "user.profile.roster.sort.obtained",
             "namespace": "user",
-            "source_text": "Sort by Obtained",
+            "source_text": "Sort by obtained",
             "description": "Sort option: by when the operator was obtained.",
             "placeholders": []
         },
@@ -59418,28 +59642,28 @@
         {
             "key": "user.profile.roster.sort.potential",
             "namespace": "user",
-            "source_text": "Sort by Potential",
+            "source_text": "Sort by potential",
             "description": "Sort option: by potential rank. 'Potential' is the game's duplicate-operator system.",
             "placeholders": []
         },
         {
             "key": "user.profile.roster.sort.rarity",
             "namespace": "user",
-            "source_text": "Sort by Rarity",
+            "source_text": "Sort by rarity",
             "description": "Sort option: by star rating.",
             "placeholders": []
         },
         {
             "key": "user.profile.roster.sort.trust",
             "namespace": "user",
-            "source_text": "Sort by Trust",
+            "source_text": "Sort by trust",
             "description": "Sort option: by trust percentage. 'Trust' is the game's own affinity stat.",
             "placeholders": []
         },
         {
             "key": "user.profile.roster.unowned.badge",
             "namespace": "user",
-            "source_text": "Not Owned",
+            "source_text": "Not owned",
             "description": "Badge across an operator the account does not have.",
             "placeholders": []
         },
@@ -59565,8 +59789,15 @@
         {
             "key": "user.profile.showcase.add.kindTitle",
             "namespace": "user",
-            "source_text": "Favourites of which type?",
+            "source_text": "Favorites of which type?",
             "description": "Heading of the add-block dialog's step where the owner chooses the type of entity a favourites block holds.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.showcase.add.loading",
+            "namespace": "user",
+            "source_text": "Loading",
+            "description": "Screen-reader text while the showcase editor fetches the player's grids, tier lists or plans to choose from. No trailing ellipsis.",
             "placeholders": []
         },
         {
@@ -59738,6 +59969,27 @@
             "placeholders": []
         },
         {
+            "key": "user.profile.showcase.blockFailed.grid",
+            "namespace": "user",
+            "source_text": "This grid couldn't be loaded.",
+            "description": "Shown in place of a grid block on a profile showcase when fetching the grid failed (not when it was deleted). A retry button follows.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.showcase.blockFailed.plan",
+            "namespace": "user",
+            "source_text": "This plan couldn't be loaded.",
+            "description": "Shown in place of a plan block on a profile showcase when fetching the player's plans failed (not when the plan was deleted). A retry button follows.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.showcase.blockFailed.tierList",
+            "namespace": "user",
+            "source_text": "This tier list couldn't be loaded.",
+            "description": "Shown in place of a tier list block on a profile showcase when fetching the list failed (not when it was deleted). A retry button follows.",
+            "placeholders": []
+        },
+        {
             "key": "user.profile.showcase.edit",
             "namespace": "user",
             "source_text": "Edit showcase",
@@ -59804,7 +60056,7 @@
         {
             "key": "user.profile.showcase.editor.entitiesList",
             "namespace": "user",
-            "source_text": "Favourites in this block",
+            "source_text": "Favorites in this block",
             "description": "Accessible name of the reorderable list of favourites inside one block.",
             "placeholders": []
         },
@@ -59818,7 +60070,7 @@
         {
             "key": "user.profile.showcase.editor.favouritesOf",
             "namespace": "user",
-            "source_text": "Favourite {kind}",
+            "source_text": "Favorite {kind}",
             "description": "Name of a favourites block in the editor when it has no title. {kind} is the plural type name, e.g. 'Operators'.",
             "placeholders": [
                 "kind"
@@ -59953,7 +60205,7 @@
         {
             "key": "user.profile.showcase.editor.type.favourites",
             "namespace": "user",
-            "source_text": "Favourites",
+            "source_text": "Favorites",
             "description": "Showcase block type: a row of favourite operators, skins, events or anything else of one type.",
             "placeholders": []
         },
@@ -60041,7 +60293,7 @@
         {
             "key": "user.profile.showcase.empty.desc",
             "namespace": "user",
-            "source_text": "Pick favourite operators, skins, events or story chapters, and pin your grids, tier lists and plans. Visitors see your showcase first.",
+            "source_text": "Pick favorite operators, skins, events or story chapters, and pin your grids, tier lists and plans. Visitors see your showcase first.",
             "description": "Body of the owner's empty showcase, listing what a showcase can hold.",
             "placeholders": []
         },
@@ -60464,6 +60716,13 @@
             "placeholders": []
         },
         {
+            "key": "user.profile.skins.filter.aria",
+            "namespace": "user",
+            "source_text": "Show skins",
+            "description": "Accessible name of the All / Owned / Missing button group in the outfit viewer.",
+            "placeholders": []
+        },
+        {
             "key": "user.profile.skins.filter.missing",
             "namespace": "user",
             "source_text": "Missing",
@@ -60511,7 +60770,7 @@
         {
             "key": "user.profile.skins.popularityFailed",
             "namespace": "user",
-            "source_text": "Couldn't load outfit popularity, so this sort has nothing to order by.",
+            "source_text": "Couldn't load skin popularity, so this sort has nothing to order by.",
             "description": "Shown above the outfit grid, beside a Try again button, when the popularity sort is chosen and the popularity data failed to load.",
             "placeholders": []
         },
@@ -60583,7 +60842,7 @@
         {
             "key": "user.profile.skins.section.all",
             "namespace": "user",
-            "source_text": "All Skins",
+            "source_text": "All skins",
             "description": "Heading over the single ungrouped section, used when sorting by date or popularity.",
             "placeholders": []
         },
@@ -60625,14 +60884,14 @@
         {
             "key": "user.profile.skins.title",
             "namespace": "user",
-            "source_text": "Skin Collection",
+            "source_text": "Skin collection",
             "description": "Title of the outfit-browser dialog, also its screen-reader title.",
             "placeholders": []
         },
         {
             "key": "user.profile.stats.classes.title",
             "namespace": "user",
-            "source_text": "Class Breakdown",
+            "source_text": "Class breakdown",
             "description": "Heading of the card breaking the roster down by operator class. The class and archetype names themselves come from the game data.",
             "placeholders": []
         },
@@ -60653,7 +60912,7 @@
         {
             "key": "user.profile.stats.collection.title",
             "namespace": "user",
-            "source_text": "Operator Collection",
+            "source_text": "Operator collection",
             "description": "Heading of the card counting how many operators the account owns.",
             "placeholders": []
         },
@@ -60695,7 +60954,7 @@
         {
             "key": "user.profile.stats.gaps.allComplete",
             "namespace": "user",
-            "source_text": "All Complete",
+            "source_text": "All complete",
             "description": "Replaces the remaining-work pills when nothing is left to do on that card.",
             "placeholders": []
         },
@@ -60828,7 +61087,7 @@
         {
             "key": "user.profile.stats.mastery.totalLevels",
             "namespace": "user",
-            "source_text": "Total Mastery Levels",
+            "source_text": "Total mastery levels",
             "description": "Label over the bar summing every mastery rank earned.",
             "placeholders": []
         },
@@ -60884,7 +61143,7 @@
         {
             "key": "user.profile.stats.modules.unlockRate",
             "namespace": "user",
-            "source_text": "Unlock Rate",
+            "source_text": "Unlock rate",
             "description": "Label over the module-unlock bar.",
             "placeholders": []
         },
@@ -60982,7 +61241,7 @@
         {
             "key": "user.profile.stats.signin.calendar.title",
             "namespace": "user",
-            "source_text": "Daily Sign-In",
+            "source_text": "Daily sign-in",
             "description": "Heading of the card showing this month's sign-in slots.",
             "placeholders": []
         },
@@ -61078,7 +61337,7 @@
         {
             "key": "user.profile.stats.signin.record.title",
             "namespace": "user",
-            "source_text": "Sign-In Record",
+            "source_text": "Sign-in record",
             "description": "Heading of the card covering lifetime daily sign-ins. 'Sign-in' is the game's daily login reward.",
             "placeholders": []
         },
@@ -61164,7 +61423,7 @@
         {
             "key": "user.profile.stats.skins.collected",
             "namespace": "user",
-            "source_text": "Skins Collected",
+            "source_text": "Skins collected",
             "description": "Tile caption: outfits owned out of those available. Rendered uppercase by CSS.",
             "placeholders": []
         },
@@ -61241,7 +61500,7 @@
         {
             "key": "user.profile.stats.top.title",
             "namespace": "user",
-            "source_text": "Top Operators",
+            "source_text": "Top operators",
             "description": "Heading of the card showing the account's best-invested operators.",
             "placeholders": []
         },
@@ -61420,7 +61679,7 @@
         {
             "key": "user.score.empty.desc",
             "namespace": "user",
-            "source_text": "This player's grade hasn't been calculated. Scores are computed periodically once enough data is on file.",
+            "source_text": "This player's grade hasn't been calculated yet. Grades are recalculated on a schedule, so it appears after the next run.",
             "description": "Empty-state body on the Score tab. 'Doctor' is what Arknights calls the player; keep the apostrophes.",
             "placeholders": []
         },
@@ -61441,7 +61700,7 @@
         {
             "key": "user.score.history.empty",
             "namespace": "user",
-            "source_text": "History builds one point per leaderboard snapshot - check back after the next one.",
+            "source_text": "History builds one point per leaderboard snapshot. Check back after the next one.",
             "description": "Shown in place of the chart when there are fewer than two snapshots to plot.",
             "placeholders": []
         },
@@ -61576,7 +61835,7 @@
         {
             "key": "user.score.improvements.medal.event.title",
             "namespace": "user",
-            "source_text": "Event medals - limited time",
+            "source_text": "Event medals (limited time)",
             "description": "Heading of the group of medals that can only be earned while their event runs.",
             "placeholders": []
         },
@@ -61590,7 +61849,7 @@
         {
             "key": "user.score.improvements.medal.hidden.tooltip",
             "namespace": "user",
-            "source_text": "Hidden medal - unlock condition isn't shown in-game.",
+            "source_text": "Hidden medal: the unlock condition isn't shown in-game.",
             "description": "Tooltip on the 'Hidden' tag.",
             "placeholders": []
         },
@@ -61637,7 +61896,7 @@
         {
             "key": "user.score.improvements.medal.ownedTooltip",
             "namespace": "user",
-            "source_text": "Earned by {pct}% of synced players on your server who share stats - how rare this medal is in the community.",
+            "source_text": "Earned by {pct}% of synced players on your server who share stats. This is how rare the medal is in the community.",
             "description": "Tooltip on the owners figure of a medal row. {pct} is the share of players who have it.",
             "placeholders": [
                 "pct"
@@ -61833,7 +62092,7 @@
         {
             "key": "user.score.improvements.operator.dim.rowTitleDetail",
             "namespace": "user",
-            "source_text": "{label} - {detail}: worth {share}% of this section. You've completed {completion}% of that, earning {earned}%.",
+            "source_text": "{label} ({detail}): worth {share}% of this section. You've completed {completion}% of that, earning {earned}%.",
             "description": "Native tooltip on one investment-axis row. {detail} is the axis's lowercase explanation.",
             "placeholders": [
                 "completion",
@@ -61881,14 +62140,14 @@
         {
             "key": "user.score.improvements.operator.empty",
             "namespace": "user",
-            "source_text": "Every owned operator is at their last milestone - nothing to upgrade here.",
+            "source_text": "Every owned operator is at their last milestone. Nothing to upgrade here.",
             "description": "Empty state in the Operator panel when nothing is left to invest in.",
             "placeholders": []
         },
         {
             "key": "user.score.improvements.operator.footnote",
             "namespace": "user",
-            "source_text": "The header's {gain} is what finishing every upgrade here would add to your headline score. The per-tag, per-rarity, and per-operator figures below are {unit} (the percentage shown at the top of the card) - there's +{room}% of room left here to climb toward 100%. ELITE includes a full re-level at the new phase, so it overlaps MAX_LEVEL; the per-op total deduplicates the pair.",
+            "source_text": "The header's {gain} is what finishing every upgrade here would add to your headline score. The per-tag, per-rarity, and per-operator figures below are {unit} (the percentage shown at the top of the card), and there's +{room}% of room left here to climb toward 100%. ELITE includes a full re-level at the new phase, so it overlaps MAX_LEVEL; the per-op total deduplicates the pair.",
             "description": "Footnote under the operator list, explaining the units. {gain} is the highlighted figure quoted back from the heading (score.improvements.operator.footnote.headerGain) and {unit} the highlighted unit (score.improvements.operator.footnote.sectionUnit); both may move. ELITE and MAX_LEVEL are raw API tag codes and stay as-is; 'per-op' is short for per-operator.",
             "placeholders": [
                 "gain",
@@ -62080,7 +62339,7 @@
         {
             "key": "user.score.improvements.operator.tag.tooltip.negligible",
             "namespace": "user",
-            "source_text": "less than 0.01% - negligible",
+            "source_text": "less than 0.01%, negligible",
             "description": "The value half of an upgrade-tag tooltip when the gain rounds away.",
             "placeholders": []
         },
@@ -62157,7 +62416,7 @@
         {
             "key": "user.score.improvements.roguelike.empty",
             "namespace": "user",
-            "source_text": "No roguelike themes loaded for this account.",
+            "source_text": "No Integrated Strategies progress on this account yet.",
             "description": "Empty state in the Roguelike panel. A 'theme' is one Integrated Strategies season.",
             "placeholders": []
         },
@@ -62215,7 +62474,7 @@
         {
             "key": "user.score.improvements.sandbox.empty",
             "namespace": "user",
-            "source_text": "No RA progress detected. Play Reclamation Algorithm to begin tracking.",
+            "source_text": "No Reclamation Algorithm progress synced yet. Play a run, then re-sync.",
             "description": "Empty state in the RA panel. 'RA' abbreviates the game mode Reclamation Algorithm and keeps the game's own name.",
             "placeholders": []
         },
@@ -62287,7 +62546,7 @@
         {
             "key": "user.score.improvements.stage.annihilation.lockedSubtitle",
             "namespace": "user",
-            "source_text": "Rotating maps that aren't playable right now, so they can't be maxed until their rotation returns. These are scored on a recency curve rather than as permanent gaps - shown for reference.",
+            "source_text": "Rotating maps that aren't playable right now, so they can't be maxed until their rotation returns. These are scored on a recency curve rather than as permanent gaps, and shown for reference.",
             "description": "Blurb under 'Not in rotation'.",
             "placeholders": []
         },
@@ -62308,7 +62567,7 @@
         {
             "key": "user.score.improvements.stage.chip.lockedTitle",
             "namespace": "user",
-            "source_text": "{label} - rotated out, not currently playable",
+            "source_text": "{label}: rotated out, not currently playable",
             "description": "Native tooltip on a rotated-out Annihilation chip. {label} is the operation's code and name.",
             "placeholders": [
                 "label"
@@ -62430,7 +62689,7 @@
         {
             "key": "user.score.ladder.top",
             "namespace": "user",
-            "source_text": "Top of the ladder - nothing left to climb.",
+            "source_text": "Top of the ladder. Nothing left to climb.",
             "description": "Shown in place of the next-grade hint when the account already holds the highest grade.",
             "placeholders": []
         },
@@ -62482,7 +62741,7 @@
         {
             "key": "user.score.overall.title",
             "namespace": "user",
-            "source_text": "Overall Grade",
+            "source_text": "Overall grade",
             "description": "Card title over the account's composite letter grade.",
             "placeholders": []
         },
@@ -62630,7 +62889,7 @@
         {
             "key": "user.score.sub.shareTooltip",
             "namespace": "user",
-            "source_text": "Worth {share}% of your overall grade - at {pct}%, this section contributes {contribution} of those {share} points",
+            "source_text": "Worth {share}% of your overall grade. At {pct}%, this section contributes {contribution} of those {share} points",
             "description": "Tooltip on the share badge. {share} is this section's maximum share, {pct} how complete the section is, {contribution} the points it currently adds.",
             "placeholders": [
                 "contribution",

@@ -13,7 +13,7 @@ export const messages = {
         description: "Screen-reader-only description of that same sheet. Never visible.",
     },
     "sidebar.toggle": {
-        text: "Toggle Sidebar",
+        text: "Toggle sidebar",
         description: "Accessible name and tooltip of the control that collapses or expands the sidebar. A verb: one control does both directions.",
     },
 } satisfies MessageMap;

@@ -132,7 +132,7 @@ export function PlannerTab({ today }: IPlannerTabProps): React.ReactElement {
                    its event list scrolls so it remains reachable while reading detail. */
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-[340px_minmax(0,1fr)]">
                     <div className={cn("flex flex-col gap-2 md:sticky md:top-20 md:max-h-[calc(100dvh-6rem)] md:self-start", pane !== "events" && "max-md:hidden")}>
-                        <div className="flex flex-col gap-2 rounded-xl border border-border bg-card p-3">
+                        <div className="flex flex-col gap-2 rounded-2xl border border-border bg-card p-3">
                             <div className="flex items-center gap-2">
                                 <Button
                                     size="sm"
@@ -160,13 +160,22 @@ export function PlannerTab({ today }: IPlannerTabProps): React.ReactElement {
                                         {accountPrimes === null ? (
                                             <>
                                                 {t("release.planner.notSynced")}
-                                                <button type="button" disabled={resync.isPending} onClick={() => resync.mutate()} className="cursor-pointer text-primary hover:underline disabled:opacity-60">
+                                                <button
+                                                    type="button"
+                                                    disabled={resync.isPending}
+                                                    onClick={() => resync.mutate()}
+                                                    className="relative cursor-pointer text-primary pointer-coarse:after:absolute pointer-coarse:after:inset-x-0 pointer-coarse:after:top-1/2 pointer-coarse:after:h-11 pointer-coarse:after:-translate-y-1/2 hover:underline disabled:opacity-60"
+                                                >
                                                     {resync.isPending ? t("release.planner.syncing") : t("release.planner.syncNow")}
                                                 </button>
                                                 {resync.isError ? t("release.planner.syncFailed") : ""}
                                             </>
                                         ) : state.initialManual ? (
-                                            <button type="button" onClick={() => setInitial(accountPrimes, false)} className="cursor-pointer text-primary hover:underline">
+                                            <button
+                                                type="button"
+                                                onClick={() => setInitial(accountPrimes, false)}
+                                                className="relative cursor-pointer text-primary pointer-coarse:after:absolute pointer-coarse:after:inset-x-0 pointer-coarse:after:top-1/2 pointer-coarse:after:h-11 pointer-coarse:after:-translate-y-1/2 hover:underline"
+                                            >
                                                 {t("release.planner.useAccount", { count: accountPrimes })}
                                             </button>
                                         ) : (
@@ -228,11 +237,11 @@ const EventCard = React.memo(function EventCard({ row, total, picks, hidden, act
         <button
             type="button"
             onClick={() => onOpen(row.key)}
-            className={cn("grid w-full cursor-pointer gap-x-3 gap-y-2 rounded-xl border p-2.5 text-left transition-all hover:border-primary/50 sm:grid-cols-[minmax(0,1fr)_auto]", active ? "border-primary bg-primary/5 ring-2 ring-primary/20" : "border-border/60 bg-card")}
+            className={cn("grid w-full cursor-pointer gap-x-3 gap-y-2 rounded-2xl border p-2.5 text-left transition-all hover:border-primary/50 sm:grid-cols-[minmax(0,1fr)_auto]", active ? "border-primary bg-primary/5 ring-2 ring-primary/20" : "border-border/60 bg-card")}
         >
             <div className="flex min-w-0 flex-col gap-1">
                 <CnName cn={row.nameCn} en={row.nameEn} auto={row.nameAuto} compact primaryClassName="font-sans font-semibold text-[13px] text-foreground">
-                    <Tag className={row.kind === "listing" ? "text-fuchsia-700 dark:text-fuchsia-400" : row.kind === "review" ? "text-teal-700 dark:text-teal-400" : undefined}>{rowTag(row, t)}</Tag>
+                    <Tag tone={row.kind === "listing" ? "var(--color-fuchsia-500)" : row.kind === "review" ? "var(--color-teal-500)" : undefined}>{rowTag(row, t)}</Tag>
                 </CnName>
                 <span className="font-mono text-[10.5px] text-muted-foreground tabular-nums">
                     {row.resolution.status === "unlisted" ? t("release.planner.card.unlisted", { date: formatDate(row.enStart, locale, timeZone) }) : formatDate(row.enStart, locale, timeZone)}
@@ -284,7 +293,7 @@ function EventDetail({ row, state, clears, hidden, total, today, lookup, onPick,
     const groups = React.useMemo(() => planGroups(row.skins.filter((s) => !hidden.has(s.skinId))), [row.skins, hidden]);
     const ownedHidden = row.skins.reduce((n, s) => n + (hidden.has(s.skinId) ? 1 : 0), 0);
     return (
-        <div className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4">
+        <div className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4">
             <div className={cn("grid gap-x-4 gap-y-2 sm:items-start", art.src ? "grid-cols-[112px_minmax(0,1fr)] sm:grid-cols-[200px_minmax(0,1fr)_auto]" : "grid-cols-1 sm:grid-cols-[minmax(0,1fr)_auto]")}>
                 {art.src && <img src={art.src} alt="" loading="lazy" onError={art.onError} className="aspect-video w-full rounded-md bg-muted object-cover sm:w-50" />}
                 <div className="flex min-w-0 flex-col gap-1">
@@ -327,11 +336,25 @@ function EventDetail({ row, state, clears, hidden, total, today, lookup, onPick,
                             <span className="font-sans text-[11.5px] text-muted-foreground">{t("release.planner.stages.ended")}</span>
                         ) : deviates ? (
                             <Tooltip>
-                                <TooltipTrigger render={<button type="button" onClick={() => onResetStages(row)} className="cursor-pointer font-sans text-[11.5px] text-primary hover:underline" />}>{t("release.planner.stages.resetAll")}</TooltipTrigger>
+                                <TooltipTrigger
+                                    render={
+                                        <button
+                                            type="button"
+                                            onClick={() => onResetStages(row)}
+                                            className="relative cursor-pointer font-sans text-[11.5px] text-primary pointer-coarse:after:absolute pointer-coarse:after:inset-x-0 pointer-coarse:after:top-1/2 pointer-coarse:after:h-11 pointer-coarse:after:-translate-y-1/2 hover:underline"
+                                        />
+                                    }
+                                >
+                                    {t("release.planner.stages.resetAll")}
+                                </TooltipTrigger>
                                 <TooltipPopup>{clears ? t("release.planner.stages.resetAccount") : t("release.planner.stages.resetDefaults")}</TooltipPopup>
                             </Tooltip>
                         ) : (
-                            <button type="button" onClick={() => onAllStages(row, !allOn)} className="cursor-pointer font-sans text-[11.5px] text-primary hover:underline">
+                            <button
+                                type="button"
+                                onClick={() => onAllStages(row, !allOn)}
+                                className="relative cursor-pointer font-sans text-[11.5px] text-primary pointer-coarse:after:absolute pointer-coarse:after:inset-x-0 pointer-coarse:after:top-1/2 pointer-coarse:after:h-11 pointer-coarse:after:-translate-y-1/2 hover:underline"
+                            >
                                 {allOn ? t("release.planner.stages.clearAll") : t("release.planner.stages.selectAll")}
                             </button>
                         )}
@@ -350,10 +373,10 @@ function EventDetail({ row, state, clears, hidden, total, today, lookup, onPick,
                                     disabled={row.ended}
                                     onClick={() => onStage(row, stageKey(st), !on)}
                                     className={cn(
-                                        "inline-flex cursor-pointer items-center gap-1.5 rounded-md border px-2 py-1 font-mono text-[11px] transition-colors disabled:cursor-default",
+                                        "inline-flex pointer-coarse:min-h-11 cursor-pointer items-center gap-1.5 rounded-md border px-2 py-1 font-mono text-[11px] transition-colors disabled:cursor-default",
                                         on ? "border-primary/50 bg-primary/10 text-foreground" : "border-border/60 bg-muted/30 text-muted-foreground",
                                         st.challenge && "border-dashed",
-                                        status === "claimed" && !on && "line-through opacity-70",
+                                        status === "claimed" && !on && "line-through",
                                     )}
                                 >
                                     <span aria-hidden="true" className={cn("size-2 rounded-full", on ? "bg-primary" : status === "unknown" && clears ? "border border-muted-foreground/60 bg-transparent" : "bg-muted-foreground/40")} />
@@ -382,7 +405,7 @@ function EventDetail({ row, state, clears, hidden, total, today, lookup, onPick,
                     <div key={`${g.name}|${g.rerun}`} className="flex flex-col gap-2 border-border/40 border-t pt-3">
                         <div className="flex items-baseline gap-2">
                             <CnName cn={g.name} auto={g.nameAuto} compact primaryClassName="font-sans font-semibold text-[13px] text-foreground" />
-                            <Tag className={g.rerun ? "text-violet-700 dark:text-violet-400" : "text-fuchsia-700 dark:text-fuchsia-400"}>{g.rerun ? t("release.planner.group.rerun") : t("release.planner.group.new")}</Tag>
+                            <Tag tone={g.rerun ? "var(--color-violet-500)" : "var(--color-fuchsia-500)"}>{g.rerun ? t("release.planner.group.rerun") : t("release.planner.group.new")}</Tag>
                         </div>
                         <div className="flex flex-wrap gap-3">
                             {g.skins.map((s) => (
@@ -421,7 +444,7 @@ function Summary({ rows, state, clears, totals, lookup, onRemove, t, locale }: I
         return skins.length > 0 ? [{ row, skins }] : [];
     });
     return (
-        <div className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4">
+        <div className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4">
             <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
                 <span className="font-bold font-sans text-[16px] text-foreground">{t("release.planner.summary.title")}</span>
                 <span className="inline-flex flex-wrap items-center gap-x-2 font-mono text-[12px] tabular-nums">
@@ -477,7 +500,7 @@ function SummarySkin({ skin, lookup, autoOn, onRemove, removeLabel }: { skin: IP
             </span>
             <Op value={skin.price.price} className="shrink-0 text-[11.5px] text-foreground" />
             <Tooltip>
-                <TooltipTrigger render={<button type="button" onClick={() => onRemove(skin)} aria-label={removeLabel} className="flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground" />}>
+                <TooltipTrigger render={<Button variant="ghost" size="icon-sm" onClick={() => onRemove(skin)} aria-label={removeLabel} className="shrink-0 text-muted-foreground" />}>
                     <X className="size-3.5" aria-hidden="true" />
                 </TooltipTrigger>
                 <TooltipPopup>{removeLabel}</TooltipPopup>

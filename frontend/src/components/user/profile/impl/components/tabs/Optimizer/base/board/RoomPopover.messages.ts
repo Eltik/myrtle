@@ -25,7 +25,7 @@ export const messages = {
         description: "Marker on a base skill a stronger one of the same type already covers. Lowercase, rendered uppercase by CSS.",
     },
     "profile.base.room.disposition.covered.hint": {
-        text: "A stronger skill of the same type is already active in this crew - the game only applies the most effective one, so this copy adds nothing on top.",
+        text: "A stronger skill of the same type is already active in this crew. The game only applies the most effective one, so this copy adds nothing on top.",
         description: "Tooltip on the 'covered' marker.",
     },
     "profile.base.room.disposition.per_room": {
@@ -33,7 +33,7 @@ export const messages = {
         description: "Marker on a base skill whose value lands in other rooms. Lowercase, rendered uppercase by CSS.",
     },
     "profile.base.room.disposition.per_room.hint": {
-        text: "Active - this skill buffs matching operators in the rooms that satisfy it, so its value is counted inside those rooms' numbers. Open those rooms to see the credit.",
+        text: "Active: this skill buffs matching operators in the rooms that satisfy it, so its value is counted inside those rooms' numbers. Open those rooms to see the credit.",
         description: "Tooltip on the 'per-room' marker.",
     },
     "profile.base.room.disposition.morale": {
@@ -41,7 +41,7 @@ export const messages = {
         description: "Marker on a base skill that affects morale rather than output. Lowercase, rendered uppercase by CSS.",
     },
     "profile.base.room.disposition.morale.hint": {
-        text: "This skill changes morale drain or recovery - it shows up in the sustainability simulation, not in this room's efficiency.",
+        text: "This skill changes morale drain or recovery. It shows up in the sustainability simulation, not in this room's efficiency.",
         description: "Tooltip on the 'morale' marker.",
     },
     "profile.base.room.disposition.capacity": {
@@ -49,7 +49,7 @@ export const messages = {
         description: "Marker on a base skill that raises how much the room can hold. Lowercase, rendered uppercase by CSS.",
     },
     "profile.base.room.disposition.capacity.hint": {
-        text: "This skill raises the room's order capacity, not its speed - it buys longer gaps between check-ins.",
+        text: "This skill raises the room's order capacity, not its speed. It buys longer gaps between check-ins.",
         description: "Tooltip on the 'capacity' marker.",
     },
     "profile.base.room.disposition.non_production": {
@@ -57,7 +57,7 @@ export const messages = {
         description: "Marker on a base skill whose value is clues or hiring rather than production. 'HR' is the base's hiring office. Lowercase, rendered uppercase by CSS.",
     },
     "profile.base.room.disposition.non_production.hint": {
-        text: "Non-production value (clues, training, HR) - counted in its own units, never folded into the efficiency number.",
+        text: "Non-production value (clues, training, HR), counted in its own units and never folded into the efficiency number.",
         description: "Tooltip on the 'reception / HR' marker. 'Clues' are the in-game Reception Room's collectibles.",
     },
     "profile.base.room.disposition.unmodeled": {
@@ -125,7 +125,7 @@ export const messages = {
         description: "Tag on an operator seated only to fill a spare seat. Rendered uppercase by CSS.",
     },
     "profile.base.room.bench.tooltip": {
-        text: "Spare seat: this operator fills a free seat at the lowest opportunity cost. They were not chosen for their skills - any effect that still applies is a bonus.",
+        text: "Spare seat: this operator fills a free seat at the lowest opportunity cost. They were not chosen for their skills; any effect that still applies is a bonus.",
         description: "Tooltip on the 'Bench' tag.",
     },
     "profile.base.room.parked": {
@@ -149,7 +149,7 @@ export const messages = {
         description: "Shown under a partly staffed room. A room has at most five seats.",
     },
     "profile.base.room.marginalNote": {
-        text: "Values are marginals - what this room loses if that one skill is removed. Coupled skills overlap, so they don’t sum to the room total.",
+        text: "Values are marginals: what this room loses if that one skill is removed. Coupled skills overlap, so they don't sum to the room total.",
         description: "Footnote under a room's skill ledger. The apostrophe is a typographic one.",
     },
     "profile.base.room.fromControlCenter": {

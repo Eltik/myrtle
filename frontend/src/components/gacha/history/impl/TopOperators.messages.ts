@@ -15,6 +15,10 @@ export const messages = {
         text: "No {rarity}★ operators pulled yet.",
         description: "Empty state when the player has pulled nothing of the selected rarity. {rarity} is a star count, 6, 5 or 4.",
     },
+    "history.top.rarityFilter": {
+        text: "Rarity",
+        description: "Accessible name of the 6★ / 5★ / 4★ switch that picks which rarity the top-operators table lists.",
+    },
     "history.top.col.operator": {
         text: "Operator",
         description: "Column heading for the operator's name. Rendered uppercase.",

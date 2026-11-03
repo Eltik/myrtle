@@ -16,7 +16,7 @@ export const messages = {
         description: "Last breadcrumb crumb: this page.",
     },
     "community.header.title": {
-        text: "What everyone’s {emphasis}.",
+        text: "What everyone's {emphasis}.",
         description: "Heading of the community gacha page. {emphasis} is the accent-coloured word labelled by community.header.titleEmphasis and may sit anywhere the sentence needs it. Keep the full stop.",
     },
     "community.header.titleEmphasis": {

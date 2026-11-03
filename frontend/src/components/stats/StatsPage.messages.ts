@@ -28,11 +28,11 @@ export const messages = {
         description: "Sub-line under the roster count. 'Yostar' is the game publisher's account system and stays as-is. 'Player' is the site's term; the game itself says 'Doctor'.",
     },
     "page.error.load": {
-        text: "Couldn’t load site stats.",
+        text: "Couldn't load site stats.",
         description: "Bold lead of the stats-page error banner; the request's own message follows it.",
     },
     "page.error.unknown": {
-        text: "Unknown error.",
+        text: "No details were given.",
         description: "Stand-in used in the stats-page error banner when the failure carried no message.",
     },
     "page.catalog.kicker": {
@@ -44,7 +44,7 @@ export const messages = {
         description: "Heading of the game-catalog section. 'Terra' is the name of the game's world and is not translated.",
     },
     "page.catalog.blurb": {
-        text: "A faithful mirror of Hypergryph’s gamedata, recomputed on every build.",
+        text: "Counted from Hypergryph's game data each time the site updates.",
         description: "Caption under the game-catalog heading. 'Hypergryph' is the game's developer and stays as-is.",
     },
     "page.community.kicker": {
@@ -52,7 +52,7 @@ export const messages = {
         description: "Eyebrow label above the community tier-list section of the stats page. Rendered uppercase; the middle dot is a separator.",
     },
     "page.community.title": {
-        text: "The community’s working notes.",
+        text: "The community's working notes.",
         description: "Heading of the community tier-list section of the stats page.",
     },
     "page.community.blurb": {
@@ -96,7 +96,7 @@ export const messages = {
         description: "Sub-line under a tier-list tile, e.g. 'avg 2.4 per list'. 'avg' is short for average; {avg} is an already-formatted number.",
     },
     "page.footer": {
-        text: "Looking for gacha rates, most-pulled operators, or pull timing? Those live on {link}. This page is the meta-count - just the shape of what we host.",
+        text: "Looking for gacha rates, most-pulled operators, or pull timing? Those live on {link}. This page is the meta-count: just the shape of what we host.",
         description: "Closing note on the stats page. {link} is a link whose label is the literal URL path /gacha/community; move it wherever the sentence needs it. 'Gacha' is the game's randomised recruitment system and a 'pull' is one draw from it.",
     },
 } satisfies MessageMap;

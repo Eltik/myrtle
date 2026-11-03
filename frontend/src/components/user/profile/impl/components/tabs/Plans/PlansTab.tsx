@@ -3,6 +3,7 @@ import { type IPlanProgressLabels, PlanProgressRows } from "#/components/tools/p
 import { planProgress } from "#/components/tools/planner/planProgress";
 import { MAX_SKILL_LEVEL, masteryOf } from "#/components/tools/planner/planTargets";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
+import { Skeleton } from "#/components/ui/skeleton";
 import { useOperatorName } from "#/hooks/use-operator-name";
 import { type IOperatorPlanResponse, publicPlansQueryOptions } from "#/lib/api/planner";
 import type { IRosterEntry } from "#/lib/api/user";
@@ -42,7 +43,7 @@ export function PlanCard({ p, roster, variant = "card" }: IPlanCardProps) {
     };
 
     return (
-        <div className={variant === "card" ? "relative flex flex-col gap-4 rounded-xl border border-border bg-card p-4 transition-all hover:shadow-md" : "flex flex-col gap-4"}>
+        <div className={variant === "card" ? "relative flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 transition-all hover:shadow-md" : "flex flex-col gap-4"}>
             <div className="flex items-start gap-3">
                 <span aria-hidden="true" className="relative flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border bg-muted/70">
                     <OperatorAvatar charId={op.id} name={op.name} className="block h-full w-full object-cover" server={op.server} />
@@ -111,11 +112,12 @@ export function PlansTab({ uid, roster }: IPlansTabProps) {
 
     if (isLoading) {
         return (
-            <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,320px),1fr))] gap-4">
+            <output className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,320px),1fr))] gap-4">
+                <span className="sr-only">{t("profile.plans.loading")}</span>
                 {["sk-p-1", "sk-p-2", "sk-p-3"].map((key) => (
-                    <div key={key} className="h-24 animate-pulse rounded-xl border border-border/40 bg-card p-4" />
+                    <Skeleton key={key} className="h-24 rounded-2xl" />
                 ))}
-            </div>
+            </output>
         );
     }
 
@@ -123,8 +125,8 @@ export function PlansTab({ uid, roster }: IPlansTabProps) {
 
     if (plans.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center gap-3 rounded-3xl border border-border bg-card px-8 py-16 text-center">
-                <span className="font-mono text-[11px] text-muted-foreground uppercase tracking-widest">{t("profile.plans.kicker")}</span>
+            <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-border bg-card px-8 py-16 text-center">
+                <span className="kicker">{t("profile.plans.kicker")}</span>
                 <h3 className="font-semibold text-lg tracking-tight">{t("profile.plans.empty.title")}</h3>
                 <p className="max-w-sm text-muted-foreground text-sm">{t("profile.plans.empty.desc")}</p>
             </div>
@@ -140,7 +142,7 @@ export function PlansTab({ uid, roster }: IPlansTabProps) {
                     const title = section.group ?? t("profile.plans.ungrouped");
                     return (
                         <section key={section.group ?? "\u0000ungrouped"} aria-label={title} className="flex flex-col gap-3">
-                            <h2 className="flex items-baseline gap-2 font-mono text-[11px] text-muted-foreground uppercase tracking-widest">
+                            <h2 className="kicker flex items-baseline gap-2">
                                 <span>{title}</span>
                                 <span className="tabular-nums">{section.plans.length}</span>
                             </h2>

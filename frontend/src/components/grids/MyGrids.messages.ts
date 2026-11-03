@@ -28,7 +28,7 @@ export const messages = {
         description: "Opens the grid in the editor.",
     },
     "my.error": {
-        text: "Your grids could not be loaded.",
+        text: "Couldn't load your grids.",
         description: "Shown when the user's grids failed to load.",
     },
     "my.retry": {

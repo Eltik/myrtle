@@ -36,8 +36,8 @@ export function PageHeader({ data, isLoading }: IPageHeaderProps) {
                     <span aria-hidden className={`size-1.5 shrink-0 rounded-full ${updatedAt != null && !cached ? "bg-success" : "bg-muted-foreground"}`} />
                     {t("community.header.updated", { when: fmtRelative(updatedAt, t) })}
                 </span>
-                {cached ? <span className="inline-flex h-6 items-center rounded-md border border-border bg-card/80 px-2.5 font-mono text-[10.5px] text-muted-foreground uppercase tracking-widest">{t("community.header.cached")}</span> : null}
-                <span className="inline-flex h-6 items-center rounded-md border border-border bg-card/80 px-2.5 font-mono text-[10.5px] text-muted-foreground uppercase tracking-widest">{fmtUTCStamp(updatedAt)}</span>
+                {cached ? <span className="inline-flex h-6 items-center rounded-md border border-border bg-card/80 px-2.5 font-mono text-[10.5px] text-muted-foreground">{t("community.header.cached")}</span> : null}
+                <span className="inline-flex h-6 items-center rounded-md border border-border bg-card/80 px-2.5 font-mono text-[10.5px] text-muted-foreground">{fmtUTCStamp(updatedAt)}</span>
             </div>
         </div>
     );

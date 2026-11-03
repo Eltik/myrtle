@@ -58,7 +58,7 @@ export function BaseSkill({ skill, server }: { skill: IRosterSkill; server?: "en
             <div className="flex min-w-0 flex-col gap-0.5">
                 <span className="flex items-baseline gap-1.5 font-semibold text-[11px] text-foreground">
                     {skill.buffName}
-                    {locked && <span className="font-normal text-[9.5px] text-muted-foreground uppercase tracking-wide">{t("profile.base.skill.locked", { elite: skill.unlockElite, level: skill.unlockLevel })}</span>}
+                    {locked && <span className="font-normal text-[9.5px] text-muted-foreground">{t("profile.base.skill.locked", { elite: skill.unlockElite, level: skill.unlockLevel })}</span>}
                 </span>
                 <p className="text-[11px] text-muted-foreground leading-snug">{renderMarkup(skill.description)}</p>
             </div>

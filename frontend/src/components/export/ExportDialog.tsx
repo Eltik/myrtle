@@ -197,7 +197,7 @@ export function ExportDialog<T>({ open, onOpenChange, schema, allRows, filteredR
                 <div className="grid min-h-0 flex-1 grid-cols-1 overflow-hidden lg:grid-cols-[1fr_minmax(0,1.1fr)]">
                     <div className="flex min-h-0 flex-col overflow-y-auto px-6 py-5">
                         <section className="flex flex-col gap-3">
-                            <h3 className="font-sans font-semibold text-[13px] text-foreground uppercase tracking-[0.08em]">{t("export.section.format")}</h3>
+                            <h3 className="font-sans font-semibold text-[13px] text-foreground">{t("export.section.format")}</h3>
                             <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
                                 {FORMAT_ORDER.map((fmt) => {
                                     const meta = FORMAT_LABELS[fmt];
@@ -219,7 +219,7 @@ export function ExportDialog<T>({ open, onOpenChange, schema, allRows, filteredR
                         </section>
 
                         <section className="mt-6 flex flex-col gap-3">
-                            <h3 className="font-sans font-semibold text-[13px] text-foreground uppercase tracking-[0.08em]">{t("export.section.scope")}</h3>
+                            <h3 className="font-sans font-semibold text-[13px] text-foreground">{t("export.section.scope")}</h3>
                             <RadioGroup className="flex flex-col gap-1.5" value={scope} onValueChange={(v) => setScope(v as ExportScope)}>
                                 {(Object.keys(SCOPE_LABEL_KEYS) as ExportScope[]).map((s) => {
                                     const count = s === "all" ? allRows.length : s === "filtered" ? (filteredRows ?? allRows).length : (pageRows?.length ?? 0);
@@ -242,9 +242,9 @@ export function ExportDialog<T>({ open, onOpenChange, schema, allRows, filteredR
 
                         <section className="mt-6 flex flex-col gap-3">
                             <div className="flex items-center justify-between gap-2">
-                                <h3 className="font-sans font-semibold text-[13px] text-foreground uppercase tracking-[0.08em]">
+                                <h3 className="font-sans font-semibold text-[13px] text-foreground">
                                     {t("export.section.fields")}{" "}
-                                    <span className="ml-1 font-mono text-[11px] text-muted-foreground tracking-normal">
+                                    <span className="ml-1 font-mono text-[11px] text-muted-foreground">
                                         ({options.fieldIds.length}/{schema.fields.length})
                                     </span>
                                 </h3>
@@ -282,13 +282,18 @@ export function ExportDialog<T>({ open, onOpenChange, schema, allRows, filteredR
                                     };
                                     return (
                                         <div key={group} className="flex flex-col gap-1.5">
-                                            <button type="button" onClick={toggleGroup} className="flex cursor-pointer items-center gap-2 font-medium font-sans text-[11px] text-muted-foreground uppercase leading-none tracking-widest hover:text-foreground">
+                                            {/* One control: the Checkbox with its label. It used to sit inside a <button> with the
+                                                same handler; a click on the box ran toggleGroup from the Checkbox and again from the
+                                                bubbling button click, so it toggled twice (a no-op). The Checkbox root cancels the
+                                                label's own activation and clicks its input once. */}
+                                            {/* biome-ignore lint/a11y/noLabelWithoutControl: Checkbox renders the input */}
+                                            <label className="flex w-fit cursor-pointer items-center gap-2 rounded px-1.5 py-1 font-medium font-sans text-[12.5px] text-foreground leading-none hover:bg-accent/50">
                                                 <Checkbox checked={allSelected} indeterminate={!allSelected && someSelected} onCheckedChange={toggleGroup} aria-label={t("export.fields.toggleGroup", { group })} />
                                                 <span>{group}</span>
-                                                <span className="font-mono text-[10px] tracking-normal">
+                                                <span className="font-mono text-[11px] text-muted-foreground">
                                                     {fields.filter((f) => enabledSet.has(f.id)).length}/{fields.length}
                                                 </span>
-                                            </button>
+                                            </label>
                                             <div className="grid grid-cols-2 gap-x-3 gap-y-1 pl-6">
                                                 {fields.map((f) => (
                                                     // biome-ignore lint/a11y/noLabelWithoutControl: Checkbox renders the input
@@ -305,7 +310,7 @@ export function ExportDialog<T>({ open, onOpenChange, schema, allRows, filteredR
                         </section>
 
                         <section className="mt-6 flex flex-col gap-3">
-                            <h3 className="font-sans font-semibold text-[13px] text-foreground uppercase tracking-[0.08em]">{t("export.section.options")}</h3>
+                            <h3 className="font-sans font-semibold text-[13px] text-foreground">{t("export.section.options")}</h3>
                             <div className="flex flex-col gap-2.5 rounded-lg border border-border bg-card/50 p-3.5">
                                 {supportsPretty && (
                                     <OptionRow label={t("export.option.pretty.label")} description={t("export.option.pretty.desc")}>
@@ -401,7 +406,7 @@ export function ExportDialog<T>({ open, onOpenChange, schema, allRows, filteredR
                         </section>
 
                         <section className="mt-6 flex flex-col gap-2">
-                            <h3 className="font-sans font-semibold text-[13px] text-foreground uppercase tracking-[0.08em]">{t("export.section.filename")}</h3>
+                            <h3 className="font-sans font-semibold text-[13px] text-foreground">{t("export.section.filename")}</h3>
                             <div className="flex items-center gap-2">
                                 <Input value={filename} onChange={(e) => setFilename(e.target.value)} placeholder={schema.pluralName} className="flex-1" size="sm" />
                                 <span className="font-mono text-[12px] text-muted-foreground">.{result?.extension ?? options.format}</span>
@@ -413,7 +418,7 @@ export function ExportDialog<T>({ open, onOpenChange, schema, allRows, filteredR
                     <div className="hidden min-h-0 flex-col border-border bg-muted/30 lg:flex lg:border-l">
                         <div className="flex items-center justify-between gap-2 border-b px-5 py-3">
                             <div className="flex flex-col gap-0.5">
-                                <span className="font-sans font-semibold text-[12px] text-foreground uppercase tracking-[0.08em]">{t("export.preview.title")}</span>
+                                <span className="font-sans font-semibold text-[12px] text-foreground">{t("export.preview.title")}</span>
                                 <span className="font-mono text-[11px] text-muted-foreground">
                                     {fmt.number(sourceRows.length)} {sourceRows.length === 1 ? schema.itemName : schema.pluralName} · {t("export.preview.fields", { count: options.fieldIds.length })} · ~{formatBytes(bytes)}
                                 </span>

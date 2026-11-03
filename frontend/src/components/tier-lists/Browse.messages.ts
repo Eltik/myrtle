@@ -4,15 +4,15 @@ export const namespace = "tierLists";
 
 export const messages = {
     "browse.error": {
-        text: "Failed to load tier lists.",
+        text: "Couldn't load tier lists.",
         description: "Shown in place of the grid when the tier lists could not be fetched.",
     },
     "browse.retry": {
-        text: "Retry",
+        text: "Try again",
         description: "Button that re-runs the failed request for the tier lists.",
     },
     "browse.retrying": {
-        text: "Retrying…",
+        text: "Trying again…",
         description: "The retry button's label while the request is in flight. Keep the single-character ellipsis.",
     },
     "browse.favorites.emptyTitle": {

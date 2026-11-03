@@ -1,5 +1,6 @@
 import { ChevronDown, Lock, Search, X } from "lucide-react";
 import * as React from "react";
+import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import { Checkbox } from "#/components/ui/checkbox";
 import { Input } from "#/components/ui/input";
@@ -124,13 +125,13 @@ export function StageFiltersPanel({ settings, onChange, hasProfile, stages, zone
                     <Search aria-hidden="true" className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
                     <Input value={query} onChange={(e) => setQuery(e.currentTarget.value)} placeholder={t("randomizer.stages.search")} size="sm" className="rounded-md border-input pl-7" />
                     {query && (
-                        <button type="button" onClick={() => setQuery("")} className="absolute top-1/2 right-1.5 inline-flex size-5 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground" aria-label={t("randomizer.stages.clearSearch")}>
-                            <X className="size-3" />
-                        </button>
+                        <Button onClick={() => setQuery("")} size="icon-xs" variant="ghost" className="absolute top-1/2 right-1 -translate-y-1/2 text-muted-foreground" aria-label={t("randomizer.stages.clearSearch")}>
+                            <X aria-hidden="true" />
+                        </Button>
                     )}
                 </div>
 
-                <div className="flex flex-wrap items-center justify-between gap-2 font-mono text-[11px] text-muted-foreground uppercase tracking-[0.16em]">
+                <div className="flex flex-wrap items-center justify-between gap-2 font-mono text-[11px] text-muted-foreground">
                     <span>
                         <span className="text-foreground">{selectedCount}</span> / {totalStages} {t("randomizer.stages.count")}
                     </span>
@@ -154,10 +155,15 @@ export function StageFiltersPanel({ settings, onChange, hasProfile, stages, zone
                         const selectedSectionStages = sectionGroups.reduce((acc, g) => acc + countSelected(g.stages, deselected), 0);
                         return (
                             <section key={section} className="flex flex-col gap-1.5">
-                                <button type="button" onClick={() => onToggleSection(section)} className="flex items-center gap-1.5 rounded-sm px-0.5 outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-expanded={isExpanded}>
+                                <button
+                                    type="button"
+                                    onClick={() => onToggleSection(section)}
+                                    className="relative flex pointer-coarse:min-h-11 items-center gap-1.5 rounded-sm px-0.5 outline-none pointer-coarse:after:absolute pointer-coarse:after:inset-x-0 pointer-coarse:after:top-1/2 pointer-coarse:after:h-11 pointer-coarse:after:-translate-y-1/2 focus-visible:ring-2 focus-visible:ring-ring"
+                                    aria-expanded={isExpanded}
+                                >
                                     <ChevronDown aria-hidden="true" className={cn("size-3 text-subtle-foreground transition-transform duration-150", !isExpanded && "-rotate-90")} />
-                                    <h3 className="font-mono text-[11px] text-muted-foreground uppercase tracking-[0.2em]">{t(STAGE_SECTION_LABEL_KEYS[section])}</h3>
-                                    <span className="font-mono text-[11px] text-muted-foreground uppercase tracking-[0.16em]">{t("randomizer.stages.sectionCount", { selected: selectedSectionStages, total: totalSectionStages })}</span>
+                                    <h3 className="kicker">{t(STAGE_SECTION_LABEL_KEYS[section])}</h3>
+                                    <span className="font-mono text-[11px] text-muted-foreground">{t("randomizer.stages.sectionCount", { selected: selectedSectionStages, total: totalSectionStages })}</span>
                                 </button>
                                 {isExpanded && sectionGroups.map((group) => <EventRow key={group.id} group={group} isOpen={openGroups.has(group.id) || searching} onToggleExpand={() => onToggleExpand(group.id)} onToggleGroup={() => onToggleGroup(group)} deselected={deselected} onToggleStage={onToggleStage} t={t} />)}
                             </section>
@@ -193,7 +199,7 @@ function EventRow({ group, isOpen, onToggleExpand, onToggleGroup, deselected, on
                             {group.label}
                             {group.section !== "MAIN" && !group.isOpen && <Lock aria-hidden="true" className="size-3 shrink-0 text-subtle-foreground" />}
                         </p>
-                        <p className="mt-0.5 font-mono text-[10.5px] text-subtle-foreground uppercase tracking-[0.14em]">
+                        <p className="mt-0.5 font-mono text-[11px] text-subtle-foreground">
                             {group.section === "MAIN" ? t("randomizer.stages.tag.mainline") : (group.sublabel ?? (group.section === "OTHER" ? t("randomizer.stages.tag.mini") : t("randomizer.stages.tag.event")))}
                             <span className="mx-1.5 opacity-50">·</span>
                             {t("randomizer.stages.groupCount", { selected: selectedCount, total: group.stages.length })}
@@ -213,7 +219,11 @@ function EventRow({ group, isOpen, onToggleExpand, onToggleGroup, deselected, on
                                     <StageModeBadge stage={stage} t={t} />
                                     <span className="inline-flex min-w-13 shrink-0 justify-start font-medium font-mono text-[11.5px] text-foreground">{stage.code}</span>
                                     <span className="min-w-0 flex-1 truncate text-[11.5px] text-muted-foreground">{stage.name ?? ""}</span>
-                                    {isChallengeModeStage(stage) && <span className="shrink-0 rounded-sm border border-amber-500/40 bg-amber-500/10 px-1 font-mono text-[9px] text-amber-500/90 uppercase tracking-[0.14em]">{t("randomizer.stages.badge.cm")}</span>}
+                                    {isChallengeModeStage(stage) && (
+                                        <Badge variant="tint" size="sm" className="font-mono" style={{ "--tone": "var(--color-amber-500)" } as React.CSSProperties}>
+                                            {t("randomizer.stages.badge.cm")}
+                                        </Badge>
+                                    )}
                                 </label>
                             </li>
                         );
@@ -242,7 +252,17 @@ function isChallengeModeStage(stage: IStage): boolean {
 
 function StageModeBadge({ stage, t }: { stage: IStage; t: StageFiltersT }): React.ReactElement | null {
     const mode = getStageMode(stage);
-    if (mode === "ADVERSE") return <span className="shrink-0 rounded-sm border border-rose-500/40 bg-rose-500/10 px-1 font-mono text-[9px] text-rose-500/90 uppercase tracking-[0.14em]">{t("randomizer.stages.badge.adverse")}</span>;
-    if (mode === "STORY") return <span className="shrink-0 rounded-sm border border-border/50 px-1 font-mono text-[9px] text-muted-foreground uppercase tracking-[0.14em]">{t("randomizer.stages.badge.story")}</span>;
+    if (mode === "ADVERSE")
+        return (
+            <Badge variant="tint" size="sm" className="font-mono" style={{ "--tone": "var(--color-rose-500)" } as React.CSSProperties}>
+                {t("randomizer.stages.badge.adverse")}
+            </Badge>
+        );
+    if (mode === "STORY")
+        return (
+            <Badge variant="outline" size="sm" className="font-mono">
+                {t("randomizer.stages.badge.story")}
+            </Badge>
+        );
     return null;
 }

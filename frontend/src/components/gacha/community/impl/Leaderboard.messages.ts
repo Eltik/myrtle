@@ -15,6 +15,10 @@ export const messages = {
         text: "No data for this rarity yet.",
         description: "Empty state when nobody has shared a pull of the selected rarity.",
     },
+    "community.leaderboard.rarityFilter": {
+        text: "Rarity",
+        description: "Accessible name of the 6★ / 5★ / 4★ switch that picks which rarity the most-pulled table lists.",
+    },
     "community.leaderboard.col.operator": {
         text: "Operator",
         description: "Column heading for the operator's name. Rendered uppercase.",

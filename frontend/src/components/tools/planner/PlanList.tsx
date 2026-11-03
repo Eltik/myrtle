@@ -32,7 +32,7 @@ export function PlanList({ plans, groups, pinDividerAt, isLoading, selection, en
         return (
             <div className="flex flex-col gap-4">
                 {["sk-1", "sk-2", "sk-3"].map((key) => (
-                    <div key={key} className="flex items-center gap-3 rounded-xl border border-border/40 p-4">
+                    <div key={key} className="flex items-center gap-3 rounded-2xl border border-border/40 p-4">
                         <Skeleton className="size-4 rounded" />
                         <Skeleton className="size-10 rounded-xl" />
                         <div className="flex flex-1 flex-col gap-1.5">
@@ -77,7 +77,7 @@ export function PlanList({ plans, groups, pinDividerAt, isLoading, selection, en
                     <Button
                         variant="ghost"
                         size="xs"
-                        className="motion-safe:fade-in motion-safe:zoom-in-95 h-7 cursor-pointer border border-red-500/20 bg-red-500/5 text-red-600 duration-150 hover:border-red-500/40 hover:bg-red-500/15 hover:text-red-600 motion-safe:animate-in dark:text-red-400 dark:hover:text-red-400"
+                        className="motion-safe:fade-in motion-safe:zoom-in-95 h-7 cursor-pointer border border-destructive/20 bg-destructive/5 text-destructive-foreground duration-150 hover:border-destructive/40 hover:bg-destructive/15 hover:text-destructive-foreground motion-safe:animate-in"
                         onClick={onDeleteSelected}
                     >
                         <Trash className="mr-1 size-3.5" />

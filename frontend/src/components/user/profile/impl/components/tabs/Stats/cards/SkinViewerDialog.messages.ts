@@ -12,7 +12,7 @@ export const namespace = "user";
 
 export const messages = {
     "profile.skins.title": {
-        text: "Skin Collection",
+        text: "Skin collection",
         description: "Title of the outfit-browser dialog, also its screen-reader title.",
     },
     "profile.skins.header.missing": {
@@ -38,6 +38,10 @@ export const messages = {
     "profile.skins.filter.missing": {
         text: "Missing",
         description: "Ownership filter: only outfits the account lacks. Rendered uppercase by CSS.",
+    },
+    "profile.skins.filter.aria": {
+        text: "Show skins",
+        description: "Accessible name of the All / Owned / Missing button group in the outfit viewer.",
     },
     "profile.skins.sort.label": {
         text: "Sort",
@@ -116,7 +120,7 @@ export const messages = {
         description: "Closes that row: how many synced accounts own the outfit.",
     },
     "profile.skins.section.all": {
-        text: "All Skins",
+        text: "All skins",
         description: "Heading over the single ungrouped section, used when sorting by date or popularity.",
     },
     "profile.skins.section.other": {
@@ -172,7 +176,7 @@ export const messages = {
         description: "Tooltip on a paid outfit's price chip, naming the in-game store it is sold in.",
     },
     "profile.skins.popularityFailed": {
-        text: "Couldn't load outfit popularity, so this sort has nothing to order by.",
+        text: "Couldn't load skin popularity, so this sort has nothing to order by.",
         description: "Shown above the outfit grid, beside a Try again button, when the popularity sort is chosen and the popularity data failed to load.",
     },
 } satisfies MessageMap;

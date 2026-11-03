@@ -67,7 +67,7 @@ function LedgerChip({ line }: { line: ISkillLine }) {
     const hint = hintKey ? t(hintKey) : undefined;
     return (
         <TileTooltip label={<span className="block max-w-56">{hint}</span>}>
-            <span className={cn("shrink-0 text-[9px] uppercase tracking-wider", line.disposition === "inactive" ? "text-subtle-foreground line-through" : "text-muted-foreground")}>{label}</span>
+            <span className={cn("shrink-0 text-[9px]", line.disposition === "inactive" ? "text-subtle-foreground line-through" : "text-muted-foreground")}>{label}</span>
         </TileTooltip>
     );
 }
@@ -79,7 +79,7 @@ function trim(v: number): string {
 function Stat({ label, value }: { label: string; value: string }) {
     return (
         <div className="flex flex-col gap-0.5">
-            <dt className="text-[10px] text-muted-foreground uppercase tracking-wider">{label}</dt>
+            <dt className="kicker">{label}</dt>
             <dd className="font-mono font-semibold text-[12px] tabular-nums">{value}</dd>
         </div>
     );
@@ -160,17 +160,17 @@ export function RoomPopover({ tile }: { tile: ITile }) {
                                 <span className="min-w-0 flex-1 truncate text-[12px]">{op.name}</span>
                                 {sustained.has(op.id) && (
                                     <TileTooltip label={<span className="block max-w-56">{t("profile.base.room.sustained.tooltip")}</span>}>
-                                        <span className="shrink-0 rounded border border-emerald-500/50 bg-emerald-500/10 px-1 py-px font-mono text-[9px] text-success-foreground uppercase tracking-wider">{t("profile.base.room.sustained")}</span>
+                                        <span className="shrink-0 rounded border border-emerald-500/50 bg-emerald-500/10 px-1 py-px font-mono text-[9px] text-success-foreground">{t("profile.base.room.sustained")}</span>
                                     </TileTooltip>
                                 )}
                                 {benched.has(op.id) && (
                                     <TileTooltip label={<span className="block max-w-56">{t("profile.base.room.bench.tooltip")}</span>}>
-                                        <span className="shrink-0 rounded border border-border px-1 py-px text-[9px] text-muted-foreground uppercase tracking-wider">{t("profile.base.room.bench")}</span>
+                                        <span className="shrink-0 rounded border border-border px-1 py-px text-[9px] text-muted-foreground">{t("profile.base.room.bench")}</span>
                                     </TileTooltip>
                                 )}
                                 {parked.has(op.id) && (
                                     <TileTooltip label={<span className="block max-w-56">{t("profile.base.room.parked.tooltip")}</span>}>
-                                        <span className="shrink-0 rounded border border-amber-500/50 bg-amber-500/10 px-1 py-px font-mono text-[9px] text-warning-foreground uppercase tracking-wider">{t("profile.base.room.parked")}</span>
+                                        <span className="shrink-0 rounded border border-amber-500/50 bg-amber-500/10 px-1 py-px font-mono text-[9px] text-warning-foreground">{t("profile.base.room.parked")}</span>
                                     </TileTooltip>
                                 )}
                             </div>
@@ -187,7 +187,7 @@ export function RoomPopover({ tile }: { tile: ITile }) {
                                             <div className={cn("flex items-start justify-between gap-2", replaced && "opacity-40")} key={skill.buffId}>
                                                 <BaseSkill skill={skill} />
                                                 {line && <LedgerChip line={line} />}
-                                                {replaced && <span className="shrink-0 text-[9px] text-muted-foreground uppercase tracking-wider">{t("profile.base.room.replaced")}</span>}
+                                                {replaced && <span className="shrink-0 text-[9px] text-muted-foreground">{t("profile.base.room.replaced")}</span>}
                                             </div>
                                         );
                                     })}
@@ -199,7 +199,7 @@ export function RoomPopover({ tile }: { tile: ITile }) {
                     {ledger.length > 0 && <p className="text-[10px] text-subtle-foreground leading-snug">{t("profile.base.room.marginalNote")}</p>}
                     {ccLines.length > 0 && (
                         <div className="flex flex-col gap-1 rounded-md border border-border/50 bg-muted/10 px-2 py-1.5">
-                            <span className="text-[9px] text-muted-foreground uppercase tracking-wider">{t("profile.base.room.fromControlCenter")}</span>
+                            <span className="text-[9px] text-muted-foreground">{t("profile.base.room.fromControlCenter")}</span>
                             {ccLines.map((l) => (
                                 <div className="flex items-baseline justify-between gap-2 text-[11px]" key={`${l.operator_id}:${l.buff_id}`}>
                                     <span className="min-w-0 truncate">
@@ -225,7 +225,7 @@ export function RoomPopover({ tile }: { tile: ITile }) {
             )}
             {change && (
                 <div className="flex items-baseline justify-between gap-2 rounded-md border border-primary/30 bg-primary/5 px-2 py-1.5">
-                    <span className="text-[10px] text-muted-foreground uppercase tracking-wider">{t("profile.base.room.optimized")}</span>
+                    <span className="kicker">{t("profile.base.room.optimized")}</span>
                     <span className="font-mono text-[11px] tabular-nums">
                         {Math.round(change.efficiency_before)}% → <span className="font-semibold text-foreground">{Math.round(change.efficiency_after)}%</span>
                     </span>

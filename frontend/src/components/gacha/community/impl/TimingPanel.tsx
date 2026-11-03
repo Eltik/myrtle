@@ -31,13 +31,13 @@ export function TimingPanel({ timing, firstPullAt, banners }: ITimingPanelProps)
     const dayCount = firstPullAt ? Math.floor((Date.now() / 1000 - firstPullAt) / 86_400) + 1 : 0;
 
     return (
-        <section className="flex flex-col gap-4 rounded-[14px] border border-border bg-card p-[18px_18px] sm:p-[22px_24px]">
+        <section className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-[18px_18px] sm:p-[22px_24px]">
             <header className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                 <div>
                     <Kicker className="mb-1.5">{t("community.timing.kicker")}</Kicker>
                     <h2 className="m-0 text-balance font-sans font-semibold text-[20px] text-foreground leading-[1.15] tracking-[-0.02em] sm:text-[22px]">{t("community.timing.title")}</h2>
                 </div>
-                <div className="inline-flex flex-wrap items-center gap-x-3.5 gap-y-1 font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.12em]">
+                <div className="inline-flex flex-wrap items-center gap-x-3.5 gap-y-1 font-mono text-[11px] text-muted-foreground">
                     <span className="inline-flex items-center">
                         <span aria-hidden className="mr-1.5 inline-block h-2 w-2 rounded-sm bg-primary align-middle" />
                         {t("community.timing.legend.totalPulls")}
@@ -54,18 +54,18 @@ export function TimingPanel({ timing, firstPullAt, banners }: ITimingPanelProps)
             <div className="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2">
                 {byDate.length > 0 ? (
                     <div className="md:col-span-2">
-                        <div className="mb-2.5 font-medium font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.14em]">{t("community.timing.byDate", { count: dayCount })}</div>
+                        <div className="kicker mb-2.5">{t("community.timing.byDate", { count: dayCount })}</div>
                         <TimingByDate rows={byDate} banners={banners} />
                     </div>
                 ) : null}
 
                 <div className="flex flex-col">
-                    <div className="mb-2.5 font-medium font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.14em]">{t("community.timing.byHour")}</div>
+                    <div className="kicker mb-2.5">{t("community.timing.byHour")}</div>
                     <TimingByHour rows={timing.byHour} />
                 </div>
 
                 <div>
-                    <div className="mb-2.5 font-medium font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.14em]">{t("community.timing.byDayOfWeek")}</div>
+                    <div className="kicker mb-2.5">{t("community.timing.byDayOfWeek")}</div>
                     <TimingByDow rows={timing.byDayOfWeek} />
                 </div>
             </div>
@@ -281,7 +281,7 @@ function ActivityChart({ data, days, color, height, bands }: { data: number[]; d
                             <div className={styles.acHoverCardValue}>
                                 <span aria-hidden className={styles.acHoverCardSwatch} style={{ background: color }} />
                                 {f.number(data[hoverIdx])}
-                                <span className={styles.acHoverCardLabel}>{t("community.timing.hover.pulls")}</span>
+                                <span className={`kicker mb-0 ${styles.acHoverCardLabel}`}>{t("community.timing.hover.pulls")}</span>
                             </div>
                             {activeBands.length > 0 ? (
                                 <div className={styles.acHoverCardBanners}>

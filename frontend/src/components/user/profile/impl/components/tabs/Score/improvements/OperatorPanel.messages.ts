@@ -13,7 +13,7 @@ export const namespace = "user";
 
 export const messages = {
     "score.improvements.operator.empty": {
-        text: "Every owned operator is at their last milestone - nothing to upgrade here.",
+        text: "Every owned operator is at their last milestone. Nothing to upgrade here.",
         description: "Empty state in the Operator panel when nothing is left to invest in.",
     },
     "score.improvements.operator.title": {
@@ -45,7 +45,7 @@ export const messages = {
         description: "The highlighted unit inside the footnote: the figures are percentages of the Operator section, not of the overall grade.",
     },
     "score.improvements.operator.footnote": {
-        text: "The header's {gain} is what finishing every upgrade here would add to your headline score. The per-tag, per-rarity, and per-operator figures below are {unit} (the percentage shown at the top of the card) - there's +{room}% of room left here to climb toward 100%. ELITE includes a full re-level at the new phase, so it overlaps MAX_LEVEL; the per-op total deduplicates the pair.",
+        text: "The header's {gain} is what finishing every upgrade here would add to your headline score. The per-tag, per-rarity, and per-operator figures below are {unit} (the percentage shown at the top of the card), and there's +{room}% of room left here to climb toward 100%. ELITE includes a full re-level at the new phase, so it overlaps MAX_LEVEL; the per-op total deduplicates the pair.",
         description:
             "Footnote under the operator list, explaining the units. {gain} is the highlighted figure quoted back from the heading (score.improvements.operator.footnote.headerGain) and {unit} the highlighted unit (score.improvements.operator.footnote.sectionUnit); both may move. ELITE and MAX_LEVEL are raw API tag codes and stay as-is; 'per-op' is short for per-operator.",
     },
@@ -142,7 +142,7 @@ export const messages = {
         description: "The value half of an upgrade-tag tooltip when the gain is measurable.",
     },
     "score.improvements.operator.tag.tooltip.negligible": {
-        text: "less than 0.01% - negligible",
+        text: "less than 0.01%, negligible",
         description: "The value half of an upgrade-tag tooltip when the gain rounds away.",
     },
     "score.improvements.operator.dim.title": {
@@ -158,7 +158,7 @@ export const messages = {
         description: "Native tooltip on one investment-axis row, for an axis with no explanatory line.",
     },
     "score.improvements.operator.dim.rowTitleDetail": {
-        text: "{label} - {detail}: worth {share}% of this section. You've completed {completion}% of that, earning {earned}%.",
+        text: "{label} ({detail}): worth {share}% of this section. You've completed {completion}% of that, earning {earned}%.",
         description: "Native tooltip on one investment-axis row. {detail} is the axis's lowercase explanation.",
     },
     "score.improvements.operator.dim.footnote.unit": {

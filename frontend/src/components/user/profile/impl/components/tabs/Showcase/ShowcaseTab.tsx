@@ -24,8 +24,9 @@ import { cn } from "#/lib/utils";
 import type { ShowcaseBlockView } from "#/types/generated/ShowcaseBlockView";
 import type { IUserProfile } from "#/types/user";
 import { draftFromView, type IShowcaseEntity, type ShowcaseDraftBlock, shownBlocks } from "../../../showcase";
+import { LoadFailed } from "../LoadFailed";
 import { PlanCard } from "../Plans/PlansTab";
-import { CARD_PADDING, Kicker, StatCard } from "../Stats/primitives";
+import { CARD_PADDING, KICKER_TEXT, Kicker, StatCard } from "../Stats/primitives";
 import { FactionFavouriteDialog, type IShowcasePlayer, OperatorFavouriteDialog, operatorTarget, ShowcasePlayerContext, useShowcasePlayer } from "./FavouriteDialogs";
 import type { messages as favMessages } from "./FavouriteDialogs.messages";
 import type { RosterAccess } from "./favourites";
@@ -74,7 +75,7 @@ export function ShowcaseTab({ uid, profile, isOwner, roster, rosterAccess }: ISh
     if (query.isPending) return <ShowcaseSkeleton />;
     if (query.isError) {
         return (
-            <div className="flex flex-col items-center gap-3 rounded-3xl border border-border bg-card px-8 py-12 text-center">
+            <div role="alert" className="flex flex-col items-center gap-3 rounded-2xl border border-border bg-card px-8 py-12 text-center">
                 <p className="text-muted-foreground text-sm">{t("profile.showcase.error")}</p>
                 <Button type="button" variant="outline" size="sm" onClick={() => void query.refetch()}>
                     <RotateCwIcon />
@@ -182,12 +183,11 @@ function ShowcaseSkeleton() {
 function ShowcaseEmpty({ onStart }: { onStart: () => void }) {
     const t: TypedT<typeof messages> = useT("user");
     return (
-        <div className="relative flex flex-col items-center justify-center gap-3 overflow-hidden rounded-3xl border border-border border-dashed bg-card px-6 py-14 text-center sm:px-8 sm:py-16">
-            <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-px bg-[linear-gradient(to_right,transparent,color-mix(in_oklch,var(--primary)_70%,transparent),transparent)]" />
+        <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-border border-dashed bg-card px-6 py-14 text-center sm:px-8 sm:py-16">
             <span aria-hidden="true" className="flex size-11 items-center justify-center rounded-2xl border border-border bg-muted/50 text-primary">
                 <SparklesIcon className="size-5" />
             </span>
-            <span className="font-mono text-[11px] text-muted-foreground uppercase tracking-widest">{t("profile.showcase.empty.kicker")}</span>
+            <span className={KICKER_TEXT}>{t("profile.showcase.empty.kicker")}</span>
             <h3 className="font-semibold text-lg tracking-tight">{t("profile.showcase.empty.title")}</h3>
             <p className="max-w-md text-muted-foreground text-sm">{t("profile.showcase.empty.desc")}</p>
             <Button type="button" className="mt-2" onClick={onStart}>
@@ -303,7 +303,7 @@ export function FavouriteTiles({ entities }: { entities: readonly IShowcaseEntit
 
 /** One tile's frame. Dark in both themes, as the art behind it is drawn for. */
 const TILE_CLASS =
-    "group relative flex items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-[linear-gradient(to_bottom,color-mix(in_oklch,var(--tile-accent)_26%,oklch(0.24_0.005_285)),oklch(0.15_0.004_285))] text-lg text-white no-underline outline-none transition-[border-color,transform,box-shadow] duration-150 hover:-translate-y-0.5 hover:border-(--tile-accent) hover:shadow-[0_6px_18px_-6px_color-mix(in_oklch,var(--tile-accent)_45%,transparent)] focus-visible:ring-2 focus-visible:ring-ring";
+    "group relative flex items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-[linear-gradient(to_bottom,color-mix(in_oklch,var(--tile-accent)_26%,oklch(0.24_0.005_285)),oklch(0.15_0.004_285))] text-lg text-white no-underline outline-none transition-[border-color,transform] duration-150 hover:-translate-y-0.5 hover:border-(--tile-accent) focus-visible:ring-2 focus-visible:ring-ring";
 
 /** An operator's card, drawn as the operators page draws it: no tinted backdrop, the portrait on the plain card. */
 const OPERATOR_TILE_CLASS = "group relative block overflow-hidden rounded-md border border-muted/50 bg-card text-foreground no-underline outline-none transition-[border-radius,border-color] duration-150 hover:rounded-lg hover:border-muted focus-visible:ring-2 focus-visible:ring-ring";
@@ -397,9 +397,11 @@ function GridBlock({ slug, isOwner }: { slug: string; isOwner: boolean }) {
     const t: TypedT<typeof messages> = useT("user");
     const server = useGamedataServer();
     const { user } = useAuth();
-    const { data: grid, isPending } = useQuery(gridQueryOptions(slug, user?.id ?? null, server));
+    const { data: grid, isPending, isError, refetch } = useQuery(gridQueryOptions(slug, user?.id ?? null, server));
     const cells = useMemo(() => (grid ? gridToState(grid).cells : []), [grid]);
     if (isPending) return <Skeleton className="h-[44rem] w-full rounded-2xl lg:w-[30rem]" />;
+    // A failed fetch is not a deleted grid: `gridQueryOptions` returns null only for a 404.
+    if (isError) return <LoadFailed message={t("profile.showcase.blockFailed.grid")} onRetry={() => void refetch()} />;
     if (!grid) return isOwner ? <RemovedBlock type="grid" /> : null;
     const description = grid.description?.trim();
     // One surface: the card is the board's panel (the compact board draws no panel of its own), and at lg
@@ -421,8 +423,9 @@ function GridBlock({ slug, isOwner }: { slug: string; isOwner: boolean }) {
 function TierListBlock({ slug, isOwner }: { slug: string; isOwner: boolean }) {
     const t: TypedT<typeof messages> = useT("user");
     const server = useGamedataServer();
-    const { data: detail, isPending } = useQuery(tierListDetailQueryOptions(slug, server));
+    const { data: detail, isPending, isError, refetch } = useQuery(tierListDetailQueryOptions(slug, server));
     if (isPending) return <Skeleton className="h-72 rounded-2xl" />;
+    if (isError) return <LoadFailed message={t("profile.showcase.blockFailed.tierList")} onRetry={() => void refetch()} />;
     if (!detail) return isOwner ? <RemovedBlock type="tier_list" /> : null;
     return (
         <StatCard color={BLOCK_ACCENT.tier_list}>
@@ -475,8 +478,9 @@ function TierListPeek({ slug, children }: { slug: string; children: ReactNode })
 
 function PlanBlock({ id, uid, roster, isOwner, plansHidden }: { id: string; uid: string; roster: IRosterEntry[]; isOwner: boolean; plansHidden: boolean }) {
     const t: TypedT<typeof messages> = useT("user");
-    const { data: plans, isPending } = useQuery(publicPlansQueryOptions(uid));
+    const { data: plans, isPending, isError, refetch } = useQuery(publicPlansQueryOptions(uid));
     if (isPending) return <Skeleton className="h-40 rounded-2xl" />;
+    if (isError) return <LoadFailed message={t("profile.showcase.blockFailed.plan")} onRetry={() => void refetch()} />;
     const plan = plans?.find((p) => p.id === id);
     if (!plan) return isOwner ? <RemovedBlock type="plan" /> : null;
     return (

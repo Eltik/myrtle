@@ -4,7 +4,7 @@ export const namespace = "nav";
 
 export const messages = {
     "authDialog.title": {
-        text: "Login",
+        text: "Sign in",
         description: "Title of the sign-in dialog.",
     },
     "authDialog.description.yostar": {
@@ -12,11 +12,11 @@ export const messages = {
         description: "Dialog subtitle for the global servers. 'Yostar' is the publisher's name. It must stay true: the code is never stored, and what the Keep me synced box below stores is said under that box.",
     },
     "authDialog.description.bili": {
-        text: "Log in with your Bilibili account. Your password is used once to sign in and never stored.",
+        text: "Sign in with your Bilibili account. Your password is used once to sign in and never stored.",
         description: "Dialog subtitle for the Bilibili server. 'Bilibili' is the Chinese publisher's name. It must stay true: the password is never stored.",
     },
     "authDialog.description.cn": {
-        text: "Experimental: logs in with your Hypergryph (CN) account through the same passport flow the Skland app uses. Untested against a real account, so it may fail even with correct credentials. Your password or code is used once to sign in and never stored.",
+        text: "Experimental: signs in with your Hypergryph (CN) account through the same passport flow the Skland app uses. Untested against a real account, so it may fail even with correct credentials. Your password or code is used once to sign in and never stored.",
         description: "Dialog subtitle for the Chinese server. 'Hypergryph' is the developer and 'Skland' its companion app; both stay as-is.",
     },
     "authDialog.email": {
@@ -64,7 +64,7 @@ export const messages = {
         description: "Placeholder in the phone field for the Chinese server.",
     },
     "authDialog.biliSmsExperimental": {
-        text: "Experimental: this endpoint hasn't been confirmed against a real response, so it may fail even with a correct code.",
+        text: "Experimental: Bilibili SMS sign-in hasn't been tested with a real account, so it may fail even with a correct code.",
         description: "Warning above the Bilibili SMS form that the flow is untested.",
     },
     "authDialog.server": {
@@ -80,19 +80,19 @@ export const messages = {
         description: "Button that closes the sign-in dialog without signing in.",
     },
     "authDialog.sending": {
-        text: "Sending...",
-        description: "Submit-button label while the verification code is being sent. Three full stops, not an ellipsis character.",
+        text: "Sending…",
+        description: "Submit-button label while the verification code is being sent. Ends in an ellipsis character.",
     },
     "authDialog.sendCode": {
-        text: "Send Code",
+        text: "Send code",
         description: "Submit-button label that requests a verification code.",
     },
     "authDialog.loggingIn": {
-        text: "Logging in...",
-        description: "Submit-button label while the sign-in request is in flight. Three full stops, not an ellipsis character.",
+        text: "Signing in…",
+        description: "Submit-button label while the sign-in request is in flight. Ends in an ellipsis character.",
     },
     "authDialog.login": {
-        text: "Login",
+        text: "Sign in",
         description: "Submit-button label that completes sign-in.",
     },
     "authDialog.resendIn": {
@@ -112,31 +112,31 @@ export const messages = {
         description: "Link that clears the entered code so a different phone number can be used.",
     },
     "authDialog.toast.sentCode": {
-        text: "Sent code",
+        text: "Code sent",
         description: "Success toast title after a verification code goes out.",
     },
     "authDialog.toast.sentOtpEmail": {
-        text: "Sent OTP code to your email.",
+        text: "Check your email for the code.",
         description: "Success toast body after emailing a one-time password.",
     },
     "authDialog.toast.sentSms": {
-        text: "Sent SMS code to your phone.",
+        text: "Check your phone for the code.",
         description: "Success toast body after texting a verification code.",
     },
     "authDialog.toast.error": {
-        text: "Error",
-        description: "Generic error toast title used when sending a code fails.",
+        text: "Couldn't send the code",
+        description: "Error toast title used when sending a sign-in code fails.",
     },
     "authDialog.toast.otpError": {
-        text: "There was an error sending an OTP:\n{error}",
-        description: "Error toast body when the one-time password could not be emailed. {error} is the server's own message, on its own line.",
+        text: "{error}",
+        description: "Error toast body when the one-time code could not be emailed. {error} is the server's own message; keep it as the whole body.",
     },
     "authDialog.toast.codeError": {
-        text: "There was an error sending a code:\n{error}",
-        description: "Error toast body when an SMS code could not be sent. {error} is the server's own message, on its own line.",
+        text: "{error}",
+        description: "Error toast body when an SMS code could not be sent. {error} is the server's own message; keep it as the whole body.",
     },
     "authDialog.toast.loggedIn": {
-        text: "Logged in successfully.",
+        text: "Signed in",
         description: "Success toast title after signing in.",
     },
     "authDialog.saveCredentials": {
@@ -148,7 +148,7 @@ export const messages = {
         description: "Caption under that checkbox, saying exactly what it stores: an encrypted game access token, never the password or the code. 'Settings' is this site's settings page, where the stored token can be disconnected.",
     },
     "authDialog.toast.loginFailed": {
-        text: "Login failed",
+        text: "Couldn't sign in",
         description: "Error toast title when signing in was rejected.",
     },
     "authDialog.toast.loginRejected": {

@@ -199,12 +199,13 @@ function CalendarWeek({ weekStart, monthFrom, monthTo, todayDay, items, selected
                                     <button
                                         type="button"
                                         onClick={() => onSelect(isSel ? null : it.key)}
+                                        aria-pressed={isSel}
                                         className={cn(
                                             "z-1 my-0.5 flex min-w-0 cursor-pointer items-center gap-1.5 px-1.5 text-left font-medium font-sans text-[11.5px] leading-[18px] outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring",
                                             style.pill,
                                             continuesLeft ? "ml-0 rounded-l-none" : "ml-1 rounded-l-md",
                                             continuesRight ? "mr-0 rounded-r-none" : "mr-1 rounded-r-md",
-                                            isSel && "ring-2 ring-foreground/60",
+                                            isSel && "ring-2 ring-foreground",
                                         )}
                                         style={{ gridColumn: `${col} / span ${span}`, gridRow: lane + 2 }}
                                     />

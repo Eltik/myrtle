@@ -1,3 +1,4 @@
+import { useId } from "react";
 import { Badge } from "#/components/ui/badge";
 import { Card } from "#/components/ui/card";
 import { Dialog, DialogTrigger } from "#/components/ui/dialog";
@@ -29,14 +30,16 @@ export function DetailedCard({ item }: IDetailedCardProps) {
             .filter(Boolean) ?? [];
     const stageCount = item.meta?.stageDropList?.length ?? 0;
     const recipeCount = item.meta?.buildingProductList?.length ?? 0;
+    const hintId = useId();
 
     return (
         <Dialog>
             <DialogTrigger
                 render={
                     <Card
+                        aria-describedby={stageCount > 0 || recipeCount > 0 ? hintId : undefined}
                         aria-label={t("profile.items.openAria", { name: item.name })}
-                        className="group relative cursor-pointer overflow-hidden rounded-xl! text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-foreground/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        className="group relative cursor-pointer overflow-hidden rounded-2xl! text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-foreground/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         render={<button type="button" />}
                     />
                 }
@@ -72,6 +75,12 @@ export function DetailedCard({ item }: IDetailedCardProps) {
                     )}
                 </div>
 
+                {(stageCount > 0 || recipeCount > 0) && (
+                    // The card is the dialog's trigger button, so the drop and recipe hints cannot be focusable tooltips of their own.
+                    <span id={hintId} className="sr-only">
+                        {[stageCount > 0 && t("profile.items.card.dropStages", { count: stageCount }), recipeCount > 0 && t("profile.items.card.recipe")].filter(Boolean).join(". ")}
+                    </span>
+                )}
                 <h3 className="relative px-4 pb-3 font-semibold text-[15.5px] text-foreground leading-tight tracking-tight">{item.name}</h3>
 
                 <div className="relative flex items-center gap-3.5 px-4 pb-3">

@@ -1,5 +1,6 @@
 import type * as React from "react";
 import { Card, CardHeader, CardPanel, CardTitle } from "#/components/ui/card";
+import { Kicker } from "#/components/ui/kicker";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import type { IBirthdayFilters } from "../types";
@@ -35,9 +36,13 @@ export function FilterSidebar({ filters, onChange, nations, classNames, matched,
                 <div className="flex items-baseline justify-between border-border border-t px-6 py-3.5">
                     <div>
                         <div className="font-bold font-sans text-[22px] text-foreground tabular-nums leading-none tracking-tight">{matched}</div>
-                        <div className="mt-1 font-medium font-mono text-[11px] text-muted-foreground uppercase tracking-[0.08em]">{t("birthdays.sidebar.matched")}</div>
+                        <Kicker className="mt-1 mb-0 block">{t("birthdays.sidebar.matched")}</Kicker>
                     </div>
-                    <button type="button" className="cursor-pointer font-medium text-[12px] text-primary transition-colors hover:text-primary/80" onClick={onReset}>
+                    <button
+                        type="button"
+                        className="pointer-coarse:after:-translate-1/2 relative cursor-pointer rounded-sm font-medium text-[12px] text-primary underline-offset-2 pointer-coarse:after:absolute pointer-coarse:after:top-1/2 pointer-coarse:after:left-1/2 pointer-coarse:after:size-11 hover:underline"
+                        onClick={onReset}
+                    >
                         {t("birthdays.sidebar.reset")}
                     </button>
                 </div>

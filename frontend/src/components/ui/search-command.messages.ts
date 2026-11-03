@@ -25,7 +25,7 @@ export const messages = {
         description: "Group heading above matching tools (calculators, planners).",
     },
     "searchCommand.operatorsFailed": {
-        text: "Failed to load operators. Try reopening the palette.",
+        text: "Couldn't load operators. Try reopening the palette.",
         description: "Shown in place of the operator list when its request failed.",
     },
     "searchCommand.cnOnly": {

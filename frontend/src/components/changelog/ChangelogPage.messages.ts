@@ -52,7 +52,7 @@ export const messages = {
         description: "How many commits landed on one day, shown next to that day's heading.",
     },
     "page.truncated": {
-        text: "Older history is capped - see the full log on GitHub.",
+        text: "Older history is capped. See the full log on GitHub.",
         description: "Note under the commit feed when the fetch window hit its cap. 'GitHub' is a product name and stays as-is.",
     },
     "page.statsLink": {
@@ -80,8 +80,8 @@ export const messages = {
         description: "The 'Today' window named mid-sentence, as in 'No commits in today' and 'commits · today'. Lower-case in English.",
     },
     "range.week.label": {
-        text: "This Week",
-        description: "Time-window tab covering the last seven days. Title case in the source.",
+        text: "This week",
+        description: "Time-window tab covering the last seven days.",
     },
     "range.week.short": {
         text: "7d",
@@ -92,8 +92,8 @@ export const messages = {
         description: "The 'This Week' window named mid-sentence, as in 'No commits in this week'. Lower-case in English.",
     },
     "range.month.label": {
-        text: "This Month",
-        description: "Time-window tab covering the last thirty days. Title case in the source.",
+        text: "This month",
+        description: "Time-window tab covering the last thirty days.",
     },
     "range.month.short": {
         text: "30d",
@@ -104,8 +104,8 @@ export const messages = {
         description: "The 'This Month' window named mid-sentence, as in 'No commits in this month'. Lower-case in English.",
     },
     "range.quarter.label": {
-        text: "3 Months",
-        description: "Time-window tab covering the last ninety days. Title case in the source.",
+        text: "3 months",
+        description: "Time-window tab covering the last ninety days.",
     },
     "range.quarter.short": {
         text: "90d",

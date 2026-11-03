@@ -12,7 +12,7 @@ export const namespace = "tools";
  */
 export const messages = {
     "release.pulls.modelNote": {
-        text: "Rates come from the game's own banner data: a 2% base 6★ rate, +2% per roll after 50 without one, and the rate-up split declared for each banner type. Recurring income is modelled; one-off event Orundum is not, so add it under Extra per day.",
+        text: "Rates come from the game's own banner data: a 2% base 6★ rate, +2% per roll after 50 without one, and the rate-up split declared for each banner type. Recurring income is modeled; one-off event Orundum is not, so add it under Extra per day.",
         description: "Explains where the numbers come from and what the model leaves out. '6★' means a six-star operator; 'rate-up' is the boosted-chance operator on a banner.",
     },
 

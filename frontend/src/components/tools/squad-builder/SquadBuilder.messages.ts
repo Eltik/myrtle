@@ -71,6 +71,10 @@ export const messages = {
         text: "Couldn't delete the slot",
         description: "Toast title when deleting failed; the reason follows.",
     },
+    "squad.toast.slotsUnavailable": {
+        text: "Your saved squads haven't loaded, so nothing was saved",
+        description: "Toast when the player tries to save before their saved squad slots have loaded (or after they failed to load). Saving then could replace a squad they cannot see.",
+    },
     "squad.toast.stageFailed": {
         text: "Couldn't load that stage",
         description: "Toast title when the picked stage failed to load.",

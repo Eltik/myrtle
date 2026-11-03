@@ -56,7 +56,7 @@ export const messages = {
         description: "Shown in place of the list when the search and filter leave nothing.",
     },
     "music.failed": {
-        text: "Couldn't load the music list. Try again in a bit.",
+        text: "Couldn't load the music list. Try again in a moment.",
         description: "Shown in place of the list when the request for it fails.",
     },
     "music.unavailableRoute": {
@@ -232,19 +232,19 @@ export const messages = {
         description: "Line under the music page heading while the label catalogue loads.",
     },
     "music.counts.syncing": {
-        text: "Syncing the label catalogue… This takes a minute the first time the server starts.",
-        description: "Shown while the backend is still copying the Monster Siren Records catalogue for the first time; the page retries on its own.",
+        text: "Loading the label catalog… The first load can take a minute.",
+        description: "Shown while the Monster Siren Records catalog loads for the first time; the page retries on its own. Keep the single-character ellipsis.",
     },
     "music.counts.noSiren": {
-        text: "The server doesn't have the Monster Siren Records catalogue yet, so only the game's {tracks, plural, one {# track} other {# tracks}} are here.",
+        text: "The server doesn't have the Monster Siren Records catalog yet, so only the game's {tracks, plural, one {# track} other {# tracks}} are here.",
         description: "Line under the music page heading when the running backend has no label catalogue route.",
     },
     "music.siren.missing": {
-        text: "The server doesn't have the Monster Siren Records catalogue yet.",
+        text: "The server doesn't have the Monster Siren Records catalog yet.",
         description: "Shown in place of label albums and songs when the running backend has no label catalogue route.",
     },
     "music.siren.failed": {
-        text: "Couldn't load the Monster Siren Records catalogue. Try again in a bit.",
+        text: "Couldn't load the Monster Siren Records catalog. Try again in a moment.",
         description: "Shown when the request for the label catalogue fails.",
     },
     "music.tab.aria": {
@@ -324,7 +324,7 @@ export const messages = {
         description: "Library section: every album and EP.",
     },
     "music.rail.songs": {
-        text: "All Songs",
+        text: "All songs",
         description: "Library section: every label track.",
     },
     "music.rail.artists": {
@@ -332,15 +332,15 @@ export const messages = {
         description: "Library section: guest artists.",
     },
     "music.rail.liked": {
-        text: "Liked Songs",
+        text: "Liked songs",
         description: "Library section: tracks the listener liked.",
     },
     "music.rail.history": {
-        text: "Recently Played",
+        text: "Recently played",
         description: "Library section: tracks played lately.",
     },
     "music.rail.stats": {
-        text: "Your Stats",
+        text: "Your stats",
         description: "Library section: listening statistics.",
     },
     "music.rail.game": {
@@ -512,11 +512,11 @@ export const messages = {
         description: "Tooltip of a playlist row's drag handle.",
     },
     "music.list.missingLiked": {
-        text: "{count, plural, one {# liked track isn't} other {# liked tracks aren't}} in the catalogue right now.",
+        text: "{count, plural, one {# liked track isn't} other {# liked tracks aren't}} in the catalog right now.",
         description: "Note over Liked Songs when some liked tracks are unknown to the current catalogue.",
     },
     "music.list.missing": {
-        text: "{count, plural, one {# track isn't} other {# tracks aren't}} in the catalogue right now.",
+        text: "{count, plural, one {# track isn't} other {# tracks aren't}} in the catalog right now.",
         description: "Note over a playlist or Recently Played when some tracks are unknown to the current catalogue.",
     },
     "music.menu.playNext": {
@@ -592,7 +592,7 @@ export const messages = {
         description: "Button that saves a playlist's new name.",
     },
     "music.playlist.createFailed": {
-        text: "Couldn't make the playlist. Try again in a bit.",
+        text: "Couldn't make the playlist. Try again in a moment.",
         description: "Toast when creating a playlist fails or the limit is reached.",
     },
     "music.playlist.delete": {
@@ -692,7 +692,7 @@ export const messages = {
         description: "Shown in the album window while the catalogue loads.",
     },
     "music.album.failed": {
-        text: "This album could not be loaded. Close it and open it again to try again.",
+        text: "Couldn't load this album. Close it and open it again.",
         description: "Shown in the album window when the album is not in the catalogue.",
     },
     "music.stats.played": {
@@ -788,7 +788,7 @@ export const messages = {
         description: "Toast after a track was written to the file the listener picked. {name} is the track title.",
     },
     "music.download.failedTrack": {
-        text: "Couldn't download {name}. Try again in a bit.",
+        text: "Couldn't download {name}. Try again in a moment.",
         description: "Error toast when a track download failed. {name} is the track title.",
     },
     "music.menu.download": {
@@ -876,7 +876,7 @@ export const messages = {
         description: "Line under the track title in the top listeners dialog: the track's community totals.",
     },
     "music.charts.failed": {
-        text: "Couldn't load the charts. Try again in a bit.",
+        text: "Couldn't load the charts. Try again in a moment.",
         description: "Shown in place of a ranking when its request failed.",
     },
     "music.charts.unavailable": {

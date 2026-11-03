@@ -1,6 +1,6 @@
 import { ChevronRightIcon, PauseIcon, PlayIcon } from "lucide-react";
 import type React from "react";
-import { memo, useMemo } from "react";
+import { memo, useCallback, useMemo, useState } from "react";
 import { asset } from "#/components/operators/detail/impl/assets";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useMediaQuery } from "#/hooks/use-media-query";
@@ -115,6 +115,22 @@ function InkFill({ art, pct }: { art: string | null; pct: number }): React.React
 /** The stub's blank face, drawn only on a card with no art, whose palette is always the fallback. */
 const NO_ART_INK = { "--ticket-c1": FALLBACK_PALETTE.c1 } as React.CSSProperties;
 
+/**
+ * The ticket's logotype, or the fitted name when the image fails: a failed
+ * logotype carries alt text, so the browser drew its broken-image glyph at the
+ * card's corner. An error before hydration never reaches `onError`, so the ref
+ * also reads an image that already finished with no pixels.
+ */
+function Logotype({ url, name }: { url: string; name: string }): React.ReactElement {
+    const [failed, setFailed] = useState(false);
+    const check = useCallback((el: HTMLImageElement | null) => {
+        // A lazy image still waiting to load has no currentSrc yet; only a finished request counts.
+        if (el?.complete && el.currentSrc !== "" && el.naturalWidth === 0) setFailed(true);
+    }, []);
+    if (failed) return <FittedTitle name={name} />;
+    return <img ref={check} src={url} alt={name} loading="lazy" decoding="async" className={styles.logotype} onError={() => setFailed(true)} />;
+}
+
 /** Own component so the fit hooks (media query, canvas measure, state updates) run on the 6 logotype-less cards, not all 87. */
 function FittedTitle({ name }: { name: string }): React.ReactElement {
     const phone = useMediaQuery("max-sm");
@@ -156,7 +172,7 @@ export const GroupCard = memo(function GroupCard({ group, fraction, onOpen }: IG
                         <span aria-hidden="true" className={styles.scrim} />
                         <span className={styles.content}>
                             <span className={styles.badge}>{t(`browse.badge.${kindOf(group)}`)}</span>
-                            {title.kind === "logotype" ? <img src={asset(title.url)} alt={group.name} loading="lazy" decoding="async" className={styles.logotype} /> : <FittedTitle name={group.name} />}
+                            {title.kind === "logotype" ? <Logotype url={asset(title.url)} name={group.name} /> : <FittedTitle name={group.name} />}
                         </span>
                         <span aria-hidden="true" className={styles.progress}>
                             <InkFill art={art} pct={pct} />

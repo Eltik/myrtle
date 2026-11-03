@@ -16,7 +16,7 @@ export const messages = {
         description: "Badge in the corner of a section card saying how much of the overall grade this section can be worth.",
     },
     "score.sub.shareTooltip": {
-        text: "Worth {share}% of your overall grade - at {pct}%, this section contributes {contribution} of those {share} points",
+        text: "Worth {share}% of your overall grade. At {pct}%, this section contributes {contribution} of those {share} points",
         description: "Tooltip on the share badge. {share} is this section's maximum share, {pct} how complete the section is, {contribution} the points it currently adds.",
     },
     "score.sub.progress": {

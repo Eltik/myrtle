@@ -80,7 +80,7 @@ export const messages = {
         description: "Seat menu item: swap this operator into the first (leader) seat.",
     },
     "squad.grid.move": {
-        text: "Move to seat...",
+        text: "Move to seat…",
         description: "Seat menu item: pick another seat number to swap with. The keyboard alternative to dragging.",
     },
     "squad.grid.remove": {

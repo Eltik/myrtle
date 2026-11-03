@@ -25,7 +25,7 @@ interface IProfileHeaderEditorProps {
 }
 
 /** One row of either list: the same chrome as the tab editor's rows. */
-const ROW = "flex items-center gap-2 rounded-xl border border-border/50 bg-background/60 py-1.5 pr-1.5 pl-3";
+const ROW = "flex items-center gap-2 rounded-lg border border-border/50 bg-background/60 py-1.5 pr-1.5 pl-3";
 const BADGE = "rounded-full bg-muted px-2 py-0.5 font-medium font-mono text-[11px] text-muted-foreground leading-none";
 const HEADING = "font-medium font-mono text-[11px] text-muted-foreground uppercase tracking-widest";
 
@@ -97,7 +97,7 @@ export function ProfileHeaderEditor({ profile, onDraft, onClose }: IProfileHeade
                         <span className="font-mono text-[11px] text-muted-foreground tabular-nums">{t("profile.headerEditor.cards.count", { count: draft.strip.length, max: STRIP_MAX })}</span>
                     </div>
                     {draft.strip.length === 0 ? (
-                        <p className="rounded-xl border border-border/60 border-dashed px-3 py-3 text-muted-foreground text-sm">{t("profile.headerEditor.cards.empty")}</p>
+                        <p className="rounded-lg border border-border/60 border-dashed px-3 py-3 text-muted-foreground text-sm">{t("profile.headerEditor.cards.empty")}</p>
                     ) : (
                         <ol className="flex flex-col gap-1.5" aria-label={t("profile.headerEditor.cards.list")}>
                             {draft.strip.map((card, i) => {

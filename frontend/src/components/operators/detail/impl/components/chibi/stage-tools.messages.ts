@@ -48,7 +48,7 @@ export const messages = {
         description: "Backdrop swatch: solid white.",
     },
     "chibiStage.bg.custom": {
-        text: "Custom colour",
+        text: "Custom color",
         description: "Backdrop swatch that opens a colour picker.",
     },
 } satisfies MessageMap;

@@ -18,7 +18,7 @@ interface ILoadFailedProps {
 export function LoadFailed({ message, onRetry }: ILoadFailedProps): React.ReactElement {
     const t: TypedT<typeof messages> = useT("user");
     return (
-        <div role="alert" className="flex flex-col items-center gap-3 rounded-3xl border border-border bg-card px-8 py-12 text-center">
+        <div role="alert" className="flex flex-col items-center gap-3 rounded-2xl border border-border bg-card px-8 py-12 text-center">
             <p className="m-0 text-muted-foreground text-sm">{message}</p>
             <Button type="button" variant="outline" size="sm" onClick={onRetry}>
                 <RotateCwIcon aria-hidden="true" />

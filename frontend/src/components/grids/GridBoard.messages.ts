@@ -12,7 +12,7 @@ export const messages = {
         description: "Shown as a grid's title on the board while its title is empty.",
     },
     "cell.addItem": {
-        text: "Add Item",
+        text: "Add item",
         description: "Centred in an empty cell's grey square in the grid editor; clicking it opens the picker. Keep it short: cells can be under 50 pixels wide.",
     },
     "cell.pick": {

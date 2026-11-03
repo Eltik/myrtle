@@ -32,7 +32,7 @@ export const messages = {
         description: "Button that copies the grid's title, size and labels, without its picks, into a new grid the viewer owns, then opens it in the editor.",
     },
     "view.fork.errTitle": {
-        text: "Could not copy this grid",
+        text: "Couldn't copy this grid",
         description: "Toast title when 'Use this template' failed; the body is the error.",
     },
     "view.edit": {
@@ -64,7 +64,7 @@ export const messages = {
         description: "Toast after the grid's link was copied.",
     },
     "view.copy.errTitle": {
-        text: "Could not copy the link",
+        text: "Couldn't copy the link",
         description: "Toast when the clipboard refused the link.",
     },
     "view.missing.title": {

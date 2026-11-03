@@ -27,24 +27,37 @@ export interface ILeaderboardData {
     catalog: ICatalog;
     materials: IMaterials | undefined;
     catalogLoading: boolean;
+    /** The item catalog or the item names failed: the picker and the most-held card have no items. */
+    catalogError: boolean;
+    refetchCatalog: () => void;
     /** The ranked item, or `null` for a score ranking. */
     currentItem: ICatalogItem | null;
     rows: IRankedRow[];
     /** Rows matching the current filters, the number pagination is over. */
     total: number;
     isLoading: boolean;
+    /** The table page failed; read before `isLoading` and the empty state. */
+    isError: boolean;
+    refetch: () => void;
     /** Everyone ranked, ignoring the nickname filter, for the hero. */
     population: number | null;
     /** The top score (0..1) or top holding, for the hero and the row bars. */
     topValue: number | null;
     heroLoading: boolean;
+    heroError: boolean;
+    refetchHero: () => void;
     /** Score snapshot time; `null` for an item ranking, which has none. */
     updatedAt: string | null;
     movers: ILeaderboardMover[];
     moversLoading: boolean;
+    moversError: boolean;
+    refetchMovers: () => void;
     scoreStanding: IPlayerStanding | null;
     itemStanding: IItemStanding | null;
     itemStandingLoading: boolean;
+    /** The signed-in player's standing (score or item, whichever is ranked) failed. */
+    standingError: boolean;
+    refetchStanding: () => void;
 }
 
 /**
@@ -97,23 +110,37 @@ export function useLeaderboardData({ ranking, sort, server, q, interval, movemen
 
     const pageQuery = byItem ? itemPageQuery : scorePageQuery;
     const topQuery = byItem ? itemTopQuery : scoreTopQuery;
+    const standingQuery = byItem ? itemStandingQuery : scoreStandingQuery;
 
     return {
         catalog,
         materials: materialsQuery.data,
         catalogLoading: catalogQuery.isLoading || materialsQuery.isLoading,
+        catalogError: catalogQuery.isError || materialsQuery.isError,
+        refetchCatalog: () => {
+            if (catalogQuery.isError) void catalogQuery.refetch();
+            if (materialsQuery.isError) void materialsQuery.refetch();
+        },
         currentItem,
         rows,
         total: pageQuery.data?.total ?? 0,
         isLoading: pageQuery.isLoading || pageQuery.isFetching,
+        isError: pageQuery.isError,
+        refetch: () => void pageQuery.refetch(),
         population: topQuery.data?.total ?? null,
         topValue: byItem ? (itemTopQuery.data?.entries[0]?.quantity ?? null) : (scoreTopQuery.data?.entries[0]?.total_score ?? null),
         heroLoading: topQuery.isLoading,
+        heroError: topQuery.isError,
+        refetchHero: () => void topQuery.refetch(),
         updatedAt: byItem ? null : (scorePageQuery.data?.updated_at ?? null),
         movers: moversQuery.data ?? [],
         moversLoading: moversQuery.isLoading,
+        moversError: moversQuery.isError,
+        refetchMovers: () => void moversQuery.refetch(),
         scoreStanding: scoreStandingQuery.data ?? null,
         itemStanding: itemStandingQuery.data ?? null,
         itemStandingLoading: itemStandingQuery.isLoading,
+        standingError: standingQuery.isError,
+        refetchStanding: () => void standingQuery.refetch(),
     };
 }

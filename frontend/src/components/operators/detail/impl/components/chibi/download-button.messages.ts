@@ -40,7 +40,7 @@ export const messages = {
         description: "Accessible name and heading of the popover with the recording options.",
     },
     "chibiExport.frameRate": {
-        text: "Frame Rate",
+        text: "Frame rate",
         description: "Label over the frames-per-second choices.",
     },
     "chibiExport.fps": {

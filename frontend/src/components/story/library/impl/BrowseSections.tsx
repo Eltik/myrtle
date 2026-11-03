@@ -127,13 +127,15 @@ export function SectionGlyph({ chip, place, className, lit, alone = false }: { c
         const size = chip.iconWide ? (place === "chip" ? "h-5 w-auto max-w-19.5" : "h-6.5 w-auto max-w-22 sm:max-w-26") : chip.iconLogo ? (place === "chip" ? (alone ? "size-6" : "size-5.5") : "size-7") : place === "chip" ? "size-5" : "size-6";
         const src = asset(chip.iconUrl);
         const image = (ink: string, extra?: string) => <img src={src} alt="" loading="lazy" decoding="async" className={cn("shrink-0 object-contain", size, ink, extra)} />;
-        if (lit === undefined) return image(GLYPH_INK, className);
+        const glyphInk = chip.iconWide ? BANNER_INK : GLYPH_INK;
+        const litInk = chip.iconWide ? BANNER_LIT_INK : WHITE_INK;
+        if (lit === undefined) return image(glyphInk, className);
         // The fade is on a wrapper per layer, because `GLYPH_INK` carries its own opacity.
         const layer = "col-start-1 row-start-1 flex items-center justify-center transition-opacity duration-200";
         return (
             <span className={cn("grid shrink-0", className)}>
-                <span className={cn(layer, lit ? "opacity-0" : "opacity-100")}>{image(GLYPH_INK)}</span>
-                <span className={cn(layer, lit ? "opacity-100" : "opacity-0")}>{image(WHITE_INK)}</span>
+                <span className={cn(layer, lit ? "opacity-0" : "opacity-100")}>{image(glyphInk)}</span>
+                <span className={cn(layer, lit ? "opacity-100" : "opacity-0")}>{image(litInk)}</span>
             </span>
         );
     }
@@ -165,11 +167,12 @@ export const SectionHead = memo(function SectionHead({ chip, count, action }: { 
                 {/* A HEADING WRAPS ON A PHONE RATHER THAN LOSING ITS RANGE. At 320 the
                     wide arc banner leaves the text column 173 px against a 245 px
                     "Main story · Chapters 0 to 3", so the ellipsis ate the numbers a
-                    reader navigates by. `truncate` is kept from 640 up, where the
-                    column is 245 px and the string has never been cut. */}
+                    reader navigates by. Above 640 the browser QA still caught
+                    "Main story · Chapt…" beside a wide banner, so every width wraps
+                    to two lines and only a third is cut. */}
                 <div className="flex min-w-0 flex-col gap-0.5">
-                    <h2 className="m-0 font-bold font-heading text-[15px] text-foreground uppercase tracking-widest sm:truncate">{heading}</h2>
-                    <span className="font-sans text-[12px] text-muted-foreground tabular-nums sm:truncate">{under}</span>
+                    <h2 className="m-0 line-clamp-2 font-bold font-heading text-[15px] text-foreground uppercase tracking-widest">{heading}</h2>
+                    <span className="line-clamp-2 font-sans text-[12px] text-muted-foreground tabular-nums">{under}</span>
                 </div>
             </div>
             {action}
@@ -179,6 +182,15 @@ export const SectionHead = memo(function SectionHead({ chip, count, action }: { 
 
 /** The glyph ink on a lit chip's primary fill. */
 const WHITE_INK = "brightness-0 invert";
+/**
+ * The four act banners are NOT monochrome: white letters on a dark halo (act_0
+ * has 535 near-white and 3,543 dark visible pixels). Flattened to one ink, the halo and
+ * the letters merge, which left "Act Initium" a blur on the light page and dim
+ * on the lit pill. The light page inverts them (black letters, the halo goes
+ * white into the page); the dark page and the lit pill draw them as authored.
+ */
+const BANNER_INK = "invert dark:invert-0";
+const BANNER_LIT_INK = "";
 
 /** How much of the scroller is faded at each edge once there is something to scroll to. */
 const FADE = 28;

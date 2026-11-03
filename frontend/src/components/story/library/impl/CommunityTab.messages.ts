@@ -24,7 +24,7 @@ export const messages = {
         description: "Heading shown in place of the Community tab when the backend serves no reading aggregate.",
     },
     "community.empty.body": {
-        text: "This server has not computed what the community has read. It appears here once it does.",
+        text: "Community reading counts haven't been calculated yet. Check back later.",
         description: "Explanation under the Community tab's empty-state heading.",
     },
     "community.section.top": {

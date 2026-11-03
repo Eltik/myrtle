@@ -155,6 +155,7 @@ export function CompactCard({ entry, lastRef, showObtained = false }: ICompactCa
                                             style={{ marginLeft: `${idx * 4}px` }}
                                             title={hasM ? t("profile.roster.compact.skillMastery", { n: idx + 1, mastery }) : t("profile.roster.compact.skillLevel", { n: idx + 1, level: entry.skill_level })}
                                         >
+                                            <span className="sr-only">{hasM ? t("profile.roster.compact.skillMastery", { n: idx + 1, mastery }) : t("profile.roster.compact.skillLevel", { n: idx + 1, level: entry.skill_level })}</span>
                                             {hasM ? (
                                                 /* NOT `icon-theme-aware`: that filter is
                                                    `invert(1) hue-rotate(180deg)`, right for the

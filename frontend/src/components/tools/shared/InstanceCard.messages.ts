@@ -10,6 +10,10 @@ import { defineMessages, type MessageMap } from "#/lib/i18n/messages";
 export const namespace = "tools";
 
 export const messages = {
+    "calc.instance.detailFailed": {
+        text: "Couldn't load this operator's skills, modules and potentials.",
+        description: "Shown in a calculator operator card when the operator's detail failed to load; the skill and module buttons then show S1/M1 placeholders. A retry button follows.",
+    },
     "calc.instance.buildSummary": {
         text: "{skill} · {rank} · {module}",
         description: "One-line summary in the card header: skill name, skill rank (Lv 7 / M3), module. All three come from elsewhere; only the middle dots are ours.",

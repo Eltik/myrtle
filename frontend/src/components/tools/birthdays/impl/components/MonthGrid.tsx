@@ -1,4 +1,5 @@
 import * as React from "react";
+import { Kicker } from "#/components/ui/kicker";
 import { useLocale, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
@@ -29,9 +30,9 @@ export function MonthGrid({ anchor, byDay, onSelect, today }: IMonthGridProps): 
         <>
             <div className="grid grid-cols-7 px-2 pt-2">
                 {weekdays.map((w) => (
-                    <span key={w} className="px-1.5 py-2 text-center font-medium font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.08em]">
+                    <Kicker key={w} className="mb-0 block px-1.5 py-2 text-center">
                         {w}
-                    </span>
+                    </Kicker>
                 ))}
             </div>
 
@@ -48,13 +49,12 @@ export function MonthGrid({ anchor, byDay, onSelect, today }: IMonthGridProps): 
                             type="button"
                             onClick={() => onSelect({ year: c.year, month: c.month, day: c.day })}
                             className={cn(
-                                "flex min-h-13 cursor-pointer flex-col gap-1 rounded-[10px] border p-1.5 text-left transition-colors sm:aspect-[1.05/1] sm:min-h-24 sm:gap-1.5 sm:p-2",
+                                "flex min-h-13 cursor-pointer flex-col gap-1 rounded-lg border p-1.5 text-left transition-colors sm:aspect-[1.05/1] sm:min-h-24 sm:gap-1.5 sm:p-2",
                                 cellIsToday ? "border-primary/40 bg-primary/8" : ops.length > 0 ? "border-border bg-muted/50 hover:bg-accent" : "border-transparent hover:border-border hover:bg-accent",
-                                c.outside && "opacity-40",
                             )}
                         >
                             <div className="flex items-center justify-between">
-                                <span className={cn("font-sans font-semibold text-[13px] leading-none sm:text-[14px]", c.outside ? "text-muted-foreground" : "text-foreground")}>{c.day}</span>
+                                <span className={cn("font-sans font-semibold text-[13px] leading-none sm:text-[14px]", c.outside ? "text-subtle-foreground" : "text-foreground")}>{c.day}</span>
                                 {ops.length > 0 && <span className="hidden size-1.25 rounded-full bg-primary sm:block" />}
                             </div>
                             {ops.length > 0 && <span className="mt-auto font-medium font-mono text-[11px] text-muted-foreground tabular-nums sm:hidden">{ops.length}</span>}

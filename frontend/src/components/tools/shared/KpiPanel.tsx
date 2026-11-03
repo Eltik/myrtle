@@ -1,5 +1,6 @@
 import { AlertTriangle, Crown } from "lucide-react";
 import type * as React from "react";
+import { Kicker } from "#/components/ui/kicker";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { Spinner } from "#/components/ui/spinner";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
@@ -139,7 +140,7 @@ function Stat({ label, value, highlight, loading, hint, locale, moreInfoLabel }:
     const display = loading && value === undefined ? <Spinner className="size-3 text-muted-foreground" /> : formatLargeNumber(value, locale);
     return (
         <div className="min-w-14">
-            <div className="font-medium text-[10px] text-muted-foreground uppercase tracking-wide">{label}</div>
+            <Kicker className="mb-0 block">{label}</Kicker>
             {hint && !loading ? (
                 <Tooltip>
                     <TooltipTrigger

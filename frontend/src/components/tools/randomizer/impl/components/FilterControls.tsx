@@ -1,5 +1,6 @@
 import { Lock } from "lucide-react";
 import type React from "react";
+import { Kicker } from "#/components/ui/kicker";
 import { Switch } from "#/components/ui/switch";
 import { cn } from "#/lib/utils";
 
@@ -7,7 +8,7 @@ import { cn } from "#/lib/utils";
 export function FieldGroup({ label, children }: { label: string; children: React.ReactNode }): React.ReactElement {
     return (
         <div className="flex flex-col gap-2.5">
-            <p className="font-mono text-[10.5px] text-muted-foreground/90 uppercase tracking-[0.18em]">{label}</p>
+            <Kicker className="mb-0">{label}</Kicker>
             {children}
         </div>
     );

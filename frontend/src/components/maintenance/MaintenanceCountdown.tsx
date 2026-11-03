@@ -95,7 +95,7 @@ export function MaintenanceBanner({ className }: { className?: string }) {
             break;
     }
     return (
-        <div className={cn("flex flex-wrap items-center gap-x-3 gap-y-1 rounded-[14px] border border-border bg-card px-4 py-3", className)}>
+        <div className={cn("flex flex-wrap items-center gap-x-3 gap-y-1 rounded-2xl border border-border bg-card px-4 py-3", className)}>
             <WrenchIcon className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
             <StatusDot down={isGameDown(m.stage)} />
             <span className="font-semibold text-[14px] text-foreground tabular-nums">{shortLabel(m, t)}</span>

@@ -12,7 +12,7 @@ export const messages = {
         description: "Caption under the promotion badge in the operator dialog. 'Elite' is the game's promotion tier. Rendered uppercase by CSS.",
     },
     "profile.roster.dialog.combatStats": {
-        text: "Combat Stats",
+        text: "Combat stats",
         description: "Section heading over the operator's battle attributes. Rendered uppercase by CSS.",
     },
     "profile.roster.dialog.skillLevelBadge": {

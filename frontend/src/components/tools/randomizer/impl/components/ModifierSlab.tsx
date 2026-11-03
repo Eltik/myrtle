@@ -1,6 +1,7 @@
 import { Flag, RotateCcw, Sparkles, Target } from "lucide-react";
 import type React from "react";
 import { Button } from "#/components/ui/button";
+import { Kicker } from "#/components/ui/kicker";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import type { messages as challengeMessages } from "../challenges.messages";
@@ -35,10 +36,10 @@ export function ModifierSlab({ challenge, onReroll }: IModifierSlabProps): React
     return (
         <SlabFrame index="03" kicker={t("randomizer.modifier.kicker")} accent="palm">
             <div className="flex items-start justify-between gap-3">
-                <div className="flex min-w-0 flex-1 items-center gap-2 text-[11px] text-muted-foreground uppercase tracking-[0.18em]">
+                <Kicker className="mb-0 flex min-w-0 flex-1 items-center gap-2">
                     <Icon aria-hidden="true" className="h-3.5 w-3.5" />
                     <span>{t(KIND_LABEL_KEY[challenge.kind])}</span>
-                </div>
+                </Kicker>
                 <Button onClick={onReroll} size="xs" variant="outline" aria-label={t("randomizer.modifier.rerollAria")}>
                     <RotateCcw aria-hidden="true" />
                     {t("randomizer.modifier.reroll")}

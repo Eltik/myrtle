@@ -24,6 +24,8 @@ export interface ISquadToolbarProps {
     readOnly: boolean;
     signedIn: boolean;
     saving: boolean;
+    /** The saved slots have not loaded, so a save could land on a squad the player has not seen. */
+    saveBlocked: boolean;
     onName: (name: string) => void;
     onToggleCompact: () => void;
     onRevert: () => void;
@@ -35,7 +37,7 @@ export interface ISquadToolbarProps {
 
 export function SquadToolbar(props: ISquadToolbarProps): React.ReactElement {
     const t: ToolbarT = useT("tools");
-    const { name, filled, hasSupport, slot, slotSaved, dirty, compact, readOnly, signedIn, saving } = props;
+    const { name, filled, hasSupport, slot, slotSaved, dirty, compact, readOnly, signedIn, saving, saveBlocked } = props;
     const [confirmOpen, setConfirmOpen] = React.useState(false);
     // Kept after close so the dialog does not swap its text while it animates out.
     const [confirm, setConfirmKind] = React.useState<"clear" | "delete">("clear");
@@ -46,7 +48,7 @@ export function SquadToolbar(props: ISquadToolbarProps): React.ReactElement {
     const empty = filled === 0 && !hasSupport;
 
     return (
-        <div className="flex flex-col gap-3 rounded-xl border border-border bg-card p-3 md:flex-row md:items-center">
+        <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-3 md:flex-row md:items-center">
             <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-1.5">
                 <Input value={name} maxLength={NAME_MAX_CHARS} disabled={readOnly} onChange={(e) => props.onName(e.target.value)} placeholder={t("squad.toolbar.name")} aria-label={t("squad.toolbar.name")} className="w-full max-w-72 font-semibold" />
                 <span className="font-mono text-[12px] text-muted-foreground tabular-nums">
@@ -77,7 +79,7 @@ export function SquadToolbar(props: ISquadToolbarProps): React.ReactElement {
                     {t("squad.toolbar.share")}
                 </Button>
                 {!readOnly && (
-                    <Button size="sm" disabled={signedIn && !dirty} loading={saving} onClick={props.onSave}>
+                    <Button size="sm" disabled={signedIn && (!dirty || saveBlocked)} loading={saving} onClick={props.onSave}>
                         <Save />
                         {signedIn ? t("squad.toolbar.save") : t("squad.toolbar.signInToSave")}
                     </Button>

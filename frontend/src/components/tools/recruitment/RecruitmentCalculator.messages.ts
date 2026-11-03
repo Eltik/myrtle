@@ -12,8 +12,8 @@ export const messages = {
         description: "Page heading and last breadcrumb. 'Recruitment' is the in-game screen's name.",
     },
     "recruit.intro": {
-        text: 'Pick the tags shown in your recruitment screen - up to {max}. Combinations are ranked by guaranteed minimum rarity - the best worst case first. Six-star operators only appear in combinations that include "Top Operator".',
-        description: "Blurb under the page heading. 'Top Operator' is a recruitment tag name from the game data, so use whatever the game calls that tag in this region, in the game's own quotes. The dashes are plain hyphens.",
+        text: 'Pick the tags shown in your recruitment screen, up to {max}. Combinations are ranked by guaranteed minimum rarity, best worst case first. Six-star operators only appear in combinations that include "Top Operator".',
+        description: "Blurb under the page heading. 'Top Operator' is a recruitment tag name from the game data, so use whatever the game calls that tag in this region, in the game's own quotes.",
     },
     "recruit.tags": {
         text: "Tags",
@@ -30,6 +30,10 @@ export const messages = {
     "recruit.loadFailed": {
         text: "Couldn't load the recruitment tags.",
         description: "Shown above the calculator, beside a Retry button, when the tag and operator data failed to load. Without it the tag list read as empty.",
+    },
+    "recruit.rosterLoadFailed": {
+        text: "Couldn't load your roster, so ownership and potentials aren't shown.",
+        description: "Shown above the calculator, beside a Retry button, when the signed-in user's roster failed to load. The roster toggles are hidden until it loads, rather than showing every operator as unowned.",
     },
 } satisfies MessageMap;
 

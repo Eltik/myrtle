@@ -31,16 +31,16 @@ export const messages = {
         description: "Dialog subtitle when creating a plan.",
     },
     "planner.dialog.selectOperator": {
-        text: "Select Operator",
+        text: "Pick an operator",
         description: "Label over the operator picker.",
     },
     "planner.dialog.loadingOperators": {
-        text: "Loading operators...",
-        description: "Placeholder in the operator picker while the list loads. Three full stops, not an ellipsis character.",
+        text: "Loading operators…",
+        description: "Placeholder in the operator picker while the list loads. Ends in an ellipsis character.",
     },
     "planner.dialog.searchOperators": {
-        text: "Search operators by name, class, or tag...",
-        description: "Placeholder in the operator picker. 'Class' and 'tag' are the game's own operator attributes. Three full stops, not an ellipsis character.",
+        text: "Search operators by name, class, or tag…",
+        description: "Placeholder in the operator picker. 'Class' and 'tag' are the game's own operator attributes. Ends in an ellipsis character.",
     },
     "planner.dialog.noOperators": {
         text: "No operators found.",
@@ -55,11 +55,11 @@ export const messages = {
         description: "Subtitle of the chosen operator: star rating then archetype, e.g. '6★ · Centurion'. {archetype} is game vocabulary and comes from the game data.",
     },
     "planner.dialog.loadingDetails": {
-        text: "Loading operator details...",
-        description: "Shown while the chosen operator's data loads. Three full stops, not an ellipsis character.",
+        text: "Loading operator details…",
+        description: "Shown while the chosen operator's data loads. Ends in an ellipsis character.",
     },
     "planner.dialog.radian": {
-        text: "Raidian's upgrades are dependent on Integrated Strategies 6 - Sui's Garden of Grotesqueries progression and cannot be planned.",
+        text: "Raidian's upgrades depend on Integrated Strategies 6: Sui's Garden of Grotesqueries progression and cannot be planned.",
         description: "Notice for the one operator whose progression this tool cannot model. The operator name and the game mode 'Integrated Strategies 6 - Sui's Garden of Grotesqueries' both come from the game and keep the game's own wording.",
     },
     "planner.dialog.promotion": {
@@ -131,12 +131,12 @@ export const messages = {
         description: "Label over the group picker.",
     },
     "planner.dialog.groups.placeholder": {
-        text: "Select plan groups...",
-        description: "Placeholder in the group picker. Three full stops, not an ellipsis character.",
+        text: "Select plan groups…",
+        description: "Placeholder in the group picker. Ends in an ellipsis character.",
     },
     "planner.dialog.groups.newName": {
-        text: "New group name...",
-        description: "Placeholder in the box for naming a new group. Three full stops, not an ellipsis character.",
+        text: "New group name…",
+        description: "Placeholder in the box for naming a new group. Ends in an ellipsis character.",
     },
     "planner.dialog.groups.create": {
         text: "Create",
@@ -159,7 +159,7 @@ export const messages = {
         description: "Prompt in the browser dialog that renames a group. Keep the colon.",
     },
     "planner.dialog.groups.deleteConfirm": {
-        text: 'Are you sure you want to delete group "{name}"?',
+        text: 'Delete the group "{name}"?',
         description: "Question in the browser dialog confirming a group deletion; {name} is the group's own name, in quotes.",
     },
     "planner.dialog.displayOnProfile": {
@@ -171,7 +171,7 @@ export const messages = {
         description: "Explanation under the 'Display on profile' switch.",
     },
     "planner.dialog.pickOperator": {
-        text: "Please select an operator to customize targets.",
+        text: "Pick an operator to set targets.",
         description: "Shown in place of the plan form before an operator has been chosen. Rendered in italics.",
     },
     "planner.dialog.cancel": {
@@ -179,8 +179,8 @@ export const messages = {
         description: "Footer button that closes the dialog without saving.",
     },
     "planner.dialog.saving": {
-        text: "Saving...",
-        description: "Footer button label while the plan is being saved. Three full stops, not an ellipsis character.",
+        text: "Saving…",
+        description: "Footer button label while the plan is being saved. Ends in an ellipsis character.",
     },
     "planner.dialog.save": {
         text: "Save changes",

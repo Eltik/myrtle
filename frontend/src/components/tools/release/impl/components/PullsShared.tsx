@@ -260,7 +260,7 @@ export function BannerModelNote({ model, className }: { model: IBannerModel; cla
             {lines.map((line) => (
                 <li key={line}>{line}</li>
             ))}
-            {model.inferred && <li className="text-amber-500/90">{t("release.pulls.banners.inferred")}</li>}
+            {model.inferred && <li className="text-warning-foreground">{t("release.pulls.banners.inferred")}</li>}
         </ul>
     );
 }

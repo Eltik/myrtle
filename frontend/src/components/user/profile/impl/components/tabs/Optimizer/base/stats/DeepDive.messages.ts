@@ -8,7 +8,7 @@ export const namespace = "user";
 
 export const messages = {
     "profile.base.deep.title": {
-        text: "Deep Dive",
+        text: "Deep dive",
         description: "Label on the collapsible panel of check-in economics and simulation detail.",
     },
     "profile.base.deep.noChange": {
@@ -48,7 +48,7 @@ export const messages = {
         description: "Deadline sentence over the check-in figures. {time} is the highlighted clock time and may move wherever the sentence needs it.",
     },
     "profile.base.deep.stalls": {
-        text: "{room} stalls {duration} after a claim - buffers below.",
+        text: "{room} stalls {duration} after a claim. Buffers below.",
         description: "Sentence under the deadline: which room fills up first and how long that takes. A 'claim' is collecting what the base has produced.",
     },
     "profile.base.deep.firstRoom": {
@@ -60,7 +60,7 @@ export const messages = {
         description: "The word carrying the tooltip that explains how the estimates are modeled. Lowercase, mid-sentence.",
     },
     "profile.base.deep.conservative.tooltip": {
-        text: "Order sizes are modeled conservatively (small orders, fast turnover), so real deadlines can be later than shown - never earlier. Trading posts are assumed gold-supplied.",
+        text: "Order sizes are modeled conservatively (small orders, fast turnover), so real deadlines can be later than shown, never earlier. Trading posts are assumed gold-supplied.",
         description: "Tooltip on the word 'conservative'. 'Trading post' is the game's own room name.",
     },
     "profile.base.deep.drones": {
@@ -68,7 +68,7 @@ export const messages = {
         description: "Opens the drone line; the count follows. 'Drones' are the game's base helpers.",
     },
     "profile.base.deep.dronesFilling": {
-        text: "Drones {meter} - full in {when}, spend before then",
+        text: "Drones {meter}: full in {when}, spend before then",
         description: "The drone line while the meter is still filling. {meter} is the highlighted 'current/max' pair and {when} the highlighted time until it is full; both may move wherever the sentence needs them. 'Drones' are the game's base helpers.",
     },
     "profile.base.deep.dronesFull": {
@@ -168,7 +168,7 @@ export const messages = {
         description: "The extra morale recovery per hour a fully decorated dormitory would give. 'h' abbreviates hour.",
     },
     "profile.base.deep.furniture.line": {
-        text: "Dormitory Lv{level} ambience {meter} - {rate} recovery sitting in the furniture shop.",
+        text: "Dormitory Lv{level} ambience {meter}: {rate} recovery sitting in the furniture shop.",
         description:
             "One dormitory's furniture line. {meter} is the highlighted 'comfort/limit' pair and {rate} the highlighted per-hour gain labelled by profile.base.deep.furniture.rate; both may move wherever the sentence needs them. 'Ambience' is the game's own name for a dormitory's comfort rating, 'Lv' its level abbreviation, and the 'furniture shop' is the in-game store.",
     },
@@ -241,7 +241,7 @@ export const messages = {
         description: "Accessible name of the button that discards the stored snapshot.",
     },
     "profile.base.deep.snapshotHint": {
-        text: "Snapshot the current numbers, then edit the board or run the optimizer - the difference tracks live.",
+        text: "Snapshot the current numbers, then edit the board or run the optimizer. The difference tracks live.",
         description: "Shown in place of the comparison table before a snapshot is taken.",
     },
     "profile.base.deep.diff.efficiency": {
@@ -273,7 +273,7 @@ export const messages = {
         description: "Section heading shown while the rotation simulation is still running.",
     },
     "profile.base.deep.simulating": {
-        text: "Simulating the rotation - this is the slow part…",
+        text: "Simulating the rotation. This is the slow part…",
         description: "Placeholder under that heading. Ends with an ellipsis character.",
     },
     "profile.base.deep.simulated.title": {
@@ -301,7 +301,7 @@ export const messages = {
         description: "Highlighted opener under that heading: how many operators hit zero morale. A handful at most.",
     },
     "profile.base.deep.unrotated.line": {
-        text: "{count} if you never swap - first at {hours}h ({name}). Rotate or lose the hours.",
+        text: "{count} if you never swap, first at {hours}h ({name}). Rotate or lose the hours.",
         description: "Sentence under that heading when at least one operator runs out of morale. {count} is the highlighted opener labelled by profile.base.deep.unrotated.dry and may move wherever the sentence needs it. {name} is an operator's name; 'h' abbreviates hour.",
     },
     "profile.base.deep.events.title": {
@@ -309,7 +309,7 @@ export const messages = {
         description: "Section heading over the moments operators run out of morale. Keep the middle dot.",
     },
     "profile.base.deep.events.none": {
-        text: "Nobody runs dry - every operator survives the recommended rotation.",
+        text: "Nobody runs dry: every operator survives the recommended rotation.",
         description: "Shown under that heading when the rotation holds up.",
     },
     "profile.base.deep.events.when": {

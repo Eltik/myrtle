@@ -2,8 +2,10 @@ import { SearchIcon } from "lucide-react";
 import type * as React from "react";
 import { FilterDropdown } from "#/components/operators/list/impl/components/FilterDropdown";
 import { ClassIcon, TeamIcon } from "#/components/operators/list/impl/components/Icons";
+import { FilterChip } from "#/components/ui/filter-chip";
 import { Input } from "#/components/ui/input";
 import { InputGroup, InputGroupAddon } from "#/components/ui/input-group";
+import { Kicker } from "#/components/ui/kicker";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -63,7 +65,7 @@ export function FilterControls({ filters, onChange, nations, classNames }: IFilt
                                             aria-pressed={on}
                                             onClick={() => toggleProfession(p)}
                                             className={cn(
-                                                "inline-flex aspect-square cursor-pointer items-center justify-center rounded-md border transition-colors",
+                                                "inline-flex aspect-square pointer-coarse:min-h-11 cursor-pointer items-center justify-center rounded-md border transition-colors",
                                                 on
                                                     ? "border-primary bg-[color-mix(in_oklch,var(--primary)_16%,transparent)] text-primary"
                                                     : "border-border bg-[color-mix(in_oklch,var(--secondary)_50%,transparent)] text-muted-foreground hover:border-[color-mix(in_oklch,var(--primary)_45%,var(--border))] hover:text-foreground",
@@ -81,26 +83,10 @@ export function FilterControls({ filters, onChange, nations, classNames }: IFilt
             </Section>
 
             <Section label={t("birthdays.filters.rarity")} t={t} onClear={filters.rarities.size > 0 ? () => onChange({ ...filters, rarities: new Set() }) : undefined}>
-                <div className="grid grid-cols-6 gap-1.5">
-                    {RARITIES.map((r) => {
-                        const on = filters.rarities.has(r);
-                        return (
-                            <button
-                                key={r}
-                                type="button"
-                                data-rarity={r}
-                                aria-pressed={on}
-                                onClick={() => toggleRarity(r)}
-                                style={{ "--rc": rarityVar(r) } as React.CSSProperties}
-                                className={cn(
-                                    "inline-flex h-7 cursor-pointer items-center justify-center rounded-md border font-sans font-semibold text-[12.5px] transition-colors",
-                                    on ? "border-[var(--rc)] bg-[color-mix(in_oklch,var(--rc)_18%,transparent)] text-[var(--rc)]" : "border-border bg-[color-mix(in_oklch,var(--secondary)_50%,transparent)] text-muted-foreground hover:border-[color-mix(in_oklch,var(--rc)_55%,var(--border))] hover:text-foreground",
-                                )}
-                            >
-                                {t("birthdays.filters.rarityChip", { rarity: r })}
-                            </button>
-                        );
-                    })}
+                <div className="flex flex-wrap gap-1.5">
+                    {RARITIES.map((r) => (
+                        <FilterChip key={r} active={filters.rarities.has(r)} label={t("birthdays.filters.rarityChip", { rarity: r })} onSelect={() => toggleRarity(r)} tone={rarityVar(r)} />
+                    ))}
                 </div>
             </Section>
 
@@ -128,10 +114,14 @@ interface ISectionProps {
 function Section({ label, onClear, children, t }: ISectionProps): React.ReactElement {
     return (
         <div className="border-border border-t py-3.5 first:border-t-0 first:pt-0">
-            <div className="mb-2.5 flex items-center justify-between font-medium font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.08em]">
-                <span>{label}</span>
+            <div className="mb-2.5 flex items-center justify-between">
+                <Kicker className="mb-0">{label}</Kicker>
                 {onClear && (
-                    <button type="button" className="-my-1 cursor-pointer px-1 py-1 font-sans text-[11px] text-primary normal-case tracking-normal transition-colors hover:text-primary/80" onClick={onClear}>
+                    <button
+                        type="button"
+                        className="pointer-coarse:after:-translate-1/2 relative -my-1 cursor-pointer rounded-sm px-1 py-1 text-[11px] text-primary underline-offset-2 pointer-coarse:after:absolute pointer-coarse:after:top-1/2 pointer-coarse:after:left-1/2 pointer-coarse:after:size-11 hover:underline"
+                        onClick={onClear}
+                    >
                         {t("birthdays.filters.clear")}
                     </button>
                 )}

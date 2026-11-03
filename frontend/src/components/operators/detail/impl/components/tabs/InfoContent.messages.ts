@@ -4,7 +4,7 @@ export const namespace = "operators";
 
 export const messages = {
     "info.title": {
-        text: "Operator Information",
+        text: "Operator information",
         description: "Heading of the Information tab. The blurb under it is the operator's trait text from the game data.",
     },
     "info.profile": {
@@ -36,7 +36,7 @@ export const messages = {
         description: "Stand-in for a profile field the game data leaves blank.",
     },
     "info.controls": {
-        text: "Operator Controls",
+        text: "Operator controls",
         description: "Heading of the collapsible panel holding the level, promotion, potential, module and trust controls.",
     },
     "info.controls.desc": {
@@ -88,7 +88,7 @@ export const messages = {
         description: "Prompt in the module select before a choice is made.",
     },
     "info.module.none": {
-        text: "No Module",
+        text: "No module",
         description: "Module option meaning no module is equipped.",
     },
     "info.module.cohort": {
@@ -140,7 +140,7 @@ export const messages = {
         description: "Names the group the module-level bars are drawn from. 'E2' is the game's second promotion, the only stage at which modules exist.",
     },
     "info.combatStats": {
-        text: "Combat Stats",
+        text: "Combat stats",
         description: "Heading over the two-column table of the operator's stats.",
     },
     "info.tags": {
@@ -160,11 +160,11 @@ export const messages = {
         description: "Shown instead of the range grid when the game data carries none.",
     },
     "info.moduleDetails": {
-        text: "Module Details",
+        text: "Module details",
         description: "Heading of the collapsible panel describing the selected module.",
     },
     "info.moduleDetails.levelStats": {
-        text: "Level {level} Stats",
+        text: "Level {level} stats",
         description: "Heading over the stat bonuses a module grants at the chosen level.",
     },
     "info.moduleDetails.noBonuses": {
@@ -176,7 +176,7 @@ export const messages = {
         description: "Shown in the module panel while no level is chosen.",
     },
     "info.traitChanges": {
-        text: "Trait Changes",
+        text: "Trait changes",
         description: "Heading over what the module changes about the operator's trait. 'Trait' is the game's always-on class ability.",
     },
     "info.showDiff.tip": {
@@ -196,7 +196,7 @@ export const messages = {
         description: "Small caption over the modified text, below the unmodified version.",
     },
     "info.talentChanges": {
-        text: "Talent Changes",
+        text: "Talent changes",
         description: "Heading over what the module changes about the operator's talents.",
     },
     "info.talents": {
@@ -208,7 +208,7 @@ export const messages = {
         description: "Shown when the chosen level, promotion and potential unlock no talents.",
     },
     "info.talents.unnamed": {
-        text: "Unnamed Talent",
+        text: "Unnamed talent",
         description: "Stand-in heading for a talent the game data does not name.",
     },
     "info.talents.requiresPotential": {

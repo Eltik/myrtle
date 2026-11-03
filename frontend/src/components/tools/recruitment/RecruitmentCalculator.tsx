@@ -34,13 +34,16 @@ export function RecruitmentCalculator(): React.ReactElement {
         dispatch,
     } = useRecruitOptions();
     const roster = useRecruitRoster();
+    // A failed roster is treated as no roster: the potential sort, the badges and the new-operator
+    // figures all read ownership, and an empty map would say "unowned" for every operator.
+    const rosterReady = roster.signedIn && !roster.failed;
 
     // The potential sort is only offered while signed in; a session that ends
     // mid-visit falls back to the default rather than sorting on an empty map.
     const activeSettings: ICalculatorSettings = React.useMemo(() => {
-        if (roster.signedIn || settings.operatorSortMode !== "potential-asc") return settings;
+        if (rosterReady || settings.operatorSortMode !== "potential-asc") return settings;
         return { ...settings, operatorSortMode: DEFAULT_SETTINGS.operatorSortMode };
-    }, [settings, roster.signedIn]);
+    }, [settings, rosterReady]);
 
     const allTags: IRecruitmentTag[] = React.useMemo(() => transformTags(tags), [tags]);
     const tagGroups = React.useMemo(() => groupTagsByType(allTags), [allTags]);
@@ -56,17 +59,17 @@ export function RecruitmentCalculator(): React.ReactElement {
     }, [selectedIds, tagById]);
 
     const results = React.useMemo(() => {
-        const potentialByOperator = roster.signedIn ? roster.potentialByOperator : undefined;
+        const potentialByOperator = rosterReady ? roster.potentialByOperator : undefined;
         return calculateResults(selectedTags, operators, { ...activeSettings, potentialByOperator });
-    }, [selectedTags, operators, activeSettings, roster.signedIn, roster.potentialByOperator]);
+    }, [selectedTags, operators, activeSettings, rosterReady, roster.potentialByOperator]);
 
     // Cards get the overlay only once the roster has landed: an empty map would
     // paint every operator as unowned for the length of the request.
     const rosterOverlay: IRosterOverlay | null = React.useMemo(() => {
-        if (!roster.signedIn || roster.loading) return null;
+        if (!rosterReady || roster.loading) return null;
         if (!rosterView.showPotentials && !rosterView.showNextUpgrade && !rosterView.showNewOdds) return null;
         return { potentialByOperator: roster.potentialByOperator, ...rosterView };
-    }, [roster.signedIn, roster.loading, roster.potentialByOperator, rosterView]);
+    }, [rosterReady, roster.loading, roster.potentialByOperator, rosterView]);
 
     const setSelectedIds = React.useCallback(
         (updater: (prev: ReadonlyArray<number>) => ReadonlyArray<number>) => {
@@ -116,6 +119,7 @@ export function RecruitmentCalculator(): React.ReactElement {
             <PageHeader breadcrumbLabel="breadcrumb" breadcrumb={[t("recruit.breadcrumb.tools"), t("recruit.title")]} title={t("recruit.title")} description={t("recruit.intro", { max: MAX_SELECTED_TAGS })} />
 
             {isError && !data && <LoadError className="mt-5 sm:mt-6" message={t("recruit.loadFailed")} onRetry={() => void refetch()} />}
+            {roster.failed && <LoadError className="mt-5 sm:mt-6" message={t("recruit.rosterLoadFailed")} onRetry={roster.refetch} />}
 
             <div className="mt-5 grid grid-cols-1 items-start gap-3 sm:mt-6 sm:gap-4 lg:grid-cols-[330px_1fr] xl:grid-cols-[400px_1fr]">
                 <aside className="flex min-w-0 flex-col gap-3 sm:gap-4">

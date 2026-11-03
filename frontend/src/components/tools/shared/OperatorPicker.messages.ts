@@ -19,12 +19,12 @@ export const messages = {
         description: "Label over the picker once at least one has been added.",
     },
     "calc.picker.loading": {
-        text: "{noun, select, healer {Loading healers...} other {Loading operators...}}",
-        description: "Placeholder in the picker's search box while the list is still loading. Three full stops, not an ellipsis character.",
+        text: "{noun, select, healer {Loading healers…} other {Loading operators…}}",
+        description: "Placeholder in the picker's search box while the list is still loading. Ends in an ellipsis character.",
     },
     "calc.picker.search": {
-        text: "{noun, select, healer {Search {count, plural, one {# healer} other {# healers}}...} other {Search {count, plural, one {# operator} other {# operators}}...}}",
-        description: "Placeholder in the picker's search box, e.g. 'Search 287 operators...'. Three full stops, not an ellipsis character.",
+        text: "{noun, select, healer {Search {count, plural, one {# healer} other {# healers}}…} other {Search {count, plural, one {# operator} other {# operators}}…}}",
+        description: "Placeholder in the picker's search box, e.g. 'Search 287 operators…'. Ends in an ellipsis character.",
     },
     "calc.picker.empty": {
         text: "{noun, select, healer {No matching healers.} other {No matching operators.}}",

@@ -79,6 +79,10 @@ export const messages = {
         text: "Preset",
         description: "Label over the saved-preset picker.",
     },
+    "planner.bulk.presetLoadFailed": {
+        text: "Couldn't load your saved presets.",
+        description: "Shown over the preset picker, beside a retry button, when the user's saved presets failed to load. The picker would otherwise read as having no presets.",
+    },
     "planner.bulk.presetPlaceholder": {
         text: "Load a preset",
         description: "Placeholder of the preset picker before one is chosen.",
@@ -124,8 +128,8 @@ export const messages = {
         description: "Shown in the preview while no operator is picked.",
     },
     "planner.bulk.status.loading": {
-        text: "Loading...",
-        description: "Preview row status while that operator's data loads. Three full stops, not an ellipsis character.",
+        text: "Loading…",
+        description: "Preview row status while that operator's data loads. Ends in an ellipsis character.",
     },
     "planner.bulk.status.planned": {
         text: "Skipped: already planned",

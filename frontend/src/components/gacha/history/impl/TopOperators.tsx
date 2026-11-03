@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Kicker } from "#/components/ui/kicker";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { Skeleton } from "#/components/ui/skeleton";
+import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import type { IClientGachaRecords, IGachaItem } from "#/lib/api/gacha";
 import { useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -54,7 +55,7 @@ export function TopOperators({ records, operatorsById, isLoading }: ITopOperator
 
     if (isLoading) {
         return (
-            <section className="flex flex-col gap-4 rounded-[14px] border border-border bg-card p-4.5 sm:p-[22px_24px]">
+            <section className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4.5 sm:p-[22px_24px]">
                 <div className="flex items-start justify-between gap-4">
                     <div className="flex flex-col gap-1.5">
                         <Skeleton className="h-2.5 w-24 rounded-full" />
@@ -84,24 +85,30 @@ export function TopOperators({ records, operatorsById, isLoading }: ITopOperator
     const max = filtered[0]?.count ?? 1;
 
     return (
-        <section className="flex flex-col gap-4 rounded-[14px] border border-border bg-card p-4.5 sm:p-[22px_24px]">
+        <section className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4.5 sm:p-[22px_24px]">
             <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                 <div>
                     <Kicker className="mb-1.5">{t("history.top.kicker")}</Kicker>
                     <h2 className="m-0 font-sans font-semibold text-[20px] text-foreground leading-[1.15] tracking-[-0.02em] sm:text-[22px]">{t("history.top.title")}</h2>
                 </div>
-                <div className="inline-flex self-start rounded-[9px] border border-border bg-muted p-0.75 sm:self-auto">
+                {/* Kit single-select group: aria-pressed, the pressed inset ring (not shade alone) and the coarse 44px hit area. */}
+                <ToggleGroup
+                    aria-label={t("history.top.rarityFilter")}
+                    className="self-start sm:self-auto"
+                    onValueChange={(next) => {
+                        const star = STAR_TABS.find((s) => String(s) === next[0]);
+                        if (star) setActiveStar(star);
+                    }}
+                    size="sm"
+                    value={[String(activeStar)]}
+                    variant="outline"
+                >
                     {STAR_TABS.map((s) => (
-                        <button
-                            key={s}
-                            type="button"
-                            onClick={() => setActiveStar(s)}
-                            className={`h-6.5 cursor-pointer rounded-md px-3 font-medium font-sans text-xs transition-colors ${activeStar === s ? "bg-card text-foreground shadow-[0_1px_2px_oklch(0_0_0/0.4)]" : "bg-transparent text-muted-foreground hover:text-foreground"}`}
-                        >
+                        <ToggleGroupItem key={s} className="px-3" value={String(s)}>
                             {s}★
-                        </button>
+                        </ToggleGroupItem>
                     ))}
-                </div>
+                </ToggleGroup>
             </header>
 
             {filtered.length === 0 ? (
@@ -111,10 +118,10 @@ export function TopOperators({ records, operatorsById, isLoading }: ITopOperator
                     <table className="w-full border-collapse">
                         <thead className="sticky top-0 z-10 bg-card">
                             <tr>
-                                <th className="w-8 border-border border-b bg-card px-1.5 py-2 text-left font-medium font-mono text-[9.5px] text-muted-foreground uppercase tracking-[0.14em] sm:w-10 sm:px-2">#</th>
-                                <th className="border-border border-b bg-card px-1.5 py-2 text-left font-medium font-mono text-[9.5px] text-muted-foreground uppercase tracking-[0.14em] sm:px-2">{t("history.top.col.operator")}</th>
-                                <th className="border-border border-b bg-card px-1.5 py-2 text-right font-medium font-mono text-[9.5px] text-muted-foreground uppercase tracking-[0.14em] sm:px-2 sm:text-left">{t("history.top.col.copies")}</th>
-                                <th className="hidden w-40 border-border border-b bg-card px-2 py-2 text-left font-medium font-mono text-[9.5px] text-muted-foreground uppercase tracking-[0.14em] sm:table-cell">{t("history.top.col.frequency")}</th>
+                                <th className="kicker w-8 border-border border-b bg-card px-1.5 py-2 text-left sm:w-10 sm:px-2">#</th>
+                                <th className="kicker border-border border-b bg-card px-1.5 py-2 text-left sm:px-2">{t("history.top.col.operator")}</th>
+                                <th className="kicker border-border border-b bg-card px-1.5 py-2 text-right sm:px-2 sm:text-left">{t("history.top.col.copies")}</th>
+                                <th className="kicker hidden w-40 border-border border-b bg-card px-2 py-2 text-left sm:table-cell">{t("history.top.col.frequency")}</th>
                             </tr>
                         </thead>
                         <tbody>

@@ -116,7 +116,7 @@ export const messages = {
         description: "Dropdown option: no tier list, so the filter is off.",
     },
     "randomizer.ops.tierList.loading": {
-        text: "Loading tiers...",
+        text: "Loading tiers…",
         description: "Shown while the chosen tier list loads.",
     },
     "randomizer.ops.tierList.unranked": {

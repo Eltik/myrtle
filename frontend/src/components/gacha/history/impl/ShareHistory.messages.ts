@@ -68,7 +68,7 @@ export const messages = {
         description: "Body of the dialog shown when the player presses Share while their profile is private. 'Settings' and 'Privacy' name the site's settings page and its section.",
     },
     "history.share.profilePrivate.action": {
-        text: "Open Settings",
+        text: "Open settings",
         description: "Link in the share dialog to the settings page, where the profile can be made public.",
     },
 } satisfies MessageMap;

@@ -13,7 +13,7 @@ import { cn, getAvatarById } from "#/lib/utils";
 import type { ArchiveGroup } from "#/types/generated/ArchiveGroup";
 import type { ArchiveNetwork } from "#/types/generated/ArchiveNetwork";
 import type { ArchivePerson } from "#/types/generated/ArchivePerson";
-import { bounds, CELL_R, centroid, directionVector, hexColor, hexPoints, type IPoint, NEUTRAL_HEX, outlineSegments, TERRITORY_R, toSvg } from "./geometry";
+import { bounds, CELL_R, centroid, directionVector, hexColor, hexPoints, type IPoint, NEUTRAL_HEX, outlineSegments, svgNum, TERRITORY_R, toSvg } from "./geometry";
 import { declutter, type ILabelBox, type IView, placeLabel, project } from "./labels";
 import { type IInsets, type IPanZoomHandle, PanZoom } from "./PanZoom";
 import { type ArchivesT, FactionLogo, FactionLogoSvg, hoverProps, PersonChip, peopleById, rarityColor, TabFailed, useArchivesT } from "./shared";
@@ -29,6 +29,8 @@ const LABEL_GAP = 6;
 const STAGE_MARGIN = 6;
 /** The game's `card_scale` at and above which a faction gets the larger label (Rhodes Island, the nations). */
 const BIG_CARD = 0.8;
+/** Least tap size for a coarse pointer, in screen pixels (size-11). */
+const HIT_MIN = 44;
 
 /** Drops out of full screen, when in it, so a drawer opened next shows over the page. */
 function leaveFullscreen(): void {
@@ -308,7 +310,7 @@ function TerritoriesLayer({ data, t, hover, onHover, onPick }: { data: ArchiveNe
                         {outlineSegments(centers, TERRITORY_R).map(([a, b]) => (
                             <line key={`${a.x},${a.y},${b.x},${b.y}`} x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke={color} strokeWidth={lit ? 3.5 : 2} strokeLinecap="round" />
                         ))}
-                        <FactionLogoSvg id={fo.id} x={logo.x - size / 2} y={logo.y - size / 2} size={size} opacity={lit ? 0.4 : 0.22} className="text-foreground" />
+                        <FactionLogoSvg id={fo.id} x={svgNum(logo.x - size / 2)} y={svgNum(logo.y - size / 2)} size={svgNum(size)} opacity={lit ? 0.4 : 0.22} className="text-foreground" />
                     </g>
                 );
             })}
@@ -360,9 +362,35 @@ function TerritoryLabels({ data, view, hover, onHover, onPick, t }: { data: Arch
     });
     const shown = declutter(boxes, (id) => people.get(id) ?? 0, LABEL_GAP, hover);
     const at = new Map(boxes.map((b) => [b.id, b]));
+    // A one-hex faction fits in about 19 by 16 pixels on a phone at the fitted
+    // zoom (R-03). The clusters are SVG groups, which take no ::after, so a
+    // coarse pointer gets a 44px hit area in screen pixels over any cluster
+    // drawn smaller than that; the plates, drawn after, still win the tap.
+    const small = data.forces.flatMap((fo) => {
+        const b = bounds(
+            fo.hexes.map((h) => toSvg(h)),
+            TERRITORY_R,
+        );
+        const w = (b.w / view.box.w) * view.width;
+        const h = (b.h / view.box.h) * view.height;
+        if (w >= HIT_MIN && h >= HIT_MIN) return [];
+        const c = project({ x: b.x + b.w / 2, y: b.y + b.h / 2 }, view);
+        return c.x < 0 || c.y < 0 || c.x > view.width || c.y > view.height ? [] : [{ fo, c }];
+    });
 
     return (
         <>
+            {small.map(({ fo, c }) => (
+                <button
+                    key={`hit-${fo.id}`}
+                    type="button"
+                    tabIndex={-1}
+                    aria-hidden
+                    onClick={() => onPick(fo.groupId)}
+                    className="pointer-events-auto absolute top-0 left-0 pointer-coarse:block hidden size-11 cursor-pointer rounded-full"
+                    style={{ transform: `translate(${Math.round(c.x - HIT_MIN / 2)}px, ${Math.round(c.y - HIT_MIN / 2)}px)` }}
+                />
+            ))}
             {data.forces.map((fo) => {
                 const box = at.get(fo.id);
                 const visible = box !== undefined && shown.has(fo.id);
@@ -386,7 +414,7 @@ function TerritoryLabels({ data, view, hover, onHover, onPick, t }: { data: Arch
                     >
                         <span className={cn("px-2 pt-1 pb-0.5 font-semibold text-foreground leading-tight", fo.cardScale >= BIG_CARD ? "text-[13px]" : "text-[11.5px]")}>{fo.name}</span>
                         <span className="border-border/60 border-t px-2 pt-0.5 pb-1 font-mono text-[9.5px] text-muted-foreground uppercase tracking-[0.08em]">
-                            {fo.code} · <span style={{ color }}>{t("network.forceCounts", { people: f.number(fo.memberCount), hexes: fo.hexes.length })}</span>
+                            {fo.code} · <span className="text-foreground">{t("network.forceCounts", { people: f.number(fo.memberCount), hexes: fo.hexes.length })}</span>
                         </span>
                     </button>
                 );
@@ -397,7 +425,7 @@ function TerritoryLabels({ data, view, hover, onHover, onPick, t }: { data: Arch
 
 function Bridge({ from, direction, length, color }: { from: IPoint; direction: number; length: number; color: string }): React.ReactElement {
     const v = directionVector(direction);
-    return <line x1={from.x} y1={from.y} x2={from.x + v.x * length} y2={from.y + v.y * length} stroke={color} strokeOpacity={0.55} strokeWidth={CELL_R * 0.2} strokeLinecap="round" />;
+    return <line x1={from.x} y1={from.y} x2={svgNum(from.x + v.x * length)} y2={svgNum(from.y + v.y * length)} stroke={color} strokeOpacity={0.55} strokeWidth={CELL_R * 0.2} strokeLinecap="round" />;
 }
 
 function ChartLayer({ group, people, server, picked, onOpenFile }: { group: ArchiveGroup; people: Map<string, ArchivePerson>; server: string; picked: string | null; onOpenFile: (id: string) => void }): React.ReactElement {

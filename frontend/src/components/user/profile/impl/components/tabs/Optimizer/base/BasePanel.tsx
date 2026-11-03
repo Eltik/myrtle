@@ -39,13 +39,13 @@ export function BasePanel({ board }: { board: IBoard }) {
     return (
         <TooltipProvider closeDelay={0} delay={350}>
             <div className="flex flex-col gap-3">
-                <p className="rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-2 text-[12px] text-foreground">
+                <p className="rounded-2xl border border-amber-500/40 bg-amber-500/10 px-4 py-2 text-[12px] text-foreground">
                     {t("profile.base.wip")}{" "}
                     <a className="underline underline-offset-2" href="/discord" rel="noreferrer" target="_blank">
                         {t("profile.base.wip.link")}
                     </a>
                 </p>
-                <div className="flex flex-wrap items-end justify-between gap-3 rounded-xl border border-border bg-card px-4 py-3">
+                <div className="flex flex-wrap items-end justify-between gap-3 rounded-2xl border border-border bg-card px-4 py-3">
                     <div className="flex flex-wrap gap-6">
                         <Headline hint={t("profile.base.headline.efficiency.hint")} label={t("profile.base.headline.efficiency")} value={totals ? `${Math.round(totals.total_production_efficiency)}%` : "-"} />
                         <Headline label={t("profile.base.headline.lmd")} value={totals ? f.number(Math.round(totals.yield_lmd_per_day)) : "-"} />
@@ -84,7 +84,7 @@ export function BasePanel({ board }: { board: IBoard }) {
                 {api.evaluationError && <p className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-[12px] text-destructive">{t("profile.base.evaluationError", { error: api.evaluationError.message })}</p>}
                 {api.optimizeError && <p className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-[12px] text-destructive">{t("profile.base.optimizeError", { error: api.optimizeError.message })}</p>}
 
-                <div className="relative rounded-xl border border-border bg-card p-3">
+                <div className="relative rounded-2xl border border-border bg-card p-3">
                     <Button aria-label={t("profile.base.fullscreen")} className="absolute top-5 right-5 z-10" onClick={() => setBoardFullscreen(true)} size="icon-sm" variant="outline">
                         <Maximize2 />
                     </Button>

@@ -17,6 +17,9 @@ interface IUseHpsCurvesResult {
     points: number[];
     rows: ICurvePoint[];
     isPending: boolean;
+    /** A whole batch call failed (network, 400): its points draw nothing until a retry. */
+    isError: boolean;
+    refetch: () => void;
 }
 
 /** Translate a swept X value (display units) into a per-request override. */
@@ -73,7 +76,11 @@ export function useHpsCurves(state: IHpsState, buffs: IHpsBuffConfig): IUseHpsCu
             const data = slot?.data;
             row[plan.instUid] = data ? selectMetric(data, state.yMetric) : null;
         }
-        return { points, rows, isPending };
+        const failed = queries.filter((q) => q.isError);
+        const refetch = () => {
+            for (const q of failed) void q.refetch();
+        };
+        return { points, rows, isPending, isError: failed.length > 0, refetch };
     }, [plans, chunks, queries, points, state.yMetric]);
 }
 

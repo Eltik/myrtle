@@ -20,7 +20,7 @@ export const messages = {
         description: "Alt text of an outfit thumbnail: the operator's name then the outfit's. Both come from the game data.",
     },
     "release.popup.loadFailed": {
-        text: "Couldn't load this outfit.",
+        text: "Couldn't load this skin.",
         description: "Shown in the outfit popup, beside a Try again button, when the outfit index failed to load. Distinct from the 'missing' line, which means the outfit is not in the index.",
     },
 } satisfies MessageMap;

@@ -24,7 +24,7 @@ export const messages = {
         description: "Stat card label: how many seconds pass between passive DP gains. Very tight space.",
     },
     "overview.dpTick.info": {
-        text: "How often you passively gain 1 DP - a lower number means DP regenerates faster.",
+        text: "How often you passively gain 1 DP. A lower number means DP regenerates faster.",
         description: "Tooltip on the DP / Tick stat card.",
     },
     "overview.unitLimit": {

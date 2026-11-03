@@ -28,11 +28,11 @@ export const messages = {
         description: "Shown in the picker while the current tab's list loads.",
     },
     "picker.error": {
-        text: "This list could not be loaded.",
+        text: "Couldn't load this list.",
         description: "Shown in the picker when the current tab's list failed to load.",
     },
     "picker.retry": {
-        text: "Retry",
+        text: "Try again",
         description: "Button that reloads the picker's failed list.",
     },
     "picker.empty": {

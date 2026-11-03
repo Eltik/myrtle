@@ -132,7 +132,7 @@ export const messages = {
         description: "Toast body after a successful save.",
     },
     "edit.toast.saveFailedTitle": {
-        text: "Could not save",
+        text: "Couldn't save the grid",
         description: "Toast title when saving the grid failed; the body is the error.",
     },
     "edit.missing.title": {

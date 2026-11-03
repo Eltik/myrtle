@@ -44,11 +44,11 @@ export const messages = {
         description: "Link to the settings page.",
     },
     "mobileNav.logout": {
-        text: "Logout",
+        text: "Sign out",
         description: "Action that signs the visitor out.",
     },
     "mobileNav.login": {
-        text: "Login",
+        text: "Sign in",
         description: "Action that opens the sign-in dialog.",
     },
 } satisfies MessageMap;

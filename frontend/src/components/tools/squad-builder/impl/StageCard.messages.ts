@@ -23,6 +23,10 @@ export const messages = {
         text: "Remove",
         description: "Button that unpicks the stage.",
     },
+    "squad.stage.loadFailed": {
+        text: "Couldn't load this stage.",
+        description: "Shown on the stage card when the picked stage's data failed to load; a retry button follows.",
+    },
     "squad.stage.missing": {
         text: "Couldn't load this stage.",
         description: "Shown in the stage card when the stage could not be loaded.",

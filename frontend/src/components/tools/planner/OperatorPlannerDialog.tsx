@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import * as React from "react";
 
+import { Alert } from "#/components/ui/alert";
 import { Button } from "#/components/ui/button";
 import { Dialog, DialogClose, DialogDescription, DialogFooter, DialogHeader, DialogPanel, DialogPopup, DialogTitle } from "#/components/ui/dialog";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
@@ -128,7 +129,7 @@ export function OperatorPlannerDialog({ open, onOpenChange, initialOperatorId }:
 
                         {selectedOperator && !isOperatorDetailLoading ? (
                             <div className="space-y-6">
-                                <div className="rounded-xl border border-border bg-card p-4">
+                                <div className="rounded-2xl border border-border bg-card p-4">
                                     <div className="flex items-center gap-4">
                                         <span aria-hidden="true" className="relative flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border bg-muted/70">
                                             <OperatorAvatar charId={selectedOperator.id} name={operatorName(selectedOperator)} className="block h-full w-full object-cover" server={selectedOperator.server} />
@@ -141,7 +142,9 @@ export function OperatorPlannerDialog({ open, onOpenChange, initialOperatorId }:
                                 </div>
 
                                 {isUnplannable ? (
-                                    <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 text-amber-600 text-sm leading-relaxed dark:text-amber-400">{t("planner.dialog.radian")}</div>
+                                    <Alert variant="warning" className="px-4 py-4 leading-relaxed">
+                                        {t("planner.dialog.radian")}
+                                    </Alert>
                                 ) : (
                                     <>
                                         <PromotionLevelPanel targets={targets} />

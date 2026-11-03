@@ -418,7 +418,7 @@ export function RequirementsPanel({ aggregatedRequirements, isLoading, activePla
     const hasRequirements = !isLoading && aggregatedRequirements.length > 0;
 
     return (
-        <div className="rounded-xl border border-border bg-card p-4">
+        <div className="rounded-2xl border border-border bg-card p-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
                     <h2 className="font-semibold text-foreground text-sm">{t("planner.req.title")}</h2>

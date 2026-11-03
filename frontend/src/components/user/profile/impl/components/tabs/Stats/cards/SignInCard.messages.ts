@@ -4,7 +4,7 @@ export const namespace = "user";
 
 export const messages = {
     "profile.stats.signin.record.title": {
-        text: "Sign-In Record",
+        text: "Sign-in record",
         description: "Heading of the card covering lifetime daily sign-ins. 'Sign-in' is the game's daily login reward.",
     },
     "profile.stats.signin.total": {
@@ -68,7 +68,7 @@ export const messages = {
         description: "Account age in years and months, e.g. '2y 7mo'. Very little room.",
     },
     "profile.stats.signin.calendar.title": {
-        text: "Daily Sign-In",
+        text: "Daily sign-in",
         description: "Heading of the card showing this month's sign-in slots.",
     },
     "profile.stats.signin.syncedTitle": {

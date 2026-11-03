@@ -27,7 +27,8 @@ export interface INavItem {
 }
 
 /** The mono caps heading every dropdown section has always worn, now on the menu's own group label. */
-const SECTION_LABEL = "px-3 pt-2 pb-1.5 font-medium font-mono text-[10.5px] text-muted-foreground uppercase leading-none tracking-widest";
+// `.kicker` voice; the size and weight are restated because MenuGroupLabel's `text-xs font-medium` utilities outrank the component layer.
+const SECTION_LABEL = "kicker px-3 pt-2 pb-1.5 font-semibold text-[10.5px] leading-none";
 
 interface IMainNavProps extends React.ComponentProps<"nav"> {
     items: INavItem[];
@@ -39,8 +40,15 @@ interface IMainNavProps extends React.ComponentProps<"nav"> {
     collapsed?: boolean;
 }
 
-function HoverDropdown({ item, isActive, onOpenCommand }: { item: INavItem; isActive: boolean; onOpenCommand?: () => void }) {
-    const [open, setOpen] = useState(false);
+interface IHoverDropdownProps {
+    item: INavItem;
+    isActive: boolean;
+    open: boolean;
+    setOpen: (open: boolean) => void;
+    onOpenCommand?: () => void;
+}
+
+function HoverDropdown({ item, isActive, open, setOpen, onOpenCommand }: IHoverDropdownProps) {
     const isMac = useIsMac();
     const t: TypedT<typeof messages> = useT("nav");
 
@@ -117,6 +125,10 @@ function HoverDropdown({ item, isActive, onOpenCommand }: { item: INavItem; isAc
 export function MainNav({ items, className, onOpenCommand, collapsed = false, ...props }: IMainNavProps) {
     const router = useRouterState();
     const pathname = router.location.pathname;
+    // One open menu for the whole bar. Each menu kept its own state, so a menu opened by a
+    // click stayed open while the pointer moved onto the next trigger, and that trigger's
+    // hover never took over (seen in the 2026-11-04 browser pass).
+    const [openHref, setOpenHref] = useState<string | null>(null);
 
     return (
         <nav className={cn("hidden shrink-0 items-center gap-1 lg:flex", collapsed && "pointer-events-none invisible absolute top-0 left-0", className)} aria-hidden={collapsed || undefined} {...props}>
@@ -126,7 +138,7 @@ export function MainNav({ items, className, onOpenCommand, collapsed = false, ..
                 const isActive = selfActive || childActive;
 
                 if (item.items) {
-                    return <HoverDropdown key={item.href} item={item} isActive={isActive} onOpenCommand={onOpenCommand} />;
+                    return <HoverDropdown key={item.href} item={item} isActive={isActive} open={openHref === item.href} setOpen={(next) => setOpenHref((cur) => (next ? item.href : cur === item.href ? null : cur))} onOpenCommand={onOpenCommand} />;
                 }
 
                 return (

@@ -40,7 +40,7 @@ export const messages = {
         description: "Sort option: grids used most as templates first.",
     },
     "browse.error": {
-        text: "Grids could not be loaded.",
+        text: "Couldn't load grids.",
         description: "Shown when the grid list failed to load.",
     },
     "browse.retry": {

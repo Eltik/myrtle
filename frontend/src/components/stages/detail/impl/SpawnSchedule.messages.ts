@@ -4,7 +4,7 @@ export const namespace = "stages";
 
 export const messages = {
     "spawns.title": {
-        text: "Spawn Schedule",
+        text: "Spawn schedule",
         description: "Kicker over the table of enemy spawns, ordered by the second they appear.",
     },
     "spawns.groups": {
@@ -12,7 +12,7 @@ export const messages = {
         description: "How many spawn entries the schedule holds, beside its heading. A 'group' is one spawn action, which may release several enemies.",
     },
     "spawns.hiddenRoutes": {
-        text: "Hidden Routes",
+        text: "Hidden routes",
         description: "Label before the pills naming spawn groups the game hides until a condition is met.",
     },
     "spawns.col.enemy": {

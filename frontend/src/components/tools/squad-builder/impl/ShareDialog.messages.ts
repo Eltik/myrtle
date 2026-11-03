@@ -52,7 +52,7 @@ export const messages = {
         description: "Alt text of the share image preview. {name} is the squad's name.",
     },
     "squad.share.rendering": {
-        text: "Drawing the image...",
+        text: "Drawing the image…",
         description: "Shown while the share image renders.",
     },
     "squad.share.renderFailed": {

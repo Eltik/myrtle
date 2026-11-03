@@ -264,7 +264,7 @@ export const messages = {
         description: "Label of the last-group picker of a reading-order range.",
     },
     "export.cancelled": {
-        text: "Export cancelled.",
+        text: "Export canceled.",
         description: "Status line after the reader cancelled an export.",
     },
     "export.error": {

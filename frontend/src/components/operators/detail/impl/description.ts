@@ -1,4 +1,4 @@
-import { atomicTagRegex, colorForTag, renderTags } from "#/lib/gamedata/richtext";
+import { atomicTagRegex, renderTags } from "#/lib/gamedata/richtext";
 import type { IBlackboard } from "#/types/operators";
 
 const interpolationRegex = /-?\{-?([^}:]+)(?::([^}]+))?\}/g;
@@ -20,8 +20,21 @@ function interpolateValues(text: string, blackboard: IBlackboard[] | { key: stri
     });
 }
 
+/**
+ * A game span's colour as a theme ink (styles.css `--game-*-ink`), read the
+ * way `colorForTag` reads the tag: the raw keyword cyan it returns measured
+ * 1.5:1 on the light page ("Arts damage").
+ */
+function inkForTag(tag: string): string {
+    const suffix = tag.startsWith("$") ? "" : tag.slice(tag.indexOf(".") + 1);
+    if (suffix === "vup") return "var(--game-vup-ink)";
+    if (suffix === "vdown") return "var(--game-vdown-ink)";
+    if (suffix === "rem") return "var(--game-rem-ink)";
+    return "var(--game-kw-ink)";
+}
+
 function renderTagsAndNewlines(text: string): string {
-    return renderTags(text, (tag, content) => `<span style="color:${colorForTag(tag)}">${content}</span>`).replace(/\n/g, "<br/>");
+    return renderTags(text, (tag, content) => `<span style="color:${inkForTag(tag)}">${content}</span>`).replace(/\n/g, "<br/>");
 }
 
 export function descriptionToHtml(description: string, blackboard: IBlackboard[] | { key: string; value: number }[] = []): string {

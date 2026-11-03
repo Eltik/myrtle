@@ -12,7 +12,7 @@ export const messages = {
         description: "Placeholder while the score snapshots are being fetched. Keep the single-character ellipsis.",
     },
     "score.history.empty": {
-        text: "History builds one point per leaderboard snapshot - check back after the next one.",
+        text: "History builds one point per leaderboard snapshot. Check back after the next one.",
         description: "Shown in place of the chart when there are fewer than two snapshots to plot.",
     },
     "score.history.trend": {

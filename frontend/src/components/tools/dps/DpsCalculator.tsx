@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Calculator, ChevronsDownUp, ChevronsUpDown, Diamond, Download, HelpCircle, RefreshCw } from "lucide-react";
 import * as React from "react";
+import { LoadError } from "#/components/operators/detail/impl/components/LoadError";
 import { AxisControls } from "#/components/tools/shared/AxisControls";
 import { CalcChart } from "#/components/tools/shared/CalcChart";
 import { buildSweepPoints, formatLargeNumber } from "#/components/tools/shared/constants";
@@ -17,6 +18,7 @@ import { Card, CardHeader, CardPanel, CardTitle } from "#/components/ui/card";
 import { PageHeader } from "#/components/ui/page-header";
 import { Popover, PopoverPopup, PopoverTrigger } from "#/components/ui/popover";
 import { Tabs, TabsList, TabsTab } from "#/components/ui/tabs";
+import { toastManager } from "#/components/ui/toast";
 import { Toggle } from "#/components/ui/toggle";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { dpsOperatorsQueryOptions } from "#/lib/api/dps";
@@ -141,7 +143,7 @@ export function DpsCalculator({ importParam, onImportConsumed, shareParam, onSha
             await exportSvgAsPng(svg, { filename, title, legend, snapshot });
         } catch (err) {
             console.error("DPS chart export failed:", err);
-            if (typeof window !== "undefined") window.alert(t("dps.export.failed", { error: err instanceof Error ? err.message : String(err) }));
+            toastManager.add({ title: t("dps.export.failed", { error: err instanceof Error ? err.message : String(err) }), type: "error" });
         } finally {
             setIsExporting(false);
         }
@@ -330,6 +332,7 @@ export function DpsCalculator({ importParam, onImportConsumed, shareParam, onSha
                                 />
                             </CardHeader>
                             <CardPanel className="pt-0">
+                                {curves.isError && <LoadError className="mb-3" message={t("dps.chart.loadFailed")} onRetry={curves.refetch} />}
                                 <CalcChart
                                     instances={state.instances}
                                     rows={curves.rows}

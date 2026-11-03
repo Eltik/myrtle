@@ -27,6 +27,18 @@ export const messages = {
         text: "Sign in",
         description: "Button that opens the sign-in dialog.",
     },
+    "planner.plansLoadFailed": {
+        text: "Couldn't load your plans.",
+        description: "Shown in place of the plan list when the request for the user's plans failed, beside a retry button.",
+    },
+    "planner.requirementsLoadFailed": {
+        text: "Couldn't load the materials these plans need.",
+        description: "Shown in place of the requirements panel when the request for the selected plans' combined materials failed, beside a retry button.",
+    },
+    "planner.rosterLoadFailed": {
+        text: "Couldn't load your roster, so progress toward each plan isn't shown.",
+        description: "Shown above the plan list when the user's synced roster failed to load, beside a retry button. Plan progress is measured against the roster.",
+    },
     "planner.createPlan": {
         text: "Create plan",
         description: "Button that opens the dialog for adding a new operator plan.",
@@ -108,7 +120,7 @@ export const messages = {
         description: "Button on a plan card that deletes that plan.",
     },
     "planner.deleteFailed": {
-        text: "Failed to delete. Please try again.",
+        text: "Couldn't delete. Try again.",
         description: "Error shown in the delete dialog when the request failed.",
     },
     "planner.unknownOperator": {
@@ -120,7 +132,7 @@ export const messages = {
         description: "Prompt in the browser dialog that renames a group. Keep the colon.",
     },
     "planner.group.deleteConfirm": {
-        text: 'Are you sure you want to delete group "{name}"?',
+        text: 'Delete the group "{name}"?',
         description: "Question in the browser dialog confirming a group deletion; {name} is the group's own name, in quotes.",
     },
     "planner.group.none": {

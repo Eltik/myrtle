@@ -4,6 +4,7 @@ import { type ReactNode, useMemo, useState } from "react";
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
+import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import { type LookbackBuildRef, lookbackBuildQueryOptions, lookbackQueryOptions } from "#/lib/api/lookback";
 import { useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -94,19 +95,13 @@ function TimelineCard({ snapshots, ownership, live }: ITimelineProps) {
             <div className={`${CARD_PADDING} flex flex-col gap-4`}>
                 <div className="flex flex-wrap items-center justify-between gap-2">
                     <Kicker icon={History} label={t("lookback.timeline.title")} />
-                    <fieldset className="flex flex-wrap gap-1" aria-label={t("lookback.timeline.title")}>
+                    <ToggleGroup aria-label={t("lookback.timeline.title")} variant="outline" size="sm" className="flex-wrap" value={[metric]} onValueChange={(next) => next[0] && setMetric(next[0] as Metric)}>
                         {METRICS.map((m) => (
-                            <button
-                                key={m}
-                                type="button"
-                                aria-pressed={m === metric}
-                                onClick={() => setMetric(m)}
-                                className={cn("rounded-md border px-2 py-0.5 text-[11px] transition-colors", m === metric ? "border-primary/50 bg-primary/10 text-foreground" : "border-border/60 text-muted-foreground hover:text-foreground")}
-                            >
+                            <ToggleGroupItem key={m} value={m} className="px-2 text-[12px]">
                                 {labels[m]}
-                            </button>
+                            </ToggleGroupItem>
                         ))}
-                    </fieldset>
+                    </ToggleGroup>
                 </div>
                 {recorded.length === 0 && rebuilt.length === 0 ? (
                     <p className="rounded-md border border-border/40 border-dashed bg-muted/15 px-3 py-2 text-[11px] text-muted-foreground">{t("lookback.empty")}</p>
@@ -221,7 +216,7 @@ function CompareCard({ uid, server, snapshots, operatorsIndex }: ICompareProps) 
                                         {METRICS.map((m) => (
                                             <div key={m} className="rounded-lg border border-border/50 bg-muted/10 px-2.5 py-2">
                                                 <div className={KICKER_TEXT}>{labels[m]}</div>
-                                                <div className={cn("font-mono font-semibold text-lg tabular-nums", delta[m] > 0 ? "text-emerald-500" : "text-muted-foreground")}>
+                                                <div className={cn("font-mono font-semibold text-lg tabular-nums", delta[m] > 0 ? "text-success-foreground" : "text-muted-foreground")}>
                                                     {delta[m] > 0 ? "+" : ""}
                                                     {f.number(delta[m])}
                                                 </div>

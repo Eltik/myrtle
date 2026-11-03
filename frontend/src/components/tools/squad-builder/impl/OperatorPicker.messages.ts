@@ -171,8 +171,12 @@ export const messages = {
         text: "Clear filters",
         description: "Button under 'No operators match.' that resets the search and every filter in the picker.",
     },
+    "squad.picker.loadFailed": {
+        text: "Couldn't load the operator list.",
+        description: "Shown in the picker when the operator list failed to load; a retry button follows.",
+    },
     "squad.picker.loading": {
-        text: "Loading operators...",
+        text: "Loading operators…",
         description: "Shown in the picker while the operator list loads.",
     },
     "squad.picker.recruitFailed": {
