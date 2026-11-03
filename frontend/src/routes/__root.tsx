@@ -194,7 +194,7 @@ function SiteChrome({ children }: { children: React.ReactNode }) {
     // `<div>` or `<section>` at their root, never a second `<main>`. `tabIndex={-1}` lets the
     // skip link move focus here, not just scroll, so the next Tab starts inside the page.
     const content = (
-        <main id="content" tabIndex={-1} className="outline-none">
+        <main id="main-content" tabIndex={-1} className="outline-none">
             <ToastProvider>
                 <AnchoredToastProvider>{children}</AnchoredToastProvider>
             </ToastProvider>

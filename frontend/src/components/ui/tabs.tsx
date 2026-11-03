@@ -43,9 +43,11 @@ export function useTabStripScroll(ref: RefObject<HTMLElement | null>): boolean {
         const resize = new ResizeObserver(measure);
         resize.observe(el);
         for (const child of Array.from(el.children)) resize.observe(child);
-        const selection = new MutationObserver(() => {
+        // Child-list changes (late tab counts) only re-measure; scrolling back to the selected
+        // tab on them yanked a strip the reader had scrolled by hand.
+        const selection = new MutationObserver((records) => {
             measure();
-            reveal(true);
+            if (records.some((r) => r.type === "attributes")) reveal(true);
         });
         selection.observe(el, { subtree: true, childList: true, attributes: true, attributeFilter: ["aria-selected"] });
         return () => {

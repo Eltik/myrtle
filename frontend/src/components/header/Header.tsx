@@ -97,8 +97,8 @@ export default function Header() {
         <>
             {/* The first tab stop on every page: without it a keyboard visitor walks
                 about twelve header controls before reaching the page. The target is the
-                shell's `<main id="content">` in `__root.tsx`. */}
-            <a href="#content" className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-60 focus:rounded-lg focus:border focus:border-border focus:bg-background focus:px-3 focus:py-2 focus:font-medium focus:text-foreground focus:text-sm focus:shadow-lg">
+                shell's `<main id="main-content">` in `__root.tsx`. */}
+            <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-60 focus:rounded-lg focus:border focus:border-border focus:bg-background focus:px-3 focus:py-2 focus:font-medium focus:text-foreground focus:text-sm focus:shadow-lg">
                 {t("header.skipToContent")}
             </a>
             {/* Opaque in both themes: a backdrop blur over the art pages smeared coloured blobs into the bar. */}

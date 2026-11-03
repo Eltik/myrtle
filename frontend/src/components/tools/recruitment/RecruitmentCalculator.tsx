@@ -140,7 +140,7 @@ export function RecruitmentCalculator(): React.ReactElement {
                             <CardTitle className="text-[15px]">{t("recruit.options")}</CardTitle>
                         </CardHeader>
                         <CardPanel className="px-4 pt-0 pb-4 sm:px-6 sm:pb-6">
-                            <CalculatorOptionsPanel settings={activeSettings} rosterView={rosterView} rosterAvailable={roster.signedIn} layout={layout} onChangeSettings={onChangeSettings} onChangeRosterView={onChangeRosterView} onChangeLayout={onChangeLayout} />
+                            <CalculatorOptionsPanel settings={activeSettings} rosterView={rosterView} rosterAvailable={rosterReady} layout={layout} onChangeSettings={onChangeSettings} onChangeRosterView={onChangeRosterView} onChangeLayout={onChangeLayout} />
                         </CardPanel>
                     </Card>
                 </aside>

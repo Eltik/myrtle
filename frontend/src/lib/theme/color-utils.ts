@@ -130,7 +130,7 @@ export function serializeAccent(accent: Accent): string {
 export function parseAccent(raw: string): Accent | null {
     if (raw.startsWith("h:")) {
         const hue = Number.parseFloat(raw.slice(2));
-        return Number.isNaN(hue) ? null : { type: "preset", hue: ((hue % 360) + 360) % 360 };
+        return !Number.isFinite(hue) ? null : { type: "preset", hue: ((hue % 360) + 360) % 360 };
     }
     if (raw.startsWith("c:")) {
         const hex = raw.slice(2);
@@ -138,6 +138,6 @@ export function parseAccent(raw: string): Accent | null {
     }
     // Legacy: bare number was previously stored as a hue.
     const legacy = Number.parseFloat(raw);
-    if (!Number.isNaN(legacy)) return { type: "preset", hue: ((legacy % 360) + 360) % 360 };
+    if (Number.isFinite(legacy)) return { type: "preset", hue: ((legacy % 360) + 360) % 360 };
     return null;
 }

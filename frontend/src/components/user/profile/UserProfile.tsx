@@ -313,7 +313,7 @@ export function UserProfile() {
     }, [shown, labels, layout, data, roster, inventory, encounteredEnemies, publicPlans]);
 
     if (isLoading) return <ProfileSkeleton />;
-    if (isError && !isPrivateOrMissing(error)) return <ProfileLoadFailed onRetry={() => void refetch()} />;
+    if (isError && !data && !isPrivateOrMissing(error)) return <ProfileLoadFailed onRetry={() => void refetch()} />;
     if (!data) return <ProfileNotFound id={id} />;
     // A failed roster fetch would hand every tab below an empty roster, which reads as "owns no operators".
     const rosterFailed = isRosterError && roster === undefined ? <LoadFailed message={t("profile.loadFailed.roster")} onRetry={() => void refetchRoster()} /> : null;

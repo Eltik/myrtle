@@ -164,7 +164,7 @@ export function accentKit() {
         let glow: (a: string) => string;
         if (raw.indexOf("h:") === 0) {
             const parsed = Number.parseFloat(raw.slice(2));
-            if (Number.isNaN(parsed)) return null;
+            if (!Number.isFinite(parsed)) return null;
             const hue = ((parsed % 360) + 360) % 360;
             const p = presetFill(hue, dark);
             fill = `oklch(${p.L} ${p.C} ${hue})`;

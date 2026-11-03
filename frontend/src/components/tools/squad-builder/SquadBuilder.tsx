@@ -6,6 +6,7 @@ import { AlertDialog, AlertDialogClose, AlertDialogDescription, AlertDialogFoote
 import { Button } from "#/components/ui/button";
 import { useErrorMessage } from "#/components/ui/error-message";
 import { PageHeader } from "#/components/ui/page-header";
+import type { messages as routeErrorMessages } from "#/components/ui/route-error.messages";
 import { toastManager } from "#/components/ui/toast";
 import { useAuth } from "#/hooks/use-auth";
 import { operatorsIndexQueryOptions } from "#/lib/api/operators";
@@ -55,6 +56,7 @@ export interface ISquadBuilderProps {
 
 export function SquadBuilder({ share, onShareConsumed }: ISquadBuilderProps): React.ReactElement {
     const t: PageT = useT("tools");
+    const tc: TypedT<typeof routeErrorMessages> = useT("common");
     const server = useGamedataServer();
     const queryClient = useQueryClient();
     const navigate = useNavigate();
@@ -290,7 +292,8 @@ export function SquadBuilder({ share, onShareConsumed }: ISquadBuilderProps): Re
 
     const slotsReady = (): boolean => {
         if (!slotsUnknown) return true;
-        toastManager.add({ id: `squad-slots-unknown-${Date.now()}`, title: t("squad.toast.slotsUnavailable"), type: "error" });
+        // The toast carries the retry: in share mode the SlotBar, the only other retry, is not rendered.
+        toastManager.add({ id: `squad-slots-unknown-${Date.now()}`, title: t("squad.toast.slotsUnavailable"), type: "error", actionProps: { children: tc("routeError.retry"), onClick: () => void refetchSquads() } });
         return false;
     };
 

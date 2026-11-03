@@ -174,7 +174,7 @@ export const GroupCard = memo(function GroupCard({ group, fraction, onOpen, hide
                         <span aria-hidden="true" className={styles.scrim} />
                         <span className={styles.content}>
                             {hideKind ? null : <span className={styles.badge}>{t(`browse.badge.${kindOf(group)}`)}</span>}
-                            {title.kind === "logotype" ? <Logotype url={asset(title.url)} name={group.name} /> : <FittedTitle name={group.name} />}
+                            {title.kind === "logotype" ? <Logotype key={title.url} url={asset(title.url)} name={group.name} /> : <FittedTitle name={group.name} />}
                         </span>
                         <span aria-hidden="true" className={styles.progress}>
                             <InkFill art={art} pct={pct} />
