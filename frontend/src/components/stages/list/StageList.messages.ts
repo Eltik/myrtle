@@ -15,17 +15,13 @@ export const messages = {
         text: "Stages",
         description: "Last breadcrumb crumb: this page.",
     },
-    "list.title": {
-        text: "Every operation, cataloged.",
-        description: "Page heading of the stage list. 'Operation' is the game's word for a stage.",
-    },
     "list.blurb": {
         text: "Browse by story arc and code. Each stage opens to a faux-3D board and enemy-pathing simulator.",
         description: "Paragraph under the stage-list heading, explaining what the list offers.",
     },
     "list.counts": {
-        text: "STAGES · {zones} ZONES · {categories} CATEGORIES",
-        description: "Metric line beside the total stage count, which is rendered separately in large type just above it. Uppercase on purpose. {zones} and {categories} are counts.",
+        text: "{stages} stages · {zones} zones · {categories} categories",
+        description: "Muted meta line beside the stage-list heading. {stages} and {zones} are formatted counts, {categories} is a count; all are always more than one.",
     },
     "list.search.placeholder": {
         text: "Search event, code or stage…",

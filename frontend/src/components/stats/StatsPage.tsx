@@ -1,14 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { useMemo } from "react";
-import { Kicker } from "#/components/ui/kicker";
 import { Skeleton } from "#/components/ui/skeleton";
 import { statsQueryOptions } from "#/lib/api/stats";
 import { type TypedRichT, useFormatters, useRichT, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { CatalogGrid } from "./impl/CatalogGrid";
 import { FieldNotes } from "./impl/FieldNotes";
-import { type IKpiCell, KpiCell, KpiStrip } from "./impl/KpiStrip";
+import { KpiCell } from "./impl/KpiStrip";
 import { PageHeader } from "./impl/PageHeader";
 import type { messages } from "./StatsPage.messages";
 
@@ -20,35 +18,8 @@ export function StatsPage() {
     const f = useFormatters();
     const { data, isError, error } = useQuery(statsQueryOptions());
 
-    const headlineCells = useMemo<IKpiCell[]>(() => {
-        if (!data) {
-            return [
-                { label: t("page.kpi.operators"), value: SKELETON, meta: <span>-</span> },
-                { label: t("page.kpi.tierLists"), value: SKELETON, meta: <span>-</span> },
-                { label: t("page.kpi.rosters"), value: SKELETON, meta: <span>-</span> },
-            ];
-        }
-        return [
-            {
-                label: t("page.kpi.operators"),
-                value: f.number(data.gameData.operators),
-                meta: <span>{t("page.kpi.operators.meta", { skills: f.number(data.gameData.skills), modules: f.number(data.gameData.modules) })}</span>,
-            },
-            {
-                label: t("page.kpi.tierLists"),
-                value: f.number(data.tierLists.active),
-                meta: <span>{t("page.kpi.tierLists.meta", { total: f.number(data.tierLists.total), versions: f.number(data.tierLists.totalVersions) })}</span>,
-            },
-            {
-                label: t("page.kpi.rosters"),
-                value: f.compact(data.rosters.total),
-                meta: <span>{t("page.kpi.rosters.meta")}</span>,
-            },
-        ];
-    }, [data, t, f]);
-
     return (
-        <section className="mx-auto flex w-full max-w-330 flex-col gap-6 px-8 pt-7 pb-15 max-[760px]:px-4 max-[760px]:pt-5 max-[760px]:pb-10">
+        <section className="page-shell flex flex-col gap-6">
             <PageHeader computedAt={data?.computedAt} />
 
             {isError ? (
@@ -57,21 +28,17 @@ export function StatsPage() {
                 </div>
             ) : null}
 
-            <KpiStrip cells={headlineCells} />
-
-            <section className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 sm:p-6">
+            <section className="flex flex-col gap-4">
                 <header className="flex flex-col gap-1">
-                    <Kicker className="mb-2.5">{t("page.catalog.kicker")}</Kicker>
                     <h2 className="m-0 text-balance font-sans font-semibold text-[22px] text-foreground leading-[1.15] tracking-[-0.02em]">{t("page.catalog.title")}</h2>
                     <p className="m-0 font-sans text-[13px] text-muted-foreground leading-normal">{t("page.catalog.blurb")}</p>
                 </header>
-                {data ? <CatalogGrid gameData={data.gameData} tierLists={data.tierLists} rosters={data.rosters} /> : <Skeleton className="h-[328px] rounded-2xl border border-border max-sm:-mx-4 max-sm:rounded-none max-sm:border-x-0 lg:h-[164px]" />}
+                {data ? <CatalogGrid gameData={data.gameData} rosters={data.rosters} /> : <Skeleton className="h-[328px] rounded-2xl border border-border lg:h-[164px]" />}
                 <FieldNotes />
             </section>
 
-            <section className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 sm:p-6">
+            <section className="flex flex-col gap-4">
                 <header className="flex flex-col gap-1">
-                    <Kicker className="mb-2.5">{t("page.community.kicker")}</Kicker>
                     <h2 className="m-0 text-balance font-sans font-semibold text-[22px] text-foreground leading-[1.15] tracking-[-0.02em]">{t("page.community.title")}</h2>
                     <p className="m-0 font-sans text-[13px] text-muted-foreground leading-normal">
                         {rt("page.community.blurb", {
@@ -80,8 +47,7 @@ export function StatsPage() {
                         })}
                     </p>
                 </header>
-                {/* Below sm the inner grids drop their own frame and run to the card's edge, so cell text sits 17px in like the strip above, not 36px. */}
-                <div className="grid grid-cols-[repeat(4,1fr)] overflow-hidden rounded-2xl border border-border bg-card max-sm:-mx-4 max-sm:rounded-none max-sm:border-x-0 max-[1180px]:grid-cols-2 max-[520px]:grid-cols-1">
+                <div className="grid grid-cols-[repeat(4,1fr)] overflow-hidden rounded-2xl border border-border bg-card max-[1180px]:grid-cols-2 max-[520px]:grid-cols-1">
                     {data ? (
                         <>
                             <KpiCell label={t("page.cell.totalLists")} value={f.number(data.tierLists.total)} meta={<span>{t("page.cell.totalLists.meta", { count: f.number(Math.max(0, data.tierLists.total - data.tierLists.active)) })}</span>} />

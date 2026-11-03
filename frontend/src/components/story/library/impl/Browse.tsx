@@ -144,6 +144,7 @@ export function Browse({ index, progress, gameRead, openGroup, onOpenHandled }: 
     const recordsForced = searched.trim() !== "" || shownFilter === "records";
     const showRecords = recordsOpen || recordsForced;
 
+    const storyGroupCount = useMemo(() => index.groups.filter((g) => g.category !== "record").length, [index.groups]);
     const openGroupObject = useMemo(() => (openId ? (index.groups.find((g) => g.id === openId) ?? null) : null), [openId, index.groups]);
     // The sheet's left and right are the page's own order: the shelves as the
     // sections and the jump bar lay them out, or the one list a sort made. A
@@ -205,11 +206,23 @@ export function Browse({ index, progress, gameRead, openGroup, onOpenHandled }: 
     // components of the head's controls twice over.
     const toolbar: IBrowseToolbarState = useMemo(() => ({ query, setQuery, filter, setFilter, readFilter, setReadFilter, sort, setSort, view, setView }), [query, filter, readFilter, setReadFilter, sort, setSort, view, setView]);
     const tools = useMemo(() => <ToolbarButton state={toolbar} />, [toolbar]);
+    // The pinned bar's search button shows only once the inline toolbar has
+    // gone under the site header, so the page never offers two at once.
+    const toolbarRef = useRef<HTMLDivElement | null>(null);
+    const [toolbarInView, setToolbarInView] = useState(true);
+    useEffect(() => {
+        const node = toolbarRef.current;
+        if (!node || typeof IntersectionObserver === "undefined") return;
+        // 65 px is the tallest site header (4rem + 1px); the phone's 57 px one shows the button 8 px early.
+        const observer = new IntersectionObserver(([entry]) => setToolbarInView(entry?.isIntersecting ?? true), { rootMargin: "-65px 0px 0px 0px" });
+        observer.observe(node);
+        return () => observer.disconnect();
+    }, []);
     const closeSheet = useCallback(() => setOpenId(null), []);
 
     return (
         <>
-            <div className="flex flex-col gap-3">
+            <div ref={toolbarRef} className="flex flex-col gap-3">
                 <BrowseToolbar state={toolbar} />
 
                 {library.fallback ? <p className="m-0 rounded-2xl border border-warning/40 bg-warning/8 px-3 py-2 font-sans text-[12px] text-muted-foreground">{t("browse.fallback")}</p> : null}
@@ -218,14 +231,15 @@ export function Browse({ index, progress, gameRead, openGroup, onOpenHandled }: 
             {/* The bar is pinned under a sort too, with no chips in it: it is the only
                 search and filter a scrolled reader has, and a sorted page is the one
                 most likely to want its sort changed back. */}
-            <JumpBar chips={flat === null ? chips : NO_CHIPS} tools={tools} />
+            <JumpBar chips={flat === null ? chips : NO_CHIPS} tools={tools} toolsShown={!toolbarInView} />
 
             {(flat === null ? library.sections.length === 0 : flat.length === 0) && library.records.length === 0 ? <div className="mt-6 rounded-2xl border border-border border-dashed p-14 text-center font-sans text-[14px] text-muted-foreground">{t("browse.empty")}</div> : null}
 
             {flat !== null ? (
                 flat.length > 0 ? (
                     <section className="mt-7">
-                        <FlatHead title={t("browse.section.sorted")} count={t("browse.section.count", { count: flat.length })} />
+                        {/* The page head already counts every chapter; the flat head repeats a count only when a filter has narrowed it. */}
+                        <FlatHead title={t("browse.section.sorted")} count={flat.length === storyGroupCount ? undefined : t("browse.section.count", { count: flat.length })} />
                         <Cards groups={flat} view={shownView} fractionOf={fractionOf} onOpen={setOpenId} />
                     </section>
                 ) : null

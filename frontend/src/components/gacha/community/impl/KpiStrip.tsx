@@ -19,7 +19,6 @@ export function KpiStrip({ data }: IKpiStripProps) {
     return (
         <KpiGrid columnsClass="grid-cols-[1.4fr_1fr_1fr_1fr] max-[1180px]:grid-cols-2 max-[520px]:grid-cols-1">
             <Kpi
-                featured
                 label={t("community.kpi.sixStarRate")}
                 value={
                     pr ? (

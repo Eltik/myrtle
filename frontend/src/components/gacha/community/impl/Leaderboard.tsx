@@ -126,7 +126,7 @@ function LeaderTable({ ops, operatorsById, isLoading }: { ops: IOperatorPopulari
                                 <td className="hidden w-45 px-2 py-2.5 pr-2 align-middle sm:table-cell">
                                     <div className="flex items-center gap-2.5">
                                         <div className="h-1 flex-1 overflow-hidden rounded-full bg-muted">
-                                            <div className="h-full rounded-full" style={{ width: `${bar}%`, background: "linear-gradient(90deg, var(--primary), oklch(0.78 0.16 25))" }} />
+                                            <div className="h-full rounded-full bg-muted-foreground" style={{ width: `${bar}%` }} />
                                         </div>
                                         <span className="min-w-14 text-right font-mono text-[11px] text-muted-foreground tabular-nums">{fmtPct(op.percentage, 3)}</span>
                                     </div>

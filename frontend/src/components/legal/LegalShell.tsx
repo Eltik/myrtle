@@ -32,8 +32,9 @@ export function LegalHeader({ title, subtitle, version, children }: ILegalHeader
                 subtitle about 60% of a 375 px screen. */}
             <div className="flex flex-col items-start gap-4 sm:flex-row sm:justify-between">
                 <div className="min-w-0">
-                    <h1 className="m-0 mb-3.5 text-balance font-extrabold text-[clamp(36px,5vw,52px)] text-foreground leading-[1.05] tracking-[-0.02em]">{title}</h1>
-                    <p className="m-0 max-w-[56ch] font-sans text-[20px] text-muted-foreground leading-[1.55]">{subtitle}</p>
+                    {/* The site's page title size (ui/page-header): a 52 px title here read as a different site. */}
+                    <h1 className="m-0 mb-2 text-balance font-bold font-sans text-[24px] text-foreground leading-[1.1] tracking-tight sm:text-[30px]">{title}</h1>
+                    <p className="m-0 max-w-[56ch] font-sans text-[15px] text-muted-foreground leading-[1.55]">{subtitle}</p>
                 </div>
                 <div className="flex shrink-0 gap-2 sm:pt-2">
                     <Badge variant="outline" size="lg">
@@ -67,7 +68,7 @@ interface ISectionHeadingProps {
 export function SectionHeading({ title, subtitle }: ISectionHeadingProps) {
     return (
         <div className="mb-4 min-w-0">
-            <h2 className="m-0 font-(--font-heading) text-[26px] text-foreground leading-[1.2] tracking-[-0.02em] sm:text-[30px]">{title}</h2>
+            <h2 className="m-0 font-(--font-heading) font-semibold text-[20px] text-foreground leading-[1.25] tracking-[-0.01em] sm:text-[22px]">{title}</h2>
             {subtitle ? <p className="m-0 mt-1 font-sans text-[14px] text-muted-foreground leading-normal">{subtitle}</p> : null}
         </div>
     );

@@ -204,7 +204,7 @@ export const SkillsContent = memo(function SkillsContent({ operator }: ISkillsCo
                 {levelsCount > 7 && (
                     <div className="mb-5 flex items-center justify-between gap-4 border-border border-b pb-5">
                         <span className="flex items-center gap-2.5">
-                            {comparisonMode ? <Columns className="h-4 w-4 text-primary" /> : <Rows className="h-4 w-4 text-muted-foreground" />}
+                            {comparisonMode ? <Columns className="h-4 w-4 text-muted-foreground" /> : <Rows className="h-4 w-4 text-muted-foreground" />}
                             <span className="font-medium text-foreground text-sm" id={compareLabelId}>
                                 {t("skills.compare.toggle")}
                             </span>
@@ -301,29 +301,29 @@ export const SkillsContent = memo(function SkillsContent({ operator }: ISkillsCo
                         </div>
                     </div>
 
-                    <div className="mb-5 grid grid-cols-3 gap-3">
-                        <div className="rounded-sm border border-border/50 bg-secondary/20 p-3 text-center">
-                            <div className="text-muted-foreground text-xs">{t("skills.spCost")}</div>
-                            <div className="mt-1 font-mono font-semibold text-foreground text-lg">
+                    <dl className="mb-5 grid grid-cols-3 gap-x-4 border-border/60 border-y py-3">
+                        <div className="min-w-0">
+                            <dt className="text-muted-foreground text-xs">{t("skills.spCost")}</dt>
+                            <dd className="mt-0.5 font-mono font-semibold text-base text-foreground">
                                 {skillData.spData?.spCost ?? "-"}
                                 {cnSpCost && <CnValue value={cnSpCost} />}
-                            </div>
+                            </dd>
                         </div>
-                        <div className="rounded-sm border border-border/50 bg-secondary/20 p-3 text-center">
-                            <div className="text-muted-foreground text-xs">{t("skills.initialSp")}</div>
-                            <div className="mt-1 font-mono font-semibold text-foreground text-lg">
+                        <div className="min-w-0">
+                            <dt className="text-muted-foreground text-xs">{t("skills.initialSp")}</dt>
+                            <dd className="mt-0.5 font-mono font-semibold text-base text-foreground">
                                 {skillData.spData?.initSp ?? "-"}
                                 {cnInitSp && <CnValue value={cnInitSp} />}
-                            </div>
+                            </dd>
                         </div>
-                        <div className="rounded-sm border border-border/50 bg-secondary/20 p-3 text-center">
-                            <div className="text-muted-foreground text-xs">{t("skills.duration")}</div>
-                            <div className="mt-1 font-mono font-semibold text-foreground text-lg">
+                        <div className="min-w-0">
+                            <dt className="text-muted-foreground text-xs">{t("skills.duration")}</dt>
+                            <dd className="mt-0.5 font-mono font-semibold text-base text-foreground">
                                 {skillData.duration && skillData.duration > 0 ? t("skills.durationSeconds", { value: skillData.duration }) : "-"}
                                 {cnDuration && <CnValue value={cnDuration} />}
-                            </div>
+                            </dd>
                         </div>
-                    </div>
+                    </dl>
 
                     <div className="rounded-sm border border-border/50 bg-secondary/10 p-4">
                         <p

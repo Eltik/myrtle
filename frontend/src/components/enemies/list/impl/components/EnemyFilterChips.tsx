@@ -1,5 +1,6 @@
 import type React from "react";
 import { FilterChip } from "#/components/ui/filter-chip";
+import { Kicker } from "#/components/ui/kicker";
 import type { IEnemyDamageType, IEnemyLevel } from "#/lib/api/enemies";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -17,14 +18,10 @@ interface IChipGroupProps {
 function ChipGroup({ label, children }: IChipGroupProps) {
     return (
         <div className="flex w-full flex-col gap-1.5 sm:w-auto sm:flex-row sm:items-center sm:gap-2.5">
-            <span className="shrink-0 whitespace-nowrap font-medium font-mono text-[10px] text-muted-foreground leading-none">{label}</span>
+            <Kicker className="shrink-0 whitespace-nowrap leading-none">{label}</Kicker>
             <div className="flex flex-wrap gap-1.5">{children}</div>
         </div>
     );
-}
-
-function ChipDivider() {
-    return <span aria-hidden="true" className="mx-1 hidden h-6 w-px self-stretch bg-border sm:block" />;
 }
 
 function toggleArray<T>(list: T[], v: T): T[] {
@@ -57,8 +54,6 @@ export function EnemyFilterChips({ filters, setLevels, setDamageTypes, setAttack
                 ))}
             </ChipGroup>
 
-            <ChipDivider />
-
             <ChipGroup label={t("chips.damage")}>
                 {DAMAGE_TYPES.map((d) => (
                     <FilterChip
@@ -77,15 +72,11 @@ export function EnemyFilterChips({ filters, setLevels, setDamageTypes, setAttack
                 ))}
             </ChipGroup>
 
-            <ChipDivider />
-
             <ChipGroup label={t("chips.range")}>
                 {APPLY_WAYS.map((a) => (
                     <FilterChip key={a} active={filters.attackTypes.includes(a)} onSelect={() => setAttackTypes(toggleArray(filters.attackTypes, a))} label={tConst(APPLY_WAY_LABEL_KEY[a])} />
                 ))}
             </ChipGroup>
-
-            <ChipDivider />
 
             {/* AND, unlike the other groups: several picks keep only enemies immune to all of them. */}
             <ChipGroup label={t("chips.immune")}>
@@ -96,7 +87,6 @@ export function EnemyFilterChips({ filters, setLevels, setDamageTypes, setAttack
 
             {races.length > 0 && (
                 <>
-                    <ChipDivider />
                     <ChipGroup label={t("chips.race")}>
                         {races.map((r) => (
                             <FilterChip key={r.id} active={filters.races.includes(r.id)} onSelect={() => setRaces(toggleArray(filters.races, r.id))} label={r.label} />

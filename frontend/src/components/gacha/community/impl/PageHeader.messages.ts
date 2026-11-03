@@ -16,12 +16,8 @@ export const messages = {
         description: "Last breadcrumb crumb: this page.",
     },
     "community.header.title": {
-        text: "What everyone's {emphasis}.",
-        description: "Heading of the community gacha page. {emphasis} is the accent-coloured word labelled by community.header.titleEmphasis and may sit anywhere the sentence needs it. Keep the full stop.",
-    },
-    "community.header.titleEmphasis": {
-        text: "pulling",
-        description: "The accent-coloured word substituted into community.header.title as {emphasis}. 'Pulling' is the community term for spending on headhunting.",
+        text: "What everyone's pulling.",
+        description: "Heading of the community gacha page. 'Pulling' is the community term for spending on headhunting. Keep the full stop.",
     },
     "community.header.blurbUsers": {
         text: "{count} players",

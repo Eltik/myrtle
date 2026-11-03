@@ -2,8 +2,9 @@
     display: flex;
     flex-direction: column;
     gap: 22px;
-    padding: clamp(32px, 8vw, 80px) 0 clamp(32px, 5vw, 48px);
-    border-top: 1px solid var(--border);
+    /* No rule above: the hero's scroll cue already ends the hero, and a hairline under it left
+       the cue floating in a band of its own. The cue's bottom margin is the gap. */
+    padding: clamp(8px, 2vw, 16px) 0 clamp(32px, 5vw, 48px);
     /* The hero's jump link lands here, so the heading clears the sticky header. */
     scroll-margin-top: var(--site-header-height);
 }

@@ -813,7 +813,7 @@ function CollapsibleSection({ icon: Icon, title, open, onOpenChange, children }:
         <Collapsible open={open} onOpenChange={onOpenChange}>
             <CollapsibleTrigger className="flex w-full items-center justify-between rounded-lg border border-border bg-secondary/30 px-4 py-3 transition-colors hover:bg-secondary/50">
                 <span className="flex items-center gap-2">
-                    <Icon aria-hidden="true" className="h-4 w-4 text-primary" />
+                    <Icon aria-hidden="true" className="h-4 w-4 text-muted-foreground" />
                     <span className="font-medium text-sm">{title}</span>
                 </span>
                 <ChevronDown aria-hidden="true" className={cn("h-4 w-4 transition-transform", open && "rotate-180")} />

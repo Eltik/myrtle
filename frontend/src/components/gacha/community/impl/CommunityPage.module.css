@@ -90,10 +90,11 @@
 .hourBar {
     width: 100%;
     border-radius: 2px 2px 0 0;
-    transition: filter 0.15s;
+    background: var(--muted-foreground);
+    transition: background-color 0.15s;
 }
 .hourCell:hover .hourBar {
-    filter: brightness(1.25);
+    background: var(--foreground);
 }
 .hourLabel {
     font-family: var(--font-mono);
@@ -139,7 +140,7 @@
 .dowBar > div {
     height: 100%;
     border-radius: 3px;
-    background: linear-gradient(90deg, var(--primary), oklch(0.78 0.16 25));
+    background: var(--muted-foreground);
 }
 .dowPct {
     color: var(--muted-foreground);

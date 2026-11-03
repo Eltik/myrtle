@@ -4,8 +4,8 @@ export const namespace = "tools";
 
 export const messages = {
     "recruit.empty.noSelection.desc": {
-        text: "Select the tags shown in your in-game recruitment screen. Combinations are ranked by guaranteed minimum rarity.",
-        description: "Empty-state body before any recruitment tag has been picked.",
+        text: "Combinations appear here once you pick a tag.",
+        description: "Empty-state line before any recruitment tag has been picked. The page intro above already explains the tags and the ranking, so this only says where results land.",
     },
     "recruit.empty.noResults.desc": {
         text: "No recruitable operators match the current tags and options. Try removing a tag or enabling more options.",

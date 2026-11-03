@@ -1,10 +1,9 @@
-import { BarChart3, ChevronDown } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { useCallback, useId, useMemo, useState } from "react";
 import { ClassIcon, SubProfessionIcon } from "#/components/operators/list/impl/components/Icons";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
-import { PALETTE } from "../palette";
 import { Bar, CARD_PADDING, CardKicker, StatCard } from "../primitives";
 import type { messages } from "./ClassBreakdownCard.messages";
 
@@ -32,8 +31,6 @@ function shortSubName(name: string): string {
 
 export function ClassBreakdownCard({ professions }: { professions: IProfession[] }) {
     const t: TypedT<typeof messages> = useT("user");
-    const colors = useMemo(() => professions.map((p) => PALETTE.classes[p.profession] ?? PALETTE.collection), [professions]);
-
     // Longest short sub-name, so expanded sub-rows share one column width.
     const maxSubNameLen = useMemo(() => {
         let max = 0;
@@ -57,9 +54,9 @@ export function ClassBreakdownCard({ professions }: { professions: IProfession[]
     }, []);
 
     return (
-        <StatCard className="sm:col-span-2" color={colors}>
+        <StatCard className="sm:col-span-2">
             <div className={cn(CARD_PADDING, "pb-2")}>
-                <CardKicker icon={BarChart3} label={t("profile.stats.classes.title")} />
+                <CardKicker label={t("profile.stats.classes.title")} />
             </div>
             <div className="flex flex-col px-4 pb-4 sm:px-5 sm:pb-5">
                 {professions.map((prof) => (
@@ -80,15 +77,12 @@ interface IProfessionRowProps {
 function ProfessionRow({ prof, expanded, maxSubNameLen, onToggle }: IProfessionRowProps) {
     const panelId = useId();
     const hasSubs = prof.subProfessions.length > 0;
-    const classColor = PALETTE.classes[prof.profession] ?? PALETTE.collection;
 
     return (
         <div>
             <button aria-controls={hasSubs ? panelId : undefined} aria-expanded={hasSubs ? expanded : undefined} className="group -mx-3 w-[calc(100%+1.5rem)] cursor-pointer rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-muted/40" onClick={() => onToggle(prof.profession)} type="button">
                 <div className="flex items-center gap-3">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl" style={{ background: `color-mix(in oklch, ${classColor} 14%, transparent)` }}>
-                        <ClassIcon className="opacity-80" profession={prof.profession} size={22} />
-                    </div>
+                    <ClassIcon className="shrink-0 opacity-80" profession={prof.profession} size={22} />
                     <div className="flex w-full min-w-0 flex-col gap-1.5">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-1.5">
@@ -100,7 +94,7 @@ function ProfessionRow({ prof, expanded, maxSubNameLen, onToggle }: IProfessionR
                                 <span className="font-mono text-[10.5px] text-muted-foreground">/ {prof.total}</span>
                             </div>
                         </div>
-                        <Bar color={classColor} pct={prof.percentage} />
+                        <Bar pct={prof.percentage} />
                     </div>
                 </div>
             </button>
@@ -116,7 +110,7 @@ function ProfessionRow({ prof, expanded, maxSubNameLen, onToggle }: IProfessionR
                             }}
                         >
                             {prof.subProfessions.map((sub, idx) => (
-                                <SubProfessionRow color={classColor} isLast={idx === prof.subProfessions.length - 1} key={sub.subProfessionId} sub={sub} />
+                                <SubProfessionRow isLast={idx === prof.subProfessions.length - 1} key={sub.subProfessionId} sub={sub} />
                             ))}
                         </div>
                     </div>
@@ -128,11 +122,10 @@ function ProfessionRow({ prof, expanded, maxSubNameLen, onToggle }: IProfessionR
 
 interface ISubProfessionRowProps {
     sub: ISubProfession;
-    color: string;
     isLast: boolean;
 }
 
-function SubProfessionRow({ sub, color, isLast }: ISubProfessionRowProps) {
+function SubProfessionRow({ sub, isLast }: ISubProfessionRowProps) {
     return (
         <div className="group/row relative col-span-4 grid grid-cols-subgrid items-center gap-x-2 rounded-md py-1.5 pr-2 transition-colors hover:bg-muted/20">
             <div className={cn("absolute left-0 w-px bg-muted-foreground/20", isLast ? "top-0 h-1/2" : "top-0 h-full")} />
@@ -143,7 +136,7 @@ function SubProfessionRow({ sub, color, isLast }: ISubProfessionRowProps) {
             <span className={cn("max-w-20 truncate font-mono text-[10.5px] text-subtle-foreground sm:max-w-none")} style={{ minWidth: "var(--sub-name-w)" }}>
                 {shortSubName(sub.displayName)}
             </span>
-            <Bar color={color} dim pct={sub.percentage} thin />
+            <Bar dim pct={sub.percentage} thin />
             <span className="w-10 shrink-0 text-right font-mono text-[10.5px] text-subtle-foreground tabular-nums">
                 {sub.owned}/{sub.total}
             </span>

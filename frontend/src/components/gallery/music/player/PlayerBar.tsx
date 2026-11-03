@@ -69,9 +69,7 @@ export function PlayerBar({ offPage = false }: { offPage?: boolean }): React.Rea
                                 </div>
                             )}
                             <div className="flex min-w-0 flex-col leading-tight">
-                                <Kicker className="block truncate" tone="accent">
-                                    {kicker}
-                                </Kicker>
+                                <Kicker className="block truncate">{kicker}</Kicker>
                                 <ClippedText className="font-sans font-semibold text-[13.5px] text-foreground" text={title} />
                                 <ClippedText className="text-[11.5px] text-muted-foreground" text={subLine(current, houseArtist)} />
                             </div>

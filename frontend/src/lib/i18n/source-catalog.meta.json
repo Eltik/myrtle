@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-11-03T18:18:09.137Z",
+    "generatedAt": "2026-11-03T18:51:06.328Z",
     "entries": [
         {
             "key": "admin.home.access.everyList",
@@ -11457,17 +11457,8 @@
         {
             "key": "gacha.community.header.title",
             "namespace": "gacha",
-            "source_text": "What everyone's {emphasis}.",
-            "description": "Heading of the community gacha page. {emphasis} is the accent-coloured word labelled by community.header.titleEmphasis and may sit anywhere the sentence needs it. Keep the full stop.",
-            "placeholders": [
-                "emphasis"
-            ]
-        },
-        {
-            "key": "gacha.community.header.titleEmphasis",
-            "namespace": "gacha",
-            "source_text": "pulling",
-            "description": "The accent-coloured word substituted into community.header.title as {emphasis}. 'Pulling' is the community term for spending on headhunting.",
+            "source_text": "What everyone's pulling.",
+            "description": "Heading of the community gacha page. 'Pulling' is the community term for spending on headhunting. Keep the full stop.",
             "placeholders": []
         },
         {
@@ -26956,7 +26947,7 @@
             "key": "stages.drops.title",
             "namespace": "stages",
             "source_text": "Drops",
-            "description": "Kicker over the stage's drop cards; the count of drops sits beside it.",
+            "description": "Section heading over the stage's drop cards; the count of drops sits beside it.",
             "placeholders": []
         },
         {
@@ -26988,7 +26979,7 @@
             "key": "stages.enemies.title",
             "namespace": "stages",
             "source_text": "Enemies · {count}",
-            "description": "Kicker over the grid of enemy cards, with how many distinct enemies the stage fields.",
+            "description": "Section heading over the grid of enemy cards, with how many distinct enemies the stage fields.",
             "placeholders": [
                 "count"
             ]
@@ -27202,7 +27193,7 @@
             "key": "stages.legend.title",
             "namespace": "stages",
             "source_text": "Legend",
-            "description": "Kicker over the row of colour swatches explaining the map's tile colours.",
+            "description": "Label over the row of colour swatches explaining the map's tile colours.",
             "placeholders": []
         },
         {
@@ -27325,10 +27316,11 @@
         {
             "key": "stages.list.counts",
             "namespace": "stages",
-            "source_text": "STAGES · {zones} ZONES · {categories} CATEGORIES",
-            "description": "Metric line beside the total stage count, which is rendered separately in large type just above it. Uppercase on purpose. {zones} and {categories} are counts.",
+            "source_text": "{stages} stages · {zones} zones · {categories} categories",
+            "description": "Muted meta line beside the stage-list heading. {stages} and {zones} are formatted counts, {categories} is a count; all are always more than one.",
             "placeholders": [
                 "categories",
+                "stages",
                 "zones"
             ]
         },
@@ -27414,13 +27406,6 @@
             "namespace": "stages",
             "source_text": "Search event, code or stage…",
             "description": "Placeholder in the stage-list search box. Ends with a single ellipsis character.",
-            "placeholders": []
-        },
-        {
-            "key": "stages.list.title",
-            "namespace": "stages",
-            "source_text": "Every operation, cataloged.",
-            "description": "Page heading of the stage list. 'Operation' is the game's word for a stage.",
             "placeholders": []
         },
         {
@@ -27684,7 +27669,7 @@
             "key": "stages.overview.title",
             "namespace": "stages",
             "source_text": "Overview",
-            "description": "Kicker over the row of stage stat cards (starting DP, DP rate, unit limit, move speed).",
+            "description": "Section heading over the row of stage stat cards (starting DP, DP rate, unit limit, move speed).",
             "placeholders": []
         },
         {
@@ -27782,7 +27767,7 @@
             "key": "stages.props.ids.title",
             "namespace": "stages",
             "source_text": "Identifiers",
-            "description": "Kicker over the grid of raw backend ids for this stage.",
+            "description": "Section heading over the grid of raw backend ids for this stage.",
             "placeholders": []
         },
         {
@@ -27831,7 +27816,7 @@
             "key": "stages.props.title",
             "namespace": "stages",
             "source_text": "Properties",
-            "description": "Kicker over the list of yes/no stage flags.",
+            "description": "Section heading over the list of yes/no stage flags.",
             "placeholders": []
         },
         {
@@ -27924,7 +27909,7 @@
             "key": "stages.spawns.title",
             "namespace": "stages",
             "source_text": "Spawn schedule",
-            "description": "Kicker over the table of enemy spawns, ordered by the second they appear.",
+            "description": "Section heading over the table of enemy spawns, ordered by the second they appear.",
             "placeholders": []
         },
         {
@@ -28087,7 +28072,7 @@
             "key": "stages.waves.title",
             "namespace": "stages",
             "source_text": "Waves · {count}",
-            "description": "Kicker over the wave cards, with how many waves the stage has.",
+            "description": "Section heading over the wave cards, with how many waves the stage has.",
             "placeholders": [
                 "count"
             ]
@@ -28197,22 +28182,6 @@
             "namespace": "stats",
             "source_text": "across {count} zones",
             "description": "Sub-line under the stage count. A zone groups stages. {count} is an already-formatted number and the label is always plural in the source.",
-            "placeholders": [
-                "count"
-            ]
-        },
-        {
-            "key": "stats.catalog.tierLists",
-            "namespace": "stats",
-            "source_text": "Tier lists",
-            "description": "Catalog tile label: community tier lists. Its value reads 'active/total'. Rendered uppercase.",
-            "placeholders": []
-        },
-        {
-            "key": "stats.catalog.tierLists.meta",
-            "namespace": "stats",
-            "source_text": "{count} placements",
-            "description": "Sub-line under the tier-list tile. A placement is one operator placed on one tier. {count} is an already-formatted compact number and the label is always plural in the source.",
             "placeholders": [
                 "count"
             ]
@@ -28382,17 +28351,10 @@
             "placeholders": []
         },
         {
-            "key": "stats.page.catalog.kicker",
-            "namespace": "stats",
-            "source_text": "Game catalog",
-            "description": "Eyebrow label above the game-catalog section of the stats page. Rendered uppercase.",
-            "placeholders": []
-        },
-        {
             "key": "stats.page.catalog.title",
             "namespace": "stats",
-            "source_text": "What we know about Terra.",
-            "description": "Heading of the game-catalog section. 'Terra' is the name of the game's world and is not translated.",
+            "source_text": "Game catalog",
+            "description": "Heading of the game-catalog section of the stats page: counts of operators, skills, stages and so on from the game data.",
             "placeholders": []
         },
         {
@@ -28475,16 +28437,9 @@
             "placeholders": []
         },
         {
-            "key": "stats.page.community.kicker",
-            "namespace": "stats",
-            "source_text": "Tier lists · community",
-            "description": "Eyebrow label above the community tier-list section of the stats page. Rendered uppercase; the middle dot is a separator.",
-            "placeholders": []
-        },
-        {
             "key": "stats.page.community.title",
             "namespace": "stats",
-            "source_text": "The community's working notes.",
+            "source_text": "Community tier lists",
             "description": "Heading of the community tier-list section of the stats page.",
             "placeholders": []
         },
@@ -28509,54 +28464,6 @@
             "description": "Closing note on the stats page. {link} is a link whose label is the literal URL path /gacha/community; move it wherever the sentence needs it. 'Gacha' is the game's randomised recruitment system and a 'pull' is one draw from it.",
             "placeholders": [
                 "link"
-            ]
-        },
-        {
-            "key": "stats.page.kpi.operators",
-            "namespace": "stats",
-            "source_text": "Operators indexed",
-            "description": "Headline tile label: how many operators (playable characters) the site has data for. Rendered uppercase in a narrow tile.",
-            "placeholders": []
-        },
-        {
-            "key": "stats.page.kpi.operators.meta",
-            "namespace": "stats",
-            "source_text": "{skills} skills · {modules} modules",
-            "description": "Sub-line under the operator count. Both values are already-formatted numbers; 'modules' are operator equipment upgrades.",
-            "placeholders": [
-                "modules",
-                "skills"
-            ]
-        },
-        {
-            "key": "stats.page.kpi.rosters",
-            "namespace": "stats",
-            "source_text": "Rosters synced",
-            "description": "Headline tile label: how many players have linked their game account. Rendered uppercase.",
-            "placeholders": []
-        },
-        {
-            "key": "stats.page.kpi.rosters.meta",
-            "namespace": "stats",
-            "source_text": "Yostar-linked players",
-            "description": "Sub-line under the roster count. 'Yostar' is the game publisher's account system and stays as-is. 'Player' is the site's term; the game itself says 'Doctor'.",
-            "placeholders": []
-        },
-        {
-            "key": "stats.page.kpi.tierLists",
-            "namespace": "stats",
-            "source_text": "Active tier lists",
-            "description": "Headline tile label: how many community tier lists are currently published. Rendered uppercase.",
-            "placeholders": []
-        },
-        {
-            "key": "stats.page.kpi.tierLists.meta",
-            "namespace": "stats",
-            "source_text": "{total} total · {versions} versions",
-            "description": "Sub-line under the active-tier-list count. A version is a saved revision of a list. Both values are already-formatted numbers.",
-            "placeholders": [
-                "total",
-                "versions"
             ]
         },
         {
@@ -30585,18 +30492,8 @@
         {
             "key": "story.library.counts",
             "namespace": "story",
-            "source_text": "{groups} chapters · {records} operators",
-            "description": "Subhead under the page title: how much the library holds.",
-            "placeholders": [
-                "groups",
-                "records"
-            ]
-        },
-        {
-            "key": "story.library.countsAll",
-            "namespace": "story",
             "source_text": "{groups} chapters · {records} operators · {stories} stories",
-            "description": "Subhead under the page title on a phone, where the headline story count beside the title is dropped and folded in here. {stories} arrives already formatted (1,887).",
+            "description": "Muted meta line under the page title: how much the library holds. {stories} arrives already formatted (1,887).",
             "placeholders": [
                 "groups",
                 "records",
@@ -30608,13 +30505,6 @@
             "namespace": "story",
             "source_text": "Read every Arknights story: main chapters, events and operator records.",
             "description": "Page subtitle of the story library.",
-            "placeholders": []
-        },
-        {
-            "key": "story.library.storiesLabel",
-            "namespace": "story",
-            "source_text": "Stories",
-            "description": "Label under the headline story count beside the page title.",
             "placeholders": []
         },
         {
@@ -34279,7 +34169,7 @@
             "key": "tierLists.detail.hero.community",
             "namespace": "tierLists",
             "source_text": "Community",
-            "description": "Badge marking a tier list built by a player. Rendered uppercase.",
+            "description": "Badge marking a tier list built by a player.",
             "placeholders": []
         },
         {
@@ -34299,24 +34189,17 @@
             ]
         },
         {
-            "key": "tierLists.detail.hero.kicker",
-            "namespace": "tierLists",
-            "source_text": "Tier List",
-            "description": "Small uppercase label above the list's title.",
-            "placeholders": []
-        },
-        {
             "key": "tierLists.detail.hero.official",
             "namespace": "tierLists",
             "source_text": "Official",
-            "description": "Badge marking a tier list maintained by the site's own team. Rendered uppercase.",
+            "description": "Badge marking a tier list maintained by the site's own team.",
             "placeholders": []
         },
         {
             "key": "tierLists.detail.hero.trending",
             "namespace": "tierLists",
             "source_text": "Trending",
-            "description": "Badge marking a list with unusual recent traffic. Rendered uppercase.",
+            "description": "Badge marking a list with unusual recent traffic.",
             "placeholders": []
         },
         {
@@ -34522,7 +34405,7 @@
             "key": "tierLists.detail.stats.trending",
             "namespace": "tierLists",
             "source_text": "Trending now",
-            "description": "Badge in the stats sidebar marking a list with unusual recent traffic. Rendered uppercase.",
+            "description": "Badge in the stats sidebar marking a list with unusual recent traffic.",
             "placeholders": []
         },
         {
@@ -45242,13 +45125,6 @@
             "placeholders": []
         },
         {
-            "key": "tools.randomizer.empty.kicker",
-            "namespace": "tools",
-            "source_text": "No squads rolled",
-            "description": "Small heading over the empty state before anything has been drawn.",
-            "placeholders": []
-        },
-        {
             "key": "tools.randomizer.empty.title",
             "namespace": "tools",
             "source_text": "Nothing rolled yet.",
@@ -46214,8 +46090,8 @@
         {
             "key": "tools.recruit.empty.noSelection.desc",
             "namespace": "tools",
-            "source_text": "Select the tags shown in your in-game recruitment screen. Combinations are ranked by guaranteed minimum rarity.",
-            "description": "Empty-state body before any recruitment tag has been picked.",
+            "source_text": "Combinations appear here once you pick a tag.",
+            "description": "Empty-state line before any recruitment tag has been picked. The page intro above already explains the tags and the ranking, so this only says where results land.",
             "placeholders": []
         },
         {
@@ -48580,24 +48456,10 @@
             "placeholders": []
         },
         {
-            "key": "tools.release.planner.tag.listing",
-            "namespace": "tools",
-            "source_text": "Store sale",
-            "description": "Tag on a row grouping outfits that go on sale without a matching event.",
-            "placeholders": []
-        },
-        {
             "key": "tools.release.planner.tag.rerun",
             "namespace": "tools",
             "source_text": "Rerun",
             "description": "Tag on an event that is being run again.",
-            "placeholders": []
-        },
-        {
-            "key": "tools.release.planner.tag.review",
-            "namespace": "tools",
-            "source_text": "Fashion Review",
-            "description": "Tag on a Fashion Review row. The game's own name for the sale.",
             "placeholders": []
         },
         {
@@ -53497,20 +53359,6 @@
             ]
         },
         {
-            "key": "tools.squad.slots.signIn",
-            "namespace": "tools",
-            "source_text": "Sign in to save squads. The squad below still works without an account.",
-            "description": "Shown in place of the saved slots when signed out.",
-            "placeholders": []
-        },
-        {
-            "key": "tools.squad.slots.signInButton",
-            "namespace": "tools",
-            "source_text": "Sign in",
-            "description": "Button that opens the sign-in dialog.",
-            "placeholders": []
-        },
-        {
             "key": "tools.squad.slots.title",
             "namespace": "tools",
             "source_text": "Your squads",
@@ -54115,13 +53963,6 @@
             "placeholders": [
                 "item"
             ]
-        },
-        {
-            "key": "user.leaderboard.hero.eyebrow",
-            "namespace": "user",
-            "source_text": "Players · Leaderboard",
-            "description": "Small uppercase label above the leaderboard heading, naming the section.",
-            "placeholders": []
         },
         {
             "key": "user.leaderboard.hero.notice",

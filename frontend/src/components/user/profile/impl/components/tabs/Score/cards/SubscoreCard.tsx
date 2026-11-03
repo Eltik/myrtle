@@ -31,18 +31,12 @@ export function SubscoreCard({ sub, score, improvements, isImprovementsLoading, 
 
     return (
         <Collapsible open={open} onOpenChange={setOpen}>
-            <StatCard color={sub.color} className={open ? "ring-1 ring-border/40" : undefined}>
+            <StatCard className={open ? "ring-1 ring-border/40" : undefined}>
                 <CollapsibleTrigger render={<button type="button" className={cn("group flex w-full flex-col gap-5 text-left", CARD_PADDING)} aria-expanded={open} aria-label={t(open ? "score.sub.details.collapse" : "score.sub.details.expand", { label: t(sub.labelKey) })} />}>
                     <div className="flex items-center justify-between">
-                        <CardKicker icon={sub.icon} label={t(sub.labelKey)} />
+                        <CardKicker label={t(sub.labelKey)} />
                         <Tooltip>
-                            <TooltipTrigger
-                                render={
-                                    <span className="cursor-default rounded-md border border-border/50 px-1.5 py-0.5 font-mono font-semibold text-[9.5px] text-subtle-foreground tabular-nums" style={{ background: `color-mix(in oklch, ${sub.color} 8%, transparent)` }}>
-                                        {t("score.sub.shareBadge", { share: wShare.toFixed(0) })}
-                                    </span>
-                                }
-                            />
+                            <TooltipTrigger render={<span className="cursor-default rounded-md border border-border/50 px-1.5 py-0.5 font-mono font-semibold text-[9.5px] text-subtle-foreground tabular-nums">{t("score.sub.shareBadge", { share: wShare.toFixed(0) })}</span>} />
                             <TooltipContent sideOffset={5}>
                                 <p>{t("score.sub.shareTooltip", { share: wShare.toFixed(0), pct: pct.toFixed(1), contribution: contribution.toFixed(1) })}</p>
                             </TooltipContent>
@@ -53,11 +47,10 @@ export function SubscoreCard({ sub, score, improvements, isImprovementsLoading, 
                         <div className="flex flex-col gap-1">
                             <div className="flex items-baseline gap-1.5">
                                 <span
-                                    className="font-bold tabular-nums leading-none"
+                                    className="font-bold text-foreground tabular-nums leading-none"
                                     style={{
                                         fontSize: "clamp(2rem, 2.6vw + 0.75rem, 2.5rem)",
                                         letterSpacing: "-0.03em",
-                                        color: sub.color,
                                     }}
                                 >
                                     {pct.toFixed(1)}
@@ -72,7 +65,7 @@ export function SubscoreCard({ sub, score, improvements, isImprovementsLoading, 
                                 <span className={KICKER_TEXT}>{t("score.sub.progress")}</span>
                                 <span className="font-mono text-[10.5px] text-muted-foreground tabular-nums">{formatPct(score, 2)}</span>
                             </div>
-                            <Bar color={sub.color} pct={pct} />
+                            <Bar pct={pct} />
                         </div>
 
                         <div className="flex items-center justify-between border-border/30 border-t pt-2.5">

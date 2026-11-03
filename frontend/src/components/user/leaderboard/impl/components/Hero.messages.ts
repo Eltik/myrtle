@@ -3,10 +3,6 @@ import { defineMessages, type MessageMap } from "#/lib/i18n/messages";
 export const namespace = "user";
 
 export const messages = {
-    "leaderboard.hero.eyebrow": {
-        text: "Players · Leaderboard",
-        description: "Small uppercase label above the leaderboard heading, naming the section.",
-    },
     "leaderboard.hero.title": {
         text: "Top Players",
         description: "Leaderboard page heading. 'Player' is the site's term; the game itself says 'Doctor'.",

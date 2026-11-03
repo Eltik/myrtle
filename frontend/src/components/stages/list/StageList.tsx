@@ -66,14 +66,9 @@ export function StageList() {
                 className="mb-6 border-border border-b pb-6 sm:mb-7"
                 breadcrumbLabel={t("list.breadcrumb")}
                 breadcrumb={[t("list.breadcrumb.collection"), t("list.breadcrumb.stages")]}
-                title={t("list.title")}
+                title={t("list.breadcrumb.stages")}
                 description={t("list.blurb")}
-                actions={
-                    <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 sm:block sm:text-right">
-                        <div className="font-light font-mono text-[26px] text-primary leading-none tracking-[-0.02em] sm:text-[34px]">{f.number(tree.totalStages)}</div>
-                        <div className="font-mono text-[10px] text-muted-foreground tracking-[0.12em] sm:mt-1.5">{t("list.counts", { zones: tree.totalZones, categories: tree.groups.length })}</div>
-                    </div>
-                }
+                actions={<p className="m-0 font-sans text-[13px] text-muted-foreground tabular-nums">{t("list.counts", { stages: f.number(tree.totalStages), zones: f.number(tree.totalZones), categories: tree.groups.length })}</p>}
             />
 
             {!searching && tree.featured && (filter === "all" || filter === tree.featured.group) && (

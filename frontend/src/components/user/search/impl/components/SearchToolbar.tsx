@@ -20,10 +20,17 @@ import type { messages } from "./SearchToolbar.messages";
 /** The sort names in `searchControls.messages.ts` are rendered here too. */
 type ToolbarT = TypedT<typeof messages & typeof sortMessages>;
 
-/** Filter trigger: 44px under a coarse pointer, 36px on narrow screens, the site's 32px on desktop. */
-const FILTER = "inline-flex h-9 cursor-pointer items-center gap-2 rounded-lg border border-input bg-card px-2.5 font-medium font-sans text-foreground text-xs leading-none transition-colors hover:border-foreground/20 sm:h-8 pointer-coarse:h-11";
-const KICKER = "kicker shrink-0 leading-none";
-const GROUP_HEADING = "kicker leading-none";
+/** The chip box sized to the single picker and the scope trigger: 36px narrow, 32px from sm (chips 24px there). */
+const CHIPS_SIZE = "sm:min-h-8 sm:*:min-h-6";
+
+/** Filter trigger: the kit input's surface and type, 36px on narrow screens, the site's 32px on desktop. */
+const FILTER = "inline-flex h-9 cursor-pointer items-center gap-2 rounded-lg border border-input bg-background px-2.5 font-sans text-base text-foreground leading-none transition-colors hover:border-foreground/20 sm:h-8 sm:text-sm dark:bg-input/32";
+/** 44px under a coarse pointer for the toolbar row's own buttons. */
+const COARSE = "pointer-coarse:h-11";
+/** A label over a control or a group: the one kicker voice. */
+const LABEL = "kicker leading-none";
+/** A label inside a trigger, before its value: plain muted sans. */
+const INLINE_LABEL = "shrink-0 text-muted-foreground";
 
 /**
  * The game's name for a scope, the class or the archetype, in the server's own wording read off the operator index
@@ -68,8 +75,8 @@ export function SearchToolbar({ controls }: { controls: ISearchControls }) {
                 <DirToggle sort={controls.sort} dir={controls.dir} onToggle={controls.toggleDir} />
             </div>
 
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 font-sans text-[12.5px] text-muted-foreground leading-none">
-                <span className={KICKER}>{t("search.toolbar.filters")}</span>
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pb-1.5 font-sans text-[12.5px] text-muted-foreground leading-none">
+                <span className="font-medium text-foreground">{t("search.toolbar.filters")}</span>
                 <span>{t("search.toolbar.filters.count", { count: controls.activeFilters })}</span>
                 {controls.activeFilters > 0 ? (
                     <Button variant="ghost" size="xs" onClick={controls.clearFilters} className="h-6 gap-1 px-1.5 text-[12px]">
@@ -81,20 +88,20 @@ export function SearchToolbar({ controls }: { controls: ISearchControls }) {
 
             <div className="grid gap-2 sm:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_auto] sm:items-start">
                 <div className="flex flex-col gap-1">
-                    <label htmlFor="search-has" className={KICKER}>
+                    <label htmlFor="search-has" className={LABEL}>
                         {t("search.toolbar.has.label")}
                     </label>
-                    <OperatorMultiCombobox id="search-has" operators={operators} value={controls.has} onChange={controls.setHas} label={t("search.toolbar.has.label")} placeholder={t("search.toolbar.has.placeholder")} />
+                    <OperatorMultiCombobox className={CHIPS_SIZE} id="search-has" operators={operators} value={controls.has} onChange={controls.setHas} label={t("search.toolbar.has.label")} placeholder={t("search.toolbar.has.placeholder")} />
                 </div>
                 <div className="flex flex-col gap-1">
-                    <label htmlFor="search-support" className={KICKER}>
+                    <label htmlFor="search-support" className={LABEL}>
                         {t("search.toolbar.support.label")}
                     </label>
                     <OperatorSingleCombobox id="search-support" operators={operators} value={controls.support} onChange={controls.setSupport} label={t("search.toolbar.support.label")} placeholder={t("search.toolbar.support.placeholder")} />
                 </div>
                 <div className="flex flex-col gap-1">
                     {/* Height matches the two picker labels so the three controls sit on one baseline. */}
-                    <span className={KICKER} aria-hidden="true">
+                    <span className={LABEL} aria-hidden="true">
                         &nbsp;
                     </span>
                     <AllPicker scope={controls.all} onChange={controls.setAll} operators={operators} />
@@ -125,14 +132,14 @@ function SortPicker({ sort, onSort, operators }: { sort: string; onSort: (next: 
 
     return (
         <Popover open={open} onOpenChange={setOpen}>
-            <PopoverTrigger aria-label={t("search.toolbar.rankBy.aria")} className={cn(FILTER, "min-w-0 max-w-full")}>
-                <span className={KICKER}>{t("search.toolbar.rankBy")}</span>
+            <PopoverTrigger aria-label={t("search.toolbar.rankBy.aria")} className={cn(FILTER, COARSE, "min-w-0 max-w-full")}>
+                <span className={INLINE_LABEL}>{t("search.toolbar.rankBy")}</span>
                 <span className="min-w-0 truncate font-semibold text-foreground">{label}</span>
                 <ChevronDown className="size-3 shrink-0 opacity-70" aria-hidden />
             </PopoverTrigger>
             <PopoverPopup align="start" className="w-[min(420px,calc(100vw-2rem))] p-0">
                 <section aria-label={t("search.toolbar.rankBy.group.metric")} className="flex flex-col gap-2 p-3">
-                    <span className={GROUP_HEADING}>{t("search.toolbar.rankBy.group.metric")}</span>
+                    <span className={LABEL}>{t("search.toolbar.rankBy.group.metric")}</span>
                     <ul className="m-0 flex list-none flex-wrap gap-1.5 p-0">
                         {METRIC_SORTS.map((key) => {
                             const active = sort === key;
@@ -145,7 +152,7 @@ function SortPicker({ sort, onSort, operators }: { sort: string; onSort: (next: 
                     </ul>
                 </section>
                 <section aria-label={t("search.toolbar.rankBy.group.scope")} className="flex flex-col gap-2 border-border/70 border-t p-3">
-                    <span className={GROUP_HEADING}>{t("search.toolbar.rankBy.group.scope")}</span>
+                    <span className={LABEL}>{t("search.toolbar.rankBy.group.scope")}</span>
                     <ScopePicker scope={scope} onChange={chooseScope} operators={operators} />
                 </section>
             </PopoverPopup>
@@ -158,7 +165,7 @@ function DirToggle({ sort, dir, onToggle }: { sort: string; dir: "asc" | "desc";
     const label = sort === "joined" ? (dir === "asc" ? t("search.toolbar.dir.joined.asc") : t("search.toolbar.dir.joined.desc")) : dir === "asc" ? t("search.toolbar.dir.asc") : t("search.toolbar.dir.desc");
     const Icon = dir === "asc" ? ArrowUpNarrowWide : ArrowDownWideNarrow;
     return (
-        <button type="button" onClick={onToggle} aria-label={t("search.toolbar.dir.aria")} title={label} className={FILTER}>
+        <button type="button" onClick={onToggle} aria-label={t("search.toolbar.dir.aria")} title={label} className={cn(FILTER, COARSE)}>
             <Icon className="size-3.5 opacity-80" aria-hidden />
             <span>{label}</span>
         </button>
@@ -172,9 +179,12 @@ function AllPicker({ scope, onChange, operators }: { scope: Scope | null; onChan
 
     return (
         <Popover open={open} onOpenChange={setOpen}>
-            <PopoverTrigger aria-label={t("search.toolbar.all.aria")} className={cn(FILTER, "w-full min-w-0 sm:w-auto", scope && "border-primary/40 bg-[color-mix(in_srgb,var(--primary)_10%,transparent)]")}>
-                <span className={KICKER}>{t("search.toolbar.all.label")}</span>
-                <span className={cn("min-w-0 truncate font-semibold", scope ? "text-primary" : "text-foreground")}>{scope ? scopeLabel(scope) : t("search.toolbar.all.none")}</span>
+            <PopoverTrigger
+                aria-label={t("search.toolbar.all.aria")}
+                className={cn(FILTER, "relative w-full min-w-0 pointer-coarse:after:absolute pointer-coarse:after:inset-x-0 pointer-coarse:after:top-1/2 pointer-coarse:after:h-11 pointer-coarse:after:-translate-y-1/2 sm:w-auto", scope && "inset-ring inset-ring-foreground/40 bg-input dark:bg-foreground/12")}
+            >
+                <span className={INLINE_LABEL}>{t("search.toolbar.all.label")}</span>
+                <span className="min-w-0 truncate font-semibold text-foreground">{scope ? scopeLabel(scope) : t("search.toolbar.all.none")}</span>
                 <ChevronDown className="size-3 shrink-0 opacity-70" aria-hidden />
             </PopoverTrigger>
             <PopoverPopup align="end" className="flex w-[min(420px,calc(100vw-2rem))] flex-col gap-3 p-3">

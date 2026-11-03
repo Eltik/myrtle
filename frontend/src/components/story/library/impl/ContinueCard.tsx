@@ -51,7 +51,7 @@ export function ContinueCard({ pick, progress, gameRead, onViewChapter }: IConti
     const primaryLabel = fresh ? th("hero.startReading") : th("hero.continue");
 
     return (
-        <section className="relative mb-5 flex items-center gap-3 overflow-hidden rounded-2xl border border-border bg-card px-3.5 py-3 sm:flex-wrap sm:gap-x-4">
+        <section className="relative mb-5 flex items-center gap-3 overflow-hidden rounded-2xl border border-border bg-card px-3.5 py-3 max-[400px]:flex-col max-[400px]:items-stretch sm:flex-wrap sm:gap-x-4">
             {banner ? (
                 <span aria-hidden="true" className="pointer-events-none absolute inset-y-0 right-0 hidden w-[46%] sm:block">
                     <img src={banner} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover object-center opacity-45" />
@@ -75,8 +75,10 @@ export function ContinueCard({ pick, progress, gameRead, onViewChapter }: IConti
                 </div>
                 <div className="font-sans text-[12px] text-muted-foreground tabular-nums">{th("hero.groupRead", { read: fraction.read, total: fraction.total })}</div>
             </div>
+            {/* Under 400 the title kept about 150 px beside the button and cut to
+                "Main story / Chapt...", so the actions take a row of their own. */}
             <div className="relative z-1 flex shrink-0 items-center gap-1 sm:hidden">
-                <Button className="h-11" render={resume}>
+                <Button className="h-11 max-[400px]:flex-1" render={resume}>
                     <PlayIcon /> {primaryLabel}
                 </Button>
                 <Menu>

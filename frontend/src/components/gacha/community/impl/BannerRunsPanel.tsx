@@ -96,7 +96,7 @@ function CommunityPullsLine({ stat }: { stat: IBannerPullStat | undefined }) {
     return (
         <div className="flex items-baseline gap-2 leading-none">
             <span className="font-sans font-semibold text-[18px] text-foreground tabular-nums tracking-[-0.02em]">{f.number(stat.pullCount)}</span>
-            <span className="kicker mb-0">{t("community.runs.communityPulls")}</span>
+            <span className="text-[12px] text-muted-foreground">{t("community.runs.communityPulls")}</span>
             <div className="ml-auto flex flex-col items-end gap-1 font-mono text-[10px] text-muted-foreground tabular-nums">
                 <span title={t("community.runs.contributors", { count: f.number(stat.userCount) })}>
                     <span aria-hidden>{t("community.runs.people", { count: f.compact(stat.userCount) })}</span>

@@ -27,9 +27,10 @@ export const CnUpdateBadge = memo(function CnUpdateBadge({ changes, className }:
     const summary = useCnChangeSummary(changes);
     const title = t("cnUpdates.badge.title", { changes: summary });
     return (
-        // The red is the ring, the word is foreground: primary text on the 85% page wash measured 4.59
-        // over pale art and 3.25 over black art in light mode.
-        <span role="img" className={cn("inline-flex items-center rounded-full bg-background/85 px-1.5 py-0.5 font-sans font-semibold text-[11px] text-foreground leading-none shadow-sm ring-1 ring-primary", className)} title={title} aria-label={title}>
+        // The tone is the ring, the word is foreground: primary text on the 85% page wash measured 4.59
+        // over pale art and 3.25 over black art in light mode. Info blue, not the red accent: an update
+        // marker is news, not an action or an error.
+        <span role="img" className={cn("inline-flex items-center rounded-full bg-background/85 px-1.5 py-0.5 font-sans font-semibold text-[11px] text-foreground leading-none shadow-sm ring-1 ring-info", className)} title={title} aria-label={title}>
             {t("cnUpdates.badge")}
         </span>
     );

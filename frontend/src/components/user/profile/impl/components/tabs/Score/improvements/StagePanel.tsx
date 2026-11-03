@@ -14,7 +14,6 @@ type PanelT = TypedT<typeof messages & typeof sharedMessages>;
 
 interface IProps {
     improvements: IImprovementsResponse;
-    accent: string;
 }
 
 const INITIAL_VISIBLE = 12;
@@ -23,7 +22,7 @@ function isAnnihilation(stage: IStageGap): boolean {
     return stage.zone_id.startsWith("camp_zone");
 }
 
-export function StagePanel({ improvements, accent }: IProps) {
+export function StagePanel({ improvements }: IProps) {
     const t: TypedT<typeof messages> = useT("user");
     const { permanent, event } = improvements.stages;
     // Annihilation lives in both pools after the rotation-scoring split (the
@@ -33,14 +32,14 @@ export function StagePanel({ improvements, accent }: IProps) {
     const annihilation = [...permanent.missing, ...permanent.not_three_starred, ...event.missing, ...event.not_three_starred].filter(isAnnihilation);
     return (
         <div className={`${PANEL_PADDING} flex flex-col gap-5`}>
-            <StageBucket title={t("score.improvements.stage.permanent")} pool={permanent} accent={accent} />
-            <StageBucket title={t("score.improvements.stage.event")} pool={event} accent={accent} />
-            <AnnihilationSection stages={annihilation} accent={accent} />
+            <StageBucket title={t("score.improvements.stage.permanent")} pool={permanent} />
+            <StageBucket title={t("score.improvements.stage.event")} pool={event} />
+            <AnnihilationSection stages={annihilation} />
         </div>
     );
 }
 
-function StageBucket({ title, pool, accent }: { title: string; pool: IStagePoolImprovements; accent: string }) {
+function StageBucket({ title, pool }: { title: string; pool: IStagePoolImprovements }) {
     const t: TypedT<typeof messages> = useT("user");
     // Annihilation maps are surfaced in their own section (they span both pools
     // and have rotation rules), so keep them out of the regular stage lists.
@@ -49,20 +48,20 @@ function StageBucket({ title, pool, accent }: { title: string; pool: IStagePoolI
 
     return (
         <div className="flex flex-col gap-3">
-            <SectionHeader title={title} count={t("score.improvements.stage.threeStarCount", { done: pool.three_starred, total: pool.total })} accent={accent} />
+            <SectionHeader title={title} count={t("score.improvements.stage.threeStarCount", { done: pool.three_starred, total: pool.total })} />
             <div className="grid gap-2.5 sm:grid-cols-3">
-                <ProgressLine label={t("score.improvements.stage.cleared")} current={pool.cleared} max={pool.total} accent={accent} />
-                <ProgressLine label={t("score.improvements.stage.threeStarred")} current={pool.three_starred} max={pool.total} accent={accent} />
-                <ProgressLine label={t("score.improvements.stage.notThreeStarred")} current={pool.cleared - pool.three_starred} max={pool.total} accent={accent} />
+                <ProgressLine label={t("score.improvements.stage.cleared")} current={pool.cleared} max={pool.total} />
+                <ProgressLine label={t("score.improvements.stage.threeStarred")} current={pool.three_starred} max={pool.total} />
+                <ProgressLine label={t("score.improvements.stage.notThreeStarred")} current={pool.cleared - pool.three_starred} max={pool.total} />
             </div>
 
-            <StageList title={t("score.improvements.stage.missing")} stages={regularMissing} accent={accent} emptyLabel={t("score.improvements.stage.missing.empty")} />
-            <StageList title={t("score.improvements.stage.notThree.title")} subtitle={t("score.improvements.stage.notThree.subtitle")} stages={regularNotThree} accent={accent} emptyLabel={t("score.improvements.stage.notThree.empty")} />
+            <StageList title={t("score.improvements.stage.missing")} stages={regularMissing} emptyLabel={t("score.improvements.stage.missing.empty")} />
+            <StageList title={t("score.improvements.stage.notThree.title")} subtitle={t("score.improvements.stage.notThree.subtitle")} stages={regularNotThree} emptyLabel={t("score.improvements.stage.notThree.empty")} />
         </div>
     );
 }
 
-function AnnihilationSection({ stages, accent }: { stages: IStageGap[]; accent: string }) {
+function AnnihilationSection({ stages }: { stages: IStageGap[] }) {
     const t: TypedT<typeof messages> = useT("user");
     if (stages.length === 0) return null;
     // Permanent maps carry no rotation window; the active rotation is "active".
@@ -72,14 +71,14 @@ function AnnihilationSection({ stages, accent }: { stages: IStageGap[]; accent: 
 
     return (
         <div className="flex flex-col gap-3">
-            <SectionHeader title={t("score.improvements.stage.annihilation.title")} count={t("score.improvements.stage.annihilation.count", { n: available.length })} accent={accent} />
-            {available.length > 0 ? <StageList title={t("score.improvements.stage.annihilation.available")} subtitle={t("score.improvements.stage.annihilation.availableSubtitle")} stages={available} accent={accent} emptyLabel="" /> : <EmptyHint>{t("score.improvements.stage.annihilation.maxed")}</EmptyHint>}
-            {locked.length > 0 && <StageList title={t("score.improvements.stage.annihilation.locked")} subtitle={t("score.improvements.stage.annihilation.lockedSubtitle")} stages={locked} accent={accent} emptyLabel="" locked />}
+            <SectionHeader title={t("score.improvements.stage.annihilation.title")} count={t("score.improvements.stage.annihilation.count", { n: available.length })} />
+            {available.length > 0 ? <StageList title={t("score.improvements.stage.annihilation.available")} subtitle={t("score.improvements.stage.annihilation.availableSubtitle")} stages={available} emptyLabel="" /> : <EmptyHint>{t("score.improvements.stage.annihilation.maxed")}</EmptyHint>}
+            {locked.length > 0 && <StageList title={t("score.improvements.stage.annihilation.locked")} subtitle={t("score.improvements.stage.annihilation.lockedSubtitle")} stages={locked} emptyLabel="" locked />}
         </div>
     );
 }
 
-function StageList({ title, subtitle, stages, accent, emptyLabel, locked = false }: { title: string; subtitle?: string; stages: IStageGap[]; accent: string; emptyLabel: string; locked?: boolean }) {
+function StageList({ title, subtitle, stages, emptyLabel, locked = false }: { title: string; subtitle?: string; stages: IStageGap[]; emptyLabel: string; locked?: boolean }) {
     const t: PanelT = useT("user");
     const [showAll, setShowAll] = useState(false);
     if (stages.length === 0) {
@@ -103,7 +102,7 @@ function StageList({ title, subtitle, stages, accent, emptyLabel, locked = false
             {subtitle && <p className={cn(TEXT_META, "-mt-1 text-subtle-foreground")}>{subtitle}</p>}
             <div className="flex flex-wrap gap-1.5">
                 {visible.map((s) => (
-                    <StageChip key={s.stage_id} stage={s} accent={accent} locked={locked} />
+                    <StageChip key={s.stage_id} stage={s} locked={locked} />
                 ))}
             </div>
             {remaining > 0 && <ShowMoreButton onClick={() => setShowAll(true)} label={t("score.improvements.showMore", { n: remaining })} />}
@@ -112,7 +111,7 @@ function StageList({ title, subtitle, stages, accent, emptyLabel, locked = false
     );
 }
 
-function StageChip({ stage, accent, locked = false }: { stage: IStageGap; accent: string; locked?: boolean }) {
+function StageChip({ stage, locked = false }: { stage: IStageGap; locked?: boolean }) {
     const t: TypedT<typeof messages> = useT("user");
     // Dot reflects clear state: rose = uncleared (state < 2), amber = cleared
     // but not 3★ (state 2). Locked (rotated-out) maps are muted regardless.
@@ -128,11 +127,9 @@ function StageChip({ stage, accent, locked = false }: { stage: IStageGap; accent
         <Tooltip>
             <TooltipTrigger render={<Link to="/stages/$stageId" params={{ stageId: stage.stage_id }} className={cn("group flex items-center gap-1.5 rounded-md border border-border/40 bg-muted/15 px-2 py-1 transition-colors hover:border-border/70 hover:bg-muted/30", locked && "opacity-55")} />}>
                 <span className={`size-1.5 shrink-0 rounded-full ${stateDot}`} aria-hidden />
-                <span className={cn(TEXT_BADGE, "max-w-[22ch] truncate font-semibold")} style={{ color: `color-mix(in oklch, ${accent} 55%, var(--foreground))` }}>
-                    {primary}
-                </span>
+                <span className={cn(TEXT_BADGE, "max-w-[22ch] truncate font-semibold")}>{primary}</span>
                 {secondary && <span className="hidden max-w-[16ch] truncate text-[11px] text-muted-foreground sm:inline">{secondary}</span>}
-                {stage.weight !== 1 && <Pill color={accent}>×{stage.weight.toFixed(2)}</Pill>}
+                {stage.weight !== 1 && <Pill>×{stage.weight.toFixed(2)}</Pill>}
             </TooltipTrigger>
             <TooltipPopup>{locked ? t("score.improvements.stage.chip.lockedTitle", { label: tooltipLabel }) : tooltipLabel}</TooltipPopup>
         </Tooltip>

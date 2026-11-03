@@ -95,14 +95,6 @@ export const messages = {
         text: "Show events",
         description: "Narrow-screen button that switches back to the event list.",
     },
-    "release.planner.tag.review": {
-        text: "Fashion Review",
-        description: "Tag on a Fashion Review row. The game's own name for the sale.",
-    },
-    "release.planner.tag.listing": {
-        text: "Store sale",
-        description: "Tag on a row grouping outfits that go on sale without a matching event.",
-    },
     "release.planner.tag.rerun": {
         text: "Rerun",
         description: "Tag on an event that is being run again.",

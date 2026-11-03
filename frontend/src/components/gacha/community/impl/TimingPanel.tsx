@@ -37,7 +37,7 @@ export function TimingPanel({ timing, firstPullAt, banners }: ITimingPanelProps)
                 </div>
                 <div className="inline-flex flex-wrap items-center gap-x-3.5 gap-y-1 font-mono text-[11px] text-muted-foreground">
                     <span className="inline-flex items-center">
-                        <span aria-hidden className="mr-1.5 inline-block h-2 w-2 rounded-sm bg-primary align-middle" />
+                        <span aria-hidden className="mr-1.5 inline-block h-2 w-2 rounded-sm bg-muted-foreground align-middle" />
                         {t("community.timing.legend.totalPulls")}
                     </span>
                     {TRACK_ORDER.map((g) => (
@@ -148,7 +148,7 @@ function TimingByDate({ rows, banners }: { rows: IDatePullData[]; banners: IBann
         return f.date(d, { month: "short", day: "numeric" });
     });
     const bands = useMemo(() => buildBannerBands(rows, banners), [rows, banners]);
-    return <ActivityChart days={days} data={series} color="var(--primary)" height={220} bands={bands} />;
+    return <ActivityChart days={days} data={series} color="var(--muted-foreground)" height={220} bands={bands} />;
 }
 
 function TimingByHour({ rows }: { rows: IHourlyPullData[] }) {
@@ -159,7 +159,7 @@ function TimingByHour({ rows }: { rows: IHourlyPullData[] }) {
                 const h = r.pullCount / max;
                 return (
                     <div key={r.hour} className={styles.hourCell}>
-                        <div className={styles.hourBar} style={{ height: `${Math.max(4, h * 100)}%`, background: `oklch(0.58 0.22 25 / ${0.25 + h * 0.7})` }} />
+                        <div className={styles.hourBar} style={{ height: `${Math.max(4, h * 100)}%` }} />
                         <div className={styles.hourLabel}>{String(r.hour).padStart(2, "0")}</div>
                     </div>
                 );
@@ -212,8 +212,6 @@ function ActivityChart({ data, days, color, height, bands }: { data: number[]; d
     const xTickCount = Math.min(isNarrow ? 3 : 6, days.length);
     const xTickIdx = xTickCount > 1 ? Array.from({ length: xTickCount }, (_, i) => Math.round((i * (days.length - 1)) / (xTickCount - 1))) : [0];
 
-    const fillId = "ac-fill-gacha-community";
-
     const plotRef = useRef<HTMLDivElement>(null);
     const [hoverIdx, setHoverIdx] = useState<number | null>(null);
 
@@ -244,12 +242,6 @@ function ActivityChart({ data, days, color, height, bands }: { data: number[]; d
             </div>
             <div className={styles.acPlot} style={{ paddingTop: PAD_T, paddingBottom: PAD_B }} ref={plotRef} onPointerMove={onPointerMove} onPointerLeave={onPointerLeave}>
                 <svg viewBox={`0 0 ${VBW} ${VBH}`} preserveAspectRatio="none" style={{ width: "100%", height: "100%", display: "block", overflow: "visible" }} role="presentation" aria-hidden="true">
-                    <defs>
-                        <linearGradient id={fillId} x1="0" x2="0" y1="0" y2="1">
-                            <stop offset="0%" stopColor={color} stopOpacity="0.25" />
-                            <stop offset="100%" stopColor={color} stopOpacity="0" />
-                        </linearGradient>
-                    </defs>
                     {yticks.map((_, i) => {
                         const y = (i / (yticks.length - 1)) * VBH;
                         return (
@@ -267,7 +259,7 @@ function ActivityChart({ data, days, color, height, bands }: { data: number[]; d
                             />
                         );
                     })}
-                    {data.length > 0 ? <path d={`${linePath(data)} L ${VBW} ${VBH} L 0 ${VBH} Z`} fill={`url(#${fillId})`} /> : null}
+                    {data.length > 0 ? <path d={`${linePath(data)} L ${VBW} ${VBH} L 0 ${VBH} Z`} fill={color} fillOpacity={0.08} /> : null}
                     {data.length > 0 ? <path d={linePath(data)} fill="none" stroke={color} strokeWidth="1.75" strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" /> : null}
                 </svg>
                 {hoverIdx != null ? (
@@ -279,7 +271,7 @@ function ActivityChart({ data, days, color, height, bands }: { data: number[]; d
                             <div className={styles.acHoverCardValue}>
                                 <span aria-hidden className={styles.acHoverCardSwatch} style={{ background: color }} />
                                 {f.number(data[hoverIdx])}
-                                <span className={`kicker mb-0 ${styles.acHoverCardLabel}`}>{t("community.timing.hover.pulls")}</span>
+                                <span className={`text-muted-foreground ${styles.acHoverCardLabel}`}>{t("community.timing.hover.pulls")}</span>
                             </div>
                             {activeBands.length > 0 ? (
                                 <div className={styles.acHoverCardBanners}>

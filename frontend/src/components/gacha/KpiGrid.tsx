@@ -19,14 +19,13 @@ interface IKpiProps {
     label: string;
     value: React.ReactNode;
     meta?: React.ReactNode;
-    featured?: boolean;
 }
 
-export function Kpi({ label, value, meta, featured }: IKpiProps) {
+export function Kpi({ label, value, meta }: IKpiProps) {
     return (
-        <div className={`relative flex flex-col gap-2 bg-card px-4 py-3.5 sm:gap-2.5 sm:px-5 sm:py-4.5 ${featured ? "bg-linear-[150deg] from-primary/8 to-transparent" : ""}`}>
+        <div className="relative flex flex-col gap-2 bg-card px-4 py-3.5 sm:gap-2.5 sm:px-5 sm:py-4.5">
             <div className="kicker inline-flex items-center gap-2 leading-none">{label}</div>
-            <div className={`flex items-baseline gap-1 font-bold font-sans text-[30px] tabular-nums leading-[0.95] tracking-[-0.04em] sm:text-[36px] sm:tracking-[-0.045em] lg:text-[42px] ${featured ? "text-primary dark:text-[color-mix(in_oklab,var(--primary)_70%,white)]" : "text-foreground"}`}>{value}</div>
+            <div className="flex items-baseline gap-1 font-bold font-sans text-[30px] text-foreground tabular-nums leading-[0.95] tracking-[-0.04em] sm:text-[36px] sm:tracking-[-0.045em] lg:text-[42px]">{value}</div>
             {meta ? <div className="flex flex-wrap items-center gap-2 font-mono text-[11px] text-muted-foreground">{meta}</div> : null}
         </div>
     );

@@ -7,10 +7,9 @@ import { EmptyHint, PANEL_PADDING, Pill, SectionHeader, TEXT_BADGE } from "./sha
 
 interface IProps {
     improvements: IImprovementsResponse;
-    accent: string;
 }
 
-export function SandboxPanel({ improvements, accent }: IProps) {
+export function SandboxPanel({ improvements }: IProps) {
     const t: TypedT<typeof messages> = useT("user");
     const s = improvements.sandbox;
     const hasAnyData = s.total > 0 || s.topics.some((topic) => topic.categories.some((c) => c.parts.some((p) => p.current > 0)));
@@ -19,30 +18,30 @@ export function SandboxPanel({ improvements, accent }: IProps) {
         <div className={`${PANEL_PADDING} flex flex-col gap-5`}>
             {!hasAnyData && <EmptyHint>{t("score.improvements.sandbox.empty")}</EmptyHint>}
             {s.topics.map((topic) => (
-                <TopicBlock key={topic.topic_id} topic={topic} shared={s.topics.length > 1} accent={accent} />
+                <TopicBlock key={topic.topic_id} topic={topic} shared={s.topics.length > 1} />
             ))}
         </div>
     );
 }
 
-function TopicBlock({ topic, shared, accent }: { topic: ISandboxTopic; shared: boolean; accent: string }) {
+function TopicBlock({ topic, shared }: { topic: ISandboxTopic; shared: boolean }) {
     const t: TypedT<typeof messages> = useT("user");
     const pct = Math.round(Math.min(1, Math.max(0, topic.total)) * 100);
     const count = shared ? t("score.improvements.sandbox.topicShare", { pct, share: Math.round(topic.weight * 100) }) : `${pct}%`;
     return (
         <div className="flex flex-col gap-3">
             {/* "Reclamation Algorithm" is the game mode's own name and stays as game vocabulary; it titles a topic the game data names no further. */}
-            <SectionHeader title={topic.name || "Reclamation Algorithm"} count={count} accent={accent} />
+            <SectionHeader title={topic.name || "Reclamation Algorithm"} count={count} />
             <div className="grid gap-x-5 gap-y-3 sm:grid-cols-2">
                 {topic.categories.map((category) => (
-                    <CategoryRow key={category.key} category={category} accent={accent} />
+                    <CategoryRow key={category.key} category={category} />
                 ))}
             </div>
         </div>
     );
 }
 
-function CategoryRow({ category, accent }: { category: ISandboxCategory; accent: string }) {
+function CategoryRow({ category }: { category: ISandboxCategory }) {
     const t: TypedT<typeof messages> = useT("user");
     const f = useFormatters();
     const pct = Math.min(100, Math.max(0, category.score * 100));
@@ -56,14 +55,8 @@ function CategoryRow({ category, accent }: { category: ISandboxCategory; accent:
                 </span>
                 <span className={cn(TEXT_BADGE, "text-foreground/85")}>{pct.toFixed(0)}%</span>
             </div>
-            <div className="h-1 w-full overflow-hidden rounded-full bg-muted/40">
-                <div
-                    className="h-full rounded-full transition-[width] duration-500 ease-out"
-                    style={{
-                        width: `${pct}%`,
-                        background: `linear-gradient(to right, color-mix(in oklch, ${accent} 55%, transparent), ${accent})`,
-                    }}
-                />
+            <div className="h-1 w-full overflow-hidden rounded-full bg-muted">
+                <div className="h-full rounded-full bg-muted-foreground transition-[width] duration-500 ease-out" style={{ width: `${pct}%` }} />
             </div>
             <div className="flex flex-wrap gap-x-3 gap-y-0.5">
                 {category.parts.map((p) => (

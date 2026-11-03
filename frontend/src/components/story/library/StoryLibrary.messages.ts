@@ -24,16 +24,8 @@ export const messages = {
         description: "Last breadcrumb above the page title: the current page.",
     },
     "library.counts": {
-        text: "{groups} chapters · {records} operators",
-        description: "Subhead under the page title: how much the library holds.",
-    },
-    "library.countsAll": {
         text: "{groups} chapters · {records} operators · {stories} stories",
-        description: "Subhead under the page title on a phone, where the headline story count beside the title is dropped and folded in here. {stories} arrives already formatted (1,887).",
-    },
-    "library.storiesLabel": {
-        text: "Stories",
-        description: "Label under the headline story count beside the page title.",
+        description: "Muted meta line under the page title: how much the library holds. {stories} arrives already formatted (1,887).",
     },
     "library.tab.browse": {
         text: "Browse",

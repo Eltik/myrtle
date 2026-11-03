@@ -18,12 +18,12 @@ export function WavesSection({ level }: { level: ILevel | null }) {
                     // biome-ignore lint/suspicious/noArrayIndexKey: waves are positional ("Wave 1", "Wave 2") and never reorder, so index is their identity
                     <div key={`wave-${wi}`} className="rounded-2xl border border-border bg-card p-3.5">
                         <div className="flex items-center justify-between gap-2">
-                            <span className="kicker inline-flex items-center gap-2 text-primary leading-none">
-                                <Swords className="h-3.5 w-3.5" /> {t("waves.wave", { index: wi + 1 })}
+                            <span className="inline-flex items-center gap-2 font-medium font-sans text-[13px] text-foreground leading-none">
+                                <Swords aria-hidden="true" className="h-3.5 w-3.5 text-muted-foreground" /> {t("waves.wave", { index: wi + 1 })}
                             </span>
                             <span className="font-mono text-[11px] text-muted-foreground tabular-nums">{t("waves.spawns", { count: spawnCount })}</span>
                         </div>
-                        <div className="mt-3 grid grid-cols-3 gap-2">
+                        <div className="mt-3 grid grid-cols-2 gap-2 *:last:odd:col-span-2 sm:grid-cols-3 sm:*:last:odd:col-span-1">
                             <Meta label={t("waves.preDelay")} value={`${wave.preDelay.toFixed(1)}s`} />
                             <Meta label={t("waves.postDelay")} value={`${wave.postDelay.toFixed(1)}s`} />
                             <Meta label={t("waves.fragments")} value={String((wave.fragments ?? []).length)} />

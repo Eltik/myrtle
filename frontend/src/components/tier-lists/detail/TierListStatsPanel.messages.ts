@@ -13,7 +13,7 @@ export const messages = {
     },
     "detail.stats.trending": {
         text: "Trending now",
-        description: "Badge in the stats sidebar marking a list with unusual recent traffic. Rendered uppercase.",
+        description: "Badge in the stats sidebar marking a list with unusual recent traffic.",
     },
     "detail.stats.empty": {
         text: "No stats yet.",

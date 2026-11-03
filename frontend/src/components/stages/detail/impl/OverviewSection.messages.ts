@@ -5,7 +5,7 @@ export const namespace = "stages";
 export const messages = {
     "overview.title": {
         text: "Overview",
-        description: "Kicker over the row of stage stat cards (starting DP, DP rate, unit limit, move speed).",
+        description: "Section heading over the row of stage stat cards (starting DP, DP rate, unit limit, move speed).",
     },
     "overview.initialCost": {
         text: "Initial DP",

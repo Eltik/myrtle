@@ -203,7 +203,10 @@ export function EnemiesList() {
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     <SearchField className="min-w-55 max-w-100 flex-1" value={filters.q} onChange={setSearchQuery} placeholder={t("list.search.placeholder")} label={t("list.search.aria")} />
 
-                    <div className="inline-flex flex-wrap items-center gap-2">
+                    {/* At 375 Filters, view, sort, Show and download wrapped into two ragged rows. The
+                        toolbar keeps the three that shape the list; page size and download sit with
+                        the pagination below. */}
+                    <div className="flex items-center gap-2 max-md:w-full max-md:justify-between">
                         <Button variant="outline" className="relative md:hidden" onClick={() => setFiltersOpen(true)} aria-expanded={filtersOpen}>
                             <Filter aria-hidden="true" />
                             {t("list.filters.button")}
@@ -235,7 +238,7 @@ export function EnemiesList() {
                         <div className="inline-flex h-9.5 items-center gap-1 rounded-lg border border-border bg-[color-mix(in_oklch,var(--secondary)_50%,transparent)] p-0.75">
                             <Select value={filters.sortBy} onValueChange={(v) => setSortBy(v as SortOption)} aria-label={t("list.sort.aria")}>
                                 <SelectTrigger size="sm" className="h-7.5 min-h-7.5 min-w-0 gap-1.5 border-0 bg-transparent px-2 font-medium font-sans text-[12.5px] text-foreground shadow-none before:shadow-none hover:bg-[color-mix(in_oklch,var(--secondary)_80%,transparent)]">
-                                    <span className="mr-1 border-border border-r pr-1 font-medium font-mono text-[10px] text-muted-foreground uppercase leading-none tracking-[0.12em]">{t("list.sort.label")}</span>
+                                    <span className="mr-0.5 text-muted-foreground leading-none">{t("list.sort.label")}</span>
                                     <SelectValue>
                                         {(value) => {
                                             const opt = SORT_OPTIONS.find((o) => o.value === value);
@@ -260,43 +263,6 @@ export function EnemiesList() {
                                 </TooltipPopup>
                             </Tooltip>
                         </div>
-
-                        <div className="inline-flex h-9.5 items-center rounded-lg border border-border bg-[color-mix(in_oklch,var(--secondary)_50%,transparent)] p-0.75">
-                            <Select
-                                value={String(itemsPerPage)}
-                                onValueChange={(v) => {
-                                    setItemsPerPage(v === "all" ? "all" : (Number(v) as ItemsPerPage));
-                                    resetPage();
-                                }}
-                                aria-label={t("list.perPage.aria")}
-                            >
-                                <SelectTrigger size="sm" className="h-7.5 min-h-7.5 min-w-0 gap-1.5 border-0 bg-transparent px-2 font-medium font-sans text-[12.5px] text-foreground shadow-none before:shadow-none hover:bg-[color-mix(in_oklch,var(--secondary)_80%,transparent)]">
-                                    <span className="mr-1 border-border border-r pr-1 font-medium font-mono text-[10px] text-muted-foreground uppercase leading-none tracking-[0.12em]">{t("list.perPage.label")}</span>
-                                    <SelectValue>{(value) => (value === "all" ? t("list.perPage.all") : value)}</SelectValue>
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {ITEMS_PER_PAGE_OPTIONS.map((opt) => (
-                                        <SelectItem key={opt} value={String(opt)}>
-                                            {opt === "all" ? t("list.perPage.all") : opt}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-
-                        <Tooltip>
-                            <TooltipTrigger
-                                render={
-                                    <Button variant="outline" onClick={() => setExportOpen(true)} aria-label={t("list.export.aria")}>
-                                        <Download aria-hidden="true" />
-                                        <span className="hidden sm:inline">{t("list.export")}</span>
-                                    </Button>
-                                }
-                            />
-                            <TooltipPopup side="top" sideOffset={8}>
-                                {t("list.export.aria")}
-                            </TooltipPopup>
-                        </Tooltip>
                     </div>
                 </div>
 
@@ -324,8 +290,44 @@ export function EnemiesList() {
                             </>
                         )}
                     </span>
-                    <div className="ml-auto flex items-center gap-3">
-                        <span className="hidden font-mono text-[10.5px] text-muted-foreground leading-none sm:inline">{t("list.hint")}</span>
+                    <div className="ml-auto flex items-center gap-2">
+                        <span className="mr-1 hidden text-muted-foreground leading-none lg:inline">{t("list.hint")}</span>
+                        <div className="inline-flex h-9.5 items-center rounded-lg border border-border bg-[color-mix(in_oklch,var(--secondary)_50%,transparent)] p-0.75">
+                            <Select
+                                value={String(itemsPerPage)}
+                                onValueChange={(v) => {
+                                    setItemsPerPage(v === "all" ? "all" : (Number(v) as ItemsPerPage));
+                                    resetPage();
+                                }}
+                                aria-label={t("list.perPage.aria")}
+                            >
+                                <SelectTrigger size="sm" className="h-7.5 min-h-7.5 min-w-0 gap-1.5 border-0 bg-transparent px-2 font-medium font-sans text-[12.5px] text-foreground shadow-none before:shadow-none hover:bg-[color-mix(in_oklch,var(--secondary)_80%,transparent)]">
+                                    <span className="mr-0.5 text-muted-foreground leading-none">{t("list.perPage.label")}</span>
+                                    <SelectValue>{(value) => (value === "all" ? t("list.perPage.all") : value)}</SelectValue>
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {ITEMS_PER_PAGE_OPTIONS.map((opt) => (
+                                        <SelectItem key={opt} value={String(opt)}>
+                                            {opt === "all" ? t("list.perPage.all") : opt}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <Tooltip>
+                            <TooltipTrigger
+                                render={
+                                    <Button variant="outline" onClick={() => setExportOpen(true)} aria-label={t("list.export.aria")}>
+                                        <Download aria-hidden="true" />
+                                        <span className="hidden sm:inline">{t("list.export")}</span>
+                                    </Button>
+                                }
+                            />
+                            <TooltipPopup side="top" sideOffset={8}>
+                                {t("list.export.aria")}
+                            </TooltipPopup>
+                        </Tooltip>
                         <PaginationCompact currentPage={page} totalPages={totalPages} onPageChange={handlePageChange} />
                     </div>
                 </div>

@@ -52,29 +52,27 @@ export function Archives(): React.ReactElement {
     const openChart = useCallback((chart: string | undefined) => setSearch({ tab: undefined, chart, id: undefined }), [setSearch]);
 
     return (
-        <section className="page-shell flex flex-col gap-5 [--page-max:1320px]">
+        <section className="page-shell flex flex-col gap-5">
             <PageHeader title={t("page.title")} description={t("page.description")} />
+            {spoilers ? null : <SpoilerNote />}
 
             <Tabs value={tab} onValueChange={(v) => v && setSearch({ tab: v === "network" ? undefined : (v as ArchivesTab) })}>
-                <div className="flex flex-col gap-2">
-                    <TabsList aria-label={t("tabs.label")} className="w-full overflow-x-auto sm:w-auto">
-                        <TabsTab className="pointer-coarse:h-11" value="network">
-                            {t("tabs.network")}
+                <TabsList aria-label={t("tabs.label")} className="w-full overflow-x-auto sm:w-auto">
+                    <TabsTab className="pointer-coarse:h-11" value="network">
+                        {t("tabs.network")}
+                    </TabsTab>
+                    <TabsTab className="pointer-coarse:h-11" value="dossiers" onPointerEnter={warmDossiers} onFocus={warmDossiers}>
+                        {t("tabs.dossiers")}
+                    </TabsTab>
+                    <TabsTab className="pointer-coarse:h-11" value="numbers" onPointerEnter={warmNumbers} onFocus={warmNumbers}>
+                        {t("tabs.numbers")}
+                    </TabsTab>
+                    {spoilers ? (
+                        <TabsTab className="pointer-coarse:h-11" value="hidden">
+                            {t("tabs.hidden")}
                         </TabsTab>
-                        <TabsTab className="pointer-coarse:h-11" value="dossiers" onPointerEnter={warmDossiers} onFocus={warmDossiers}>
-                            {t("tabs.dossiers")}
-                        </TabsTab>
-                        <TabsTab className="pointer-coarse:h-11" value="numbers" onPointerEnter={warmNumbers} onFocus={warmNumbers}>
-                            {t("tabs.numbers")}
-                        </TabsTab>
-                        {spoilers ? (
-                            <TabsTab className="pointer-coarse:h-11" value="hidden">
-                                {t("tabs.hidden")}
-                            </TabsTab>
-                        ) : null}
-                    </TabsList>
-                    {spoilers ? null : <SpoilerNote className="text-[12px]" />}
-                </div>
+                    ) : null}
+                </TabsList>
                 <TabsPanel value="network" className="mt-4">
                     <NetworkTab chart={search.chart} onChart={(chart) => setSearch({ chart })} onOpenFile={openFile} />
                 </TabsPanel>
@@ -87,7 +85,7 @@ export function Archives(): React.ReactElement {
                     </Suspense>
                 </TabsPanel>
                 <TabsPanel value="hidden" className="mt-4">
-                    {spoilers ? <HiddenTab onOpenFile={openFile} /> : <SpoilerNote className="rounded-2xl border border-border bg-card p-5" />}
+                    {spoilers ? <HiddenTab onOpenFile={openFile} /> : null}
                 </TabsPanel>
             </Tabs>
 

@@ -168,8 +168,9 @@
     outline: 2px solid var(--primary);
     outline-offset: 4px;
 }
-/* A coarse pointer means no physical keyboard, where a key hint is meaningless. */
-@media (pointer: coarse) {
+/* A coarse pointer means no physical keyboard, where a key hint is meaningless. `hover: none`
+   also catches touch devices that report a fine primary pointer (a stylus, some tablets). */
+@media (pointer: coarse), (hover: none) {
     .hint {
         display: none;
     }

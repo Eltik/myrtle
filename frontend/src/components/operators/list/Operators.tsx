@@ -11,6 +11,7 @@ import { LoadFailed } from "#/components/ui/load-failed";
 import { PageHeader } from "#/components/ui/page-header";
 import { useCnUpdates } from "#/hooks/use-cn-updates";
 import { useLocalStorageState } from "#/hooks/use-local-storage-state";
+import { useMediaQuery } from "#/hooks/use-media-query";
 import { useOperatorName } from "#/hooks/use-operator-name";
 import { noteHasContent, operatorNotesListQueryOptions } from "#/lib/api/operator-notes";
 import { cnChangesQueryOptions, type IOperatorExportFields, operatorOwnershipQueryOptions, operatorsExportFieldsQueryOptions, operatorsIndexQueryOptions } from "#/lib/api/operators";
@@ -147,7 +148,12 @@ export function OperatorsList() {
         parse: (raw) => raw === "1",
         serialize: (v) => (v ? "1" : "0"),
     });
-    const toggleFilters = () => setFiltersVisible((v) => !v);
+    // The stored flag is the desktop sidebar's. Below md the panel is a full-height sheet, and a
+    // "1" saved on desktop opened it over the list on every phone load, so phones start closed.
+    const isMobile = useMediaQuery("max-md");
+    const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+    const filtersOpen = isMobile ? mobileFiltersOpen : filtersVisible;
+    const toggleFilters = () => (isMobile ? setMobileFiltersOpen((v) => !v) : setFiltersVisible((v) => !v));
 
     const [statMetric, setStatMetric] = useLocalStorageState<StatMetric>(STAT_METRIC_KEY, "owned", {
         parse: (raw) => (STAT_METRICS.has(raw as StatMetric) ? (raw as StatMetric) : undefined),
@@ -300,14 +306,14 @@ export function OperatorsList() {
                     }}
                     onClearAll={clearFilters}
                     hasActiveFilters={hasActiveFilters}
-                    collapsed={!filtersVisible}
+                    collapsed={!filtersOpen}
                     onToggle={toggleFilters}
                     activeFilterCount={activeFilterCount}
                 />
 
                 <section className="flex min-w-0 flex-1 flex-col gap-3.5" aria-label={t("list.results.aria")}>
                     <div className="flex flex-wrap items-center gap-2.5">
-                        <FilterToggleButton visible={filtersVisible} onToggle={toggleFilters} activeCount={activeFilterCount} />
+                        <FilterToggleButton visible={filtersOpen} onToggle={toggleFilters} activeCount={activeFilterCount} />
 
                         <SearchField className="h-10 min-w-60 flex-1 sm:h-9 sm:max-w-115" value={filters.searchQuery} onChange={setSearchQuery} placeholder={t("list.search.placeholder")} label={t("list.search.aria")} />
 
@@ -470,7 +476,7 @@ export function OperatorsList() {
                                 <span className="text-center">{t("list.column.owned")}</span>
                                 <span />
                             </div>
-                            <div className="flex flex-col gap-1">
+                            <div className="flex flex-col gap-0.5">
                                 {paginated.map((op) => (
                                     <OperatorCardList key={op.id} operator={op} statMetric={statMetric} />
                                 ))}

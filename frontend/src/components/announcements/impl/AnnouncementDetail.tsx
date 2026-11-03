@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { ArrowLeft, ExternalLink, FileQuestion, Newspaper } from "lucide-react";
+import { ArrowLeft, ExternalLink, FileQuestion } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { Button } from "#/components/ui/button";
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "#/components/ui/empty";
@@ -144,13 +144,7 @@ export function DetailPlaceholder({ loading }: { loading: boolean }) {
     const t: TypedT<typeof messages> = useT("announcements");
     if (loading) return <Skeleton className="aspect-[16/9] w-full rounded-2xl" />;
     return (
-        <Empty className="hidden rounded-2xl border border-dashed py-16 lg:flex">
-            <EmptyHeader>
-                <EmptyMedia variant="icon">
-                    <Newspaper aria-hidden="true" />
-                </EmptyMedia>
-                <EmptyDescription>{t("detail.pick")}</EmptyDescription>
-            </EmptyHeader>
-        </Empty>
+        // A plain sentence: an icon tile over "pick a notice" was decoration on a pane with nothing in it yet.
+        <p className="m-0 hidden min-h-40 items-center justify-center text-balance rounded-2xl border border-border border-dashed px-6 py-16 text-center text-muted-foreground text-sm lg:flex">{t("detail.pick")}</p>
     );
 }

@@ -1,4 +1,4 @@
-import { Check, Medal } from "lucide-react";
+import { Check } from "lucide-react";
 import { useMemo } from "react";
 import { eliteIcon } from "#/components/operators/detail/impl/assets";
 import { RARITY_COLORS } from "#/components/operators/list/impl/constants";
@@ -15,7 +15,6 @@ type TopT = TypedT<typeof messages & typeof cardMessages>;
 
 import { operatorCompleteness, operatorMissing, ownedAvatar, parseOperatorName, RARITY_WEIGHT, specializedIcon } from "../../Roster/helpers.card";
 import type { messages as cardMessages } from "../../Roster/helpers.card.messages";
-import { PALETTE } from "../palette";
 import { CardKicker, StatCard } from "../primitives";
 
 const TOP_OPERATOR_LIMIT = 8;
@@ -54,9 +53,9 @@ export function TopOperatorsCard({ roster, operatorsIndex }: ITopOperatorsCardPr
     if (top.length === 0) return null;
 
     return (
-        <StatCard className="sm:col-span-2" color={PALETTE.top}>
+        <StatCard className="sm:col-span-2">
             <div className="p-4 pb-3 sm:p-5 sm:pb-3">
-                <CardKicker icon={Medal} label={t("profile.stats.top.title")} />
+                <CardKicker label={t("profile.stats.top.title")} />
             </div>
             <div className="grid grid-cols-2 gap-px bg-border sm:grid-cols-4">
                 {top.map((ranked, i) => (

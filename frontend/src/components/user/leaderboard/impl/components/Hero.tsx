@@ -51,11 +51,8 @@ export function Hero({ item, rankedPlayers, topValue, updatedAt, isLoading, stat
 
     return (
         <section className="relative overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
-            <div aria-hidden className="pointer-events-none absolute inset-x-0 -top-px h-px bg-linear-to-r from-transparent via-primary/60 to-transparent" />
-
             <div className="relative grid gap-x-7 gap-y-4 px-4 py-4 sm:grid-cols-[1fr_auto] sm:gap-y-5 sm:px-6 sm:py-6">
                 <div className="flex min-w-0 flex-col gap-1.5">
-                    <Kicker>{t("leaderboard.hero.eyebrow")}</Kicker>
                     <h1 className="m-0 flex flex-wrap items-center gap-2.5 font-bold font-sans text-[22px] text-foreground leading-[1.1] tracking-tight sm:text-[28px]">
                         {t("leaderboard.hero.title")}
                         {item ? (

@@ -5,7 +5,7 @@ import { RARITY_COLORS } from "#/components/operators/list/impl/constants";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "#/components/ui/accordion";
 import { Card, CardContent } from "#/components/ui/card";
 import { Dialog } from "#/components/ui/dialog";
-import { Progress } from "#/components/ui/progress";
+import { Progress, ProgressIndicator, ProgressTrack } from "#/components/ui/progress";
 import { ScrollArea } from "#/components/ui/scroll-area";
 import { Separator } from "#/components/ui/separator";
 import { useDataSaver } from "#/hooks/use-data-saver";
@@ -154,14 +154,22 @@ export function DetailedCard({ entry, lastRef }: IDetailedCardProps) {
                                     <span className="font-medium text-sm">{t("profile.roster.card.level")}</span>
                                     <span className="font-bold text-sm">{entry.level}</span>
                                 </div>
-                                <Progress className="h-1.5 transition-all duration-1000 ease-out" value={levelProgress} />
+                                <Progress value={levelProgress}>
+                                    <ProgressTrack className="bg-muted">
+                                        <ProgressIndicator className="bg-muted-foreground duration-1000 ease-out" />
+                                    </ProgressTrack>
+                                </Progress>
                             </div>
                             <div>
                                 <div className="flex items-center justify-between">
                                     <span className="font-medium text-sm">{t("profile.roster.card.trust")}</span>
                                     <span className="font-bold text-sm">{trustPct}%</span>
                                 </div>
-                                <Progress className="h-1.5 transition-all duration-1000 ease-out" value={trustProgress} />
+                                <Progress value={trustProgress}>
+                                    <ProgressTrack className="bg-muted">
+                                        <ProgressIndicator className="bg-muted-foreground duration-1000 ease-out" />
+                                    </ProgressTrack>
+                                </Progress>
                             </div>
                         </div>
                         <Separator className="my-3" />

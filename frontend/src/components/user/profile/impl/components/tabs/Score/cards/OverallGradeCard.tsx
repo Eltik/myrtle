@@ -1,4 +1,3 @@
-import { Trophy } from "lucide-react";
 import type { IPlayerStanding, IUserScore } from "#/lib/api/user";
 import { type TypedRichT, useFormatters, useRichT, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -21,30 +20,26 @@ interface IOverallGradeCardProps {
 export function OverallGradeCard({ score, standing }: IOverallGradeCardProps) {
     const t: GradeT = useT("user");
     const f = useFormatters();
-    const color = gradeColor(score.grade);
     const totalPct = Math.max(0, Math.min(100, score.total_score * 100));
     const calcAt = formatCalculatedAt(score.calculated_at, f);
 
     return (
-        <StatCard className="sm:col-span-2" color={color}>
+        <StatCard className="sm:col-span-2">
             <div className={cn("grid gap-6 sm:grid-cols-[auto_1fr] sm:gap-8", CARD_PADDING)}>
                 <div className="flex flex-col items-start gap-3 sm:gap-4">
-                    <CardKicker icon={Trophy} label={t("score.overall.title")} />
+                    <CardKicker label={t("score.overall.title")} />
                     <div className="flex items-baseline gap-3">
                         <span
-                            className="font-bold tabular-nums leading-none"
+                            className="font-bold text-foreground tabular-nums leading-none"
                             style={{
                                 fontSize: "clamp(4.5rem, 8vw + 1rem, 7rem)",
                                 letterSpacing: "-0.06em",
-                                color,
                             }}
                         >
                             {score.grade ?? "-"}
                         </span>
                         <div className="flex flex-col gap-0.5">
-                            <span className="font-bold text-2xl tabular-nums leading-none" style={{ color }}>
-                                {totalPct.toFixed(1)}%
-                            </span>
+                            <span className="font-bold text-2xl text-foreground tabular-nums leading-none">{totalPct.toFixed(1)}%</span>
                             <span className={KICKER_TEXT}>{t("score.overall.composite")}</span>
                         </div>
                     </div>
@@ -53,7 +48,7 @@ export function OverallGradeCard({ score, standing }: IOverallGradeCardProps) {
                 </div>
 
                 <div className="flex flex-col justify-center gap-4 sm:border-border/50 sm:border-l sm:pl-8">
-                    <GradeLadder total={score.total_score} color={color} />
+                    <GradeLadder total={score.total_score} />
                     <NextGradeHint score={score} />
                 </div>
             </div>
@@ -90,7 +85,7 @@ function StandingRow({ standing }: { standing: IPlayerStanding }) {
 }
 
 /** The grade thresholds as a segmented track with the account's position. */
-function GradeLadder({ total, color }: { total: number; color: string }) {
+function GradeLadder({ total }: { total: number }) {
     const t: GradeT = useT("user");
     const pos = Math.max(0, Math.min(100, total * 100));
     return (
@@ -105,7 +100,7 @@ function GradeLadder({ total, color }: { total: number; color: string }) {
                         return <div key={g.grade} className="h-full border-background/70 border-r last:border-r-0" style={{ width: `${width}%`, background: reached ? gradeColor(g.grade) : "transparent", opacity: reached ? 0.55 : 1 }} />;
                     })}
                 </div>
-                <div className="absolute -top-0.75 h-3.5 w-0.75 -translate-x-1/2 rounded-full" style={{ left: `${pos}%`, background: color, boxShadow: "0 0 0 2px var(--background)" }} />
+                <div className="absolute -top-0.75 h-3.5 w-0.75 -translate-x-1/2 rounded-full" style={{ left: `${pos}%`, background: "var(--foreground)", boxShadow: "0 0 0 2px var(--card)" }} />
             </div>
             <div className="relative h-3.5">
                 {GRADE_LADDER.map((g) => (
@@ -129,11 +124,7 @@ function NextGradeHint({ score }: { score: IUserScore }) {
         <p className="text-[11.5px] text-muted-foreground leading-relaxed">
             {rt("score.next.step", {
                 points: <span className="font-semibold text-foreground/90 tabular-nums">{t("score.next.points", { points: next.pointsAway.toFixed(1) })}</span>,
-                grade: (
-                    <span className="font-semibold" style={{ color: gradeColor(next.grade) }}>
-                        {next.grade}
-                    </span>
-                ),
+                grade: <span className="font-semibold text-foreground">{next.grade}</span>,
             })}
             {fastest && <> {rt("score.next.fastest", { section: <span className="font-medium text-foreground/85">{t(fastest.labelKey)}</span>, share: weightShare(fastest.weight).toFixed(0) })}</>}.
         </p>

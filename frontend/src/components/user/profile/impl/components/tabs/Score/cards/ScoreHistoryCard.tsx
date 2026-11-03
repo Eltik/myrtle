@@ -1,4 +1,3 @@
-import { TrendingUp } from "lucide-react";
 import { useMemo } from "react";
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { LoadFailed } from "#/components/ui/load-failed";
@@ -7,7 +6,6 @@ import { useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { CARD_PADDING, CardKicker, StatCard } from "../../Stats/primitives";
 import { toPct } from "../helpers";
-import { gradeColor } from "../palette";
 import type { messages as overallMessages } from "./OverallGradeCard.messages";
 import type { messages } from "./ScoreHistoryCard.messages";
 
@@ -37,7 +35,6 @@ export function ScoreHistoryCard({ score, history, isLoading, onRetry }: IProps)
     /** 'global' is declared once, on the sibling overall-grade card. */
     const t: TypedT<typeof messages & typeof overallMessages> = useT("user");
     const f = useFormatters();
-    const color = gradeColor(score.grade);
 
     const points = useMemo<IChartPoint[]>(() => {
         const snaps: IChartPoint[] = (history ?? []).filter((p) => p.total_score !== null).map((p) => ({ ts: new Date(p.taken_at).getTime(), pct: toPct(p.total_score), rank: p.rank_global }));
@@ -51,10 +48,10 @@ export function ScoreHistoryCard({ score, history, isLoading, onRetry }: IProps)
     }, [history, score]);
 
     return (
-        <StatCard className="sm:col-span-2" color={color}>
+        <StatCard className="sm:col-span-2">
             <div className={`${CARD_PADDING} flex flex-col gap-4`}>
                 <div className="flex items-center justify-between">
-                    <CardKicker icon={TrendingUp} label={t("score.history.title")} />
+                    <CardKicker label={t("score.history.title")} />
                     {points.length > 1 && <TrendChip points={points} />}
                 </div>
                 {points.length < 2 && onRetry ? (
@@ -75,9 +72,7 @@ export function ScoreHistoryCard({ score, history, isLoading, onRetry }: IProps)
                                         return (
                                             <div className="rounded-md border border-border/60 bg-popover px-2.5 py-1.5 text-[11px] shadow-md">
                                                 <div className="font-mono text-muted-foreground tabular-nums">{f.date(p.ts, TICK_DATE)}</div>
-                                                <div className="font-semibold tabular-nums" style={{ color }}>
-                                                    {p.pct.toFixed(2)}%
-                                                </div>
+                                                <div className="font-semibold text-foreground tabular-nums">{p.pct.toFixed(2)}%</div>
                                                 {p.rank !== null && (
                                                     <div className="text-muted-foreground tabular-nums">
                                                         #{f.number(p.rank)} {t("score.global")}
@@ -87,7 +82,7 @@ export function ScoreHistoryCard({ score, history, isLoading, onRetry }: IProps)
                                         );
                                     }}
                                 />
-                                <Line type="monotone" dataKey="pct" stroke={color} strokeWidth={2} dot={{ r: 2.5, fill: color, strokeWidth: 0 }} activeDot={{ r: 4 }} isAnimationActive={false} />
+                                <Line type="monotone" dataKey="pct" stroke="var(--foreground)" strokeWidth={2} dot={{ r: 2.5, fill: "var(--foreground)", strokeWidth: 0 }} activeDot={{ r: 4 }} isAnimationActive={false} />
                             </LineChart>
                         </ResponsiveContainer>
                     </div>

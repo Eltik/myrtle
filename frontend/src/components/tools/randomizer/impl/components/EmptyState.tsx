@@ -1,5 +1,4 @@
 import type React from "react";
-import { Kicker } from "#/components/ui/kicker";
 import { type TypedRichT, useRichT, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import type { messages } from "./EmptyState.messages";
@@ -11,8 +10,7 @@ export function EmptyState(): React.ReactElement {
         <section className="relative overflow-hidden rounded-2xl border border-border/70 border-dashed bg-card/60 px-6 py-10 shadow-xs/5 sm:py-14">
             <div className="mx-auto flex max-w-md flex-col items-center text-center">
                 <DiceStack />
-                <Kicker className="mt-5">{t("randomizer.empty.kicker")}</Kicker>
-                <h2 className="mt-2 font-display text-2xl text-foreground sm:text-3xl">{t("randomizer.empty.title")}</h2>
+                <h2 className="mt-5 font-display text-2xl text-foreground sm:text-3xl">{t("randomizer.empty.title")}</h2>
                 <p className="mt-3 max-w-prose text-pretty text-muted-foreground text-sm leading-relaxed">
                     {rt("randomizer.empty.hint", {
                         key: <kbd className="mx-0.5 inline-flex -translate-y-px items-center rounded-sm border border-border/70 bg-foreground/5 px-1.5 py-px font-medium font-mono text-[11px] text-foreground tracking-tight shadow-xs/5">{t("randomizer.empty.hintKey")}</kbd>,

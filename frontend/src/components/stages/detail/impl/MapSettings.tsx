@@ -49,7 +49,7 @@ function SettingRow({ def, checked, disabled, onChange }: { def: ISettingDef; ch
     const Icon = def.icon;
     return (
         <label htmlFor={id} className={cn("flex items-center gap-3 py-1.5", disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer")}>
-            <span aria-hidden="true" className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-border bg-[color-mix(in_oklch,var(--muted)_40%,transparent)] text-muted-foreground [&_svg]:h-3.5 [&_svg]:w-3.5">
+            <span aria-hidden="true" className="flex shrink-0 items-center text-muted-foreground [&_svg]:size-4">
                 <Icon />
             </span>
             <span className="flex min-w-0 flex-1 flex-col gap-0.5">

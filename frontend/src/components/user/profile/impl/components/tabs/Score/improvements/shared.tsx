@@ -66,26 +66,22 @@ export const URGENT_COLOR = "oklch(0.65 0.22 30)";
 /**
  * Mini-section header inside an expanded subscore panel.
  */
-export function SectionHeader({ title, count, accent }: { title: string; count?: ReactNode; accent: string }) {
+export function SectionHeader({ title, count }: { title: string; count?: ReactNode }) {
     return (
         <div className="flex items-center justify-between border-border/40 border-b pb-1.5">
-            <span className={cn(TEXT_KICKER)} style={{ color: `color-mix(in oklch, ${accent} 60%, var(--foreground))` }}>
-                {title}
-            </span>
+            <span className={cn(TEXT_KICKER)}>{title}</span>
             {count !== undefined && <span className={cn(TEXT_BADGE, "rounded-md border border-border/40 bg-muted/30 px-1.5 py-0.5 text-muted-foreground")}>{count}</span>}
         </div>
     );
 }
 
 /** `SectionHeader` plus a chevron, for secondary sections that stay one click away instead of stretching the panel. */
-export function CollapsibleSection({ title, count, accent, defaultOpen = false, children }: { title: string; count?: ReactNode; accent: string; defaultOpen?: boolean; children: ReactNode }) {
+export function CollapsibleSection({ title, count, defaultOpen = false, children }: { title: string; count?: ReactNode; defaultOpen?: boolean; children: ReactNode }) {
     const [open, setOpen] = useState(defaultOpen);
     return (
         <Collapsible open={open} onOpenChange={setOpen} className="flex flex-col gap-3">
             <CollapsibleTrigger className="flex items-center justify-between gap-2 border-border/40 border-b pb-1.5 text-left transition-colors hover:border-border">
-                <span className={cn(TEXT_KICKER)} style={{ color: `color-mix(in oklch, ${accent} 60%, var(--foreground))` }}>
-                    {title}
-                </span>
+                <span className={cn(TEXT_KICKER)}>{title}</span>
                 <span className="flex items-center gap-2">
                     {count !== undefined && <span className={cn(TEXT_BADGE, "rounded-md border border-border/40 bg-muted/30 px-1.5 py-0.5 text-muted-foreground")}>{count}</span>}
                     <ChevronDown className={cn("size-3.5 text-muted-foreground transition-transform", open && "rotate-180")} />
@@ -101,7 +97,7 @@ export function CollapsibleSection({ title, count, accent, defaultOpen = false, 
 /**
  * "X / Y" progress chip with a thin bar underneath.
  */
-export function ProgressLine({ label, current, max, accent, hint }: { label: string; current: number; max: number; accent: string; hint?: ReactNode }) {
+export function ProgressLine({ label, current, max, hint }: { label: string; current: number; max: number; hint?: ReactNode }) {
     const f = useFormatters();
     const pct = max > 0 ? Math.min(100, (current / max) * 100) : 0;
     return (
@@ -115,14 +111,9 @@ export function ProgressLine({ label, current, max, accent, hint }: { label: str
                     {hint}
                 </span>
             </div>
-            <div className="h-1 w-full overflow-hidden rounded-full bg-muted/40">
-                <div
-                    className="h-full rounded-full transition-[width] duration-500 ease-out"
-                    style={{
-                        width: `${pct}%`,
-                        background: `linear-gradient(to right, color-mix(in oklch, ${accent} 55%, transparent), ${accent})`,
-                    }}
-                />
+            {/* Neutral fill on the muted track: 6.25:1 light / 5.35:1 dark. */}
+            <div className="h-1 w-full overflow-hidden rounded-full bg-muted">
+                <div className="h-full rounded-full bg-muted-foreground transition-[width] duration-500 ease-out" style={{ width: `${pct}%` }} />
             </div>
         </div>
     );
@@ -158,7 +149,7 @@ export function ShowMoreButton({ onClick, label }: { onClick: () => void; label:
  * Top-of-panel summary tile. `min-h` keeps a row level when one sub-label
  * wraps; tiles without `onClick` render dimmed so a "0" doesn't look clickable.
  */
-export function StatTile({ value, label, sub, accent, active, onClick }: { value: ReactNode; label: string; sub?: ReactNode; accent: string; active?: boolean; onClick?: () => void }) {
+export function StatTile({ value, label, sub, active, onClick }: { value: ReactNode; label: string; sub?: ReactNode; active?: boolean; onClick?: () => void }) {
     const interactive = onClick !== undefined;
     const Wrapper = interactive ? "button" : "div";
     return (
@@ -169,11 +160,10 @@ export function StatTile({ value, label, sub, accent, active, onClick }: { value
             className={cn("flex min-h-22 flex-col items-center justify-center gap-1 rounded-md border px-2 py-2.5 text-center transition-colors", active ? "border-foreground/30 bg-muted/40" : "border-border/40 bg-muted/15", interactive ? "cursor-pointer hover:border-foreground/25 hover:bg-muted/30" : "opacity-55")}
         >
             <span
-                className="font-bold tabular-nums leading-none"
+                className="font-bold text-foreground tabular-nums leading-none"
                 style={{
                     fontSize: "1.5rem",
                     letterSpacing: "-0.02em",
-                    color: `color-mix(in oklch, ${accent} 70%, var(--foreground))`,
                 }}
             >
                 {value}

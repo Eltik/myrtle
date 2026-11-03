@@ -1,4 +1,3 @@
-import { CalendarClock, CalendarDays, Dices, Palette, Ticket } from "lucide-react";
 import * as React from "react";
 import { PageHeader } from "#/components/ui/page-header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "#/components/ui/tabs";
@@ -63,23 +62,18 @@ export function ReleasePlanner(): React.ReactElement {
                     <Tabs value={view} onValueChange={(v) => select(v as ReleaseView)} className="mt-5">
                         <TabsList className="mb-4 w-max">
                             <TabsTrigger value="planner" className="max-sm:shrink-0">
-                                <Palette />
                                 {t("release.tab.planner")}
                             </TabsTrigger>
                             <TabsTrigger value="pulls" className="max-sm:shrink-0">
-                                <Dices />
                                 {t("release.tab.pulls")}
                             </TabsTrigger>
                             <TabsTrigger value="events" className="max-sm:shrink-0">
-                                <CalendarClock />
                                 {t("release.tab.events")}
                             </TabsTrigger>
                             <TabsTrigger value="banners" className="max-sm:shrink-0">
-                                <Ticket />
                                 {t("release.tab.banners")}
                             </TabsTrigger>
                             <TabsTrigger value="calendar" className="max-sm:shrink-0">
-                                <CalendarDays />
                                 {t("release.tab.calendar")}
                             </TabsTrigger>
                         </TabsList>

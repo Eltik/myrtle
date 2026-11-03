@@ -36,6 +36,8 @@ const PRESETS: readonly RankPreset[] = ["p1Max", "p6Max", "default"];
 /** The share link carries at most 32 cards (`decodeInstances`). */
 const MAX_CARDS = 32;
 const ROW_HEIGHT = 44;
+/** The operator column, pinned to the scroller's left edge on a narrow screen. */
+const STICKY_CELL = "sticky left-0 z-1 bg-card";
 
 interface IRankingViewProps {
     state: IDpsState;
@@ -240,7 +242,9 @@ function RankTable({ rows, columns, sortBy, top, withRetention, withSplit, inCom
         { id: "add", label: "" },
     ];
     return (
-        <div ref={scrollRef} className="max-h-[70vh] overflow-auto rounded-lg border border-border">
+        // 68rem of columns in a 343px phone viewport: the scroller shows edge shadows while more
+        // sits past either side, and the operator column stays pinned so a row keeps its name.
+        <div ref={scrollRef} className="scroll-shadows-x max-h-[70vh] overflow-auto rounded-lg border border-border bg-card [--scroll-shadow-bg:var(--card)]">
             <div className="min-w-[68rem]">
                 <div className="sticky top-0 z-1 grid items-center gap-x-2 border-border border-b bg-card px-2 py-2 font-medium text-[10.5px] text-muted-foreground" style={{ gridTemplateColumns: columns }}>
                     {heads.map((h) =>
@@ -250,7 +254,7 @@ function RankTable({ rows, columns, sortBy, top, withRetention, withSplit, inCom
                                 <TooltipPopup className="max-w-72">{h.hint}</TooltipPopup>
                             </Tooltip>
                         ) : (
-                            <span key={h.id} className={cn("truncate", h.numeric && "text-right", h.active && "text-foreground")}>
+                            <span key={h.id} className={cn("truncate", h.numeric && "text-right", h.active && "text-foreground", h.id === "operator" && STICKY_CELL)}>
                                 {h.label}
                             </span>
                         ),
@@ -294,7 +298,7 @@ export function RankRowView({ row, index, columns, sortBy, top, withRetention, w
     return (
         <div className={cn("grid h-full items-center gap-x-2 border-border/60 border-b px-2 text-[12px]", added && "bg-primary/4")} style={{ gridTemplateColumns: columns }}>
             <span className="text-right font-mono text-[11px] text-muted-foreground tabular-nums">{index + 1}</span>
-            <span className="flex min-w-0 items-center gap-2">
+            <span className={cn("flex min-w-0 items-center gap-2 self-stretch", STICKY_CELL, added && "bg-[color-mix(in_oklch,var(--primary)_4%,var(--card))]")}>
                 <span aria-hidden="true" className="inline-flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-md bg-muted text-[9px]">
                     <OperatorAvatar charId={row.operatorId} name={row.name} />
                 </span>

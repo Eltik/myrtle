@@ -210,9 +210,9 @@ export function PlannerTab({ today }: IPlannerTabProps): React.ReactElement {
     );
 }
 
-function rowTag(row: IPlanRow, t: PlannerT): string {
-    if (row.kind === "review") return t("release.planner.tag.review");
-    if (row.kind === "listing") return t("release.planner.tag.listing");
+/** A store sale and a Fashion Review carry no tag: their names already say what they are ("Store sale / Store sale"). */
+function rowTag(row: IPlanRow, t: PlannerT): string | null {
+    if (row.kind === "review" || row.kind === "listing") return null;
     return row.rerun ? t("release.planner.tag.rerun") : t("release.planner.tag.event");
 }
 
@@ -232,6 +232,7 @@ const EventCard = React.memo(function EventCard({ row, total, picks, hidden, act
     const art = useArt(row.imagePath);
     const timeZone = useReleaseTimeZone();
     const picked = row.skins.filter((s) => picks[s.skinId]).length;
+    const tag = rowTag(row, t);
     const outfits = row.skins.filter((s) => !hidden.has(s.skinId)).length;
     return (
         <button
@@ -241,7 +242,7 @@ const EventCard = React.memo(function EventCard({ row, total, picks, hidden, act
         >
             <div className="flex min-w-0 flex-col gap-1">
                 <CnName cn={row.nameCn} en={row.nameEn} auto={row.nameAuto} compact primaryClassName="font-sans font-semibold text-[13px] text-foreground">
-                    <Tag tone={row.kind === "listing" ? "var(--color-fuchsia-500)" : row.kind === "review" ? "var(--color-teal-500)" : undefined}>{rowTag(row, t)}</Tag>
+                    {tag ? <Tag>{tag}</Tag> : null}
                 </CnName>
                 <span className="font-mono text-[10.5px] text-muted-foreground tabular-nums">
                     {row.resolution.status === "unlisted" ? t("release.planner.card.unlisted", { date: formatDate(row.enStart, locale, timeZone) }) : formatDate(row.enStart, locale, timeZone)}
@@ -292,13 +293,14 @@ function EventDetail({ row, state, clears, hidden, total, today, lookup, onPick,
     const onRecord = tally.claimed + tally.open + tally.unrated;
     const groups = React.useMemo(() => planGroups(row.skins.filter((s) => !hidden.has(s.skinId))), [row.skins, hidden]);
     const ownedHidden = row.skins.reduce((n, s) => n + (hidden.has(s.skinId) ? 1 : 0), 0);
+    const tag = rowTag(row, t);
     return (
         <div className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4">
             <div className={cn("grid gap-x-4 gap-y-2 sm:items-start", art.src ? "grid-cols-[112px_minmax(0,1fr)] sm:grid-cols-[200px_minmax(0,1fr)_auto]" : "grid-cols-1 sm:grid-cols-[minmax(0,1fr)_auto]")}>
                 {art.src && <img src={art.src} alt="" loading="lazy" onError={art.onError} className="aspect-video w-full rounded-md bg-muted object-cover sm:w-50" />}
                 <div className="flex min-w-0 flex-col gap-1">
                     <CnName cn={row.nameCn} en={row.nameEn} auto={row.nameAuto} primaryClassName="font-sans font-bold text-[16px] text-foreground">
-                        <Tag>{rowTag(row, t)}</Tag>
+                        {tag ? <Tag>{tag}</Tag> : null}
                     </CnName>
                     <Calcs total={total} className="w-max" />
                 </div>

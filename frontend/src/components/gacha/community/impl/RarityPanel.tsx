@@ -121,32 +121,12 @@ function RarityRow({ row, count, observed, hasData, personal }: { row: IRarityRo
 
             <BaselineBar observed={observed} baseline={row.expected} fillColor={row.color} personalObserved={personal?.observed} hasData={hasData} />
 
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[10.5px] text-muted-foreground">
+            {/* Gap, not a middle dot, between the items: a wrapped dot led or trailed a line on its own. */}
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-1 font-sans text-[11.5px] text-muted-foreground">
                 <span className="tabular-nums">{hasData ? t("community.rarity.pulls", { count: f.number(count) }) : "-"}</span>
-                {/* Each separator is the first child of the item after it, so a wrap carries it to the
-                    next line instead of leaving "26,173 pulls ·" dangling at the end of this one. */}
-                <span className="inline-flex items-center gap-3">
-                    <span className="text-subtle-foreground" aria-hidden>
-                        ·
-                    </span>
-                    <ComparisonChip label={t("community.rarity.chip.vsExpected")} baseline={row.expected} comparison={vsExpected} />
-                </span>
-                {personal != null && personalVsCommunity != null ? (
-                    <span className="inline-flex items-center gap-3">
-                        <span className="text-subtle-foreground" aria-hidden>
-                            ·
-                        </span>
-                        <ComparisonChip label={t("community.rarity.chip.youVsCommunity")} baseline={observed} comparison={personalVsCommunity} highlight />
-                    </span>
-                ) : null}
-                {personal != null && personalVsExpected != null ? (
-                    <span className="inline-flex items-center gap-3">
-                        <span className="text-subtle-foreground" aria-hidden>
-                            ·
-                        </span>
-                        <ComparisonChip label={t("community.rarity.chip.youVsExpected")} baseline={row.expected} comparison={personalVsExpected} highlight />
-                    </span>
-                ) : null}
+                <ComparisonChip label={t("community.rarity.chip.vsExpected")} baseline={row.expected} comparison={vsExpected} />
+                {personal != null && personalVsCommunity != null ? <ComparisonChip label={t("community.rarity.chip.youVsCommunity")} baseline={observed} comparison={personalVsCommunity} highlight /> : null}
+                {personal != null && personalVsExpected != null ? <ComparisonChip label={t("community.rarity.chip.youVsExpected")} baseline={row.expected} comparison={personalVsExpected} highlight /> : null}
             </div>
         </div>
     );
@@ -157,7 +137,7 @@ function ComparisonChip({ label, baseline, comparison, highlight }: { label: str
     if (!comparison) {
         return (
             <span className="inline-flex items-center gap-1.5">
-                <span className="kicker mb-0">{label}</span>
+                <span>{label}</span>
                 <span className="text-subtle-foreground">-</span>
             </span>
         );
@@ -170,7 +150,7 @@ function ComparisonChip({ label, baseline, comparison, highlight }: { label: str
 
     return (
         <span className={`inline-flex items-center gap-1.5 ${baseClass}`}>
-            <span className="kicker mb-0">{label}</span>
+            <span>{label}</span>
             <span className={`inline-flex items-center gap-0.5 font-semibold tabular-nums ${colorClass}`}>
                 {Arrow ? <Arrow aria-hidden className="size-3" /> : null}
                 {comparison.direction === "on" ? null : <span className="sr-only">{t(comparison.direction === "above" ? "community.rarity.direction.above" : "community.rarity.direction.below")}</span>}

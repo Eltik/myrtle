@@ -35,12 +35,12 @@ import { type ISection, underLine } from "./sections";
 type BrowseT = TypedT<typeof messages>;
 
 /** The heading over the one flat section a sort produces. It carries no glyph and no chapter range, because the list it heads is not a shelf and describing it as one would be a lie. */
-export function FlatHead({ title, count }: { title: string; count: string }): React.ReactElement {
+export function FlatHead({ title, count }: { title: string; count?: string }): React.ReactElement {
     return (
         <div className="mb-3 flex items-end justify-between gap-3 border-border border-b pb-2">
             <div className="flex min-w-0 flex-col gap-0.5">
                 <h2 className="m-0 font-bold font-heading text-[15px] text-foreground sm:truncate">{title}</h2>
-                <span className="font-sans text-[12px] text-muted-foreground tabular-nums sm:truncate">{count}</span>
+                {count ? <span className="font-sans text-[12px] text-muted-foreground tabular-nums sm:truncate">{count}</span> : null}
             </div>
         </div>
     );
@@ -265,7 +265,7 @@ const FADE = 28;
  * How the bar moves (the spy, the held chip on a click, the rail's slide and
  * its fade edges) lives in `./jumpBar`; this component is the markup.
  */
-export const JumpBar = memo(function JumpBar({ chips, tools }: { chips: readonly IChipModel[]; tools: React.ReactNode }): React.ReactElement {
+export const JumpBar = memo(function JumpBar({ chips, tools, toolsShown }: { chips: readonly IChipModel[]; tools: React.ReactNode; toolsShown: boolean }): React.ReactElement {
     const t: BrowseT = useT("story");
     const spied = useScrollSpy(useMemo(() => chips.map((chip) => chip.id), [chips]));
     const { active, jump } = useJumpHold(spied);
@@ -284,13 +284,17 @@ export const JumpBar = memo(function JumpBar({ chips, tools }: { chips: readonly
     const phone = useMediaQuery("max-sm");
     const pickerCurrent = phone ? current : (chips[0] ?? null);
 
-    return (
+    // Under a sort the bar holds nothing but the search button, which the inline
+    // toolbar above already shows. So there it takes no room in the flow and
+    // appears, laid over the cards, only once the toolbar has scrolled away.
+    const flat = current === null;
+    const bar = (
         <nav
             aria-label={t("browse.jump.aria")}
             // The fill bleeds to the page edges; the 1 px rule is an inset pseudo-element held to the
             // content column, because a border on the bled box ran out past the content to x 5. The
             // bottom padding grew 1 px to keep the 52 / 66 px bar the border made.
-            className="page-bleed sticky top-(--site-header-height) z-20 mt-4 bg-background/95 px-(--page-gutter) pt-1 pb-1 after:pointer-events-none after:absolute after:inset-x-(--page-gutter) after:bottom-0 after:h-px after:bg-border/60 sm:pt-2 sm:pb-2.25"
+            className={cn("page-bleed bg-background px-(--page-gutter) pt-1 pb-1 after:pointer-events-none after:absolute after:inset-x-(--page-gutter) after:bottom-0 after:h-px after:bg-border/60 sm:pt-2 sm:pb-2.25", flat ? cn("relative", !toolsShown && "invisible") : "sticky top-(--site-header-height) z-20 mt-4")}
         >
             <div className="flex items-center gap-2 sm:gap-1.5">
                 {current === null ? (
@@ -315,10 +319,13 @@ export const JumpBar = memo(function JumpBar({ chips, tools }: { chips: readonly
                         <span aria-hidden="true" className="hidden h-6 w-px shrink-0 bg-border sm:block" />
                     </>
                 )}
-                {tools}
+                {/* Hidden, not unmounted, while the inline toolbar is on screen: one
+                    filter trigger in view at a time, and the bar keeps its height. */}
+                <div className={cn("contents", !toolsShown && "invisible")}>{tools}</div>
             </div>
         </nav>
     );
+    return flat ? <div className="sticky top-(--site-header-height) z-20 h-0">{bar}</div> : bar;
 });
 
 /**

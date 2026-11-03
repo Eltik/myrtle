@@ -3,30 +3,6 @@ import { defineMessages, type MessageMap } from "#/lib/i18n/messages";
 export const namespace = "stats";
 
 export const messages = {
-    "page.kpi.operators": {
-        text: "Operators indexed",
-        description: "Headline tile label: how many operators (playable characters) the site has data for. Rendered uppercase in a narrow tile.",
-    },
-    "page.kpi.operators.meta": {
-        text: "{skills} skills · {modules} modules",
-        description: "Sub-line under the operator count. Both values are already-formatted numbers; 'modules' are operator equipment upgrades.",
-    },
-    "page.kpi.tierLists": {
-        text: "Active tier lists",
-        description: "Headline tile label: how many community tier lists are currently published. Rendered uppercase.",
-    },
-    "page.kpi.tierLists.meta": {
-        text: "{total} total · {versions} versions",
-        description: "Sub-line under the active-tier-list count. A version is a saved revision of a list. Both values are already-formatted numbers.",
-    },
-    "page.kpi.rosters": {
-        text: "Rosters synced",
-        description: "Headline tile label: how many players have linked their game account. Rendered uppercase.",
-    },
-    "page.kpi.rosters.meta": {
-        text: "Yostar-linked players",
-        description: "Sub-line under the roster count. 'Yostar' is the game publisher's account system and stays as-is. 'Player' is the site's term; the game itself says 'Doctor'.",
-    },
     "page.error.load": {
         text: "Couldn't load site stats.",
         description: "Bold lead of the stats-page error banner; the request's own message follows it.",
@@ -35,24 +11,16 @@ export const messages = {
         text: "No details were given.",
         description: "Stand-in used in the stats-page error banner when the failure carried no message.",
     },
-    "page.catalog.kicker": {
-        text: "Game catalog",
-        description: "Eyebrow label above the game-catalog section of the stats page. Rendered uppercase.",
-    },
     "page.catalog.title": {
-        text: "What we know about Terra.",
-        description: "Heading of the game-catalog section. 'Terra' is the name of the game's world and is not translated.",
+        text: "Game catalog",
+        description: "Heading of the game-catalog section of the stats page: counts of operators, skills, stages and so on from the game data.",
     },
     "page.catalog.blurb": {
         text: "Counted from Hypergryph's game data each time the site updates.",
         description: "Caption under the game-catalog heading. 'Hypergryph' is the game's developer and stays as-is.",
     },
-    "page.community.kicker": {
-        text: "Tier lists · community",
-        description: "Eyebrow label above the community tier-list section of the stats page. Rendered uppercase; the middle dot is a separator.",
-    },
     "page.community.title": {
-        text: "The community's working notes.",
+        text: "Community tier lists",
         description: "Heading of the community tier-list section of the stats page.",
     },
     "page.community.blurb": {

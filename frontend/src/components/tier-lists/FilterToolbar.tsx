@@ -68,8 +68,16 @@ export function FilterToolbar({ type, sort, query, selectedFlairs, flairOptions,
         <div className="max-sm:contents sm:sticky sm:top-16 sm:z-30 sm:border-border sm:border-y sm:bg-background">
             <div className="max-sm:contents sm:py-3">
                 <div className="flex flex-wrap items-center gap-2.5 max-sm:contents">
-                    <div className="page-bleed sticky top-14 z-30 flex flex-wrap items-center gap-2.5 border-border border-y bg-background px-(--page-gutter) py-2.5 sm:contents">
-                        <ToggleGroup aria-label={t("browse.type.label")} value={[type]} onValueChange={(next) => next[0] && onTypeChange(next[0] as TierListType)} variant="outline" size="sm" className="shrink-0">
+                    <div className="page-bleed sticky top-14 z-30 flex items-center gap-2.5 border-border border-y bg-background px-(--page-gutter) py-2 sm:contents">
+                        {/* One row below sm (it wrapped to 96px at 375): the group scrolls sideways; the 6px padding, cancelled by the margin, keeps the 44px touch hit area and the focus ring inside the scroller. */}
+                        <ToggleGroup
+                            aria-label={t("browse.type.label")}
+                            value={[type]}
+                            onValueChange={(next) => next[0] && onTypeChange(next[0] as TierListType)}
+                            variant="outline"
+                            size="sm"
+                            className="min-w-0 max-sm:-m-1.5 max-sm:overflow-x-auto max-sm:p-1.5 sm:shrink-0 max-sm:[scrollbar-width:none] max-sm:[&::-webkit-scrollbar]:hidden"
+                        >
                             {typeTabs.map((tab) => (
                                 <ToggleGroupItem key={tab.value} value={tab.value} className="gap-1.5 px-3 text-xs sm:text-xs">
                                     {tab.value === "favorites" && (

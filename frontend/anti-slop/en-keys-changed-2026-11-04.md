@@ -427,3 +427,20 @@ Also changed in fc081710 (older keys):
 | story/sprites/CharactersTab.messages.ts | list error | The character list could not be loaded. -> Couldn't load the character list. |
 | user/profile/.../Showcase/ShowcaseTab.messages.ts | showcase error | The showcase couldn't be loaded. -> Couldn't load the showcase. |
 | story/export/export.messages.ts | pictures left out | {count} pictures could not be loaded and were left out. -> Couldn't load {count} pictures, so they were left out. |
+
+
+## Final wave (after fee8f54a): text changes the other locales must follow
+
+| file | key | change |
+|---|---|---|
+| gacha/community/impl/PageHeader.messages.ts | community.header.title | now "What everyone's pulling." with NO `{emphasis}` placeholder (the red emphasis word and `community.header.titleEmphasis` are gone): every locale must drop the placeholder |
+| stages/list/StageList.messages.ts | list.counts | "{stages} stages · {zones} zones · {categories} categories" |
+| stats/StatsPage.messages.ts | page.catalog.title / page.community.title | "Game catalog" / "Community tier lists" |
+| story/library/StoryLibrary.messages.ts | library.counts | now includes `{stories}` ("{groups} chapters · {records} operators · {stories} stories") |
+| tools/recruitment/impl/components/ResultsList.messages.ts | recruit.empty.noSelection.desc | "Combinations appear here once you pick a tag." |
+
+Removed keys (no translation needed): stages list.title; tierLists detail.hero.kicker; stats
+page.kpi.* (6), page.catalog.kicker, page.community.kicker, catalog.tierLists(.meta);
+leaderboard.hero.eyebrow; community.header.titleEmphasis; story library.countsAll,
+library.storiesLabel; tools randomizer.empty.kicker, squad.slots.signIn(Button),
+release.planner.tag.review, release.planner.tag.listing.

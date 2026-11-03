@@ -114,7 +114,7 @@ export function FieldNotes() {
                 <Kicker>{t("fieldNotes.kicker")}</Kicker>
                 <StatusPicker value={status} onChange={setStatus} t={t} />
             </div>
-            <div className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-border bg-border max-sm:-mx-4 max-sm:rounded-none max-sm:border-x-0 lg:grid-cols-5">
+            <div className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-border bg-border lg:grid-cols-5">
                 <FactTile
                     label={t("fieldNotes.immune.label")}
                     fraction={shareOf(enemies, () => immunity ?? null)}

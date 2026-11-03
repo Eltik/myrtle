@@ -3,10 +3,6 @@ import { defineMessages, type MessageMap } from "#/lib/i18n/messages";
 export const namespace = "tools";
 
 export const messages = {
-    "randomizer.empty.kicker": {
-        text: "No squads rolled",
-        description: "Small heading over the empty state before anything has been drawn.",
-    },
     "randomizer.empty.title": {
         text: "Nothing rolled yet.",
         description: "Large empty-state line before the first roll. Keep the full stop.",

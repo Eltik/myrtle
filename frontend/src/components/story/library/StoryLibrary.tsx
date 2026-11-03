@@ -117,27 +117,12 @@ export function StoryLibrary(): React.ReactElement {
 
     return (
         <div className="page-shell [--page-max:1400px]">
-            {/* THE BIG NUMBER IS A DESKTOP ORNAMENT. Under 640 it would be a 130 px block
-                of its own over a 923 px head, so there it folds into the subhead as a
-                third count and the right-hand stat is hidden. At 640 and up the
-                subhead keeps its two counts and the number stays where it was. */}
             <PageHeader
-                className={cn("mb-4 border-primary/70 border-b-2 pb-3", SHELF_HEAD)}
+                className={cn("mb-4 border-border border-b pb-3", SHELF_HEAD)}
                 breadcrumbLabel={t("library.breadcrumb")}
                 breadcrumb={[t("library.breadcrumb.archive"), t("library.breadcrumb.stories")]}
                 title={t("library.title")}
-                description={
-                    <>
-                        <span className="sm:hidden">{t("library.countsAll", { groups: storyGroups.length, records: index.records.length, stories: f.number(totals) })}</span>
-                        <span className="max-sm:hidden">{t("library.counts", { groups: storyGroups.length, records: index.records.length })}</span>
-                    </>
-                }
-                actions={
-                    <div className="hidden sm:block sm:text-right">
-                        <div className="font-light font-sans text-[34px] text-primary tabular-nums leading-none tracking-[-0.02em]">{f.number(totals)}</div>
-                        <div className="mt-1.5 font-sans text-[12px] text-muted-foreground">{t("library.storiesLabel")}</div>
-                    </div>
-                }
+                description={t("library.counts", { groups: storyGroups.length, records: index.records.length, stories: f.number(totals) })}
             />
 
             {hero ? <ContinueCard pick={hero} progress={progress} gameRead={gameRead} onViewChapter={viewChapter} /> : null}

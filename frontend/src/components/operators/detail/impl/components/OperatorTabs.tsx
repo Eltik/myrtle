@@ -51,13 +51,18 @@ export function OperatorTabs({ operator, activeTab, onTabChange }: IOperatorTabs
                         {/* At 375px the six tabs run to 713px and a screenshot showed the strip cut "Level-Up
                             Cost" mid-word with no sign that it scrolls; a 3rem mask fade did not read as
                             "more" either. The kit list now scrolls itself with an edge shadow. */}
-                        <TabsList className={cn("w-max gap-1 rounded-none bg-transparent px-[var(--page-gutter)] py-2.5 [--scroll-shadow-bg:var(--background)]", "**:data-[slot=tab-indicator]:rounded-full **:data-[slot=tab-indicator]:bg-primary! **:data-[slot=tab-indicator]:shadow-sm")}>
+                        <TabsList
+                            className={cn(
+                                "w-max gap-1 rounded-none bg-transparent px-[var(--page-gutter)] py-2.5 [--scroll-shadow-bg:var(--background)]",
+                                "**:data-[slot=tab-indicator]:inset-ring **:data-[slot=tab-indicator]:inset-ring-foreground/40 **:data-[slot=tab-indicator]:rounded-full **:data-[slot=tab-indicator]:bg-input! **:data-[slot=tab-indicator]:shadow-none dark:**:data-[slot=tab-indicator]:bg-foreground/12!",
+                            )}
+                        >
                             {filteredTabs.map((tab) => {
                                 const Icon = tab.icon;
                                 return (
                                     <TabsTab
                                         aria-controls={tab.type === activeTab ? PANEL_ID : undefined}
-                                        className="h-auto pointer-coarse:min-h-11 grow-0 rounded-full px-4 py-1.5 font-medium text-muted-foreground text-sm hover:bg-accent hover:text-foreground data-active:text-primary-foreground! data-active:hover:bg-transparent"
+                                        className="h-auto pointer-coarse:min-h-11 grow-0 rounded-full px-4 py-1.5 font-medium text-muted-foreground text-sm hover:bg-accent hover:text-foreground data-active:text-foreground data-active:hover:bg-transparent"
                                         id={`${MOBILE_TAB_ID_PREFIX}${tab.type}`}
                                         key={tab.type}
                                         value={tab.type}
@@ -72,7 +77,10 @@ export function OperatorTabs({ operator, activeTab, onTabChange }: IOperatorTabs
 
                     <Tabs className="sticky top-20 hidden lg:block" onValueChange={handleValueChange} orientation="vertical" value={activeTab}>
                         <TabsList
-                            className={cn("w-full gap-0.5 rounded-2xl border border-border/60 bg-card p-2", "**:data-[slot=tab-indicator]:rounded-lg **:data-[slot=tab-indicator]:bg-primary/10 **:data-[slot=tab-indicator]:shadow-none **:data-[slot=tab-indicator]:ring-1 **:data-[slot=tab-indicator]:ring-primary/30")}
+                            className={cn(
+                                "w-full gap-0.5 rounded-2xl border border-border/60 bg-card p-2",
+                                "**:data-[slot=tab-indicator]:inset-ring **:data-[slot=tab-indicator]:inset-ring-foreground/40 **:data-[slot=tab-indicator]:rounded-lg **:data-[slot=tab-indicator]:bg-input! **:data-[slot=tab-indicator]:shadow-none dark:**:data-[slot=tab-indicator]:bg-foreground/12!",
+                            )}
                         >
                             {filteredTabs.map((tab) => {
                                 const Icon = tab.icon;
@@ -88,7 +96,7 @@ export function OperatorTabs({ operator, activeTab, onTabChange }: IOperatorTabs
                                                 />
                                             }
                                         >
-                                            <Icon className="h-4 w-4 shrink-0 text-subtle-foreground transition-colors group-hover:text-foreground group-data-active:text-primary" />
+                                            <Icon className="h-4 w-4 shrink-0 text-subtle-foreground transition-colors group-hover:text-foreground group-data-active:text-foreground" />
                                             <span className="truncate">{t(tab.labelKey)}</span>
                                         </TooltipTrigger>
                                         <TooltipPopup side="right">{t(tab.labelKey)}</TooltipPopup>

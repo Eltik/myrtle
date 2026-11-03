@@ -1,4 +1,4 @@
-import { CalendarCheck, CalendarDays, Check, Clock } from "lucide-react";
+import { Check, Clock } from "lucide-react";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { type IFormatters, useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -97,16 +97,16 @@ export function SignInOverviewCard({ checkin, server }: ICardProps) {
     const { claimed, elapsed } = monthState(checkin, server);
 
     return (
-        <StatCard color={SIGNIN}>
+        <StatCard>
             <div className={cn("flex h-full flex-col gap-5", CARD_PADDING)}>
-                <CardKicker icon={CalendarDays} label={t("profile.stats.signin.record.title")} />
+                <CardKicker label={t("profile.stats.signin.record.title")} />
 
                 <div className="grid grid-cols-2 gap-3">
-                    {cumulative_signin !== null && <Tile color={SIGNIN} sub={t("profile.stats.signin.total")} tooltip={t("profile.stats.signin.total.tooltip")} value={f.number(cumulative_signin)} />}
-                    {ageDays !== null && <Tile color={SIGNIN} sub={t("profile.stats.signin.age")} value={f.number(ageDays)} />}
+                    {cumulative_signin !== null && <Tile sub={t("profile.stats.signin.total")} tooltip={t("profile.stats.signin.total.tooltip")} value={f.number(cumulative_signin)} />}
+                    {ageDays !== null && <Tile sub={t("profile.stats.signin.age")} value={f.number(ageDays)} />}
                 </div>
 
-                {rate !== null && <MetricRow color={SIGNIN} label={t("profile.stats.signin.rate")} pct={rate} value={`${rate}%`} />}
+                {rate !== null && <MetricRow label={t("profile.stats.signin.rate")} pct={rate} value={`${rate}%`} />}
 
                 <div className="flex flex-col gap-2.5">
                     {register_ts ? <StatRow label={t("profile.stats.signin.memberSince")} value={f.date(new Date(register_ts * 1000), DATE_SHORT)} /> : null}
@@ -129,7 +129,7 @@ function claimedStyle() {
     return {
         background: `color-mix(in oklch, ${SIGNIN} 16%, transparent)`,
         borderColor: `color-mix(in oklch, ${SIGNIN} 30%, transparent)`,
-        color: SIGNIN,
+        color: "var(--foreground)",
     };
 }
 
@@ -165,10 +165,10 @@ export function SignInCalendarCard({ checkin, server }: ICardProps) {
     const slots = Array.from({ length: daysInMonth }, (_, d) => d + 1);
 
     return (
-        <StatCard color={SIGNIN}>
+        <StatCard>
             <div className={cn("flex h-full flex-col gap-4", CARD_PADDING)}>
                 <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-                    <CardKicker icon={CalendarCheck} label={t("profile.stats.signin.calendar.title")} />
+                    <CardKicker label={t("profile.stats.signin.calendar.title")} />
                     <Tooltip>
                         <TooltipTrigger render={<button type="button" className="inline-flex cursor-default items-center gap-1.5 rounded-sm text-left font-medium text-[11px] text-muted-foreground focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2" />}>
                             <Clock aria-hidden className="size-3" />
@@ -181,10 +181,7 @@ export function SignInCalendarCard({ checkin, server }: ICardProps) {
                 <div className="flex items-baseline justify-between">
                     <span className={KICKER_TEXT}>{monthLabel}</span>
                     <span className="font-mono text-[10.5px] text-muted-foreground tabular-nums">
-                        <span className="font-semibold" style={{ color: SIGNIN }}>
-                            {claimed}
-                        </span>{" "}
-                        / {elapsed} {t("profile.stats.signin.claimed")}
+                        <span className="font-semibold text-foreground">{claimed}</span> / {elapsed} {t("profile.stats.signin.claimed")}
                     </span>
                 </div>
 
@@ -209,13 +206,13 @@ export function SignInCalendarCard({ checkin, server }: ICardProps) {
                                                 className={cn(CELL_BASE, state === "open" && "border-border/60 border-dashed text-subtle-foreground", state === "upcoming" && "border-transparent text-subtle-foreground", state === "claimed" && "border-transparent")}
                                                 style={{
                                                     ...(state === "claimed" && claimedStyle()),
-                                                    ...(slot === nextSlot && { boxShadow: `inset 0 0 0 1.5px color-mix(in oklch, ${SIGNIN} 55%, transparent)` }),
+                                                    ...(slot === nextSlot && { boxShadow: "inset 0 0 0 1.5px var(--muted-foreground)" }),
                                                 }}
                                             />
                                         }
                                     >
                                         {slot}
-                                        {state === "claimed" && <Check aria-hidden className="absolute top-0.5 right-0.5 size-2" style={{ color: SIGNIN }} />}
+                                        {state === "claimed" && <Check aria-hidden className="absolute top-0.5 right-0.5 size-2 text-foreground" />}
                                     </TooltipTrigger>
                                     <TooltipPopup>{titleParts.join(" · ")}</TooltipPopup>
                                 </Tooltip>
@@ -250,22 +247,13 @@ export function SignInCalendarCard({ checkin, server }: ICardProps) {
                             }
                         >
                             {behind === 0 ? (
-                                <span className="font-semibold" style={{ color: SIGNIN }}>
-                                    {t("profile.stats.signin.caughtUp")}
-                                </span>
+                                <span className="font-semibold text-foreground">{t("profile.stats.signin.caughtUp")}</span>
                             ) : (
                                 <>
-                                    <span className="font-semibold" style={{ color: SIGNIN }}>
-                                        {behind}
-                                    </span>{" "}
-                                    {t("profile.stats.signin.behind.days", { count: behind })}
+                                    <span className="font-semibold text-foreground">{behind}</span> {t("profile.stats.signin.behind.days", { count: behind })}
                                 </>
                             )}
-                            {can_check_in && (
-                                <span className="ml-2 font-semibold" style={{ color: SIGNIN }}>
-                                    {t("profile.stats.signin.claimReady")}
-                                </span>
-                            )}
+                            {can_check_in && <span className="ml-2 font-semibold text-success-foreground">{t("profile.stats.signin.claimReady")}</span>}
                         </TooltipTrigger>
                         <TooltipPopup>{t("profile.stats.signin.cardDays.tooltip", { cardDays, claimed })}</TooltipPopup>
                     </Tooltip>

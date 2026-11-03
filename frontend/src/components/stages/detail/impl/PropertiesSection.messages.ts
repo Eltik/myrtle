@@ -5,7 +5,7 @@ export const namespace = "stages";
 export const messages = {
     "props.title": {
         text: "Properties",
-        description: "Kicker over the list of yes/no stage flags.",
+        description: "Section heading over the list of yes/no stage flags.",
     },
     "props.canPractice": {
         text: "Can practice",
@@ -57,7 +57,7 @@ export const messages = {
     },
     "props.ids.title": {
         text: "Identifiers",
-        description: "Kicker over the grid of raw backend ids for this stage.",
+        description: "Section heading over the grid of raw backend ids for this stage.",
     },
     "props.ids.stage": {
         text: "Stage ID",

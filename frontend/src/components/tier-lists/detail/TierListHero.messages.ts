@@ -9,19 +9,15 @@ export const messages = {
     },
     "detail.hero.official": {
         text: "Official",
-        description: "Badge marking a tier list maintained by the site's own team. Rendered uppercase.",
+        description: "Badge marking a tier list maintained by the site's own team.",
     },
     "detail.hero.community": {
         text: "Community",
-        description: "Badge marking a tier list built by a player. Rendered uppercase.",
+        description: "Badge marking a tier list built by a player.",
     },
     "detail.hero.trending": {
         text: "Trending",
-        description: "Badge marking a list with unusual recent traffic. Rendered uppercase.",
-    },
-    "detail.hero.kicker": {
-        text: "Tier List",
-        description: "Small uppercase label above the list's title.",
+        description: "Badge marking a list with unusual recent traffic.",
     },
     "detail.hero.authorFallback": {
         text: "Player",

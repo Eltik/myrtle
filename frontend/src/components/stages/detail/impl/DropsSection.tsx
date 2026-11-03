@@ -1,7 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { Package } from "lucide-react";
 import { useState } from "react";
-import { Kicker } from "#/components/ui/kicker";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -96,7 +95,7 @@ export function DropsSection({ groups }: { groups: IDropGroup[] }) {
             </SectionHead>
             {groups.map((group) => (
                 <div key={group.type} className="flex flex-col gap-2">
-                    <Kicker className="leading-none">{group.labelKey ? tConst(group.labelKey) : group.type}</Kicker>
+                    <h3 className="m-0 font-medium font-sans text-[12.5px] text-muted-foreground leading-none">{group.labelKey ? tConst(group.labelKey) : group.type}</h3>
                     <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
                         {group.drops.map((drop) => (
                             <DropCard key={`${group.type}-${drop.reward.id}`} drop={drop} />

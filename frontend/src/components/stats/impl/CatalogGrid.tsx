@@ -1,7 +1,8 @@
 import { Kicker } from "#/components/ui/kicker";
-import type { IGameDataStats, IRostersStats, ITierListStats } from "#/lib/api/stats";
+import type { IGameDataStats, IRostersStats } from "#/lib/api/stats";
 import { useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
+import { cn } from "#/lib/utils";
 import type { messages } from "./CatalogGrid.messages";
 
 interface ICatalogTile {
@@ -9,11 +10,12 @@ interface ICatalogTile {
     label: string;
     value: string;
     meta?: string;
+    className?: string;
 }
 
-function CatalogCell({ label, value, meta }: ICatalogTile) {
+function CatalogCell({ label, value, meta, className }: ICatalogTile) {
     return (
-        <div className="flex flex-col gap-2 bg-card px-4 py-3.5">
+        <div className={cn("flex flex-col gap-2 bg-card px-4 py-3.5", className)}>
             <dt>
                 <Kicker>{label}</Kicker>
             </dt>
@@ -25,11 +27,10 @@ function CatalogCell({ label, value, meta }: ICatalogTile) {
 
 interface ICatalogGridProps {
     gameData: IGameDataStats;
-    tierLists: ITierListStats;
     rosters: IRostersStats;
 }
 
-export function CatalogGrid({ gameData, tierLists, rosters }: ICatalogGridProps) {
+export function CatalogGrid({ gameData, rosters }: ICatalogGridProps) {
     const t: TypedT<typeof messages> = useT("stats");
     const f = useFormatters();
 
@@ -40,12 +41,12 @@ export function CatalogGrid({ gameData, tierLists, rosters }: ICatalogGridProps)
         { id: "skin", label: t("catalog.skins"), value: f.number(gameData.skins), meta: t("catalog.skins.meta") },
         { id: "zone", label: t("catalog.stages"), value: f.number(gameData.stages), meta: t("catalog.stages.meta", { count: f.number(gameData.zones) }) },
         { id: "enemy", label: t("catalog.enemies"), value: f.number(gameData.enemies), meta: t("catalog.enemies.meta") },
-        { id: "tiers", label: t("catalog.tierLists"), value: `${f.number(tierLists.active)}/${f.number(tierLists.total)}`, meta: t("catalog.tierLists.meta", { count: f.compact(tierLists.totalPlacements) }) },
-        { id: "sync", label: t("catalog.rosters"), value: f.compact(rosters.total), meta: t("catalog.rosters.meta") },
+        // Tier lists have their own section below; Rosters takes the freed slot so the seventh tile closes the row.
+        { id: "sync", label: t("catalog.rosters"), value: f.compact(rosters.total), meta: t("catalog.rosters.meta"), className: "col-span-2" },
     ];
 
     return (
-        <dl className="m-0 grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-border bg-border max-sm:-mx-4 max-sm:rounded-none max-sm:border-x-0 lg:grid-cols-4">
+        <dl className="m-0 grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-border bg-border lg:grid-cols-4">
             {tiles.map((tile) => (
                 <CatalogCell key={tile.id} {...tile} />
             ))}

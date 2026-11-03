@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { Avatar, AvatarFallback, AvatarImage } from "#/components/ui/avatar";
+import { Badge } from "#/components/ui/badge";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "#/components/ui/breadcrumb";
-import { Kicker } from "#/components/ui/kicker";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import type { ITierListDetail } from "#/lib/api/tier-lists";
 import { useFormatters, useT } from "#/lib/i18n";
@@ -25,7 +25,7 @@ export function TierListHero({ detail }: ITierListHeroProps) {
     const updatedRel = f.relative(detail.updatedAt);
 
     return (
-        <header className="border-border/60 border-b bg-linear-to-b from-card/40 to-transparent">
+        <header className="border-border/60 border-b">
             <div className="page-gutter pt-5 pb-6 [--page-max:1080px] sm:pt-10 sm:pb-9">
                 <Breadcrumb className="mb-3">
                     <BreadcrumbList className="text-xs">
@@ -42,51 +42,17 @@ export function TierListHero({ detail }: ITierListHeroProps) {
                 <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
                     <div className="min-w-0 flex-1">
                         <div className="mb-2 flex flex-wrap items-center gap-1.5">
-                            {isOfficial ? (
-                                <span className="inline-flex items-center gap-1 rounded-full border border-[oklch(0.92_0.13_85)] bg-[oklch(0.92_0.13_85)] px-2 py-0.5 font-bold font-mono text-[10.5px] text-[oklch(0.32_0.12_75)] leading-none">
-                                    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className="h-2.5 w-2.5">
-                                        <path d="M12 2 9.6 4.4 6.3 4l-.6 3.3L2.5 9 4 12l-1.5 3 3.2 1.7.6 3.3 3.3-.4L12 22l2.4-2.4 3.3.4.6-3.3L21.5 15 20 12l1.5-3-3.2-1.7-.6-3.3L14.4 4.4Zm-1.2 13.4-3.4-3.4 1.4-1.4 2 2 4.4-4.4 1.4 1.4Z" />
-                                    </svg>
-                                    {t("detail.hero.official")}
-                                </span>
-                            ) : (
-                                <span className="inline-flex items-center gap-1 rounded-full border border-border bg-muted px-2 py-0.5 font-medium font-mono text-[10.5px] text-muted-foreground leading-none">{t("detail.hero.community")}</span>
-                            )}
-
+                            {/* Kind, flair and trending are neutral labels; only the flair's own colour means something, so it alone tints. */}
+                            <Badge variant="outline">{isOfficial ? t("detail.hero.official") : t("detail.hero.community")}</Badge>
                             {flair && (
-                                <span
-                                    className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-bold font-mono text-[10.5px] leading-none"
-                                    style={
-                                        flair.color
-                                            ? {
-                                                  background: `color-mix(in srgb, ${flair.color} 18%, transparent)`,
-                                                  // Free-form flair colours measured 2.46 to 2.94 as text on their own tint; the dot and border carry the colour.
-                                                  color: "var(--foreground)",
-                                                  border: `1px solid color-mix(in srgb, ${flair.color} 50%, transparent)`,
-                                              }
-                                            : {
-                                                  background: "var(--muted)",
-                                                  color: "var(--muted-foreground)",
-                                                  border: "1px solid var(--border)",
-                                              }
-                                    }
-                                >
-                                    <span className="h-1.5 w-1.5 rounded-full" style={{ background: flair.color ?? "currentColor" }} aria-hidden="true" />
+                                // Free-form flair colours measured 2.46 to 2.94 as text on their own tint; the tint and border carry the colour, the text stays foreground.
+                                <Badge variant={flair.color ? "tint" : "outline"} style={flair.color ? ({ "--tone": flair.color } as React.CSSProperties) : undefined}>
                                     {flair.label}
-                                </span>
+                                </Badge>
                             )}
-
-                            {stats?.isTrending && (
-                                <span className="inline-flex items-center gap-1 rounded-full border border-[color-mix(in_srgb,var(--primary)_36%,transparent)] bg-[color-mix(in_srgb,var(--primary)_10%,transparent)] px-2 py-0.5 font-bold font-mono text-[10.5px] text-foreground leading-none">
-                                    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className="h-2.5 w-2.5 text-primary">
-                                        <path d="M12 2c.6 4 4.7 5.4 4.7 9.5 0 2.6-2 4.5-4.7 4.5s-4.7-1.9-4.7-4.5C7.3 9.4 9.6 8 9 4c2.4 1.4 3 4 3 4Z" />
-                                    </svg>
-                                    {t("detail.hero.trending")}
-                                </span>
-                            )}
+                            {stats?.isTrending && <Badge variant="outline">{t("detail.hero.trending")}</Badge>}
                         </div>
 
-                        <Kicker className="mb-2.5">{t("detail.hero.kicker")}</Kicker>
                         <h1 className="m-0 font-bold font-sans text-2xl text-foreground leading-tight tracking-tight sm:text-3xl md:text-4xl">{detail.title}</h1>
 
                         {detail.description && <ExpandableDescription text={detail.description} markdown className="mt-3 max-w-160 font-sans text-muted-foreground text-sm leading-relaxed sm:text-[15px]" />}
@@ -109,12 +75,8 @@ export function TierListHero({ detail }: ITierListHeroProps) {
                                 </span>
                             )}
 
-                            {/* Each separator is the first child of the item after it, so a wrap carries it
-                                to the next line instead of leaving it at the end of this one. */}
+                            {/* No dot separators: the row's gap separates the items, so a wrap never starts a line with an orphan "·". */}
                             <span className="inline-flex items-center gap-1.5">
-                                <span className="me-2.5 opacity-50 max-sm:hidden" aria-hidden="true">
-                                    ·
-                                </span>
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5 opacity-70" aria-hidden="true">
                                     <circle cx="12" cy="12" r="10" />
                                     <path d="M12 6v6l4 2" />
@@ -126,9 +88,6 @@ export function TierListHero({ detail }: ITierListHeroProps) {
                                 <>
                                     <Tooltip>
                                         <TooltipTrigger render={<span className="inline-flex items-center gap-1.5" />}>
-                                            <span className="me-2.5 opacity-50" aria-hidden="true">
-                                                ·
-                                            </span>
                                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5 opacity-70" aria-hidden="true">
                                                 <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
                                                 <circle cx="12" cy="12" r="3" />

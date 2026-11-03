@@ -17,7 +17,6 @@ type SlotT = TypedT<typeof messages>;
 const SLOT_NUMBERS: readonly number[] = Array.from({ length: SLOT_LIMIT }, (_, i) => i + 1);
 
 export interface ISlotBarProps {
-    signedIn: boolean;
     isLoading: boolean;
     /** The saved slots failed to load: shown as a failure, never as four empty slots to save over. */
     isError: boolean;
@@ -28,26 +27,19 @@ export interface ISlotBarProps {
     dirty: boolean;
     onLoadSlot: (slot: number) => void;
     onLoadGame: (squad: GameSquad) => void;
-    onSignIn: () => void;
 }
 
-export function SlotBar({ signedIn, isLoading, isError, onRetry, saved, synced, activeSlot, dirty, onLoadSlot, onLoadGame, onSignIn }: ISlotBarProps): React.ReactElement {
+/** The saved slots and the game's synced squads, for a signed-in player only: signed out, the toolbar's "Sign in to save" is the one prompt. */
+export function SlotBar({ isLoading, isError, onRetry, saved, synced, activeSlot, dirty, onLoadSlot, onLoadGame }: ISlotBarProps): React.ReactElement {
     const t: SlotT = useT("tools");
     const fmt = useFormatters();
     const latestSync = synced.reduce<string | null>((acc, s) => (!acc || s.synced_at > acc ? s.synced_at : acc), null);
 
     return (
-        <div className={cn("grid gap-4", signedIn && "lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]")}>
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
             <section className="rounded-2xl border border-border bg-card p-3">
                 <h2 className="mb-2 font-semibold text-[13px]">{t("squad.slots.title")}</h2>
-                {!signedIn ? (
-                    <div className="flex flex-wrap items-center gap-3 rounded-lg border border-border border-dashed px-3 py-3">
-                        <p className="flex-1 text-[12.5px] text-muted-foreground">{t("squad.slots.signIn")}</p>
-                        <Button size="sm" variant="outline" onClick={onSignIn}>
-                            {t("squad.slots.signInButton")}
-                        </Button>
-                    </div>
-                ) : isError ? (
+                {isError ? (
                     <LoadFailed layout="inline" message={t("squad.slots.loadFailed")} onRetry={onRetry} />
                 ) : isLoading ? (
                     <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -102,52 +94,50 @@ export function SlotBar({ signedIn, isLoading, isError, onRetry, saved, synced, 
                 )}
             </section>
 
-            {signedIn && (
-                <section className="rounded-2xl border border-border bg-card p-3">
-                    <div className="mb-2 flex items-baseline justify-between gap-2">
-                        <h2 className="font-semibold text-[13px]">{t("squad.slots.game")}</h2>
-                        {latestSync && <span className="truncate text-[10.5px] text-muted-foreground">{t("squad.slots.gameSynced", { date: fmt.date(latestSync) })}</span>}
+            <section className="rounded-2xl border border-border bg-card p-3">
+                <div className="mb-2 flex items-baseline justify-between gap-2">
+                    <h2 className="font-semibold text-[13px]">{t("squad.slots.game")}</h2>
+                    {latestSync && <span className="truncate text-[10.5px] text-muted-foreground">{t("squad.slots.gameSynced", { date: fmt.date(latestSync) })}</span>}
+                </div>
+                {synced.length === 0 ? (
+                    <div className="flex flex-wrap items-center gap-3 rounded-lg border border-border border-dashed px-3 py-3">
+                        <p className="flex-1 text-[12.5px] text-muted-foreground">{t("squad.slots.gameEmpty")}</p>
+                        <Button size="sm" variant="outline" render={<Link to="/settings" />}>
+                            {t("squad.slots.gameEmptyLink")}
+                        </Button>
                     </div>
-                    {synced.length === 0 ? (
-                        <div className="flex flex-wrap items-center gap-3 rounded-lg border border-border border-dashed px-3 py-3">
-                            <p className="flex-1 text-[12.5px] text-muted-foreground">{t("squad.slots.gameEmpty")}</p>
-                            <Button size="sm" variant="outline" render={<Link to="/settings" />}>
-                                {t("squad.slots.gameEmptyLink")}
-                            </Button>
-                        </div>
-                    ) : (
-                        <>
-                            <p className="mb-2 text-[11.5px] text-muted-foreground">{t("squad.slots.gameDesc")}</p>
-                            <ul className="grid grid-cols-2 gap-2">
-                                {synced.map((sq) => {
-                                    const name = sq.name.trim() || t("squad.slots.gameUntitled", { index: sq.index + 1 });
-                                    const ids = sq.slots.filter((s) => s !== null).map((s) => s.char_id);
-                                    return (
-                                        <li key={`game-${sq.index}`}>
-                                            <button
-                                                type="button"
-                                                onClick={() => onLoadGame(sq)}
-                                                aria-label={t("squad.slots.gameAria", { name })}
-                                                className="flex w-full cursor-pointer flex-col gap-1.5 rounded-lg border border-border bg-background/40 p-2 text-left outline-none transition-colors hover:border-primary/50 focus-visible:ring-2 focus-visible:ring-ring"
-                                            >
-                                                <span className="flex items-baseline justify-between gap-2">
-                                                    <span className="truncate font-medium text-[12.5px]">{name}</span>
-                                                    <span className="shrink-0 font-mono text-[10.5px] text-muted-foreground">{t("squad.slots.count", { count: ids.length, total: SQUAD_SIZE })}</span>
-                                                </span>
-                                                <span className="flex -space-x-1.5 overflow-hidden">
-                                                    {ids.slice(0, 8).map((id) => (
-                                                        <img key={id} alt="" src={getAvatarById(id)} width={24} height={24} className="size-6 rounded-full border border-card bg-muted object-cover" loading="lazy" />
-                                                    ))}
-                                                </span>
-                                            </button>
-                                        </li>
-                                    );
-                                })}
-                            </ul>
-                        </>
-                    )}
-                </section>
-            )}
+                ) : (
+                    <>
+                        <p className="mb-2 text-[11.5px] text-muted-foreground">{t("squad.slots.gameDesc")}</p>
+                        <ul className="grid grid-cols-2 gap-2">
+                            {synced.map((sq) => {
+                                const name = sq.name.trim() || t("squad.slots.gameUntitled", { index: sq.index + 1 });
+                                const ids = sq.slots.filter((s) => s !== null).map((s) => s.char_id);
+                                return (
+                                    <li key={`game-${sq.index}`}>
+                                        <button
+                                            type="button"
+                                            onClick={() => onLoadGame(sq)}
+                                            aria-label={t("squad.slots.gameAria", { name })}
+                                            className="flex w-full cursor-pointer flex-col gap-1.5 rounded-lg border border-border bg-background/40 p-2 text-left outline-none transition-colors hover:border-primary/50 focus-visible:ring-2 focus-visible:ring-ring"
+                                        >
+                                            <span className="flex items-baseline justify-between gap-2">
+                                                <span className="truncate font-medium text-[12.5px]">{name}</span>
+                                                <span className="shrink-0 font-mono text-[10.5px] text-muted-foreground">{t("squad.slots.count", { count: ids.length, total: SQUAD_SIZE })}</span>
+                                            </span>
+                                            <span className="flex -space-x-1.5 overflow-hidden">
+                                                {ids.slice(0, 8).map((id) => (
+                                                    <img key={id} alt="" src={getAvatarById(id)} width={24} height={24} className="size-6 rounded-full border border-card bg-muted object-cover" loading="lazy" />
+                                                ))}
+                                            </span>
+                                        </button>
+                                    </li>
+                                );
+                            })}
+                        </ul>
+                    </>
+                )}
+            </section>
         </div>
     );
 }

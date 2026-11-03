@@ -17,7 +17,7 @@ export const messages = {
     },
     "legend.title": {
         text: "Legend",
-        description: "Kicker over the row of colour swatches explaining the map's tile colours.",
+        description: "Label over the row of colour swatches explaining the map's tile colours.",
     },
     "legend.start": {
         text: "Start",

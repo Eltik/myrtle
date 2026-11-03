@@ -167,7 +167,7 @@ export function Hero({ profile, background, onChangeBackground, onEditHeader, is
                     {profile.resume && <p className="mb-3.5 max-w-prose font-normal font-sans text-muted-foreground text-sm leading-normal sm:text-[14.5px] lg:max-w-135">{profile.resume}</p>}
                     {levelProgress && <LevelProgressBar progress={levelProgress} marked={isOwner && levelHidden} />}
                     {(showRegistered || showSignIn) && (
-                        <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1.5 font-medium font-sans text-muted-foreground text-xs leading-none">
+                        <div className="mt-1.5 flex flex-wrap items-center gap-x-5 gap-y-1.5 font-medium font-sans text-muted-foreground text-xs leading-none">
                             {showRegistered && (
                                 <span className="inline-flex items-center gap-2">
                                     <span>
@@ -185,8 +185,6 @@ export function Hero({ profile, background, onChangeBackground, onEditHeader, is
                             )}
                             {showSignIn && (
                                 <span className="inline-flex items-center gap-2">
-                                    {/* The separator belongs between two pieces, so it goes when the date is hidden. */}
-                                    {showRegistered && <span aria-hidden="true" className="size-1.5 rounded-full bg-muted-foreground/40" />}
                                     <span>
                                         {t("profile.hero.signedIn")}{" "}
                                         <b className="text-foreground tabular-nums">

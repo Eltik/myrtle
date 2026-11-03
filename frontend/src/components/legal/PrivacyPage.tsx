@@ -21,11 +21,11 @@ function Section({ id, children }: { id: string; children: ReactNode }) {
 }
 
 function H2Plain({ children }: { children: ReactNode }) {
-    return <h2 className="m-0 mb-4 font-(--font-heading) text-[26px] text-foreground leading-[1.2] tracking-[-0.02em] sm:text-[30px]">{children}</h2>;
+    return <h2 className="m-0 mb-4 font-(--font-heading) font-semibold text-[20px] text-foreground leading-[1.25] tracking-[-0.01em] sm:text-[22px]">{children}</h2>;
 }
 
 function H3({ children }: { children: ReactNode }) {
-    return <h3 className="m-0 mt-6 mb-2 font-(--font-heading) text-[20px] text-foreground leading-[1.3] tracking-[-0.01em] first:mt-0">{children}</h3>;
+    return <h3 className="m-0 mt-6 mb-2 font-(--font-heading) font-semibold text-[17px] text-foreground leading-[1.3] tracking-[-0.01em] first:mt-0">{children}</h3>;
 }
 
 function P({ children, muted }: { children: ReactNode; muted?: boolean }) {
@@ -55,7 +55,7 @@ function A({ href, children, external }: { href: string; children: ReactNode; ex
 function Tile({ icon, title, desc }: { icon: ReactNode; title: string; desc: string }) {
     return (
         <div className="relative rounded-2xl border border-border bg-card p-4.5 shadow-xs/5">
-            <div className="mb-2.5 text-primary [&_svg]:size-5.5">{icon}</div>
+            <div className="mb-2.5 text-muted-foreground [&_svg]:size-5.5">{icon}</div>
             <p className="m-0 mb-1.5 font-sans font-semibold text-[14.5px] text-foreground leading-[1.3]">{title}</p>
             <p className="m-0 font-sans text-[13.5px] text-muted-foreground leading-[1.55]">{desc}</p>
         </div>
@@ -125,14 +125,14 @@ export function PrivacyPage() {
                 <LegalHeaderLine icon={<Calendar className="size-4" aria-hidden="true" />}>{t("privacy.hero.effective", { date: EFFECTIVE_DATE })}</LegalHeaderLine>
             </LegalHeader>
 
-            <Alert className="mb-10 border-[color-mix(in_srgb,var(--primary)_32%,transparent)] bg-[color-mix(in_srgb,var(--primary)_5%,transparent)] [&>svg]:text-primary">
+            <Alert className="mb-10">
                 <Eye strokeWidth={2} />
                 <AlertTitle className="text-[15px] text-foreground">{t("privacy.tldr.title")}</AlertTitle>
                 <AlertDescription className="text-[15px] text-muted-foreground leading-[1.55]">{t("privacy.tldr.body")}</AlertDescription>
             </Alert>
 
             <section className="my-12">
-                <h2 className="m-0 mb-5 text-center font-semibold text-[26px] text-foreground leading-[1.2] tracking-[-0.02em]">{t("privacy.principles.heading")}</h2>
+                <h2 className="m-0 mb-5 text-center font-semibold text-[20px] text-foreground leading-[1.25] tracking-[-0.01em] sm:text-[22px]">{t("privacy.principles.heading")}</h2>
                 <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
                     <Tile icon={<Lock strokeWidth={1.8} />} title={t("privacy.principles.minimal.title")} desc={t("privacy.principles.minimal.desc")} />
                     <Tile icon={<Eye strokeWidth={1.8} />} title={t("privacy.principles.transparency.title")} desc={t("privacy.principles.transparency.desc")} />
@@ -404,7 +404,7 @@ export function PrivacyPage() {
             </Section>
 
             <div className="my-12 rounded-2xl border border-border bg-card p-8 text-center">
-                <h3 className="m-0 mb-2 font-semibold text-[22px] text-foreground leading-[1.3] tracking-[-0.01em]">{t("privacy.cta.title")}</h3>
+                <h3 className="m-0 mb-2 font-semibold text-[17px] text-foreground leading-[1.3] tracking-[-0.01em]">{t("privacy.cta.title")}</h3>
                 <p className="m-0 mx-auto max-w-[56ch] text-balance font-sans text-[15px] text-muted-foreground leading-[1.55]">{t("privacy.cta.body")}</p>
                 <div className="mt-5 flex flex-wrap items-center justify-center gap-2.5">
                     <Button size="lg" render={<Link to="/settings" />}>

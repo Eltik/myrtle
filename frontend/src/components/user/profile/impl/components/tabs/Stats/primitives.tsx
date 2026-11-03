@@ -1,5 +1,5 @@
 import { ArrowUpRight, ChevronDown } from "lucide-react";
-import { type ElementType, type ReactNode, useState } from "react";
+import { type ReactNode, useState } from "react";
 import { Collapsible, CollapsibleContent } from "#/components/ui/collapsible";
 import { Dialog, DialogTrigger } from "#/components/ui/dialog";
 import { Kicker } from "#/components/ui/kicker";
@@ -16,61 +16,33 @@ import type { messages } from "./primitives.messages";
 export const KICKER_TEXT = "kicker";
 export const CARD_PADDING = "p-4 sm:p-5";
 
-function barGradient(color: string): string {
-    return `linear-gradient(to right, color-mix(in oklch, ${color} 55%, transparent), ${color})`;
-}
-
-function lineGradient(color: string | readonly string[]): string {
-    if (typeof color === "string") {
-        return `linear-gradient(to right, transparent, color-mix(in oklch, ${color} 70%, transparent), transparent)`;
-    }
-    const stops = color.map((c) => `color-mix(in oklch, ${c} 70%, transparent)`).join(", ");
-    return `linear-gradient(to right, transparent, ${stops}, transparent)`;
-}
-
 interface IStatCardProps {
     children: ReactNode;
-    color: string | readonly string[];
     className?: string;
 }
 
-export function StatCard({ children, color, className }: IStatCardProps) {
-    return (
-        <div className={cn("relative overflow-hidden rounded-2xl border border-border bg-card", "shadow-[0_1px_2px_rgb(0_0_0/0.04)] transition-colors duration-200 hover:border-foreground/15", className)}>
-            <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 z-10 h-px" style={{ background: lineGradient(color) }} />
-            {children}
-        </div>
-    );
+export function StatCard({ children, className }: IStatCardProps) {
+    return <div className={cn("relative overflow-hidden rounded-2xl border border-border bg-card", className)}>{children}</div>;
 }
 
-/** A card's kicker with its icon: the kit `Kicker` voice, the icon beside it. */
-export function CardKicker({ icon: Icon, label }: { icon: ElementType; label: string }) {
-    return (
-        <div className="flex items-center gap-2">
-            <Icon className="h-3.5 w-3.5 shrink-0 text-subtle-foreground" />
-            <Kicker>{label}</Kicker>
-        </div>
-    );
+/** A card's title in the kit `Kicker` voice. */
+export function CardKicker({ label }: { label: string }) {
+    return <Kicker>{label}</Kicker>;
 }
 
 interface IBarProps {
     pct: number;
-    color: string;
+    /** A data ink, only where the hue is the data (rarity); otherwise the fill is neutral. */
+    color?: string;
     thin?: boolean;
     dim?: boolean;
 }
 
+/** Neutral fill on the muted track: muted-foreground 6.25:1 light / 5.35:1 dark, dim (subtle-foreground) 4.63 / 4.75. */
 export function Bar({ pct, color, thin, dim }: IBarProps) {
     return (
-        <div className={cn("w-full overflow-hidden rounded-full bg-muted/50", thin ? "h-1" : "h-1.5")}>
-            <div
-                className="h-full rounded-full transition-[width] duration-700 ease-out"
-                style={{
-                    width: `${Math.min(pct, 100)}%`,
-                    background: barGradient(color),
-                    opacity: dim ? 0.5 : 1,
-                }}
-            />
+        <div className={cn("w-full overflow-hidden rounded-full bg-muted", thin ? "h-1" : "h-1.5")}>
+            <div className={cn("h-full rounded-full transition-[width] duration-700 ease-out", !color && (dim ? "bg-subtle-foreground" : "bg-muted-foreground"))} style={{ width: `${Math.min(pct, 100)}%`, background: color }} />
         </div>
     );
 }
@@ -78,14 +50,13 @@ export function Bar({ pct, color, thin, dim }: IBarProps) {
 interface ITileProps {
     value: ReactNode;
     sub: string;
-    color: string;
     tooltip?: string;
 }
 
-export function Tile({ value, sub, color, tooltip }: ITileProps) {
+export function Tile({ value, sub, tooltip }: ITileProps) {
     const inner = (
         <div className="flex cursor-default flex-col items-center gap-1.5 rounded-lg border border-border/40 bg-muted/20 p-3 text-center transition-colors hover:bg-muted/35">
-            <span className="font-bold tabular-nums leading-none" style={{ fontSize: "1.375rem", letterSpacing: "-0.02em", color }}>
+            <span className="font-bold text-foreground tabular-nums leading-none" style={{ fontSize: "1.375rem", letterSpacing: "-0.02em" }}>
                 {value}
             </span>
             <span className={KICKER_TEXT}>{sub}</span>
@@ -106,17 +77,16 @@ interface IMetricRowProps {
     label: string;
     value: ReactNode;
     pct: number;
-    color: string;
 }
 
-export function MetricRow({ label, value, pct, color }: IMetricRowProps) {
+export function MetricRow({ label, value, pct }: IMetricRowProps) {
     return (
         <div className="space-y-2">
             <div className="flex items-center justify-between">
                 <span className={KICKER_TEXT}>{label}</span>
                 <span className="font-mono text-[10.5px] text-muted-foreground tabular-nums">{value}</span>
             </div>
-            <Bar color={color} pct={pct} />
+            <Bar pct={pct} />
         </div>
     );
 }
@@ -125,7 +95,6 @@ export interface IGapItem {
     key: string;
     label: string;
     value: number;
-    color: string;
     tooltip?: string;
     /** Expands inline under the pill. */
     details?: IOperatorGapItem[];
@@ -185,7 +154,7 @@ export function GapList({ items, label }: IGapListProps) {
                 })}
             </div>
             <Collapsible onOpenChange={(open) => !open && setOpenKey(null)} open={isOpen}>
-                <CollapsibleContent>{display?.details ? <GapDetailsPanel color={display.color} items={display.details} title={display.label} /> : null}</CollapsibleContent>
+                <CollapsibleContent>{display?.details ? <GapDetailsPanel items={display.details} title={display.label} /> : null}</CollapsibleContent>
             </Collapsible>
         </div>
     );
@@ -206,12 +175,8 @@ function GapPillContent({ item, mode, expanded = false }: IGapPillContentProps) 
     const f = useFormatters();
     return (
         <>
-            <span aria-hidden className="h-1 w-1 shrink-0 rounded-full" style={{ background: item.color }} />
             <span className="font-mono text-[10.5px] text-muted-foreground tabular-nums">
-                <span className="font-semibold" style={{ color: item.color }}>
-                    {f.number(item.value)}
-                </span>{" "}
-                {item.label}
+                <span className="font-semibold text-foreground">{f.number(item.value)}</span> {item.label}
             </span>
             {mode === "collapse" && <ChevronDown aria-hidden className={cn("h-2.5 w-2.5 text-subtle-foreground transition-transform duration-200", expanded && "rotate-180")} />}
             {mode === "dialog" && <ArrowUpRight aria-hidden className="h-2.5 w-2.5 text-subtle-foreground" />}
@@ -232,12 +197,8 @@ function GapPill({ item, expanded, mode, onToggle }: IGapPillProps) {
     if (mode === "static") {
         const staticNode = (
             <span className="inline-flex cursor-default items-center gap-1.5 rounded-md">
-                <span aria-hidden className="h-1 w-1 shrink-0 rounded-full" style={{ background: item.color }} />
                 <span className="font-mono text-[10.5px] text-muted-foreground tabular-nums">
-                    <span className="font-semibold" style={{ color: item.color }}>
-                        {f.number(item.value)}
-                    </span>{" "}
-                    {item.label}
+                    <span className="font-semibold text-foreground">{f.number(item.value)}</span> {item.label}
                 </span>
             </span>
         );
@@ -273,11 +234,10 @@ const MAX_RENDERED_DETAILS = 100;
 
 interface IGapDetailsPanelProps {
     title: string;
-    color: string;
     items: IOperatorGapItem[];
 }
 
-function GapDetailsPanel({ title, color, items }: IGapDetailsPanelProps) {
+function GapDetailsPanel({ title, items }: IGapDetailsPanelProps) {
     const t: TypedT<typeof messages> = useT("user");
     const f = useFormatters();
     const rendered = items.length > MAX_RENDERED_DETAILS ? items.slice(0, MAX_RENDERED_DETAILS) : items;
@@ -288,10 +248,7 @@ function GapDetailsPanel({ title, color, items }: IGapDetailsPanelProps) {
             <div className="flex items-center justify-between border-border/40 border-b px-3 py-1.5">
                 <span className={KICKER_TEXT}>{title}</span>
                 <span className="font-mono text-[10px] text-subtle-foreground tabular-nums">
-                    <span className="font-semibold" style={{ color }}>
-                        {f.number(items.length)}
-                    </span>{" "}
-                    {t("profile.stats.gaps.total")}
+                    <span className="font-semibold text-foreground">{f.number(items.length)}</span> {t("profile.stats.gaps.total")}
                 </span>
             </div>
             <ul className="max-h-64 space-y-px overflow-y-auto p-1.5">

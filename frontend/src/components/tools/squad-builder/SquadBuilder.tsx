@@ -323,9 +323,9 @@ export function SquadBuilder({ share, onShareConsumed }: ISquadBuilderProps): Re
                         }}
                         t={t}
                     />
-                ) : (
-                    <SlotBar signedIn={signedIn} isLoading={squadsLoading} isError={squadsFailed} onRetry={() => void refetchSquads()} saved={saved} synced={squads?.synced ?? []} activeSlot={state.slot} dirty={dirty} onLoadSlot={loadSlot} onLoadGame={loadGame} onSignIn={() => authActions.openLoginDialog()} />
-                )}
+                ) : signedIn ? (
+                    <SlotBar isLoading={squadsLoading} isError={squadsFailed} onRetry={() => void refetchSquads()} saved={saved} synced={squads?.synced ?? []} activeSlot={state.slot} dirty={dirty} onLoadSlot={loadSlot} onLoadGame={loadGame} />
+                ) : null}
 
                 <SquadToolbar
                     name={draft.name}

@@ -78,10 +78,10 @@ export function RankByPicker({ ranking, onRanking, catalog, materials, catalogEr
         variant === "toolbar" ? (
             <PopoverTrigger
                 aria-label={t("leaderboard.rankBy.aria")}
-                className={cn("inline-flex h-9 pointer-coarse:h-11 min-w-0 cursor-pointer items-center gap-2 rounded-lg border border-input bg-card pr-2.5 pl-2 font-medium font-sans text-foreground text-xs leading-none transition-colors hover:border-foreground/20 sm:h-8", className)}
+                className={cn("inline-flex h-9 pointer-coarse:h-11 min-w-0 cursor-pointer items-center gap-2 rounded-lg border border-input bg-background pr-2.5 pl-2 font-sans text-base text-foreground leading-none transition-colors hover:border-foreground/20 sm:h-8 sm:text-sm dark:bg-input/32", className)}
             >
                 {activeItem ? <ItemIcon item={toIconEntry(activeItem)} size={20} className="rounded" /> : null}
-                <Kicker className="shrink-0">{t("leaderboard.rankBy.label")}</Kicker>
+                <span className="shrink-0 text-muted-foreground">{t("leaderboard.rankBy.label")}</span>
                 <span className="min-w-0 truncate font-semibold text-foreground">{label}</span>
                 <ChevronDown className="size-3 shrink-0 opacity-70" aria-hidden />
             </PopoverTrigger>

@@ -5,7 +5,7 @@ export const namespace = "stages";
 export const messages = {
     "spawns.title": {
         text: "Spawn schedule",
-        description: "Kicker over the table of enemy spawns, ordered by the second they appear.",
+        description: "Section heading over the table of enemy spawns, ordered by the second they appear.",
     },
     "spawns.groups": {
         text: "{count, plural, one {# group} other {# groups}}",

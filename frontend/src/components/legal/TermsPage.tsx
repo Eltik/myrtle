@@ -34,11 +34,11 @@ function Section({ id, children }: { id: string; children: React.ReactNode }) {
 }
 
 function H2({ children }: { children: React.ReactNode }) {
-    return <h2 className="m-0 mb-4 font-semibold text-[26px] text-foreground leading-[1.2] tracking-[-0.02em] sm:text-[30px]">{children}</h2>;
+    return <h2 className="m-0 mb-4 font-semibold text-[20px] text-foreground leading-[1.25] tracking-[-0.01em] sm:text-[22px]">{children}</h2>;
 }
 
 function H3({ children }: { children: React.ReactNode }) {
-    return <h3 className="m-0 mt-6 mb-2 font-semibold text-[20px] text-foreground leading-[1.3] tracking-[-0.01em] first:mt-0">{children}</h3>;
+    return <h3 className="m-0 mt-6 mb-2 font-semibold text-[17px] text-foreground leading-[1.3] tracking-[-0.01em] first:mt-0">{children}</h3>;
 }
 
 function P({ children }: { children: React.ReactNode }) {
@@ -78,7 +78,7 @@ export function TermsPage() {
                 </LegalHeaderLine>
             </LegalHeader>
 
-            <Alert className="mb-10 border-[color-mix(in_srgb,var(--primary)_32%,transparent)] bg-[color-mix(in_srgb,var(--primary)_5%,transparent)] [&>svg]:text-primary">
+            <Alert className="mb-10">
                 <ShieldIcon strokeWidth={1.8} />
                 <AlertDescription className="text-[15px] text-muted-foreground leading-[1.55]">{t("terms.tldr")}</AlertDescription>
             </Alert>
@@ -88,7 +88,7 @@ export function TermsPage() {
                 <ol className="m-0 list-decimal pl-6 font-sans text-[14.5px] leading-[1.6]">
                     {TOC.map((entry) => (
                         <li key={entry.id} className="my-1.5 pointer-coarse:my-0">
-                            <a href={`#${entry.id}`} className="pointer-coarse:inline-flex pointer-coarse:min-h-11 pointer-coarse:items-center text-primary underline decoration-1 underline-offset-[3px] transition-[text-decoration-thickness] hover:decoration-2">
+                            <a href={`#${entry.id}`} className="pointer-coarse:inline-flex pointer-coarse:min-h-11 pointer-coarse:items-center text-foreground underline decoration-1 underline-offset-[3px] transition-[text-decoration-thickness] hover:decoration-2">
                                 {t(entry.labelKey)}
                             </a>
                         </li>

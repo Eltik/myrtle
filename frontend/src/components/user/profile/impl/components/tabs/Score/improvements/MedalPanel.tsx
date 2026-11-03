@@ -15,7 +15,6 @@ type PanelT = TypedT<typeof messages & typeof sharedMessages>;
 
 interface IProps {
     improvements: IImprovementsResponse;
-    accent: string;
 }
 
 const INITIAL_VISIBLE = 12;
@@ -57,7 +56,7 @@ function MedalIcon({ medal, color }: { medal: IMedalGap; color: string }) {
 
 type MedalMode = "permanent" | "event" | "locked" | "unobtainable";
 
-export function MedalPanel({ improvements, accent }: IProps) {
+export function MedalPanel({ improvements }: IProps) {
     const t: TypedT<typeof messages> = useT("user");
     const { permanent_missing: permanent, event_in_window_missing: event, operator_locked: locked, unobtainable_missing: unobtainable } = improvements.medals;
     if (permanent.length === 0 && event.length === 0 && locked.length === 0 && unobtainable.length === 0) {
@@ -70,15 +69,15 @@ export function MedalPanel({ improvements, accent }: IProps) {
 
     return (
         <div className={`${PANEL_PADDING} flex flex-col gap-5`}>
-            {event.length > 0 && <MedalList title={t("score.improvements.medal.event.title")} subtitle={t("score.improvements.medal.event.subtitle")} medals={event} accent={accent} mode="event" />}
-            {permanent.length > 0 && <MedalList title={t("score.improvements.medal.permanent.title")} subtitle={t("score.improvements.medal.permanent.subtitle")} medals={permanent} accent={accent} mode="permanent" />}
-            {locked.length > 0 && <MedalList title={t("score.improvements.medal.locked.title")} subtitle={t("score.improvements.medal.locked.subtitle")} medals={locked} accent={accent} mode="locked" />}
-            {unobtainable.length > 0 && <MedalList title={t("score.improvements.medal.unobtainable.title")} subtitle={t("score.improvements.medal.unobtainable.subtitle")} medals={unobtainable} accent={accent} mode="unobtainable" startCollapsed />}
+            {event.length > 0 && <MedalList title={t("score.improvements.medal.event.title")} subtitle={t("score.improvements.medal.event.subtitle")} medals={event} mode="event" />}
+            {permanent.length > 0 && <MedalList title={t("score.improvements.medal.permanent.title")} subtitle={t("score.improvements.medal.permanent.subtitle")} medals={permanent} mode="permanent" />}
+            {locked.length > 0 && <MedalList title={t("score.improvements.medal.locked.title")} subtitle={t("score.improvements.medal.locked.subtitle")} medals={locked} mode="locked" />}
+            {unobtainable.length > 0 && <MedalList title={t("score.improvements.medal.unobtainable.title")} subtitle={t("score.improvements.medal.unobtainable.subtitle")} medals={unobtainable} mode="unobtainable" startCollapsed />}
         </div>
     );
 }
 
-function MedalList({ title, subtitle, medals, accent, mode, startCollapsed = false }: { title: string; subtitle: string; medals: IMedalGap[]; accent: string; mode: MedalMode; startCollapsed?: boolean }) {
+function MedalList({ title, subtitle, medals, mode, startCollapsed = false }: { title: string; subtitle: string; medals: IMedalGap[]; mode: MedalMode; startCollapsed?: boolean }) {
     const t: PanelT = useT("user");
     const [collapsed, setCollapsed] = useState(startCollapsed);
     const [showAll, setShowAll] = useState(false);
@@ -86,7 +85,7 @@ function MedalList({ title, subtitle, medals, accent, mode, startCollapsed = fal
 
     return (
         <div className="flex flex-col gap-2">
-            <SectionHeader title={title} count={t("score.improvements.medal.missingCount", { n: medals.length })} accent={accent} />
+            <SectionHeader title={title} count={t("score.improvements.medal.missingCount", { n: medals.length })} />
             <p className={cn(TEXT_META, "text-muted-foreground")}>{subtitle}</p>
             {collapsed ? (
                 <ShowMoreButton onClick={() => setCollapsed(false)} label={t("score.improvements.medal.show", { n: medals.length })} />

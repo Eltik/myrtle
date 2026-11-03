@@ -5,7 +5,7 @@ export const namespace = "stages";
 export const messages = {
     "enemies.title": {
         text: "Enemies · {count}",
-        description: "Kicker over the grid of enemy cards, with how many distinct enemies the stage fields.",
+        description: "Section heading over the grid of enemy cards, with how many distinct enemies the stage fields.",
     },
     "enemies.showOnMap": {
         text: "Show {name} on map",

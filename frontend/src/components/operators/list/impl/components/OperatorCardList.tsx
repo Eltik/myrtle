@@ -47,9 +47,7 @@ export function OperatorCardList({ operator, statMetric }: IOperatorCardListProp
         <HoverCard>
             <HoverCardTrigger
                 render={
-                    <Link to="/operators/$id" params={{ id: operator.id ?? "" }} preload={dataSaver ? false : undefined} className="group relative block rounded-lg border border-transparent bg-card/50 px-3 py-2.5 transition-colors hover:border-border hover:bg-card">
-                        <div className="absolute top-1/2 left-0 h-8 w-0.5 -translate-y-1/2 rounded-full opacity-60 transition-opacity group-hover:opacity-100" style={{ backgroundColor: rarityColor }} />
-
+                    <Link to="/operators/$id" params={{ id: operator.id ?? "" }} preload={dataSaver ? false : undefined} className="group relative block rounded-lg border border-transparent bg-card/50 px-3 py-2 transition-colors hover:border-border hover:bg-card">
                         <div className="hidden items-center gap-3 min-[900px]:grid" style={{ gridTemplateColumns: LIST_GRID_COLS }}>
                             <div className="relative h-12 w-12 overflow-hidden rounded-md border border-border/50 bg-background">
                                 <img alt={operator.name} src={portraitSrc} loading="lazy" width={48} height={48} className="absolute inset-0 h-full w-full object-cover" />
@@ -74,7 +72,7 @@ export function OperatorCardList({ operator, statMetric }: IOperatorCardListProp
                                     </span>
                                 )}
                             </div>
-                            <div className="flex h-6 w-6 items-center justify-center justify-self-center opacity-40 transition-opacity group-hover:opacity-70">
+                            <div className="flex h-6 w-6 items-center justify-center justify-self-center overflow-hidden opacity-40 transition-opacity group-hover:opacity-70">
                                 <CampIcon groupId={factionLogoId} size={24} />
                             </div>
                         </div>
@@ -87,22 +85,27 @@ export function OperatorCardList({ operator, statMetric }: IOperatorCardListProp
                                 <div className="flex items-center gap-2">
                                     <span className="truncate font-semibold text-foreground text-sm">{operator.name}</span>
                                     {operator.cnChanges && <CnUpdateBadge changes={operator.cnChanges} className="shrink-0" />}
-                                    <div className="flex h-4 w-4 shrink-0 items-center justify-center opacity-50">
+                                    <div className="flex h-4 w-4 shrink-0 items-center justify-center overflow-hidden opacity-50">
                                         <CampIcon groupId={factionLogoId} size={16} />
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-2 text-muted-foreground text-xs">
+                                {/* At 375 class, subclass and the share chip in one line truncated both names to
+                                    "Van... Ch...". The class reads from its icon here; the line wraps, so the chip
+                                    drops below a long subclass instead of squeezing it. */}
+                                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-muted-foreground text-xs">
                                     <RarityStars rarity={rarityNum} />
-                                    <span className="shrink-0 opacity-50">·</span>
+                                    <span aria-hidden="true" className="shrink-0">
+                                        ·
+                                    </span>
                                     <div className="flex min-w-0 items-center gap-1">
-                                        <ClassIcon profession={operator.profession} size={14} className="opacity-60" />
-                                        <span className="truncate">{professionLabel(operator)}</span>
+                                        <ClassIcon profession={operator.profession} size={14} className="shrink-0 opacity-60" />
+                                        <span className="truncate">{archetype}</span>
                                     </div>
-                                    <span className="shrink-0 opacity-50">·</span>
-                                    <span className="truncate">{archetype}</span>
                                     {operator.ownership && (
                                         <>
-                                            <span className="shrink-0 opacity-50">·</span>
+                                            <span aria-hidden="true" className="shrink-0">
+                                                ·
+                                            </span>
                                             <OwnershipBadge info={operator.ownership} metric={statMetric} color={rarityColor} className="shrink-0" />
                                         </>
                                     )}
