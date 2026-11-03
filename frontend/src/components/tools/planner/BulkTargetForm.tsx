@@ -3,6 +3,7 @@ import type * as React from "react";
 import { eliteIcon, specializedIcon } from "#/components/operators/detail/impl/assets";
 import { Input } from "#/components/ui/input";
 import { Kicker } from "#/components/ui/kicker";
+import { Toggle } from "#/components/ui/toggle";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import type { IPresetTarget } from "#/lib/api/planner";
 import { useT } from "#/lib/i18n";
@@ -11,7 +12,7 @@ import { cn } from "#/lib/utils";
 import type { messages } from "./BulkPlanDialog.messages";
 import { presetLevelCap, withPresetChange } from "./bulkTargets";
 import type { messages as dialogMessages } from "./OperatorPlannerDialog.messages";
-import { stepStateClass } from "./PlanTargetSections";
+import { STEP_TOGGLE } from "./PlanTargetSections";
 import { ELITE_PHASES, MAX_SKILL_LEVEL, MODULE_STAGES } from "./planTargets";
 
 type BulkT = TypedT<typeof messages & typeof dialogMessages>;
@@ -41,7 +42,7 @@ export function BulkTargetForm({ target, onChange }: IBulkTargetFormProps): Reac
                     <div className="flex items-center gap-2">
                         {ELITE_PHASES.map((e) => (
                             <Tooltip key={e}>
-                                <TooltipTrigger render={<button type="button" onClick={() => onChange(withPresetChange(target, { field: "elite", value: e }))} className={cn("flex size-12 cursor-pointer items-center justify-center rounded-lg border transition-all", stepStateClass(target.elite === e))} />}>
+                                <TooltipTrigger render={<Toggle variant="outline" pressed={target.elite === e} onPressedChange={() => onChange(withPresetChange(target, { field: "elite", value: e }))} className={cn(STEP_TOGGLE, "size-12 sm:size-12")} />}>
                                     <img src={eliteIcon(e)} alt={t("planner.dialog.elite", { elite: e })} className="icon-theme-aware size-7 object-contain" />
                                 </TooltipTrigger>
                                 <TooltipPopup>{t("planner.dialog.elite", { elite: e })}</TooltipPopup>
@@ -117,7 +118,7 @@ interface IStepButtonProps {
 function StepButton({ isActive, title, onSelect, children }: IStepButtonProps): React.ReactElement {
     return (
         <Tooltip>
-            <TooltipTrigger render={<button type="button" onClick={onSelect} aria-pressed={isActive} aria-label={title} className={cn("flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-md border transition-all", stepStateClass(isActive))} />}>{children}</TooltipTrigger>
+            <TooltipTrigger render={<Toggle variant="outline" pressed={isActive} onPressedChange={() => onSelect()} aria-label={title} className={cn(STEP_TOGGLE, "size-9 sm:size-9")} />}>{children}</TooltipTrigger>
             <TooltipPopup>{title}</TooltipPopup>
         </Tooltip>
     );

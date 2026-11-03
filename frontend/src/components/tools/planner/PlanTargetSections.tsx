@@ -7,6 +7,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "#/component
 import { Input } from "#/components/ui/input";
 import { Kicker } from "#/components/ui/kicker";
 import { Slider } from "#/components/ui/slider";
+import { Toggle } from "#/components/ui/toggle";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -19,9 +20,8 @@ import type { IPlanTargets } from "./usePlanTargets";
 type DialogT = TypedT<typeof messages>;
 
 /** The selected/unselected look shared by the promotion buttons and every target step. */
-export function stepStateClass(isActive: boolean): string {
-    return isActive ? "border-primary bg-primary/10 opacity-100 ring-2 ring-primary/20" : "border-border bg-muted/40 opacity-40 hover:bg-muted/80 hover:opacity-75";
-}
+/** A target step is a kit outline toggle; the `sm:` sizes repeat so the toggle's own `sm:h-8` does not shrink a step. */
+export const STEP_TOGGLE = "min-w-0 shrink-0 p-0";
 
 interface IPromotionLevelPanelProps {
     targets: IPlanTargets;
@@ -45,12 +45,12 @@ export function PromotionLevelPanel({ targets }: IPromotionLevelPanelProps): Rea
                             <Tooltip key={e}>
                                 {isReached ? (
                                     <TooltipTrigger render={<span className="inline-flex cursor-not-allowed" />}>
-                                        <button type="button" disabled className="relative flex size-12 cursor-not-allowed items-center justify-center rounded-lg border border-border/40 bg-muted/20 opacity-20 transition-all">
+                                        <Toggle variant="outline" disabled className={cn(STEP_TOGGLE, "size-12 disabled:opacity-20 sm:size-12")}>
                                             {icon}
-                                        </button>
+                                        </Toggle>
                                     </TooltipTrigger>
                                 ) : (
-                                    <TooltipTrigger render={<button type="button" onClick={() => changeElite(e)} className={cn("relative flex size-12 cursor-pointer items-center justify-center rounded-lg border transition-all", stepStateClass(elite === e))} />}>{icon}</TooltipTrigger>
+                                    <TooltipTrigger render={<Toggle variant="outline" pressed={elite === e} onPressedChange={() => changeElite(e)} className={cn(STEP_TOGGLE, "size-12 sm:size-12")} />}>{icon}</TooltipTrigger>
                                 )}
                                 <TooltipPopup>{isReached ? t("planner.dialog.alreadyReached") : t("planner.dialog.elite", { elite: e })}</TooltipPopup>
                             </Tooltip>
@@ -144,9 +144,9 @@ function TargetStepButton({ isActive, lockedReason, title, sizeClassName, onSele
                 <TooltipTrigger
                     render={(props) => (
                         <span {...props} className={cn("flex shrink-0 cursor-help", sizeClassName)}>
-                            <button type="button" disabled className="flex h-full w-full cursor-help items-center justify-center rounded-md border border-border/40 bg-muted/20 opacity-20 transition-all" aria-label={title}>
+                            <Toggle variant="outline" disabled className={cn(STEP_TOGGLE, "h-full w-full cursor-help disabled:cursor-help disabled:opacity-20 sm:h-full")} aria-label={title}>
                                 {children}
-                            </button>
+                            </Toggle>
                         </span>
                     )}
                 />
@@ -157,7 +157,7 @@ function TargetStepButton({ isActive, lockedReason, title, sizeClassName, onSele
 
     return (
         <Tooltip>
-            <TooltipTrigger render={<button type="button" onClick={onSelect} aria-label={title} className={cn("flex shrink-0 cursor-pointer items-center justify-center rounded-md border transition-all", sizeClassName, stepStateClass(isActive))} />}>{children}</TooltipTrigger>
+            <TooltipTrigger render={<Toggle variant="outline" pressed={isActive} onPressedChange={() => onSelect()} aria-label={title} className={cn(STEP_TOGGLE, sizeClassName)} />}>{children}</TooltipTrigger>
             <TooltipPopup>{title}</TooltipPopup>
         </Tooltip>
     );
@@ -255,7 +255,7 @@ function SkillTargetRow({ operator, skill, skillIdx, targets }: ISkillTargetRowP
                         isActive={currentTarget === value}
                         lockedReason={lockedReason(value)}
                         title={isMastery ? t("planner.dialog.mastery", { mastery: masteryOf(value) }) : t("planner.dialog.skillLevel", { level: value })}
-                        sizeClassName="aspect-square w-full sm:size-9"
+                        sizeClassName="aspect-square h-auto w-full sm:size-9"
                         onSelect={() => changeSkillTarget(skillIdx, value)}
                     >
                         {isMastery ? <img src={specializedIcon(masteryOf(value))} alt={t("planner.dialog.mastery", { mastery: masteryOf(value) })} className="icon-theme-aware size-5 object-contain sm:size-6" /> : <span className="font-semibold text-xs sm:text-[13px]">{value}</span>}
@@ -311,7 +311,7 @@ function ModuleTargetRow({ operator, mod, targets }: IModuleTargetRowProps): Rea
                         isActive={currentTarget === stage}
                         lockedReason={isReached ? t("planner.dialog.alreadyReached") : isLocked ? lockedText : ""}
                         title={stage === 0 ? t("planner.dialog.notPlanned") : t("planner.dialog.stage", { stage })}
-                        sizeClassName="size-9"
+                        sizeClassName="size-9 sm:size-9"
                         onSelect={() => changeModuleTarget(mod.uniEquipId, stage)}
                     >
                         <span className="font-semibold text-xs sm:text-[13px]">{stage === 0 ? "-" : stage}</span>

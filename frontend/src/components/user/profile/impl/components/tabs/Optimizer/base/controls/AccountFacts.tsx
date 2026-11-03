@@ -1,3 +1,4 @@
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
 import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useT } from "#/lib/i18n";
@@ -35,15 +36,20 @@ export function AccountFacts() {
                             ))}
                         </ToggleGroup>
                         <span className="text-[12px] text-muted-foreground">{t("profile.base.facts.training")}</span>
-                        <select aria-label={t("profile.base.facts.training.aria")} className="rounded-md border border-border bg-transparent px-1.5 py-1 text-[11px]" onChange={(e) => api.setTrainingClass(e.target.value === "" ? null : e.target.value)} value={api.trainingClass ?? ""}>
-                            <option value="">{t("profile.base.facts.training.nobody")}</option>
-                            {/* The class names are both the API value and game vocabulary, so they stay as-is. */}
-                            {["Vanguard", "Guard", "Defender", "Sniper", "Caster", "Medic", "Supporter", "Specialist"].map((c) => (
-                                <option key={c} value={c}>
-                                    {c}
-                                </option>
-                            ))}
-                        </select>
+                        <Select onValueChange={(next: string | null) => api.setTrainingClass(next)} value={api.trainingClass ?? null}>
+                            <SelectTrigger aria-label={t("profile.base.facts.training.aria")} className="w-auto min-w-28" size="sm">
+                                <SelectValue>{(value: string | null) => value ?? t("profile.base.facts.training.nobody")}</SelectValue>
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value={null}>{t("profile.base.facts.training.nobody")}</SelectItem>
+                                {/* The class names are both the API value and game vocabulary, so they stay as-is. */}
+                                {["Vanguard", "Guard", "Defender", "Sniper", "Caster", "Medic", "Supporter", "Specialist"].map((c) => (
+                                    <SelectItem key={c} value={c}>
+                                        {c}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                         {api.factsSaved !== null && <span className={api.factsSaved ? "text-[10px] text-success-foreground" : "text-[10px] text-muted-foreground"}>{api.factsSaved ? t("profile.base.facts.saved") : t("profile.base.facts.whatIf")}</span>}
                     </div>
                 )}

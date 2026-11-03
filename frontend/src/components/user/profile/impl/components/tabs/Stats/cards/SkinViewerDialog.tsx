@@ -4,7 +4,9 @@ import { Check, Search, X } from "lucide-react";
 import { memo, useCallback, useDeferredValue, useEffect, useId, useMemo, useRef, useState, useTransition } from "react";
 import { LoadError } from "#/components/operators/detail/impl/components/LoadError";
 import { DetailRow, type ISkinPrice, SkinDetailContent } from "#/components/skins/SkinDetailDialog";
+import { Button } from "#/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "#/components/ui/dialog";
+import { InputGroup, InputGroupAddon, InputGroupInput } from "#/components/ui/input-group";
 import { ScrollArea } from "#/components/ui/scroll-area";
 import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
@@ -234,27 +236,19 @@ function SkinViewerBody({ skins, ownedIds, profileOwnedCount, operatorsMap, colo
                 <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
                     <FilterTabs counts={{ missing: missingCount, owned: ownedCount, all: totalCount }} onChange={setFilter} value={filter} />
                     <SortTabs onChange={setSort} value={sort} />
-                    <div className="relative flex items-center sm:ml-auto">
-                        <Search aria-hidden className="absolute left-2.5 h-3.5 w-3.5 text-subtle-foreground" />
-                        <input
-                            aria-label={t("profile.skins.search.aria")}
-                            className="w-full rounded-md border border-border bg-background py-1.5 pr-8 pl-8 text-sm transition-colors placeholder:text-muted-foreground sm:w-64"
-                            onChange={handleQueryChange}
-                            placeholder={t("profile.skins.search.placeholder")}
-                            type="search"
-                            value={query}
-                        />
+                    <InputGroup className="sm:ml-auto sm:w-64">
+                        <InputGroupAddon>
+                            <Search aria-hidden="true" />
+                        </InputGroupAddon>
+                        <InputGroupInput aria-label={t("profile.skins.search.aria")} onChange={handleQueryChange} placeholder={t("profile.skins.search.placeholder")} type="search" value={query} />
                         {query && (
-                            <button
-                                aria-label={t("profile.skins.search.clear")}
-                                className="pointer-coarse:after:-translate-1/2 absolute right-1.5 flex h-6 w-6 cursor-pointer items-center justify-center rounded-full text-muted-foreground pointer-coarse:after:absolute pointer-coarse:after:top-1/2 pointer-coarse:after:left-1/2 pointer-coarse:after:size-11 hover:bg-muted hover:text-foreground"
-                                onClick={clearSearch}
-                                type="button"
-                            >
-                                <X aria-hidden="true" className="h-3 w-3" />
-                            </button>
+                            <InputGroupAddon align="inline-end">
+                                <Button aria-label={t("profile.skins.search.clear")} className="text-muted-foreground" onClick={clearSearch} size="icon-xs" type="button" variant="ghost">
+                                    <X aria-hidden="true" />
+                                </Button>
+                            </InputGroupAddon>
                         )}
-                    </div>
+                    </InputGroup>
                 </div>
             </header>
 

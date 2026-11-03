@@ -2,6 +2,7 @@ import { Camera, ChevronDown, Copy, X } from "lucide-react";
 import { useState } from "react";
 import { Button } from "#/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "#/components/ui/collapsible";
+import { Input } from "#/components/ui/input";
 import { Spinner } from "#/components/ui/spinner";
 import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import type { IEvaluateResponse } from "#/lib/api/base";
@@ -226,9 +227,10 @@ export function DeepDive() {
                                             </ToggleGroupItem>
                                         ))}
                                     </ToggleGroup>
-                                    <input
+                                    <Input
                                         aria-label={t("profile.base.deep.cadence.custom")}
-                                        className="w-14 rounded-md border border-border bg-transparent px-1.5 py-0.5 text-center font-mono text-[11px] tabular-nums placeholder:text-subtle-foreground"
+                                        className="w-14 font-mono tabular-nums [&_input]:text-center"
+                                        size="sm"
                                         inputMode="numeric"
                                         onChange={(e) => {
                                             const v = Number(e.target.value);

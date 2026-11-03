@@ -7,6 +7,7 @@ import { Button } from "#/components/ui/button";
 import { Dialog, DialogClose, DialogFooter, DialogHeader, DialogPanel, DialogPopup, DialogTitle } from "#/components/ui/dialog";
 import { Sheet, SheetClose, SheetFooter, SheetHeader, SheetPanel, SheetPopup, SheetTitle } from "#/components/ui/sheet";
 import { Skeleton } from "#/components/ui/skeleton";
+import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import { useMediaQuery } from "#/hooks/use-media-query";
 import { storyIllustrationsQueryOptions } from "#/lib/api/story";
 import { useFormatters, useGamedataServer, useT } from "#/lib/i18n";
@@ -65,20 +66,14 @@ export function IllustrationPanel({ group, kind, onClose }: IIllustrationPanelPr
     );
 
     const panes = (
-        <fieldset className="msv-scroll mb-2.5 flex max-w-full gap-0.5 overflow-x-auto rounded-[9px] border border-border bg-secondary/45 p-0.75" aria-label={t("illustrations.pane.aria")}>
+        <ToggleGroup aria-label={t("illustrations.pane.aria")} value={[pane]} onValueChange={(next) => next[0] && setPane(next[0] as (typeof ART_PANES)[number])} variant="outline" className="msv-scroll mb-2.5 max-w-full overflow-x-auto">
             {ART_PANES.map((key) => (
-                <button
-                    key={key}
-                    type="button"
-                    onClick={() => setPane(key)}
-                    aria-pressed={pane === key}
-                    className={cn("h-11 shrink-0 cursor-pointer rounded-md px-2.5 font-sans font-semibold text-[11.5px] transition-colors sm:h-7", pane === key ? "bg-background text-foreground shadow-sm/5" : "text-muted-foreground hover:text-foreground")}
-                >
+                <ToggleGroupItem key={key} value={key} className="px-2.5 font-semibold text-[11.5px] sm:text-[11.5px]">
                     {t(`illustrations.pane.${key}`)}
                     <span className="ms-1.5 font-mono text-[10px] text-muted-foreground tabular-nums">{counts[key]}</span>
-                </button>
+                </ToggleGroupItem>
             ))}
-        </fieldset>
+        </ToggleGroup>
     );
 
     const body = (

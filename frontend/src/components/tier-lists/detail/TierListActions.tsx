@@ -1,7 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Download, Heart, Share2 } from "lucide-react";
 import { useState } from "react";
+import { Button } from "#/components/ui/button";
 import { toastManager } from "#/components/ui/toast";
+import { Toggle } from "#/components/ui/toggle";
 import { useAuth } from "#/hooks/use-auth";
 import { type ITierListDetail, myTierListFavoriteQueryOptions, toggleTierListFavoriteFn } from "#/lib/api/tier-lists";
 import { useT } from "#/lib/i18n";
@@ -120,41 +122,20 @@ export function TierListActions({ detail }: ITierListActionsProps) {
 
     return (
         <div className="flex shrink-0 flex-wrap items-center gap-2">
-            <button
-                type="button"
-                onClick={handleFavorite}
-                disabled={favoriteMut.isPending}
-                aria-pressed={favorited}
-                aria-label={favorited ? t("detail.actions.favorite.remove") : t("detail.actions.favorite.add")}
-                className={cn(
-                    "inline-flex h-11 min-w-11 cursor-pointer items-center justify-center gap-1.5 rounded-lg border px-3 font-medium font-sans text-sm leading-none transition-colors disabled:opacity-60 sm:h-9 sm:min-w-0",
-                    favorited ? "border-[color-mix(in_srgb,var(--primary)_50%,transparent)] bg-[color-mix(in_srgb,var(--primary)_12%,transparent)] text-foreground hover:bg-[color-mix(in_srgb,var(--primary)_18%,transparent)]" : "border-border bg-popover text-foreground hover:bg-accent",
-                )}
-            >
+            <Toggle variant="outline" size="lg" className="gap-1.5" pressed={favorited} onPressedChange={() => handleFavorite()} disabled={favoriteMut.isPending} aria-label={favorited ? t("detail.actions.favorite.remove") : t("detail.actions.favorite.add")}>
                 <Heart className={cn("h-4 w-4", favorited ? "fill-current text-primary" : "fill-none")} aria-hidden="true" />
                 <span className="hidden sm:inline">{favorited ? t("detail.actions.favorited") : t("detail.actions.favorite")}</span>
-            </button>
+            </Toggle>
 
-            <button
-                type="button"
-                onClick={handleDownload}
-                disabled={downloading}
-                aria-label={t("detail.actions.download.label")}
-                className="inline-flex h-11 min-w-11 cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-border bg-popover px-3 font-medium font-sans text-foreground text-sm leading-none transition-colors hover:bg-accent disabled:cursor-wait disabled:opacity-60 sm:h-9 sm:min-w-0"
-            >
+            <Button variant="outline" size="lg" className="gap-1.5 disabled:cursor-wait" onClick={handleDownload} disabled={downloading} aria-label={t("detail.actions.download.label")}>
                 <Download className={cn("h-4 w-4", downloading && "animate-pulse")} aria-hidden="true" />
                 <span className="hidden sm:inline">{downloading ? t("detail.actions.downloading") : t("detail.actions.download")}</span>
-            </button>
+            </Button>
 
-            <button
-                type="button"
-                onClick={handleShare}
-                aria-label={t("detail.actions.share.label")}
-                className="inline-flex h-11 min-w-11 cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-border bg-popover px-3 font-medium font-sans text-foreground text-sm leading-none transition-colors hover:bg-accent sm:h-9 sm:min-w-0"
-            >
+            <Button variant="outline" size="lg" className="gap-1.5" onClick={handleShare} aria-label={t("detail.actions.share.label")}>
                 <Share2 className="h-4 w-4" aria-hidden="true" />
                 <span className="hidden sm:inline">{t("detail.actions.share")}</span>
-            </button>
+            </Button>
         </div>
     );
 }

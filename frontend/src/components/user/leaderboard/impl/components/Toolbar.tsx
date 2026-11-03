@@ -4,6 +4,7 @@ import { Button } from "#/components/ui/button";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "#/components/ui/input-group";
 import { Kicker } from "#/components/ui/kicker";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "#/components/ui/menu";
+import { Toggle } from "#/components/ui/toggle";
 import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import type { IMaterials } from "#/lib/api/materials";
@@ -119,22 +120,10 @@ export function Toolbar({ ranking, onRanking, catalog, materials, catalogError, 
                     </DropdownMenuContent>
                 </DropdownMenu>
                 <HintWrap hint={movementHint ?? (movementOnly ? t("leaderboard.toolbar.movementOnly.on") : t("leaderboard.toolbar.movementOnly.off"))} className="col-span-2 w-full sm:w-auto">
-                    <button
-                        type="button"
-                        role="switch"
-                        aria-checked={movementOnly}
-                        disabled={!movementAvailable}
-                        onClick={() => onMovementOnly(!movementOnly)}
-                        className={cn(
-                            "inline-flex h-9 pointer-coarse:h-11 w-full cursor-pointer items-center justify-center gap-1.5 rounded-lg border px-2.5 font-medium font-sans text-xs leading-none transition-colors disabled:cursor-not-allowed disabled:opacity-50 sm:h-8 sm:w-auto",
-                            movementOnly && movementAvailable
-                                ? "border-primary/40 bg-[color-mix(in_srgb,var(--primary)_10%,transparent)] text-foreground hover:bg-[color-mix(in_srgb,var(--primary)_14%,transparent)] [&>svg]:text-primary"
-                                : "border-input bg-card text-foreground hover:border-foreground/20 disabled:hover:border-input",
-                        )}
-                    >
-                        <TrendingUp className={cn("size-3.5", movementOnly && movementAvailable ? "opacity-100" : "opacity-70")} aria-hidden />
+                    <Toggle variant="outline" pressed={movementOnly && movementAvailable} disabled={!movementAvailable} onPressedChange={(next) => onMovementOnly(next)} className="h-9 pointer-coarse:h-11 w-full gap-1.5 px-2.5 text-xs sm:h-8 sm:w-auto sm:text-xs">
+                        <TrendingUp className="size-3.5" aria-hidden />
                         <span>{t("leaderboard.toolbar.movementOnly")}</span>
-                    </button>
+                    </Toggle>
                 </HintWrap>
             </div>
         </div>

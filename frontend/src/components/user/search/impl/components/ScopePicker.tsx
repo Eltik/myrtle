@@ -2,10 +2,11 @@ import { useMemo } from "react";
 import { ClassIcon } from "#/components/operators/list/impl/components/Icons";
 import { CLASSES } from "#/components/operators/list/impl/constants";
 import { FilterChip } from "#/components/ui/filter-chip";
+import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import { cn, formatArchetype, professionLabel, serverNames, subProfessionToProfession } from "#/lib/utils";
+import { formatArchetype, professionLabel, serverNames, subProfessionToProfession } from "#/lib/utils";
 import type { IOperatorIndexEntry } from "#/types/operators";
 import type { Scope } from "../searchControls";
 import type { messages } from "./ScopePicker.messages";
@@ -74,32 +75,21 @@ export function ScopePicker({ scope, onChange, operators }: IScopePickerProps) {
         <div className="flex flex-col gap-2">
             <fieldset className="m-0 min-w-0 border-0 p-0">
                 <Legend>{t("search.scope.class")}</Legend>
-                <div className="grid grid-cols-8 gap-1">
+                <ToggleGroup aria-label={t("search.scope.class")} className="grid w-full grid-cols-8 gap-1" value={profession ? [profession] : []} onValueChange={(next) => onChange(next[0] ? { kind: "class", profession: next[0] as (typeof CLASSES)[number] } : null)}>
                     {CLASSES.map((cls) => {
-                        const on = profession === cls;
                         const name = professionLabel({ profession: cls, professionName: classNames.get(cls) });
                         return (
                             <Tooltip key={cls}>
-                                <TooltipTrigger
-                                    render={
-                                        <button
-                                            type="button"
-                                            aria-pressed={on}
-                                            aria-label={name}
-                                            onClick={() => onChange(on ? null : { kind: "class", profession: cls })}
-                                            className={cn("inline-flex aspect-square cursor-pointer items-center justify-center rounded-md border transition-colors", on ? "border-primary bg-[color-mix(in_srgb,var(--primary)_16%,transparent)]" : "border-border bg-secondary/50 hover:border-primary/45")}
-                                        >
-                                            <ClassIcon profession={cls} size={20} />
-                                        </button>
-                                    }
-                                />
+                                <TooltipTrigger render={<ToggleGroupItem value={cls} aria-label={name} className="aspect-square h-auto min-w-0 border-border bg-secondary/50 p-0 sm:h-auto sm:min-w-0" />}>
+                                    <ClassIcon profession={cls} size={20} />
+                                </TooltipTrigger>
                                 <TooltipPopup side="top" sideOffset={6}>
                                     {name}
                                 </TooltipPopup>
                             </Tooltip>
                         );
                     })}
-                </div>
+                </ToggleGroup>
             </fieldset>
 
             {profession ? (

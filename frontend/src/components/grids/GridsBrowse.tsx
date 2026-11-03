@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { Button } from "#/components/ui/button";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "#/components/ui/input-group";
 import { Skeleton } from "#/components/ui/skeleton";
+import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import { useAuth } from "#/hooks/use-auth";
 import { useDebounce } from "#/hooks/use-debounce";
 import { browseGridsQueryOptions, type GridSort } from "#/lib/api/grids";
@@ -65,23 +66,13 @@ export function GridsBrowse({ search }: { search: IGridsSearch }) {
                         </InputGroupAddon>
                         <InputGroupInput value={input} onChange={(e) => setInput((e.target as HTMLInputElement).value)} placeholder={t("browse.searchPlaceholder")} type="search" aria-label={t("browse.searchLabel")} />
                     </InputGroup>
-                    <fieldset className="m-0 inline-flex rounded-lg border-0 bg-muted p-0.5">
-                        <legend className="sr-only">{t("browse.sortLabel")}</legend>
+                    <ToggleGroup aria-label={t("browse.sortLabel")} value={[search.sort]} onValueChange={(next) => next[0] && setSort(next[0] as (typeof SORTS)[number])} variant="outline">
                         {SORTS.map((s) => (
-                            <button
-                                key={s}
-                                type="button"
-                                aria-pressed={search.sort === s}
-                                onClick={() => setSort(s)}
-                                className={cn(
-                                    "relative inline-flex h-8 cursor-pointer items-center justify-center rounded-md px-3 font-medium font-sans text-sm transition-colors pointer-coarse:after:absolute pointer-coarse:after:size-full pointer-coarse:after:min-h-11",
-                                    search.sort === s ? "bg-background text-foreground shadow-sm/5" : "text-muted-foreground hover:text-foreground",
-                                )}
-                            >
+                            <ToggleGroupItem key={s} value={s} className="px-3">
                                 {s === "recent" ? t("browse.sort.recent") : t("browse.sort.popular")}
-                            </button>
+                            </ToggleGroupItem>
                         ))}
-                    </fieldset>
+                    </ToggleGroup>
                 </div>
 
                 <div className="mt-5">

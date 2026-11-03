@@ -1,7 +1,7 @@
 import { Check, ChevronDown, FilterX, Info, RotateCcw, Search, X } from "lucide-react";
 import * as React from "react";
 import { Button } from "#/components/ui/button";
-import { Input } from "#/components/ui/input";
+import { InputGroup, InputGroupAddon, InputGroupInput } from "#/components/ui/input-group";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { type TypedRichT, useRichT, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -122,15 +122,19 @@ export function RosterPicker({ allOperators, visibleOperators, selected, isExpli
             {hasActiveFilters && <ActiveFiltersHint settings={settings} hiddenCount={hiddenCount} tierFilterTitle={tierFilterTitle} />}
 
             <div className="flex items-center gap-2">
-                <div className="relative min-w-0 flex-1">
-                    <Search aria-hidden="true" className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
-                    <Input value={query} onChange={(e) => setQuery(e.currentTarget.value)} placeholder={t("randomizer.roster.search")} size="sm" className="rounded-md border-input pl-7" />
+                <InputGroup className="min-w-0 flex-1">
+                    <InputGroupAddon>
+                        <Search aria-hidden="true" />
+                    </InputGroupAddon>
+                    <InputGroupInput value={query} onChange={(e) => setQuery(e.currentTarget.value)} placeholder={t("randomizer.roster.search")} size="sm" />
                     {query && (
-                        <Button onClick={() => setQuery("")} size="icon-xs" variant="ghost" className="absolute top-1/2 right-1 -translate-y-1/2 text-muted-foreground" aria-label={t("randomizer.roster.clearSearch")}>
-                            <X aria-hidden="true" />
-                        </Button>
+                        <InputGroupAddon align="inline-end">
+                            <Button onClick={() => setQuery("")} size="icon-xs" variant="ghost" className="text-muted-foreground" aria-label={t("randomizer.roster.clearSearch")}>
+                                <X aria-hidden="true" />
+                            </Button>
+                        </InputGroupAddon>
                     )}
-                </div>
+                </InputGroup>
             </div>
 
             <div className="flex flex-wrap items-center justify-between gap-2 font-mono text-[11px] text-muted-foreground">

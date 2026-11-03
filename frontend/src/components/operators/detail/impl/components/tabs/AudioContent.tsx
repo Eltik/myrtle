@@ -1,6 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
-import { AudioLines, ChevronDown, ChevronUp, Download, Layers, Loader2, Pause, Play, Search, Volume2, VolumeX, X } from "lucide-react";
+import { AudioLines, ChevronDown, ChevronUp, Download, Layers, Loader2, Pause, Play, Volume2, VolumeX } from "lucide-react";
 import { memo, type ReactNode, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { SearchField } from "#/components/SearchField";
+import { Button } from "#/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
 import { Skeleton } from "#/components/ui/skeleton";
 import { Slider } from "#/components/ui/slider";
@@ -241,14 +243,9 @@ function VolumeControl({ volume, setVolume, isMuted, setIsMuted }: { volume: num
 
     return (
         <div className="flex items-center gap-2">
-            <button
-                type="button"
-                aria-label={isMuted ? t("audio.unmute") : t("audio.mute")}
-                onClick={() => setIsMuted((m) => !m)}
-                className="relative inline-flex items-center justify-center rounded-md p-1.5 text-muted-foreground pointer-coarse:after:absolute pointer-coarse:after:min-h-11 pointer-coarse:after:min-w-11 hover:bg-accent hover:text-foreground"
-            >
+            <Button variant="ghost" size="icon-sm" className="text-muted-foreground hover:text-foreground" aria-label={isMuted ? t("audio.unmute") : t("audio.mute")} onClick={() => setIsMuted((m) => !m)}>
                 {isMuted ? <VolumeX aria-hidden="true" className="h-4 w-4" /> : <Volume2 aria-hidden="true" className="h-4 w-4" />}
-            </button>
+            </Button>
             <Slider className="w-24" min={0} max={100} step={1} value={[volume]} onValueChange={(v) => setVolume(Array.isArray(v) ? (v[0] ?? 80) : v)} aria-label={t("audio.volume")} />
         </div>
     );
@@ -260,27 +257,6 @@ function Pill({ children, className }: { children: ReactNode; className?: string
 
 function EmptyState({ children }: { children: ReactNode }) {
     return <div className="py-12 text-center text-muted-foreground text-sm">{children}</div>;
-}
-
-function SearchBox({ value, onChange, placeholder, label }: { value: string; onChange: (v: string) => void; placeholder: string; label: string }) {
-    const t: AudioT = useT("operators");
-
-    return (
-        <div className="flex h-9 min-w-60 max-w-115 flex-1 items-center gap-2 rounded-lg border border-border bg-[color-mix(in_oklch,var(--secondary)_60%,transparent)] px-3 transition-[border-color,box-shadow] duration-150 focus-within:border-ring focus-within:shadow-[0_0_0_1px_var(--ring)] [&>svg]:shrink-0 [&>svg]:text-muted-foreground">
-            <Search className="h-3.75 w-3.75" aria-hidden="true" />
-            <input type="text" value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} aria-label={label} className="min-w-0 flex-1 appearance-none border-0 bg-transparent p-0 font-sans text-foreground text-sm leading-none outline-none placeholder:text-muted-foreground" />
-            {value && (
-                <button
-                    type="button"
-                    aria-label={t("audio.search.clear")}
-                    onClick={() => onChange("")}
-                    className="relative inline-flex items-center justify-center rounded p-0.5 text-muted-foreground pointer-coarse:after:absolute pointer-coarse:after:min-h-11 pointer-coarse:after:min-w-11 hover:bg-accent hover:text-foreground"
-                >
-                    <X aria-hidden="true" className="h-3.5 w-3.5" />
-                </button>
-            )}
-        </div>
-    );
 }
 
 function AudioSkeleton() {
@@ -344,30 +320,13 @@ function AudioRow({ isPlaying, isUnavailable, isDownloading, progress, downloadL
         <div className={cn("group relative overflow-hidden rounded-lg border transition-colors", isPlaying ? "border-primary bg-primary/10" : "border-border bg-card/30 hover:bg-secondary/30", isUnavailable && "opacity-60")}>
             <div className="flex items-start gap-3 p-3">
                 <div className="flex shrink-0 gap-1">
-                    <button
-                        type="button"
-                        onClick={onPlay}
-                        disabled={isUnavailable && !isPlaying}
-                        aria-label={isPlaying ? t("audio.pause") : isUnavailable ? t("audio.unavailable") : t("audio.play")}
-                        className={cn("flex h-9 w-9 items-center justify-center rounded-md transition-colors disabled:cursor-not-allowed disabled:opacity-50", isPlaying ? "bg-primary text-primary-foreground" : "bg-secondary text-foreground hover:bg-secondary/80")}
-                    >
+                    <Button variant={isPlaying ? "default" : "secondary"} size="icon" onClick={onPlay} disabled={isUnavailable && !isPlaying} aria-label={isPlaying ? t("audio.pause") : isUnavailable ? t("audio.unavailable") : t("audio.play")}>
                         {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-                    </button>
+                    </Button>
                     <Tooltip>
-                        <TooltipTrigger
-                            render={(props) => (
-                                <button
-                                    {...props}
-                                    type="button"
-                                    onClick={onDownload}
-                                    disabled={isUnavailable || isDownloading}
-                                    aria-label={downloadLabel}
-                                    className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
-                                >
-                                    {isDownloading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-                                </button>
-                            )}
-                        />
+                        <TooltipTrigger render={<Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground" onClick={onDownload} disabled={isUnavailable || isDownloading} aria-label={downloadLabel} />}>
+                            {isDownloading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                        </TooltipTrigger>
                         <TooltipPopup>{t("audio.download")}</TooltipPopup>
                     </Tooltip>
                 </div>
@@ -502,7 +461,7 @@ function VoiceLinesPanel({ operator, player }: { operator: IOperatorListItem; pl
                             ))}
                         </SelectContent>
                     </Select>
-                    <SearchBox value={searchQuery} onChange={setSearchQuery} placeholder={t("audio.search.voice.placeholder")} label={t("audio.search.voice.label")} />
+                    <SearchField className="h-9 min-w-60 max-w-115 flex-1" value={searchQuery} onChange={setSearchQuery} placeholder={t("audio.search.voice.placeholder")} label={t("audio.search.voice.label")} clearLabel={t("audio.search.clear")} />
                 </div>
             </div>
 
@@ -770,7 +729,7 @@ function SfxPanel({ operator, player }: { operator: IOperatorListItem; player: I
     return (
         <div>
             <div className="mb-6">
-                <SearchBox value={searchQuery} onChange={setSearchQuery} placeholder={t("audio.search.sfx.placeholder")} label={t("audio.search.sfx.label")} />
+                <SearchField className="h-9 min-w-60 max-w-115 flex-1" value={searchQuery} onChange={setSearchQuery} placeholder={t("audio.search.sfx.placeholder")} label={t("audio.search.sfx.label")} clearLabel={t("audio.search.clear")} />
             </div>
 
             <Tabs value={activeCategory} onValueChange={(v) => setActiveCategory(String(v))} className="w-full">

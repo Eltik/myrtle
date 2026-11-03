@@ -3,7 +3,7 @@ import * as React from "react";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import { Checkbox } from "#/components/ui/checkbox";
-import { Input } from "#/components/ui/input";
+import { InputGroup, InputGroupAddon, InputGroupInput } from "#/components/ui/input-group";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { compactForSearch } from "#/lib/search/fuzzy";
@@ -121,15 +121,19 @@ export function StageFiltersPanel({ settings, onChange, hasProfile, stages, zone
             </FieldGroup>
 
             <FieldGroup label={t("randomizer.stages.pool")}>
-                <div className="relative">
-                    <Search aria-hidden="true" className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
-                    <Input value={query} onChange={(e) => setQuery(e.currentTarget.value)} placeholder={t("randomizer.stages.search")} size="sm" className="rounded-md border-input pl-7" />
+                <InputGroup>
+                    <InputGroupAddon>
+                        <Search aria-hidden="true" />
+                    </InputGroupAddon>
+                    <InputGroupInput value={query} onChange={(e) => setQuery(e.currentTarget.value)} placeholder={t("randomizer.stages.search")} size="sm" />
                     {query && (
-                        <Button onClick={() => setQuery("")} size="icon-xs" variant="ghost" className="absolute top-1/2 right-1 -translate-y-1/2 text-muted-foreground" aria-label={t("randomizer.stages.clearSearch")}>
-                            <X aria-hidden="true" />
-                        </Button>
+                        <InputGroupAddon align="inline-end">
+                            <Button onClick={() => setQuery("")} size="icon-xs" variant="ghost" className="text-muted-foreground" aria-label={t("randomizer.stages.clearSearch")}>
+                                <X aria-hidden="true" />
+                            </Button>
+                        </InputGroupAddon>
                     )}
-                </div>
+                </InputGroup>
 
                 <div className="flex flex-wrap items-center justify-between gap-2 font-mono text-[11px] text-muted-foreground">
                     <span>

@@ -1,6 +1,7 @@
 import { MusicIcon, PauseIcon, PlayIcon, SquareIcon } from "lucide-react";
 import type React from "react";
 import { useState } from "react";
+import { Button } from "#/components/ui/button";
 import { Slider, SliderPrimitive } from "#/components/ui/slider";
 import { useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -85,23 +86,13 @@ function Bar({ state }: { state: IPlayerBarState }): React.ReactElement {
                         </span>
                     </div>
 
-                    <button
-                        type="button"
-                        onClick={() => (state.paused ? resume() : pause())}
-                        aria-label={state.paused ? t("nowPlaying.resume", { name }) : t("nowPlaying.pause", { name })}
-                        className="flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-full border border-border bg-background text-foreground transition-colors hover:border-primary/45 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    >
+                    <Button variant="outline" size="icon-xl" className="rounded-full before:rounded-full" onClick={() => (state.paused ? resume() : pause())} aria-label={state.paused ? t("nowPlaying.resume", { name }) : t("nowPlaying.pause", { name })}>
                         {state.paused ? <PlayIcon className="size-4" aria-hidden="true" /> : <PauseIcon className="size-4" aria-hidden="true" />}
-                    </button>
+                    </Button>
 
-                    <button
-                        type="button"
-                        onClick={stop}
-                        aria-label={t("nowPlaying.stop", { name })}
-                        className="flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-full border border-border bg-background text-muted-foreground transition-colors hover:border-primary/45 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    >
+                    <Button variant="outline" size="icon-xl" className="rounded-full text-muted-foreground before:rounded-full hover:text-foreground" onClick={stop} aria-label={t("nowPlaying.stop", { name })}>
                         <SquareIcon className="size-3.5" aria-hidden="true" />
-                    </button>
+                    </Button>
 
                     {/* At 390 the seek takes a SECOND ROW of its own, full width, which is what
                         `order-last` plus `w-full` buys out of one wrapping row: the title and

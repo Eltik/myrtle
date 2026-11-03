@@ -5,7 +5,10 @@ import { useMemo, useRef, useState } from "react";
 import { asset } from "#/components/operators/detail/impl/assets";
 import { VOICE_LANGUAGE_LABEL_KEY } from "#/components/operators/detail/impl/constants";
 import type { messages as detailConstantsMessages } from "#/components/operators/detail/impl/constants.messages";
+import { Button } from "#/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "#/components/ui/collapsible";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
+import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import { storyIndexQueryOptions } from "#/lib/api/story";
 import { GameText } from "#/lib/gamedata/GameText";
 import { useGamedataServer, useT } from "#/lib/i18n";
@@ -87,21 +90,15 @@ export function ChapterViewSwitch({ view, onView, sections }: { view: ChapterVie
     if (sections.length === 0) return null;
 
     return (
-        <fieldset className="msv-scroll flex shrink-0 gap-0.5 overflow-x-auto border-border border-b px-4 pb-3 sm:px-5" aria-label={t("archive.view.aria")}>
-            <span className="flex gap-0.5 rounded-[9px] border border-border bg-secondary/45 p-0.75">
+        <div className="msv-scroll flex shrink-0 overflow-x-auto border-border border-b px-4 pb-3 sm:px-5">
+            <ToggleGroup aria-label={t("archive.view.aria")} value={[view]} onValueChange={(next) => next[0] && onView(next[0] as (typeof CHAPTER_VIEWS)[number])} variant="outline">
                 {CHAPTER_VIEWS.map((key) => (
-                    <button
-                        key={key}
-                        type="button"
-                        onClick={() => onView(key)}
-                        aria-pressed={view === key}
-                        className={cn("h-11 pointer-coarse:h-11 shrink-0 cursor-pointer rounded-md px-3 font-sans font-semibold text-[11.5px] transition-colors sm:h-7", view === key ? "bg-background text-foreground shadow-sm/5" : "text-muted-foreground hover:text-foreground")}
-                    >
+                    <ToggleGroupItem key={key} value={key} className="px-3 font-semibold text-[11.5px] sm:text-[11.5px]">
                         {key === "entries" ? t("archive.view.entries") : t("archive.view.archive")}
-                    </button>
+                    </ToggleGroupItem>
                 ))}
-            </span>
-        </fieldset>
+            </ToggleGroup>
+        </div>
     );
 }
 
@@ -324,14 +321,15 @@ function TrackRow({ track, audio }: { track: ArchiveTrack; audio: IChapterAudio 
 
     return (
         <div className="flex min-h-11 items-center gap-2.5 rounded-[9px] border border-border bg-secondary/25 px-2.5 py-1.5">
-            <button
-                type="button"
+            <Button
+                variant="outline"
+                size="icon-lg"
+                className="rounded-full before:rounded-full"
                 onClick={() => audio.toggle(key, { intro: track.introUrl ?? undefined, loop: track.loopUrl }, track.name?.trim() ? track.name : null)}
                 aria-label={playing ? t("archive.theme.pause", { name }) : t("archive.theme.play", { name })}
-                className="flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-full border border-border bg-background text-foreground transition-colors hover:border-primary/45 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:size-9"
             >
                 {playing ? <PauseIcon className="size-4" aria-hidden="true" /> : <PlayIcon className="size-4" aria-hidden="true" />}
-            </button>
+            </Button>
             <span className="flex min-w-0 flex-col">
                 <span className="truncate font-sans text-[12.5px] text-foreground">{name}</span>
                 {track.description ? (
@@ -446,33 +444,30 @@ function ClipRow({ clip, player, name }: { clip: ArchiveClip; player: IClipPlaye
 
     return (
         <div className="flex min-h-11 flex-wrap items-center gap-2 rounded-[9px] border border-border bg-secondary/25 px-2.5 py-1.5">
-            <button
-                type="button"
-                disabled={url === null}
-                onClick={() => url && player.play(url)}
-                aria-label={playing ? t("archive.clip.pause", { name }) : t("archive.clip.play", { name })}
-                className="flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-full border border-border bg-background text-foreground transition-colors hover:border-primary/45 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-default disabled:opacity-45 sm:size-9"
-            >
+            <Button variant="outline" size="icon-lg" className="rounded-full before:rounded-full" disabled={url === null} onClick={() => url && player.play(url)} aria-label={playing ? t("archive.clip.pause", { name }) : t("archive.clip.play", { name })}>
                 {playing ? <PauseIcon className="size-4" aria-hidden="true" /> : <PlayIcon className="size-4" aria-hidden="true" />}
-            </button>
+            </Button>
             <img src={getAvatarById(clip.charId)} alt="" aria-hidden="true" loading="lazy" decoding="async" className="size-7 shrink-0 rounded-full bg-secondary/55 object-cover" />
             <span className="min-w-0 flex-1 basis-24 truncate font-sans text-[12.5px] text-foreground">{name}</span>
             {tracks.length > 1 ? (
-                <select
-                    aria-label={t("archive.clip.language")}
+                <Select
                     value={chosen?.language ?? ""}
-                    onChange={(e) => {
+                    onValueChange={(next) => {
                         if (playing) player.stop();
-                        setLanguage(e.target.value as LangType);
+                        setLanguage(next as LangType);
                     }}
-                    className="h-11 pointer-coarse:h-11 shrink-0 cursor-pointer rounded-[7px] border border-border bg-background px-1.5 font-mono text-[10.5px] text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:h-8"
                 >
-                    {tracks.map((track) => (
-                        <option key={track.language} value={track.language}>
-                            {VOICE_LANGUAGE_LABEL_KEY[track.language] ? td(VOICE_LANGUAGE_LABEL_KEY[track.language]) : track.language}
-                        </option>
-                    ))}
-                </select>
+                    <SelectTrigger size="sm" aria-label={t("archive.clip.language")} className="w-auto min-w-0 shrink-0 font-mono text-[10.5px] text-muted-foreground sm:text-[10.5px]">
+                        <SelectValue>{(value: string) => (VOICE_LANGUAGE_LABEL_KEY[value as LangType] ? td(VOICE_LANGUAGE_LABEL_KEY[value as LangType]) : value)}</SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                        {tracks.map((track) => (
+                            <SelectItem key={track.language} value={track.language}>
+                                {VOICE_LANGUAGE_LABEL_KEY[track.language] ? td(VOICE_LANGUAGE_LABEL_KEY[track.language]) : track.language}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
             ) : null}
         </div>
     );

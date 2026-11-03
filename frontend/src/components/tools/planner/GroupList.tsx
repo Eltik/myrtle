@@ -1,8 +1,10 @@
 import { ChevronDown, Pencil, Pin, Trash } from "lucide-react";
 import * as React from "react";
 
+import { Button } from "#/components/ui/button";
 import { Checkbox } from "#/components/ui/checkbox";
 import { Skeleton } from "#/components/ui/skeleton";
+import { Toggle } from "#/components/ui/toggle";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import type { IOperatorPlanResponse, IPlanGroup } from "#/lib/api/planner";
 import { useT } from "#/lib/i18n";
@@ -101,8 +103,7 @@ function GroupCard({ group, plans, isSelected, isFilterEngaged, isExpanded, onTo
     const expandLabel = isExpanded ? t("planner.group.collapse", { name: group.name }) : t("planner.group.expand", { name: group.name });
     // The 28px face stays for a mouse; a coarse pointer gets a centred 44px hit area on each, and the
     // row's gap widens to 16px so neighbouring areas (28 + 16 = 44 apart) do not overlap.
-    const iconButton = "pointer-coarse:after:-translate-1/2 relative flex size-7 items-center justify-center rounded-md border transition-all pointer-coarse:after:absolute pointer-coarse:after:top-1/2 pointer-coarse:after:left-1/2 pointer-coarse:after:size-11";
-    const neutralButton = "border-border bg-muted/40 text-foreground hover:border-border/80 hover:bg-muted";
+    const iconButton = "size-7 min-w-7 p-0 sm:size-7 sm:min-w-7";
 
     return (
         // The card is not itself a button: it holds the pin, expand, rename and delete buttons and the
@@ -119,30 +120,20 @@ function GroupCard({ group, plans, isSelected, isFilterEngaged, isExpanded, onTo
                 </label>
                 <div className="flex items-center gap-1 pointer-coarse:gap-4">
                     <Tooltip>
-                        <TooltipTrigger
-                            render={
-                                <button
-                                    type="button"
-                                    aria-label={pinLabel}
-                                    aria-pressed={group.pinned}
-                                    onClick={onTogglePin}
-                                    className={cn(iconButton, group.pinned ? "border-primary/40 bg-primary/10 text-primary hover:bg-primary/15" : "border-border bg-muted/40 text-muted-foreground hover:border-border/80 hover:bg-muted hover:text-foreground")}
-                                />
-                            }
-                        >
+                        <TooltipTrigger render={<Toggle variant="outline" size="sm" aria-label={pinLabel} pressed={group.pinned} onPressedChange={() => onTogglePin()} className={iconButton} />}>
                             <Pin aria-hidden="true" className={cn("size-3.5", group.pinned && "fill-current")} />
                         </TooltipTrigger>
                         <TooltipPopup>{pinLabel}</TooltipPopup>
                     </Tooltip>
-                    <button type="button" aria-label={expandLabel} aria-expanded={isExpanded} onClick={onToggleExpanded} className={cn(iconButton, neutralButton)}>
+                    <Button variant="outline" size="icon-sm" aria-label={expandLabel} aria-expanded={isExpanded} onClick={onToggleExpanded} className={iconButton}>
                         <ChevronDown aria-hidden="true" className={cn("size-3.5 transition-transform", isExpanded && "rotate-180")} />
-                    </button>
-                    <button type="button" aria-label={t("planner.group.rename", { name: group.name })} onClick={onRename} className={cn(iconButton, neutralButton)}>
+                    </Button>
+                    <Button variant="outline" size="icon-sm" aria-label={t("planner.group.rename", { name: group.name })} onClick={onRename} className={iconButton}>
                         <Pencil aria-hidden="true" className="size-3.5" />
-                    </button>
-                    <button type="button" aria-label={t("planner.group.delete", { name: group.name })} onClick={onDelete} className={cn(iconButton, "border-destructive/20 bg-destructive/5 text-destructive-foreground hover:border-destructive/40 hover:bg-destructive/15")}>
+                    </Button>
+                    <Button variant="destructive-outline" size="icon-sm" aria-label={t("planner.group.delete", { name: group.name })} onClick={onDelete} className={iconButton}>
                         <Trash aria-hidden="true" className="size-3.5" />
-                    </button>
+                    </Button>
                 </div>
             </div>
 

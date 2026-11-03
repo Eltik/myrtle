@@ -27,6 +27,7 @@
 import { LayoutGridIcon, ListIcon, SearchIcon, SlidersHorizontalIcon } from "lucide-react";
 import type React from "react";
 import { memo, useId, useRef } from "react";
+import { SearchField } from "#/components/SearchField";
 import { Button } from "#/components/ui/button";
 import { Popover, PopoverPopup, PopoverTrigger } from "#/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
@@ -75,22 +76,7 @@ const ITEM_TALL: Record<Density, string> = {
 const LABEL = "font-medium font-sans text-[12px] text-muted-foreground";
 
 function SearchBox({ state, t, className, inputRef, density }: { state: IBrowseToolbarState; t: BrowseT; className?: string; inputRef?: React.Ref<HTMLInputElement>; density: Density }): React.ReactElement {
-    return (
-        <div className={cn("relative min-w-0", className)}>
-            <SearchIcon className="pointer-events-none absolute top-1/2 left-3.5 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
-            <input
-                ref={inputRef}
-                value={state.query}
-                onChange={(e) => state.setQuery(e.target.value)}
-                placeholder={t("browse.search.placeholder")}
-                aria-label={t("browse.search.aria")}
-                className={cn(
-                    "w-full rounded-[9px] border border-border bg-secondary/50 pr-3.5 pl-9 font-sans text-[13px] text-foreground outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring",
-                    density === "inline" ? "h-11 pointer-coarse:h-11 sm:h-9.5" : density === "sheet" ? "h-11" : "h-9 pointer-coarse:h-11",
-                )}
-            />
-        </div>
-    );
+    return <SearchField inputRef={inputRef} value={state.query} onChange={state.setQuery} placeholder={t("browse.search.placeholder")} label={t("browse.search.aria")} className={cn("min-w-0", density === "inline" ? "h-11 sm:h-9.5" : density === "sheet" ? "h-11" : "h-9 pointer-coarse:h-11", className)} />;
 }
 
 /** Grid or list. Inline it is two icon buttons; in a panel it spells its two words out, because a panel has the room and a stacked label over two bare icons reads as a riddle. */

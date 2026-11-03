@@ -1,5 +1,6 @@
 import { Check } from "lucide-react";
 import { useState } from "react";
+import { Button } from "#/components/ui/button";
 import { Input } from "#/components/ui/input";
 import { Menu, MenuItem, MenuPopup, MenuTrigger } from "#/components/ui/menu";
 import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
@@ -82,10 +83,7 @@ export function FilterToolbar({ type, sort, query, selectedFlairs, flairOptions,
                         </ToggleGroup>
 
                         <Menu>
-                            <MenuTrigger
-                                className={cn("relative inline-flex h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-lg border border-border bg-popover px-2.5 font-medium font-sans text-foreground text-xs leading-none transition-colors hover:bg-accent", "[&>svg]:h-3 [&>svg]:w-3 [&>svg]:opacity-80", COARSE_HIT)}
-                                aria-label={t("browse.sortTrigger", { label: activeSort ? t(activeSort.labelKey) : "" })}
-                            >
+                            <MenuTrigger render={<Button variant="outline" size="sm" />} className="text-xs sm:text-xs [&>svg]:h-3 [&>svg]:w-3" aria-label={t("browse.sortTrigger", { label: activeSort ? t(activeSort.labelKey) : "" })}>
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                                     <path d="M3 6h18" />
                                     <path d="M7 12h10" />
@@ -108,13 +106,7 @@ export function FilterToolbar({ type, sort, query, selectedFlairs, flairOptions,
                     </div>
 
                     {flairOptions.length > 0 && (
-                        <button
-                            type="button"
-                            onClick={() => setFlairsOpenOverride(!flairsOpen)}
-                            aria-expanded={flairsOpen}
-                            aria-controls="tier-list-flairs"
-                            className={cn("relative hidden h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-lg border border-border bg-popover px-2.5 font-medium font-sans text-foreground text-xs leading-none transition-colors hover:bg-accent sm:inline-flex", COARSE_HIT)}
-                        >
+                        <Button variant="outline" size="sm" className="hidden text-xs sm:inline-flex sm:text-xs" onClick={() => setFlairsOpenOverride(!flairsOpen)} aria-expanded={flairsOpen} aria-controls="tier-list-flairs">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3 opacity-80" aria-hidden="true">
                                 <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
                                 <circle cx="7.5" cy="7.5" r="1.25" fill="currentColor" stroke="none" />
@@ -124,7 +116,7 @@ export function FilterToolbar({ type, sort, query, selectedFlairs, flairOptions,
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={cn("h-3 w-3 opacity-80 transition-transform duration-200", flairsOpen && "rotate-180")} aria-hidden="true">
                                 <path d="m6 9 6 6 6-6" />
                             </svg>
-                        </button>
+                        </Button>
                     )}
 
                     <div className={cn("relative mt-2.5 min-w-0 flex-1 sm:order-2 sm:mt-0 sm:w-72 sm:max-w-72 sm:flex-none", !authorFilter && "sm:ml-auto")}>

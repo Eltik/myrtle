@@ -257,13 +257,9 @@ function JumpToPagePopover({ totalPages, hiddenFrom, hiddenTo, suggestedPage, on
         <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger
                 render={
-                    <button
-                        type="button"
-                        aria-label={t("pager.jump.aria", { from: hiddenFrom, to: hiddenTo })}
-                        className="inline-flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring data-popup-open:bg-accent data-popup-open:text-foreground"
-                    >
+                    <Button variant="ghost" size="icon-sm" aria-label={t("pager.jump.aria", { from: hiddenFrom, to: hiddenTo })} className="text-muted-foreground hover:text-foreground data-popup-open:bg-accent data-popup-open:text-foreground">
                         <PaginationEllipsis className="min-w-0" />
-                    </button>
+                    </Button>
                 }
             />
             <PopoverContent align="center" sideOffset={6} className="w-60">

@@ -1,13 +1,14 @@
-import { ArrowDownWideNarrowIcon, ArrowUpNarrowWideIcon, ListFilterIcon, SearchIcon } from "lucide-react";
+import { ArrowDownWideNarrowIcon, ArrowUpNarrowWideIcon, ListFilterIcon } from "lucide-react";
 import type React from "react";
 import { useState } from "react";
+import { SearchField } from "#/components/SearchField";
 import { Button } from "#/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
 import { Switch } from "#/components/ui/switch";
+import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import { cn } from "#/lib/utils";
 import { MUSIC_KIND_FILTERS, type MusicKindFilter } from "../impl/tracks";
 import type { messages } from "../MusicGallery.messages";
 import { ALBUM_SORTS, type AlbumSort, SONG_SORTS, type SongSort } from "./sort";
@@ -59,17 +60,7 @@ export function FilterStrip(props: IFilterStripProps): React.ReactElement {
                     </>
                 ) : null}
                 {mode === "game" ? <KindChips value={props.kind} onChange={props.onKind} /> : null}
-                <div className="relative min-w-0 flex-1 basis-full sm:basis-60">
-                    <SearchIcon className="pointer-events-none absolute top-1/2 left-3 size-3.5 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
-                    <input
-                        type="search"
-                        value={query}
-                        onChange={(e) => onQuery(e.target.value)}
-                        placeholder={mode === "game" ? t("music.search.placeholder") : t("music.filter.searchPlaceholder")}
-                        aria-label={t("music.search.aria")}
-                        className="h-11 w-full rounded-[9px] border border-border bg-secondary/50 pr-3 pl-8.5 font-sans text-[13px] text-foreground outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring sm:h-9"
-                    />
-                </div>
+                <SearchField className="h-11 min-w-0 flex-1 basis-full sm:h-9 sm:basis-60" value={query} onChange={onQuery} placeholder={mode === "game" ? t("music.search.placeholder") : t("music.filter.searchPlaceholder")} label={t("music.search.aria")} />
                 {mode === "songs" ? (
                     <Button variant={open ? "default" : "outline"} className="max-sm:min-h-11" onClick={() => setOpen((o) => !o)} aria-expanded={open} title={t("music.filter.filters")}>
                         <ListFilterIcon aria-hidden="true" />
@@ -120,18 +111,12 @@ function SortSelect<T extends string>({ value, options, onChange, render }: { va
 function KindChips({ value, onChange }: { value: MusicKindFilter; onChange: (k: MusicKindFilter) => void }): React.ReactElement {
     const t: MusicT = useT("gallery");
     return (
-        <fieldset className="msv-scroll flex max-w-full shrink-0 gap-0.5 overflow-x-auto rounded-[9px] border border-border bg-secondary/45 p-0.75" aria-label={t("music.kind.aria")}>
+        <ToggleGroup aria-label={t("music.kind.aria")} value={[value]} onValueChange={(next) => next[0] && onChange(next[0] as (typeof MUSIC_KIND_FILTERS)[number])} variant="outline" className="msv-scroll max-w-full shrink-0 overflow-x-auto">
             {MUSIC_KIND_FILTERS.map((k) => (
-                <button
-                    key={k}
-                    type="button"
-                    onClick={() => onChange(k)}
-                    aria-pressed={value === k}
-                    className={cn("h-11 shrink-0 cursor-pointer rounded-md px-2.5 font-sans font-semibold text-[11.5px] transition-colors sm:h-7.5", value === k ? "bg-background text-foreground shadow-sm/5" : "text-muted-foreground hover:text-foreground")}
-                >
+                <ToggleGroupItem key={k} value={k} className="px-2.5 font-semibold text-[11.5px] sm:text-[11.5px]">
                     {t(`music.kind.${k}`)}
-                </button>
+                </ToggleGroupItem>
             ))}
-        </fieldset>
+        </ToggleGroup>
     );
 }

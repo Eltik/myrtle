@@ -1,10 +1,10 @@
 import { GRANT_LEVELS, levelVariant } from "#/components/admin/shell/model";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
+import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import type { TierListPermissionLevel } from "#/lib/api/admin";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import { cn } from "#/lib/utils";
 import type { messages } from "./Users.messages";
 
 type UsersT = TypedT<typeof messages>;
@@ -59,11 +59,13 @@ export function GrantPicker({ level, onLevel, levelLabel, options, loading, empt
         <div className="flex flex-col gap-2 rounded-lg bg-muted p-2.5">
             <div className="flex flex-wrap items-center gap-1.5">
                 <span className="mr-1 text-[12.5px] text-muted-foreground">{t("users.sheet.picker.level")}</span>
-                {GRANT_LEVELS.map((l) => (
-                    <Button key={l} size="xs" variant={l === level ? "secondary" : "ghost"} aria-pressed={l === level} className={cn(l === level && "bg-background")} onClick={() => onLevel(l)}>
-                        {levelLabel(l)}
-                    </Button>
-                ))}
+                <ToggleGroup aria-label={t("users.sheet.picker.level")} size="sm" className="flex-wrap" value={[level]} onValueChange={(next) => next[0] && onLevel(next[0] as TierListPermissionLevel)}>
+                    {GRANT_LEVELS.map((l) => (
+                        <ToggleGroupItem key={l} value={l}>
+                            {levelLabel(l)}
+                        </ToggleGroupItem>
+                    ))}
+                </ToggleGroup>
             </div>
             <span className="text-[12.5px] text-muted-foreground">{t("users.sheet.picker.on", { level: levelLabel(level) })}</span>
             {loading ? (

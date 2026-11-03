@@ -3,6 +3,7 @@ import { useId } from "react";
 import { Button } from "#/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "#/components/ui/popover";
 import { Switch } from "#/components/ui/switch";
+import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useTheme } from "#/hooks/use-theme";
 import { useT } from "#/lib/i18n";
@@ -53,11 +54,11 @@ export default function ThemeToggle() {
                         content-sized with the slack shared out, so each
                         button is at least as wide as its own word and the labels
                         never wrap. */}
-                    <div className="flex gap-1">
-                        <ModeButton active={mode === "light"} icon={<SunIcon className="h-3.5 w-3.5 shrink-0" />} label={t("themeToggle.light")} onClick={() => setMode("light")} />
-                        <ModeButton active={mode === "dark"} icon={<MoonIcon className="h-3.5 w-3.5 shrink-0" />} label={t("themeToggle.dark")} onClick={() => setMode("dark")} />
-                        <ModeButton active={mode === "auto"} icon={<MonitorIcon className="h-3.5 w-3.5 shrink-0" />} label={t("themeToggle.auto")} onClick={() => setMode("auto")} />
-                    </div>
+                    <ToggleGroup aria-label={t("themeToggle.appearance")} className="w-full gap-1" value={[mode]} onValueChange={(next) => next[0] && setMode(next[0] as typeof mode)}>
+                        <ModeItem value="light" icon={<SunIcon className="h-3.5 w-3.5 shrink-0" />} label={t("themeToggle.light")} />
+                        <ModeItem value="dark" icon={<MoonIcon className="h-3.5 w-3.5 shrink-0" />} label={t("themeToggle.dark")} />
+                        <ModeItem value="auto" icon={<MonitorIcon className="h-3.5 w-3.5 shrink-0" />} label={t("themeToggle.auto")} />
+                    </ToggleGroup>
 
                     <div className="-mx-1 h-px bg-border" />
 
@@ -139,25 +140,14 @@ export default function ThemeToggle() {
     );
 }
 
-function ModeButton({ active, icon, label, lang, onClick }: { active: boolean; icon?: React.ReactNode; label: string; lang?: string; onClick: () => void }) {
+function ModeItem({ value, icon, label }: { value: string; icon: React.ReactNode; label: string }) {
     return (
-        <button
-            type="button"
-            onClick={onClick}
-            aria-pressed={active}
-            lang={lang}
-            className={cn(
-                // The coarse ::after makes the 32px row a 44px touch target; the pressed one gets the
-                // a foreground/50 border (3.72 light / 5.16 dark on the popover), so the state is not carried by the fill alone.
-                "relative inline-flex h-8 min-w-0 grow items-center justify-center gap-1.5 rounded-md border border-transparent px-1.5 font-medium text-foreground text-xs transition-colors pointer-coarse:after:absolute pointer-coarse:after:inset-x-0 pointer-coarse:after:top-1/2 pointer-coarse:after:h-11 pointer-coarse:after:-translate-y-1/2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                active ? "border-foreground/50 bg-accent" : "hover:bg-accent/60",
-            )}
-        >
+        <ToggleGroupItem value={value} className="h-8 min-w-0 grow gap-1.5 px-1.5 text-xs sm:h-8 sm:min-w-0 sm:text-xs">
             {icon}
             {/* A language whose three words genuinely cannot fit clips with an
                 ellipsis, which is still readable; wrapping inside a fixed-height
                 button is not. */}
             <span className="truncate">{label}</span>
-        </button>
+        </ToggleGroupItem>
     );
 }

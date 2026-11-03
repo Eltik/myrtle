@@ -504,13 +504,9 @@ function KindStep({ onChoose }: { onChoose: (kind: TierEntityKind) => void }) {
         <ul className="m-0 flex list-none flex-wrap gap-1.5 p-0">
             {ALL_ENTITY_KINDS.map((kind) => (
                 <li key={kind}>
-                    <button
-                        type="button"
-                        onClick={() => onChoose(kind)}
-                        className="inline-flex h-8 cursor-pointer items-center rounded-full border border-border bg-popover px-3 font-medium font-sans text-muted-foreground text-xs leading-none transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    >
+                    <Button variant="outline" size="sm" onClick={() => onChoose(kind)}>
                         {labels.plural(kind)}
-                    </button>
+                    </Button>
                 </li>
             ))}
         </ul>

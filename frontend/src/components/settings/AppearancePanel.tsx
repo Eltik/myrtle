@@ -8,6 +8,7 @@ import { Button } from "#/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "#/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
 import { Switch } from "#/components/ui/switch";
+import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useHydrated } from "#/hooks/use-hydrated";
 import { useTheme } from "#/hooks/use-theme";
@@ -47,11 +48,11 @@ export function AppearancePanel() {
                     <CardDescription>{t("appearance.theme.desc")}</CardDescription>
                 </CardHeader>
                 <CardContent className="pt-0">
-                    <div className="grid max-w-90 grid-cols-3 gap-2">
-                        <ModeButton active={mode === "light"} icon={<SunIcon />} label={t("appearance.mode.light")} onClick={() => setMode("light")} />
-                        <ModeButton active={mode === "dark"} icon={<MoonIcon />} label={t("appearance.mode.dark")} onClick={() => setMode("dark")} />
-                        <ModeButton active={mode === "auto"} icon={<MonitorIcon />} label={t("appearance.mode.auto")} onClick={() => setMode("auto")} />
-                    </div>
+                    <ToggleGroup aria-label={t("appearance.theme.title")} className="grid w-full max-w-90 grid-cols-3 gap-2" value={[mode]} onValueChange={(next) => next[0] && setMode(next[0] as typeof mode)}>
+                        <ModeItem value="light" icon={<SunIcon />} label={t("appearance.mode.light")} />
+                        <ModeItem value="dark" icon={<MoonIcon />} label={t("appearance.mode.dark")} />
+                        <ModeItem value="auto" icon={<MonitorIcon />} label={t("appearance.mode.auto")} />
+                    </ToggleGroup>
                 </CardContent>
             </Card>
 
@@ -241,19 +242,11 @@ function GameTextSection(): React.ReactElement | null {
     );
 }
 
-function ModeButton({ active, icon, label, onClick }: { active: boolean; icon: React.ReactNode; label: string; onClick: () => void }) {
+function ModeItem({ value, icon, label }: { value: string; icon: React.ReactNode; label: string }) {
     return (
-        <button
-            type="button"
-            onClick={onClick}
-            aria-pressed={active}
-            className={cn(
-                "inline-flex h-15 cursor-pointer flex-col items-center justify-center gap-1.5 rounded-lg border bg-card font-medium font-sans text-[13px] text-foreground outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background [&_svg]:size-4.5",
-                active ? "border-foreground bg-accent" : "border-input hover:bg-accent/50",
-            )}
-        >
+        <ToggleGroupItem value={value} className="h-15 flex-col gap-1.5 border-input bg-card font-sans text-[13px] sm:h-15 sm:text-[13px]">
             {icon}
             {label}
-        </button>
+        </ToggleGroupItem>
     );
 }

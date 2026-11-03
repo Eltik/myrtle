@@ -1,10 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { ArrowDown, ArrowUp, Download, LayoutGrid, LayoutList, Rows3, Search } from "lucide-react";
+import { ArrowDown, ArrowUp, Download, LayoutGrid, LayoutList, Rows3 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DynamicExportDialog } from "#/components/export/ExportDialog.lazy";
 import { LoadError } from "#/components/operators/detail/impl/components/LoadError";
 import { useOperatorFactLabel } from "#/components/operators/OperatorFacts";
+import { SearchField } from "#/components/SearchField";
 import { Button } from "#/components/ui/button";
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader } from "#/components/ui/empty";
 import { PageHeader } from "#/components/ui/page-header";
@@ -21,6 +22,7 @@ import { cnChangesById } from "#/lib/operators/cn-changes";
 import { Route } from "#/routes/operators";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../ui/select";
 import { Skeleton } from "../../ui/skeleton";
+import { ToggleGroup, ToggleGroupItem } from "../../ui/toggle-group";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../../ui/tooltip";
 import { ActiveFilterChips } from "./impl/components/ActiveFilterChips";
 import { FilterToggleButton } from "./impl/components/FilterToggleButton";
@@ -38,6 +40,12 @@ import { buildSharedChips } from "./impl/shared-filters";
 import type { IOperatorExportRow, IOperatorOwnershipInfo, IOperatorView, SortOption, SortOrder, StatMetric, ViewMode } from "./impl/types";
 import { useOperatorFilters } from "./impl/useOperatorFilters";
 import type { messages } from "./Operators.messages";
+
+const VIEW_MODE_ICONS = [
+    { mode: "grid", Icon: LayoutGrid },
+    { mode: "compact", Icon: Rows3 },
+    { mode: "list", Icon: LayoutList },
+] as const satisfies readonly { mode: ViewMode; Icon: typeof LayoutGrid }[];
 
 const UPCOMING_SKELETON_KEYS = Array.from({ length: 18 }, (_, i) => `upcoming-skeleton-${i}`);
 
@@ -301,97 +309,35 @@ export function OperatorsList() {
                     <div className="flex flex-wrap items-center gap-2.5">
                         <FilterToggleButton visible={filtersVisible} onToggle={toggleFilters} activeCount={activeFilterCount} />
 
-                        <div className="flex h-10 pointer-coarse:h-11 min-w-60 flex-1 items-center gap-2 rounded-lg border border-border bg-[color-mix(in_oklch,var(--secondary)_60%,transparent)] px-3 transition-[border-color,box-shadow] duration-150 focus-within:border-ring focus-within:shadow-[0_0_0_1px_var(--ring)] sm:max-w-115 [&>svg]:shrink-0 [&>svg]:text-muted-foreground">
-                            <Search className="h-3.75 w-3.75" aria-hidden="true" />
-                            <input
-                                type="text"
-                                value={filters.searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                placeholder={t("list.search.placeholder")}
-                                aria-label={t("list.search.aria")}
-                                className="min-w-0 flex-1 appearance-none self-stretch border-0 bg-transparent p-0 font-sans text-foreground text-sm leading-none outline-none placeholder:text-muted-foreground"
-                            />
-                        </div>
+                        <SearchField className="h-10 min-w-60 flex-1 sm:h-9 sm:max-w-115" value={filters.searchQuery} onChange={setSearchQuery} placeholder={t("list.search.placeholder")} label={t("list.search.aria")} />
 
-                        {/* biome-ignore lint/a11y/useSemanticElements: role="group" is appropriate for this toggle button group */}
-                        <div
-                            className="inline-flex h-10 items-center rounded-lg border border-border bg-[color-mix(in_oklch,var(--secondary)_60%,transparent)] p-1 [&>button:not([data-on]):hover]:text-foreground [&>button[data-on]]:bg-primary [&>button[data-on]]:text-primary-foreground [&>button]:relative [&>button]:inline-flex [&>button]:h-8 [&>button]:w-8 [&>button]:cursor-pointer [&>button]:items-center [&>button]:justify-center [&>button]:rounded-md [&>button]:border-0 [&>button]:bg-transparent [&>button]:p-0 [&>button]:text-muted-foreground [&>button]:transition-[background-color,color] [&>button]:duration-150 [&>button]:pointer-coarse:after:absolute [&>button]:pointer-coarse:after:min-h-11 [&>button]:pointer-coarse:after:min-w-11"
-                            role="group"
-                            aria-label={t("list.viewMode.aria")}
-                        >
-                            <Tooltip>
-                                <TooltipTrigger
-                                    render={
-                                        <button type="button" aria-label={t("list.viewMode.grid")} data-on={viewMode === "grid" || undefined} onClick={() => setViewMode("grid")} aria-pressed={viewMode === "grid"}>
-                                            <LayoutGrid className="h-4 w-4" aria-hidden="true" />
-                                        </button>
-                                    }
-                                />
-                                <TooltipPopup side="top" sideOffset={8}>
-                                    {t("list.viewMode.grid")}
-                                </TooltipPopup>
-                            </Tooltip>
-                            <Tooltip>
-                                <TooltipTrigger
-                                    render={
-                                        <button type="button" aria-label={t("list.viewMode.compact")} data-on={viewMode === "compact" || undefined} onClick={() => setViewMode("compact")} aria-pressed={viewMode === "compact"}>
-                                            <Rows3 className="h-4 w-4" aria-hidden="true" />
-                                        </button>
-                                    }
-                                />
-                                <TooltipPopup side="top" sideOffset={8}>
-                                    {t("list.viewMode.compact")}
-                                </TooltipPopup>
-                            </Tooltip>
-                            <Tooltip>
-                                <TooltipTrigger
-                                    render={
-                                        <button type="button" aria-label={t("list.viewMode.list")} data-on={viewMode === "list" || undefined} onClick={() => setViewMode("list")} aria-pressed={viewMode === "list"}>
-                                            <LayoutList className="h-4 w-4" aria-hidden="true" />
-                                        </button>
-                                    }
-                                />
-                                <TooltipPopup side="top" sideOffset={8}>
-                                    {t("list.viewMode.list")}
-                                </TooltipPopup>
-                            </Tooltip>
-                        </div>
+                        <ToggleGroup aria-label={t("list.viewMode.aria")} value={[viewMode]} onValueChange={(next) => next[0] && setViewMode(next[0] as ViewMode)} variant="outline" size="lg">
+                            {VIEW_MODE_ICONS.map(({ mode, Icon }) => (
+                                <Tooltip key={mode}>
+                                    <TooltipTrigger render={<ToggleGroupItem value={mode} aria-label={t(`list.viewMode.${mode}`)} />}>
+                                        <Icon aria-hidden="true" />
+                                    </TooltipTrigger>
+                                    <TooltipPopup side="top" sideOffset={8}>
+                                        {t(`list.viewMode.${mode}`)}
+                                    </TooltipPopup>
+                                </Tooltip>
+                            ))}
+                        </ToggleGroup>
 
-                        {/* biome-ignore lint/a11y/useSemanticElements: role="group" is appropriate for this toggle button group */}
-                        <div
-                            className="inline-flex h-10 items-center rounded-lg border border-border bg-[color-mix(in_oklch,var(--secondary)_60%,transparent)] p-1 [&>button:not([data-on]):hover]:text-foreground [&>button[data-on]]:bg-primary [&>button[data-on]]:text-primary-foreground [&>button]:relative [&>button]:inline-flex [&>button]:h-8 [&>button]:cursor-pointer [&>button]:items-center [&>button]:justify-center [&>button]:rounded-md [&>button]:border-0 [&>button]:bg-transparent [&>button]:px-2 [&>button]:font-medium [&>button]:font-sans [&>button]:text-muted-foreground [&>button]:text-xs [&>button]:transition-[background-color,color] [&>button]:duration-150 [&>button]:pointer-coarse:after:absolute [&>button]:pointer-coarse:after:min-h-11 [&>button]:pointer-coarse:after:min-w-11"
-                            role="group"
-                            aria-label={t("list.stat.aria")}
-                        >
-                            <Tooltip>
-                                <TooltipTrigger
-                                    render={
-                                        <button type="button" data-on={statMetric === "owned" || undefined} onClick={() => setStatMetric("owned")} aria-pressed={statMetric === "owned"}>
-                                            {t("list.stat.owned")}
-                                        </button>
-                                    }
-                                />
-                                <TooltipPopup side="top" sideOffset={8}>
-                                    {t("list.stat.owned.tip")}
-                                </TooltipPopup>
-                            </Tooltip>
-                            <Tooltip>
-                                <TooltipTrigger
-                                    render={
-                                        <button type="button" data-on={statMetric === "e2" || undefined} onClick={() => setStatMetric("e2")} aria-pressed={statMetric === "e2"}>
-                                            {t("list.stat.e2")}
-                                        </button>
-                                    }
-                                />
-                                <TooltipPopup side="top" sideOffset={8}>
-                                    {t("list.stat.e2.tip")}
-                                </TooltipPopup>
-                            </Tooltip>
-                        </div>
+                        <ToggleGroup aria-label={t("list.stat.aria")} value={[statMetric]} onValueChange={(next) => next[0] && setStatMetric(next[0] as StatMetric)} variant="outline" size="lg">
+                            {(["owned", "e2"] as const).map((metric) => (
+                                <Tooltip key={metric}>
+                                    <TooltipTrigger render={<ToggleGroupItem value={metric} className="text-xs sm:text-xs" />}>{t(`list.stat.${metric}`)}</TooltipTrigger>
+                                    <TooltipPopup side="top" sideOffset={8}>
+                                        {t(`list.stat.${metric}.tip`)}
+                                    </TooltipPopup>
+                                </Tooltip>
+                            ))}
+                        </ToggleGroup>
 
-                        <div className="inline-flex h-10 items-center gap-1 rounded-lg border border-border bg-[color-mix(in_oklch,var(--secondary)_60%,transparent)] p-1">
+                        <div className="inline-flex h-10 items-center gap-1 rounded-lg border border-input bg-background p-1 sm:h-9 dark:bg-input/32">
                             <Select value={filters.sortBy} onValueChange={(v) => setSortBy(v as SortOption)} aria-label={t("list.sort.aria")}>
-                                <SelectTrigger size="sm" className="h-8 min-h-8 min-w-0 gap-1.5 border-0 bg-transparent px-2 font-medium font-sans text-[13px] text-foreground shadow-none before:shadow-none hover:bg-[color-mix(in_oklch,var(--secondary)_80%,transparent)]">
+                                <SelectTrigger size="sm" className="h-8 min-h-8 min-w-0 gap-1.5 border-0 bg-transparent px-2 font-medium font-sans text-[13px] text-foreground shadow-none before:shadow-none hover:bg-accent">
                                     <span className="mr-1 border-border border-r pr-1 font-medium font-sans text-muted-foreground text-xs leading-none">{t("list.sort.caption")}</span>
                                     <SelectValue>
                                         {(value) => {
@@ -409,16 +355,7 @@ export function OperatorsList() {
                                 </SelectContent>
                             </Select>
                             <Tooltip>
-                                <TooltipTrigger
-                                    render={
-                                        <button
-                                            type="button"
-                                            className="relative inline-flex h-8 w-8 cursor-pointer appearance-none items-center justify-center rounded-md border-0 bg-transparent p-0 text-muted-foreground transition-[background-color,color] duration-150 pointer-coarse:after:absolute pointer-coarse:after:min-h-11 pointer-coarse:after:min-w-11 hover:bg-secondary hover:text-foreground"
-                                            onClick={() => setSortOrder((filters.sortOrder === "asc" ? "desc" : "asc") as SortOrder)}
-                                            aria-label={t("list.sort.toggleAria")}
-                                        />
-                                    }
-                                >
+                                <TooltipTrigger render={<Button variant="ghost" size="icon-sm" className="text-muted-foreground hover:text-foreground" onClick={() => setSortOrder((filters.sortOrder === "asc" ? "desc" : "asc") as SortOrder)} aria-label={t("list.sort.toggleAria")} />}>
                                     {filters.sortOrder === "asc" ? <ArrowUp className="h-3.5 w-3.5" aria-hidden="true" /> : <ArrowDown className="h-3.5 w-3.5" aria-hidden="true" />}
                                 </TooltipTrigger>
                                 <TooltipPopup side="top" sideOffset={8}>
@@ -427,7 +364,7 @@ export function OperatorsList() {
                             </Tooltip>
                         </div>
 
-                        <div className="inline-flex h-10 items-center rounded-lg border border-border bg-[color-mix(in_oklch,var(--secondary)_60%,transparent)] p-1">
+                        <div className="inline-flex h-10 items-center rounded-lg border border-input bg-background p-1 sm:h-9 dark:bg-input/32">
                             <Select
                                 value={String(itemsPerPage)}
                                 onValueChange={(v) => {
@@ -436,7 +373,7 @@ export function OperatorsList() {
                                 }}
                                 aria-label={t("list.perPage.aria")}
                             >
-                                <SelectTrigger size="sm" className="h-8 min-h-8 min-w-0 gap-1.5 border-0 bg-transparent px-2 font-medium font-sans text-[13px] text-foreground shadow-none before:shadow-none hover:bg-[color-mix(in_oklch,var(--secondary)_80%,transparent)]">
+                                <SelectTrigger size="sm" className="h-8 min-h-8 min-w-0 gap-1.5 border-0 bg-transparent px-2 font-medium font-sans text-[13px] text-foreground shadow-none before:shadow-none hover:bg-accent">
                                     <span className="mr-1 border-border border-r pr-1 font-medium font-sans text-muted-foreground text-xs leading-none">{t("list.perPage.caption")}</span>
                                     <SelectValue>{(value) => (value === "all" ? t("list.perPage.all") : value)}</SelectValue>
                                 </SelectTrigger>
@@ -453,15 +390,10 @@ export function OperatorsList() {
                         <Tooltip>
                             <TooltipTrigger
                                 render={
-                                    <button
-                                        type="button"
-                                        className="inline-flex h-10 pointer-coarse:h-11 pointer-coarse:min-w-11 cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-border bg-[color-mix(in_oklch,var(--secondary)_60%,transparent)] px-3 font-medium font-sans text-[13px] text-foreground transition-colors hover:border-[color-mix(in_oklch,var(--primary)_55%,var(--border))] hover:bg-card"
-                                        onClick={() => setExportOpen(true)}
-                                        aria-label={t("list.export.tip")}
-                                    >
+                                    <Button variant="outline" size="lg" className="gap-1.5" onClick={() => setExportOpen(true)} aria-label={t("list.export.tip")}>
                                         <Download className="h-3.5 w-3.5" aria-hidden="true" />
                                         <span className="hidden sm:inline">{t("list.export")}</span>
-                                    </button>
+                                    </Button>
                                 }
                             />
                             <TooltipPopup side="top" sideOffset={8}>

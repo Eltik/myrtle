@@ -1,5 +1,6 @@
 import { ChevronLeft, ChevronRight, Filter } from "lucide-react";
 import { Badge } from "#/components/ui/badge";
+import { Button } from "#/components/ui/button";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -18,10 +19,11 @@ export function FilterToggleButton({ visible, onToggle, activeCount }: { visible
         <Tooltip>
             <TooltipTrigger
                 render={
-                    <button
-                        type="button"
-                        data-on={visible || undefined}
-                        className="relative box-border inline-flex h-6 w-6 shrink-0 cursor-pointer appearance-none items-center justify-center rounded-md border border-border bg-[color-mix(in_oklch,var(--secondary)_70%,var(--card))] p-0 font-[inherit] text-muted-foreground shadow-[0_1px_2px_color-mix(in_oklch,var(--foreground)_6%,transparent)] transition-[background-color,border-color,color,box-shadow] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] pointer-coarse:after:absolute pointer-coarse:after:min-h-11 pointer-coarse:after:min-w-11 hover:border-[color-mix(in_oklch,var(--primary)_55%,var(--border))] hover:bg-card hover:text-foreground hover:shadow-[0_2px_8px_color-mix(in_oklch,var(--foreground)_10%,transparent)] focus-visible:border-ring focus-visible:shadow-[0_0_0_1px_var(--ring)] focus-visible:outline-none motion-reduce:transition-none md:h-9 md:w-auto md:min-w-20 md:gap-1 md:rounded-lg md:bg-[color-mix(in_oklch,var(--secondary)_60%,transparent)] md:px-1.5 md:shadow-none md:data-on:border-[color-mix(in_oklch,var(--primary)_55%,var(--border))] md:data-on:bg-card md:data-on:text-foreground md:hover:shadow-none"
+                    <Button
+                        variant="outline"
+                        size="icon-xs"
+                        data-pressed={visible || undefined}
+                        className="text-muted-foreground hover:text-foreground data-pressed:text-foreground md:h-9 md:w-auto md:min-w-20 md:gap-1 md:rounded-lg md:px-1.5 md:before:rounded-[calc(var(--radius-lg)-1px)]"
                         onClick={onToggle}
                         aria-label={toggleLabel}
                         aria-expanded={visible}

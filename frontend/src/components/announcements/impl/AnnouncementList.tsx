@@ -4,7 +4,7 @@ import { Newspaper, Search, SearchX } from "lucide-react";
 import { Button } from "#/components/ui/button";
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "#/components/ui/empty";
 import { FilterChip } from "#/components/ui/filter-chip";
-import { Input } from "#/components/ui/input";
+import { InputGroup, InputGroupAddon, InputGroupInput } from "#/components/ui/input-group";
 import { Skeleton } from "#/components/ui/skeleton";
 import { boardDate, type IGroupCount } from "#/lib/announcements";
 import { useFormatters, useT } from "#/lib/i18n";
@@ -44,10 +44,12 @@ export function AnnouncementList({ query, server, all, shown, groups, group, onG
 
     return (
         <div className="flex min-w-0 flex-col gap-3">
-            <div className="relative">
-                <Search className="pointer-events-none absolute start-3 top-1/2 z-10 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
-                <Input type="search" value={text} onChange={(e) => onText(e.target.value)} placeholder={t("search.placeholder")} aria-label={t("search.label")} className="ps-6 max-lg:[&_input]:h-11 max-lg:[&_input]:text-base max-lg:[&_input]:leading-11" />
-            </div>
+            <InputGroup>
+                <InputGroupAddon>
+                    <Search aria-hidden="true" />
+                </InputGroupAddon>
+                <InputGroupInput type="search" value={text} onChange={(e) => onText(e.target.value)} placeholder={t("search.placeholder")} aria-label={t("search.label")} className="max-lg:[&_input]:h-11 max-lg:[&_input]:text-base max-lg:[&_input]:leading-11" />
+            </InputGroup>
 
             {groups.length > 1 ? (
                 // biome-ignore lint/a11y/useSemanticElements: a chip row, not a form field group

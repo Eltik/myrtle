@@ -1,7 +1,8 @@
-import { CheckIcon, SearchIcon, StarIcon } from "lucide-react";
+import { CheckIcon, StarIcon } from "lucide-react";
 import type React from "react";
 import { memo, useId, useMemo, useState } from "react";
 import { asset } from "#/components/operators/detail/impl/assets";
+import { SearchField } from "#/components/SearchField";
 import { Button } from "#/components/ui/button";
 import { Checkbox } from "#/components/ui/checkbox";
 import { useT } from "#/lib/i18n";
@@ -59,16 +60,7 @@ export const OperatorsTab = memo(function OperatorsTab({ records, progress, game
         <div className={controls ? "pt-4" : undefined}>
             {controls ? (
                 <div className="mb-4 flex flex-wrap items-center gap-x-3 gap-y-2.5">
-                    <div className="relative min-w-0 flex-1 basis-full sm:max-w-100 sm:basis-auto">
-                        <SearchIcon className="pointer-events-none absolute top-1/2 left-3.5 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
-                        <input
-                            value={query}
-                            onChange={(e) => setQuery(e.target.value)}
-                            placeholder={t("operators.search.placeholder")}
-                            aria-label={t("operators.search.aria")}
-                            className="h-11 w-full rounded-[9px] border border-border bg-secondary/50 pr-3.5 pl-9 font-sans text-[13px] text-foreground outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring sm:h-9.5"
-                        />
-                    </div>
+                    <SearchField className="h-11 min-w-0 flex-1 basis-full sm:h-9.5 sm:max-w-100 sm:basis-auto" value={query} onChange={setQuery} placeholder={t("operators.search.placeholder")} label={t("operators.search.aria")} />
                     <label htmlFor={hideFinishedId} className="flex cursor-pointer select-none items-center gap-2 font-sans text-[12px] text-muted-foreground max-sm:min-h-11">
                         <Checkbox id={hideFinishedId} checked={hideFinished} onCheckedChange={(checked) => setHideFinished(checked === true)} />
                         {t("operators.hideFinished")}

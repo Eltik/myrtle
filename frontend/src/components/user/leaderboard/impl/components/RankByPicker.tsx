@@ -2,6 +2,7 @@ import { Check, ChevronDown, Search, X } from "lucide-react";
 import { useDeferredValue, useMemo, useState } from "react";
 import { LoadError } from "#/components/operators/detail/impl/components/LoadError";
 import { Button } from "#/components/ui/button";
+import { FilterChip } from "#/components/ui/filter-chip";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "#/components/ui/input-group";
 import { Kicker } from "#/components/ui/kicker";
 import { Popover, PopoverPopup, PopoverTrigger } from "#/components/ui/popover";
@@ -124,18 +125,7 @@ export function RankByPicker({ ranking, onRanking, catalog, materials, catalogEr
                                     const active = ranking.kind === "score" && ranking.sort === opt.value;
                                     return (
                                         <li key={opt.value}>
-                                            <button
-                                                type="button"
-                                                aria-pressed={active}
-                                                onClick={() => choose({ kind: "score", sort: opt.value as LeaderboardSort })}
-                                                className={cn(
-                                                    "inline-flex h-8 pointer-coarse:h-11 cursor-pointer items-center gap-1.5 rounded-lg border px-2.5 font-medium font-sans text-xs leading-none transition-colors",
-                                                    active ? "border-primary/40 bg-[color-mix(in_srgb,var(--primary)_10%,transparent)] text-foreground [&>svg]:text-primary" : "border-input bg-card text-foreground hover:border-foreground/20",
-                                                )}
-                                            >
-                                                {active ? <Check className="size-3" aria-hidden /> : null}
-                                                {opt.label}
-                                            </button>
+                                            <FilterChip label={opt.label} active={active} onSelect={() => choose({ kind: "score", sort: opt.value as LeaderboardSort })} />
                                         </li>
                                     );
                                 })}

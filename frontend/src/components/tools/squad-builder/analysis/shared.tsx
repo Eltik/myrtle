@@ -5,10 +5,10 @@ import { Button } from "#/components/ui/button";
 import { Card, CardAction, CardDescription, CardHeader, CardPanel, CardTitle } from "#/components/ui/card";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { Skeleton } from "#/components/ui/skeleton";
+import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import { segmentedControlItemVariants, segmentedControlRootClassName } from "#/lib/segmented-control";
 import { cn, rarityStarColor } from "#/lib/utils";
 import type { SourceRef } from "#/types/generated/SourceRef";
 import type { IOperatorIndexEntry } from "#/types/operators";
@@ -178,17 +178,13 @@ export function SectionHeading({ title, hint }: { title: string; hint?: string }
 /** A small segmented control for a panel's filter or view. */
 export function Segmented<T extends string>({ label, value, options, onChange }: { label: string; value: T; options: ReadonlyArray<{ value: T; label: string }>; onChange: (value: T) => void }): React.ReactElement {
     return (
-        <fieldset className={cn(segmentedControlRootClassName, "m-0 min-w-0 max-w-full flex-wrap justify-start border-0")}>
-            <legend className="sr-only">{label}</legend>
-            {options.map((o) => {
-                const on = o.value === value;
-                return (
-                    <button key={o.value} type="button" aria-pressed={on} data-pressed={on ? "" : undefined} onClick={() => onChange(o.value)} className={cn(segmentedControlItemVariants({ size: "sm", state: "pressed" }), "pointer-coarse:min-h-11 pointer-coarse:min-w-11")}>
-                        {o.label}
-                    </button>
-                );
-            })}
-        </fieldset>
+        <ToggleGroup aria-label={label} variant="outline" size="sm" className="max-w-full flex-wrap" value={[value]} onValueChange={(next) => next[0] && onChange(next[0] as T)}>
+            {options.map((o) => (
+                <ToggleGroupItem key={o.value} value={o.value}>
+                    {o.label}
+                </ToggleGroupItem>
+            ))}
+        </ToggleGroup>
     );
 }
 

@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { ChevronDown } from "lucide-react";
 import { Fragment, useMemo, useState } from "react";
+import { Button } from "#/components/ui/button";
 import { Kicker } from "#/components/ui/kicker";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { Popover, PopoverPopup, PopoverTrigger } from "#/components/ui/popover";
@@ -496,16 +497,17 @@ export function BannerBreakdown({ records, bannersById, operatorsById, isLoading
                                         <td className="whitespace-nowrap px-2 py-2.5 text-right align-middle font-mono font-semibold text-[12px] text-foreground tabular-nums">{f.number(banner.total)}</td>
                                         <td className="whitespace-nowrap px-2 py-2.5 text-right align-middle font-mono text-[11px] tabular-nums">
                                             {banner.sixStars > 0 ? (
-                                                <button
-                                                    type="button"
+                                                <Button
+                                                    variant="ghost"
+                                                    size="xs"
                                                     aria-expanded={isOpen}
                                                     aria-controls={panelId}
                                                     aria-label={t(isOpen ? "history.breakdown.hideSixStars" : "history.breakdown.showSixStars", { count: banner.sixStars, banner: banner.poolName })}
-                                                    className="-my-1 -mr-1.5 inline-flex min-h-8 pointer-coarse:min-h-11 cursor-pointer touch-manipulation items-center gap-1 rounded-md px-1.5 text-rarity-6-ink transition-colors hover:bg-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                                    className="-my-1 -mr-1.5 h-8 touch-manipulation px-1.5 font-mono text-[11px] text-rarity-6-ink sm:h-8 sm:text-[11px]"
                                                 >
                                                     {banner.sixStars}×6★
                                                     <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 motion-reduce:transition-none ${isOpen ? "rotate-180" : ""}`} aria-hidden />
-                                                </button>
+                                                </Button>
                                             ) : (
                                                 <span className="text-muted-foreground">-</span>
                                             )}

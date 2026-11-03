@@ -4,6 +4,7 @@ import type React from "react";
 import { useMemo, useState } from "react";
 import { asset } from "#/components/operators/detail/impl/assets";
 import { Kicker } from "#/components/ui/kicker";
+import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import { useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import type { StoryProgress } from "#/lib/story/progress";
@@ -48,19 +49,13 @@ export function ReadingOrderTab({ groups, progress, gameRead }: IReadingOrderTab
 
     return (
         <div className="pt-4">
-            <fieldset className="msv-scroll mb-3 flex max-w-full gap-0.5 overflow-x-auto rounded-[9px] border border-border bg-secondary/45 p-0.75" aria-label={t("reading.mode.aria")}>
+            <ToggleGroup aria-label={t("reading.mode.aria")} value={[mode]} onValueChange={(next) => next[0] && setMode(next[0] as (typeof READING_ORDER_MODES)[number])} variant="outline" className="msv-scroll mb-3 max-w-full overflow-x-auto">
                 {READING_ORDER_MODES.map((key) => (
-                    <button
-                        key={key}
-                        type="button"
-                        onClick={() => setMode(key)}
-                        aria-pressed={mode === key}
-                        className={cn("h-11 pointer-coarse:h-11 shrink-0 cursor-pointer rounded-md px-3 font-sans font-semibold text-[12px] transition-colors sm:h-8", mode === key ? "bg-background text-foreground shadow-sm/5" : "text-muted-foreground hover:text-foreground")}
-                    >
+                    <ToggleGroupItem key={key} value={key} className="px-3 font-semibold text-[12px] sm:text-[12px]">
                         {t(`reading.mode.${key}`)}
-                    </button>
+                    </ToggleGroupItem>
                 ))}
-            </fieldset>
+            </ToggleGroup>
 
             {mode === "timeline" ? (
                 <div className="rounded-2xl border border-border border-dashed p-6 sm:p-8">

@@ -1,13 +1,13 @@
 import { useNavigate, useSearch } from "@tanstack/react-router";
-import { SearchIcon } from "lucide-react";
 import type React from "react";
 import { useCallback, useDeferredValue, useMemo, useState } from "react";
+import { SearchField } from "#/components/SearchField";
 import { pageOf, RECORD_PAGE } from "#/components/story/library/impl/paging";
 import { Button } from "#/components/ui/button";
 import { Skeleton } from "#/components/ui/skeleton";
+import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import { useFormatters, useLocale, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import { cn } from "#/lib/utils";
 import type { messages } from "./CharactersTab.messages";
 import { useSpriteIndex } from "./data";
 import { filterSprites, prepareSpriteSearch, primaryName, SPRITE_KIND_FILTERS, SPRITE_SORTS, type SpriteKindFilter, type SpriteSort } from "./gallery";
@@ -76,17 +76,7 @@ export default function CharactersTab(): React.ReactElement {
         <div className="pt-4">
             {entries ? <p className="mt-0 mb-3 max-w-2xl font-sans text-[12.5px] text-muted-foreground">{t("sprites.subtitle", { count: f.number(counts.all), operators: f.number(counts.operators), npcs: f.number(counts.npcs) })}</p> : null}
             <div className="mb-4 flex flex-wrap items-center gap-x-3 gap-y-2.5">
-                <div className="relative min-w-0 flex-1 basis-full sm:max-w-100 sm:basis-auto">
-                    <SearchIcon className="pointer-events-none absolute top-1/2 left-3.5 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
-                    <input
-                        type="search"
-                        value={query}
-                        onChange={(e) => setQuery(e.target.value)}
-                        placeholder={t("sprites.search.placeholder")}
-                        aria-label={t("sprites.search.aria")}
-                        className="h-11 w-full rounded-[9px] border border-border bg-secondary/50 pr-3.5 pl-9 font-sans text-[13px] text-foreground outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring sm:h-9.5"
-                    />
-                </div>
+                <SearchField className="h-11 min-w-0 flex-1 basis-full sm:h-9.5 sm:max-w-100 sm:basis-auto" value={query} onChange={setQuery} placeholder={t("sprites.search.placeholder")} label={t("sprites.search.aria")} />
                 <Segmented label={t("sprites.kind.aria")} options={SPRITE_KIND_FILTERS} value={kind} onChange={setKind} render={(k) => t(`sprites.kind.${k}`)} />
                 <Segmented label={t("sprites.sort.aria")} options={SPRITE_SORTS} value={sort} onChange={setSort} render={(s) => t(`sprites.sort.${s}`)} />
                 {entries ? <span className="font-mono text-[11px] text-muted-foreground tabular-nums">{t("sprites.results", { count: visible.length })}</span> : null}
@@ -115,19 +105,13 @@ export default function CharactersTab(): React.ReactElement {
 /** A row of mutually exclusive buttons, the same pill strip the illustration panel uses. */
 function Segmented<T extends string>({ label, options, value, onChange, render }: { label: string; options: readonly T[]; value: T; onChange: (v: T) => void; render: (v: T) => string }): React.ReactElement {
     return (
-        <fieldset className="msv-scroll flex max-w-full shrink-0 gap-0.5 overflow-x-auto rounded-[9px] border border-border bg-secondary/45 p-0.75" aria-label={label}>
+        <ToggleGroup aria-label={label} value={[value]} onValueChange={(next) => next[0] && onChange(next[0] as (typeof options)[number])} variant="outline" className="msv-scroll max-w-full shrink-0 overflow-x-auto">
             {options.map((o) => (
-                <button
-                    key={o}
-                    type="button"
-                    onClick={() => onChange(o)}
-                    aria-pressed={value === o}
-                    className={cn("h-11 shrink-0 cursor-pointer rounded-md px-2.5 font-sans font-semibold text-[11.5px] transition-colors sm:h-7.5", value === o ? "bg-background text-foreground shadow-sm/5" : "text-muted-foreground hover:text-foreground")}
-                >
+                <ToggleGroupItem key={o} value={o} className="px-2.5 font-semibold text-[11.5px] sm:text-[11.5px]">
                     {render(o)}
-                </button>
+                </ToggleGroupItem>
             ))}
-        </fieldset>
+        </ToggleGroup>
     );
 }
 

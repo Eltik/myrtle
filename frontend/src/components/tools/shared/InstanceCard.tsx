@@ -9,6 +9,7 @@ import { Label } from "#/components/ui/label";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { Slider } from "#/components/ui/slider";
 import { Switch } from "#/components/ui/switch";
+import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -48,6 +49,9 @@ interface IInstanceCardProps {
 
 const SKILL_LEVELS = [1, 2, 3, 4, 5, 6, 7] as const;
 const MASTERY_RANKS = [8, 9, 10] as const;
+
+/** Build pickers are kit toggles drawn as separate bordered tiles on the card surface, not a joined segment. */
+const CHIP = "border-border bg-card";
 
 export function InstanceCard({ inst, index, isFirst, isLast, onUpdate, onToggleConditional, onToggleVisibility, onToggleCollapsed, onMoveUp, onMoveDown, onDuplicate, onRemove, buffsSection, buffsSetCount = 0 }: IInstanceCardProps): React.ReactElement {
     const t: CardT = useT("tools");
@@ -111,22 +115,23 @@ export function InstanceCard({ inst, index, isFirst, isLast, onUpdate, onToggleC
                 <CardPanel className="space-y-3.5 px-4 pt-0 pb-3">
                     {detail.failed && <LoadError message={t("calc.instance.detailFailed")} onRetry={detail.retry} />}
                     <FieldRow label={t("calc.instance.promotion")}>
-                        <div className="flex flex-wrap gap-1.5">
+                        <ToggleGroup
+                            aria-label={t("calc.instance.promotion")}
+                            className="flex-wrap gap-1.5"
+                            value={[String(promotion)]}
+                            onValueChange={(next) => {
+                                if (next[0] === undefined) return;
+                                const p = Number(next[0]);
+                                const newMax = detail.maxLevelForPromotion(p);
+                                const wasAtMax = config.level === undefined || config.level >= maxLevel;
+                                // Clamp both level and skill rank to what the new promotion allows.
+                                onUpdate({ promotion: p, level: wasAtMax ? undefined : Math.min(level, newMax), skillRank: clampRankToElite(config.skillRank, p) });
+                            }}
+                        >
                             {Array.from({ length: detail.phaseCount }, (_, i) => i).map((p) => (
-                                <IconChip
-                                    key={`prom-${p}`}
-                                    selected={promotion === p}
-                                    label={`E${p}`}
-                                    iconURL={eliteIcon(p)}
-                                    onClick={() => {
-                                        const newMax = detail.maxLevelForPromotion(p);
-                                        const wasAtMax = config.level === undefined || config.level >= maxLevel;
-                                        // Clamp both level and skill rank to what the new promotion allows.
-                                        onUpdate({ promotion: p, level: wasAtMax ? undefined : Math.min(level, newMax), skillRank: clampRankToElite(config.skillRank, p) });
-                                    }}
-                                />
+                                <IconChip key={`prom-${p}`} value={String(p)} label={`E${p}`} iconURL={eliteIcon(p)} />
                             ))}
-                        </div>
+                        </ToggleGroup>
                     </FieldRow>
 
                     <div>
@@ -141,149 +146,91 @@ export function InstanceCard({ inst, index, isFirst, isLast, onUpdate, onToggleC
                     </div>
 
                     <FieldRow label={t("calc.instance.potential")}>
-                        <div className="flex flex-wrap gap-1">
+                        <ToggleGroup aria-label={t("calc.instance.potential")} className="flex-wrap gap-1" value={[String(config.potential)]} onValueChange={(next) => next[0] !== undefined && onUpdate({ potential: Number(next[0]) })}>
                             {[1, 2, 3, 4, 5, 6].map((p) => (
                                 <Tooltip key={`pot-${p}`}>
-                                    <TooltipTrigger
-                                        render={(triggerProps) => (
-                                            <button
-                                                {...triggerProps}
-                                                type="button"
-                                                onClick={() => onUpdate({ potential: p })}
-                                                aria-label={t("calc.instance.potentialAria", { rank: p })}
-                                                aria-pressed={config.potential === p}
-                                                className={cn(
-                                                    "flex pointer-coarse:size-11 size-8 shrink-0 cursor-pointer items-center justify-center rounded-md border bg-card outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
-                                                    config.potential === p ? "inset-ring inset-ring-foreground/40 border-input bg-input dark:bg-foreground/12" : "border-border hover:bg-accent",
-                                                )}
-                                            >
-                                                <img alt="" aria-hidden="true" className="icon-theme-aware size-5 object-contain" decoding="async" loading="lazy" src={potentialIcon(p - 1)} />
-                                            </button>
-                                        )}
-                                    />
+                                    <TooltipTrigger render={<ToggleGroupItem value={String(p)} aria-label={t("calc.instance.potentialAria", { rank: p })} className={cn(CHIP, "pointer-coarse:size-11 size-8 min-w-0 p-0 sm:size-8")} />}>
+                                        <img alt="" aria-hidden="true" className="icon-theme-aware size-5 object-contain" decoding="async" loading="lazy" src={potentialIcon(p - 1)} />
+                                    </TooltipTrigger>
                                     <TooltipPopup className="max-w-64">{detail.potentialLabel(p)}</TooltipPopup>
                                 </Tooltip>
                             ))}
-                        </div>
+                        </ToggleGroup>
                     </FieldRow>
 
                     {op.availableSkills.length > 0 && (
                         <FieldRow label={t("calc.instance.skill")}>
-                            <div className="grid grid-cols-3 gap-1.5">
+                            <ToggleGroup aria-label={t("calc.instance.skill")} className="grid w-full grid-cols-3 gap-1.5" value={[String(config.skillIndex)]} onValueChange={(next) => next[0] !== undefined && onUpdate({ skillIndex: Number(next[0]) })}>
                                 {op.availableSkills.map((s) => {
                                     const skill = detail.skillAt(s);
                                     const skillName = skill?.static?.levels?.[0]?.name ?? t("calc.instance.skillFallback", { index: s });
                                     return (
                                         <Tooltip key={`skill-${s}`}>
-                                            <TooltipTrigger
-                                                render={(triggerProps) => (
-                                                    <button
-                                                        {...triggerProps}
-                                                        type="button"
-                                                        onClick={() => onUpdate({ skillIndex: s })}
-                                                        aria-label={t("calc.instance.useSkill", { skill: skillName })}
-                                                        aria-pressed={config.skillIndex === s}
-                                                        className={cn(
-                                                            "flex pointer-coarse:min-h-11 min-w-0 cursor-pointer flex-col items-center gap-1 rounded-md border bg-card px-1 py-1.5 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
-                                                            config.skillIndex === s ? "inset-ring inset-ring-foreground/40 border-input bg-input dark:bg-foreground/12" : "border-border hover:bg-accent",
-                                                        )}
-                                                    >
-                                                        {skill ? (
-                                                            <img alt="" aria-hidden="true" className="size-7 shrink-0 object-contain" decoding="async" loading="lazy" src={skillIconURL(skill)} />
-                                                        ) : (
-                                                            <span className="flex size-7 shrink-0 items-center justify-center rounded bg-muted font-mono text-[10px] text-muted-foreground">S{s}</span>
-                                                        )}
-                                                        <span className="line-clamp-1 break-all text-center font-medium text-[10.5px] leading-tight">{skillName}</span>
-                                                    </button>
+                                            <TooltipTrigger render={<ToggleGroupItem value={String(s)} aria-label={t("calc.instance.useSkill", { skill: skillName })} className={cn(CHIP, "h-auto pointer-coarse:min-h-11 min-w-0 flex-col gap-1 whitespace-normal px-1 py-1.5 sm:h-auto")} />}>
+                                                {skill ? (
+                                                    <img alt="" aria-hidden="true" className="size-7 shrink-0 object-contain" decoding="async" loading="lazy" src={skillIconURL(skill)} />
+                                                ) : (
+                                                    <span className="flex size-7 shrink-0 items-center justify-center rounded bg-muted font-mono text-[10px] text-muted-foreground">S{s}</span>
                                                 )}
-                                            />
+                                                <span className="line-clamp-1 break-all text-center font-medium text-[10.5px] leading-tight">{skillName}</span>
+                                            </TooltipTrigger>
                                             <TooltipPopup className="max-w-56">{t("calc.detail.designatorWithName", { label: `S${s}`, name: skillName })}</TooltipPopup>
                                         </Tooltip>
                                     );
                                 })}
-                            </div>
+                            </ToggleGroup>
                         </FieldRow>
                     )}
 
                     <FieldRow label={t("calc.instance.skillLevel")}>
-                        <div className="flex flex-wrap items-center gap-1">
+                        <ToggleGroup aria-label={t("calc.instance.skillLevel")} className="flex-wrap items-center gap-1" value={[String(config.skillRank)]} onValueChange={(next) => next[0] !== undefined && onUpdate({ skillRank: Number(next[0]) })}>
                             {SKILL_LEVELS.map((lvl) => (
-                                <RankChip key={`lvl-${lvl}`} rank={lvl} selected={config.skillRank === lvl} lockReason={rankLockReason(lvl, promotion, t)} onSelect={() => onUpdate({ skillRank: lvl })} t={t} />
+                                <RankChip key={`lvl-${lvl}`} rank={lvl} lockReason={rankLockReason(lvl, promotion, t)} t={t} />
                             ))}
                             <span aria-hidden="true" className="mx-0.5 h-6 w-px shrink-0 bg-border" />
                             {MASTERY_RANKS.map((m) => (
-                                <RankChip key={`m-${m}`} rank={m} selected={config.skillRank === m} lockReason={rankLockReason(m, promotion, t)} onSelect={() => onUpdate({ skillRank: m })} t={t} />
+                                <RankChip key={`m-${m}`} rank={m} lockReason={rankLockReason(m, promotion, t)} t={t} />
                             ))}
-                        </div>
+                        </ToggleGroup>
                         {maxRank < 10 && <p className="mt-1 text-[10px] text-subtle-foreground leading-snug">{maxRank < 7 ? t("calc.instance.rankHint.e1") : t("calc.instance.rankHint.e2")}</p>}
                     </FieldRow>
 
                     {optionalModules.length > 0 && (
                         <FieldRow label={t("calc.instance.module")}>
-                            <div className="flex flex-wrap gap-1.5">
-                                <button
-                                    type="button"
-                                    onClick={() => onUpdate({ moduleIndex: 0 })}
-                                    aria-pressed={config.moduleIndex === 0}
-                                    className={cn(
-                                        "flex pointer-coarse:min-h-11 min-w-16 cursor-pointer items-center justify-center rounded-md border bg-card px-2 py-1.5 font-medium text-[11px] outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
-                                        config.moduleIndex === 0 ? "inset-ring inset-ring-foreground/40 border-input bg-input dark:bg-foreground/12" : "border-border hover:bg-accent",
-                                    )}
-                                >
+                            <ToggleGroup aria-label={t("calc.instance.module")} className="flex-wrap gap-1.5" value={[String(config.moduleIndex)]} onValueChange={(next) => next[0] !== undefined && onUpdate({ moduleIndex: Number(next[0]) })}>
+                                <ToggleGroupItem value="0" className={cn(CHIP, "h-auto pointer-coarse:min-h-11 min-w-16 px-2 py-1.5 font-medium text-[11px] sm:h-auto sm:text-[11px]")}>
                                     {t("calc.detail.noModule")}
-                                </button>
+                                </ToggleGroupItem>
                                 {optionalModules.map((m) => {
                                     const mod = detail.moduleAt(m);
                                     const typeLabel = mod?.typeName1 && mod?.typeName2 ? `${mod.typeName1}-${mod.typeName2}` : (mod?.uniEquipName ?? t("calc.detail.moduleFallback", { index: m }));
                                     return (
                                         <Tooltip key={`mod-${m}`}>
-                                            <TooltipTrigger
-                                                render={(triggerProps) => (
-                                                    <button
-                                                        {...triggerProps}
-                                                        type="button"
-                                                        onClick={() => onUpdate({ moduleIndex: m })}
-                                                        aria-pressed={config.moduleIndex === m}
-                                                        className={cn(
-                                                            "flex pointer-coarse:min-h-11 cursor-pointer items-center gap-1.5 rounded-md border bg-card px-1.5 py-1 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
-                                                            config.moduleIndex === m ? "inset-ring inset-ring-foreground/40 border-input bg-input dark:bg-foreground/12" : "border-border hover:bg-accent",
-                                                        )}
-                                                    >
-                                                        {mod ? (
-                                                            <img alt="" aria-hidden="true" className="size-7 shrink-0 object-contain" decoding="async" loading="lazy" src={moduleIconURL(mod)} />
-                                                        ) : (
-                                                            <span className="flex size-7 shrink-0 items-center justify-center rounded bg-muted font-mono text-[10px] text-muted-foreground">M{m}</span>
-                                                        )}
-                                                        <span className="font-medium font-mono text-[10.5px]">{typeLabel}</span>
-                                                    </button>
+                                            <TooltipTrigger render={<ToggleGroupItem value={String(m)} className={cn(CHIP, "h-auto pointer-coarse:min-h-11 gap-1.5 px-1.5 py-1 sm:h-auto")} />}>
+                                                {mod ? (
+                                                    <img alt="" aria-hidden="true" className="size-7 shrink-0 object-contain" decoding="async" loading="lazy" src={moduleIconURL(mod)} />
+                                                ) : (
+                                                    <span className="flex size-7 shrink-0 items-center justify-center rounded bg-muted font-mono text-[10px] text-muted-foreground">M{m}</span>
                                                 )}
-                                            />
+                                                <span className="font-medium font-mono text-[10.5px]">{typeLabel}</span>
+                                            </TooltipTrigger>
                                             <TooltipPopup className="max-w-56">{mod?.uniEquipName ?? t("calc.instance.moduleFallbackTooltip", { index: m })}</TooltipPopup>
                                         </Tooltip>
                                     );
                                 })}
-                            </div>
+                            </ToggleGroup>
                         </FieldRow>
                     )}
 
                     {config.moduleIndex > 0 && (
                         <FieldRow label={t("calc.instance.moduleLevel")}>
-                            <div className="flex gap-1">
+                            <ToggleGroup aria-label={t("calc.instance.moduleLevel")} className="gap-1" value={[String(config.moduleLevel)]} onValueChange={(next) => next[0] !== undefined && onUpdate({ moduleLevel: Number(next[0]) })}>
                                 {[1, 2, 3].map((l) => (
-                                    <button
-                                        key={`ml-${l}`}
-                                        type="button"
-                                        onClick={() => onUpdate({ moduleLevel: l })}
-                                        aria-pressed={config.moduleLevel === l}
-                                        className={cn(
-                                            "flex h-8 pointer-coarse:h-11 min-w-10 pointer-coarse:min-w-11 cursor-pointer items-center justify-center rounded-md border bg-card px-2 font-medium font-mono text-[11px] outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
-                                            config.moduleLevel === l ? "inset-ring inset-ring-foreground/40 border-input bg-input dark:bg-foreground/12" : "border-border hover:bg-accent",
-                                        )}
-                                    >
+                                    <ToggleGroupItem key={`ml-${l}`} value={String(l)} className={cn(CHIP, "h-8 pointer-coarse:h-11 min-w-10 pointer-coarse:min-w-11 px-2 font-medium font-mono text-[11px] sm:h-8 sm:min-w-10 sm:text-[11px]")}>
                                         L{l}
-                                    </button>
+                                    </ToggleGroupItem>
                                 ))}
-                            </div>
+                            </ToggleGroup>
                         </FieldRow>
                     )}
 
@@ -354,37 +301,20 @@ export function InstanceCard({ inst, index, isFirst, isLast, onUpdate, onToggleC
 
 interface IRankChipProps {
     rank: number;
-    selected: boolean;
     lockReason: string | null;
-    onSelect: () => void;
     t: CardT;
 }
 
-function RankChip({ rank, selected, lockReason, onSelect, t }: IRankChipProps): React.ReactElement {
+/** One skill rank in the rank group; a rank the promotion has not reached is disabled and says why. */
+function RankChip({ rank, lockReason, t }: IRankChipProps): React.ReactElement {
     const locked = lockReason !== null;
     const mastery = isMasteryRank(rank);
     const tip = locked ? lockReason : skillRankLabel(rank, t);
     return (
         <Tooltip>
-            <TooltipTrigger
-                render={(triggerProps) => (
-                    <button
-                        {...triggerProps}
-                        type="button"
-                        disabled={locked}
-                        aria-label={skillRankLabel(rank, t)}
-                        aria-pressed={selected}
-                        onClick={() => !locked && onSelect()}
-                        className={cn(
-                            "flex h-8 pointer-coarse:h-11 min-w-8 pointer-coarse:min-w-11 shrink-0 items-center justify-center rounded-md border bg-card px-1.5 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
-                            locked ? "cursor-not-allowed border-border/60 opacity-40" : "cursor-pointer",
-                            selected ? "inset-ring inset-ring-foreground/40 border-input bg-input dark:bg-foreground/12" : !locked && "border-border hover:bg-accent",
-                        )}
-                    >
-                        {mastery ? <img alt="" aria-hidden="true" className="icon-theme-aware size-5 object-contain" decoding="async" loading="lazy" src={specializedIcon(rank - 7)} /> : <span className="font-medium font-mono text-[12px]">{rank}</span>}
-                    </button>
-                )}
-            />
+            <TooltipTrigger render={<ToggleGroupItem value={String(rank)} disabled={locked} aria-label={skillRankLabel(rank, t)} className={cn(CHIP, "h-8 pointer-coarse:h-11 min-w-8 pointer-coarse:min-w-11 px-1.5 disabled:opacity-40 sm:h-8 sm:min-w-8")} />}>
+                {mastery ? <img alt="" aria-hidden="true" className="icon-theme-aware size-5 object-contain" decoding="async" loading="lazy" src={specializedIcon(rank - 7)} /> : <span className="font-medium font-mono text-[12px]">{rank}</span>}
+            </TooltipTrigger>
             <TooltipPopup>{tip}</TooltipPopup>
         </Tooltip>
     );
@@ -400,26 +330,16 @@ function FieldRow({ label, children }: { label: string; children: React.ReactNod
 }
 
 interface IIconChipProps {
-    selected: boolean;
+    value: string;
     label: string;
     iconURL: string;
-    onClick: () => void;
 }
 
-function IconChip({ selected, label, iconURL, onClick }: IIconChipProps): React.ReactElement {
+function IconChip({ value, label, iconURL }: IIconChipProps): React.ReactElement {
     return (
-        <button
-            type="button"
-            onClick={onClick}
-            aria-label={label}
-            aria-pressed={selected}
-            className={cn(
-                "flex pointer-coarse:size-11 h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-md border bg-card outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
-                selected ? "inset-ring inset-ring-foreground/40 border-input bg-input dark:bg-foreground/12" : "border-border hover:bg-accent",
-            )}
-        >
+        <ToggleGroupItem value={value} aria-label={label} className={cn(CHIP, "pointer-coarse:size-11 size-9 min-w-0 p-0 sm:size-9")}>
             <img alt="" aria-hidden="true" className="icon-theme-aware size-6 object-contain" decoding="async" loading="lazy" src={iconURL} />
-        </button>
+        </ToggleGroupItem>
     );
 }
 
