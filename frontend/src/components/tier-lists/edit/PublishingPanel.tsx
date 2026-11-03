@@ -1,5 +1,6 @@
 import { CheckIcon, ChevronDownIcon, EyeIcon, EyeOffIcon, RocketIcon, TagIcon } from "lucide-react";
 import { useId } from "react";
+import { Button } from "#/components/ui/button";
 import { Menu, MenuItem, MenuPopup, MenuTrigger } from "#/components/ui/menu";
 import { Switch } from "#/components/ui/switch";
 import type { ITierListFlair } from "#/lib/api/tier-lists";
@@ -41,11 +42,7 @@ export function PublishingPanel({ flair, flairOptions, isListed, canPublish, pub
                         {t("edit.publishing.flair")}
                     </label>
                     <Menu>
-                        <MenuTrigger
-                            id={`${visibilityId}-flair-trigger`}
-                            disabled={settingFlair}
-                            className="inline-flex h-9 w-full cursor-pointer items-center justify-between gap-2 rounded-lg border border-border bg-popover px-2.5 font-medium font-sans text-foreground text-xs leading-none transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-60"
-                        >
+                        <MenuTrigger id={`${visibilityId}-flair-trigger`} disabled={settingFlair} render={<Button variant="outline" className="w-full justify-between px-2.5 text-xs sm:text-xs" />}>
                             <span className="flex min-w-0 items-center gap-1.5">
                                 {flair ? (
                                     <>
@@ -97,17 +94,10 @@ export function PublishingPanel({ flair, flairOptions, isListed, canPublish, pub
                     <Switch id={visibilityId} checked={isListed} disabled={settingVisibility} aria-describedby={visibilityHintId} onCheckedChange={onSetVisibility} className="mt-1 shrink-0" />
                 </div>
 
-                <button
-                    type="button"
-                    onClick={onOpenPublishDialog}
-                    disabled={!canPublish}
-                    title={publishingDisabledReason ?? undefined}
-                    aria-disabled={!canPublish || undefined}
-                    className="inline-flex h-9 w-full cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-primary bg-primary px-3 font-sans font-semibold text-primary-foreground text-xs leading-none shadow-[0_1px_2px_oklch(0_0_0/0.06)] transition-shadow hover:shadow-[0_2px_8px_color-mix(in_srgb,var(--primary)_30%,transparent)] disabled:cursor-not-allowed disabled:border-border disabled:bg-muted disabled:text-muted-foreground disabled:shadow-none"
-                >
+                <Button onClick={onOpenPublishDialog} disabled={!canPublish} title={publishingDisabledReason ?? undefined} className="w-full font-semibold text-xs sm:text-xs">
                     <RocketIcon className="h-3.5 w-3.5" aria-hidden="true" />
                     {t("edit.publishing.publish")}
-                </button>
+                </Button>
                 {publishingDisabledReason && (
                     <p className="m-0 font-sans text-[11px] text-muted-foreground leading-snug" role="note">
                         {publishingDisabledReason}

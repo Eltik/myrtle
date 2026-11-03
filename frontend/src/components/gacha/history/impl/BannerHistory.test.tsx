@@ -32,7 +32,7 @@ function rowNames(): string[] {
         .map((row) => row.querySelector("td:nth-child(2) .truncate")?.textContent ?? "");
 }
 
-const tab = (label: string) => screen.getByRole("button", { name: new RegExp(`^${label}\\s*\\d`) });
+const tab = (label: string) => screen.getByRole("tab", { name: new RegExp(`^${label}\\s*\\d`) });
 
 afterEach(cleanup);
 

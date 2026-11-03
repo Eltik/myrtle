@@ -4,6 +4,7 @@ import { FilterChip } from "#/components/ui/filter-chip";
 import { Kicker } from "#/components/ui/kicker";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { Skeleton } from "#/components/ui/skeleton";
+import { Tabs, TabsList, TabsPanel, TabsTab } from "#/components/ui/tabs";
 import type { IBanner, IClientGachaRecords, IGachaItem } from "#/lib/api/gacha";
 import { type IFormatters, useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -304,52 +305,51 @@ export function BannerHistory({ records, operatorsById, bannersById, isLoading }
                       : t("history.banners.status.filtered", { rarities: rarityFilterLabel, shown: f.number(visibleCount), total: f.number(activeTabTotal), tab: activeTabLabel })}
             </output>
 
-            <div className="-mx-1 flex gap-0.5 overflow-x-auto overflow-y-hidden border-border border-b px-1 [scrollbar-width:none] sm:gap-1 [&::-webkit-scrollbar]:hidden">
-                {HISTORY_TABS.filter((tab) => isTabShown(records, tab)).map((tab) => {
-                    const count = filteredTabCounts.get(tab) ?? 0;
-                    const isActive = activeTab === tab;
-                    return (
-                        <button
-                            key={tab}
-                            type="button"
-                            aria-pressed={isActive}
-                            onClick={() => setActiveTab(tab)}
-                            className={`relative flex shrink-0 cursor-pointer items-center gap-1 whitespace-nowrap border-none bg-none px-2 py-2 font-medium font-sans text-[12px] transition-colors sm:gap-1.5 sm:px-3 sm:text-[13px] ${isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}
-                        >
-                            {tabLabel(tab)}
-                            <span className={`inline-flex h-4.5 min-w-5 shrink-0 items-center justify-center rounded-full px-1 font-mono text-[10px] tabular-nums ${isActive ? "bg-primary/15 text-foreground" : "bg-muted text-muted-foreground"}`}>{f.number(count)}</span>
-                            {isActive ? <span className="absolute right-2 -bottom-px left-2 h-0.5 rounded-full bg-primary sm:right-3 sm:left-3" /> : null}
-                        </button>
-                    );
-                })}
-            </div>
-
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-                <span className="kicker">{t("history.banners.rarityLabel")}</span>
-                {/* flex-wrap only matters below ~320px, where an unbreakable row would clip the last chip out of reach. */}
-                <div ref={rarityGroupRef} className="flex flex-wrap gap-1.5">
-                    {RARITY_FILTERS.map((rarity) => {
-                        const isActive = activeRarities.has(rarity);
-                        const count = rarityCounts.get(rarity) ?? 0;
-                        // A selected chip stays clickable even at 0 on this tab: otherwise
-                        // filtering to 6* and switching to a tab without any greys out the
-                        // one control that would undo it.
-                        const isDisabled = count === 0 && !isActive;
-                        return <FilterChip key={rarity} active={isActive} aria-label={t("history.banners.rarityChip", { rarity, count })} count={count} disabled={isDisabled} label={`${rarity}★`} onSelect={() => toggleRarity(rarity)} tone={`var(--rarity-${rarity})`} toneInk={rarityInk(rarity)} />;
+            <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as HistoryTab)} className="gap-4">
+                <TabsList variant="underline" className="w-full justify-start border-border border-b">
+                    {HISTORY_TABS.filter((tab) => isTabShown(records, tab)).map((tab) => {
+                        const count = filteredTabCounts.get(tab) ?? 0;
+                        const isActive = activeTab === tab;
+                        return (
+                            <TabsTab key={tab} value={tab} className="grow-0 gap-1 px-2 text-[12px] sm:gap-1.5 sm:px-3 sm:text-[13px]">
+                                {tabLabel(tab)}
+                                <span className={`inline-flex h-4.5 min-w-5 shrink-0 items-center justify-center rounded-full px-1 font-mono text-[10px] tabular-nums ${isActive ? "bg-primary/15 text-foreground" : "bg-muted text-muted-foreground"}`}>{f.number(count)}</span>
+                            </TabsTab>
+                        );
                     })}
-                </div>
-            </div>
+                </TabsList>
 
-            <PullTable
-                key={`${activeTab}-${RARITY_FILTERS.filter((r) => activeRarities.has(r)).join("")}`}
-                items={filteredRecords}
-                operatorsById={operatorsById}
-                bannersById={bannersById}
-                total={filteredRecords.length}
-                emptyMessage={activeRarities.size === 0 ? t("history.banners.emptyNoRarity") : isFiltered ? (activeTab === "all" ? t("history.banners.emptyFilteredAll", { rarities: rarityStarList }) : t("history.banners.emptyFiltered", { rarities: rarityStarList, tab: activeTabLabel })) : t("history.banners.empty")}
-                onClearFilter={isFiltered ? clearRarityFilter : undefined}
-                bannerInline={activeTab === "all"}
-            />
+                <TabsPanel key={activeTab} value={activeTab} className="flex flex-col gap-4">
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                        <span className="kicker">{t("history.banners.rarityLabel")}</span>
+                        {/* flex-wrap only matters below ~320px, where an unbreakable row would clip the last chip out of reach. */}
+                        <div ref={rarityGroupRef} className="flex flex-wrap gap-1.5">
+                            {RARITY_FILTERS.map((rarity) => {
+                                const isActive = activeRarities.has(rarity);
+                                const count = rarityCounts.get(rarity) ?? 0;
+                                // A selected chip stays clickable even at 0 on this tab: otherwise
+                                // filtering to 6* and switching to a tab without any greys out the
+                                // one control that would undo it.
+                                const isDisabled = count === 0 && !isActive;
+                                return <FilterChip key={rarity} active={isActive} aria-label={t("history.banners.rarityChip", { rarity, count })} count={count} disabled={isDisabled} label={`${rarity}★`} onSelect={() => toggleRarity(rarity)} tone={`var(--rarity-${rarity})`} toneInk={rarityInk(rarity)} />;
+                            })}
+                        </div>
+                    </div>
+
+                    <PullTable
+                        key={`${activeTab}-${RARITY_FILTERS.filter((r) => activeRarities.has(r)).join("")}`}
+                        items={filteredRecords}
+                        operatorsById={operatorsById}
+                        bannersById={bannersById}
+                        total={filteredRecords.length}
+                        emptyMessage={
+                            activeRarities.size === 0 ? t("history.banners.emptyNoRarity") : isFiltered ? (activeTab === "all" ? t("history.banners.emptyFilteredAll", { rarities: rarityStarList }) : t("history.banners.emptyFiltered", { rarities: rarityStarList, tab: activeTabLabel })) : t("history.banners.empty")
+                        }
+                        onClearFilter={isFiltered ? clearRarityFilter : undefined}
+                        bannerInline={activeTab === "all"}
+                    />
+                </TabsPanel>
+            </Tabs>
         </section>
     );
 }

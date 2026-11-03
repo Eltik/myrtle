@@ -5,6 +5,7 @@ import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } f
 import { Button } from "#/components/ui/button";
 import { Input } from "#/components/ui/input";
 import { Kicker } from "#/components/ui/kicker";
+import { Toggle } from "#/components/ui/toggle";
 import { archiveHiddenFactionsQueryOptions } from "#/lib/api/archives";
 import { useFormatters, useGamedataServer } from "#/lib/i18n";
 import { searchAndRank } from "#/lib/search/fuzzy";
@@ -186,23 +187,19 @@ function FlowChart({ secret, shownName, hiddenName, pick, onPick, lit }: { secre
         const dim = pick !== null && !isPicked && !isRelated;
         return (
             <div key={node.id} className={cn("flex items-center", left ? "justify-end" : "justify-start")} style={{ height: node.slot, marginBottom: FLOW_GAP }}>
-                <button
-                    type="button"
-                    aria-pressed={isPicked}
+                <Toggle
+                    size="sm"
+                    pressed={isPicked}
                     aria-label={t("hidden.nodeLabel", { name, count: node.count })}
                     title={t("hidden.nodeLabel", { name, count: node.count })}
-                    onClick={() => onPick(p)}
+                    onPressedChange={() => onPick(p)}
                     {...hoverProps(setHover, p)}
-                    className={cn(
-                        "relative inline-flex h-6 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-md px-2 text-[12px] outline-none transition-[color,background-color] pointer-coarse:after:absolute pointer-coarse:after:inset-x-0 pointer-coarse:after:top-1/2 pointer-coarse:after:h-11 pointer-coarse:after:-translate-y-1/2 focus-visible:ring-2 focus-visible:ring-ring",
-                        left ? "flex-row" : "flex-row-reverse",
-                        isPicked ? "bg-primary font-semibold text-primary-foreground" : dim ? "text-muted-foreground hover:text-foreground" : "text-foreground hover:text-primary",
-                    )}
+                    className={cn("h-6 min-w-0 gap-1.5 rounded-md px-2 text-[12px] sm:h-6 sm:min-w-0 sm:text-[12px]", left ? "flex-row" : "flex-row-reverse", isPicked ? "font-semibold" : dim ? "text-muted-foreground hover:text-foreground" : "text-foreground hover:text-primary")}
                 >
                     <span className={cn("font-mono tabular-nums", isPicked ? "" : "text-muted-foreground")}>{f.number(node.count)}</span>
                     <FactionLogo id={node.id} className={cn("size-3.5", dim && "opacity-40")} />
                     <span className="font-medium">{name}</span>
-                </button>
+                </Toggle>
             </div>
         );
     };
@@ -229,23 +226,21 @@ function FlowChart({ secret, shownName, hiddenName, pick, onPick, lit }: { secre
                             const text = t("hidden.bandLabel", { count: b.count, shown: shownName(b.shown), hidden: hiddenName(b.hidden) });
                             const dimBand = pick !== null && !isPicked && !covers(pick, b.shown, b.hidden);
                             return (
-                                <button
+                                <Toggle
                                     key={bandKey(b.shown, b.hidden)}
-                                    type="button"
-                                    aria-pressed={isPicked}
+                                    variant="outline"
+                                    size="sm"
+                                    pressed={isPicked}
                                     aria-label={text}
                                     title={text}
-                                    onClick={() => onPick(p)}
-                                    className={cn(
-                                        "inline-flex min-h-11 cursor-pointer items-center gap-1.5 rounded-md border px-2.5 text-[12px] outline-none transition-[color,background-color] focus-visible:ring-2 focus-visible:ring-ring",
-                                        isPicked ? "border-primary bg-primary font-semibold text-primary-foreground" : on ? "border-primary text-primary" : dimBand ? "border-border/60 text-muted-foreground" : "border-border text-foreground",
-                                    )}
+                                    onPressedChange={() => onPick(p)}
+                                    className={cn("min-h-11 gap-1.5 px-2.5 text-[12px] sm:text-[12px]", isPicked ? "font-semibold" : on ? "border-primary text-primary" : dimBand ? "text-muted-foreground" : "")}
                                 >
                                     <CornerDownRightIcon aria-hidden className="size-3.5 opacity-60" />
                                     <FactionLogo id={b.hidden} className={cn("size-3.5", dimBand && "opacity-40")} />
                                     <span className="font-medium">{hiddenName(b.hidden)}</span>
                                     <span className={cn("font-mono tabular-nums", isPicked ? "" : "text-muted-foreground")}>{f.number(b.count)}</span>
-                                </button>
+                                </Toggle>
                             );
                         })}
                     </div>

@@ -1,6 +1,5 @@
-import { Minus, Plus } from "lucide-react";
 import * as React from "react";
-import { Button } from "#/components/ui/button";
+import { NumberField, NumberFieldDecrement, NumberFieldGroup, NumberFieldIncrement, NumberFieldInput } from "#/components/ui/number-field";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useFormatters, useT } from "#/lib/i18n";
@@ -142,37 +141,16 @@ function EconomyBody({ economy, startDp, onStartDpChange, startDpFrom, stage, ha
 }
 
 function DpStepper({ value, onChange, t }: { value: number; onChange: (n: number) => void; t: EconomyT }): React.ReactElement {
-    const [draft, setDraft] = React.useState(String(value));
-    React.useEffect(() => setDraft(String(value)), [value]);
-    const commit = (raw: string) => {
-        const n = Number.parseInt(raw, 10);
-        if (Number.isNaN(n)) setDraft(String(value));
-        else onChange(clampStartDp(n));
-    };
+    // The field keeps the typed draft until blur, clamps to min/max there, and restores the
+    // last value when the draft is cleared (a null change is ignored, so the controlled value wins).
     return (
-        <span className="flex items-center gap-1">
-            <Button variant="outline" size="icon-xs" aria-label={t("squad.analysis.economy.startDp.less")} disabled={value <= START_DP_MIN} onClick={() => onChange(clampStartDp(value - 1))}>
-                <Minus />
-            </Button>
-            <input
-                type="number"
-                inputMode="numeric"
-                min={START_DP_MIN}
-                max={START_DP_MAX}
-                value={draft}
-                aria-label={t("squad.analysis.economy.startDp.input")}
-                onChange={(e) => {
-                    setDraft(e.target.value);
-                    const n = Number.parseInt(e.target.value, 10);
-                    if (!Number.isNaN(n)) onChange(clampStartDp(n));
-                }}
-                onBlur={(e) => commit(e.target.value)}
-                className="h-7 pointer-coarse:h-11 w-11 rounded-md border border-input bg-background px-1 text-center font-mono font-semibold text-[16px] tabular-nums outline-none [appearance:textfield] focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-            />
-            <Button variant="outline" size="icon-xs" aria-label={t("squad.analysis.economy.startDp.more")} disabled={value >= START_DP_MAX} onClick={() => onChange(clampStartDp(value + 1))}>
-                <Plus />
-            </Button>
-        </span>
+        <NumberField value={value} min={START_DP_MIN} max={START_DP_MAX} step={1} size="sm" className="w-auto" onValueChange={(n) => n !== null && onChange(clampStartDp(n))}>
+            <NumberFieldGroup className="w-auto">
+                <NumberFieldDecrement aria-label={t("squad.analysis.economy.startDp.less")} />
+                <NumberFieldInput aria-label={t("squad.analysis.economy.startDp.input")} className="w-11 grow-0 px-1 font-mono font-semibold text-[16px]" />
+                <NumberFieldIncrement aria-label={t("squad.analysis.economy.startDp.more")} />
+            </NumberFieldGroup>
+        </NumberField>
     );
 }
 

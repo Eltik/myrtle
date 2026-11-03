@@ -6,6 +6,7 @@ import { ActiveFilterChips, type IActiveChip } from "#/components/operators/list
 import { FilterPanel } from "#/components/operators/list/impl/components/FilterPanel";
 import { FilterToggleButton } from "#/components/operators/list/impl/components/FilterToggleButton";
 import { SearchField } from "#/components/SearchField";
+import { Button } from "#/components/ui/button";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "#/components/ui/table";
 import { useLocalStorageState } from "#/hooks/use-local-storage-state";
@@ -107,15 +108,16 @@ export function DossiersTab({ onOpenFile }: { onOpenFile: (id: string) => void }
         const active = sort.key === key;
         return (
             <TableHead className={className} aria-sort={active ? (sort.desc ? "descending" : "ascending") : "none"}>
-                <button
-                    type="button"
+                <Button
+                    variant="ghost"
+                    size="xs"
                     aria-label={t("dossiers.sortBy", { column: label })}
-                    className={cn("inline-flex pointer-coarse:min-h-11 cursor-pointer items-center gap-1 font-mono text-[10.5px] uppercase tracking-[0.12em]", active ? "text-primary" : "text-muted-foreground hover:text-foreground")}
+                    className={cn("-mx-2 font-mono text-[10.5px] uppercase tracking-[0.12em] sm:text-[10.5px]", active ? "text-primary" : "text-muted-foreground hover:text-foreground")}
                     onClick={() => setSort((s) => ({ key, desc: s.key === key ? !s.desc : false }))}
                 >
                     {label}
                     {active ? sort.desc ? <ArrowDownIcon aria-hidden className="size-3" /> : <ArrowUpIcon aria-hidden className="size-3" /> : null}
-                </button>
+                </Button>
             </TableHead>
         );
     };

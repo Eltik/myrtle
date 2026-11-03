@@ -97,7 +97,7 @@ function GridViewContent({ grid }: { grid: IGrid }) {
     );
 }
 
-const ACTION_CLASS = "inline-flex h-11 min-w-11 cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-border bg-popover px-3 font-medium font-sans text-foreground text-sm leading-none no-underline transition-colors hover:bg-accent disabled:cursor-wait disabled:opacity-60 sm:h-9 sm:min-w-0";
+const ACTION_CLASS = "h-11 min-w-11 px-3 sm:h-9 sm:min-w-0";
 
 function GridActions({ grid }: { grid: IGrid }) {
     const t: TypedT<typeof messages> = useT("grids");
@@ -159,20 +159,20 @@ function GridActions({ grid }: { grid: IGrid }) {
                 {t("view.fork")}
             </Button>
             {grid.can_edit && (
-                <Link to="/grids/$slug/edit" params={{ slug: grid.slug }} className={ACTION_CLASS} aria-label={t("view.edit")}>
+                <Button variant="outline" render={<Link to="/grids/$slug/edit" params={{ slug: grid.slug }} />} className={ACTION_CLASS} aria-label={t("view.edit")}>
                     <PencilIcon className="h-4 w-4" aria-hidden="true" />
                     <span className="hidden sm:inline">{t("view.edit")}</span>
-                </Link>
+                </Button>
             )}
             {grid.can_edit && <DeleteGridButton grid={grid} variant="labelled" collapse className="h-11 min-w-11 rounded-lg px-3 sm:h-9 sm:min-w-0" onDeleted={() => navigate({ to: "/grids/my", replace: true })} />}
-            <button type="button" onClick={handleDownload} disabled={downloading} className={ACTION_CLASS} aria-label={t("view.download")}>
+            <Button variant="outline" onClick={handleDownload} disabled={downloading} className={cn(ACTION_CLASS, "disabled:cursor-wait")} aria-label={t("view.download")}>
                 <Download className={cn("h-4 w-4", downloading && "animate-pulse")} aria-hidden="true" />
                 <span className="hidden sm:inline">{downloading ? t("view.downloading") : t("view.download")}</span>
-            </button>
-            <button type="button" onClick={handleCopy} className={ACTION_CLASS} aria-label={t("view.copy")}>
+            </Button>
+            <Button variant="outline" onClick={handleCopy} className={ACTION_CLASS} aria-label={t("view.copy")}>
                 <CopyIcon className="h-4 w-4" aria-hidden="true" />
                 <span className="hidden sm:inline">{t("view.copy")}</span>
-            </button>
+            </Button>
         </div>
     );
 }
