@@ -15,6 +15,13 @@ interface IWindowVirtualRowsOptions<TRow> {
     measureDeps?: unknown[];
     /** Extra scroll-offset triggers beyond width and row count (e.g. view mode). */
     scrollMarginDeps?: unknown[];
+    /**
+     * A stable key per row. Without it the virtualizer caches measured heights by INDEX, so
+     * when rows are inserted or removed above (expand/collapse) a row inherits the height
+     * measured for whatever sat at its index before: /stages kept ~300px of blank under a
+     * collapsed group after "Expand all" then "Collapse" until a reload.
+     */
+    getRowKey?: (row: TRow, index: number) => string | number;
 }
 
 /**
@@ -24,7 +31,7 @@ interface IWindowVirtualRowsOptions<TRow> {
  * content changes height, and the virtualizer itself. Derives the row list from
  * width internally so callers never face the width -> count/estimate cycle.
  */
-export function useWindowVirtualRows<TRow>({ buildRows, rowDeps, estimateSize, overscan, measureDeps = [], scrollMarginDeps = [] }: IWindowVirtualRowsOptions<TRow>) {
+export function useWindowVirtualRows<TRow>({ buildRows, rowDeps, estimateSize, overscan, measureDeps = [], scrollMarginDeps = [], getRowKey }: IWindowVirtualRowsOptions<TRow>) {
     const parentRef = useRef<HTMLDivElement>(null);
     const [width, setWidth] = useState(0);
     const [scrollMargin, setScrollMargin] = useState(0);
@@ -46,6 +53,8 @@ export function useWindowVirtualRows<TRow>({ buildRows, rowDeps, estimateSize, o
     const virtualizer = useWindowVirtualizer({
         count: rows.length,
         estimateSize: (index) => estimateSize(rows[index], index, width),
+        // Spread, not `getItemKey: undefined`: an explicit undefined would replace the library's index default.
+        ...(getRowKey ? { getItemKey: (index: number) => (rows[index] === undefined ? index : getRowKey(rows[index] as TRow, index)) } : {}),
         overscan,
         scrollMargin,
     });

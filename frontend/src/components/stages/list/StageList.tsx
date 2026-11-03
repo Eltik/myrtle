@@ -96,7 +96,7 @@ export function StageList() {
                 </div>
             </div>
 
-            <div className="msv-scroll mb-8 flex gap-1.5 overflow-x-auto pb-1.5">
+            <div className="scroll-shadows-x mb-8 flex gap-1.5 overflow-x-auto pb-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 <FilterChip className="flex-none" label={t("list.filter.all")} count={tree.totalZones} active={filter === "all"} onSelect={() => setFilter("all")} />
                 {tree.groups.map((g) => (
                     <FilterChip className="flex-none" key={g.key} label={tNav(STAGE_GROUP_LABEL_KEY[g.key])} count={g.zoneCount} tone={g.tone} toneInk={STAGE_GROUP_INK[g.key]} active={filter === g.key} onSelect={() => setFilter((f) => (f === g.key ? "all" : g.key))} />
@@ -244,6 +244,7 @@ function VirtualStageTree({ groups, searching, open, closedSections, onToggleSec
         },
         overscan: STAGE_VIRTUAL_OVERSCAN,
         measureDeps: [viewportWidth],
+        getRowKey: (row) => row.key,
     });
 
     const cols = columnsFor(width);
