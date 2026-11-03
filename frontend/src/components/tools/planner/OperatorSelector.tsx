@@ -162,7 +162,7 @@ export function OperatorMultiSelector({ options, selectedOptions, isLoading, onS
             <ComboboxPopup className="max-w-100">
                 {searchQuery.trim() && unpickedMatches.length > 0 && (
                     <div className="border-border border-b p-1">
-                        <button type="button" onClick={addAllMatches} className="flex w-full items-center rounded-md px-2 py-1.5 text-left font-medium text-primary text-xs hover:bg-primary/10">
+                        <button type="button" onClick={addAllMatches} className="flex w-full items-center rounded-md px-2 py-1.5 text-left font-medium text-primary text-xs hover:bg-primary/10 hover:text-foreground">
                             {t("planner.bulk.addAllResults", { count: unpickedMatches.length })}
                         </button>
                     </div>

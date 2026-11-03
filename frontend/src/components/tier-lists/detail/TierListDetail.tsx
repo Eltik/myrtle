@@ -56,7 +56,7 @@ export function TierListDetail() {
 
     if (!detail) {
         return (
-            <main className="mx-auto w-[min(720px,calc(100%-2rem))] py-20 text-center">
+            <div className="mx-auto w-[min(720px,calc(100%-2rem))] py-20 text-center">
                 <h1 className="m-0 font-bold font-sans text-2xl text-foreground tracking-tight">{t("detail.notFound.title")}</h1>
                 <p className="mt-3 font-sans text-muted-foreground text-sm">{t("detail.notFound.body")}</p>
                 <Link to="/tier-lists" search={{ type: "all", sort: "recent", q: "", flair: [] }} className="mt-6 inline-flex items-center gap-1.5 rounded-lg border border-border bg-popover px-3.5 py-2 font-medium font-sans text-foreground text-sm leading-none no-underline transition-colors hover:bg-accent">
@@ -66,14 +66,14 @@ export function TierListDetail() {
                     </svg>
                     {t("detail.notFound.action")}
                 </Link>
-            </main>
+            </div>
         );
     }
 
     const boardDetail: ITierListDetail = snapshotTiers ? { ...detail, tiers: snapshotTiers } : detail;
 
     return (
-        <main className="min-h-dvh pb-20">
+        <div className="min-h-dvh pb-20">
             <TierListHero detail={detail} />
 
             <VersionsBar slug={detail.slug} versions={versions} selectedVersion={selectedVersion} isLatestView={isLatestView} />
@@ -84,6 +84,6 @@ export function TierListDetail() {
                 </div>
                 <TierListStatsPanel detail={detail} />
             </div>
-        </main>
+        </div>
     );
 }

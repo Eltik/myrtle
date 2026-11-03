@@ -1,11 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { ChevronDown, Dna, Heart, Info, LibraryBig, type LucideIcon, MapPin, Package, Palette, User } from "lucide-react";
-import { memo, type ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import { memo, type ReactNode, useEffect, useId, useMemo, useRef, useState } from "react";
 import { useOperatorFactLabel } from "#/components/operators/OperatorFacts";
 import { Badge } from "#/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "#/components/ui/collapsible";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
 import { Separator } from "#/components/ui/separator";
+import { Skeleton } from "#/components/ui/skeleton";
 import { Slider } from "#/components/ui/slider";
 import { Switch } from "#/components/ui/switch";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
@@ -29,6 +30,7 @@ import { BaseSkillsSection } from "../BaseSkillsSection";
 import { CnDescription, CnTag, CnValue } from "../CnMarkers";
 import { CommunitySharePill } from "../CommunitySharePill";
 import { LevelBreakdown } from "../LevelBreakdown";
+import { LoadError } from "../LoadError";
 import { OperatorNotes } from "../OperatorNotes";
 import { OperatorRange } from "../OperatorRange";
 import { SummonsSection } from "../SummonsSection";
@@ -265,6 +267,8 @@ function buildTalentEffects(operator: IOperatorListItem, phaseIndex: number, lev
 export const InfoContent = memo(function InfoContent({ operator }: IInfoContentProps) {
     const t: InfoT = useT("operators");
     const f = useFormatters();
+    const levelLabelId = useId();
+    const trustLabelId = useId();
     const [phaseIndex, setPhaseIndex] = useState(operator.phases.length - 1);
     const [level, setLevel] = useState(operator.phases[operator.phases.length - 1]?.maxLevel ?? 1);
     const [trustLevel, setTrustLevel] = useState(100);
@@ -278,7 +282,7 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
     const moduleSettled = useRef(false);
 
     const localeServer = useGamedataServer();
-    const { data: ranges } = useQuery(rangesQueryOptions(operatorGamedataServer(operator.server, localeServer)));
+    const { data: ranges, isLoading: rangesLoading, isError: rangesFailed, refetch: refetchRanges } = useQuery(rangesQueryOptions(operatorGamedataServer(operator.server, localeServer)));
     const currentRange = ranges?.[operator.phases[phaseIndex]?.rangeId ?? ""];
     // CN's range at this promotion, fetched only when CN changed a range and this one differs.
     const cnRangeId = cnUpdates?.kinds.has("range_changed") ? cnUpdates.cn.phases[phaseIndex]?.rangeId : undefined;
@@ -394,7 +398,7 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
             </div>
 
             <CollapsibleSection icon={User} title={t("info.profile")} open={showProfile} onOpenChange={setShowProfile}>
-                <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-4">
+                <dl className="mt-3 grid grid-cols-2 gap-x-6 md:grid-cols-4">
                     {profile && (
                         <>
                             <ProfileCard icon={MapPin} label={t("info.profile.placeOfBirth")} value={profile.placeOfBirth ? fact.birthPlace(profile.placeOfBirth) : unknown} />
@@ -404,7 +408,7 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
                         </>
                     )}
                     {operator.artists && operator.artists.length > 0 && <ProfileCard icon={Palette} label={t("info.profile.artist")} value={operator.artists.join(", ")} />}
-                </div>
+                </dl>
             </CollapsibleSection>
 
             <Separator className="my-6" />
@@ -414,14 +418,15 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
             <Separator className="my-6" />
 
             <CollapsibleSection icon={Package} title={t("info.controls")} open={showControls} onOpenChange={setShowControls}>
-                <div className="mt-3 space-y-4 rounded-lg border border-border/50 bg-card/30 p-4">
+                <div className="mt-3 space-y-4 px-1">
                     <p className="text-muted-foreground text-xs">{t("info.controls.desc")}</p>
 
                     <div className="flex flex-wrap items-center gap-2">
                         <span className="text-muted-foreground text-sm">{t("info.promotion")}</span>
                         {operator.phases.map((_, idx) => (
                             <button
-                                className={cn("flex h-10 w-10 items-center justify-center rounded-lg border transition-colors", phaseIndex === idx ? "border-primary bg-primary/10" : "border-border bg-card hover:border-primary/50")}
+                                aria-pressed={phaseIndex === idx}
+                                className={cn("flex pointer-coarse:size-11 h-10 w-10 items-center justify-center rounded-lg transition-colors", phaseIndex === idx ? "border-2 border-primary bg-primary/10" : "border border-border bg-card hover:border-primary/50")}
                                 // biome-ignore lint/suspicious/noArrayIndexKey: phase ordering is fixed by elite tier
                                 key={`phase-${idx}`}
                                 onClick={() => {
@@ -438,21 +443,23 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
                     <div className="grid gap-4 md:grid-cols-2">
                         <div className="space-y-2">
                             <div className="flex items-center justify-between">
-                                <span className="text-muted-foreground text-sm">{t("info.level")}</span>
+                                <span className="text-muted-foreground text-sm" id={levelLabelId}>
+                                    {t("info.level")}
+                                </span>
                                 <span className="font-mono text-foreground text-sm">
                                     {level} / {operator.phases[phaseIndex]?.maxLevel ?? 1}
                                 </span>
                             </div>
-                            <Slider min={1} max={operator.phases[phaseIndex]?.maxLevel ?? 1} step={1} value={[level]} onValueChange={(v) => setLevel(Array.isArray(v) ? (v[0] ?? 1) : v)} />
+                            <Slider aria-labelledby={levelLabelId} min={1} max={operator.phases[phaseIndex]?.maxLevel ?? 1} step={1} value={[level]} onValueChange={(v) => setLevel(Array.isArray(v) ? (v[0] ?? 1) : v)} />
                         </div>
                         <div className="space-y-2">
                             <div className="flex items-center justify-between">
-                                <span className="flex items-center gap-1 text-muted-foreground text-sm">
-                                    <Heart className="h-3.5 w-3.5" /> {t("info.trust")}
+                                <span className="flex items-center gap-1 text-muted-foreground text-sm" id={trustLabelId}>
+                                    <Heart aria-hidden="true" className="h-3.5 w-3.5" /> {t("info.trust")}
                                 </span>
                                 <span className="font-mono text-foreground text-sm">{trustLevel}%</span>
                             </div>
-                            <Slider min={0} max={200} step={1} value={[trustLevel]} onValueChange={(v) => setTrustLevel(Array.isArray(v) ? (v[0] ?? 100) : v)} />
+                            <Slider aria-labelledby={trustLabelId} min={0} max={200} step={1} value={[trustLevel]} onValueChange={(v) => setTrustLevel(Array.isArray(v) ? (v[0] ?? 100) : v)} />
                         </div>
                     </div>
 
@@ -460,7 +467,13 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
                         <div className="flex items-center gap-2 text-muted-foreground text-sm">
                             {t("info.potential")}
                             <Tooltip>
-                                <TooltipTrigger render={(props) => <Info className="h-3 w-3 cursor-help text-muted-foreground" {...props} />} />
+                                <TooltipTrigger
+                                    render={(props) => (
+                                        <button {...props} aria-label={t("info.potential.tip")} className="relative inline-flex cursor-help items-center justify-center rounded-sm text-muted-foreground pointer-coarse:after:absolute pointer-coarse:after:min-h-11 pointer-coarse:after:min-w-11" type="button">
+                                            <Info aria-hidden="true" className="h-3 w-3" />
+                                        </button>
+                                    )}
+                                />
                                 <TooltipPopup>{t("info.potential.tip")}</TooltipPopup>
                             </Tooltip>
                         </div>
@@ -480,8 +493,12 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
                                                 <button
                                                     {...props}
                                                     type="button"
+                                                    aria-pressed={potentialRank === idx}
                                                     onClick={() => setPotentialRank(idx)}
-                                                    className={cn("relative flex h-8 w-8 items-center justify-center rounded-md border transition-colors", potentialRank === idx ? "border-primary bg-primary/10" : "border-border bg-card hover:border-primary/50")}
+                                                    className={cn(
+                                                        "relative flex h-8 w-8 items-center justify-center rounded-md transition-colors pointer-coarse:after:absolute pointer-coarse:after:min-h-11 pointer-coarse:after:min-w-11",
+                                                        potentialRank === idx ? "border-2 border-primary bg-primary/10" : "border border-border bg-card hover:border-primary/50",
+                                                    )}
                                                 >
                                                     <img alt={t("info.potential.alt", { rank: idx })} className="icon-theme-aware h-5 w-5 object-contain" decoding="async" loading="lazy" src={potentialIcon(idx, operator.server)} />
                                                     {cnRankDiffers && <span aria-hidden="true" className="absolute -top-0.5 -right-0.5 h-1.5 w-1.5 rounded-full bg-primary" />}
@@ -619,7 +636,7 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
                             {column.map(({ iconURL, label, value, cn: cnValue }) => (
                                 <div key={label} className="flex items-center justify-between py-2">
                                     <span className="flex items-center gap-2 text-muted-foreground">
-                                        <img alt={label} src={iconURL} className="icon-theme-aware h-4 w-4 object-contain" decoding="async" loading="lazy" />
+                                        <img alt="" src={iconURL} className="icon-theme-aware h-4 w-4 object-contain" decoding="async" loading="lazy" />
                                         <span className="text-sm">{label}</span>
                                     </span>
                                     <span className="flex items-baseline">
@@ -646,7 +663,15 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
             )}
             <div className="mb-6">
                 <h3 className="mb-3 font-medium text-foreground">{t("info.attackRange")}</h3>
-                {currentRange ? <OperatorRange range={currentRange} /> : <p className="text-muted-foreground text-sm">{t("info.attackRange.empty")}</p>}
+                {currentRange ? (
+                    <OperatorRange range={currentRange} />
+                ) : rangesLoading ? (
+                    <Skeleton className="h-24 w-40 rounded-md" />
+                ) : rangesFailed ? (
+                    <LoadError message={t("info.attackRange.error")} onRetry={() => void refetchRanges()} />
+                ) : (
+                    <p className="text-muted-foreground text-sm">{t("info.attackRange.empty")}</p>
+                )}
                 {cnRange && (
                     <div className="mt-3 flex items-start gap-2">
                         <CnTag className="mt-1" />
@@ -657,7 +682,7 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
 
             {showModuleControls && currentModule && (
                 <div className="mb-6">
-                    <CollapsibleSection icon={Package} title={t("info.moduleDetails")} open={showModuleDetails} onOpenChange={setShowModuleDetails} chevron>
+                    <CollapsibleSection icon={Package} title={t("info.moduleDetails")} open={showModuleDetails} onOpenChange={setShowModuleDetails}>
                         <div className="mt-3 rounded-lg border border-border/50 bg-card/30 p-4">
                             <div className="mb-4 flex items-center gap-3">
                                 {currentModule.image && <img alt={currentModule.uniEquipName} className="h-16 w-16 rounded-md object-contain" decoding="async" loading="lazy" src={asset(currentModule.image, currentModuleIsCn ? "cn" : operator.server)} />}
@@ -720,7 +745,7 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
                 {talents.length === 0 ? (
                     <p className="mt-3 text-muted-foreground text-xs">{t("info.talents.empty")}</p>
                 ) : (
-                    <div className="mt-3 space-y-3">
+                    <div className="mt-3 divide-y divide-border/60">
                         {talents.map((talent) => {
                             const base = talent.modifiedByModule ? talent.base : null;
                             const change = talent.cnText ? renderCnChange(base, talent.cnText, talent.blackboard, showDiff) : renderChange(base, talent, showDiff);
@@ -728,7 +753,7 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
                             // A talent CN reshaped (other candidates, another module phase) is not this one with new values.
                             const cnHtml = cnTalent ? (cnTalent.shape === talent.shape ? cnNumbersHtml(talent.description, talent.blackboard, cnTalent.description, cnTalent.blackboard) : { html: descriptionToHtml(cnTalent.description, cnTalent.blackboard), lang: "zh-CN" }) : null;
                             return (
-                                <div className="rounded-lg border border-border/50 bg-card/30 p-3" key={talent.key}>
+                                <div className="py-3" key={talent.key}>
                                     <div className="mb-1 flex items-center gap-2">
                                         <h4 lang={talent.zhName ? "zh-CN" : undefined} className="font-medium text-foreground text-sm">
                                             {talent.name ?? t("info.talents.unnamed")}
@@ -777,34 +802,36 @@ interface ICollapsibleSectionProps {
     title: string;
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    /** Show the open/closed chevron; the always-open-by-default sections omit it. */
-    chevron?: boolean;
+
     children: ReactNode;
 }
 
-function CollapsibleSection({ icon: Icon, title, open, onOpenChange, chevron = false, children }: ICollapsibleSectionProps) {
+/** Every section draws the chevron: without it a bar gave no sign that it folds, or whether it was open. */
+function CollapsibleSection({ icon: Icon, title, open, onOpenChange, children }: ICollapsibleSectionProps) {
     return (
         <Collapsible open={open} onOpenChange={onOpenChange}>
             <CollapsibleTrigger className="flex w-full items-center justify-between rounded-lg border border-border bg-secondary/30 px-4 py-3 transition-colors hover:bg-secondary/50">
                 <span className="flex items-center gap-2">
-                    <Icon className="h-4 w-4 text-primary" />
+                    <Icon aria-hidden="true" className="h-4 w-4 text-primary" />
                     <span className="font-medium text-sm">{title}</span>
                 </span>
-                {chevron && <ChevronDown className={cn("h-4 w-4 transition-transform", open && "rotate-180")} />}
+                <ChevronDown aria-hidden="true" className={cn("h-4 w-4 transition-transform", open && "rotate-180")} />
             </CollapsibleTrigger>
             <CollapsibleContent>{children}</CollapsibleContent>
         </Collapsible>
     );
 }
 
+/** One fact in the profile list: a term over its value, divided by a rule rather than boxed, since
+ *  the panel around it is already a card. */
 function ProfileCard({ icon: Icon, label, value }: { icon: LucideIcon; label: string; value: string }) {
     return (
-        <div className="rounded-lg border border-border/50 bg-card/40 p-3">
-            <div className="flex items-center gap-1.5 text-muted-foreground">
-                <Icon className="h-3.5 w-3.5" />
+        <div className="min-w-0 border-border/60 border-t py-2.5">
+            <dt className="flex items-center gap-1.5 text-muted-foreground">
+                <Icon aria-hidden="true" className="h-3.5 w-3.5" />
                 <span className="text-xs">{label}</span>
-            </div>
-            <div className="mt-1 truncate text-foreground text-sm">{value}</div>
+            </dt>
+            <dd className="mt-1 truncate text-foreground text-sm">{value}</dd>
         </div>
     );
 }
@@ -819,19 +846,20 @@ interface IDescriptionDiffProps {
     prefix?: ReactNode;
 }
 
-const DIFF_LABEL_CLASS = "mb-0.5 font-medium text-[10px] text-muted-foreground uppercase tracking-wider";
+const DIFF_LABEL_CLASS = "mb-0.5 font-medium text-[11px] text-muted-foreground";
 
-/** A description a module changed, shown as the faded base above the marked-up new text. */
+/** A description a module changed: the base, struck through under its label, above the marked-up new
+ *  text. The base used to be faded with opacity 50, which put xs muted text near 2:1. */
 function DescriptionDiff({ html, baseHtml, baseLabel, prefix }: IDescriptionDiffProps) {
     const t: InfoT = useT("operators");
     return (
         <>
             {baseHtml && (
-                <div className="mb-2 border-border/40 border-b pb-2 opacity-50">
+                <div className="mb-2 border-border/40 border-b pb-2">
                     <div className={DIFF_LABEL_CLASS}>{baseLabel}</div>
                     {prefix}
                     <span
-                        className={cn("text-muted-foreground text-xs", !prefix && "block")}
+                        className={cn("text-muted-foreground text-xs line-through decoration-muted-foreground/70", !prefix && "block")}
                         // biome-ignore lint/security/noDangerouslySetInnerHtml: Sanitized in description-to-html
                         dangerouslySetInnerHTML={{ __html: baseHtml }}
                     />
@@ -888,7 +916,7 @@ function ModuleTraitChange({ operator, phase, descriptionBlackboard, showDiff, o
                         <TooltipTrigger
                             render={(props) => (
                                 <span {...props}>
-                                    <Switch checked={showDiff} onCheckedChange={onShowDiffChange} />
+                                    <Switch aria-label={t("info.showDiff.tip")} checked={showDiff} onCheckedChange={onShowDiffChange} />
                                 </span>
                             )}
                         />

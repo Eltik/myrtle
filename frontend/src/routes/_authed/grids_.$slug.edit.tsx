@@ -39,8 +39,8 @@ function RouteComponent() {
 
 function EditorLoading() {
     return (
-        <main className="grid min-h-dvh place-items-center">
+        <div className="grid min-h-dvh place-items-center">
             <Spinner />
-        </main>
+        </div>
     );
 }

@@ -8,8 +8,8 @@ export const messages = {
         description: "Heading of the home page panel listing the newest release notes.",
     },
     "updates.seeAll": {
-        text: "Changelog →",
-        description: "Link from the home page's latest-updates panel to the full changelog page. The arrow is part of the label.",
+        text: "Changelog",
+        description: "Link from the home page's latest-updates panel to the full changelog page.",
     },
 } satisfies MessageMap;
 

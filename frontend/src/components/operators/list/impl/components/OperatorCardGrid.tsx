@@ -5,7 +5,7 @@ import { assetURL } from "#/lib/assets";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { cn, getAvatarById, rarityToNumber } from "#/lib/utils";
-import { RARITY_BLUR_COLORS, RARITY_COLORS } from "../constants";
+import { RARITY_COLORS } from "../constants";
 import type { IOperatorView, StatMetric } from "../types";
 import { CnUpdateBadge } from "./CnUpdateBadge";
 import { CampIcon, ClassIcon } from "./Icons";
@@ -39,17 +39,18 @@ export function OperatorCardGrid({ operator, statMetric }: IOperatorCardGridProp
                         {dataSaver && operator.id ? (
                             // The deployment-bar avatar, under half the portrait's bytes, sat in the space above the name bar.
                             <div className="absolute inset-x-0 top-0 bottom-12 flex origin-center items-center justify-center p-3 transition-transform group-hover:scale-105">
-                                <img alt={t("card.portraitAlt", { name: operator.name })} className="aspect-square w-full max-w-40 rounded-md object-contain" decoding="async" loading="lazy" src={getAvatarById(operator.id)} />
+                                <img alt={t("card.portraitAlt", { name: operator.name })} className="aspect-square w-full max-w-40 rounded-md object-contain" decoding="async" height={160} loading="lazy" src={getAvatarById(operator.id)} width={160} />
                             </div>
                         ) : (
                             <div className="absolute inset-0 origin-center transition-transform group-hover:scale-105">
-                                <img alt={t("card.portraitAlt", { name: operator.name })} className="h-full w-full rounded-lg object-contain" decoding="async" loading="lazy" src={operator.portrait ? assetURL(operator.portrait) : undefined} />
+                                <img alt={t("card.portraitAlt", { name: operator.name })} className="h-full w-full rounded-lg object-contain" decoding="async" height={270} loading="lazy" src={operator.portrait ? assetURL(operator.portrait) : undefined} width={180} />
                             </div>
                         )}
                         <div className="absolute inset-x-0 bottom-0 z-10">
                             <div className="relative">
-                                <div className="h-12 w-full bg-background/80 backdrop-blur-sm" />
-                                <h2 className="absolute bottom-1 left-1 line-clamp-2 max-w-[92%] font-bold text-xs uppercase opacity-60 opacity-transition group-hover:opacity-100 sm:text-sm md:text-sm">{operator.name}</h2>
+                                {/* Solid: a blur per card cost up to 100 backdrop passes a page, and the name never needed the art behind it. */}
+                                <div className="h-12 w-full bg-background" />
+                                <h2 className="absolute bottom-1 left-1 line-clamp-2 max-w-[92%] font-bold text-xs opacity-60 opacity-transition group-hover:opacity-100 sm:text-sm md:text-sm">{operator.name}</h2>
                                 <div className="card-hover-transition absolute right-1 bottom-1 flex scale-75 items-center opacity-90 transition-transform group-hover:scale-100 group-hover:opacity-100">
                                     <div className="h-4 w-4 md:h-6 md:w-6">
                                         <ClassIcon profession={operator.profession} size={160} />
@@ -61,19 +62,13 @@ export function OperatorCardGrid({ operator, statMetric }: IOperatorCardGridProp
                                         backgroundColor: RARITY_COLORS[rarityToNumber(operator.rarity)],
                                     }}
                                 />
-                                <div
-                                    className="absolute -bottom-0.5 h-1 w-full blur-sm"
-                                    style={{
-                                        backgroundColor: RARITY_BLUR_COLORS[rarityToNumber(operator.rarity)],
-                                    }}
-                                />
                             </div>
                         </div>
                     </Link>
                 }
             />
             <HoverCardContent className="w-max max-w-85 p-0">
-                <OperatorPreview operator={operator} />
+                <OperatorPreview operator={operator} ownership={operator.ownership} cnChanges={operator.cnChanges} />
             </HoverCardContent>
         </HoverCard>
     );

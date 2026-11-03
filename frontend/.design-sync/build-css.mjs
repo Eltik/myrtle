@@ -33,6 +33,7 @@ const FONT_PKGS = [
     { prefix: 'inter-', pkg: '@fontsource-variable/inter' },
     { prefix: 'geist-mono-', pkg: '@fontsource-variable/geist-mono' },
     { prefix: 'orbitron-', pkg: '@fontsource-variable/orbitron' },
+    { prefix: 'fraunces-', pkg: '@fontsource-variable/fraunces' },
 ];
 
 // ── Safelist ──────────────────────────────────────────────────────────────

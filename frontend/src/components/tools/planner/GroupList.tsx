@@ -14,11 +14,6 @@ import type { IPlannerSelection } from "./usePlannerSelection";
 
 type PlannerT = TypedT<typeof messages>;
 
-/** Group cards toggle on background clicks only: clicks on nested controls must not double-fire. */
-function isInteractiveGroupChild(target: HTMLElement): boolean {
-    return Boolean(target.closest("button") || target.closest("input") || target.closest("[role='checkbox']") || target.closest(".group-plans-list"));
-}
-
 interface IGroupListProps {
     plans: IOperatorPlanResponse[];
     groups: IPlanGroup[];
@@ -103,36 +98,26 @@ interface IGroupCardProps {
 function GroupCard({ group, plans, isSelected, isFilterEngaged, isExpanded, onToggleSelected, onToggleExpanded, onTogglePin, onRename, onDelete, entryContext }: IGroupCardProps): React.ReactElement {
     const t: PlannerT = useT("tools");
     const pinLabel = group.pinned ? t("planner.group.unpin", { name: group.name }) : t("planner.group.pin", { name: group.name });
-    const iconButton = "flex size-7 items-center justify-center rounded-md border transition-all";
+    const expandLabel = isExpanded ? t("planner.group.collapse", { name: group.name }) : t("planner.group.expand", { name: group.name });
+    // The 28px face stays for a mouse; a coarse pointer gets a centred 44px hit area on each, and the
+    // row's gap widens to 16px so neighbouring areas (28 + 16 = 44 apart) do not overlap.
+    const iconButton = "pointer-coarse:after:-translate-1/2 relative flex size-7 items-center justify-center rounded-md border transition-all pointer-coarse:after:absolute pointer-coarse:after:top-1/2 pointer-coarse:after:left-1/2 pointer-coarse:after:size-11";
     const neutralButton = "border-border bg-muted/40 text-foreground hover:border-border/80 hover:bg-muted";
 
     return (
-        // biome-ignore lint/a11y/useSemanticElements: custom interactive group wrapper
+        // The card is not itself a button: it holds the pin, expand, rename and delete buttons and the
+        // plans' own checkboxes, and a role=button around them made every one a nested control. The
+        // header label (checkbox plus name) is the selecting control.
         <div
-            role="button"
-            tabIndex={0}
-            onClick={(e) => {
-                if (isInteractiveGroupChild(e.target as HTMLElement)) return;
-                onToggleSelected();
-            }}
-            onKeyDown={(e) => {
-                if (e.key !== "Enter" && e.key !== " ") return;
-                if (isInteractiveGroupChild(e.target as HTMLElement)) return;
-                e.preventDefault();
-                onToggleSelected();
-            }}
-            className={cn(
-                "relative flex cursor-pointer flex-col rounded-xl border p-4 transition-all hover:shadow-md focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary/50",
-                isExpanded ? "gap-4" : "gap-0",
-                isSelected ? "border-primary bg-primary/5 shadow-sm ring-2 ring-primary/20" : isFilterEngaged ? "border-border/40 bg-card opacity-60 hover:opacity-100" : "border-border/40 bg-card",
-            )}
+            className={cn("relative flex flex-col rounded-xl border p-4 transition-all hover:shadow-md", isExpanded ? "gap-4" : "gap-0", isSelected ? "border-primary bg-primary/5 shadow-sm ring-2 ring-primary/20" : isFilterEngaged ? "border-border/40 bg-card opacity-60 hover:opacity-100" : "border-border/40 bg-card")}
         >
             <div className={cn("flex items-center justify-between", isExpanded && "border-border/40 border-b pb-3")}>
-                <div className="flex items-center gap-3">
+                {/* biome-ignore lint/a11y/noLabelWithoutControl: Checkbox renders the control inside this label */}
+                <label className="flex min-w-0 flex-1 cursor-pointer items-center gap-3">
                     <Checkbox checked={isSelected} onCheckedChange={onToggleSelected} />
-                    <span className="font-semibold text-foreground text-sm">{group.name}</span>
-                </div>
-                <div className="flex items-center gap-1">
+                    <span className="truncate font-semibold text-foreground text-sm">{group.name}</span>
+                </label>
+                <div className="flex items-center gap-1 pointer-coarse:gap-4">
                     <Tooltip>
                         <TooltipTrigger
                             render={
@@ -145,18 +130,18 @@ function GroupCard({ group, plans, isSelected, isFilterEngaged, isExpanded, onTo
                                 />
                             }
                         >
-                            <Pin className={cn("size-3.5", group.pinned && "fill-current")} />
+                            <Pin aria-hidden="true" className={cn("size-3.5", group.pinned && "fill-current")} />
                         </TooltipTrigger>
                         <TooltipPopup>{pinLabel}</TooltipPopup>
                     </Tooltip>
-                    <button type="button" onClick={onToggleExpanded} className={cn(iconButton, neutralButton)}>
-                        <ChevronDown className={cn("size-3.5 transition-transform", isExpanded && "rotate-180")} />
+                    <button type="button" aria-label={expandLabel} aria-expanded={isExpanded} onClick={onToggleExpanded} className={cn(iconButton, neutralButton)}>
+                        <ChevronDown aria-hidden="true" className={cn("size-3.5 transition-transform", isExpanded && "rotate-180")} />
                     </button>
-                    <button type="button" onClick={onRename} className={cn(iconButton, neutralButton)}>
-                        <Pencil className="size-3.5" />
+                    <button type="button" aria-label={t("planner.group.rename", { name: group.name })} onClick={onRename} className={cn(iconButton, neutralButton)}>
+                        <Pencil aria-hidden="true" className="size-3.5" />
                     </button>
-                    <button type="button" onClick={onDelete} className={cn(iconButton, "border-red-500/20 bg-red-500/5 text-red-600 hover:border-red-500/40 hover:bg-red-500/15 dark:text-red-400")}>
-                        <Trash className="size-3.5" />
+                    <button type="button" aria-label={t("planner.group.delete", { name: group.name })} onClick={onDelete} className={cn(iconButton, "border-red-500/20 bg-red-500/5 text-red-600 hover:border-red-500/40 hover:bg-red-500/15 dark:text-red-400")}>
+                        <Trash aria-hidden="true" className="size-3.5" />
                     </button>
                 </div>
             </div>

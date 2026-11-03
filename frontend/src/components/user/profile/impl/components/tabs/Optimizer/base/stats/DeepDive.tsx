@@ -75,7 +75,7 @@ function DiffRow({ label, from, to, format, betterLow }: { label: string; from: 
             <span className="font-mono text-[11.5px] tabular-nums">
                 {format(from)} &rarr; {format(to)}{" "}
                 {meaningful ? (
-                    <span className={cn("font-semibold", improved ? "text-emerald-400" : "text-destructive")}>
+                    <span className={cn("font-semibold", improved ? "text-success-foreground" : "text-destructive-foreground")}>
                         {delta > 0 ? "+" : "−"}
                         {format(Math.abs(delta))}
                     </span>
@@ -183,7 +183,7 @@ export function DeepDive() {
                                                     <span className="font-mono tabular-nums">
                                                         {Math.round(evaluation.drones.current)}/{evaluation.drones.max}
                                                     </span>
-                                                    <span className="text-destructive">{t("profile.base.deep.dronesFull")}</span>
+                                                    <span className="text-destructive-foreground">{t("profile.base.deep.dronesFull")}</span>
                                                 </>
                                             )}
                                         </span>
@@ -205,7 +205,7 @@ export function DeepDive() {
                                             {atRisk.map((e, i) => (
                                                 <span key={e.operator_id}>
                                                     {i > 0 && <span className="text-muted-foreground"> · </span>}
-                                                    {e.name} <span className={cn("font-mono tabular-nums", (e.lasts_hours ?? 99) < 12 ? "text-destructive" : "text-muted-foreground")}>{hoursLabel(e.lasts_hours ?? 0, t)}</span>
+                                                    {e.name} <span className={cn("font-mono tabular-nums", (e.lasts_hours ?? 99) < 12 ? "text-destructive-foreground" : "text-muted-foreground")}>{hoursLabel(e.lasts_hours ?? 0, t)}</span>
                                                 </span>
                                             ))}
                                         </span>
@@ -253,7 +253,9 @@ export function DeepDive() {
                                             </ToggleGroupItem>
                                         ))}
                                     </ToggleGroup>
-                                    <span className={cn("font-mono text-[11.5px] tabular-nums", losses.length > 0 ? "text-destructive" : "text-muted-foreground")}>{losses.length > 0 ? t("profile.base.deep.lost.suffix", { losses: losses.join(" · "), period: periodLabel }) : t("profile.base.deep.lost.nothing")}</span>
+                                    <span className={cn("font-mono text-[11.5px] tabular-nums", losses.length > 0 ? "text-destructive-foreground" : "text-muted-foreground")}>
+                                        {losses.length > 0 ? t("profile.base.deep.lost.suffix", { losses: losses.join(" · "), period: periodLabel }) : t("profile.base.deep.lost.nothing")}
+                                    </span>
                                 </div>
                             </div>
                         </section>
@@ -273,7 +275,7 @@ export function DeepDive() {
                                                     {d.comfort}/{d.comfort_limit}
                                                 </span>
                                             ),
-                                            rate: <span className="font-mono font-semibold text-emerald-400 tabular-nums">{t("profile.base.deep.furniture.rate", { rate: (d.comfort_upside_per_hour ?? 0).toFixed(2) })}</span>,
+                                            rate: <span className="font-mono font-semibold text-success-foreground tabular-nums">{t("profile.base.deep.furniture.rate", { rate: (d.comfort_upside_per_hour ?? 0).toFixed(2) })}</span>,
                                         })}
                                     </span>
                                 ))}
@@ -305,7 +307,7 @@ export function DeepDive() {
                                                 </span>
                                                 <span className="font-mono text-[11px] text-muted-foreground tabular-nums">{Math.round(room.total_efficiency)}%</span>
                                             </div>
-                                            <span className={cn("text-[10.5px]", overflows ? "text-destructive" : "text-muted-foreground")}>
+                                            <span className={cn("text-[10.5px]", overflows ? "text-destructive-foreground" : "text-muted-foreground")}>
                                                 {t("profile.base.deep.fullIn", { duration: room.fill_hours == null ? "-" : hoursLabel(room.fill_hours, t), count: room.capacity, unit: room.room_type === "TRADING" ? t("profile.base.deep.unit.orders") : t("profile.base.deep.unit.items") })}
                                                 {overflows && t("profile.base.deep.overflows")}
                                             </span>
@@ -390,7 +392,7 @@ export function DeepDive() {
                                         <div className="flex items-baseline gap-3 py-1 text-[11.5px]" key={facility.slot_id}>
                                             <span className="min-w-0 flex-1 truncate">{roomLabel(facility.room_type, api.catalog)}</span>
                                             <span className="font-mono tabular-nums">{produced}</span>
-                                            <span className={cn("w-24 text-right font-mono tabular-nums", facility.idle_hours > 0.05 ? "text-destructive" : "text-muted-foreground")}>
+                                            <span className={cn("w-24 text-right font-mono tabular-nums", facility.idle_hours > 0.05 ? "text-destructive-foreground" : "text-muted-foreground")}>
                                                 {facility.idle_hours > 0.05 ? t("profile.base.deep.idle", { hours: facility.idle_hours.toFixed(1) }) : t("profile.base.deep.noIdle")}
                                             </span>
                                         </div>
@@ -408,7 +410,7 @@ export function DeepDive() {
                             ) : (
                                 <span className="text-[11.5px] text-muted-foreground">
                                     {rt("profile.base.deep.unrotated.line", {
-                                        count: <span className="font-semibold text-destructive">{t("profile.base.deep.unrotated.dry", { count: evaluation.unrotated.depleted.length })}</span>,
+                                        count: <span className="font-semibold text-destructive-foreground">{t("profile.base.deep.unrotated.dry", { count: evaluation.unrotated.depleted.length })}</span>,
                                         hours: (evaluation.unrotated.depleted[0]?.at_hours ?? 0).toFixed(1),
                                         name: evaluation.unrotated.depleted[0]?.operator.name,
                                     })}

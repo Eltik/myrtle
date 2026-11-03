@@ -8,24 +8,28 @@ export const messages = {
         description: "Home page headline. It is the site's own name; keep it as-is unless the site is known by another name in this language.",
     },
     "hero.lead": {
-        text: "Show off your roster, plan your pulls and skins, see what’s coming to EN, and check the tier lists and leaderboards.",
+        text: "Show off your roster, plan your pulls and skins, see what's coming to EN, and check the tier lists and leaderboards.",
         description: "Paragraph under the home page headline. A 'roster' is a player's own operator collection; 'pulls' are gacha rolls; 'EN' is the English game server.",
     },
     "hero.hint": {
         text: "Press {keys} to search.",
         description: "Keyboard hint under the hero paragraph; clicking it opens the search palette. {keys} is the pair of key caps, '⌘ K' on a Mac and 'Ctrl K' elsewhere; move it wherever the sentence needs it.",
     },
+    "hero.keyCtrl": {
+        text: "Ctrl",
+        description: "Label on the Control key cap in the home page's search hint, shown everywhere but on a Mac. Use the label printed on that key on keyboards in this language, such as 'Strg' in German.",
+    },
     "hero.myrtleAlt": {
         text: "Myrtle, asleep under a blanket",
         description: "Alt text for the chibi of Myrtle (an operator, the site's mascot) beside the home page headline.",
     },
     "hero.cue.title": {
-        text: "Want to know some of Myrtle's functions?",
-        description: "Button at the bottom of the home page hero that scrolls down to the live events. Myrtle is the site's mascot operator speaking playfully.",
+        text: "See what's ending soon",
+        description: "Link at the bottom of the home page hero that jumps down to the section headed 'Ending soon', which lists the running events and banners closing first. Keep it close to that heading's wording.",
     },
     "hero.cue.subtitle": {
-        text: "See what's happening now",
-        description: "Second line of the scroll-down button in the home page hero; the section below lists the events and banners running now.",
+        text: "Events and banners closing first",
+        description: "Second line of the jump link at the bottom of the home page hero, saying what the 'Ending soon' section below lists: the running events and banners, the ones closing first at the top.",
     },
 } satisfies MessageMap;
 

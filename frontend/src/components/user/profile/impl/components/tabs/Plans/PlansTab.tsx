@@ -9,6 +9,7 @@ import type { IRosterEntry } from "#/lib/api/user";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { rarityToNumber, subProfessionLabel } from "#/lib/utils";
+import { LoadFailed } from "../LoadFailed";
 import type { messages } from "./PlansTab.messages";
 
 interface IPlanCardProps {
@@ -105,7 +106,7 @@ interface IPlansTabProps {
 
 export function PlansTab({ uid, roster }: IPlansTabProps) {
     const t: TypedT<typeof messages> = useT("user");
-    const { data: plans = [], isLoading } = useQuery(publicPlansQueryOptions(uid));
+    const { data: plans = [], isLoading, isError, refetch } = useQuery(publicPlansQueryOptions(uid));
     const sections = planSections(plans);
 
     if (isLoading) {
@@ -117,6 +118,8 @@ export function PlansTab({ uid, roster }: IPlansTabProps) {
             </div>
         );
     }
+
+    if (isError && plans.length === 0) return <LoadFailed message={t("profile.plans.error")} onRetry={() => void refetch()} />;
 
     if (plans.length === 0) {
         return (

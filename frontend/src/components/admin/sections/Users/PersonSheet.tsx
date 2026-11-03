@@ -168,7 +168,7 @@ function PersonBody({ person, meId, canAssign, grants, locales, localeName }: Om
                         {scores.map(([label, value]) => (
                             <div key={label} className="flex flex-col gap-0.5">
                                 <span className="text-[11.5px] text-muted-foreground">{label}</span>
-                                <span className="font-semibold text-[14px] tabular-nums">{value === null ? "—" : f.number(value)}</span>
+                                <span className="font-semibold text-[14px] tabular-nums">{value === null ? "-" : f.number(value)}</span>
                             </div>
                         ))}
                     </div>

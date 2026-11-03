@@ -39,7 +39,7 @@ function UnownedCompact({ entry }: { entry: IUnownedEntry }) {
 
     return (
         <div
-            className="fade-in slide-in-from-bottom-2 relative flex h-min w-full animate-in flex-col rounded bg-card opacity-60 grayscale"
+            className="relative flex h-min w-full flex-col rounded bg-card"
             style={{
                 padding: "4px 6px",
                 boxShadow: "0 1px 3px 0 rgb(0 0 0 / 0.1)",
@@ -52,7 +52,8 @@ function UnownedCompact({ entry }: { entry: IUnownedEntry }) {
                 </span>
             </div>
 
-            <div className="relative box-content aspect-square w-full" style={{ borderBottom: `4px solid ${rarityColor}` }}>
+            {/* Only the art dims for "not owned": a whole-card opacity took the name down with it. */}
+            <div className="relative box-content aspect-square w-full opacity-60 grayscale" style={{ borderBottom: `4px solid ${rarityColor}` }}>
                 <img alt={entry.name} className="h-full w-full object-contain" decoding="async" height={120} loading="lazy" src={getAvatarById(entry.operator_id)} width={120} />
             </div>
         </div>
@@ -67,10 +68,15 @@ function UnownedDetailed({ entry }: { entry: IUnownedEntry }) {
     const dataSaver = useDataSaver();
 
     return (
-        <Card className="fade-in slide-in-from-bottom-4 flex w-full animate-in flex-col gap-0 overflow-hidden border-2 border-muted/30 py-0 pb-1 opacity-60 grayscale transition-all duration-300 hover:border-muted hover:opacity-80 hover:shadow-lg">
+        <Card className="group flex w-full flex-col gap-0 overflow-hidden border-2 border-muted/30 py-0 pb-1 transition-all duration-300 hover:border-muted hover:shadow-lg">
             <div className="relative">
-                <div className="relative h-64 w-full overflow-hidden">
-                    {dataSaver ? <img alt={entry.name} className="h-full w-full object-contain p-6 pb-16" decoding="async" loading="lazy" src={getAvatarById(entry.operator_id)} /> : <img alt={entry.name} className="h-full w-full object-contain object-top" decoding="async" loading="lazy" src={heroSrc} />}
+                {/* The dim sits on the art alone, so the labels below keep full muted-foreground (7.43, was 2.87 under a card-wide opacity-60). */}
+                <div className="relative h-64 w-full overflow-hidden grayscale">
+                    {dataSaver ? (
+                        <img alt={entry.name} className="h-full w-full object-contain p-6 pb-16 opacity-60 transition-opacity duration-300 group-hover:opacity-80" decoding="async" loading="lazy" src={getAvatarById(entry.operator_id)} />
+                    ) : (
+                        <img alt={entry.name} className="h-full w-full object-contain object-top opacity-60 transition-opacity duration-300 group-hover:opacity-80" decoding="async" loading="lazy" src={heroSrc} />
+                    )}
                     <div className="absolute inset-0 bg-linear-to-t from-black/50 to-transparent opacity-70" />
                     <div className="absolute right-0 bottom-0 left-0 p-4">
                         <h3 className="mt-2 max-w-3/4 text-left font-bold text-white text-xl">{entry.name}</h3>
@@ -112,7 +118,7 @@ function UnownedDetailed({ entry }: { entry: IUnownedEntry }) {
                 <div className="w-full">
                     {(["profile.roster.card.potential", "profile.roster.card.skills", "profile.roster.card.modules"] as const).map((key) => (
                         <div className="flex items-center justify-between border-b-0 py-2" key={key}>
-                            <span className="font-medium text-muted-foreground/50 text-sm">{t(key)}</span>
+                            <span className="font-medium text-muted-foreground text-sm">{t(key)}</span>
                         </div>
                     ))}
                 </div>

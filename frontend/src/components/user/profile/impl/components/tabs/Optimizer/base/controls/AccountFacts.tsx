@@ -44,7 +44,7 @@ export function AccountFacts() {
                                 </option>
                             ))}
                         </select>
-                        {api.factsSaved !== null && <span className={api.factsSaved ? "text-[10px] text-emerald-400" : "text-[10px] text-muted-foreground"}>{api.factsSaved ? t("profile.base.facts.saved") : t("profile.base.facts.whatIf")}</span>}
+                        {api.factsSaved !== null && <span className={api.factsSaved ? "text-[10px] text-success-foreground" : "text-[10px] text-muted-foreground"}>{api.factsSaved ? t("profile.base.facts.saved") : t("profile.base.facts.whatIf")}</span>}
                     </div>
                 )}
             />

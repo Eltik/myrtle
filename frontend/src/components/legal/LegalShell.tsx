@@ -14,16 +14,10 @@ interface ILegalContainerProps {
 
 export function LegalContainer({ children, ambient }: ILegalContainerProps) {
     return (
-        <main className="relative overflow-x-clip">
-            <div className={styles.pageAmbient} aria-hidden="true" />
-            {ambient ? (
-                <>
-                    <div className={styles.heroAmb} aria-hidden="true" />
-                    <div className={styles.heroGrid} aria-hidden="true" />
-                </>
-            ) : null}
+        <div className="relative overflow-x-clip">
+            {ambient ? <div className={styles.heroGrid} aria-hidden="true" /> : null}
             <article className="page-gutter relative z-1 py-14 [--page-max:880px] sm:py-16">{children}</article>
-        </main>
+        </div>
     );
 }
 

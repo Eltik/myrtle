@@ -8,20 +8,28 @@ export const messages = {
         description: "Heading of the home page section listing the running events and banners, the ones closing first at the top.",
     },
     "live.seeAll": {
-        text: "All current banners →",
-        description: "Link from the home page's live section to the community gacha page, which lists every banner open right now on the reader's game server. The arrow is part of the label.",
+        text: "All current banners",
+        description: "Link from the home page's live section to the community gacha page, which lists every banner open right now on the reader's game server.",
     },
     "live.empty": {
         text: "Nothing running on {server} right now.",
         description: "Shown in the home page's live section when no event or banner is open. {server} is the game server's region name, such as 'Global' or 'China'.",
     },
     "live.upcoming": {
-        text: "See what's coming next →",
-        description: "Link under the empty message in the home page's live section, to the release planner, which forecasts upcoming events and banners. Shown only on the server the planner forecasts. The arrow is part of the label.",
+        text: "See what's coming next",
+        description: "Link under the empty message in the home page's live section, to the release planner, which forecasts upcoming events and banners. Shown only on the server the planner forecasts.",
     },
     "live.error": {
         text: "Couldn't load what's running on {server}.",
         description: "Shown in the home page's live section when the event or banner data failed to load. {server} is the game server's region name, such as 'Global' or 'China'.",
+    },
+    "live.retry": {
+        text: "Try again",
+        description: "Button beside the error message in the home page's live section; it reloads the event and banner data.",
+    },
+    "live.loading": {
+        text: "Loading what's running on {server}.",
+        description: "Read out by screen readers only, while the home page's live section loads. {server} is the game server's region name, such as 'Global' or 'China'.",
     },
     "live.eventDetail": {
         text: "Event · ends {date}",
@@ -37,7 +45,7 @@ export const messages = {
     },
     "live.bannerMore": {
         text: "{names} +{count} more",
-        description: "A banner's featured operators when there are more than three: {names} is the first two, comma-separated, and {count} is how many are left out.",
+        description: "A banner's featured operators when there are more than three: {names} is the first two, already joined as a list in the reader's language, and {count} is how many are left out.",
     },
     "live.countdown": {
         text: "{days}d {clock}",

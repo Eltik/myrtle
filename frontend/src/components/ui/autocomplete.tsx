@@ -5,7 +5,10 @@ import { ChevronsUpDownIcon, XIcon } from "lucide-react";
 import type React from "react";
 import { Input } from "#/components/ui/input";
 import { ScrollArea } from "#/components/ui/scroll-area";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
+import type { messages } from "./combobox.messages";
 
 export const Autocomplete: typeof AutocompletePrimitive.Root = AutocompletePrimitive.Root;
 
@@ -71,7 +74,7 @@ export function AutocompleteInput({
                     )}
                     {...clearProps}
                 >
-                    <XIcon />
+                    <XIcon aria-hidden="true" />
                 </AutocompleteClear>
             )}
         </AutocompletePrimitive.InputGroup>
@@ -117,7 +120,7 @@ export function AutocompletePopup({
 export function AutocompleteItem({ className, children, ...props }: AutocompletePrimitive.Item.Props): React.ReactElement {
     return (
         <AutocompletePrimitive.Item
-            className={cn("flex min-h-8 cursor-default select-none items-center rounded-sm px-2 py-1 text-base outline-none data-disabled:pointer-events-none data-highlighted:bg-accent data-highlighted:text-accent-foreground data-disabled:opacity-64 sm:min-h-7 sm:text-sm", className)}
+            className={cn("flex min-h-8 pointer-coarse:min-h-11 cursor-default select-none items-center rounded-sm px-2 py-1 text-base outline-none data-disabled:cursor-not-allowed data-highlighted:bg-accent data-highlighted:text-accent-foreground data-disabled:opacity-64 sm:min-h-7 sm:text-sm", className)}
             data-slot="autocomplete-item"
             {...props}
         >
@@ -159,8 +162,12 @@ export function AutocompleteList({ className, ...props }: AutocompletePrimitive.
 }
 
 export function AutocompleteClear({ className, ...props }: AutocompletePrimitive.Clear.Props): React.ReactElement {
+    // Shares the combobox's Clear string: same control, same word.
+    const t: TypedT<typeof messages> = useT("common");
+
     return (
         <AutocompletePrimitive.Clear
+            aria-label={t("combobox.clear")}
             className={cn(
                 "absolute end-0.5 top-1/2 inline-flex size-8 shrink-0 -translate-y-1/2 cursor-pointer items-center justify-center rounded-md border border-transparent opacity-80 outline-none transition-[color,background-color,box-shadow,opacity] pointer-coarse:after:absolute pointer-coarse:after:min-h-11 pointer-coarse:after:min-w-11 hover:opacity-100 sm:size-7 [&_svg:not([class*='size-'])]:size-4.5 sm:[&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0",
                 className,
@@ -168,7 +175,7 @@ export function AutocompleteClear({ className, ...props }: AutocompletePrimitive
             data-slot="autocomplete-clear"
             {...props}
         >
-            <XIcon />
+            <XIcon aria-hidden="true" />
         </AutocompletePrimitive.Clear>
     );
 }

@@ -11,6 +11,14 @@ export const messages = {
         text: "Randomizer",
         description: "Last breadcrumb, naming this tool. The page heading itself is a separate string.",
     },
+    "randomizer.loadError": {
+        text: "Some of the game data couldn't be loaded, so the operator and stage pools may be incomplete.",
+        description: "Shown in place of the empty result when a list the randomizer draws from (operators, stages, the player's roster or clears) fails to load.",
+    },
+    "randomizer.retry": {
+        text: "Try again",
+        description: "Button that reloads the lists that failed to load.",
+    },
 } satisfies MessageMap;
 
 export const { keys } = defineMessages({ namespace, messages });

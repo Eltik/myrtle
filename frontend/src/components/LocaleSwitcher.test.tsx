@@ -3,7 +3,6 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { I18nProvider } from "#/lib/i18n/context";
 import LanguageToggle from "./header/impl/LanguageToggle";
-import { LocaleSwitcher } from "./LocaleSwitcher";
 
 // `useLocaleSwitch` reads the current location to rebuild it under the new
 // locale's basepath. Standing up a real router for that would test the router;
@@ -34,20 +33,6 @@ function mount(available: Array<{ code: string; nativeName: string }>, children:
 
 // `globals: false`, so RTL's auto-cleanup is not installed.
 afterEach(cleanup);
-
-describe("LocaleSwitcher", () => {
-    it("renders nothing when only one locale is enabled", () => {
-        const { container } = mount(ONE, <LocaleSwitcher />);
-        expect(container.firstChild).toBeNull();
-    });
-
-    it("lists every enabled locale under its own name, marking the active one", () => {
-        mount(TWO, <LocaleSwitcher />);
-        expect(screen.getAllByRole("button").map((b) => b.textContent)).toEqual(["English", "日本語"]);
-        expect(screen.getByRole("button", { name: "English" }).getAttribute("aria-current")).toBe("true");
-        expect(screen.getByRole("button", { name: "日本語" }).getAttribute("aria-current")).toBeNull();
-    });
-});
 
 describe("LanguageToggle", () => {
     it("renders nothing when only one locale is enabled", () => {

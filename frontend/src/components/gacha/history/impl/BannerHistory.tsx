@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from "react";
 import { Button } from "#/components/ui/button";
 import { Kicker } from "#/components/ui/kicker";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
+import { Skeleton } from "#/components/ui/skeleton";
 import type { IBanner, IClientGachaRecords, IGachaItem } from "#/lib/api/gacha";
 import { type IFormatters, useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -270,23 +271,23 @@ export function BannerHistory({ records, operatorsById, bannersById, isLoading }
     if (isLoading) {
         return (
             <section className="flex flex-col gap-4 rounded-[14px] border border-border bg-card p-4.5 sm:p-[22px_24px]">
-                <div className="h-4 w-28 animate-pulse rounded bg-muted" />
+                <Skeleton className="h-4 w-28 rounded" />
                 <div className="flex gap-2 border-border border-b pb-0">
                     {Array.from({ length: 3 }).map((_, i) => (
                         // biome-ignore lint/suspicious/noArrayIndexKey: skeleton
-                        <div key={i} className="h-8 w-20 animate-pulse rounded-t-md bg-muted" />
+                        <Skeleton key={i} className="h-8 w-20 rounded-t-md" />
                     ))}
                 </div>
                 <div className="flex flex-col gap-2.5">
                     {Array.from({ length: 8 }).map((_, i) => (
                         // biome-ignore lint/suspicious/noArrayIndexKey: skeleton
                         <div key={i} className="flex items-center gap-3 not-last:border-border/50 not-last:border-b py-1">
-                            <div className="h-7 w-7 animate-pulse rounded-md bg-muted" />
+                            <Skeleton className="h-7 w-7 rounded-md" />
                             <div className="flex flex-1 flex-col gap-1.5">
-                                <div className="h-3 w-28 animate-pulse rounded bg-muted" />
-                                <div className="h-2 w-16 animate-pulse rounded bg-muted" />
+                                <Skeleton className="h-3 w-28 rounded" />
+                                <Skeleton className="h-2 w-16 rounded" />
                             </div>
-                            <div className="hidden h-3 w-24 animate-pulse rounded bg-muted sm:block" />
+                            <Skeleton className="hidden h-3 w-24 rounded sm:block" />
                         </div>
                     ))}
                 </div>
@@ -324,7 +325,7 @@ export function BannerHistory({ records, operatorsById, bannersById, isLoading }
                             className={`relative flex shrink-0 cursor-pointer items-center gap-1 whitespace-nowrap border-none bg-none px-2 py-2 font-medium font-sans text-[12px] transition-colors sm:gap-1.5 sm:px-3 sm:text-[13px] ${isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}
                         >
                             {tabLabel(tab)}
-                            <span className={`inline-flex h-4.5 min-w-5 shrink-0 items-center justify-center rounded-full px-1 font-mono text-[10px] tabular-nums ${isActive ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"}`}>{f.number(count)}</span>
+                            <span className={`inline-flex h-4.5 min-w-5 shrink-0 items-center justify-center rounded-full px-1 font-mono text-[10px] tabular-nums ${isActive ? "bg-primary/15 text-foreground" : "bg-muted text-muted-foreground"}`}>{f.number(count)}</span>
                             {isActive ? <span className="absolute right-2 -bottom-px left-2 h-0.5 rounded-full bg-primary sm:right-3 sm:left-3" /> : null}
                         </button>
                     );
@@ -355,7 +356,7 @@ export function BannerHistory({ records, operatorsById, bannersById, isLoading }
                                 <span className="tabular-nums" style={isActive ? { color: rarityStarColor(rarity) } : undefined}>
                                     {rarity}★
                                 </span>
-                                <span className={`inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1 font-mono text-[9.5px] tabular-nums ${isActive ? "bg-primary/15 text-primary" : "bg-muted-foreground/15 text-muted-foreground"}`}>{f.number(count)}</span>
+                                <span className={`inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1 font-mono text-[9.5px] tabular-nums ${isActive ? "bg-primary/15 text-foreground" : "bg-muted-foreground/15 text-muted-foreground"}`}>{f.number(count)}</span>
                             </button>
                         );
                     })}

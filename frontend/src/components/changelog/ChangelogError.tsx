@@ -5,7 +5,6 @@ import { Button } from "#/components/ui/button";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import type { messages } from "./ChangelogError.messages";
-import styles from "./impl/ChangelogPage.module.css";
 
 export function ChangelogError({ error }: { error: unknown }) {
     const t: TypedT<typeof messages> = useT("changelog");
@@ -23,8 +22,7 @@ export function ChangelogError({ error }: { error: unknown }) {
     }
 
     return (
-        <main className="relative overflow-x-clip">
-            <div className={styles.pageAmbient} aria-hidden="true" />
+        <div className="relative overflow-x-clip">
             <div className="mx-auto flex w-[min(820px,calc(100%-2rem))] flex-col items-center py-20 text-center sm:py-28">
                 <span className="mb-5 inline-flex size-16 items-center justify-center rounded-2xl bg-destructive/10 text-destructive-foreground">
                     <TriangleAlertIcon className="size-8" strokeWidth={1.8} aria-hidden="true" />
@@ -41,6 +39,6 @@ export function ChangelogError({ error }: { error: unknown }) {
                     </Button>
                 </div>
             </div>
-        </main>
+        </div>
     );
 }

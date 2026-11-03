@@ -249,7 +249,7 @@ export function HpsCalculator({ shareParam, onShareParamChange }: IHpsCalculator
                     <BuffsPanel hydrationToken={hydrationToken} buffs={state.buffs} onChangeBuffs={(patch) => dispatch({ type: "SET_BUFFS", patch })} onChangeBuffValues={(patch) => dispatch({ type: "SET_BUFF_VALUES", patch })} />
                 </aside>
 
-                <main className="flex min-w-0 flex-col gap-4 xl:sticky xl:top-20 xl:col-start-2 xl:row-span-2 xl:row-start-1 xl:max-h-[calc(100vh-6rem)] xl:overflow-y-auto xl:pr-1">
+                <div className="flex min-w-0 flex-col gap-4 xl:sticky xl:top-20 xl:col-start-2 xl:row-span-2 xl:row-start-1 xl:max-h-[calc(100vh-6rem)] xl:overflow-y-auto xl:pr-1">
                     <Card>
                         <CardHeader className="pb-3">
                             <AxisControls
@@ -304,7 +304,7 @@ export function HpsCalculator({ shareParam, onShareParamChange }: IHpsCalculator
                     </Card>
 
                     <KpiPanel instances={state.instances} snapshots={snapshots} leaderKey={state.yMetric} leaderLabel={t(Y_METRIC_LABEL_KEYS[state.yMetric])} columns={columns} />
-                </main>
+                </div>
 
                 <section aria-label={t("hps.configured")} className="flex min-w-0 flex-col gap-4 xl:col-start-1 xl:row-start-2">
                     {state.instances.map((inst, idx) => (

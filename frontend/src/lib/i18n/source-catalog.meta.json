@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-11-02T12:08:51.462Z",
+    "generatedAt": "2026-11-02T23:17:21.678Z",
     "entries": [
         {
             "key": "admin.home.access.everyList",
@@ -2577,7 +2577,7 @@
         {
             "key": "admin.system.languages.noFallback",
             "namespace": "admin",
-            "source_text": "—",
+            "source_text": "-",
             "description": "Shown in the Falls back to column for the source language, which falls back to nothing. A dash meaning 'none'.",
             "placeholders": []
         },
@@ -8966,6 +8966,13 @@
             "placeholders": []
         },
         {
+            "key": "common.combobox.clear",
+            "namespace": "common",
+            "source_text": "Clear",
+            "description": "Accessible name of the x button at the end of a combobox or autocomplete field. A verb: it empties the field, or deselects every value.",
+            "placeholders": []
+        },
+        {
             "key": "common.combobox.removeChip",
             "namespace": "common",
             "source_text": "Remove",
@@ -9316,7 +9323,7 @@
             "key": "common.localeSwitcher.language",
             "namespace": "common",
             "source_text": "Language",
-            "description": "A noun naming what the language controls select. Used as the screen-reader-only group label in the footer switcher, the heading of the header's globe menu and of the mobile drawer's language group, and the title of the Language card in appearance settings.",
+            "description": "A noun naming what the language controls select. Used as the label of the language group in the header's language menu and the mobile drawer, and the title of the Language card in appearance settings.",
             "placeholders": []
         },
         {
@@ -9532,7 +9539,14 @@
             "key": "common.notFound.returnHome",
             "namespace": "common",
             "source_text": "Take me home",
-            "description": "The only 404 action: navigates to the site root.",
+            "description": "First 404 action: navigates to the site root.",
+            "placeholders": []
+        },
+        {
+            "key": "common.notFound.search",
+            "namespace": "common",
+            "source_text": "Search the site",
+            "description": "Second 404 action: opens the site-wide search palette (operators, stages, pages), for a visitor who followed an old link.",
             "placeholders": []
         },
         {
@@ -9585,6 +9599,41 @@
             "placeholders": []
         },
         {
+            "key": "common.playerFallback",
+            "namespace": "common",
+            "source_text": "Player",
+            "description": "Stands in for a signed-in visitor's nickname when the game sent none, in the header account menu, the mobile drawer and Settings. 'Player' is the site's term; the game itself says 'Doctor'.",
+            "placeholders": []
+        },
+        {
+            "key": "common.routeError.description",
+            "namespace": "common",
+            "source_text": "Try loading it again. If it fails a second time, the rest of the site still works, so start again from the home page.",
+            "description": "Line under the heading that names the next step: retry first, then go home. The two buttons below it do exactly those two things.",
+            "placeholders": []
+        },
+        {
+            "key": "common.routeError.home",
+            "namespace": "common",
+            "source_text": "Go to the home page",
+            "description": "Second button: navigates to the site root.",
+            "placeholders": []
+        },
+        {
+            "key": "common.routeError.retry",
+            "namespace": "common",
+            "source_text": "Try again",
+            "description": "Button that reloads the failed page's data in place, without a full browser reload.",
+            "placeholders": []
+        },
+        {
+            "key": "common.routeError.title",
+            "namespace": "common",
+            "source_text": "Something went wrong loading this page",
+            "description": "Heading shown in place of a page whose data or code failed to load. No full stop: it is a heading.",
+            "placeholders": []
+        },
+        {
             "key": "common.searchCommand.cnOnly",
             "namespace": "common",
             "source_text": "CN only",
@@ -9603,8 +9652,8 @@
         {
             "key": "common.searchCommand.noResults",
             "namespace": "common",
-            "source_text": "No results found.",
-            "description": "Shown when nothing in any group matches the query.",
+            "source_text": "Nothing matches. Try an operator's codename or a page name.",
+            "description": "Shown when nothing in any group matches the query. The second sentence is the next step: operators are found by codename (Amiya, SilverAsh), pages by their name.",
             "placeholders": []
         },
         {
@@ -9633,13 +9682,6 @@
             "namespace": "common",
             "source_text": "Search operators, pages, tools…",
             "description": "Placeholder in the command palette's search field. Ends in a single ellipsis character.",
-            "placeholders": []
-        },
-        {
-            "key": "common.searchCommand.poweredBy",
-            "namespace": "common",
-            "source_text": "powered by COSS UI",
-            "description": "Attribution in the palette footer. 'COSS UI' is a product name and stays as-is.",
             "placeholders": []
         },
         {
@@ -9696,6 +9738,13 @@
             "namespace": "common",
             "source_text": "Loading",
             "description": "Accessible name of the spinning busy indicator, announced while something is still being fetched. No trailing ellipsis.",
+            "placeholders": []
+        },
+        {
+            "key": "common.toast.close",
+            "namespace": "common",
+            "source_text": "Dismiss notification",
+            "description": "Accessible name of the x button on a pop-up notification (toast). It closes that one notification.",
             "placeholders": []
         },
         {
@@ -11300,17 +11349,24 @@
             ]
         },
         {
-            "key": "gacha.community.error.load",
+            "key": "gacha.community.error.bannerStats",
             "namespace": "gacha",
-            "source_text": "Couldn’t load community stats.",
-            "description": "Bold lead-in of the error banner on the community gacha page; the server's own message follows it on the same line.",
+            "source_text": "The per-banner pull counts couldn't be loaded, so the banners below show without them.",
+            "description": "Shown above the banner runs panel on the community gacha page when the per-banner pull statistics fail to load; the banners still list.",
             "placeholders": []
         },
         {
-            "key": "gacha.community.error.unknown",
+            "key": "gacha.community.error.banners",
             "namespace": "gacha",
-            "source_text": "Unknown error.",
-            "description": "Stand-in for the server's error message when the failed request carried none.",
+            "source_text": "The banner list couldn't be loaded.",
+            "description": "Shown above the banner runs panel on the community gacha page when the list of banners fails to load.",
+            "placeholders": []
+        },
+        {
+            "key": "gacha.community.error.load",
+            "namespace": "gacha",
+            "source_text": "The community stats couldn't be loaded.",
+            "description": "Shown in place of the community page's stat panels (totals, most-pulled operators, rarity rates, pull timing) when they fail to load.",
             "placeholders": []
         },
         {
@@ -12388,6 +12444,13 @@
             "placeholders": []
         },
         {
+            "key": "gacha.history.error.names",
+            "namespace": "gacha",
+            "source_text": "Operator or banner names couldn't be loaded, so some pulls show without them.",
+            "description": "Notice above the pull-history panels when the operator list or the banner list fails to load; the pulls still count, but rows lose their operator or banner names.",
+            "placeholders": []
+        },
+        {
             "key": "gacha.history.error.unknown",
             "namespace": "gacha",
             "source_text": "Unknown error.",
@@ -12655,15 +12718,6 @@
             ]
         },
         {
-            "key": "gacha.history.pity.softPityAt.title",
-            "namespace": "gacha",
-            "source_text": "Soft pity at {count}",
-            "description": "Tooltip on the tick marking where the 6-star chance starts climbing.",
-            "placeholders": [
-                "count"
-            ]
-        },
-        {
             "key": "gacha.history.pity.title",
             "namespace": "gacha",
             "source_text": "Pulls since last 6★.",
@@ -12921,6 +12975,13 @@
             "namespace": "gacha",
             "source_text": "Your top operators.",
             "description": "Heading of the panel ranking the operators the player pulled most often.",
+            "placeholders": []
+        },
+        {
+            "key": "gacha.loadFailed.retry",
+            "namespace": "gacha",
+            "source_text": "Try again",
+            "description": "Button beside a failure line on the gacha history or community page that reloads what failed to load.",
             "placeholders": []
         },
         {
@@ -16803,15 +16864,15 @@
         {
             "key": "home.hero.cue.subtitle",
             "namespace": "home",
-            "source_text": "See what's happening now",
-            "description": "Second line of the scroll-down button in the home page hero; the section below lists the events and banners running now.",
+            "source_text": "Events and banners closing first",
+            "description": "Second line of the jump link at the bottom of the home page hero, saying what the 'Ending soon' section below lists: the running events and banners, the ones closing first at the top.",
             "placeholders": []
         },
         {
             "key": "home.hero.cue.title",
             "namespace": "home",
-            "source_text": "Want to know some of Myrtle's functions?",
-            "description": "Button at the bottom of the home page hero that scrolls down to the live events. Myrtle is the site's mascot operator speaking playfully.",
+            "source_text": "See what's ending soon",
+            "description": "Link at the bottom of the home page hero that jumps down to the section headed 'Ending soon', which lists the running events and banners closing first. Keep it close to that heading's wording.",
             "placeholders": []
         },
         {
@@ -16824,9 +16885,16 @@
             ]
         },
         {
+            "key": "home.hero.keyCtrl",
+            "namespace": "home",
+            "source_text": "Ctrl",
+            "description": "Label on the Control key cap in the home page's search hint, shown everywhere but on a Mac. Use the label printed on that key on keyboards in this language, such as 'Strg' in German.",
+            "placeholders": []
+        },
+        {
             "key": "home.hero.lead",
             "namespace": "home",
-            "source_text": "Show off your roster, plan your pulls and skins, see what’s coming to EN, and check the tier lists and leaderboards.",
+            "source_text": "Show off your roster, plan your pulls and skins, see what's coming to EN, and check the tier lists and leaderboards.",
             "description": "Paragraph under the home page headline. A 'roster' is a player's own operator collection; 'pulls' are gacha rolls; 'EN' is the English game server.",
             "placeholders": []
         },
@@ -16859,6 +16927,13 @@
             "placeholders": []
         },
         {
+            "key": "home.leaders.loading",
+            "namespace": "home",
+            "source_text": "Loading the leaderboard.",
+            "description": "Read out by screen readers only, while the home page's top-five panel loads.",
+            "placeholders": []
+        },
+        {
             "key": "home.leaders.meta",
             "namespace": "home",
             "source_text": "{server} · Lv {level}",
@@ -16869,27 +16944,39 @@
             ]
         },
         {
+            "key": "home.leaders.missing",
+            "namespace": "home",
+            "source_text": "-",
+            "description": "Shown in a home page leaderboard row in place of a rank, score or grade the player does not have. Keep it a short placeholder mark.",
+            "placeholders": []
+        },
+        {
+            "key": "home.leaders.missingLabel",
+            "namespace": "home",
+            "source_text": "Not available",
+            "description": "Read out by screen readers only, in place of the placeholder mark for a rank, score or grade the player does not have on the home page leaderboard.",
+            "placeholders": []
+        },
+        {
+            "key": "home.leaders.retry",
+            "namespace": "home",
+            "source_text": "Try again",
+            "description": "Button beside the error message in the home page's top-five panel; it reloads the leaderboard.",
+            "placeholders": []
+        },
+        {
             "key": "home.leaders.seeAll",
             "namespace": "home",
-            "source_text": "Full leaderboard →",
-            "description": "Link from the home page's top-five panel to the full leaderboard. The arrow is part of the label.",
+            "source_text": "Full leaderboard",
+            "description": "Link from the home page's top-five panel to the full leaderboard.",
             "placeholders": []
         },
         {
             "key": "home.leaders.title",
             "namespace": "home",
-            "source_text": "Top Players",
+            "source_text": "Top players",
             "description": "Heading of the home page's top-five player panel. 'Player' is the site's term; the game itself says 'Doctor'.",
             "placeholders": []
-        },
-        {
-            "key": "home.leaders.viewProfile",
-            "namespace": "home",
-            "source_text": "View {nickname}'s profile",
-            "description": "Accessible name of a player row on the home page leaderboard, which opens that player's profile.",
-            "placeholders": [
-                "nickname"
-            ]
         },
         {
             "key": "home.live.bannerKind",
@@ -16904,7 +16991,7 @@
             "key": "home.live.bannerMore",
             "namespace": "home",
             "source_text": "{names} +{count} more",
-            "description": "A banner's featured operators when there are more than three: {names} is the first two, comma-separated, and {count} is how many are left out.",
+            "description": "A banner's featured operators when there are more than three: {names} is the first two, already joined as a list in the reader's language, and {count} is how many are left out.",
             "placeholders": [
                 "count",
                 "names"
@@ -16962,10 +17049,26 @@
             ]
         },
         {
+            "key": "home.live.loading",
+            "namespace": "home",
+            "source_text": "Loading what's running on {server}.",
+            "description": "Read out by screen readers only, while the home page's live section loads. {server} is the game server's region name, such as 'Global' or 'China'.",
+            "placeholders": [
+                "server"
+            ]
+        },
+        {
+            "key": "home.live.retry",
+            "namespace": "home",
+            "source_text": "Try again",
+            "description": "Button beside the error message in the home page's live section; it reloads the event and banner data.",
+            "placeholders": []
+        },
+        {
             "key": "home.live.seeAll",
             "namespace": "home",
-            "source_text": "All current banners →",
-            "description": "Link from the home page's live section to the community gacha page, which lists every banner open right now on the reader's game server. The arrow is part of the label.",
+            "source_text": "All current banners",
+            "description": "Link from the home page's live section to the community gacha page, which lists every banner open right now on the reader's game server.",
             "placeholders": []
         },
         {
@@ -16978,15 +17081,15 @@
         {
             "key": "home.live.upcoming",
             "namespace": "home",
-            "source_text": "See what's coming next →",
-            "description": "Link under the empty message in the home page's live section, to the release planner, which forecasts upcoming events and banners. Shown only on the server the planner forecasts. The arrow is part of the label.",
+            "source_text": "See what's coming next",
+            "description": "Link under the empty message in the home page's live section, to the release planner, which forecasts upcoming events and banners. Shown only on the server the planner forecasts.",
             "placeholders": []
         },
         {
             "key": "home.updates.seeAll",
             "namespace": "home",
-            "source_text": "Changelog →",
-            "description": "Link from the home page's latest-updates panel to the full changelog page. The arrow is part of the label.",
+            "source_text": "Changelog",
+            "description": "Link from the home page's latest-updates panel to the full changelog page.",
             "placeholders": []
         },
         {
@@ -19343,6 +19446,13 @@
             "placeholders": []
         },
         {
+            "key": "meta.root.notFoundTitle",
+            "namespace": "meta",
+            "source_text": "Page not found",
+            "description": "Document title of the 404 page, shown when no page exists at the address. The site name is appended as `Page not found • Myrtle`.",
+            "placeholders": []
+        },
+        {
             "key": "meta.root.title",
             "namespace": "meta",
             "source_text": "Myrtle",
@@ -19697,22 +19807,22 @@
         {
             "key": "nav.authDialog.description.bili",
             "namespace": "nav",
-            "source_text": "Log in with your Bilibili account. No login information is stored on the server.",
-            "description": "Dialog subtitle for the Bilibili server. 'Bilibili' is the Chinese publisher's name.",
+            "source_text": "Log in with your Bilibili account. Your password is used once to sign in and never stored.",
+            "description": "Dialog subtitle for the Bilibili server. 'Bilibili' is the Chinese publisher's name. It must stay true: the password is never stored.",
             "placeholders": []
         },
         {
             "key": "nav.authDialog.description.cn",
             "namespace": "nav",
-            "source_text": "Experimental: logs in with your Hypergryph (CN) account through the same passport flow the Skland app uses. Untested against a real account, so it may fail even with correct credentials. No login information is stored on the server.",
+            "source_text": "Experimental: logs in with your Hypergryph (CN) account through the same passport flow the Skland app uses. Untested against a real account, so it may fail even with correct credentials. Your password or code is used once to sign in and never stored.",
             "description": "Dialog subtitle for the Chinese server. 'Hypergryph' is the developer and 'Skland' its companion app; both stay as-is.",
             "placeholders": []
         },
         {
             "key": "nav.authDialog.description.yostar",
             "namespace": "nav",
-            "source_text": "Use your YoStar email to send an OTP code. No login information is stored on the server.",
-            "description": "Dialog subtitle for the global servers. 'YoStar' is the publisher's name; OTP is a one-time password.",
+            "source_text": "Sign in with a one-time code sent to your Yostar email. The code is used once and never stored.",
+            "description": "Dialog subtitle for the global servers. 'Yostar' is the publisher's name. It must stay true: the code is never stored, and what the Keep me synced box below stores is said under that box.",
             "placeholders": []
         },
         {
@@ -19793,8 +19903,8 @@
         {
             "key": "nav.authDialog.saveCredentials.hint",
             "namespace": "nav",
-            "source_text": "Re-syncing keeps working without a new email code. Revoke any time in Settings.",
-            "description": "Caption under that checkbox. 'Settings' is this site's settings page, where the stored game credentials can be disconnected.",
+            "source_text": "Keeps an encrypted game token on our server, so re-syncing works without signing in again. Untick it and nothing is saved, so a re-sync more than an hour later asks you to sign in again. Revoke it any time in Settings.",
+            "description": "Caption under that checkbox, saying exactly what it stores: an encrypted game access token, never the password or the code. 'Settings' is this site's settings page, where the stored token can be disconnected.",
             "placeholders": []
         },
         {
@@ -19816,6 +19926,13 @@
             "namespace": "nav",
             "source_text": "Sending...",
             "description": "Submit-button label while the verification code is being sent. Three full stops, not an ellipsis character.",
+            "placeholders": []
+        },
+        {
+            "key": "nav.authDialog.server",
+            "namespace": "nav",
+            "source_text": "Server",
+            "description": "Visible field label over the game-server picker in the sign-in dialog. A 'server' is a regional release of the game (Global, Japan, Korea, China).",
             "placeholders": []
         },
         {
@@ -20084,6 +20201,13 @@
             "placeholders": []
         },
         {
+            "key": "nav.header.homeLink",
+            "namespace": "nav",
+            "source_text": "myrtle.moe home",
+            "description": "Accessible name of the logo link at the left of the header, which goes to the landing page. 'myrtle.moe' is the site's name and stays as-is.",
+            "placeholders": []
+        },
+        {
             "key": "nav.header.players",
             "namespace": "nav",
             "source_text": "Players",
@@ -20158,6 +20282,13 @@
             "namespace": "nav",
             "source_text": "Settings",
             "description": "Label of the cog-icon link to the settings page.",
+            "placeholders": []
+        },
+        {
+            "key": "nav.header.skipToContent",
+            "namespace": "nav",
+            "source_text": "Skip to content",
+            "description": "Link hidden until a keyboard user tabs to it, the first stop on every page. It jumps past the header to the page's own content.",
             "placeholders": []
         },
         {
@@ -21089,6 +21220,13 @@
             ]
         },
         {
+            "key": "operators.audio.error.voice",
+            "namespace": "operators",
+            "source_text": "The voice lines did not load.",
+            "description": "Shown in place of the voice-line list when its request failed, beside a Try again button. Distinct from 'No voice data available', which means the game data has none.",
+            "placeholders": []
+        },
+        {
             "key": "operators.audio.language",
             "namespace": "operators",
             "source_text": "Language",
@@ -21424,8 +21562,15 @@
         {
             "key": "operators.breakdown.you",
             "namespace": "operators",
-            "source_text": "you",
-            "description": "Tiny uppercase marker on the row the signed-in reader is at.",
+            "source_text": "You",
+            "description": "Small marker after the level label on the row the signed-in reader is at.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.card.noOwnership",
+            "namespace": "operators",
+            "source_text": "No community data",
+            "description": "Screen-reader text for the dash in the Owned column of the list view, where no imported roster has this operator or the counts have not loaded.",
             "placeholders": []
         },
         {
@@ -22627,6 +22772,15 @@
             "placeholders": []
         },
         {
+            "key": "operators.filters.chip.module",
+            "namespace": "operators",
+            "source_text": "{type} module",
+            "description": "Text of the applied-filter chip for a module type. {type} is the game's own short type glyph (X, Y, D, A, B), which stays as-is.",
+            "placeholders": [
+                "type"
+            ]
+        },
+        {
             "key": "operators.filters.class",
             "namespace": "operators",
             "source_text": "Class",
@@ -22779,7 +22933,7 @@
             "key": "operators.filters.toggle.label",
             "namespace": "operators",
             "source_text": "Filter",
-            "description": "Small uppercase caption inside the toggle button on desktop. Very tight space - one short word.",
+            "description": "Small caption inside the toggle button on desktop. Very tight space - one short word.",
             "placeholders": []
         },
         {
@@ -22874,24 +23028,31 @@
             "placeholders": []
         },
         {
+            "key": "operators.info.attackRange.error",
+            "namespace": "operators",
+            "source_text": "The attack range did not load.",
+            "description": "Shown in place of the range grid when the range data failed to load, beside a Try again button. Distinct from 'No range data available', which means the game data has none.",
+            "placeholders": []
+        },
+        {
             "key": "operators.info.baseTalent",
             "namespace": "operators",
-            "source_text": "Base Talent",
-            "description": "Small uppercase caption over a talent's unmodified text.",
+            "source_text": "Base talent",
+            "description": "Small caption over a talent's unmodified text.",
             "placeholders": []
         },
         {
             "key": "operators.info.baseTrait",
             "namespace": "operators",
-            "source_text": "Base Trait",
-            "description": "Small uppercase caption over the operator's unmodified trait text.",
+            "source_text": "Base trait",
+            "description": "Small caption over the operator's unmodified trait text.",
             "placeholders": []
         },
         {
             "key": "operators.info.changes",
             "namespace": "operators",
             "source_text": "Changes",
-            "description": "Small uppercase caption over the modified text, below the unmodified version.",
+            "description": "Small caption over the modified text, below the unmodified version.",
             "placeholders": []
         },
         {
@@ -23553,6 +23714,13 @@
             "placeholders": []
         },
         {
+            "key": "operators.list.error.upcoming",
+            "namespace": "operators",
+            "source_text": "The upcoming CN operators did not load.",
+            "description": "Shown above the Upcoming (CN) view when its list failed to load, beside a Try again button. Distinct from the empty state: nothing was filtered out, the data never arrived.",
+            "placeholders": []
+        },
+        {
             "key": "operators.list.export",
             "namespace": "operators",
             "source_text": "Export",
@@ -23577,7 +23745,7 @@
             "key": "operators.list.hint",
             "namespace": "operators",
             "source_text": "Hover for preview · Click to open",
-            "description": "Small uppercase hint beside the pager on pointer devices. Keep the middle dot separator.",
+            "description": "Small hint beside the pager on pointer devices. Keep the middle dot separator.",
             "placeholders": []
         },
         {
@@ -23598,7 +23766,7 @@
             "key": "operators.list.perPage.caption",
             "namespace": "operators",
             "source_text": "Show",
-            "description": "Small uppercase caption inside the page-size control, before the chosen number. Very tight space.",
+            "description": "Small caption inside the page-size control, before the chosen number. Very tight space.",
             "placeholders": []
         },
         {
@@ -23651,7 +23819,7 @@
             "key": "operators.list.sort.caption",
             "namespace": "operators",
             "source_text": "Sort",
-            "description": "Small uppercase caption inside the sort control, before the chosen option. Very tight space.",
+            "description": "Small caption inside the sort control, before the chosen option. Very tight space.",
             "placeholders": []
         },
         {
@@ -23693,7 +23861,7 @@
             "key": "operators.list.stat.owned",
             "namespace": "operators",
             "source_text": "Owned",
-            "description": "Card-statistic option: the share of players who own the operator. Uppercased by the design; keep it very short.",
+            "description": "Card-statistic option: the share of players who own the operator. Keep it very short.",
             "placeholders": []
         },
         {
@@ -23787,6 +23955,20 @@
             "namespace": "operators",
             "source_text": "Cons",
             "description": "Heading over the operator's weaknesses. Short, beside a thumbs-down icon.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.notes.error",
+            "namespace": "operators",
+            "source_text": "The operator notes did not load.",
+            "description": "Shown in place of the notes section when its request failed, beside a Try again button. Not the same as an operator with no notes, which shows nothing.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.notes.loading",
+            "namespace": "operators",
+            "source_text": "Loading operator notes",
+            "description": "Screen-reader text for the spinner shown while the community notes for this operator load.",
             "placeholders": []
         },
         {
@@ -24108,6 +24290,18 @@
             "source_text": "Race",
             "description": "Small key in the hover preview; its value is the operator's race from the game data.",
             "placeholders": []
+        },
+        {
+            "key": "operators.range.aria",
+            "namespace": "operators",
+            "source_text": "Attack range: {tiles, plural, one {# tile} other {# tiles}}, reaching {ahead, plural, one {# tile} other {# tiles}} ahead, {behind, plural, one {# behind} other {# behind}} and {side, plural, one {# to each side} other {# to each side}}",
+            "description": "Screen-reader description of the attack-range grid. The operator faces right; 'ahead' counts tiles in the facing direction, 'behind' the opposite, 'to each side' the widest reach up or down. {tiles} is how many tiles the operator can hit. Every number may be 0.",
+            "placeholders": [
+                "ahead",
+                "behind",
+                "side",
+                "tiles"
+            ]
         },
         {
             "key": "operators.scene.error",
@@ -24568,7 +24762,7 @@
         {
             "key": "operators.skills.range.onSkill",
             "namespace": "operators",
-            "source_text": "On Skill",
+            "source_text": "On skill",
             "description": "Caption over the attack range while the skill is active, in the side-by-side comparison.",
             "placeholders": []
         },
@@ -25151,6 +25345,13 @@
             "placeholders": []
         },
         {
+            "key": "settings.appearance.accent.customActive",
+            "namespace": "settings",
+            "source_text": "Custom",
+            "description": "Label on the custom-colour button once a custom colour is the accent. The colour's hex code shows beside it, so the label does not repeat it.",
+            "placeholders": []
+        },
+        {
             "key": "settings.appearance.accent.customColor",
             "namespace": "settings",
             "source_text": "Custom color",
@@ -25574,8 +25775,8 @@
         {
             "key": "settings.data.linked.desc",
             "namespace": "settings",
-            "source_text": "We never see your password. We do keep the token that lets us re-sync on your behalf - disconnect below to delete it.",
-            "description": "Card description under Linked Yostar account.",
+            "source_text": "We never store your password or sign-in code. If you ticked Keep me synced when you signed in, we keep an encrypted game token that lets us re-sync on your behalf. Disconnect below to delete it.",
+            "description": "Card description under Linked Yostar account. It must stay true: the password and code are never stored; the token is stored only when the Keep me synced box in the sign-in dialog was ticked.",
             "placeholders": []
         },
         {
@@ -25583,27 +25784,6 @@
             "namespace": "settings",
             "source_text": "Linked Yostar account",
             "description": "Card title over the connected game account's status and controls.",
-            "placeholders": []
-        },
-        {
-            "key": "settings.data.oauth.active",
-            "namespace": "settings",
-            "source_text": "Active",
-            "description": "Status badge meaning the game account link is currently working.",
-            "placeholders": []
-        },
-        {
-            "key": "settings.data.oauth.desc",
-            "namespace": "settings",
-            "source_text": "Authenticated via your in-game email verification code.",
-            "description": "Caption under the Yostar OAuth row.",
-            "placeholders": []
-        },
-        {
-            "key": "settings.data.oauth.title",
-            "namespace": "settings",
-            "source_text": "Yostar OAuth",
-            "description": "Label of the row showing how the game account is authenticated. 'Yostar OAuth' is the publisher's sign-in system.",
             "placeholders": []
         },
         {
@@ -25616,7 +25796,7 @@
         {
             "key": "settings.data.signOut.desc",
             "namespace": "settings",
-            "source_text": "Ends the current session. Your data stays - just sign back in to re-access it.",
+            "source_text": "Ends the current session. Your data stays; sign back in to see it again.",
             "description": "Caption under the sign-out row.",
             "placeholders": []
         },
@@ -25630,7 +25810,7 @@
         {
             "key": "settings.data.sync.desc",
             "namespace": "settings",
-            "source_text": "Pull the latest from Yostar. Re-sync any time - we replace your stored snapshot.",
+            "source_text": "Pull the latest from Yostar. Re-sync any time; we replace your stored snapshot.",
             "description": "Card description under the Sync & refresh title. 'Yostar' is the game's publisher.",
             "placeholders": []
         },
@@ -25681,7 +25861,7 @@
         {
             "key": "settings.data.viewProfile.desc",
             "namespace": "settings",
-            "source_text": "Roster, scores, stage progress, gacha history (if stored), and medals - the data we have on you is what shows up here.",
+            "source_text": "Roster, scores, stage progress, gacha history (if stored), and medals. The data we have on you is what shows up here.",
             "description": "Caption under the view-on-profile row. 'Roster' is the set of owned operators; 'gacha' is the random-draw system.",
             "placeholders": []
         },
@@ -25768,7 +25948,7 @@
             "key": "settings.privacy.gacha.title",
             "namespace": "settings",
             "source_text": "Store gacha history",
-            "description": "Label of the switch that keeps a record of the visitor's pulls. 'Gacha' is the game's random-draw system.",
+            "description": "Label of the switch that keeps a record of the visitor's pulls, and the switch's accessible name. 'Gacha' is the game's random-draw system.",
             "placeholders": []
         },
         {
@@ -25799,7 +25979,7 @@
             "key": "settings.privacy.leaderboards.title",
             "namespace": "settings",
             "source_text": "Show on leaderboards",
-            "description": "Label of the switch that opts into public rankings.",
+            "description": "Label of the switch that opts into public rankings, and the switch's accessible name.",
             "placeholders": []
         },
         {
@@ -25822,7 +26002,7 @@
             "key": "settings.privacy.publicGacha.title",
             "namespace": "settings",
             "source_text": "Public pull history",
-            "description": "Label of the switch that lets visitors see the player's pull history on their profile and through links they share. 'Pull' is one draw on a headhunting banner.",
+            "description": "Label of the switch that lets visitors see the player's pull history on their profile and through links they share, and the switch's accessible name. 'Pull' is one draw on a headhunting banner.",
             "placeholders": []
         },
         {
@@ -25836,7 +26016,7 @@
             "key": "settings.privacy.publicProfile.title",
             "namespace": "settings",
             "source_text": "Public profile",
-            "description": "Label of the switch that makes the profile world-readable.",
+            "description": "Label of the switch that makes the profile world-readable, and the switch's accessible name.",
             "placeholders": []
         },
         {
@@ -25877,34 +26057,6 @@
             "placeholders": []
         },
         {
-            "key": "settings.profile.gameSynced.desc",
-            "namespace": "settings",
-            "source_text": "Read-only. Pulled from Yostar when you sync - change it in-game.",
-            "description": "Card description explaining that these fields can only be changed inside Arknights itself.",
-            "placeholders": []
-        },
-        {
-            "key": "settings.profile.gameSynced.title",
-            "namespace": "settings",
-            "source_text": "Game-synced info",
-            "description": "Card title over the read-only fields that come from the game.",
-            "placeholders": []
-        },
-        {
-            "key": "settings.profile.level.desc",
-            "namespace": "settings",
-            "source_text": "Player level from the in-game profile.",
-            "description": "Caption under the account-level field. 'Doctor' is what the game calls the player.",
-            "placeholders": []
-        },
-        {
-            "key": "settings.profile.level.title",
-            "namespace": "settings",
-            "source_text": "Account level",
-            "description": "Field label for the in-game account level.",
-            "placeholders": []
-        },
-        {
             "key": "settings.profile.level.value",
             "namespace": "settings",
             "source_text": "Lv. {level}",
@@ -25912,34 +26064,6 @@
             "placeholders": [
                 "level"
             ]
-        },
-        {
-            "key": "settings.profile.nickname.desc",
-            "namespace": "settings",
-            "source_text": "Shown on your profile, leaderboard, and tier lists you publish.",
-            "description": "Caption under the nickname field.",
-            "placeholders": []
-        },
-        {
-            "key": "settings.profile.nickname.title",
-            "namespace": "settings",
-            "source_text": "Arknights nickname",
-            "description": "Field label for the in-game display name.",
-            "placeholders": []
-        },
-        {
-            "key": "settings.profile.server.desc",
-            "namespace": "settings",
-            "source_text": "Which Arknights server you're synced from. Re-link your account to change this.",
-            "description": "Caption under the game-server field.",
-            "placeholders": []
-        },
-        {
-            "key": "settings.profile.server.title",
-            "namespace": "settings",
-            "source_text": "Game server",
-            "description": "Field label for which regional game server the account lives on.",
-            "placeholders": []
         },
         {
             "key": "settings.profile.synced",
@@ -25999,6 +26123,27 @@
             "namespace": "settings",
             "source_text": "Settings",
             "description": "Page title of the settings screen.",
+            "placeholders": []
+        },
+        {
+            "key": "settings.signedOut.action",
+            "namespace": "settings",
+            "source_text": "Sign in",
+            "description": "Button in that card that opens the sign-in dialog.",
+            "placeholders": []
+        },
+        {
+            "key": "settings.signedOut.desc",
+            "namespace": "settings",
+            "source_text": "Appearance works without an account. Sign in to sync your game data, choose who can see your profile, or delete your account.",
+            "description": "Card description under that title: what the account sections offer once signed in.",
+            "placeholders": []
+        },
+        {
+            "key": "settings.signedOut.title",
+            "namespace": "settings",
+            "source_text": "Sign in to manage your account",
+            "description": "Card title shown above the appearance settings to a signed-out visitor, the only section they can reach.",
             "placeholders": []
         },
         {
@@ -43311,6 +43456,13 @@
             "placeholders": []
         },
         {
+            "key": "tools.planner.card.collapse",
+            "namespace": "tools",
+            "source_text": "Hide plan details",
+            "description": "Accessible name of the chevron button that collapses an expanded plan card.",
+            "placeholders": []
+        },
+        {
             "key": "tools.planner.card.delete",
             "namespace": "tools",
             "source_text": "Delete",
@@ -43332,6 +43484,13 @@
             "placeholders": [
                 "elite"
             ]
+        },
+        {
+            "key": "tools.planner.card.expand",
+            "namespace": "tools",
+            "source_text": "Show plan details",
+            "description": "Accessible name of the chevron button that expands a plan card to show its level, skill and module targets.",
+            "placeholders": []
         },
         {
             "key": "tools.planner.card.level",
@@ -43357,6 +43516,13 @@
             "placeholders": [
                 "mastery"
             ]
+        },
+        {
+            "key": "tools.planner.card.moduleNone",
+            "namespace": "tools",
+            "source_text": "None",
+            "description": "Screen-reader text for a module stage of 0 in a plan card's progress rows (shown visually as a hyphen): the module is not unlocked now, or is left out of the target.",
+            "placeholders": []
         },
         {
             "key": "tools.planner.card.modules",
@@ -43934,6 +44100,24 @@
             "placeholders": []
         },
         {
+            "key": "tools.planner.group.collapse",
+            "namespace": "tools",
+            "source_text": "Hide plans in {name}",
+            "description": "Accessible name of the chevron button that collapses an expanded group; {name} is the player's own group name.",
+            "placeholders": [
+                "name"
+            ]
+        },
+        {
+            "key": "tools.planner.group.delete",
+            "namespace": "tools",
+            "source_text": "Delete {name}",
+            "description": "Accessible name of the bin button that deletes a group; {name} is the player's own group name.",
+            "placeholders": [
+                "name"
+            ]
+        },
+        {
             "key": "tools.planner.group.deleteConfirm",
             "namespace": "tools",
             "source_text": "Are you sure you want to delete group \"{name}\"?",
@@ -43950,6 +44134,15 @@
             "placeholders": []
         },
         {
+            "key": "tools.planner.group.expand",
+            "namespace": "tools",
+            "source_text": "Show plans in {name}",
+            "description": "Accessible name of the chevron button that expands a collapsed group to list its plans; {name} is the player's own group name.",
+            "placeholders": [
+                "name"
+            ]
+        },
+        {
             "key": "tools.planner.group.none",
             "namespace": "tools",
             "source_text": "No groups created yet.",
@@ -43961,6 +44154,15 @@
             "namespace": "tools",
             "source_text": "Pin {name}",
             "description": "Accessible name and tooltip of the button that pins a group to the top of the list; {name} is the player's own group name.",
+            "placeholders": [
+                "name"
+            ]
+        },
+        {
+            "key": "tools.planner.group.rename",
+            "namespace": "tools",
+            "source_text": "Rename {name}",
+            "description": "Accessible name of the pencil button that renames a group; {name} is the player's own group name.",
             "placeholders": [
                 "name"
             ]
@@ -44902,6 +45104,13 @@
             "placeholders": []
         },
         {
+            "key": "tools.randomizer.loadError",
+            "namespace": "tools",
+            "source_text": "Some of the game data couldn't be loaded, so the operator and stage pools may be incomplete.",
+            "description": "Shown in place of the empty result when a list the randomizer draws from (operators, stages, the player's roster or clears) fails to load.",
+            "placeholders": []
+        },
+        {
             "key": "tools.randomizer.modifier.kicker",
             "namespace": "tools",
             "source_text": "RULE",
@@ -45202,6 +45411,13 @@
                 "code",
                 "name"
             ]
+        },
+        {
+            "key": "tools.randomizer.retry",
+            "namespace": "tools",
+            "source_text": "Try again",
+            "description": "Button that reloads the lists that failed to load.",
+            "placeholders": []
         },
         {
             "key": "tools.randomizer.roster.all",
@@ -48231,6 +48447,13 @@
             "placeholders": []
         },
         {
+            "key": "tools.release.primes.currency",
+            "namespace": "tools",
+            "source_text": "Originite Prime",
+            "description": "Alt text and hover title of the currency icon beside every Originite Prime amount. Originite Prime is the game's premium currency; use your server's official name for it.",
+            "placeholders": []
+        },
+        {
             "key": "tools.release.primes.expenses",
             "namespace": "tools",
             "source_text": "Expenses",
@@ -48782,6 +49005,20 @@
                 "horizon",
                 "percent"
             ]
+        },
+        {
+            "key": "tools.release.pulls.plan.eventsError",
+            "namespace": "tools",
+            "source_text": "Event names and art couldn't be loaded, so some banners show without them.",
+            "description": "Notice above the banner plan when the events list fails to load; the banners still plan, but those that borrow their name and picture from an event show without them.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.plan.eventsRetry",
+            "namespace": "tools",
+            "source_text": "Try again",
+            "description": "Button beside the events notice that reloads the events list.",
+            "placeholders": []
         },
         {
             "key": "tools.release.pulls.plan.export",
@@ -53292,6 +53529,13 @@
             "placeholders": []
         },
         {
+            "key": "tools.squad.stagePicker.error",
+            "namespace": "tools",
+            "source_text": "The stage list couldn't be loaded.",
+            "description": "Shown in place of the stage grid when the stage list fails to load.",
+            "placeholders": []
+        },
+        {
             "key": "tools.squad.stagePicker.group",
             "namespace": "tools",
             "source_text": "Mode",
@@ -53310,6 +53554,13 @@
             "namespace": "tools",
             "source_text": "Loading stages...",
             "description": "Shown while the stage list loads.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.squad.stagePicker.retry",
+            "namespace": "tools",
+            "source_text": "Try again",
+            "description": "Button that reloads the stage list after a failure.",
             "placeholders": []
         },
         {
@@ -54508,6 +54759,13 @@
             "namespace": "user",
             "source_text": "No snapshot yet. One is taken on the first sync after each event launch.",
             "description": "Shown when the account has no snapshot yet. A snapshot is recorded automatically when the account syncs.",
+            "placeholders": []
+        },
+        {
+            "key": "user.lookback.error",
+            "namespace": "user",
+            "source_text": "The snapshots couldn't be loaded.",
+            "description": "Shown on the Lookback tab when the account's snapshots fail to load.",
             "placeholders": []
         },
         {
@@ -58139,6 +58397,13 @@
             ]
         },
         {
+            "key": "user.profile.loadFailed.retry",
+            "namespace": "user",
+            "source_text": "Try again",
+            "description": "Button under the failure line on a profile tab (Stats, Lookback, Plans) that reloads what failed to load.",
+            "placeholders": []
+        },
+        {
             "key": "user.profile.noTabs.desc",
             "namespace": "user",
             "source_text": "This player keeps every section of their profile private.",
@@ -58247,6 +58512,13 @@
             "namespace": "user",
             "source_text": "No public plans",
             "description": "Empty-state title when the account has pinned no plans to its profile.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.plans.error",
+            "namespace": "user",
+            "source_text": "The plans couldn't be loaded.",
+            "description": "Shown on the Plans tab when the player's public plans fail to load.",
             "placeholders": []
         },
         {
@@ -58632,7 +58904,7 @@
             "key": "user.profile.roster.detailed.openAria",
             "namespace": "user",
             "source_text": "Open details for {name}",
-            "description": "Accessible name of an operator card, which opens that operator's dialog. {name} comes from the game data.",
+            "description": "Accessible name of the button laid over an operator card's art, which opens that operator's dialog. {name} comes from the game data.",
             "placeholders": [
                 "name"
             ]
@@ -60156,6 +60428,13 @@
             "namespace": "user",
             "source_text": "Elite Promotion",
             "description": "Heading of the card breaking the roster down by promotion tier.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.stats.error",
+            "namespace": "user",
+            "source_text": "The statistics couldn't be loaded.",
+            "description": "Shown in place of the Stats tab's cards when the skin list they are counted against fails to load.",
             "placeholders": []
         },
         {
@@ -61723,6 +62002,13 @@
             "placeholders": []
         },
         {
+            "key": "user.score.improvements.stage.annihilation.title",
+            "namespace": "user",
+            "source_text": "Annihilation",
+            "description": "Heading of the Annihilation section of the score improvements. 'Annihilation' is the game's own name for the mode: use the name the game uses in your language.",
+            "placeholders": []
+        },
+        {
             "key": "user.score.improvements.stage.chip.lockedTitle",
             "namespace": "user",
             "source_text": "{label} - rotated out, not currently playable",
@@ -62260,6 +62546,20 @@
             "namespace": "user",
             "source_text": "No public profiles yet",
             "description": "Empty-state title when nobody has made a profile public.",
+            "placeholders": []
+        },
+        {
+            "key": "user.search.error.retry",
+            "namespace": "user",
+            "source_text": "Try again",
+            "description": "Button under the search failure line that runs the same search again.",
+            "placeholders": []
+        },
+        {
+            "key": "user.search.error.title",
+            "namespace": "user",
+            "source_text": "The search couldn't be loaded.",
+            "description": "Shown in place of the results when the player search request fails.",
             "placeholders": []
         },
         {

@@ -1,8 +1,9 @@
 /** This module exists so the two surfaces cannot drift; a filter added here appears on both pages. */
 
+import type { IOperatorFactLabels } from "#/components/operators/OperatorFacts";
 import { serverNames, subProfessionLabel } from "#/lib/utils";
 import type { IActiveChip } from "./components/ActiveFilterChips";
-import { CHIP_CONFIG } from "./constants";
+import { CHIP_CONFIG, moduleTypeGlyph } from "./constants";
 import type { ArrayFilterKey, IFilterLabels, IFilterOptions, IFilterSubject, ISharedFilters } from "./types";
 
 export const EMPTY_SHARED_FILTERS: ISharedFilters = {
@@ -103,11 +104,17 @@ export function countSharedFilters(filters: ISharedFilters): number {
     return filters.classes.length + filters.subclasses.length + filters.rarities.length + filters.genders.length + filters.nations.length + filters.factions.length + filters.races.length + filters.birthPlaces.length + filters.artists.length + filters.voiceActors.length + filters.modules.length;
 }
 
-export function buildSharedChips(filters: ISharedFilters, removeFrom: (key: ArrayFilterKey, value: string) => void, labels?: IFilterLabels): IActiveChip[] {
+/** `fact` localizes the gender, race and birthplace chips, which the game data sends as raw English; without it they keep the raw value.
+ *  `moduleChip` words a module chip around its type glyph; without it the chip reads "X module" in English. */
+export function buildSharedChips(filters: ISharedFilters, removeFrom: (key: ArrayFilterKey, value: string) => void, labels?: IFilterLabels, fact?: IOperatorFactLabels, moduleChip?: (glyph: string) => string): IActiveChip[] {
     // A subclass goes through `subProfessionLabel`, which keeps EN's "Centurion Guard" wording; the bare server name
     // would read "Centurion".
     const named = (key: ArrayFilterKey, v: string): string | undefined => {
         if (key === "subclasses") return subProfessionLabel({ subProfessionId: v, subProfessionName: labels?.subclasses[v] });
+        if (key === "genders") return fact?.gender(v);
+        if (key === "races") return fact?.race(v);
+        if (key === "birthPlaces") return fact?.birthPlace(v);
+        if (key === "modules") return moduleChip?.(moduleTypeGlyph(v));
         return key === "classes" || key === "nations" || key === "factions" ? labels?.[key][v] : undefined;
     };
     return CHIP_CONFIG.flatMap(({ key, prefix, label }) =>

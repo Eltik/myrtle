@@ -9,8 +9,8 @@ export const messages = {
         description: "Placeholder in the command palette's search field. Ends in a single ellipsis character.",
     },
     "searchCommand.noResults": {
-        text: "No results found.",
-        description: "Shown when nothing in any group matches the query.",
+        text: "Nothing matches. Try an operator's codename or a page name.",
+        description: "Shown when nothing in any group matches the query. The second sentence is the next step: operators are found by codename (Amiya, SilverAsh), pages by their name.",
     },
     "searchCommand.operators": {
         text: "Operators",
@@ -43,10 +43,6 @@ export const messages = {
     "searchCommand.toSelect": {
         text: "to select",
         description: "Footer hint, read after the enter key cap: 'enter to select'.",
-    },
-    "searchCommand.poweredBy": {
-        text: "powered by COSS UI",
-        description: "Attribution in the palette footer. 'COSS UI' is a product name and stays as-is.",
     },
 } satisfies MessageMap;
 

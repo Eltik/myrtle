@@ -10,13 +10,14 @@ interface IOwnershipBadgeProps {
     /** Which community number to show. `owned` is the share of all sharing
      *  players; `e2` is the share OF OWNERS who promoted to E2. */
     metric: StatMetric;
-    /** Accent color. Decorative: the percentage text carries the value. */
+    /** Rarity hue for the dot. Decorative: the percentage text carries the value. */
     color: string;
     className?: string;
 }
 
 /** Compact pill showing a community rate for an operator; the exact figure and
- *  its denominator are available via the native title on hover.
+ *  its denominator are in the native title here and in visible text in the
+ *  hover preview.
  *
  *  Renders nothing on the `e2` metric when the operator has no conversion rate
  *  to report - nobody owns them, or they cannot be promoted to E2 at all. An
@@ -35,7 +36,10 @@ export const OwnershipBadge = memo(function OwnershipBadge({ info, metric, color
     const ariaLabel = isE2 ? t("ownership.e2.aria", { pct: label }) : t("ownership.owned.aria", { pct: label });
 
     return (
-        <span role="img" className={cn("inline-flex items-center rounded-full bg-background/85 px-1.5 py-px font-mono font-semibold text-[9px] uppercase tabular-nums tracking-wider shadow-sm", className)} style={{ color }} title={title} aria-label={ariaLabel}>
+        // The text is foreground, the rarity hue only a dot: as text it measured 1.38 (5★) to 2.42 (6★)
+        // on the light page.
+        <span role="img" className={cn("inline-flex items-center gap-1 rounded-full bg-background/85 px-1.5 py-0.5 font-mono font-semibold text-[11px] text-foreground tabular-nums leading-none shadow-sm", className)} title={title} aria-label={ariaLabel}>
+            <span aria-hidden="true" className="size-1.5 shrink-0 rounded-full" style={{ backgroundColor: color }} />
             {label}
         </span>
     );

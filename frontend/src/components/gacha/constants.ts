@@ -1,4 +1,5 @@
 import type { ClientGachaGroup } from "#/lib/api/gacha";
+import inkStyles from "./bannerGroup.module.css";
 import type { messages as gachaConstantsMessages } from "./constants.messages";
 
 /** A key in `constants.messages.ts`; resolved by whichever component renders it. */
@@ -18,6 +19,20 @@ export const BANNER_GROUP_LABEL_KEYS: Record<ClientGachaGroup, GachaMessageKey> 
     regular: "banner.group.regular",
     special: "banner.group.special",
     boot: "banner.group.boot",
+};
+
+/**
+ * Each group's colour, shared by both gacha screens. `fill` paints bars, swatches and borders;
+ * `inkClass` colours the group's label text, because every fill is under 2.2:1 as text on the
+ * light card. Regular and special are the 4★ and 3★ rarity colours; limited, linkage and boot
+ * match no token, so their hues are kept here and their ink in `bannerGroup.module.css`.
+ */
+export const BANNER_GROUP_COLOR: Record<ClientGachaGroup, { fill: string; inkClass: string }> = {
+    limited: { fill: "oklch(0.85 0.18 80)", inkClass: inkStyles.limited },
+    linkage: { fill: "oklch(0.78 0.16 320)", inkClass: inkStyles.linkage },
+    regular: { fill: "var(--rarity-4)", inkClass: "text-rarity-4-ink" },
+    special: { fill: "var(--rarity-3)", inkClass: "text-rarity-3-ink" },
+    boot: { fill: "oklch(0.8 0.12 160)", inkClass: inkStyles.boot },
 };
 
 export const BANNER_STATUS_LABEL_KEYS: Record<BannerStatus, GachaMessageKey> = {

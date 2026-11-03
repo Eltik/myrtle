@@ -47,6 +47,10 @@ export const messages = {
         text: "Pick custom hex",
         description: "Label on the custom-colour button before a custom colour has been chosen. 'Hex' is a hexadecimal colour code.",
     },
+    "appearance.accent.customActive": {
+        text: "Custom",
+        description: "Label on the custom-colour button once a custom colour is the accent. The colour's hex code shows beside it, so the label does not repeat it.",
+    },
     "appearance.accent.chooseCustom": {
         text: "Choose custom accent color",
         description: "Accessible name of the hidden colour input behind the custom-colour button.",

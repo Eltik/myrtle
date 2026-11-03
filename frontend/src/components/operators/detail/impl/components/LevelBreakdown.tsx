@@ -75,7 +75,7 @@ export const LevelBreakdown = memo(function LevelBreakdown({ buckets, total, tit
                                     <div className="col-span-3 grid grid-cols-subgrid items-center rounded-sm">
                                         <span className={cn("truncate text-[11px]", isNone ? "text-muted-foreground" : "text-foreground", isOwn && "font-semibold")}>
                                             {labels[bucket.level] ?? t("breakdown.levelFallback", { level: bucket.level })}
-                                            {isOwn && <span className="ml-1 font-normal text-[9px] text-primary uppercase tracking-wider">{t("breakdown.you")}</span>}
+                                            {isOwn && <span className="ml-1 font-normal text-[11px] text-muted-foreground">{t("breakdown.you")}</span>}
                                         </span>
 
                                         <span className="h-1.5 w-full overflow-hidden rounded-full bg-border/70">

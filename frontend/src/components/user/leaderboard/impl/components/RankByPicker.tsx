@@ -122,7 +122,7 @@ export function RankByPicker({ ranking, onRanking, catalog, materials, variant, 
                                                 onClick={() => choose({ kind: "score", sort: opt.value as LeaderboardSort })}
                                                 className={cn(
                                                     "inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-lg border px-2.5 font-medium font-sans text-xs leading-none transition-colors",
-                                                    active ? "border-primary/40 bg-[color-mix(in_srgb,var(--primary)_10%,transparent)] text-primary" : "border-input bg-card text-foreground hover:border-foreground/20",
+                                                    active ? "border-primary/40 bg-[color-mix(in_srgb,var(--primary)_10%,transparent)] text-foreground [&>svg]:text-primary" : "border-input bg-card text-foreground hover:border-foreground/20",
                                                 )}
                                             >
                                                 {active ? <Check className="size-3" aria-hidden /> : null}
@@ -222,7 +222,7 @@ function Option({ active, onClick, children }: { active: boolean; onClick: () =>
             type="button"
             onClick={onClick}
             aria-pressed={active}
-            className={cn("flex min-h-10 w-full cursor-pointer items-center gap-2.5 rounded-md px-2 py-1.5 text-left font-sans text-[13px] text-foreground leading-tight transition-colors hover:bg-accent", active && "bg-[color-mix(in_srgb,var(--primary)_8%,transparent)] font-semibold text-primary")}
+            className={cn("flex min-h-10 w-full cursor-pointer items-center gap-2.5 rounded-md px-2 py-1.5 text-left font-sans text-[13px] text-foreground leading-tight transition-colors hover:bg-accent", active && "bg-[color-mix(in_srgb,var(--primary)_8%,transparent)] font-semibold [&>svg]:text-primary")}
         >
             {children}
             {active ? <Check className="size-3.5 shrink-0" aria-hidden /> : <span className="size-3.5 shrink-0" aria-hidden />}

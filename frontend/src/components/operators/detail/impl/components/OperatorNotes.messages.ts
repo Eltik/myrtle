@@ -31,6 +31,14 @@ export const messages = {
         text: "Show less",
         description: "Button that re-collapses an expanded note.",
     },
+    "notes.loading": {
+        text: "Loading operator notes",
+        description: "Screen-reader text for the spinner shown while the community notes for this operator load.",
+    },
+    "notes.error": {
+        text: "The operator notes did not load.",
+        description: "Shown in place of the notes section when its request failed, beside a Try again button. Not the same as an operator with no notes, which shows nothing.",
+    },
 } satisfies MessageMap;
 
 export const { keys } = defineMessages({ namespace, messages });

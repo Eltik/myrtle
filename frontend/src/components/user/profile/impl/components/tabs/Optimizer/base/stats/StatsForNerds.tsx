@@ -23,7 +23,7 @@ function Delta({ from, to, suffix = "" }: { from: number; to: number; suffix?: s
     const change = Math.round(to) - Math.round(from);
     if (change === 0) return <span className="text-muted-foreground">{t("profile.base.nerds.noChange")}</span>;
     return (
-        <span className={cn("font-semibold", change > 0 ? "text-emerald-400" : "text-destructive")}>
+        <span className={cn("font-semibold", change > 0 ? "text-success-foreground" : "text-destructive-foreground")}>
             {change > 0 ? "+" : "-"}
             {num(Math.abs(change), f)}
             {suffix}
@@ -91,7 +91,7 @@ export function StatsForNerds() {
                         <Row label={t("profile.base.nerds.generated")}>{num(power.generated, f)}</Row>
                         <Row label={t("profile.base.nerds.consumed")}>{num(power.consumed, f)}</Row>
                         <Row label={t("profile.base.nerds.net")}>
-                            <span className={cn("font-semibold", power.net < 0 && "text-destructive")}>
+                            <span className={cn("font-semibold", power.net < 0 && "text-destructive-foreground")}>
                                 {power.net > 0 ? "+" : ""}
                                 {num(power.net, f)}
                             </span>
@@ -130,7 +130,7 @@ export function StatsForNerds() {
                                 {comparison.matching_cells} / {comparison.production_cells}
                             </Row>
                             {comparison.preset_legs_hours.length > 0 && <Row label={t("profile.base.nerds.presetLegs")}>{comparison.preset_legs_hours.map((h) => t("profile.base.nerds.hours", { hours: Math.round(h) })).join(" / ")}</Row>}
-                            {comparison.matching_cells === comparison.production_cells && comparison.production_cells > 0 && <p className="text-[11px] text-emerald-400">{t("profile.base.nerds.presetsMatch")}</p>}
+                            {comparison.matching_cells === comparison.production_cells && comparison.production_cells > 0 && <p className="text-[11px] text-success-foreground">{t("profile.base.nerds.presetsMatch")}</p>}
                         </Section>
                     )}
 

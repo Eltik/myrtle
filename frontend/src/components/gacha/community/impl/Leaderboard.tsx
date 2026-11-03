@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { Kicker } from "#/components/ui/kicker";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
+import { Skeleton } from "#/components/ui/skeleton";
 import type { IOperatorPopularity } from "#/lib/api/gacha";
 import { useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -59,12 +60,12 @@ function LeaderTable({ ops, operatorsById, isLoading }: { ops: IOperatorPopulari
                 {Array.from({ length: 6 }).map((_, i) => (
                     // biome-ignore lint/suspicious/noArrayIndexKey: loading skeleton
                     <div key={i} className="flex items-center gap-3">
-                        <div className="h-9 w-9 shrink-0 animate-pulse rounded-lg bg-muted" />
+                        <Skeleton className="h-9 w-9 shrink-0 rounded-lg" />
                         <div className="flex flex-1 flex-col gap-1.5">
-                            <div className="h-3 w-32 animate-pulse rounded bg-muted" />
-                            <div className="h-2 w-20 animate-pulse rounded bg-muted" />
+                            <Skeleton className="h-3 w-32 rounded" />
+                            <Skeleton className="h-2 w-20 rounded" />
                         </div>
-                        <div className="h-3 w-16 animate-pulse rounded bg-muted" />
+                        <Skeleton className="h-3 w-16 rounded" />
                     </div>
                 ))}
             </div>

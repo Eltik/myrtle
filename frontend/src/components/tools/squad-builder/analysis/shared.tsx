@@ -134,7 +134,13 @@ export function OpChip({ charId, seat, ctx, why, support = false, className }: I
 export type PillTone = "muted" | "accent" | "outline";
 
 export function Pill({ tone = "muted", className, children, title }: { tone?: PillTone; className?: string; children: React.ReactNode; title?: string }): React.ReactElement {
-    const pillClassName = cn("inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 font-medium text-[11px] leading-tight", tone === "muted" && "bg-muted text-muted-foreground", tone === "accent" && "bg-primary/12 text-primary", tone === "outline" && "border border-border text-muted-foreground", className);
+    const pillClassName = cn(
+        "inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 font-medium text-[11px] leading-tight",
+        tone === "muted" && "bg-muted text-muted-foreground",
+        tone === "accent" && "bg-primary/12 text-foreground",
+        tone === "outline" && "border border-border text-muted-foreground",
+        className,
+    );
     if (!title) return <span className={pillClassName}>{children}</span>;
     return (
         <Tooltip>

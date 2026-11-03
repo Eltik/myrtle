@@ -139,6 +139,34 @@ export const messages = {
         text: "Unpin {name}",
         description: "Accessible name and tooltip of the button that unpins a pinned group; {name} is the player's own group name.",
     },
+    "planner.group.expand": {
+        text: "Show plans in {name}",
+        description: "Accessible name of the chevron button that expands a collapsed group to list its plans; {name} is the player's own group name.",
+    },
+    "planner.group.collapse": {
+        text: "Hide plans in {name}",
+        description: "Accessible name of the chevron button that collapses an expanded group; {name} is the player's own group name.",
+    },
+    "planner.group.rename": {
+        text: "Rename {name}",
+        description: "Accessible name of the pencil button that renames a group; {name} is the player's own group name.",
+    },
+    "planner.group.delete": {
+        text: "Delete {name}",
+        description: "Accessible name of the bin button that deletes a group; {name} is the player's own group name.",
+    },
+    "planner.card.expand": {
+        text: "Show plan details",
+        description: "Accessible name of the chevron button that expands a plan card to show its level, skill and module targets.",
+    },
+    "planner.card.collapse": {
+        text: "Hide plan details",
+        description: "Accessible name of the chevron button that collapses an expanded plan card.",
+    },
+    "planner.card.moduleNone": {
+        text: "None",
+        description: "Screen-reader text for a module stage of 0 in a plan card's progress rows (shown visually as a hyphen): the module is not unlocked now, or is left out of the target.",
+    },
     "planner.completed.check": {
         text: "Completed plans",
         description: "Header button that lists the plans whose targets the last roster sync shows as reached, whether or not the notice is showing.",

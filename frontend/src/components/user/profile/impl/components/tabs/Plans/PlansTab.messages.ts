@@ -15,6 +15,10 @@ export const messages = {
         text: "This player hasn't pinned any plans to their profile yet.",
         description: "Empty-state body of the plans tab. 'Doctor' is what Arknights calls the player; keep the apostrophe.",
     },
+    "profile.plans.error": {
+        text: "The plans couldn't be loaded.",
+        description: "Shown on the Plans tab when the player's public plans fail to load.",
+    },
     "profile.plans.aria": {
         text: "Operator plans",
         description: "Accessible name of the plans section of a profile.",

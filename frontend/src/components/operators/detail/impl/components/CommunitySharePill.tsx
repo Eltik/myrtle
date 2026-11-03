@@ -21,7 +21,8 @@ interface ICommunitySharePillProps {
 
 /**
  * The share of the community that picked one skill or module, as a compact
- * percentage with the raw counts on hover.
+ * percentage with the raw counts on hover. A span is not focusable, so the
+ * counts are also in the pill as screen-reader text.
  *
  * Renders nothing rather than "0%" when there is no figure: a zero reads as
  * "nobody picked this" when it means "we cannot say". Either the cohort is
@@ -41,12 +42,22 @@ export const CommunitySharePill = memo(function CommunitySharePill({ share, tota
     // the common case noisy.
     const label = pct < 10 ? `${pct.toFixed(1)}%` : `${Math.round(pct)}%`;
     const isTop = share.rank === 0;
+    const detail = t("share.tooltip", { users: f.number(share.users), total: f.number(total), cohort, top: isTop ? "yes" : "no" });
 
     return (
         <Tooltip>
-            <TooltipTrigger render={<span className={cn("inline-flex shrink-0 items-center rounded-full px-1.5 py-px font-mono font-semibold text-[10px] tabular-nums leading-none tracking-wider", isTop ? "bg-primary/15 text-primary" : "bg-secondary text-muted-foreground", className)}>{label}</span>} />
+            {/* The top pick is foreground on the primary tint: primary text on its own tint measured
+                under 4.5:1 at 10px. The tint alone marks the top pick. */}
+            <TooltipTrigger
+                render={
+                    <span className={cn("inline-flex shrink-0 items-center rounded-full px-1.5 py-px font-mono font-semibold text-[11px] tabular-nums leading-none", isTop ? "bg-primary/15 text-foreground" : "bg-secondary text-muted-foreground", className)}>
+                        {label}
+                        <span className="sr-only">{detail}</span>
+                    </span>
+                }
+            />
             <TooltipPopup side="top" sideOffset={6}>
-                {t("share.tooltip", { users: f.number(share.users), total: f.number(total), cohort, top: isTop ? "yes" : "no" })}
+                {detail}
             </TooltipPopup>
         </Tooltip>
     );

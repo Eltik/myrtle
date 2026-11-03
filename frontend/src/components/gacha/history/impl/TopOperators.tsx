@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { Kicker } from "#/components/ui/kicker";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
+import { Skeleton } from "#/components/ui/skeleton";
 import type { IClientGachaRecords, IGachaItem } from "#/lib/api/gacha";
 import { useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -56,21 +57,21 @@ export function TopOperators({ records, operatorsById, isLoading }: ITopOperator
             <section className="flex flex-col gap-4 rounded-[14px] border border-border bg-card p-4.5 sm:p-[22px_24px]">
                 <div className="flex items-start justify-between gap-4">
                     <div className="flex flex-col gap-1.5">
-                        <div className="h-2.5 w-24 animate-pulse rounded-full bg-muted" />
-                        <div className="h-5 w-40 animate-pulse rounded bg-muted" />
+                        <Skeleton className="h-2.5 w-24 rounded-full" />
+                        <Skeleton className="h-5 w-40 rounded" />
                     </div>
-                    <div className="h-7 w-28 animate-pulse rounded-lg bg-muted" />
+                    <Skeleton className="h-7 w-28 rounded-lg" />
                 </div>
                 <div className="flex flex-col gap-2.5">
                     {Array.from({ length: 5 }).map((_, i) => (
                         // biome-ignore lint/suspicious/noArrayIndexKey: skeleton
                         <div key={i} className="flex items-center gap-3">
-                            <div className="h-9 w-9 animate-pulse rounded-lg bg-muted" />
+                            <Skeleton className="h-9 w-9 rounded-lg" />
                             <div className="flex flex-1 flex-col gap-1.5">
-                                <div className="h-3 w-32 animate-pulse rounded bg-muted" />
-                                <div className="h-2 w-20 animate-pulse rounded bg-muted" />
+                                <Skeleton className="h-3 w-32 rounded" />
+                                <Skeleton className="h-2 w-20 rounded" />
                             </div>
-                            <div className="h-3 w-12 animate-pulse rounded bg-muted" />
+                            <Skeleton className="h-3 w-12 rounded" />
                         </div>
                     ))}
                 </div>

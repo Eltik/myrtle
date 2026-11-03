@@ -147,8 +147,13 @@ export function ActiveFilters({ groupName, onRemoveGroup, onClear }: { groupName
                 <span className="inline-flex h-7 max-w-64 items-center gap-1 rounded-full border border-primary/40 bg-primary/10 ps-2.5 pe-0.5 font-sans text-foreground text-xs">
                     <BookOpenIcon className="size-3.5 shrink-0 opacity-70" aria-hidden="true" />
                     <span className="min-w-0 truncate">{groupName}</span>
-                    <button type="button" onClick={onRemoveGroup} aria-label={t("profile.background.gallery.removeFilter", { name: groupName })} className="inline-flex size-6 cursor-pointer items-center justify-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground">
-                        <XIcon className="size-3" />
+                    <button
+                        type="button"
+                        onClick={onRemoveGroup}
+                        aria-label={t("profile.background.gallery.removeFilter", { name: groupName })}
+                        className="pointer-coarse:after:-translate-1/2 relative inline-flex size-6 cursor-pointer items-center justify-center rounded-full text-muted-foreground pointer-coarse:after:absolute pointer-coarse:after:top-1/2 pointer-coarse:after:left-1/2 pointer-coarse:after:size-11 hover:bg-accent hover:text-foreground"
+                    >
+                        <XIcon aria-hidden="true" className="size-3" />
                     </button>
                 </span>
             )}

@@ -5,6 +5,10 @@ import { useRender } from "@base-ui/react/use-render";
 import type React from "react";
 import { cn } from "#/lib/utils";
 
+// Panels share one radius, `rounded-2xl` (18px): 67 Card call sites plus 21 hand-rolled
+// bg-card panels rendered at it, against 79 hand-rolled panels plus 4 Alerts at `rounded-xl`,
+// so Alert and the card-variant Table moved up to it. Stacked cards in CardFrame keep
+// `xl` on their inner joins.
 export function Card({ className, render, ...props }: useRender.ComponentProps<"div">): React.ReactElement {
     const defaultProps = {
         className: cn(

@@ -54,7 +54,7 @@ export function OperatorCardCompact({ operator, statMetric }: IOperatorCardCompa
                 }
             />
             <HoverCardContent className="w-max max-w-85 p-0">
-                <OperatorPreview operator={operator} />
+                <OperatorPreview operator={operator} ownership={operator.ownership} cnChanges={operator.cnChanges} />
             </HoverCardContent>
         </HoverCard>
     );

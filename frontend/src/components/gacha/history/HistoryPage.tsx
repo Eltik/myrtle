@@ -12,7 +12,6 @@ import type { messages } from "./HistoryPage.messages";
 import { BannerFilter } from "./impl/BannerFilter";
 import { bannerOptions, filterRecordsByPools } from "./impl/banner-filter";
 import { HistoryBody, hasAnyPull, useBannersById } from "./impl/HistoryBody";
-import styles from "./impl/HistoryPage.module.css";
 import { PublicHistorySwitch, ShareHistoryButton } from "./impl/ShareHistory";
 import { gachaStorageOff } from "./impl/storage-gate";
 
@@ -62,7 +61,8 @@ export function HistoryPage() {
     const storageOff = gachaStorageOff(user);
 
     const recordsQuery = useQuery(myGachaStoredRecordsQueryOptions(isAuthenticated));
-    const bannersById = useBannersById(user?.server);
+    const banners = useBannersById(user?.server);
+    const bannersById = banners.byId;
     // The banners the page is limited to; empty is every banner. Filtered here, from the
     // records already loaded, so picking a banner costs no request.
     const [pools, setPools] = useState<string[]>([]);
@@ -96,61 +96,58 @@ export function HistoryPage() {
     const hasRecords = hasAnyPull(rawRecords);
 
     return (
-        <>
-            <div className={styles.pageAmbient} aria-hidden />
-            <section className="mx-auto flex w-full max-w-330 flex-col gap-6 px-8 pt-7 pb-15 max-[760px]:px-4 max-[760px]:pt-5 max-[760px]:pb-10">
-                <PageHeader>
-                    {isAuthenticated ? (
-                        <div className="flex flex-col items-start gap-1.5 sm:items-end">
-                            <button
-                                type="button"
-                                onClick={() => refreshMutation.mutate()}
-                                disabled={refreshMutation.isPending || storageOff}
-                                aria-describedby={storageOff ? "gacha-storage-off" : undefined}
-                                className="inline-flex h-9 cursor-pointer items-center gap-2 rounded-lg bg-primary px-4 font-medium font-sans text-primary-foreground text-sm shadow-[0_1px_2px_oklch(0_0_0/0.25)] transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-                            >
-                                <RefreshCw className={`h-4 w-4 ${refreshMutation.isPending ? "animate-spin" : ""}`} aria-hidden />
-                                {refreshMutation.isPending ? t("history.refreshing") : t("history.refresh")}
-                            </button>
-                            {storageOff ? (
-                                <p id="gacha-storage-off" className="m-0 max-w-[40ch] font-sans text-muted-foreground text-xs sm:text-right">
-                                    {t("history.refresh.storageOff")}{" "}
-                                    <Link to="/settings" className="text-foreground underline underline-offset-2 hover:text-primary">
-                                        {t("history.refresh.storageOffAction")}
-                                    </Link>
-                                </p>
-                            ) : null}
-                        </div>
-                    ) : null}
-                </PageHeader>
-
-                {recordsQuery.isError ? (
-                    <div className="rounded-[14px] border border-destructive/30 bg-destructive/8 px-5 py-4 font-sans text-foreground/90 text-sm">
-                        <strong className="font-semibold text-foreground">{t("history.error.load")}</strong> {(recordsQuery.error as Error)?.message ?? t("history.error.unknown")}
+        <section className="mx-auto flex w-full max-w-330 flex-col gap-6 px-8 pt-7 pb-15 max-[760px]:px-4 max-[760px]:pt-5 max-[760px]:pb-10">
+            <PageHeader>
+                {isAuthenticated ? (
+                    <div className="flex flex-col items-start gap-1.5 sm:items-end">
+                        <button
+                            type="button"
+                            onClick={() => refreshMutation.mutate()}
+                            disabled={refreshMutation.isPending || storageOff}
+                            aria-describedby={storageOff ? "gacha-storage-off" : undefined}
+                            className="inline-flex h-9 cursor-pointer items-center gap-2 rounded-lg bg-primary px-4 font-medium font-sans text-primary-foreground text-sm shadow-[0_1px_2px_oklch(0_0_0/0.25)] transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                            <RefreshCw className={`h-4 w-4 ${refreshMutation.isPending ? "animate-spin" : ""}`} aria-hidden />
+                            {refreshMutation.isPending ? t("history.refreshing") : t("history.refresh")}
+                        </button>
+                        {storageOff ? (
+                            <p id="gacha-storage-off" className="m-0 max-w-[40ch] font-sans text-muted-foreground text-xs sm:text-right">
+                                {t("history.refresh.storageOff")}{" "}
+                                <Link to="/settings" className="text-foreground underline underline-offset-2 hover:text-primary">
+                                    {t("history.refresh.storageOffAction")}
+                                </Link>
+                            </p>
+                        ) : null}
                     </div>
                 ) : null}
+            </PageHeader>
 
-                {!isAuthenticated && !isLoading ? (
-                    <UnauthenticatedState />
-                ) : isAuthenticated && !isLoading && !hasRecords ? (
-                    <NoDataState />
-                ) : (
-                    <>
-                        {user ? (
-                            <div className="flex flex-col gap-3 rounded-[14px] border border-border bg-card px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
-                                <BannerFilter options={options} value={pools} onChange={setPools} disabled={isLoading} />
-                                <div className="flex flex-wrap items-center gap-3 sm:gap-4">
-                                    <PublicHistorySwitch user={user} />
-                                    <ShareHistoryButton user={user} pools={pools} />
-                                </div>
+            {recordsQuery.isError ? (
+                <div className="rounded-[14px] border border-destructive/30 bg-destructive/8 px-5 py-4 font-sans text-foreground/90 text-sm">
+                    <strong className="font-semibold text-foreground">{t("history.error.load")}</strong> {(recordsQuery.error as Error)?.message ?? t("history.error.unknown")}
+                </div>
+            ) : null}
+
+            {!isAuthenticated && !isLoading ? (
+                <UnauthenticatedState />
+            ) : isAuthenticated && !isLoading && !hasRecords ? (
+                <NoDataState />
+            ) : (
+                <>
+                    {user ? (
+                        <div className="flex flex-col gap-3 rounded-[14px] border border-border bg-card px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
+                            <BannerFilter options={options} value={pools} onChange={setPools} disabled={isLoading} />
+                            <div className="flex flex-wrap items-center gap-3 sm:gap-4">
+                                <PublicHistorySwitch user={user} />
+                                <ShareHistoryButton user={user} pools={pools} />
                             </div>
-                        ) : null}
+                        </div>
+                    ) : null}
 
-                        <HistoryBody records={records} bannersById={bannersById} isLoading={isLoading} filtered={pools.length > 0} />
-                    </>
-                )}
-            </section>
-        </>
+                    <HistoryBody records={records} banners={banners} isLoading={isLoading} filtered={pools.length > 0} />
+                </>
+            )}
+        </section>
     );
 }
 

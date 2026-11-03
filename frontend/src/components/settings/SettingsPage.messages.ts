@@ -19,6 +19,18 @@ export const messages = {
         text: "Danger zone",
         description: "Settings section holding account deletion. Deliberately alarming.",
     },
+    "signedOut.title": {
+        text: "Sign in to manage your account",
+        description: "Card title shown above the appearance settings to a signed-out visitor, the only section they can reach.",
+    },
+    "signedOut.desc": {
+        text: "Appearance works without an account. Sign in to sync your game data, choose who can see your profile, or delete your account.",
+        description: "Card description under that title: what the account sections offer once signed in.",
+    },
+    "signedOut.action": {
+        text: "Sign in",
+        description: "Button in that card that opens the sign-in dialog.",
+    },
     "toast.saved.title": {
         text: "Settings saved",
         description: "Success toast title after a privacy switch is stored.",

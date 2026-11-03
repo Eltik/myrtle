@@ -193,7 +193,6 @@ export function SearchCommand({ open, onOpenChange }: ISearchCommandProps): Reac
                         <span className="flex pointer-coarse:hidden items-center gap-1">
                             <Kbd>↵</Kbd> {t("searchCommand.toSelect")}
                         </span>
-                        <span className="ml-auto font-mono text-[10.5px] text-muted-foreground/60 tracking-[0.04em]">{t("searchCommand.poweredBy")}</span>
                     </CommandFooter>
                 </Command>
             </CommandDialogPopup>

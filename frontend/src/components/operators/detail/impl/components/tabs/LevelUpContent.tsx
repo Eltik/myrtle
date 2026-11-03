@@ -53,18 +53,23 @@ function ItemTile({ item, materials, server }: { item: ILevelUpCostItem; materia
         <Tooltip>
             <TooltipTrigger
                 render={(props) => (
-                    <div {...props} className="group relative h-14 w-14 cursor-help overflow-hidden rounded-lg border border-border bg-muted/40 transition-colors hover:border-primary/60">
+                    // A button so the name and count reach the keyboard and touch; the tooltip only repeats
+                    // them. The name is screen-reader text, not the alt: a failed icon is hidden, alt and all.
+                    <button {...props} type="button" className="group relative h-14 w-14 cursor-help overflow-hidden rounded-lg border border-border bg-muted/40 transition-colors hover:border-primary/60">
+                        <span className="sr-only">{name}</span>
                         <img
                             alt=""
                             className="h-full w-full object-contain p-1"
+                            height={54}
                             loading="lazy"
+                            width={54}
                             src={src}
                             onError={(e) => {
                                 (e.currentTarget as HTMLImageElement).style.visibility = "hidden";
                             }}
                         />
                         <span className="absolute right-0 bottom-0 whitespace-nowrap rounded-tl-md bg-background/85 px-1 font-semibold text-[10px] text-foreground leading-tight">{t("levelup.itemCount", { count: shortCount })}</span>
-                    </div>
+                    </button>
                 )}
             />
             <TooltipPopup className="p-0">
@@ -217,7 +222,11 @@ export const LevelUpContent = memo(function LevelUpContent({ operator }: ILevelU
                             <div className="flex gap-1.5 overflow-x-auto border-border border-b bg-muted/30 px-5 py-2.5">
                                 {masterySkills.map((s, i) => (
                                     <button
-                                        className={cn("flex shrink-0 items-center gap-2 whitespace-nowrap rounded-md px-3 py-1.5 font-medium text-xs transition-colors", i === activeSkill ? "bg-primary/15 text-primary" : "text-muted-foreground hover:bg-accent hover:text-foreground")}
+                                        aria-pressed={i === activeSkill}
+                                        className={cn(
+                                            "flex shrink-0 items-center gap-2 whitespace-nowrap rounded-md border px-3 py-1.5 font-medium text-xs transition-colors",
+                                            i === activeSkill ? "border-primary bg-primary/15 text-foreground" : "border-transparent text-muted-foreground hover:bg-accent hover:text-foreground",
+                                        )}
                                         key={s.skillId}
                                         onClick={() => setActiveSkill(i)}
                                         type="button"
@@ -229,7 +238,7 @@ export const LevelUpContent = memo(function LevelUpContent({ operator }: ILevelU
                                 ))}
                             </div>
                         )}
-                        <div className="px-5 pt-3 pb-1 text-muted-foreground text-xs uppercase tracking-wider">{activeMasteryName}</div>
+                        <div className="kicker px-5 pt-3 pb-1">{activeMasteryName}</div>
                         {activeMastery.levelUpCostCond.map((c, i) => (
                             <CostRow
                                 hint={t("levelup.row.unlockAt", { phase: t(PHASE_MESSAGE_KEY[c.unlockCond.phase]), level: c.unlockCond.level })}
@@ -252,7 +261,7 @@ export const LevelUpContent = memo(function LevelUpContent({ operator }: ILevelU
                                     <div className="px-5 py-4" key={m.uniEquipId}>
                                         <div className="mb-3 flex items-center gap-3">
                                             <div className="grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded-md border border-border bg-muted/40">
-                                                {m.image ? <img alt="" className="h-full w-full object-contain" loading="lazy" src={asset(m.image, fromCn ? "cn" : operator.server)} /> : <span className="font-bold text-[10px] text-primary uppercase">{m.typeName2 ?? m.typeName1}</span>}
+                                                {m.image ? <img alt="" className="h-full w-full object-contain" loading="lazy" src={asset(m.image, fromCn ? "cn" : operator.server)} /> : <span className="font-bold text-[10px] text-foreground">{m.typeName2 ?? m.typeName1}</span>}
                                             </div>
                                             <div className="min-w-0">
                                                 <div className="flex min-w-0 items-center gap-2">

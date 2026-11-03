@@ -105,7 +105,7 @@ function KpiRow({ inst, snap, index, isLeader, leaderValue, leaderKey, columns, 
                                 </Tooltip>
                             ) : isLeader ? (
                                 <Tooltip>
-                                    <TooltipTrigger render={<span className="inline-flex items-center gap-0.5 rounded bg-primary/12 px-1.5 py-0.5 font-medium text-[10px] text-primary" />}>
+                                    <TooltipTrigger render={<span className="inline-flex items-center gap-0.5 rounded bg-primary/12 px-1.5 py-0.5 font-medium text-[10px] text-foreground [&>svg]:text-primary" />}>
                                         <Crown className="size-3" />
                                         {t("calc.kpi.top")}
                                     </TooltipTrigger>

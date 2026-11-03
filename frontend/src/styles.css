@@ -1,4 +1,9 @@
-@import url("https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&display=swap");
+/* Fraunces is self-hosted with the opsz axis (the files also carry wght) and the
+   italic, the same axes the Google Fonts URL requested, so optical sizing and the
+   italic display moments (stats header, tier list preview quote) render as before
+   without a third-party CSS round trip ahead of first paint. */
+@import "@fontsource-variable/fraunces/opsz.css";
+@import "@fontsource-variable/fraunces/opsz-italic.css";
 @import "@fontsource-variable/inter";
 @import "@fontsource-variable/geist-mono";
 @import "@fontsource-variable/orbitron";
@@ -20,30 +25,18 @@
   --font-sans: "Inter Variable", ui-sans-serif, system-ui, var(--font-cjk), sans-serif;
   --font-heading: "Inter Variable", ui-sans-serif, system-ui, var(--font-cjk), sans-serif;
   --font-mono: "Geist Mono Variable", ui-monospace, SFMono-Regular, var(--font-cjk), monospace;
-  --font-display: "Fraunces", Georgia, var(--font-cjk), serif;
+  --font-display: "Fraunces Variable", Georgia, var(--font-cjk), serif;
   /* Squared-off technical numerals for RIIC readouts, not body copy. */
   --font-techno: "Orbitron Variable", var(--font-mono);
 }
 
 :root {
-  --sea-ink: #173a40;
   --sea-ink-soft: #416166;
   --lagoon: #4fb8b2;
   --lagoon-deep: #328f97;
   --palm: #2f6a4a;
-  --sand: #e7f0e8;
-  --foam: #f3faf5;
   --surface: rgba(255, 255, 255, 0.74);
-  --surface-strong: rgba(255, 255, 255, 0.9);
-  --line: rgba(23, 58, 64, 0.14);
-  --inset-glint: rgba(255, 255, 255, 0.82);
   --bg-base: #e7f3ec;
-  --header-bg: rgba(251, 255, 248, 0.84);
-  --chip-bg: rgba(255, 255, 255, 0.8);
-  --chip-line: rgba(47, 106, 74, 0.18);
-  --link-bg-hover: rgba(255, 255, 255, 0.9);
-  --hero-a: rgba(79, 184, 178, 0.36);
-  --hero-b: rgba(47, 106, 74, 0.2);
   --destructive-foreground: var(--color-red-700);
   --info: var(--color-blue-500);
   --info-foreground: var(--color-blue-700);
@@ -95,6 +88,20 @@
   --rarity-3: #88c8e3;
   --rarity-2: #7ef2a3;
   --rarity-1: #b5b5b5;
+
+  /* The rarity hues as TEXT. On the white card every one of the six above
+     measures under 3:1 (1.39 to 2.52), so a rarity-coloured name or star count
+     was unreadable in light mode. Same oklch hue, lightness lowered until the
+     colour clears 4.5:1 on both #ffffff (card) and #fafafb (page), with chroma
+     trimmed only where the darker colour left the sRGB gamut. On the muted
+     surface (#ebebee) they measure 3.97 to 4.17, so they are not for text on
+     muted. Ratios: on #ffffff / on #fafafb. */
+  --rarity-6-ink: oklch(0.56 0.149 49.4); /* 4.93 / 4.73 */
+  --rarity-5-ink: oklch(0.55 0.112 94.9); /* 4.85 / 4.65 */
+  --rarity-4-ink: oklch(0.55 0.07 301); /* 4.98 / 4.77 */
+  --rarity-3-ink: oklch(0.54 0.075 226.3); /* 4.95 / 4.75 */
+  --rarity-2-ink: oklch(0.53 0.138 152.4); /* 4.95 / 4.74 */
+  --rarity-1-ink: oklch(0.55 0 0); /* 4.85 / 4.65 */
 
   --enemy-normal: oklch(0.65 0.01 285);
   --enemy-elite: oklch(0.72 0.14 75);
@@ -216,6 +223,12 @@ pre code {
   --color-info-foreground: var(--info-foreground);
   --color-info: var(--info);
   --color-destructive-foreground: var(--destructive-foreground);
+  --color-rarity-6-ink: var(--rarity-6-ink);
+  --color-rarity-5-ink: var(--rarity-5-ink);
+  --color-rarity-4-ink: var(--rarity-4-ink);
+  --color-rarity-3-ink: var(--rarity-3-ink);
+  --color-rarity-2-ink: var(--rarity-2-ink);
+  --color-rarity-1-ink: var(--rarity-1-ink);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -313,24 +326,12 @@ pre code {
 }
 
 .dark {
-  --sea-ink: #d7ece8;
   --sea-ink-soft: #afcdc8;
   --lagoon: #60d7cf;
   --lagoon-deep: #8de5db;
   --palm: #6ec89a;
-  --sand: #0f1a1e;
-  --foam: #101d22;
   --surface: rgba(16, 30, 34, 0.8);
-  --surface-strong: rgba(15, 27, 31, 0.92);
-  --line: rgba(141, 229, 219, 0.18);
-  --inset-glint: rgba(194, 247, 238, 0.14);
   --bg-base: #0a1418;
-  --header-bg: rgba(10, 20, 24, 0.8);
-  --chip-bg: rgba(13, 28, 32, 0.9);
-  --chip-line: rgba(141, 229, 219, 0.24);
-  --link-bg-hover: rgba(24, 44, 49, 0.8);
-  --hero-a: rgba(96, 215, 207, 0.18);
-  --hero-b: rgba(110, 200, 154, 0.12);
   --destructive-foreground: var(--color-red-400);
   --info-foreground: var(--color-blue-400);
   --success-foreground: var(--color-emerald-400);
@@ -372,11 +373,43 @@ pre code {
   --glow-primary-intense: oklch(0.75 0.15 25 / 0.8);
   --enemy-normal: oklch(0.75 0.01 285);
   --enemy-boss: oklch(0.75 0.15 25);
+  /* The plain hues already read on the dark card, 7.58 to 13.28. */
+  --rarity-6-ink: var(--rarity-6);
+  --rarity-5-ink: var(--rarity-5);
+  --rarity-4-ink: var(--rarity-4);
+  --rarity-3-ink: var(--rarity-3);
+  --rarity-2-ink: var(--rarity-2);
+  --rarity-1-ink: var(--rarity-1);
 }
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border outline-ring;
+  }
+  /* The keyboard focus mark for anything that does not draw its own. The ring
+     at 50% alpha measured 2.29:1 on the light page and 2.80:1 on the dark one,
+     under the 3:1 a focus indicator needs; solid it measures 4.59 and 8.06.
+     A kit control that draws a `focus-visible:ring-*` also sets
+     `outline-none`, and a utility beats this base rule, so it never gets two
+     marks. `:focus-visible` only, so a mouse click draws nothing. */
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+  /* Preflight leaves every control on the arrow cursor, so a Switch, a
+     Checkbox or a Select trigger did not read as clickable. `:where()` keeps
+     this at zero specificity: the disabled rule below always beats it, and so
+     does any `cursor-*` utility a component sets on purpose (the menu and
+     select rows keep `cursor-default`). The label clause names the toggles
+     only: `cursor` inherits, and a label around a text input would hand the
+     input a pointer in place of its text caret. */
+  :where(button, [role="button"], [role="switch"], [role="checkbox"], [role="radio"], [role="tab"], [role="option"], [role="menuitem"], summary, select, a[href], label:has(input[type="checkbox"], input[type="radio"], [role="checkbox"], [role="switch"], [role="radio"])) {
+    cursor: pointer;
+  }
+  :disabled,
+  [data-disabled],
+  [aria-disabled="true"] {
+    cursor: not-allowed;
   }
   body {
     @apply bg-background text-foreground;
@@ -385,7 +418,27 @@ pre code {
     font-family: var(--font-mono);
   }
   html {
-    @apply font-sans font-mono;
+    @apply font-sans;
+  }
+  /* Reduced motion collapses every transition and animation to an instant,
+     including the overlay, accordion and tooltip motion the kit never opted
+     out of. It sits in a layer on purpose: an `!important` in a layer
+     outranks an unlayered or utility `!important`, so no component can
+     reintroduce motion by accident. Spinners are the exception. A frozen
+     spinner reads as a hang, so they keep turning, slower. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+    [class*="animate-spin"] {
+      animation-duration: 1.5s !important;
+      animation-iteration-count: infinite !important;
+    }
   }
 }
 

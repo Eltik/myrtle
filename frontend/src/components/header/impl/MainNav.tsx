@@ -65,7 +65,7 @@ function HoverDropdown({ item, isActive, onOpenCommand }: { item: INavItem; isAc
     // menu without an onClick of our own.
     const renderLink = (t: INavItem) => (
         <DropdownMenuItem key={t.href} className="cursor-pointer gap-3 rounded-lg px-3 py-2.5 no-underline transition-colors" render={<Link to={t.href} />}>
-            {hasIcons && <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/5 bg-muted/70 text-primary">{t.icon && <ToolIcon name={t.icon} />}</span>}
+            {hasIcons && <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border bg-muted/70 text-primary">{t.icon && <ToolIcon name={t.icon} />}</span>}
             <span className="flex min-w-0 flex-1 flex-col gap-0.75">
                 <span className="font-medium font-sans text-[13px] text-foreground leading-none tracking-tight">{t.label}</span>
                 {t.desc && <span className="font-sans text-[11.5px] text-muted-foreground leading-snug">{t.desc}</span>}
@@ -102,14 +102,14 @@ function HoverDropdown({ item, isActive, onOpenCommand }: { item: INavItem; isAc
                         </DropdownMenuGroup>
                     )}
                     {hasIcons && (
-                        <div className="mt-1.5 flex items-center justify-between gap-2 border-white/5 border-t px-3 pt-2.5 pb-2 font-sans text-[11.5px] text-muted-foreground leading-none">
+                        <div className="mt-1.5 flex items-center justify-between gap-2 border-border border-t px-3 pt-2.5 pb-2 font-sans text-[11.5px] text-muted-foreground leading-none">
                             <span className="inline-flex items-center gap-1.5 font-medium font-mono text-[11.5px]">
                                 {t("mainNav.press")} <Kbd>{modKey(isMac)}</Kbd>
                                 <Kbd>K</Kbd> {t("mainNav.forAllCommands")}
                             </span>
                             <button
                                 type="button"
-                                className="cursor-pointer border-none bg-transparent p-0 font-medium font-sans text-[11.5px] text-primary leading-none transition-colors hover:text-[color-mix(in_oklab,var(--primary),white_40%)]"
+                                className="cursor-pointer border-none bg-transparent p-0 font-medium font-sans text-[11.5px] text-primary leading-none underline-offset-2 hover:underline"
                                 onClick={() => {
                                     setOpen(false);
                                     onOpenCommand?.();

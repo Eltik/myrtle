@@ -40,7 +40,7 @@ export function ZoneFields({ zones, onChange, resetKey, compact = false }: IZone
                 <button type="button" onClick={() => setMore((v) => !v)} className="flex w-full cursor-pointer items-center justify-between rounded py-1 text-left font-medium text-[11px] text-muted-foreground hover:text-foreground">
                     <span className="flex items-center gap-1.5">
                         {more ? t("dps.zones.less") : t("dps.zones.more")}
-                        {rareSet > 0 && <span className="rounded bg-primary/15 px-1.5 py-0.5 font-mono text-[9.5px] text-primary">{t("dps.zones.moreSet", { count: rareSet })}</span>}
+                        {rareSet > 0 && <span className="rounded bg-primary/15 px-1.5 py-0.5 font-mono text-[9.5px] text-foreground">{t("dps.zones.moreSet", { count: rareSet })}</span>}
                     </span>
                     {more ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
                 </button>

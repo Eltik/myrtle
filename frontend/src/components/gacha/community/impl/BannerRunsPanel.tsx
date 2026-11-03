@@ -2,11 +2,12 @@ import { useMemo, useState } from "react";
 import { Kicker } from "#/components/ui/kicker";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "#/components/ui/preview-card";
+import { Skeleton } from "#/components/ui/skeleton";
 import { type ClientGachaGroup, classifyBannerGroup, type IBanner, type IBannerPullStat } from "#/lib/api/gacha";
 import { type IFormatters, type TypedRichT, useFormatters, useRichT, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import type { IOperatorIndexEntry } from "#/types/operators";
-import { BANNER_GROUP_LABEL_KEYS, BANNER_STATUS_COLOR, BANNER_STATUS_LABEL_KEYS, type BannerStatus, bannerStatus } from "../../constants";
+import { BANNER_GROUP_COLOR, BANNER_GROUP_LABEL_KEYS, BANNER_STATUS_COLOR, BANNER_STATUS_LABEL_KEYS, type BannerStatus, bannerStatus } from "../../constants";
 import type { messages as gachaConstantsMessages } from "../../constants.messages";
 import type { messages } from "./BannerRunsPanel.messages";
 
@@ -21,14 +22,6 @@ interface IBannerRunsPanelProps {
     statsById: Map<string, IBannerPullStat>;
     isLoading: boolean;
 }
-
-const TYPE_COLORS: Record<ClientGachaGroup, string> = {
-    limited: "oklch(0.85 0.18 80)",
-    linkage: "oklch(0.78 0.16 320)",
-    regular: "#bcabdb",
-    special: "#88c8e3",
-    boot: "oklch(0.8 0.12 160)",
-};
 
 type Status = BannerStatus;
 
@@ -110,7 +103,7 @@ function BannerCard({ entry, operatorsById, stat, rank, rankTitle }: { entry: IB
     const t: RunsT = useT("gacha");
     const f = useFormatters();
     const { banner, group, status } = entry;
-    const typeColor = TYPE_COLORS[group];
+    const groupColor = BANNER_GROUP_COLOR[group];
 
     return (
         <HoverCard>
@@ -118,14 +111,12 @@ function BannerCard({ entry, operatorsById, stat, rank, rankTitle }: { entry: IB
                 render={
                     <div
                         className="flex cursor-default flex-col gap-2.5 rounded-xl border bg-muted/30 p-3.5 transition-colors hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-                        style={{ borderColor: status === "active" ? `color-mix(in oklch, ${typeColor} 50%, var(--border))` : "var(--border)" }}
+                        style={{ borderColor: status === "active" ? `color-mix(in oklch, ${groupColor.fill} 50%, var(--border))` : "var(--border)" }}
                     >
                         <div className="flex items-start justify-between gap-2">
                             <div className="flex items-center gap-1.5">
                                 {rank !== null ? <RankChip rank={rank} title={rankTitle} /> : null}
-                                <span className="font-mono text-[9.5px] uppercase tracking-[0.14em]" style={{ color: typeColor }}>
-                                    {t(BANNER_GROUP_LABEL_KEYS[group])}
-                                </span>
+                                <span className={`font-mono text-[9.5px] uppercase tracking-[0.14em] ${groupColor.inkClass}`}>{t(BANNER_GROUP_LABEL_KEYS[group])}</span>
                             </div>
                             <StatusPill status={status} />
                         </div>
@@ -141,7 +132,7 @@ function BannerCard({ entry, operatorsById, stat, rank, rankTitle }: { entry: IB
             <HoverCardContent className="w-80 p-4">
                 <div className="flex flex-col gap-3">
                     <div className="flex flex-col gap-1">
-                        <span className="font-mono text-[9.5px] uppercase tracking-[0.14em]" style={{ color: typeColor }}>
+                        <span className={`font-mono text-[9.5px] uppercase tracking-[0.14em] ${groupColor.inkClass}`}>
                             {t(BANNER_GROUP_LABEL_KEYS[group])} · {banner.gachaRuleType}
                         </span>
                         <span className="font-sans font-semibold text-[14px] text-foreground leading-snug">{banner.gachaPoolName}</span>
@@ -303,11 +294,11 @@ export function BannerRunsPanel({ banners, operatorsById, statsById, isLoading }
     if (isLoading) {
         return (
             <section id="banner-runs" className="flex scroll-mt-24 flex-col gap-4 rounded-[14px] border border-border bg-card p-[18px_18px] sm:p-[22px_24px]">
-                <div className="h-4 w-32 animate-pulse rounded bg-muted" />
+                <Skeleton className="h-4 w-32 rounded" />
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                     {Array.from({ length: 6 }).map((_, i) => (
                         // biome-ignore lint/suspicious/noArrayIndexKey: skeleton
-                        <div key={i} className="h-32 animate-pulse rounded-xl bg-muted" />
+                        <Skeleton key={i} className="h-32 rounded-xl" />
                     ))}
                 </div>
             </section>

@@ -75,6 +75,14 @@ export const messages = {
         text: "Loosen a filter, or clear them all to browse every public profile.",
         description: "Empty-state body under search.empty.filtered.title. A 'Clear filters' button follows.",
     },
+    "search.error.title": {
+        text: "The search couldn't be loaded.",
+        description: "Shown in place of the results when the player search request fails.",
+    },
+    "search.error.retry": {
+        text: "Try again",
+        description: "Button under the search failure line that runs the same search again.",
+    },
     "search.empty.none.title": {
         text: "No public profiles yet",
         description: "Empty-state title when nobody has made a profile public.",

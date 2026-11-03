@@ -63,34 +63,43 @@ function PlannerRequirementRow({ item, depth, path, expandedPaths, onToggleExpan
     const { status, shortfall } = requirementStatus(item);
     const needsCrafting = status === "craft";
 
-    const handleClick = () => {
-        if (hasRecipe) {
-            onToggleExpand(path);
-        }
-    };
+    const icon = (
+        <img
+            src={itemIcon(item.id, item.iconId, item.image)}
+            alt={hasRecipe ? "" : item.name}
+            className="size-8 shrink-0 rounded-md object-contain"
+            onError={(e) => {
+                (e.currentTarget as HTMLImageElement).style.display = "none";
+            }}
+        />
+    );
+    const name = <span className="font-medium text-foreground text-xs leading-tight">{item.name}</span>;
 
     return (
         <>
-            <tr className={cn("group transition-colors hover:bg-muted/20", hasRecipe && "cursor-pointer")} onClick={handleClick}>
+            <tr className="group transition-colors hover:bg-muted/20">
                 <td className="py-2.5 pr-4">
-                    <div className="flex items-center gap-2" style={{ paddingLeft: `${depth * 1.25}rem` }}>
-                        {hasRecipe ? isExpanded ? <ChevronDown className="size-3.5 shrink-0 text-muted-foreground" /> : <ChevronRight className="size-3.5 shrink-0 text-muted-foreground" /> : <div className="size-3.5 shrink-0" />}
-                        <img
-                            src={itemIcon(item.id, item.iconId, item.image)}
-                            alt={item.name}
-                            className="size-8 shrink-0 rounded-md object-contain"
-                            onError={(e) => {
-                                (e.currentTarget as HTMLImageElement).style.display = "none";
-                            }}
-                        />
-                        <span className="font-medium text-foreground text-xs leading-tight">{item.name}</span>
-                    </div>
+                    {/* The expand control is a real button in the first cell, not a click on the row, so a
+                        keyboard reaches it and a screen reader hears its expanded state. */}
+                    {hasRecipe ? (
+                        <button type="button" aria-expanded={isExpanded} onClick={() => onToggleExpand(path)} className="flex cursor-pointer items-center gap-2 rounded-md text-left" style={{ paddingLeft: `${depth * 1.25}rem` }}>
+                            {isExpanded ? <ChevronDown aria-hidden="true" className="size-3.5 shrink-0 text-muted-foreground" /> : <ChevronRight aria-hidden="true" className="size-3.5 shrink-0 text-muted-foreground" />}
+                            {icon}
+                            {name}
+                        </button>
+                    ) : (
+                        <div className="flex items-center gap-2" style={{ paddingLeft: `${depth * 1.25}rem` }}>
+                            <div className="size-3.5 shrink-0" />
+                            {icon}
+                            {name}
+                        </div>
+                    )}
                 </td>
                 <td className="py-2.5 pr-2 text-right text-foreground text-xs tabular-nums">{f.number(item.requiredCount)}</td>
-                <td className={cn("px-2 py-2.5 text-right text-xs tabular-nums", status === "complete" ? "text-emerald-400" : needsCrafting ? "text-amber-400" : "text-muted-foreground")}>{f.number(item.inventoryCount)}</td>
+                <td className={cn("px-2 py-2.5 text-right text-xs tabular-nums", status === "complete" ? "text-success-foreground" : needsCrafting ? "text-warning-foreground" : "text-muted-foreground")}>{f.number(item.inventoryCount)}</td>
                 <td className="px-2 py-2.5 text-right text-xs tabular-nums">
                     {item.canCraft ? (
-                        <span className="text-sky-400">{f.number(item.craftableCount)}</span>
+                        <span className="text-info-foreground">{f.number(item.craftableCount)}</span>
                     ) : isMissingRequirements && (item.unmetStages?.length ?? 0) > 0 ? (
                         <div className="flex justify-end">
                             <UnmetStagesPopover item={item} t={t} />
@@ -119,14 +128,14 @@ function PlannerRequirementRow({ item, depth, path, expandedPaths, onToggleExpan
                 </td>
                 <td className="py-2.5 pl-2 text-right text-xs tabular-nums">
                     {status === "missing" ? (
-                        <span className="font-semibold text-red-400 text-xs">{f.number(item.missingCount)}</span>
+                        <span className="font-semibold text-destructive-foreground text-xs">{f.number(item.missingCount)}</span>
                     ) : needsCrafting ? (
                         <Tooltip>
-                            <TooltipTrigger render={<span className="font-semibold text-amber-400 text-xs" />}>{t("planner.req.craft", { count: f.number(shortfall) })}</TooltipTrigger>
+                            <TooltipTrigger render={<span className="font-semibold text-warning-foreground text-xs" />}>{t("planner.req.craft", { count: f.number(shortfall) })}</TooltipTrigger>
                             <TooltipPopup>{t("planner.req.craftTitle", { have: f.number(item.inventoryCount), required: f.number(item.requiredCount), shortfall: f.number(shortfall) })}</TooltipPopup>
                         </Tooltip>
                     ) : (
-                        <span className="font-semibold text-emerald-400">✓</span>
+                        <span className="font-semibold text-success-foreground">✓</span>
                     )}
                 </td>
             </tr>

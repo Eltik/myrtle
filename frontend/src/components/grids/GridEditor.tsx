@@ -124,7 +124,7 @@ function EditorContent({ grid, viewerId }: { grid: IGrid; viewerId: string | nul
     const picker = <EntityPickerDialog target={pickerTarget(state, pickIndex)} kinds={state.entityKinds} onClose={() => setPickIndex(null)} onPick={handlePick} onClear={handleClear} />;
 
     return (
-        <main className="min-h-dvh pb-24">
+        <div className="min-h-dvh pb-24">
             <EditorHeader
                 slug={slug}
                 state={state}
@@ -189,7 +189,7 @@ function EditorContent({ grid, viewerId }: { grid: IGrid; viewerId: string | nul
             />
 
             <ConfirmDialog open={blocker.status === "blocked"} title={t("edit.leave.title")} body={t("edit.leave.body")} confirmLabel={t("edit.leave.confirm")} cancelLabel={t("edit.leave.cancel")} destructive onCancel={() => blocker.reset?.()} onConfirm={() => blocker.proceed?.()} />
-        </main>
+        </div>
     );
 }
 

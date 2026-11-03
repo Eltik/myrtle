@@ -149,7 +149,7 @@ export const ArtBrowser = memo(function ArtBrowser({ selected, onPick }: IArtBro
                         characters
                     ) : (
                         <>
-                            <div className={`${STICKY_UNDER_STRIP} z-10 flex flex-col gap-2 border-b bg-background/80 px-6 pt-4 pb-2.5 backdrop-blur-md backdrop-saturate-150`}>
+                            <div className={`${STICKY_UNDER_STRIP} z-10 flex flex-col gap-2 border-b bg-background px-6 pt-4 pb-2.5`}>
                                 <GalleryResultsHeader view={view} query={chosen.query} actions={actions} end={sizeControl} />
                             </div>
                             <div className="px-6 pt-4 pb-10">{tiles}</div>
@@ -164,7 +164,7 @@ export const ArtBrowser = memo(function ArtBrowser({ selected, onPick }: IArtBro
     const pinned = source === "characters";
     return (
         <section className={cn("flex flex-col", pinned && `${STICKY_UNDER_STRIP} ${UNDER_STRIP}`)}>
-            <div className={cn("z-20 flex shrink-0 flex-col gap-2.5 border-b bg-background/80 px-4 py-3 backdrop-blur-md backdrop-saturate-150", !pinned && STICKY_UNDER_STRIP)}>
+            <div className={cn("z-20 flex shrink-0 flex-col gap-2.5 border-b bg-background px-4 py-3", !pinned && STICKY_UNDER_STRIP)}>
                 <div className="-mx-4 overflow-x-auto px-4 [scrollbar-width:none]">
                     <div className="inline-flex w-max gap-0.5 rounded-lg bg-muted/70 p-1" role="tablist" aria-label={t("profile.background.source")}>
                         {SOURCES.map((s) => {

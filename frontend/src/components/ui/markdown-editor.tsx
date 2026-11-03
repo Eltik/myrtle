@@ -166,7 +166,7 @@ export function MarkdownEditor({ id, name, value, onChange, placeholder, maxLeng
             </Tabs>
 
             {showHint && (
-                <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 border-border/60 border-t px-2.5 py-1 font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.08em]">
+                <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 border-border/60 border-t px-2.5 py-1 font-mono text-[10.5px] text-muted-foreground">
                     <span className="hidden sm:inline">
                         <span className="font-semibold text-foreground/80">**bold**</span> · <span className="font-semibold text-foreground/80">*italic*</span> · <span className="font-semibold text-foreground/80">`code`</span> · <span className="font-semibold text-foreground/80">[link](url)</span>
                     </span>

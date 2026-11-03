@@ -13,7 +13,7 @@ export const messages = {
     },
     "filters.toggle.label": {
         text: "Filter",
-        description: "Small uppercase caption inside the toggle button on desktop. Very tight space - one short word.",
+        description: "Small caption inside the toggle button on desktop. Very tight space - one short word.",
     },
 } satisfies MessageMap;
 

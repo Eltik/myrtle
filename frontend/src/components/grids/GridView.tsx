@@ -48,7 +48,7 @@ function GridViewContent({ grid }: { grid: IGrid }) {
     const state = useMemo(() => gridToState(grid), [grid]);
 
     return (
-        <main className="min-h-dvh pb-24">
+        <div className="min-h-dvh pb-24">
             <div className="page-gutter pt-6 [--page-max:1180px] sm:pt-10">
                 <Link to="/grids" search={DEFAULT_GRIDS_SEARCH} className="inline-flex items-center gap-1.5 font-sans text-muted-foreground text-xs no-underline hover:text-foreground">
                     <ArrowLeftIcon className="h-3.5 w-3.5" aria-hidden="true" />
@@ -93,7 +93,7 @@ function GridViewContent({ grid }: { grid: IGrid }) {
 
                 {grid.description && <p className="mx-auto mt-5 max-w-180 whitespace-pre-line text-center font-sans text-muted-foreground text-sm leading-relaxed">{grid.description}</p>}
             </div>
-        </main>
+        </div>
     );
 }
 

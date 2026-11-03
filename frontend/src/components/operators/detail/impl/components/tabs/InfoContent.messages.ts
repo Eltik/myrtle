@@ -151,6 +151,10 @@ export const messages = {
         text: "Attack Range",
         description: "Heading over the grid showing which tiles the operator can hit.",
     },
+    "info.attackRange.error": {
+        text: "The attack range did not load.",
+        description: "Shown in place of the range grid when the range data failed to load, beside a Try again button. Distinct from 'No range data available', which means the game data has none.",
+    },
     "info.attackRange.empty": {
         text: "No range data available.",
         description: "Shown instead of the range grid when the game data carries none.",
@@ -180,16 +184,16 @@ export const messages = {
         description: "Hover text on the switch that highlights what changed against the unmodified text. 'Diff' is short for difference.",
     },
     "info.baseTrait": {
-        text: "Base Trait",
-        description: "Small uppercase caption over the operator's unmodified trait text.",
+        text: "Base trait",
+        description: "Small caption over the operator's unmodified trait text.",
     },
     "info.baseTalent": {
-        text: "Base Talent",
-        description: "Small uppercase caption over a talent's unmodified text.",
+        text: "Base talent",
+        description: "Small caption over a talent's unmodified text.",
     },
     "info.changes": {
         text: "Changes",
-        description: "Small uppercase caption over the modified text, below the unmodified version.",
+        description: "Small caption over the modified text, below the unmodified version.",
     },
     "info.talentChanges": {
         text: "Talent Changes",

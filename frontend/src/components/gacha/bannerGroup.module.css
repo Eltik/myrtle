@@ -1,0 +1,25 @@
+/*
+ * Label ink for the three banner groups with no rarity token. Light: the fill's hue darkened
+ * to 4.56 to 4.68 on muted/60 over the card, where the fill itself measures 1.50 to 1.93.
+ * Dark keeps the fill, already 8.95 to 11.49 on the dark card.
+ */
+.limited {
+    color: oklch(0.54 0.111 80);
+}
+:global(.dark) .limited {
+    color: oklch(0.85 0.18 80);
+}
+
+.linkage {
+    color: oklch(0.56 0.16 320);
+}
+:global(.dark) .linkage {
+    color: oklch(0.78 0.16 320);
+}
+
+.boot {
+    color: oklch(0.52 0.117 160);
+}
+:global(.dark) .boot {
+    color: oklch(0.8 0.12 160);
+}

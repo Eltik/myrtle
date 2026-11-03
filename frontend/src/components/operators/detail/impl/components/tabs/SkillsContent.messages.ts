@@ -116,7 +116,7 @@ export const messages = {
         description: "Caption over the operator's normal attack range in the side-by-side comparison.",
     },
     "skills.range.onSkill": {
-        text: "On Skill",
+        text: "On skill",
         description: "Caption over the attack range while the skill is active, in the side-by-side comparison.",
     },
     "skills.column.level": {

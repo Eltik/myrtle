@@ -16,7 +16,9 @@ export function OperatorAvatar({ charId, name, className, server }: IOperatorAva
     const [failed, setFailed] = useState(false);
 
     if (!charId || failed) {
-        return <>{name.charAt(0).toUpperCase()}</>;
+        // The initial is a picture of the name, not the name: the caller labels
+        // the chip, and a lone "S" read aloud before it is noise.
+        return <span aria-hidden="true">{name.charAt(0).toUpperCase()}</span>;
     }
 
     return <img src={getAvatarById(charId, server)} alt="" aria-hidden="true" loading="lazy" decoding="async" draggable={false} onDragStart={(e) => e.preventDefault()} className={className ?? "block h-full w-full rounded-[inherit] object-cover"} onError={() => setFailed(true)} />;

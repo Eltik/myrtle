@@ -97,8 +97,14 @@ function PlanCardHeader({ op, isActive, onToggleActive, isExpanded, onToggleExpa
                 <h3 className="truncate font-bold text-foreground text-sm leading-tight">{operatorName(op)}</h3>
                 <p className="mt-0.5 truncate text-muted-foreground text-xs leading-normal">{t("planner.card.rarityClass", { rarity: rarityToNumber(op.rarity), archetype: subProfessionLabel(op) })}</p>
             </div>
-            <button type="button" onClick={handled(onToggleExpanded)} className="flex size-7 shrink-0 items-center justify-center rounded-md border border-border bg-muted/40 text-foreground shadow-xs transition-all hover:border-border/80 hover:bg-muted">
-                <ChevronDown className={cn("size-4 transition-transform", isExpanded && "rotate-180")} />
+            <button
+                type="button"
+                aria-label={isExpanded ? t("planner.card.collapse") : t("planner.card.expand")}
+                aria-expanded={isExpanded}
+                onClick={handled(onToggleExpanded)}
+                className="pointer-coarse:after:-translate-1/2 relative flex size-7 shrink-0 items-center justify-center rounded-md border border-border bg-muted/40 text-foreground shadow-xs transition-all pointer-coarse:after:absolute pointer-coarse:after:top-1/2 pointer-coarse:after:left-1/2 pointer-coarse:after:size-11 hover:border-border/80 hover:bg-muted"
+            >
+                <ChevronDown aria-hidden="true" className={cn("size-4 transition-transform", isExpanded && "rotate-180")} />
             </button>
         </div>
     );
@@ -123,11 +129,20 @@ function PlanDetails({ plan, op, rosterEntry, className }: IPlanDetailsProps): R
         skillTarget: (value) => (value <= MAX_SKILL_LEVEL ? String(value) : t("planner.card.mastery", { mastery: masteryOf(value) })),
         // Not "X": it sat next to the module's designator and X is itself a designator letter
         // (typeName2 is one of A, B, D, X, Y), so "SUM-X  X ➔ 3" read as though the stage column
-        // were naming the module. An em dash cannot be mistaken for one.
-        moduleStage: (stage) => (stage === 0 ? "\u2014" : String(stage)),
+        // were naming the module. A hyphen cannot be mistaken for one, and a screen reader, which
+        // would read it as "dash" or skip it, gets the word instead.
+        moduleStage: (stage) =>
+            stage === 0 ? (
+                <>
+                    <span aria-hidden="true">-</span>
+                    <span className="sr-only">{t("planner.card.moduleNone")}</span>
+                </>
+            ) : (
+                String(stage)
+            ),
     };
 
-    return <PlanProgressRows progress={planProgress(op, plan, rosterEntry)} server={op.server} labels={labels} className={cn("fade-in slide-in-from-top-2 animate-in duration-200", className)} />;
+    return <PlanProgressRows progress={planProgress(op, plan, rosterEntry)} server={op.server} labels={labels} className={cn("motion-safe:fade-in motion-safe:slide-in-from-top-2 motion-safe:animate-in motion-safe:duration-200", className)} />;
 }
 
 interface IPlanActionsProps {

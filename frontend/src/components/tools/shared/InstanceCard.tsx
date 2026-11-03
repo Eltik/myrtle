@@ -325,7 +325,7 @@ export function InstanceCard({ inst, index, isFirst, isLast, onUpdate, onToggleC
                             <button type="button" className="flex w-full cursor-pointer items-center justify-between rounded py-1 text-left font-medium text-[11px] text-muted-foreground hover:text-foreground" onClick={() => setBuffsOpen((v) => !v)}>
                                 <span className="flex items-center gap-1.5">
                                     {t("calc.instance.externalBuffs")}
-                                    {buffsSetCount > 0 && <span className="rounded bg-primary/15 px-1.5 py-0.5 font-mono text-[9.5px] text-primary">{t("calc.instance.externalBuffs.count", { count: buffsSetCount })}</span>}
+                                    {buffsSetCount > 0 && <span className="rounded bg-primary/15 px-1.5 py-0.5 font-mono text-[9.5px] text-foreground">{t("calc.instance.externalBuffs.count", { count: buffsSetCount })}</span>}
                                 </span>
                                 {buffsOpen ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
                             </button>

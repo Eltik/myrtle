@@ -150,7 +150,7 @@ export function PlanGroupsField({ groupNames, selectedGroups, onSelectedGroupsCh
                         </div>
                     ) : (
                         <div className="border-border border-b p-1">
-                            <button type="button" onClick={() => setIsCreating(true)} className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left font-medium text-primary text-xs hover:bg-primary/10 hover:text-primary">
+                            <button type="button" onClick={() => setIsCreating(true)} className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left font-medium text-primary text-xs hover:bg-primary/10 hover:text-foreground">
                                 <Plus className="h-3.5 w-3.5" />
                                 {t("planner.dialog.groups.createNew")}
                             </button>

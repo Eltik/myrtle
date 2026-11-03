@@ -1,12 +1,16 @@
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { CheckIcon, KeyRoundIcon, Link2OffIcon, LogOutIcon, MailIcon, RefreshCwIcon, UserRoundIcon } from "lucide-react";
+import { CheckIcon, Link2OffIcon, LogOutIcon, MailIcon, RefreshCwIcon, UserRoundIcon } from "lucide-react";
+import { usePlayerName } from "#/components/header/impl/use-player-name";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "#/components/ui/card";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { useMaintenance } from "#/hooks/use-maintenance";
+import { useOperatorName } from "#/hooks/use-operator-name";
+import { operatorsIndexQueryOptions } from "#/lib/api/operators";
 import { formatServerWithPublisher } from "#/lib/auth/login";
-import { useT } from "#/lib/i18n";
+import { useGamedataServer, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { formatSpan, isGameDown } from "#/lib/maintenance";
 import { formatRelativeShort } from "#/lib/utils";
@@ -37,7 +41,7 @@ export function AccountPanel({ user, onResync, syncing, onSignOut, signingOut, o
     // The re-sync labels and the data/linked-account copy keep the keys of the two
     // panels this one merged, so no translation is invalidated.
     const t: TypedT<typeof profileMessages & typeof dataMessages> = useT("settings");
-    const display = user.nickname ?? "Player";
+    const display = usePlayerName()(user.nickname);
     const nickNum = user.nick_number ? `#${user.nick_number}` : "";
     // While the game is down a sync would only be refused; say so instead of offering it.
     const maintenance = useMaintenance();
@@ -105,7 +109,7 @@ export function AccountPanel({ user, onResync, syncing, onSignOut, signingOut, o
                                 <div className="inline-flex size-9 items-center justify-center overflow-hidden rounded-lg border border-border bg-[color-mix(in_srgb,var(--primary)_14%,var(--card))] text-muted-foreground">
                                     {user.secretary ? <OperatorAvatar charId={user.secretary_skin_id ?? user.secretary} name={display} /> : <UserRoundIcon className="size-4" />}
                                 </div>
-                                <span className="font-mono text-[13px] text-muted-foreground">{user.secretary ?? "-"}</span>
+                                <AssistantName charId={user.secretary} />
                             </div>
                         }
                     />
@@ -141,26 +145,15 @@ export function AccountPanel({ user, onResync, syncing, onSignOut, signingOut, o
                 </CardContent>
             </Card>
 
+            {/* No status badge here: neither the session nor the profile says whether a game
+                token is stored, so a badge could only be hardcoded, and the old "Active" one
+                stayed green after Disconnect. The description states the rule instead. */}
             <Card>
                 <CardHeader>
                     <CardTitle>{t("data.linked.title")}</CardTitle>
                     <CardDescription>{t("data.linked.desc")}</CardDescription>
                 </CardHeader>
                 <CardContent className="pt-0">
-                    <SettingRow
-                        layout="inline"
-                        title={
-                            <span className="inline-flex items-center gap-1.5">
-                                <KeyRoundIcon className="size-3.5 text-muted-foreground" /> {t("data.oauth.title")}
-                            </span>
-                        }
-                        description={t("data.oauth.desc")}
-                        control={
-                            <Badge variant="success">
-                                <CheckIcon className="size-3" /> {t("data.oauth.active")}
-                            </Badge>
-                        }
-                    />
                     <SettingRow
                         title={t("data.signOut.title")}
                         description={t("data.signOut.desc")}
@@ -184,5 +177,24 @@ export function AccountPanel({ user, onResync, syncing, onSignOut, signingOut, o
                 </CardContent>
             </Card>
         </div>
+    );
+}
+
+/**
+ * The assistant's display name from the operators index, with the char id in a
+ * tooltip. The raw id shows only while the index loads or when it has no entry
+ * (a CN-only operator), so the row never reads blank.
+ */
+function AssistantName({ charId }: { charId: string | null | undefined }) {
+    const server = useGamedataServer();
+    const operatorName = useOperatorName();
+    const { data: operators } = useQuery({ ...operatorsIndexQueryOptions(server), enabled: Boolean(charId) });
+    if (!charId) return <span className="text-[13px] text-muted-foreground">-</span>;
+    const op = operators?.find((o) => o.id === charId);
+    if (!op) return <span className="font-mono text-[13px] text-muted-foreground">{charId}</span>;
+    return (
+        <span className="text-foreground text-sm" title={charId}>
+            {operatorName(op)}
+        </span>
     );
 }

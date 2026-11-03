@@ -1,4 +1,4 @@
-import { MonitorIcon, MoonIcon, PaletteIcon, RotateCcwIcon, SparklesIcon, SunIcon } from "lucide-react";
+import { ClapperboardIcon, MonitorIcon, MoonIcon, PaletteIcon, RotateCcwIcon, SunIcon } from "lucide-react";
 import { useId } from "react";
 import { Button } from "#/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "#/components/ui/popover";
@@ -102,14 +102,19 @@ export default function ThemeToggle() {
                         })}
                     </div>
 
-                    <label htmlFor={customInputId} className={cn("group flex cursor-pointer items-center justify-between rounded-md border bg-popover px-2 py-1.5 text-xs transition-colors hover:bg-accent/40", accent?.type === "custom" ? "border-foreground/40" : "border-border")}>
+                    {/* The colour input is `sr-only`, so keyboard focus lands on something invisible;
+                        the ring goes on the label that wraps it. */}
+                    <label
+                        htmlFor={customInputId}
+                        className={cn("group flex cursor-pointer items-center justify-between rounded-md border bg-popover px-2 py-1.5 text-xs transition-colors hover:bg-accent/40 has-focus-visible:ring-2 has-focus-visible:ring-ring", accent?.type === "custom" ? "border-foreground/40" : "border-border")}
+                    >
                         <span className="flex min-w-0 items-center gap-2 text-foreground">
                             <span className="relative inline-block size-5 shrink-0 overflow-hidden rounded-full border border-border" aria-hidden="true">
                                 <span className="absolute inset-0" style={{ backgroundColor: renderedHex }} />
                             </span>
                             {t("themeToggle.customColor")}
                         </span>
-                        <span className="shrink-0 font-mono text-[10px] text-muted-foreground/70 tabular-nums">{customLabel}</span>
+                        <span className="shrink-0 font-mono text-[10px] text-muted-foreground tabular-nums">{customLabel}</span>
                         <input id={customInputId} type="color" value={renderedHex} onChange={onPickCustom} className="sr-only" aria-label={t("themeToggle.chooseCustomColor")} />
                     </label>
 
@@ -117,12 +122,12 @@ export default function ThemeToggle() {
 
                     <label htmlFor={dynamicArtId} className="flex cursor-pointer items-center justify-between gap-2">
                         <span className="flex min-w-0 items-center gap-1.5 font-medium text-muted-foreground text-xs">
-                            <SparklesIcon className="h-3.5 w-3.5 shrink-0" />
+                            <ClapperboardIcon className="h-3.5 w-3.5 shrink-0" />
                             {t("themeToggle.dynamicArt")}
                         </span>
                         <Switch id={dynamicArtId} checked={dynamicArtwork} onCheckedChange={setDynamicArtwork} aria-label={t("themeToggle.dynamicArtAria")} className="shrink-0" />
                     </label>
-                    <p className="text-[10px] text-muted-foreground/70 leading-snug">{t("themeToggle.dynamicArtNote")}</p>
+                    <p className="text-[10px] text-muted-foreground leading-snug">{t("themeToggle.dynamicArtNote")}</p>
                 </div>
             </PopoverContent>
         </Popover>

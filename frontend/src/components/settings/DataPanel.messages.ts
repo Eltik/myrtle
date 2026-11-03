@@ -8,7 +8,7 @@ export const messages = {
         description: "Card title over the re-sync control. The ampersand is literal.",
     },
     "data.sync.desc": {
-        text: "Pull the latest from Yostar. Re-sync any time - we replace your stored snapshot.",
+        text: "Pull the latest from Yostar. Re-sync any time; we replace your stored snapshot.",
         description: "Card description under the Sync & refresh title. 'Yostar' is the game's publisher.",
     },
     "data.sync.rowTitle": {
@@ -40,7 +40,7 @@ export const messages = {
         description: "Label of the row linking to the visitor's own profile page.",
     },
     "data.viewProfile.desc": {
-        text: "Roster, scores, stage progress, gacha history (if stored), and medals - the data we have on you is what shows up here.",
+        text: "Roster, scores, stage progress, gacha history (if stored), and medals. The data we have on you is what shows up here.",
         description: "Caption under the view-on-profile row. 'Roster' is the set of owned operators; 'gacha' is the random-draw system.",
     },
     "data.viewProfile.action": {
@@ -64,27 +64,15 @@ export const messages = {
         description: "Card title over the connected game account's status and controls.",
     },
     "data.linked.desc": {
-        text: "We never see your password. We do keep the token that lets us re-sync on your behalf - disconnect below to delete it.",
-        description: "Card description under Linked Yostar account.",
-    },
-    "data.oauth.title": {
-        text: "Yostar OAuth",
-        description: "Label of the row showing how the game account is authenticated. 'Yostar OAuth' is the publisher's sign-in system.",
-    },
-    "data.oauth.desc": {
-        text: "Authenticated via your in-game email verification code.",
-        description: "Caption under the Yostar OAuth row.",
-    },
-    "data.oauth.active": {
-        text: "Active",
-        description: "Status badge meaning the game account link is currently working.",
+        text: "We never store your password or sign-in code. If you ticked Keep me synced when you signed in, we keep an encrypted game token that lets us re-sync on your behalf. Disconnect below to delete it.",
+        description: "Card description under Linked Yostar account. It must stay true: the password and code are never stored; the token is stored only when the Keep me synced box in the sign-in dialog was ticked.",
     },
     "data.signOut.title": {
         text: "Sign out of this browser",
         description: "Label of the row that ends the current session.",
     },
     "data.signOut.desc": {
-        text: "Ends the current session. Your data stays - just sign back in to re-access it.",
+        text: "Ends the current session. Your data stays; sign back in to see it again.",
         description: "Caption under the sign-out row.",
     },
     "data.signOut.action": {

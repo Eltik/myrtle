@@ -1,5 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
+import type * as React from "react";
+import { Button } from "#/components/ui/button";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { toPct } from "#/components/user/leaderboard/impl/constants";
 import { playerIdentity } from "#/components/user/leaderboard/impl/identity";
@@ -8,7 +10,6 @@ import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { DEFAULT_AVATAR_ID } from "#/lib/utils";
 import styles from "./Digest.module.css";
-import { useReveal } from "./motion";
 import shared from "./shared.module.css";
 import type { messages } from "./TopPlayers.messages";
 
@@ -18,14 +19,18 @@ export const TOP_PLAYERS_QUERY = { sort: "total_score", limit: 5 } as const;
 /** Widened to `string` like the header's nav links: the route's search params all have defaults, so no search is passed. */
 const LEADERBOARD_HREF: string = "/user/leaderboard";
 
+/** One placeholder row per player while the leaderboard loads. */
+const SKELETON_KEYS = Array.from({ length: TOP_PLAYERS_QUERY.limit }, (_, i) => `skeleton-${i}`);
+
+type LeadersT = TypedT<typeof messages>;
+
 export default function TopPlayers() {
-    const t: TypedT<typeof messages> = useT("home");
-    const reveal = useReveal<HTMLDivElement>();
-    const { data, isPending, isError } = useQuery(leaderboardQueryOptions(TOP_PLAYERS_QUERY));
+    const t: LeadersT = useT("home");
+    const { data, isPending, isError, isFetching, refetch } = useQuery(leaderboardQueryOptions(TOP_PLAYERS_QUERY));
     const entries = data?.entries ?? [];
 
     return (
-        <div {...reveal} className={`${shared.reveal} ${styles.panel}`}>
+        <div className={styles.panel}>
             <div className={styles.head}>
                 <div className={styles.headText}>
                     <h2 className={styles.title}>{t("leaders.title")}</h2>
@@ -34,14 +39,24 @@ export default function TopPlayers() {
                     {t("leaders.seeAll")}
                 </Link>
             </div>
-            <div className={styles.list}>
-                {isError && <p className={styles.note}>{t("leaders.error")}</p>}
+            {/* Mounted from the first render and only its text changes, so a screen reader announces the load. */}
+            <output className="sr-only">{isPending ? t("leaders.loading") : ""}</output>
+            <div className={styles.list} aria-busy={isPending}>
+                {isPending && SKELETON_KEYS.map((key) => <div key={key} className={styles.leaderSkeleton} aria-hidden="true" />)}
+                {isError && (
+                    <div className={styles.noteRow}>
+                        <p className={styles.note}>{t("leaders.error")}</p>
+                        <Button variant="outline" size="sm" loading={isFetching} onClick={() => void refetch()}>
+                            {t("leaders.retry")}
+                        </Button>
+                    </div>
+                )}
                 {!isPending && !isError && entries.length === 0 && <p className={styles.note}>{t("leaders.empty")}</p>}
                 {entries.map((entry) => {
                     const { nickname } = playerIdentity(entry);
                     return (
-                        <Link key={`${entry.server}:${entry.uid}`} to="/user/$id" params={{ id: entry.uid }} className={styles.leader} aria-label={t("leaders.viewProfile", { nickname })}>
-                            <span className={styles.rank}>{entry.rank_global ?? "-"}</span>
+                        <Link key={`${entry.server}:${entry.uid}`} to="/user/$id" params={{ id: entry.uid }} className={styles.leader}>
+                            <span className={styles.rank}>{entry.rank_global ?? <Missing t={t} />}</span>
                             <span className={styles.avatar}>
                                 <OperatorAvatar charId={entry.avatar_id ?? DEFAULT_AVATAR_ID} name={nickname} />
                             </span>
@@ -50,16 +65,27 @@ export default function TopPlayers() {
                                     <span className={styles.nickname}>{nickname}</span>
                                     {entry.nick_number && <span className={styles.nickNumber}>#{entry.nick_number}</span>}
                                 </span>
-                                <span className={styles.meta}>{t("leaders.meta", { server: entry.server.toUpperCase(), level: entry.level ?? "-" })}</span>
+                                {/* With no level, the server code alone: "Lv" and a placeholder say nothing more. */}
+                                <span className={styles.meta}>{entry.level == null ? entry.server.toUpperCase() : t("leaders.meta", { server: entry.server.toUpperCase(), level: entry.level })}</span>
                             </span>
                             <span className={styles.score}>
-                                <span className={styles.scoreValue}>{entry.total_score == null ? "-" : toPct(entry.total_score).toFixed(1)}</span>
-                                <span className={styles.grade}>{entry.grade ?? "-"}</span>
+                                <span className={styles.scoreValue}>{entry.total_score == null ? <Missing t={t} /> : toPct(entry.total_score).toFixed(1)}</span>
+                                <span className={styles.grade}>{entry.grade ?? <Missing t={t} />}</span>
                             </span>
                         </Link>
                     );
                 })}
             </div>
         </div>
+    );
+}
+
+/** A rank, score or grade the player does not have: a mark on screen, words for a screen reader. */
+function Missing({ t }: { t: LeadersT }): React.ReactElement {
+    return (
+        <>
+            <span aria-hidden="true">{t("leaders.missing")}</span>
+            <span className="sr-only">{t("leaders.missingLabel")}</span>
+        </>
     );
 }

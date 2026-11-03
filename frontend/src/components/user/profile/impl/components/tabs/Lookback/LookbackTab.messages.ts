@@ -7,6 +7,10 @@ export const messages = {
         text: "This player keeps their roster history private.",
         description: "Shown on the Lookback tab when the player hid their Roster tab, whose data the snapshots are.",
     },
+    "lookback.error": {
+        text: "The snapshots couldn't be loaded.",
+        description: "Shown on the Lookback tab when the account's snapshots fail to load.",
+    },
     "lookback.loading": {
         text: "Loading snapshots…",
         description: "Placeholder while the account's snapshots load. Keep the single-character ellipsis.",

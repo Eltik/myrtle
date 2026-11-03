@@ -96,26 +96,22 @@ export function DetailedCard({ entry, lastRef }: IDetailedCardProps) {
     return (
         <div ref={lastRef ?? undefined} className="w-full">
             <Dialog onOpenChange={setDialogOpen} open={dialogOpen}>
+                {/* The card is not a role=button: it holds the Potential, Skills and Modules accordion
+                    triggers, which made each one a control nested inside another. The open button laid
+                    over the art is the keyboard and screen-reader path; the card's own click only widens
+                    the mouse target, and still skips the accordion. */}
                 <Card
                     ref={cardRef}
-                    aria-label={t("profile.roster.detailed.openAria", { name: entry.name })}
-                    className="fade-in slide-in-from-bottom-4 flex w-full animate-in cursor-pointer flex-col gap-0 overflow-hidden border-2 border-muted/30 py-0 pb-1 text-left transition-all duration-300 hover:border-muted hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="flex w-full cursor-pointer flex-col gap-0 overflow-hidden border-2 border-muted/30 py-0 pb-1 text-left transition-all duration-300 hover:border-muted hover:shadow-lg"
                     onClick={(e) => {
                         if ((e.target as HTMLElement).closest("[data-roster-card-accordion]")) return;
                         setDialogOpen(true);
                     }}
-                    onKeyDown={(e) => {
-                        if (e.target !== e.currentTarget) return;
-                        if (e.key === "Enter" || e.key === " ") {
-                            e.preventDefault();
-                            setDialogOpen(true);
-                        }
-                    }}
                     onMouseEnter={() => setHovered(true)}
                     onMouseLeave={() => setHovered(false)}
-                    role="button"
-                    style={maxed ? { boxShadow: `0 0 20px ${rarityColor}60, 0 0 40px ${rarityColor}40` } : undefined}
-                    tabIndex={0}
+                    // A maxed operator is marked by its rarity colour on the border and the Maxed tag, not by
+                    // the 20px + 40px glow it used to cast over its neighbours in the grid.
+                    style={maxed ? { borderColor: rarityColor } : undefined}
                 >
                     <div className="relative">
                         <div className="relative aspect-5/4 w-full cursor-pointer overflow-hidden">
@@ -128,6 +124,7 @@ export function DetailedCard({ entry, lastRef }: IDetailedCardProps) {
                             {/* The L2D is composited over the same hero art at the game's authored frame and cropped exactly as the image above (cover, top). */}
                             {!dataSaver && <DynamicArtOverlay elite={entry.elite} operatorCode={entry.operator_id} skinId={entry.skin_id} viewportGated fit={{ mode: "cover", align: "top" }} framing="authored" surface="panel" backdrop={ownedHeroURL(entry)} onActiveChange={setDynActive} />}
                             <div className={`absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent transition-opacity duration-300 ${hovered ? "opacity-100" : "opacity-90"}`} />
+                            <button type="button" aria-label={t("profile.roster.detailed.openAria", { name: entry.name })} onClick={() => setDialogOpen(true)} className="absolute inset-0 z-1 cursor-pointer focus-visible:-outline-offset-2" />
                             <div className="absolute right-0 bottom-0 left-0 p-4">
                                 <h3 className={`mt-2 max-w-3/4 text-left font-bold text-white text-xl transition-all duration-300 ${hovered ? "translate-y-0" : "translate-y-1"}`}>{entry.name}</h3>
                                 <div className={`flex items-center justify-between transition-all duration-300 ${hovered ? "translate-y-0" : "translate-y-1"}`}>

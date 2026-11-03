@@ -27,7 +27,9 @@ export const CnUpdateBadge = memo(function CnUpdateBadge({ changes, className }:
     const summary = useCnChangeSummary(changes);
     const title = t("cnUpdates.badge.title", { changes: summary });
     return (
-        <span role="img" className={cn("inline-flex items-center rounded-full bg-background/85 px-1.5 py-px font-mono font-semibold text-[9px] text-primary uppercase tracking-wider shadow-sm ring-1 ring-primary/30", className)} title={title} aria-label={title}>
+        // The red is the ring, the word is foreground: primary text on the 85% page wash measured 4.59
+        // over pale art and 3.25 over black art in light mode.
+        <span role="img" className={cn("inline-flex items-center rounded-full bg-background/85 px-1.5 py-0.5 font-sans font-semibold text-[11px] text-foreground leading-none shadow-sm ring-1 ring-primary", className)} title={title} aria-label={title}>
             {t("cnUpdates.badge")}
         </span>
     );

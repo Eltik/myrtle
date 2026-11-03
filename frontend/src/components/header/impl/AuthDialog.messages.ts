@@ -8,15 +8,15 @@ export const messages = {
         description: "Title of the sign-in dialog.",
     },
     "authDialog.description.yostar": {
-        text: "Use your YoStar email to send an OTP code. No login information is stored on the server.",
-        description: "Dialog subtitle for the global servers. 'YoStar' is the publisher's name; OTP is a one-time password.",
+        text: "Sign in with a one-time code sent to your Yostar email. The code is used once and never stored.",
+        description: "Dialog subtitle for the global servers. 'Yostar' is the publisher's name. It must stay true: the code is never stored, and what the Keep me synced box below stores is said under that box.",
     },
     "authDialog.description.bili": {
-        text: "Log in with your Bilibili account. No login information is stored on the server.",
-        description: "Dialog subtitle for the Bilibili server. 'Bilibili' is the Chinese publisher's name.",
+        text: "Log in with your Bilibili account. Your password is used once to sign in and never stored.",
+        description: "Dialog subtitle for the Bilibili server. 'Bilibili' is the Chinese publisher's name. It must stay true: the password is never stored.",
     },
     "authDialog.description.cn": {
-        text: "Experimental: logs in with your Hypergryph (CN) account through the same passport flow the Skland app uses. Untested against a real account, so it may fail even with correct credentials. No login information is stored on the server.",
+        text: "Experimental: logs in with your Hypergryph (CN) account through the same passport flow the Skland app uses. Untested against a real account, so it may fail even with correct credentials. Your password or code is used once to sign in and never stored.",
         description: "Dialog subtitle for the Chinese server. 'Hypergryph' is the developer and 'Skland' its companion app; both stay as-is.",
     },
     "authDialog.email": {
@@ -66,6 +66,10 @@ export const messages = {
     "authDialog.biliSmsExperimental": {
         text: "Experimental: this endpoint hasn't been confirmed against a real response, so it may fail even with a correct code.",
         description: "Warning above the Bilibili SMS form that the flow is untested.",
+    },
+    "authDialog.server": {
+        text: "Server",
+        description: "Visible field label over the game-server picker in the sign-in dialog. A 'server' is a regional release of the game (Global, Japan, Korea, China).",
     },
     "authDialog.selectServer": {
         text: "Select server",
@@ -140,8 +144,8 @@ export const messages = {
         description: "Label of the checkbox in the login dialog that decides whether the site may store the player's GAME credentials. It does not affect the myrtle.moe session itself, which lasts a week either way, so the wording must not promise to keep the player signed in.",
     },
     "authDialog.saveCredentials.hint": {
-        text: "Re-syncing keeps working without a new email code. Revoke any time in Settings.",
-        description: "Caption under that checkbox. 'Settings' is this site's settings page, where the stored game credentials can be disconnected.",
+        text: "Keeps an encrypted game token on our server, so re-syncing works without signing in again. Untick it and nothing is saved, so a re-sync more than an hour later asks you to sign in again. Revoke it any time in Settings.",
+        description: "Caption under that checkbox, saying exactly what it stores: an encrypted game access token, never the password or the code. 'Settings' is this site's settings page, where the stored token can be disconnected.",
     },
     "authDialog.toast.loginFailed": {
         text: "Login failed",

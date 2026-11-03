@@ -1,12 +1,15 @@
 import { Link } from "@tanstack/react-router";
+import { SearchIcon } from "lucide-react";
 import type * as React from "react";
 import { Button } from "#/components/ui/button";
+import { useCommand } from "#/lib/command-context";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import type { messages } from "./NotFound.messages";
 
 export function NotFound(): React.ReactElement {
     const t: TypedT<typeof messages> = useT("common");
+    const { open: openSearch } = useCommand();
 
     return (
         <section className="flex min-h-[calc(100svh-var(--site-header-height))] flex-1 flex-col items-center justify-center gap-7 px-4 py-12">
@@ -19,7 +22,14 @@ export function NotFound(): React.ReactElement {
                 <p className="m-0 font-semibold text-[18px] text-foreground">{t("notFound.title")}</p>
                 <p className="m-0 text-[15px] text-muted-foreground">{t("notFound.description")}</p>
             </div>
-            <Button render={<Link to="/" />}>{t("notFound.returnHome")}</Button>
+            {/* Most 404s here are a stale operator or stage URL, so search is the likelier way out than home. */}
+            <div className="flex flex-wrap items-center justify-center gap-2">
+                <Button render={<Link to="/" />}>{t("notFound.returnHome")}</Button>
+                <Button variant="outline" onClick={openSearch}>
+                    <SearchIcon aria-hidden="true" />
+                    {t("notFound.search")}
+                </Button>
+            </div>
         </section>
     );
 }

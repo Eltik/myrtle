@@ -35,6 +35,7 @@ function RarityStars({ rarity, className }: { rarity: number; className?: string
 }
 
 export function OperatorCardList({ operator, statMetric }: IOperatorCardListProps) {
+    const t: TypedT<typeof messages> = useT("operators");
     const rarityNum = rarityToNumber(operator.rarity);
     const rarityColor = RARITY_COLORS[rarityNum] ?? "#ffffff";
     const factionLogoId = operator.nationId || operator.teamId || operator.groupId || "rhodes";
@@ -51,10 +52,10 @@ export function OperatorCardList({ operator, statMetric }: IOperatorCardListProp
 
                         <div className="hidden items-center gap-3 min-[900px]:grid" style={{ gridTemplateColumns: LIST_GRID_COLS }}>
                             <div className="relative h-12 w-12 overflow-hidden rounded-md border border-border/50 bg-background">
-                                <img alt={operator.name} src={portraitSrc} loading="lazy" className="absolute inset-0 h-full w-full object-cover transition-transform duration-200 ease-out group-hover:scale-110" />
+                                <img alt={operator.name} src={portraitSrc} loading="lazy" width={48} height={48} className="absolute inset-0 h-full w-full object-cover" />
                             </div>
                             <div className="flex min-w-0 items-center gap-2">
-                                <span className="truncate font-semibold text-foreground text-sm uppercase tracking-wide">{operator.name}</span>
+                                <span className="truncate font-semibold text-foreground text-sm">{operator.name}</span>
                                 {operator.cnChanges && <CnUpdateBadge changes={operator.cnChanges} className="shrink-0" />}
                             </div>
                             <RarityStars rarity={rarityNum} className="justify-self-center" />
@@ -63,7 +64,16 @@ export function OperatorCardList({ operator, statMetric }: IOperatorCardListProp
                                 <span className="truncate text-muted-foreground text-sm">{professionLabel(operator)}</span>
                             </div>
                             <span className="justify-self-center truncate text-muted-foreground text-sm">{archetype}</span>
-                            <div className="justify-self-center">{operator.ownership ? <OwnershipBadge info={operator.ownership} metric={statMetric} color={rarityColor} /> : <span className="text-muted-foreground/40 text-sm">-</span>}</div>
+                            <div className="justify-self-center">
+                                {operator.ownership ? (
+                                    <OwnershipBadge info={operator.ownership} metric={statMetric} color={rarityColor} />
+                                ) : (
+                                    <span className="text-muted-foreground text-sm">
+                                        <span aria-hidden="true">-</span>
+                                        <span className="sr-only">{t("card.noOwnership")}</span>
+                                    </span>
+                                )}
+                            </div>
                             <div className="flex h-6 w-6 items-center justify-center justify-self-center opacity-40 transition-opacity group-hover:opacity-70">
                                 <CampIcon groupId={factionLogoId} size={24} />
                             </div>
@@ -71,11 +81,11 @@ export function OperatorCardList({ operator, statMetric }: IOperatorCardListProp
 
                         <div className="flex items-center gap-3 min-[900px]:hidden">
                             <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-md border border-border/50 bg-background">
-                                <img alt={operator.name} src={portraitSrc} loading="lazy" className="absolute inset-0 h-full w-full object-cover transition-transform duration-200 ease-out group-hover:scale-110" />
+                                <img alt={operator.name} src={portraitSrc} loading="lazy" width={48} height={48} className="absolute inset-0 h-full w-full object-cover" />
                             </div>
                             <div className="flex min-w-0 flex-1 flex-col gap-1">
                                 <div className="flex items-center gap-2">
-                                    <span className="truncate font-semibold text-foreground text-sm uppercase tracking-wide">{operator.name}</span>
+                                    <span className="truncate font-semibold text-foreground text-sm">{operator.name}</span>
                                     {operator.cnChanges && <CnUpdateBadge changes={operator.cnChanges} className="shrink-0" />}
                                     <div className="flex h-4 w-4 shrink-0 items-center justify-center opacity-50">
                                         <CampIcon groupId={factionLogoId} size={16} />
@@ -103,7 +113,7 @@ export function OperatorCardList({ operator, statMetric }: IOperatorCardListProp
                 }
             />
             <HoverCardContent className="w-max max-w-85 p-0">
-                <OperatorPreview operator={operator} />
+                <OperatorPreview operator={operator} ownership={operator.ownership} cnChanges={operator.cnChanges} />
             </HoverCardContent>
         </HoverCard>
     );

@@ -90,9 +90,6 @@
         gap: 2px;
         min-height: 110px;
     }
-    .hourLabel {
-        font-size: 7.5px;
-    }
 }
 .hourCell {
     display: flex;
@@ -113,9 +110,17 @@
 }
 .hourLabel {
     font-family: var(--font-mono);
-    font-size: 8.5px;
+    font-size: 10px;
     color: var(--muted-foreground);
     font-variant-numeric: tabular-nums;
+}
+@media (max-width: 520px) {
+    /* A 10px two-digit label is about 12px wide, as wide as a column here, so neighbours
+       would touch: only every third hour (00, 03, 06...) keeps its label. Hidden, not
+       removed, so every bar keeps the same baseline. */
+    .hourCell:not(:nth-child(3n + 1)) .hourLabel {
+        visibility: hidden;
+    }
 }
 
 .dowList {
@@ -356,30 +361,4 @@
 }
 .acBannerBand:hover {
     opacity: 1;
-}
-
-.pageAmbient {
-    position: fixed;
-    inset: 0;
-    z-index: -1;
-    pointer-events: none;
-    background: radial-gradient(60% 50% at 0% 0%, oklch(0.58 0.22 25 / 0.06), transparent 70%), radial-gradient(50% 40% at 100% 100%, oklch(0.55 0.15 184 / 0.04), transparent 70%);
-}
-
-.dotPulse {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: oklch(0.78 0.18 152);
-    box-shadow: 0 0 0 0 oklch(0.78 0.18 152 / 0.5);
-    animation: pulseDot 1.6s ease-out infinite;
-}
-@keyframes pulseDot {
-    0%,
-    100% {
-        box-shadow: 0 0 0 0 oklch(0.78 0.18 152 / 0.6);
-    }
-    50% {
-        box-shadow: 0 0 0 5px oklch(0.78 0.18 152 / 0);
-    }
 }

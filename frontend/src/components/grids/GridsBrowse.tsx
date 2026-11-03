@@ -40,7 +40,7 @@ export function GridsBrowse({ search }: { search: IGridsSearch }) {
     const setPage = (page: number) => navigate({ search: (prev) => ({ ...prev, page }), resetScroll: true });
 
     return (
-        <main className="min-h-dvh pb-24">
+        <div className="min-h-dvh pb-24">
             <section className="page-gutter pt-10 pb-6 [--page-max:1080px] sm:pt-14 sm:pb-8">
                 <div className="flex flex-wrap items-end justify-between gap-4">
                     <div className="min-w-0">
@@ -129,6 +129,6 @@ export function GridsBrowse({ search }: { search: IGridsSearch }) {
                     )}
                 </div>
             </div>
-        </main>
+        </div>
     );
 }

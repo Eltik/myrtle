@@ -91,11 +91,11 @@ export function Birthdays({ operators }: IBirthdaysProps): React.ReactElement {
 
             <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[300px_1fr]">
                 <FilterSidebar filters={filters} onChange={setFilters} nations={nations} classNames={classNames} matched={matchedCount} total={knownTotal} onReset={onResetFilters} />
-                <main className="min-w-0">
+                <div className="min-w-0">
                     {view === "calendar" && <CalendarView scale={scale} onScaleChange={setScale} anchor={anchor} onAnchorChange={setAnchor} byDay={byDay} onSelect={onSelectDay} today={today} />}
                     {view === "list" && <ListView items={filtered} today={today} />}
                     {view === "upcoming" && <UpcomingView items={filtered} today={today} />}
-                </main>
+                </div>
             </div>
 
             <DayDialog open={dayDialogOpen} onOpenChange={setDayDialogOpen} date={selected} ops={selectedOps} today={today} />

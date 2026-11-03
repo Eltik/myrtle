@@ -10,7 +10,6 @@ import { type IFormatters, useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import type { messages } from "./ChangelogPage.messages";
 import { ActivityStrip } from "./impl/ActivityStrip";
-import styles from "./impl/ChangelogPage.module.css";
 import { CommitItem } from "./impl/CommitItem";
 
 type ChangelogSurface = "notes" | "commits";
@@ -111,11 +110,9 @@ export function ChangelogPage() {
     const repoURL = data?.repoURL ?? "https://github.com";
 
     return (
-        <main className="relative overflow-x-clip">
-            <div className={styles.pageAmbient} aria-hidden="true" />
+        <div className="relative overflow-x-clip">
             <div className="page-gutter py-12 [--page-max:820px] sm:py-14">
                 <header className="relative mb-8">
-                    <div className={styles.heroGlow} aria-hidden="true" />
                     <div className="relative flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                         <div className="min-w-0">
                             <Kicker className="mb-2 flex items-center gap-1.5">
@@ -209,7 +206,7 @@ export function ChangelogPage() {
                     </Link>
                 </div>
             </div>
-        </main>
+        </div>
     );
 }
 

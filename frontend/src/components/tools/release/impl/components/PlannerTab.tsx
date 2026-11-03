@@ -232,7 +232,7 @@ const EventCard = React.memo(function EventCard({ row, total, picks, hidden, act
         >
             <div className="flex min-w-0 flex-col gap-1">
                 <CnName cn={row.nameCn} en={row.nameEn} auto={row.nameAuto} compact primaryClassName="font-sans font-semibold text-[13px] text-foreground">
-                    <Tag className={row.kind === "listing" ? "text-fuchsia-400" : row.kind === "review" ? "text-teal-400" : undefined}>{rowTag(row, t)}</Tag>
+                    <Tag className={row.kind === "listing" ? "text-fuchsia-700 dark:text-fuchsia-400" : row.kind === "review" ? "text-teal-700 dark:text-teal-400" : undefined}>{rowTag(row, t)}</Tag>
                 </CnName>
                 <span className="font-mono text-[10.5px] text-muted-foreground tabular-nums">
                     {row.resolution.status === "unlisted" ? t("release.planner.card.unlisted", { date: formatDate(row.enStart, locale, timeZone) }) : formatDate(row.enStart, locale, timeZone)}
@@ -382,7 +382,7 @@ function EventDetail({ row, state, clears, hidden, total, today, lookup, onPick,
                     <div key={`${g.name}|${g.rerun}`} className="flex flex-col gap-2 border-border/40 border-t pt-3">
                         <div className="flex items-baseline gap-2">
                             <CnName cn={g.name} auto={g.nameAuto} compact primaryClassName="font-sans font-semibold text-[13px] text-foreground" />
-                            <Tag className={g.rerun ? "text-violet-400" : "text-fuchsia-400"}>{g.rerun ? t("release.planner.group.rerun") : t("release.planner.group.new")}</Tag>
+                            <Tag className={g.rerun ? "text-violet-700 dark:text-violet-400" : "text-fuchsia-700 dark:text-fuchsia-400"}>{g.rerun ? t("release.planner.group.rerun") : t("release.planner.group.new")}</Tag>
                         </div>
                         <div className="flex flex-wrap gap-3">
                             {g.skins.map((s) => (
@@ -427,8 +427,8 @@ function Summary({ rows, state, clears, totals, lookup, onRemove, t, locale }: I
                 <span className="inline-flex flex-wrap items-center gap-x-2 font-mono text-[12px] tabular-nums">
                     <span className="text-muted-foreground">{t("release.planner.summary.start")}</span>
                     <Op value={state.initial} />
-                    <Op value={income} sign="+" className="text-emerald-500" />
-                    <Op value={expense} sign="-" className="text-rose-400" />
+                    <Op value={income} sign="+" className="text-success-foreground" />
+                    <Op value={expense} sign="-" className="text-rose-700 dark:text-rose-400" />
                     <span className="text-muted-foreground">{t("release.planner.summary.end")}</span>
                     <Op value={end} className={cn("font-semibold", end < 0 ? "text-destructive-foreground" : "text-foreground")} />
                 </span>

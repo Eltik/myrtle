@@ -74,7 +74,12 @@ export function PlanList({ plans, groups, pinDividerAt, isLoading, selection, en
                     <span>{allSelected ? t("planner.unselectAll") : t("planner.selectAll")}</span>
                 </label>
                 {selectedCount > 0 && (
-                    <Button variant="ghost" size="xs" className="fade-in zoom-in-95 h-7 animate-in cursor-pointer border border-red-500/20 bg-red-500/5 text-red-600 duration-150 hover:border-red-500/40 hover:bg-red-500/15 hover:text-red-600 dark:text-red-400 dark:hover:text-red-400" onClick={onDeleteSelected}>
+                    <Button
+                        variant="ghost"
+                        size="xs"
+                        className="motion-safe:fade-in motion-safe:zoom-in-95 h-7 cursor-pointer border border-red-500/20 bg-red-500/5 text-red-600 duration-150 hover:border-red-500/40 hover:bg-red-500/15 hover:text-red-600 motion-safe:animate-in dark:text-red-400 dark:hover:text-red-400"
+                        onClick={onDeleteSelected}
+                    >
                         <Trash className="mr-1 size-3.5" />
                         {t("planner.deleteSelected", { count: selectedCount })}
                     </Button>

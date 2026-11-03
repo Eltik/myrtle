@@ -25,7 +25,7 @@ export const messages = {
     },
     "privacy.publicProfile.title": {
         text: "Public profile",
-        description: "Label of the switch that makes the profile world-readable.",
+        description: "Label of the switch that makes the profile world-readable, and the switch's accessible name.",
     },
     "privacy.publicProfile.desc": {
         text: "Lets anyone with your UID open your profile, see your roster, and look up your scores.",
@@ -33,7 +33,7 @@ export const messages = {
     },
     "privacy.leaderboards.title": {
         text: "Show on leaderboards",
-        description: "Label of the switch that opts into public rankings.",
+        description: "Label of the switch that opts into public rankings, and the switch's accessible name.",
     },
     "privacy.leaderboards.desc": {
         text: "Opt in to ranked appearance on {path}. Scores are still calculated either way. Backed by {column}.",
@@ -49,7 +49,7 @@ export const messages = {
     },
     "privacy.gacha.title": {
         text: "Store gacha history",
-        description: "Label of the switch that keeps a record of the visitor's pulls. 'Gacha' is the game's random-draw system.",
+        description: "Label of the switch that keeps a record of the visitor's pulls, and the switch's accessible name. 'Gacha' is the game's random-draw system.",
     },
     "privacy.gacha.desc": {
         text: "Saves your synced pulls so you can browse them in Gacha → History and contribute aggregate stats. Backed by {column}.",
@@ -61,7 +61,7 @@ export const messages = {
     },
     "privacy.publicGacha.title": {
         text: "Public pull history",
-        description: "Label of the switch that lets visitors see the player's pull history on their profile and through links they share. 'Pull' is one draw on a headhunting banner.",
+        description: "Label of the switch that lets visitors see the player's pull history on their profile and through links they share, and the switch's accessible name. 'Pull' is one draw on a headhunting banner.",
     },
     "privacy.publicGacha.desc": {
         text: "Shows your stored pulls on your profile's Pulls tab and through the links you share from Gacha → History. Off by default, and only on a public profile. Backed by {column}.",

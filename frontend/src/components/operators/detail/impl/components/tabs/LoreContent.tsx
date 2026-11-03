@@ -127,7 +127,7 @@ function renderParagraph(paragraph: string, idx: number) {
         const isStat = STAT_HEADERS.has(header);
         return (
             <div className="flex flex-col gap-1 py-1.5 sm:flex-row sm:items-baseline sm:gap-3" key={`hdr-${idx}`}>
-                <span className="min-w-40 shrink-0 font-semibold text-primary text-xs uppercase tracking-wide sm:text-right">{header}</span>
+                <span className="min-w-40 shrink-0 font-medium text-muted-foreground text-xs sm:text-right">{header}</span>
                 <span className={cn("flex-1 text-foreground text-sm leading-relaxed", isStat && "rounded-md bg-secondary/40 px-2 py-1 font-mono text-xs")}>{content ? <GameText text={content} /> : "-"}</span>
             </div>
         );

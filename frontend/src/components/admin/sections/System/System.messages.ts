@@ -597,7 +597,7 @@ export const messages = {
         description: "Shown in the Translated column for the source language, which needs no translation.",
     },
     "system.languages.noFallback": {
-        text: "—",
+        text: "-",
         description: "Shown in the Falls back to column for the source language, which falls back to nothing. A dash meaning 'none'.",
     },
     "system.languages.fallback.chain": {

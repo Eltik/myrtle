@@ -35,10 +35,6 @@ export const messages = {
         text: "near guaranteed",
         description: "Pill on a pity card within five pulls of the guaranteed 6-star. Rendered uppercase.",
     },
-    "history.pity.softPityAt.title": {
-        text: "Soft pity at {count}",
-        description: "Tooltip on the tick marking where the 6-star chance starts climbing.",
-    },
     "history.pity.softPityAt": {
         text: "soft pity at {count}",
         description: "Under a pity bar, at its left: the pull count where the 6-star chance starts climbing. Lowercase.",

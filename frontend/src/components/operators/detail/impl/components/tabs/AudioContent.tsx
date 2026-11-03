@@ -20,6 +20,7 @@ import { audioURL } from "../../assets";
 import { SFX_CATEGORY_LABEL_KEY, SFX_CATEGORY_ORDER, SFX_EVENT_LABEL_KEY, VOICE_CATEGORY_LABEL_KEY, VOICE_CATEGORY_MAP, VOICE_CATEGORY_ORDER, VOICE_LANGUAGE_LABEL_KEY, VOICE_LANGUAGE_ORDER, VOICE_LANGUAGE_SHORT_KEY } from "../../constants";
 import type { messages as detailConstantsMessages } from "../../constants.messages";
 import { sanitizeFilename } from "../../helpers";
+import { LoadError } from "../LoadError";
 import type { messages } from "./AudioContent.messages";
 
 const ALL_CATEGORY_ID = "all";
@@ -240,8 +241,13 @@ function VolumeControl({ volume, setVolume, isMuted, setIsMuted }: { volume: num
 
     return (
         <div className="flex items-center gap-2">
-            <button type="button" aria-label={isMuted ? t("audio.unmute") : t("audio.mute")} onClick={() => setIsMuted((m) => !m)} className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground">
-                {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+            <button
+                type="button"
+                aria-label={isMuted ? t("audio.unmute") : t("audio.mute")}
+                onClick={() => setIsMuted((m) => !m)}
+                className="relative inline-flex items-center justify-center rounded-md p-1.5 text-muted-foreground pointer-coarse:after:absolute pointer-coarse:after:min-h-11 pointer-coarse:after:min-w-11 hover:bg-accent hover:text-foreground"
+            >
+                {isMuted ? <VolumeX aria-hidden="true" className="h-4 w-4" /> : <Volume2 aria-hidden="true" className="h-4 w-4" />}
             </button>
             <Slider className="w-24" min={0} max={100} step={1} value={[volume]} onValueChange={(v) => setVolume(Array.isArray(v) ? (v[0] ?? 80) : v)} aria-label={t("audio.volume")} />
         </div>
@@ -249,7 +255,7 @@ function VolumeControl({ volume, setVolume, isMuted, setIsMuted }: { volume: num
 }
 
 function Pill({ children, className }: { children: ReactNode; className?: string }) {
-    return <span className={cn("rounded bg-secondary/60 px-1.5 py-0.5 text-[10px] text-muted-foreground uppercase tracking-wide", className)}>{children}</span>;
+    return <span className={cn("rounded bg-secondary/60 px-1.5 py-0.5 text-[11px] text-muted-foreground", className)}>{children}</span>;
 }
 
 function EmptyState({ children }: { children: ReactNode }) {
@@ -264,8 +270,13 @@ function SearchBox({ value, onChange, placeholder, label }: { value: string; onC
             <Search className="h-3.75 w-3.75" aria-hidden="true" />
             <input type="text" value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} aria-label={label} className="min-w-0 flex-1 appearance-none border-0 bg-transparent p-0 font-sans text-foreground text-sm leading-none outline-none placeholder:text-muted-foreground" />
             {value && (
-                <button type="button" aria-label={t("audio.search.clear")} onClick={() => onChange("")} className="rounded p-0.5 text-muted-foreground hover:bg-accent hover:text-foreground">
-                    <X className="h-3.5 w-3.5" />
+                <button
+                    type="button"
+                    aria-label={t("audio.search.clear")}
+                    onClick={() => onChange("")}
+                    className="relative inline-flex items-center justify-center rounded p-0.5 text-muted-foreground pointer-coarse:after:absolute pointer-coarse:after:min-h-11 pointer-coarse:after:min-w-11 hover:bg-accent hover:text-foreground"
+                >
+                    <X aria-hidden="true" className="h-3.5 w-3.5" />
                 </button>
             )}
         </div>
@@ -380,7 +391,7 @@ interface IVoiceCategory {
 function VoiceLinesPanel({ operator, player }: { operator: IOperatorListItem; player: IPlayer }) {
     const t: AudioT = useT("operators");
     const localeServer = useGamedataServer();
-    const { data: voicesData, isLoading } = useQuery(operatorVoicesQueryOptions(operator.id ?? "", operatorGamedataServer(operator.server, localeServer)));
+    const { data: voicesData, isLoading, isError, refetch } = useQuery(operatorVoicesQueryOptions(operator.id ?? "", operatorGamedataServer(operator.server, localeServer)));
 
     const operatorVoices: IVoice[] = useMemo(() => {
         if (!voicesData) return [];
@@ -468,6 +479,7 @@ function VoiceLinesPanel({ operator, player }: { operator: IOperatorListItem; pl
     };
 
     if (isLoading) return <AudioSkeleton />;
+    if (isError) return <LoadError message={t("audio.error.voice")} onRetry={() => void refetch()} />;
 
     return (
         <div>
@@ -815,7 +827,7 @@ function SfxRow({ item, player, operatorName, showCategory }: { item: ISfxItem; 
                 {item.skinVariant && <Pill>{t("audio.altSkin")}</Pill>}
                 {isUnavailable && <Pill className="bg-muted">{t("audio.unavailable")}</Pill>}
                 {variantCount > 1 && (
-                    <button type="button" onClick={() => setExpanded((v) => !v)} aria-expanded={expanded} className="inline-flex items-center gap-1 rounded bg-secondary/60 px-1.5 py-0.5 font-medium text-[10px] text-muted-foreground uppercase tracking-wide transition-colors hover:text-foreground">
+                    <button type="button" onClick={() => setExpanded((v) => !v)} aria-expanded={expanded} className="inline-flex items-center gap-1 rounded bg-secondary/60 px-1.5 py-0.5 font-medium text-[11px] text-muted-foreground transition-colors hover:text-foreground">
                         <Layers className="h-3 w-3" />
                         {t("audio.variants", { count: variantCount })}
                         {expanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}

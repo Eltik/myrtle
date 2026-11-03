@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { ChevronDown, Minus, Plus, RotateCcw } from "lucide-react";
+import { ChevronDown, Minus, Plus, RotateCcw, RotateCwIcon } from "lucide-react";
 import * as React from "react";
 import { Button } from "#/components/ui/button";
 import { Card } from "#/components/ui/card";
@@ -82,6 +82,18 @@ export function PullsBanners({ rows, totals, lookup, charNames, today, onAllocat
                 {totals.shortBanners > 0 && <Stat label={t("release.pulls.plan.overrun", { count: totals.shortBanners })} value={f.number(totals.shortfall)} className="text-amber-500" />}
                 {!planned && <p className="m-0 self-center font-sans text-[12px] text-muted-foreground">{t("release.pulls.plan.untouched")}</p>}
             </div>
+
+            {/* The rows still plan without the events list; only the borrowed names and art are lost,
+                so the failure is a notice above them rather than a replacement for them. */}
+            {events.isError && (
+                <div role="alert" className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border border-border bg-muted/30 px-3 py-2">
+                    <p className="m-0 font-sans text-[12px] text-muted-foreground">{t("release.pulls.plan.eventsError")}</p>
+                    <Button type="button" size="sm" variant="outline" onClick={() => void events.refetch()}>
+                        <RotateCwIcon aria-hidden="true" />
+                        {t("release.pulls.plan.eventsRetry")}
+                    </Button>
+                </div>
+            )}
 
             {rows.length === 0 ? (
                 <ReleaseEmpty title={t("release.pulls.plan.title")} description={t("release.pulls.banners.empty")} />

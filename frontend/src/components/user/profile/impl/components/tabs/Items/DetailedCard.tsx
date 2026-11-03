@@ -36,7 +36,7 @@ export function DetailedCard({ item }: IDetailedCardProps) {
                 render={
                     <Card
                         aria-label={t("profile.items.openAria", { name: item.name })}
-                        className="fade-in slide-in-from-bottom-4 group relative animate-in cursor-pointer overflow-hidden rounded-xl! text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-foreground/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        className="group relative cursor-pointer overflow-hidden rounded-xl! text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-foreground/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         render={<button type="button" />}
                     />
                 }

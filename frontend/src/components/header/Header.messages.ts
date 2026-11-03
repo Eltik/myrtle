@@ -4,6 +4,14 @@ import { defineMessages, type MessageMap } from "#/lib/i18n/messages";
 export const namespace = "nav";
 
 export const messages = {
+    "header.skipToContent": {
+        text: "Skip to content",
+        description: "Link hidden until a keyboard user tabs to it, the first stop on every page. It jumps past the header to the page's own content.",
+    },
+    "header.homeLink": {
+        text: "myrtle.moe home",
+        description: "Accessible name of the logo link at the left of the header, which goes to the landing page. 'myrtle.moe' is the site's name and stays as-is.",
+    },
     "header.home": {
         text: "Home",
         description: "Top-level nav link to the landing page.",

@@ -3,7 +3,10 @@ import { useNavigate } from "@tanstack/react-router";
 import { ArrowDown, ArrowUp, Download, LayoutGrid, LayoutList, Rows3, Search } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DynamicExportDialog } from "#/components/export/ExportDialog.lazy";
+import { useOperatorFactLabel } from "#/components/operators/OperatorFacts";
+import { Button } from "#/components/ui/button";
 import { PageHeader } from "#/components/ui/page-header";
+import type { messages as routeErrorMessages } from "#/components/ui/route-error.messages";
 import { useCnUpdates } from "#/hooks/use-cn-updates";
 import { useLocalStorageState } from "#/hooks/use-local-storage-state";
 import { useOperatorName } from "#/hooks/use-operator-name";
@@ -49,6 +52,8 @@ interface IUpcomingEntry {
 
 export function OperatorsList() {
     const t: TypedT<typeof messages & typeof listConstantsMessages> = useT("operators");
+    const ct: TypedT<typeof routeErrorMessages> = useT("common");
+    const fact = useOperatorFactLabel();
     const rt: TypedRichT<typeof messages> = useRichT("operators");
     const server = useGamedataServer();
     const { data: operators = [] } = useQuery(operatorsIndexQueryOptions(server));
@@ -113,7 +118,7 @@ export function OperatorsList() {
         activeFilterCount,
     } = useOperatorFilters(enriched);
 
-    const { data: upcoming = [], isLoading: upcomingLoading } = useQuery(upcomingQueryOptions(server));
+    const { data: upcoming = [], isLoading: upcomingLoading, isError: upcomingFailed, refetch: refetchUpcoming } = useQuery(upcomingQueryOptions(server));
     const operatorName = useOperatorName();
     const isUpcoming = filters.availability === "upcoming";
 
@@ -233,7 +238,7 @@ export function OperatorsList() {
     }, [filteredOperators, upcomingFiltered, page, pageSize, totalCount]);
 
     const activeChips = useMemo(() => {
-        const chips = buildSharedChips(filters, removeFrom, filterOptions.labels);
+        const chips = buildSharedChips(filters, removeFrom, filterOptions.labels, fact, (type) => t("filters.chip.module", { type }));
         if (filters.hasNotes !== "any") {
             chips.push({
                 key: `notes-${filters.hasNotes}`,
@@ -242,7 +247,7 @@ export function OperatorsList() {
             });
         }
         return chips;
-    }, [filters, filterOptions.labels, removeFrom, setHasNotes, t]);
+    }, [filters, filterOptions.labels, removeFrom, setHasNotes, t, fact]);
 
     // Only the export dialog reads these, and `toExportRow`'s merge is empty until
     // it opens, so skip the rebuild while it's closed.
@@ -292,11 +297,11 @@ export function OperatorsList() {
                     activeFilterCount={activeFilterCount}
                 />
 
-                <main className="flex min-w-0 flex-1 flex-col gap-3.5" aria-label={t("list.results.aria")}>
+                <section className="flex min-w-0 flex-1 flex-col gap-3.5" aria-label={t("list.results.aria")}>
                     <div className="flex flex-wrap items-center gap-2.5">
                         <FilterToggleButton visible={filtersVisible} onToggle={toggleFilters} activeCount={activeFilterCount} />
 
-                        <div className="flex h-10 min-w-60 flex-1 items-center gap-2 rounded-lg border border-border bg-[color-mix(in_oklch,var(--secondary)_60%,transparent)] px-3 transition-[border-color,box-shadow] duration-150 focus-within:border-primary focus-within:shadow-[0_0_0_1px_var(--primary)] sm:max-w-115 [&>svg]:shrink-0 [&>svg]:text-muted-foreground">
+                        <div className="flex h-10 pointer-coarse:h-11 min-w-60 flex-1 items-center gap-2 rounded-lg border border-border bg-[color-mix(in_oklch,var(--secondary)_60%,transparent)] px-3 transition-[border-color,box-shadow] duration-150 focus-within:border-primary focus-within:shadow-[0_0_0_1px_var(--primary)] sm:max-w-115 [&>svg]:shrink-0 [&>svg]:text-muted-foreground">
                             <Search className="h-3.75 w-3.75" aria-hidden="true" />
                             <input
                                 type="text"
@@ -304,13 +309,13 @@ export function OperatorsList() {
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 placeholder={t("list.search.placeholder")}
                                 aria-label={t("list.search.aria")}
-                                className="min-w-0 flex-1 appearance-none border-0 bg-transparent p-0 font-sans text-foreground text-sm leading-none outline-none placeholder:text-muted-foreground"
+                                className="min-w-0 flex-1 appearance-none self-stretch border-0 bg-transparent p-0 font-sans text-foreground text-sm leading-none outline-none placeholder:text-muted-foreground"
                             />
                         </div>
 
                         {/* biome-ignore lint/a11y/useSemanticElements: role="group" is appropriate for this toggle button group */}
                         <div
-                            className="inline-flex h-10 items-center rounded-lg border border-border bg-[color-mix(in_oklch,var(--secondary)_60%,transparent)] p-1 [&>button:not([data-on]):hover]:text-foreground [&>button[data-on]]:bg-primary [&>button[data-on]]:text-primary-foreground [&>button]:inline-flex [&>button]:h-8 [&>button]:w-8 [&>button]:cursor-pointer [&>button]:items-center [&>button]:justify-center [&>button]:rounded-md [&>button]:border-0 [&>button]:bg-transparent [&>button]:p-0 [&>button]:text-muted-foreground [&>button]:transition-[background-color,color] [&>button]:duration-150"
+                            className="inline-flex h-10 items-center rounded-lg border border-border bg-[color-mix(in_oklch,var(--secondary)_60%,transparent)] p-1 [&>button:not([data-on]):hover]:text-foreground [&>button[data-on]]:bg-primary [&>button[data-on]]:text-primary-foreground [&>button]:relative [&>button]:inline-flex [&>button]:h-8 [&>button]:w-8 [&>button]:cursor-pointer [&>button]:items-center [&>button]:justify-center [&>button]:rounded-md [&>button]:border-0 [&>button]:bg-transparent [&>button]:p-0 [&>button]:text-muted-foreground [&>button]:transition-[background-color,color] [&>button]:duration-150 [&>button]:pointer-coarse:after:absolute [&>button]:pointer-coarse:after:min-h-11 [&>button]:pointer-coarse:after:min-w-11"
                             role="group"
                             aria-label={t("list.viewMode.aria")}
                         >
@@ -354,7 +359,7 @@ export function OperatorsList() {
 
                         {/* biome-ignore lint/a11y/useSemanticElements: role="group" is appropriate for this toggle button group */}
                         <div
-                            className="inline-flex h-10 items-center rounded-lg border border-border bg-[color-mix(in_oklch,var(--secondary)_60%,transparent)] p-1 [&>button:not([data-on]):hover]:text-foreground [&>button[data-on]]:bg-primary [&>button[data-on]]:text-primary-foreground [&>button]:inline-flex [&>button]:h-8 [&>button]:cursor-pointer [&>button]:items-center [&>button]:justify-center [&>button]:rounded-md [&>button]:border-0 [&>button]:bg-transparent [&>button]:px-2 [&>button]:font-medium [&>button]:font-mono [&>button]:text-[10px] [&>button]:text-muted-foreground [&>button]:uppercase [&>button]:tracking-[0.12em] [&>button]:transition-[background-color,color] [&>button]:duration-150"
+                            className="inline-flex h-10 items-center rounded-lg border border-border bg-[color-mix(in_oklch,var(--secondary)_60%,transparent)] p-1 [&>button:not([data-on]):hover]:text-foreground [&>button[data-on]]:bg-primary [&>button[data-on]]:text-primary-foreground [&>button]:relative [&>button]:inline-flex [&>button]:h-8 [&>button]:cursor-pointer [&>button]:items-center [&>button]:justify-center [&>button]:rounded-md [&>button]:border-0 [&>button]:bg-transparent [&>button]:px-2 [&>button]:font-medium [&>button]:font-sans [&>button]:text-muted-foreground [&>button]:text-xs [&>button]:transition-[background-color,color] [&>button]:duration-150 [&>button]:pointer-coarse:after:absolute [&>button]:pointer-coarse:after:min-h-11 [&>button]:pointer-coarse:after:min-w-11"
                             role="group"
                             aria-label={t("list.stat.aria")}
                         >
@@ -387,7 +392,7 @@ export function OperatorsList() {
                         <div className="inline-flex h-10 items-center gap-1 rounded-lg border border-border bg-[color-mix(in_oklch,var(--secondary)_60%,transparent)] p-1">
                             <Select value={filters.sortBy} onValueChange={(v) => setSortBy(v as SortOption)} aria-label={t("list.sort.aria")}>
                                 <SelectTrigger size="sm" className="h-8 min-h-8 min-w-0 gap-1.5 border-0 bg-transparent px-2 font-medium font-sans text-[13px] text-foreground shadow-none before:shadow-none hover:bg-[color-mix(in_oklch,var(--secondary)_80%,transparent)]">
-                                    <span className="mr-1 border-border border-r pr-1 font-medium font-mono text-[10px] text-muted-foreground uppercase leading-none tracking-[0.12em]">{t("list.sort.caption")}</span>
+                                    <span className="mr-1 border-border border-r pr-1 font-medium font-sans text-muted-foreground text-xs leading-none">{t("list.sort.caption")}</span>
                                     <SelectValue>
                                         {(value) => {
                                             const opt = SORT_OPTIONS.find((o) => o.value === value);
@@ -408,7 +413,7 @@ export function OperatorsList() {
                                     render={
                                         <button
                                             type="button"
-                                            className="inline-flex h-8 w-8 cursor-pointer appearance-none items-center justify-center rounded-md border-0 bg-transparent p-0 text-muted-foreground transition-[background-color,color] duration-150 hover:bg-secondary hover:text-foreground"
+                                            className="relative inline-flex h-8 w-8 cursor-pointer appearance-none items-center justify-center rounded-md border-0 bg-transparent p-0 text-muted-foreground transition-[background-color,color] duration-150 pointer-coarse:after:absolute pointer-coarse:after:min-h-11 pointer-coarse:after:min-w-11 hover:bg-secondary hover:text-foreground"
                                             onClick={() => setSortOrder((filters.sortOrder === "asc" ? "desc" : "asc") as SortOrder)}
                                             aria-label={t("list.sort.toggleAria")}
                                         />
@@ -432,7 +437,7 @@ export function OperatorsList() {
                                 aria-label={t("list.perPage.aria")}
                             >
                                 <SelectTrigger size="sm" className="h-8 min-h-8 min-w-0 gap-1.5 border-0 bg-transparent px-2 font-medium font-sans text-[13px] text-foreground shadow-none before:shadow-none hover:bg-[color-mix(in_oklch,var(--secondary)_80%,transparent)]">
-                                    <span className="mr-1 border-border border-r pr-1 font-medium font-mono text-[10px] text-muted-foreground uppercase leading-none tracking-[0.12em]">{t("list.perPage.caption")}</span>
+                                    <span className="mr-1 border-border border-r pr-1 font-medium font-sans text-muted-foreground text-xs leading-none">{t("list.perPage.caption")}</span>
                                     <SelectValue>{(value) => (value === "all" ? t("list.perPage.all") : value)}</SelectValue>
                                 </SelectTrigger>
                                 <SelectContent>
@@ -450,7 +455,7 @@ export function OperatorsList() {
                                 render={
                                     <button
                                         type="button"
-                                        className="inline-flex h-10 cursor-pointer items-center gap-1.5 rounded-lg border border-border bg-[color-mix(in_oklch,var(--secondary)_60%,transparent)] px-3 font-medium font-sans text-[13px] text-foreground transition-colors hover:border-[color-mix(in_oklch,var(--primary)_55%,var(--border))] hover:bg-card"
+                                        className="inline-flex h-10 pointer-coarse:h-11 pointer-coarse:min-w-11 cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-border bg-[color-mix(in_oklch,var(--secondary)_60%,transparent)] px-3 font-medium font-sans text-[13px] text-foreground transition-colors hover:border-[color-mix(in_oklch,var(--primary)_55%,var(--border))] hover:bg-card"
                                         onClick={() => setExportOpen(true)}
                                         aria-label={t("list.export.tip")}
                                     >
@@ -476,10 +481,19 @@ export function OperatorsList() {
                             })}
                         </span>
                         <div className="ml-auto flex items-center gap-3">
-                            <span className="hidden font-mono text-[11px] text-muted-foreground uppercase leading-none tracking-[0.08em] md:inline">{t("list.hint")}</span>
+                            <span className="hidden font-sans text-muted-foreground text-xs leading-none [@media(hover:hover)]:md:inline">{t("list.hint")}</span>
                             <PaginationCompact currentPage={page} totalPages={totalPages} onPageChange={handlePageChange} />
                         </div>
                     </div>
+
+                    {isUpcoming && upcomingFailed && (
+                        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-card px-4 py-3" role="alert">
+                            <p className="font-sans text-foreground text-sm">{t("list.error.upcoming")}</p>
+                            <Button onClick={() => void refetchUpcoming()} size="sm" variant="outline">
+                                {ct("routeError.retry")}
+                            </Button>
+                        </div>
+                    )}
 
                     {isUpcoming && upcomingLoading ? (
                         <div className="grid grid-cols-3 gap-2.5 min-[1080px]:grid-cols-6 min-[520px]:grid-cols-4 min-[780px]:grid-cols-5 min-[1280px]:gap-4 min-[780px]:gap-3">
@@ -488,12 +502,18 @@ export function OperatorsList() {
                             ))}
                         </div>
                     ) : totalCount === 0 ? (
-                        <div className="rounded-xl border border-border border-dashed bg-card/50 py-16 text-center">
-                            <p className="font-sans text-muted-foreground text-sm">{isUpcoming ? t("list.empty.upcoming") : t("list.empty")}</p>
-                            <button type="button" onClick={clearFilters} className="mt-3 inline-flex items-center gap-1 font-medium text-[12px] text-primary hover:underline">
-                                {t("list.clearFilters")}
-                            </button>
-                        </div>
+                        // A failed upcoming fetch is said by the alert above; an empty state here would
+                        // claim the filters removed operators that never arrived.
+                        isUpcoming && upcomingFailed ? null : (
+                            <div className="rounded-xl border border-border border-dashed bg-card/50 py-16 text-center">
+                                <p className="font-sans text-muted-foreground text-sm">{isUpcoming ? t("list.empty.upcoming") : t("list.empty")}</p>
+                                {hasActiveFilters && (
+                                    <button type="button" onClick={clearFilters} className="mt-3 inline-flex items-center gap-1 font-medium text-[12px] text-primary hover:underline">
+                                        {t("list.clearFilters")}
+                                    </button>
+                                )}
+                            </div>
+                        )
                     ) : isUpcoming ? (
                         <div className="grid grid-cols-3 gap-2.5 min-[1080px]:grid-cols-6 min-[520px]:grid-cols-4 min-[780px]:grid-cols-5 min-[1280px]:gap-4 min-[780px]:gap-3">
                             {upcomingPaginated.map(({ operator: op, updated }) => (updated ? <OperatorCardGrid key={op.id} operator={op} statMetric={statMetric} /> : <OperatorCardUpcoming key={op.id} operator={op} />))}
@@ -512,7 +532,7 @@ export function OperatorsList() {
                         </div>
                     ) : (
                         <div className="flex flex-col gap-1 pt-1">
-                            <div className="grid items-center gap-3 rounded-lg border border-transparent border-b-border/60 px-3 pb-2 font-medium font-mono text-[10.5px] text-muted-foreground uppercase leading-none tracking-[0.12em] max-[900px]:hidden" style={{ gridTemplateColumns: LIST_GRID_COLS }}>
+                            <div className="kicker grid items-center gap-3 rounded-lg border border-transparent border-b-border/60 px-3 pb-2 leading-none max-[900px]:hidden" style={{ gridTemplateColumns: LIST_GRID_COLS }}>
                                 <span />
                                 <span>{t("list.column.name")}</span>
                                 <span className="text-center">{t("list.column.rarity")}</span>
@@ -530,7 +550,7 @@ export function OperatorsList() {
                     )}
 
                     <Pagination currentPage={page} totalPages={totalPages} onPageChange={handlePageChange} />
-                </main>
+                </section>
             </div>
             <DynamicExportDialog open={exportOpen} onOpenChange={setExportOpen} schema={operatorsExportSchema} allRows={exportAllRows} filteredRows={exportFilteredRows} pageRows={exportPageRows} title={t("list.export.dialogTitle")} />
         </div>

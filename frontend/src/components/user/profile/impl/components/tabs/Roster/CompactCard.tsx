@@ -57,7 +57,7 @@ export function CompactCard({ entry, lastRef, showObtained = false }: ICompactCa
                     portrait came out 65px in a 132px track. */}
                 <DialogTrigger render={<button type="button" className="block w-full text-left" />}>
                     <div
-                        className="fade-in slide-in-from-bottom-2 relative flex h-min w-full animate-in cursor-pointer flex-col rounded bg-card transition-transform hover:scale-102"
+                        className="relative flex h-min w-full cursor-pointer flex-col rounded bg-card transition-transform hover:scale-102"
                         style={{
                             padding: "4px 6px",
                             boxShadow: maxed ? `0 0 10px ${rarityColor}, 0 0 20px ${rarityColor}80` : "0 1px 3px 0 rgb(0 0 0 / 0.1)",

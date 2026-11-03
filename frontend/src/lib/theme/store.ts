@@ -91,7 +91,12 @@ function resolveMode(mode: ThemeMode): ResolvedTheme {
     return mode === "auto" ? getSystemResolved() : mode;
 }
 
-export const themeStore = new Store<IThemeState>({
+/**
+ * What the server renders with: it has no localStorage, so every preference is its default.
+ * Exported for a component that hydrates AFTER `hydrateTheme()` has filled the store (a lazy
+ * route), which must render this on its hydrating pass to match the server HTML.
+ */
+export const SERVER_THEME_STATE: Readonly<IThemeState> = Object.freeze({
     mode: "auto",
     resolved: "dark",
     accent: null,
@@ -103,6 +108,8 @@ export const themeStore = new Store<IThemeState>({
     cnUpdates: true,
     hydrated: false,
 });
+
+export const themeStore = new Store<IThemeState>({ ...SERVER_THEME_STATE });
 
 function applyMode(mode: ThemeMode): ResolvedTheme {
     if (typeof document === "undefined") return resolveMode(mode);

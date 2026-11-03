@@ -116,7 +116,9 @@ export function Toolbar({ ranking, onRanking, catalog, materials, scope, onScope
                         onClick={() => onMovementOnly(!movementOnly)}
                         className={cn(
                             "inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-lg border px-2.5 font-medium font-sans text-xs leading-none transition-colors disabled:cursor-not-allowed disabled:opacity-50 sm:h-8",
-                            movementOnly && movementAvailable ? "border-primary/40 bg-[color-mix(in_srgb,var(--primary)_10%,transparent)] text-primary hover:bg-[color-mix(in_srgb,var(--primary)_14%,transparent)]" : "border-input bg-card text-foreground hover:border-foreground/20 disabled:hover:border-input",
+                            movementOnly && movementAvailable
+                                ? "border-primary/40 bg-[color-mix(in_srgb,var(--primary)_10%,transparent)] text-foreground hover:bg-[color-mix(in_srgb,var(--primary)_14%,transparent)] [&>svg]:text-primary"
+                                : "border-input bg-card text-foreground hover:border-foreground/20 disabled:hover:border-input",
                         )}
                     >
                         <TrendingUp className={cn("size-3.5", movementOnly && movementAvailable ? "opacity-100" : "opacity-70")} aria-hidden />

@@ -67,8 +67,11 @@ export const Route = createRootRouteWithContext<IMyRouterContext>()({
     head: ({ match }) => {
         // No `useT()` in `head()`; the context already has the bootstrap. See `lib/meta.ts`.
         const t = metaT(match.context.i18n);
+        // A URL no route matched lands on the root match flagged `_notFound`; without this
+        // the 404 kept the site title. A notFound thrown by a deeper loader is that route's
+        // own head to title.
         const { meta, links } = seo({
-            title: t("root.title"),
+            title: match._notFound ? t("root.notFoundTitle") : t("root.title"),
             description: t("root.description"),
             locale: match.context.i18n?.locale,
         });
@@ -187,13 +190,22 @@ function SiteChrome({ children }: { children: React.ReactNode }) {
 
     // The admin panel sits under the site header (its own section bar renders
     // below it) but has no footer: it is a working surface, not a page to scroll past.
+    // The one `<main>` landmark on every page, and the skip link's target: pages render a
+    // `<div>` or `<section>` at their root, never a second `<main>`. `tabIndex={-1}` lets the
+    // skip link move focus here, not just scroll, so the next Tab starts inside the page.
+    const content = (
+        <main id="content" tabIndex={-1} className="outline-none">
+            <ToastProvider>
+                <AnchoredToastProvider>{children}</AnchoredToastProvider>
+            </ToastProvider>
+        </main>
+    );
+
     if (isAdmin) {
         return (
             <>
                 <Header />
-                <ToastProvider>
-                    <AnchoredToastProvider>{children}</AnchoredToastProvider>
-                </ToastProvider>
+                {content}
             </>
         );
     }
@@ -201,9 +213,7 @@ function SiteChrome({ children }: { children: React.ReactNode }) {
     return (
         <>
             <Header />
-            <ToastProvider>
-                <AnchoredToastProvider>{children}</AnchoredToastProvider>
-            </ToastProvider>
+            {content}
             <Footer />
         </>
     );

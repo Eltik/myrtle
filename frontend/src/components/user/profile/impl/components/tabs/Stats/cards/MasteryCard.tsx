@@ -78,7 +78,7 @@ export function MasteryCard({ masteries }: IMasteryCardProps) {
                             </span>
                         </div>
                         <Bar color={PALETTE.mastery.accent} pct={masteryPct} />
-                        <p className="text-center font-mono text-[10px] text-muted-foreground/50">{t("profile.stats.mastery.ofMax", { pct: masteryPct.toFixed(1) })}</p>
+                        <p className="text-center font-mono text-[10px] text-muted-foreground">{t("profile.stats.mastery.ofMax", { pct: masteryPct.toFixed(1) })}</p>
                     </div>
                     <div className="border-border/60 border-t pt-3">
                         <GapList items={gaps} />

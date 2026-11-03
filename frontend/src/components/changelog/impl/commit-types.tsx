@@ -23,7 +23,7 @@ export const COMMIT_TYPE_STYLES: Record<CommitType, ICommitTypeStyle> = {
     test: { labelKey: "commitType.test", Icon: TestTube, dotClass: "bg-muted-foreground/60", pillClass: "bg-muted text-muted-foreground ring-border" },
     chore: { labelKey: "commitType.chore", Icon: Wrench, dotClass: "bg-muted-foreground/60", pillClass: "bg-muted text-muted-foreground ring-border" },
     revert: { labelKey: "commitType.revert", Icon: RotateCcw, dotClass: "bg-warning", pillClass: "bg-warning/10 text-warning-foreground ring-warning/25" },
-    other: { labelKey: "commitType.other", Icon: GitCommitHorizontal, dotClass: "bg-primary", pillClass: "bg-primary/10 text-primary ring-primary/25" },
+    other: { labelKey: "commitType.other", Icon: GitCommitHorizontal, dotClass: "bg-primary", pillClass: "bg-primary/10 text-foreground ring-primary/25 [&>svg]:text-primary" },
 };
 
 export function commitTypeStyle(type: CommitType): ICommitTypeStyle {

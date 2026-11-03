@@ -20,6 +20,10 @@ export const messages = {
         text: "Myrtle",
         description: "Site name, used as the default document title and in the `X • Myrtle` suffix.",
     },
+    "root.notFoundTitle": {
+        text: "Page not found",
+        description: "Document title of the 404 page, shown when no page exists at the address. The site name is appended as `Page not found • Myrtle`.",
+    },
     "root.description": {
         text: "Arknights companion - operators, rosters, tier lists.",
         description: "Site-wide meta description, used on any page that does not set its own.",

@@ -57,7 +57,7 @@ export const messages = {
     },
     "list.stat.owned": {
         text: "Owned",
-        description: "Card-statistic option: the share of players who own the operator. Uppercased by the design; keep it very short.",
+        description: "Card-statistic option: the share of players who own the operator. Keep it very short.",
     },
     "list.stat.owned.tip": {
         text: "Share of players who own each operator",
@@ -77,7 +77,7 @@ export const messages = {
     },
     "list.sort.caption": {
         text: "Sort",
-        description: "Small uppercase caption inside the sort control, before the chosen option. Very tight space.",
+        description: "Small caption inside the sort control, before the chosen option. Very tight space.",
     },
     "list.sort.asc": {
         text: "Ascending",
@@ -97,7 +97,7 @@ export const messages = {
     },
     "list.perPage.caption": {
         text: "Show",
-        description: "Small uppercase caption inside the page-size control, before the chosen number. Very tight space.",
+        description: "Small caption inside the page-size control, before the chosen number. Very tight space.",
     },
     "list.perPage.all": {
         text: "All",
@@ -121,7 +121,7 @@ export const messages = {
     },
     "list.hint": {
         text: "Hover for preview · Click to open",
-        description: "Small uppercase hint beside the pager on pointer devices. Keep the middle dot separator.",
+        description: "Small hint beside the pager on pointer devices. Keep the middle dot separator.",
     },
     "list.empty.upcoming": {
         text: "No upcoming operators match your filters.",
@@ -130,6 +130,10 @@ export const messages = {
     "list.empty": {
         text: "No operators match your filters.",
         description: "Empty state when the grid is filtered down to nothing.",
+    },
+    "list.error.upcoming": {
+        text: "The upcoming CN operators did not load.",
+        description: "Shown above the Upcoming (CN) view when its list failed to load, beside a Try again button. Distinct from the empty state: nothing was filtered out, the data never arrived.",
     },
     "list.clearFilters": {
         text: "Clear all filters",

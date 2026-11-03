@@ -194,7 +194,7 @@ export function MyTierLists({ initialSort, initialType, initialView, initialQuer
     }, []);
 
     return (
-        <main className="min-h-dvh pb-24">
+        <div className="min-h-dvh pb-24">
             <MyHero total={allLists.length} communityCount={communityCount} communityQuota={COMMUNITY_QUOTA} officialCount={officialCount} totalViews={totalViews} totalFavorites={totalFavorites} onCreate={handleOpenCreate} />
 
             <div id="my-tier-lists-grid" className="page-gutter mt-2 scroll-mt-32 [--page-max:1080px]">
@@ -292,6 +292,6 @@ export function MyTierLists({ initialSort, initialType, initialView, initialQuer
                 isSubmitting={deleteMutation.isPending}
                 errorMessage={mutationError}
             />
-        </main>
+        </div>
     );
 }

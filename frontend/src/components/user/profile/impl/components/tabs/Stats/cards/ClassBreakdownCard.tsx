@@ -97,7 +97,7 @@ function ProfessionRow({ prof, expanded, maxSubNameLen, onToggle }: IProfessionR
                             </div>
                             <div className="flex items-baseline gap-1">
                                 <span className="font-bold text-sm tabular-nums">{prof.owned}</span>
-                                <span className="font-mono text-[10.5px] text-muted-foreground/50">/ {prof.total}</span>
+                                <span className="font-mono text-[10.5px] text-muted-foreground">/ {prof.total}</span>
                             </div>
                         </div>
                         <Bar color={classColor} pct={prof.percentage} />

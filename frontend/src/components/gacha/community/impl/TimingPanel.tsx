@@ -4,7 +4,7 @@ import { useMediaQuery } from "#/hooks/use-media-query";
 import { type ClientGachaGroup, classifyBannerGroup, type IBanner, type IDatePullData, type IDayOfWeekPullData, type IHourlyPullData, type IPullTimingData } from "#/lib/api/gacha";
 import { useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import { BANNER_GROUP_LABEL_KEYS } from "../../constants";
+import { BANNER_GROUP_COLOR, BANNER_GROUP_LABEL_KEYS } from "../../constants";
 import type { messages as gachaConstantsMessages } from "../../constants.messages";
 import styles from "./CommunityPage.module.css";
 import { fmtPct } from "./format";
@@ -19,14 +19,6 @@ interface ITimingPanelProps {
     firstPullAt?: number | null;
     banners: IBanner[];
 }
-
-const TYPE_COLORS: Record<ClientGachaGroup, string> = {
-    limited: "oklch(0.85 0.18 80)",
-    linkage: "oklch(0.78 0.16 320)",
-    regular: "#bcabdb",
-    special: "#88c8e3",
-    boot: "oklch(0.8 0.12 160)",
-};
 
 // Top row down, same order as the rest of the UI.
 const TRACK_ORDER: ClientGachaGroup[] = ["limited", "linkage", "special", "regular"];
@@ -52,7 +44,7 @@ export function TimingPanel({ timing, firstPullAt, banners }: ITimingPanelProps)
                     </span>
                     {TRACK_ORDER.map((g) => (
                         <span key={g} className="inline-flex items-center">
-                            <span aria-hidden className="mr-1.5 inline-block h-2 w-2 rounded-sm align-middle" style={{ background: TYPE_COLORS[g] }} />
+                            <span aria-hidden className="mr-1.5 inline-block h-2 w-2 rounded-sm align-middle" style={{ background: BANNER_GROUP_COLOR[g].fill }} />
                             {t(BANNER_GROUP_LABEL_KEYS[g])}
                         </span>
                     ))}
@@ -295,7 +287,7 @@ function ActivityChart({ data, days, color, height, bands }: { data: number[]; d
                                 <div className={styles.acHoverCardBanners}>
                                     {activeBands.slice(0, 5).map((b) => (
                                         <div key={b.poolId} className={styles.acHoverCardBannerRow}>
-                                            <span aria-hidden className={styles.acHoverCardSwatch} style={{ background: TYPE_COLORS[b.group] }} />
+                                            <span aria-hidden className={styles.acHoverCardSwatch} style={{ background: BANNER_GROUP_COLOR[b.group].fill }} />
                                             <span className={styles.acHoverCardBannerName}>{b.name}</span>
                                         </div>
                                     ))}
@@ -329,7 +321,7 @@ function ActivityChart({ data, days, color, height, bands }: { data: number[]; d
                                             style={{
                                                 left: `${leftPct}%`,
                                                 width: `${widthPct}%`,
-                                                background: TYPE_COLORS[b.group],
+                                                background: BANNER_GROUP_COLOR[b.group].fill,
                                             }}
                                             title={t("community.timing.band", { name: b.name, type: t(BANNER_GROUP_LABEL_KEYS[b.group]) })}
                                         />

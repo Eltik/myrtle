@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Columns, GitCompareArrows, Rows } from "lucide-react";
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { Badge } from "#/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
 import { Slider } from "#/components/ui/slider";
@@ -32,8 +32,14 @@ interface ISkillsContentProps {
 /** Own chrome plus the labels `helpers.ts` derives. */
 type SkillsT = TypedT<typeof messages & typeof helperMessages>;
 
+/** A pressed neutral toggle: a 2px foreground border and the muted fill, never a shadow, with the
+ *  padding giving back the extra pixel so the button keeps its size. */
+const PRESSED_NEUTRAL = "border-2 border-foreground/70 bg-muted px-[11px] text-foreground";
+
 export const SkillsContent = memo(function SkillsContent({ operator }: ISkillsContentProps) {
     const t: SkillsT = useT("operators");
+    const compareLabelId = useId();
+    const levelLabelId = useId();
     const cnUpdates = useCnUpdatesContext();
     // Skills merged in from CN come after this server's, so the tab still opens on this server's last.
     const ownSkillCount = operator.skills.filter((s) => !cnUpdates?.skillIds.has(s.skillId)).length;
@@ -162,8 +168,14 @@ export const SkillsContent = memo(function SkillsContent({ operator }: ISkillsCo
                         <button
                             key={skill.skillId ?? idx}
                             type="button"
+                            aria-pressed={isSelected}
                             onClick={() => handleSkillChange(idx)}
-                            className={cn("flex w-full items-center gap-2 rounded-lg border px-4 py-2 font-medium text-sm transition-colors sm:w-auto", isSelected ? "border-primary bg-primary/10 text-primary" : "border-border bg-secondary/30 text-muted-foreground hover:border-primary/50 hover:text-foreground")}
+                            // Selected is a 2px border as well as the tint, so it does not rest on hue alone;
+                            // the padding gives back the extra pixel so the button keeps its size.
+                            className={cn(
+                                "flex w-full items-center gap-2 rounded-lg font-medium text-sm transition-colors sm:w-auto",
+                                isSelected ? "border-2 border-primary bg-primary/10 px-[15px] py-[7px] text-foreground" : "border border-border bg-secondary/30 px-4 py-2 text-muted-foreground hover:border-primary/50 hover:text-foreground",
+                            )}
                         >
                             {image && <img alt="" className="h-5 w-5 shrink-0 object-contain" decoding="async" loading="lazy" src={asset(image, isCn ? "cn" : operator.server)} />}
                             {isCn ? <span lang="zh-CN">{name}</span> : name}
@@ -203,19 +215,23 @@ export const SkillsContent = memo(function SkillsContent({ operator }: ISkillsCo
                     <div className="mb-5 flex items-center justify-between gap-4 border-border border-b pb-5">
                         <span className="flex items-center gap-2.5">
                             {comparisonMode ? <Columns className="h-4 w-4 text-primary" /> : <Rows className="h-4 w-4 text-muted-foreground" />}
-                            <span className="font-medium text-foreground text-sm">{t("skills.compare.toggle")}</span>
+                            <span className="font-medium text-foreground text-sm" id={compareLabelId}>
+                                {t("skills.compare.toggle")}
+                            </span>
                         </span>
-                        <Switch checked={comparisonMode} onCheckedChange={setComparisonMode} />
+                        <Switch aria-labelledby={compareLabelId} checked={comparisonMode} onCheckedChange={setComparisonMode} />
                     </div>
                 )}
                 {!comparisonMode ? (
                     <div className="flex flex-col gap-4 md:flex-row md:items-center">
                         <div className="flex-1 space-y-2">
                             <div className="flex items-center justify-between">
-                                <span className="text-muted-foreground text-sm">{t("skills.level")}</span>
+                                <span className="text-muted-foreground text-sm" id={levelLabelId}>
+                                    {t("skills.level")}
+                                </span>
                                 <span className="font-mono text-foreground text-sm">{formatSkillLevel(skillLevel, t)}</span>
                             </div>
-                            <Slider min={0} max={Math.max(0, levelsCount - 1)} step={1} value={[skillLevel]} onValueChange={(v) => setSkillLevel(Array.isArray(v) ? (v[0] ?? 0) : v)} />
+                            <Slider aria-labelledby={levelLabelId} min={0} max={Math.max(0, levelsCount - 1)} step={1} value={[skillLevel]} onValueChange={(v) => setSkillLevel(Array.isArray(v) ? (v[0] ?? 0) : v)} />
                         </div>
                         <Select value={String(skillLevel)} onValueChange={(v) => setSkillLevel(Number.parseInt(String(v), 10))}>
                             <SelectTrigger className="w-36">
@@ -240,8 +256,9 @@ export const SkillsContent = memo(function SkillsContent({ operator }: ISkillsCo
                             </div>
                             <button
                                 type="button"
+                                aria-pressed={showDifferencesOnly}
                                 onClick={() => setShowDifferencesOnly((s) => !s)}
-                                className={cn("inline-flex h-9 items-center gap-2 rounded-sm border px-3 font-medium text-xs transition-colors", showDifferencesOnly ? "border-border bg-muted text-foreground shadow-sm ring-1 ring-border" : "border-border bg-secondary/50 text-foreground hover:bg-muted")}
+                                className={cn("inline-flex h-9 items-center gap-2 rounded-sm font-medium text-xs transition-colors", showDifferencesOnly ? PRESSED_NEUTRAL : "border border-border bg-secondary/50 px-3 text-foreground hover:bg-muted")}
                             >
                                 <GitCompareArrows className="h-4 w-4" />
                                 {showDifferencesOnly ? t("skills.compare.showFull") : t("skills.compare.showDiff")}
@@ -255,11 +272,9 @@ export const SkillsContent = memo(function SkillsContent({ operator }: ISkillsCo
                                     <button
                                         type="button"
                                         key={`tl-${idx}`}
+                                        aria-pressed={isOn}
                                         onClick={() => toggleComparisonLevel(idx)}
-                                        className={cn(
-                                            "h-9 min-w-14 rounded-sm border px-3 font-medium text-xs transition-colors",
-                                            isOn ? (isMastery ? "border-border bg-muted text-foreground shadow-sm ring-1 ring-border" : "border-primary bg-primary/10 text-primary") : "border-border bg-secondary/30 text-muted-foreground hover:text-foreground",
-                                        )}
+                                        className={cn("h-9 min-w-14 rounded-sm font-medium text-xs transition-colors", isOn ? (isMastery ? PRESSED_NEUTRAL : "border-2 border-primary bg-primary/10 px-[11px] text-foreground") : "border border-border bg-secondary/30 px-3 text-muted-foreground hover:text-foreground")}
                                     >
                                         {formatSkillLevel(idx, t)}
                                     </button>
@@ -333,12 +348,13 @@ export const SkillsContent = memo(function SkillsContent({ operator }: ISkillsCo
                     {skillRange && (
                         <div className="mt-5 rounded-sm border border-border/50 bg-secondary/10 p-4">
                             <div className="mb-3 flex items-center justify-between">
-                                <span className="font-medium text-muted-foreground text-xs uppercase tracking-wide">{t("skills.range")}</span>
+                                <span className="kicker">{t("skills.range")}</span>
                                 {baseRange && (
                                     <button
                                         type="button"
+                                        aria-pressed={showRangeDiff}
                                         onClick={() => setShowRangeDiff((s) => !s)}
-                                        className={cn("inline-flex h-8 items-center gap-2 rounded-sm border px-3 font-medium text-xs transition-colors", showRangeDiff ? "border-border bg-muted text-foreground shadow-sm ring-1 ring-border" : "border-border bg-secondary/50 text-foreground hover:bg-muted")}
+                                        className={cn("inline-flex h-8 items-center gap-2 rounded-sm font-medium text-xs transition-colors", showRangeDiff ? PRESSED_NEUTRAL : "border border-border bg-secondary/50 px-3 text-foreground hover:bg-muted")}
                                     >
                                         <GitCompareArrows className="h-4 w-4" />
                                         {showRangeDiff ? t("skills.range.hideDiff") : t("skills.compare.showDiff")}
@@ -348,11 +364,11 @@ export const SkillsContent = memo(function SkillsContent({ operator }: ISkillsCo
                             {showRangeDiff && baseRange ? (
                                 <div className="flex flex-wrap items-start gap-6">
                                     <div className="space-y-1.5">
-                                        <span className="block font-medium text-[0.625rem] text-muted-foreground uppercase tracking-wide">{t("skills.range.original")}</span>
+                                        <span className="block font-medium text-[11px] text-muted-foreground">{t("skills.range.original")}</span>
                                         <OperatorRange range={baseRange} />
                                     </div>
                                     <div className="space-y-1.5">
-                                        <span className="block font-medium text-[0.625rem] text-muted-foreground uppercase tracking-wide">{t("skills.range.onSkill")}</span>
+                                        <span className="block font-medium text-[11px] text-muted-foreground">{t("skills.range.onSkill")}</span>
                                         <OperatorRange range={skillRange} />
                                     </div>
                                 </div>
@@ -365,26 +381,26 @@ export const SkillsContent = memo(function SkillsContent({ operator }: ISkillsCo
             )}
             {comparisonMode && (
                 <div className="space-y-4">
-                    <div className="flex items-start gap-4 rounded-md border border-border bg-card/50 p-5 shadow-sm">
+                    <div className="flex items-start gap-4 rounded-md border border-border bg-card/50 p-5">
                         {operator.skills[selectedSkillIndex].static?.image && (
-                            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-sm border border-border bg-secondary/50 shadow-sm">
+                            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-sm border border-border bg-secondary/50">
                                 <img alt={operator.skills[selectedSkillIndex].static.levels[comparisonLevels[0] ?? 0]?.name ?? t("skills.imageAlt")} className="h-10 w-10 object-contain" decoding="async" loading="lazy" src={asset(operator.skills[selectedSkillIndex].static.image, operator.server)} />
                             </div>
                         )}
                         <div className="min-w-0 flex-1">
                             <h3 className="font-semibold text-foreground text-lg">{operator.skills[selectedSkillIndex].static?.levels[comparisonLevels[0] ?? 0]?.name}</h3>
                             <div className="mt-2 flex flex-wrap gap-2">
-                                <Badge className="rounded-sm bg-secondary shadow-sm" variant="secondary">
+                                <Badge className="rounded-sm bg-secondary" variant="secondary">
                                     {getSpTypeLabel(operator.skills[selectedSkillIndex].static?.levels[comparisonLevels[0] ?? 0]?.spData?.spType ?? "", t)}
                                 </Badge>
-                                <Badge className="rounded-sm bg-secondary shadow-sm" variant="secondary">
+                                <Badge className="rounded-sm bg-secondary" variant="secondary">
                                     {getSkillTypeLabel(operator.skills[selectedSkillIndex].static?.levels[comparisonLevels[0] ?? 0]?.skillType ?? "", t)}
                                 </Badge>
                             </div>
                         </div>
                     </div>
 
-                    <div className="hidden items-center gap-6 px-4 font-medium text-muted-foreground text-xs uppercase tracking-wider md:flex">
+                    <div className="kicker hidden items-center gap-6 px-4 md:flex">
                         <div className="w-20 shrink-0">{t("skills.column.level")}</div>
                         <div className="min-w-0 flex-1">{t("skills.column.description")}</div>
                         <div className="flex shrink-0 gap-3">
@@ -466,7 +482,7 @@ export const SkillComparisonRow = memo(function SkillComparisonRow({ levelIndex,
     return (
         <div className={cn("flex flex-col gap-4 border-border bg-card/30 p-5 md:flex-row md:items-start md:gap-6 md:p-6", isFirst && "rounded-t-lg border", !isFirst && !isLast && "border-x border-b", isLast && "rounded-b-lg border-x border-b", isFirst && isLast && "rounded-lg")}>
             <div className="flex shrink-0 items-center gap-2 md:w-20 md:flex-col md:items-start md:gap-1.5">
-                <Badge className={cn("rounded-sm font-mono text-sm shadow-sm", levelIndex >= 7 ? "border-border bg-muted text-foreground" : "border-border bg-muted/50 text-muted-foreground")} variant="secondary">
+                <Badge className={cn("rounded-sm font-mono text-sm", levelIndex >= 7 ? "border-border bg-muted text-foreground" : "border-border bg-muted/50 text-muted-foreground")} variant="secondary">
                     {formatSkillLevel(levelIndex, t)}
                 </Badge>
             </div>
@@ -477,7 +493,7 @@ export const SkillComparisonRow = memo(function SkillComparisonRow({ levelIndex,
                         {diffSummary.map((c, idx) => (
                             // biome-ignore lint/suspicious/noArrayIndexKey: diff entries are positionally generated and stable per render
                             <div className="flex items-baseline gap-3 rounded-sm border border-border bg-muted/30 px-4 py-2.5" key={`${c.label}-${idx}`}>
-                                <span className="shrink-0 font-medium text-muted-foreground text-xs uppercase tracking-wide">{c.label}</span>
+                                <span className="shrink-0 font-medium text-muted-foreground text-xs">{c.label}</span>
                                 <span className="font-medium font-mono text-foreground text-sm">{c.value}</span>
                             </div>
                         ))}
@@ -492,12 +508,13 @@ export const SkillComparisonRow = memo(function SkillComparisonRow({ levelIndex,
                 {range && (
                     <div className="mt-4 rounded-sm border border-border/50 bg-secondary/10 p-3">
                         <div className="mb-2 flex items-center justify-between">
-                            <span className="font-medium text-[0.625rem] text-muted-foreground uppercase tracking-wide">{t("skills.range")}</span>
+                            <span className="kicker">{t("skills.range")}</span>
                             {baseRange && onToggleRangeDiff && (
                                 <button
                                     type="button"
+                                    aria-pressed={showRangeDiff}
                                     onClick={onToggleRangeDiff}
-                                    className={cn("inline-flex h-7 items-center gap-1.5 rounded-sm border px-2 font-medium text-[0.625rem] transition-colors", showRangeDiff ? "border-border bg-muted text-foreground shadow-sm ring-1 ring-border" : "border-border bg-secondary/50 text-foreground hover:bg-muted")}
+                                    className={cn("inline-flex h-7 items-center gap-1.5 rounded-sm font-medium text-[11px] transition-colors", showRangeDiff ? "border-2 border-foreground/70 bg-muted px-[7px] text-foreground" : "border border-border bg-secondary/50 px-2 text-foreground hover:bg-muted")}
                                 >
                                     <GitCompareArrows className="h-3 w-3" />
                                     {showRangeDiff ? t("skills.range.hideDiff") : t("skills.compare.showDiff")}
@@ -507,11 +524,11 @@ export const SkillComparisonRow = memo(function SkillComparisonRow({ levelIndex,
                         {showRangeDiff && baseRange ? (
                             <div className="flex flex-wrap items-start gap-4">
                                 <div className="space-y-1.5">
-                                    <span className="block font-medium text-[0.625rem] text-muted-foreground uppercase tracking-wide">{t("skills.range.original")}</span>
+                                    <span className="block font-medium text-[11px] text-muted-foreground">{t("skills.range.original")}</span>
                                     <OperatorRange range={baseRange} />
                                 </div>
                                 <div className="space-y-1.5">
-                                    <span className="block font-medium text-[0.625rem] text-muted-foreground uppercase tracking-wide">{t("skills.range.onSkill")}</span>
+                                    <span className="block font-medium text-[11px] text-muted-foreground">{t("skills.range.onSkill")}</span>
                                     <OperatorRange range={range} />
                                 </div>
                             </div>
@@ -523,16 +540,16 @@ export const SkillComparisonRow = memo(function SkillComparisonRow({ levelIndex,
             </div>
 
             <div className="flex shrink-0 items-center gap-2.5 md:gap-3">
-                <div className={cn("flex flex-col items-center justify-center rounded-sm border px-3.5 py-1.5 transition-all duration-200", diff.spCostChanged ? "border-border bg-muted shadow-sm ring-1 ring-border" : "border-border/60 bg-muted/40")}>
-                    <div className="font-medium text-[0.625rem] text-muted-foreground uppercase tracking-wide">{t("skills.column.sp")}</div>
+                <div className={cn("flex flex-col items-center justify-center rounded-sm border px-3.5 py-1.5 transition-all duration-200", diff.spCostChanged ? "border-foreground/40 bg-muted" : "border-border/60 bg-muted/40")}>
+                    <div className="font-medium text-[11px] text-muted-foreground">{t("skills.column.sp")}</div>
                     <div className="mt-0.5 font-mono font-semibold text-base text-foreground">{levelData.spData?.spCost ?? "-"}</div>
                 </div>
-                <div className={cn("flex flex-col items-center justify-center rounded-sm border px-3.5 py-1.5 transition-all duration-200", diff.initSpChanged ? "border-border bg-muted shadow-sm ring-1 ring-border" : "border-border/60 bg-muted/40")}>
-                    <div className="font-medium text-[0.625rem] text-muted-foreground uppercase tracking-wide">{t("skills.column.init")}</div>
+                <div className={cn("flex flex-col items-center justify-center rounded-sm border px-3.5 py-1.5 transition-all duration-200", diff.initSpChanged ? "border-foreground/40 bg-muted" : "border-border/60 bg-muted/40")}>
+                    <div className="font-medium text-[11px] text-muted-foreground">{t("skills.column.init")}</div>
                     <div className="mt-0.5 font-mono font-semibold text-base text-foreground">{levelData.spData?.initSp ?? "-"}</div>
                 </div>
-                <div className={cn("flex flex-col items-center justify-center rounded-sm border px-3.5 py-1.5 transition-all duration-200", diff.durationChanged ? "border-border bg-muted shadow-sm ring-1 ring-border" : "border-border/60 bg-muted/40")}>
-                    <div className="font-medium text-[0.625rem] text-muted-foreground uppercase tracking-wide">{t("skills.column.dur")}</div>
+                <div className={cn("flex flex-col items-center justify-center rounded-sm border px-3.5 py-1.5 transition-all duration-200", diff.durationChanged ? "border-foreground/40 bg-muted" : "border-border/60 bg-muted/40")}>
+                    <div className="font-medium text-[11px] text-muted-foreground">{t("skills.column.dur")}</div>
                     <div className="mt-0.5 font-mono font-semibold text-base text-foreground">{levelData.duration && levelData.duration > 0 ? t("skills.durationSeconds", { value: levelData.duration }) : "-"}</div>
                 </div>
             </div>

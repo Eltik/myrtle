@@ -50,7 +50,7 @@ function accessText(t: UsersT, summary: AccessSummary): string {
         case "translator":
             return summary.locales.length ? summary.locales.join(", ") : t("users.access.translatorNone");
         case "player":
-            return summary.locales.length ? summary.locales.join(", ") : "—";
+            return summary.locales.length ? summary.locales.join(", ") : "-";
     }
 }
 
@@ -195,7 +195,7 @@ export default function Users({ search }: IUsersProps): React.ReactElement {
                                 const label = personLabel(u, t("users.deletedAccount"));
                                 // Shown in their own columns from sm, under the name on a phone.
                                 const role = <Badge variant={roleVariant(u.role)}>{roleLabel(u.role)}</Badge>;
-                                const canEdit = <span className={cn("text-[13px]", warned ? "text-warning-foreground" : text === "—" ? "text-muted-foreground" : "text-foreground")}>{warned ? t("users.access.warned", { access: text }) : text}</span>;
+                                const canEdit = <span className={cn("text-[13px]", warned ? "text-warning-foreground" : text === "-" ? "text-muted-foreground" : "text-foreground")}>{warned ? t("users.access.warned", { access: text }) : text}</span>;
                                 return (
                                     <TableRow key={u.id} className="cursor-pointer hover:bg-accent" data-state={u.id === selectedId ? "selected" : undefined}>
                                         <TableCell>
@@ -215,9 +215,9 @@ export default function Users({ search }: IUsersProps): React.ReactElement {
                                         <TableCell className="max-md:hidden">
                                             <span className="font-mono text-[12.5px]">{u.server}</span>
                                         </TableCell>
-                                        <TableCell className="tabular-nums max-md:hidden">{u.level === null ? "—" : f.number(u.level)}</TableCell>
-                                        <TableCell className="tabular-nums max-md:hidden">{u.totalScore === null ? "—" : f.number(Math.round(u.totalScore))}</TableCell>
-                                        <TableCell className="max-md:hidden">{u.grade ? <Badge variant="outline">{u.grade}</Badge> : <span className="text-muted-foreground">—</span>}</TableCell>
+                                        <TableCell className="tabular-nums max-md:hidden">{u.level === null ? "-" : f.number(u.level)}</TableCell>
+                                        <TableCell className="tabular-nums max-md:hidden">{u.totalScore === null ? "-" : f.number(Math.round(u.totalScore))}</TableCell>
+                                        <TableCell className="max-md:hidden">{u.grade ? <Badge variant="outline">{u.grade}</Badge> : <span className="text-muted-foreground">-</span>}</TableCell>
                                         <TableCell className="max-sm:hidden">{role}</TableCell>
                                         <TableCell className="min-w-[16ch] max-w-[28ch] whitespace-normal leading-snug max-sm:hidden">{canEdit}</TableCell>
                                     </TableRow>

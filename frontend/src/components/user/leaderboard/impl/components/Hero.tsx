@@ -65,7 +65,7 @@ export function Hero({ item, rankedPlayers, topValue, updatedAt, isLoading }: IH
                                 <span className="truncate">{item.name}</span>
                             </span>
                         ) : (
-                            <span className="inline-flex h-5.5 items-center rounded-full border border-primary/30 bg-primary/10 px-2 font-mono font-semibold text-[10.5px] text-primary uppercase leading-none tracking-[0.18em]">{t("leaderboard.hero.allTime")}</span>
+                            <span className="inline-flex h-5.5 items-center rounded-full border border-primary/30 bg-primary/10 px-2 font-mono font-semibold text-[10.5px] text-foreground uppercase leading-none tracking-[0.18em]">{t("leaderboard.hero.allTime")}</span>
                         )}
                     </h1>
                     <p className="m-0 max-w-[60ch] font-sans text-[13.5px] text-muted-foreground leading-snug">{item ? t("leaderboard.hero.blurb.item", { item: item.name }) : t("leaderboard.hero.blurb")}</p>

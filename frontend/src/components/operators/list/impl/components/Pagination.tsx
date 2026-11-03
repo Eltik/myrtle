@@ -289,7 +289,7 @@ function JumpToPagePopover({ totalPages, hiddenFrom, hiddenTo, suggestedPage, on
                             onChange={(event) => setValue(event.currentTarget.value)}
                             aria-label={t("pager.jump.input")}
                             aria-invalid={value.length > 0 && !isValid}
-                            className="flex-1 tabular-nums `[[type=number]]:[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                            className="flex-1 tabular-nums [&_input::-webkit-inner-spin-button]:appearance-none [&_input::-webkit-outer-spin-button]:appearance-none [&_input]:[appearance:textfield]"
                         />
                         <Button type="submit" size="icon" variant="default" disabled={!isValid} aria-label={t("pager.goToPage")} className="size-8 shrink-0">
                             <CornerDownLeft className="size-4" />

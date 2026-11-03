@@ -7,24 +7,19 @@ import type { TypedT } from "#/lib/i18n/messages";
 import { stripMarkdown } from "#/lib/markdown";
 import styles from "./Digest.module.css";
 import type { messages } from "./LatestUpdates.messages";
-import { useReveal } from "./motion";
 import { splitNoteTitle } from "./notes";
 import shared from "./shared.module.css";
 
 /** How many release notes the home page lists. */
 const NOTE_LIMIT = 4;
 
-/** One beat behind Top Players, which sits beside this panel. */
-const PANEL_REVEAL_DELAY_MS = 80;
-
 export default function LatestUpdates() {
     const t: TypedT<typeof messages> = useT("home");
     const tn: TypedT<typeof entryMessages> = useT("changelog");
     const locale = useLocale();
-    const reveal = useReveal<HTMLDivElement>(PANEL_REVEAL_DELAY_MS);
 
     return (
-        <div {...reveal} className={`${shared.reveal} ${styles.panel}`}>
+        <div className={styles.panel}>
             <div className={styles.head}>
                 <div className={styles.headText}>
                     <h2 className={styles.title}>{t("updates.title")}</h2>
@@ -39,7 +34,7 @@ export default function LatestUpdates() {
                     return (
                         <Link key={note.id} to={note.href ?? "/changelog"} className={styles.update}>
                             <span className={styles.updateMeta}>
-                                {kind && <span className={shared.tag}>{kind}</span>}
+                                {kind && <span className="kicker">{kind}</span>}
                                 <span className={styles.updateDate}>{formatNoteDate(note.date, locale, { month: "short", day: "numeric" })}</span>
                             </span>
                             <span className={styles.updateTitle}>{title}</span>

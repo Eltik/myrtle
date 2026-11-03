@@ -178,7 +178,7 @@ function ZoneHelper(): React.ReactElement {
                             <dt className="text-foreground">{t(row.wordingKey)}</dt>
                             <dd className="mt-0.5 flex flex-wrap gap-1">
                                 {row.zones.map((z) => (
-                                    <span key={z} className="rounded bg-primary/10 px-1.5 py-0.5 font-medium text-[11px] text-primary">
+                                    <span key={z} className="rounded bg-primary/10 px-1.5 py-0.5 font-medium text-[11px] text-foreground">
                                         {t(zoneField(z).labelKey)}
                                     </span>
                                 ))}

@@ -156,8 +156,8 @@ export function StageFiltersPanel({ settings, onChange, hasProfile, stages, zone
                             <section key={section} className="flex flex-col gap-1.5">
                                 <button type="button" onClick={() => onToggleSection(section)} className="flex items-center gap-1.5 rounded-sm px-0.5 outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-expanded={isExpanded}>
                                     <ChevronDown aria-hidden="true" className={cn("size-3 text-muted-foreground/70 transition-transform duration-150", !isExpanded && "-rotate-90")} />
-                                    <h3 className="font-mono text-[10px] text-muted-foreground/70 uppercase tracking-[0.2em]">{t(STAGE_SECTION_LABEL_KEYS[section])}</h3>
-                                    <span className="font-mono text-[10px] text-muted-foreground/50 uppercase tracking-[0.16em]">{t("randomizer.stages.sectionCount", { selected: selectedSectionStages, total: totalSectionStages })}</span>
+                                    <h3 className="font-mono text-[11px] text-muted-foreground uppercase tracking-[0.2em]">{t(STAGE_SECTION_LABEL_KEYS[section])}</h3>
+                                    <span className="font-mono text-[11px] text-muted-foreground uppercase tracking-[0.16em]">{t("randomizer.stages.sectionCount", { selected: selectedSectionStages, total: totalSectionStages })}</span>
                                 </button>
                                 {isExpanded && sectionGroups.map((group) => <EventRow key={group.id} group={group} isOpen={openGroups.has(group.id) || searching} onToggleExpand={() => onToggleExpand(group.id)} onToggleGroup={() => onToggleGroup(group)} deselected={deselected} onToggleStage={onToggleStage} t={t} />)}
                             </section>

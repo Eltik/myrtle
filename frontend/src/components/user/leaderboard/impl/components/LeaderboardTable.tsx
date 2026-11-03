@@ -149,7 +149,7 @@ function DesktopRow({ row, ranking, topValue, intervalKey }: { row: IRankedRow; 
                     <AvatarFallback className="rounded-[10px] text-xs">{initials}</AvatarFallback>
                 </Avatar>
                 <span className="flex min-w-0 flex-col gap-0.5">
-                    <span className="truncate font-sans font-semibold text-[13.5px] text-foreground leading-tight tracking-tight transition-colors group-hover:text-primary">{nickname}</span>
+                    <span className="truncate font-sans font-semibold text-[13.5px] text-foreground leading-tight tracking-tight">{nickname}</span>
                     <span className="truncate font-mono text-[11px] text-muted-foreground tabular-nums leading-none before:opacity-50 before:content-['#']">{row.uid}</span>
                 </span>
             </span>

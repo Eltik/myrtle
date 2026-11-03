@@ -138,10 +138,10 @@ export function RecruitmentCalculator(): React.ReactElement {
                     </Card>
                 </aside>
 
-                <main className="flex min-w-0 flex-col gap-3 sm:gap-4">
+                <div className="flex min-w-0 flex-col gap-3 sm:gap-4">
                     <SelectedTagsBar selectedTags={selectedTags} resultCount={results.length} onRemove={onRemove} onReset={onReset} />
                     <ResultsList results={results} hasSelection={selectedTags.length > 0} roster={rosterOverlay} layout={layout} />
-                </main>
+                </div>
             </div>
         </div>
     );

@@ -42,7 +42,7 @@ export function CompactCard({ item }: ICompactCardProps) {
                         type="button"
                         aria-label={t("profile.items.openAria", { name: item.name })}
                         title={item.name}
-                        className="fade-in slide-in-from-bottom-2 group relative flex animate-in cursor-pointer flex-col rounded bg-card text-left transition-transform hover:scale-[1.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        className="group relative flex cursor-pointer flex-col rounded bg-card text-left transition-transform hover:scale-[1.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         style={{ padding: "4px 6px", boxShadow: "0 1px 3px 0 rgb(0 0 0 / 0.1)" }}
                     />
                 }

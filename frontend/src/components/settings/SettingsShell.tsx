@@ -25,7 +25,8 @@ export function SettingsShell({ nav, active, onChange, children }: ISettingsShel
     const t: TypedT<typeof messages> = useT("settings");
 
     return (
-        <main className="page-gutter relative py-8 [--page-max:1100px] sm:py-14">
+        // A `<div>`: the site shell already wraps every page in the one `<main>`.
+        <div className="page-gutter relative py-8 [--page-max:1100px] sm:py-14">
             <div className="mb-6 sm:mb-8">
                 <Kicker className="mb-2">{t("shell.kicker")}</Kicker>
                 <h1 className="m-0 font-(--font-heading) font-bold text-[26px] text-foreground leading-[1.15] tracking-[-0.02em] sm:text-[36px]">{t("shell.title")}</h1>
@@ -36,7 +37,7 @@ export function SettingsShell({ nav, active, onChange, children }: ISettingsShel
                 <SettingsNav nav={nav} active={active} onChange={onChange} />
                 <div className="min-w-0">{children}</div>
             </div>
-        </main>
+        </div>
     );
 }
 
@@ -66,7 +67,7 @@ function SettingsNav({ nav, active, onChange }: { nav: ISettingsNavItem[]; activ
             aria-label={t("shell.sectionsNav")}
             className={cn(
                 "page-bleed sm:mx-0",
-                "sticky top-14 z-20 border-border border-b bg-background/85 backdrop-blur-md backdrop-saturate-150 supports-[backdrop-filter]:bg-background/65",
+                "sticky top-(--site-header-height) z-20 border-border border-b bg-background/85 backdrop-blur-md backdrop-saturate-150 supports-[backdrop-filter]:bg-background/65",
                 "sm:top-20 sm:z-0 sm:self-start sm:rounded-2xl sm:border sm:border-sidebar-border sm:bg-sidebar/60 sm:p-2 sm:backdrop-blur-none sm:backdrop-saturate-100",
             )}
         >
@@ -98,7 +99,8 @@ function SettingsNavButton({ item, isActive, activeRef, onSelect, tone = "defaul
             data-active={isActive ? "true" : undefined}
             className={cn(
                 "group relative inline-flex shrink-0 cursor-pointer items-center gap-2.5 whitespace-nowrap rounded-lg border border-transparent px-3 py-2 text-left font-sans text-[13.5px] outline-none transition-colors focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
-                "min-h-9 touch-manipulation",
+                // 44px on the phone strip, where these are the only way between sections.
+                "min-h-11 touch-manipulation sm:min-h-9",
                 "sm:w-full sm:px-2.5 sm:py-2 sm:text-[14px]",
                 tone === "danger"
                     ? isActive
@@ -131,10 +133,10 @@ export function SettingRow({ title, description, control, layout = "auto" }: { t
 
 export function SectionLabel({ icon, children }: { icon?: ReactNode; children: ReactNode }) {
     return (
-        <div className="mb-2.5 flex items-center gap-2 font-sans font-semibold text-[11px] text-muted-foreground uppercase tracking-[0.16em]">
+        <Kicker className="flex items-center gap-2">
             {icon ? <span className="inline-flex size-3.5 items-center justify-center [&_svg]:size-3.5">{icon}</span> : null}
             {children}
-        </div>
+        </Kicker>
     );
 }
 

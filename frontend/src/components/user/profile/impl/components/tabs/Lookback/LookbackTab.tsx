@@ -10,6 +10,7 @@ import type { TypedT } from "#/lib/i18n/messages";
 import { cn, RARITY_HEX, rarityToNumber } from "#/lib/utils";
 import type { LookbackSnapshot } from "#/types/generated/LookbackSnapshot";
 import type { IOperatorIndexEntry } from "#/types/operators";
+import { LoadFailed } from "../LoadFailed";
 import { CARD_PADDING, KICKER_TEXT, Kicker, StatCard } from "../Stats/primitives";
 import { diffBuilds, type IBuildDiff, type ISeriesPoint, METRICS, type Metric, metricSeries, ownershipSeries, summaryDelta } from "./helpers";
 import type { messages } from "./LookbackTab.messages";
@@ -51,10 +52,13 @@ function useMetricLabels(t: T): Record<Metric, string> {
  */
 export function LookbackTab({ uid, server, operatorsIndex, rosterPrivate }: IProps) {
     const t: T = useT("user");
-    const { data: overview, isLoading } = useQuery({ ...lookbackQueryOptions(uid), enabled: !rosterPrivate });
+    const { data: overview, isLoading, isError, refetch } = useQuery({ ...lookbackQueryOptions(uid), enabled: !rosterPrivate });
     const { data: live } = useQuery({ ...lookbackBuildQueryOptions(uid, "current"), enabled: !rosterPrivate && Boolean(overview) });
 
     if (rosterPrivate || (!isLoading && overview === null)) return <Notice>{t("lookback.private")}</Notice>;
+    // Before the !overview branch: a failed query has no data and is not loading, so it used to
+    // leave the loading line up for good.
+    if (isError && !overview) return <LoadFailed message={t("lookback.error")} onRetry={() => void refetch()} />;
     if (!overview) return <Notice>{t("lookback.loading")}</Notice>;
 
     const liveSummary = live ? { ts: new Date(live.taken_at).getTime(), summary: live.summary } : null;

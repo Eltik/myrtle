@@ -57,7 +57,7 @@ function StatTiles(): React.ReactElement {
     const byRole = stats?.usersByRole;
     const totalUsers = byRole ? byRole.user + byRole.translator + byRole.tierListEditor + byRole.tierListAdmin + byRole.superAdmin : undefined;
     const staffCount = byRole && totalUsers !== undefined ? totalUsers - byRole.user : undefined;
-    const dash = "—";
+    const dash = "-";
 
     return (
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">

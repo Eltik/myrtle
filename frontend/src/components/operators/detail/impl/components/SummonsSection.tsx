@@ -64,8 +64,14 @@ export function SummonsSection({ drones, parentPhaseIndex, parentLevel, server }
                                     <button
                                         key={d.id ?? d.name}
                                         type="button"
+                                        aria-pressed={isActive}
                                         onClick={() => d.id && setActiveId(d.id)}
-                                        className={cn("shrink-0 rounded-full border px-3 py-1 font-medium text-xs transition-colors", isActive ? "border-primary bg-primary/15 text-foreground" : "border-border bg-card text-muted-foreground hover:border-primary/40 hover:text-foreground")}
+                                        // Grown on touch with min-height, not a pseudo-element: this strip scrolls
+                                        // sideways, so a box past its edge would be clipped.
+                                        className={cn(
+                                            "pointer-coarse:min-h-11 shrink-0 rounded-full font-medium text-xs transition-colors",
+                                            isActive ? "border-2 border-primary bg-primary/15 px-[11px] py-[3px] text-foreground" : "border border-border bg-card px-3 py-1 text-muted-foreground hover:border-primary/40 hover:text-foreground",
+                                        )}
                                     >
                                         {d.name}
                                     </button>
@@ -155,7 +161,7 @@ function SummonCard({ drone, parentPhaseIndex, parentLevel, server }: ISummonCar
                         {column.map(({ iconURL, label, value }) => (
                             <div key={label} className="flex items-center justify-between py-1.5">
                                 <span className="flex items-center gap-2 text-muted-foreground">
-                                    <img alt={label} className="icon-theme-aware h-4 w-4 object-contain" decoding="async" loading="lazy" src={iconURL} />
+                                    <img alt="" className="icon-theme-aware h-4 w-4 object-contain" decoding="async" loading="lazy" src={iconURL} />
                                     <span className="text-xs">{label}</span>
                                 </span>
                                 <span className="font-semibold text-foreground text-sm tabular-nums">{value}</span>

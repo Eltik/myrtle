@@ -1,4 +1,5 @@
 import { Kicker } from "#/components/ui/kicker";
+import { Skeleton } from "#/components/ui/skeleton";
 import type { ClientGachaGroup, IBanner, IClientGachaRecords } from "#/lib/api/gacha";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -58,7 +59,9 @@ function PityMeter({ pity, softPityAt, hardPityAt, color }: { pity: number; soft
                         }}
                     />
                 </div>
-                <div className="pointer-events-none absolute top-0 bottom-0 w-px bg-foreground/30" style={{ left: `${softPct}%` }} title={t("history.pity.softPityAt.title", { count: softPityAt })} aria-hidden />
+                {/* No title: the tick takes no pointer events, so a tooltip on it never showed. The
+                    "soft pity at N" caption under the bar is its label. */}
+                <div className="pointer-events-none absolute top-0 bottom-0 w-px bg-foreground/30" style={{ left: `${softPct}%` }} aria-hidden />
             </div>
             <div className="flex items-center justify-between font-mono text-[10px] text-muted-foreground">
                 <span>{t("history.pity.softPityAt", { count: softPityAt })}</span>
@@ -121,11 +124,11 @@ export function PityPanel({ records, bannersById, isLoading }: IPityPanelProps) 
     if (isLoading) {
         return (
             <section className="flex flex-col gap-4 rounded-[14px] border border-border bg-card p-4.5 sm:p-[22px_24px]">
-                <div className="h-4 w-28 animate-pulse rounded bg-muted" />
+                <Skeleton className="h-4 w-28 rounded" />
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
                     {Array.from({ length: 4 }).map((_, i) => (
                         // biome-ignore lint/suspicious/noArrayIndexKey: skeleton
-                        <div key={i} className="h-32 animate-pulse rounded-xl bg-muted" />
+                        <Skeleton key={i} className="h-32 rounded-xl" />
                     ))}
                 </div>
             </section>

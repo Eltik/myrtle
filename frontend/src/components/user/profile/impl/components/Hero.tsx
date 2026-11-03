@@ -14,7 +14,6 @@ import { isHidden } from "../header";
 import type { messages } from "./Hero.messages";
 import { HeroArt } from "./HeroArt";
 import { HiddenMarker } from "./HiddenMarker";
-import shared from "./shared.module.css";
 
 interface IHeroProps {
     profile: IUserProfile;
@@ -213,7 +212,6 @@ export function Hero({ profile, background, onChangeBackground, onEditHeader, is
                         <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1.5 font-medium font-sans text-muted-foreground text-xs leading-none">
                             {showRegistered && (
                                 <span className="inline-flex items-center gap-2">
-                                    <span className={shared.dotPulse} aria-hidden="true" />
                                     <span>
                                         {t("profile.hero.registered")}{" "}
                                         <b>

@@ -69,7 +69,7 @@ export function SupporterPicker({ selected, investment, onToggle, onInvestment }
                     <Button {...p} variant="outline" size="sm">
                         <Users />
                         {t("dps.supporters.add")}
-                        {selected.length > 0 && <span className="rounded bg-primary/15 px-1.5 font-mono text-[10px] text-primary">{selected.length}</span>}
+                        {selected.length > 0 && <span className="rounded bg-primary/15 px-1.5 font-mono text-[10px] text-foreground">{selected.length}</span>}
                     </Button>
                 )}
             />

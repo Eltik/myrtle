@@ -4,56 +4,50 @@ import { type TypedRichT, useRichT, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import type { messages } from "./Hero.messages";
 import styles from "./Hero.module.css";
-import { prefersReducedMotion, useParallax, useReveal } from "./motion";
 import shared from "./shared.module.css";
 
-/** The intro, then the key hint, reveal a beat after Myrtle. */
-const INTRO_REVEAL_DELAY_MS = 80;
-const HINT_REVEAL_DELAY_MS = 240;
+const HERO_WIDTHS = [800, 1200, 1600, 2400];
+const HERO_WEBP_SRCSET = HERO_WIDTHS.map((w) => `/home/hero_art-${w}w.webp ${w}w`).join(", ");
+const HERO_JPEG_SRCSET = HERO_WIDTHS.map((w) => `/home/${w === 2400 ? "hero_art.jpg" : `hero_art-${w}w.jpg`} ${w}w`).join(", ");
+// The art is cropped with object-fit: cover inside a box up to 116% of max(78svh, 52vw)
+// tall, so the 16:9 image renders wider than the viewport: up to 161vh when the viewport
+// is narrower than 3:2, up to 108vw otherwise. A 375px phone draws it about 1110px wide,
+// so 100vw would hand it a file a third of the width it shows. The box also stops at the
+// hero's height, so these are ceilings and err towards the sharper file.
+const HERO_SIZES = "(max-aspect-ratio: 3/2) 161vh, 108vw";
 
 export default function Hero({ onOpenCommand, scrollTargetId }: { onOpenCommand: () => void; scrollTargetId: string }) {
     const t: TypedT<typeof messages> = useT("home");
     const rt: TypedRichT<typeof messages> = useRichT("home");
     const isMac = useIsMac();
-    const artRef = useParallax<HTMLDivElement>();
-    const revealMyrtle = useReveal<HTMLDivElement>();
-    const revealIntro = useReveal<HTMLDivElement>(INTRO_REVEAL_DELAY_MS);
-    const revealHint = useReveal<HTMLButtonElement>(HINT_REVEAL_DELAY_MS);
-
-    const scrollToTarget = (): void => {
-        const target = document.getElementById(scrollTargetId);
-        if (!target) return;
-        // Measured at click time so the target lands flush under the sticky header at
-        // whatever height `--site-header-height` gives it (57px narrow, 65px from 640px).
-        const headerHeight = document.querySelector("header")?.offsetHeight ?? 0;
-        window.scrollTo({ top: target.getBoundingClientRect().top + window.scrollY - headerHeight, behavior: prefersReducedMotion() ? "auto" : "smooth" });
-    };
 
     return (
         <section className={styles.hero}>
             <div className={styles.art} aria-hidden="true">
-                <div ref={artRef} className={styles.artLayer}>
-                    <img src="/home/hero_art.jpg" alt="" width={2400} height={1350} fetchPriority="high" decoding="async" />
+                <div className={styles.artLayer}>
+                    <picture>
+                        <source type="image/webp" srcSet={HERO_WEBP_SRCSET} sizes={HERO_SIZES} />
+                        <img src="/home/hero_art.jpg" srcSet={HERO_JPEG_SRCSET} sizes={HERO_SIZES} alt="" width={2400} height={1350} fetchPriority="high" />
+                    </picture>
                 </div>
                 <div className={styles.artFade} />
             </div>
             <div className={styles.spacer} />
 
             <div className={`${shared.container} ${styles.body}`}>
-                <div {...revealMyrtle} className={`${shared.reveal} ${styles.myrtle}`}>
-                    <div className={styles.myrtleGlow} aria-hidden="true" />
+                <div className={styles.myrtle}>
                     <img src="/home/myrtle_sleepy.png" alt={t("hero.myrtleAlt")} width={300} height={300} className={styles.myrtleImg} />
                 </div>
                 <div className={styles.copy}>
-                    <div {...revealIntro} className={`${shared.reveal} ${styles.intro}`}>
+                    <div className={styles.intro}>
                         <h1 className={styles.title}>{t("hero.title")}</h1>
                         <p className={styles.lead}>{t("hero.lead")}</p>
                     </div>
-                    <button type="button" {...revealHint} className={`${shared.reveal} ${styles.hint}`} onClick={onOpenCommand}>
+                    <button type="button" className={styles.hint} onClick={onOpenCommand}>
                         {rt("hero.hint", {
                             keys: (
                                 <span className="inline-flex items-center gap-1.5">
-                                    <Kbd>{isMac ? "⌘" : "Ctrl"}</Kbd>
+                                    <Kbd>{isMac ? "⌘" : t("hero.keyCtrl")}</Kbd>
                                     <Kbd>K</Kbd>
                                 </span>
                             ),
@@ -62,18 +56,18 @@ export default function Hero({ onOpenCommand, scrollTargetId }: { onOpenCommand:
                 </div>
             </div>
 
-            <button type="button" className={styles.cue} onClick={scrollToTarget}>
+            <a href={`#${scrollTargetId}`} className={styles.cue}>
                 <img src="/home/myrtle_happy.png" alt="" width={52} height={52} className={styles.cueImg} />
                 <span className={styles.cueText}>
                     <span className={styles.cueTitle}>{t("hero.cue.title")}</span>
                     <span className={styles.cueSub}>
                         {t("hero.cue.subtitle")}
-                        <svg className={styles.cueChevron} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                             <path d="M6 9l6 6 6-6" />
                         </svg>
                     </span>
                 </span>
-            </button>
+            </a>
         </section>
     );
 }

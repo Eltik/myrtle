@@ -1,6 +1,11 @@
 import type * as React from "react";
 import { cn } from "#/lib/utils";
 
-export function Kicker({ className, ...props }: React.ComponentProps<"span">): React.ReactElement {
-    return <span className={cn("mb-2.5 inline-block font-bold text-[0.69rem] text-primary uppercase tracking-[0.22em]", className)} data-slot="kicker" {...props} />;
+/**
+ * The small uppercase label over a card or section, in the one `.kicker` voice (mono,
+ * muted). `tone="accent"` keeps the red for the rare label that has to pull the eye;
+ * spent on every eyebrow, the red stopped marking anything.
+ */
+export function Kicker({ className, tone = "muted", ...props }: React.ComponentProps<"span"> & { tone?: "muted" | "accent" }): React.ReactElement {
+    return <span className={cn("kicker mb-2.5 inline-block", tone === "accent" && "text-primary", className)} data-slot="kicker" {...props} />;
 }

@@ -83,6 +83,10 @@ export const messages = {
         text: "{label} - rotated out, not currently playable",
         description: "Native tooltip on a rotated-out Annihilation chip. {label} is the operation's code and name.",
     },
+    "score.improvements.stage.annihilation.title": {
+        text: "Annihilation",
+        description: "Heading of the Annihilation section of the score improvements. 'Annihilation' is the game's own name for the mode: use the name the game uses in your language.",
+    },
 } satisfies MessageMap;
 
 export const { keys } = defineMessages({ namespace, messages });

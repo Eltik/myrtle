@@ -1,4 +1,4 @@
-/* The two side-by-side panels under "Happening now": Top Players and Latest updates. */
+/* The two side-by-side panels under "Ending soon": Top players and Latest updates. */
 
 .section {
     display: grid;
@@ -56,6 +56,24 @@
     font-size: 13px;
     color: var(--muted-foreground);
 }
+/* The error text with its retry button after it, wrapping on narrow screens. */
+.noteRow {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px 12px;
+}
+/* A player row is 48px (a 32px avatar plus 8px padding above and below); the 4px
+   margins keep the placeholders apart and the column at the rows' own height. */
+.leaderSkeleton {
+    flex: 1 0 auto;
+    min-height: 40px;
+    margin: 4px -6px;
+    border-radius: 8px;
+    background: var(--muted);
+    opacity: 0.5;
+}
 
 /* Both panels' rows are links that bleed into the panel padding on hover. */
 .leader,
@@ -103,7 +121,7 @@
     border-radius: 8px;
     font-size: 12px;
     font-weight: 700;
-    color: #fff;
+    color: var(--foreground);
     background: var(--muted);
 }
 .who {

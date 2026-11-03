@@ -35,6 +35,14 @@ export const messages = {
         text: "Hard",
         description: "Tag on a stage card for a harder variant (Adverse Environment, six-star, Hard chapter) that shares its code with the standard stage.",
     },
+    "squad.stagePicker.error": {
+        text: "The stage list couldn't be loaded.",
+        description: "Shown in place of the stage grid when the stage list fails to load.",
+    },
+    "squad.stagePicker.retry": {
+        text: "Try again",
+        description: "Button that reloads the stage list after a failure.",
+    },
     "squad.stagePicker.loading": {
         text: "Loading stages...",
         description: "Shown while the stage list loads.",

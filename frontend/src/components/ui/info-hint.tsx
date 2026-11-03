@@ -16,7 +16,12 @@ export function InfoHint({ label, children }: { label: string; children: React.R
                 openOnHover
                 delay={120}
                 render={(props) => (
-                    <button {...props} type="button" aria-label={label} className="inline-flex size-4 cursor-help items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2">
+                    <button
+                        {...props}
+                        type="button"
+                        aria-label={label}
+                        className="relative inline-flex size-4 cursor-help items-center justify-center rounded-full text-muted-foreground transition-colors pointer-coarse:after:absolute pointer-coarse:after:-inset-3.5 hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2"
+                    >
                         <Info className="size-3.5" aria-hidden="true" />
                     </button>
                 )}

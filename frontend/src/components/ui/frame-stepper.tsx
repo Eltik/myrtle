@@ -146,7 +146,7 @@ export function FrameStepper({ paused, onPausedChange, onStep, getPosition, scop
         <div className={cn("flex flex-col gap-1.5", className)}>
             <input
                 aria-label={t("frameStepper.scrub")}
-                className="h-4 w-full cursor-pointer accent-primary disabled:cursor-default disabled:opacity-64"
+                className="h-4 pointer-coarse:h-11 w-full cursor-pointer accent-primary disabled:cursor-not-allowed disabled:opacity-64"
                 defaultValue={0}
                 disabled={disabled}
                 max={0}

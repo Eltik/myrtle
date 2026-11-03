@@ -8,21 +8,27 @@
 }
 .opPreview[data-rarity="6"] {
     --c: var(--rarity-6);
+    --ci: var(--rarity-6-ink);
 }
 .opPreview[data-rarity="5"] {
     --c: var(--rarity-5);
+    --ci: var(--rarity-5-ink);
 }
 .opPreview[data-rarity="4"] {
     --c: var(--rarity-4);
+    --ci: var(--rarity-4-ink);
 }
 .opPreview[data-rarity="3"] {
     --c: var(--rarity-3);
+    --ci: var(--rarity-3-ink);
 }
 .opPreview[data-rarity="2"] {
     --c: var(--rarity-2);
+    --ci: var(--rarity-2-ink);
 }
 .opPreview[data-rarity="1"] {
     --c: var(--rarity-1);
+    --ci: var(--rarity-1-ink);
 }
 .opPreview::before {
     content: "";
@@ -59,7 +65,9 @@
     font-weight: 600;
     font-size: 28px;
     line-height: 1;
-    color: var(--c, var(--foreground));
+    /* Foreground, not the rarity hue: on this tinted tile the hue measured under 3:1 in light mode
+       for every rarity, and the tile border and top bar already carry it. */
+    color: var(--foreground);
 }
 .avatarImg {
     position: relative;
@@ -90,14 +98,13 @@
 .rarity {
     display: inline-flex;
     gap: 1px;
-    color: var(--c, var(--primary));
+    /* The ink tokens: the plain hues are fills, 1.39 to 2.52 as text on the white popover. */
+    color: var(--ci, var(--foreground));
     font-size: 11px;
     line-height: 1;
 }
 .nation {
-    font: 500 11px / 1 var(--font-mono);
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
+    font: 500 12px / 1 var(--font-sans);
     color: var(--muted-foreground);
 }
 
@@ -138,9 +145,7 @@
     flex: 0 1 auto;
 }
 .metaItem .k {
-    font: 500 10px / 1 var(--font-mono);
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
+    font: 500 11px / 1 var(--font-sans);
     color: var(--muted-foreground);
 }
 .metaItem .v {
@@ -151,38 +156,15 @@
     white-space: nowrap;
 }
 
-.stats {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 6px;
-}
-.stat {
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    padding: 6px 8px;
-    background: color-mix(in oklch, var(--secondary) 40%, transparent);
+.facts {
     display: flex;
     flex-direction: column;
-    gap: 2px;
-    min-width: 0;
-}
-.stat .k {
-    font: 500 10px / 1 var(--font-mono);
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--muted-foreground);
-}
-.stat .v {
-    font: 600 13px / 1 var(--font-sans);
-    color: var(--foreground);
-}
-
-.hint {
-    font: 500 10.5px / 1 var(--font-mono);
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--muted-foreground);
-    text-align: center;
-    padding-top: 4px;
+    gap: 4px;
+    padding-top: 8px;
     border-top: 1px dashed var(--border);
+    font: 500 12px / 1.35 var(--font-sans);
+    color: var(--muted-foreground);
+}
+.facts p {
+    margin: 0;
 }

@@ -1,5 +1,6 @@
 import { createFileRoute, stripSearchParams } from "@tanstack/react-router";
 import { OperatorsList } from "#/components/operators/list/Operators";
+import { RouteError } from "#/components/ui/route-error";
 import { operatorNotesListQueryOptions } from "#/lib/api/operator-notes";
 import { operatorOwnershipQueryOptions, operatorsIndexQueryOptions } from "#/lib/api/operators";
 import { upcomingQueryOptions } from "#/lib/api/upcoming";
@@ -11,7 +12,7 @@ const SEARCH_DEFAULTS = { page: 1 } as const;
 
 export const Route = createFileRoute("/operators")({
     component: RouteComponent,
-    errorComponent: RootErrorComponent,
+    errorComponent: RouteError,
     // The page number lives in the URL so returning from an operator page lands
     // back on the page you left, with the scroll position the router restores.
     // Left optional so `<Link to="/operators">` still means "page one" and the
@@ -46,18 +47,6 @@ export const Route = createFileRoute("/operators")({
         };
     },
 });
-
-function RootErrorComponent({ error }: { error: unknown }) {
-    console.error("Router error:", error);
-
-    return (
-        <div style={{ padding: 20 }}>
-            <h1>Something went wrong</h1>
-            <pre style={{ color: "red" }}>{error instanceof Error ? error.message : JSON.stringify(error, null, 2)}</pre>
-            <pre>{error instanceof Error ? error.stack : null}</pre>
-        </div>
-    );
-}
 
 function RouteComponent() {
     return <OperatorsList />;

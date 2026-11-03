@@ -1,5 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
+import { RotateCwIcon } from "lucide-react";
 import * as React from "react";
+import { Button } from "#/components/ui/button";
 import { useAuth } from "#/hooks/use-auth";
 import { useLocalStorageState } from "#/hooks/use-local-storage-state";
 import { operatorsIndexQueryOptions } from "#/lib/api/operators";
@@ -56,13 +58,20 @@ export function Randomizer(): React.ReactElement {
     const uid = user?.uid ?? null;
 
     const server = useGamedataServer();
-    const { data: operatorsIndex = [] } = useQuery(operatorsIndexQueryOptions(server));
-    const { data: stages = [] } = useQuery(stagesQueryOptions(server));
-    const { data: zones = [] } = useQuery(zonesQueryOptions(server));
-    const { data: activities = [] } = useQuery(activitiesQueryOptions(server));
-    const { data: retroActs = [] } = useQuery(retroActsQueryOptions(server));
-    const { data: rosterEntries } = useQuery({ ...userRosterQueryOptions(uid ?? ""), enabled: !!uid });
-    const { data: stageClears } = useQuery(userStageClearsQueryOptions(uid));
+    const operatorsQuery = useQuery(operatorsIndexQueryOptions(server));
+    const stagesQuery = useQuery(stagesQueryOptions(server));
+    const zonesQuery = useQuery(zonesQueryOptions(server));
+    const activitiesQuery = useQuery(activitiesQueryOptions(server));
+    const retroActsQuery = useQuery(retroActsQueryOptions(server));
+    const rosterQuery = useQuery({ ...userRosterQueryOptions(uid ?? ""), enabled: !!uid });
+    const stageClearsQuery = useQuery(userStageClearsQueryOptions(uid));
+    const operatorsIndex = operatorsQuery.data ?? [];
+    const stages = stagesQuery.data ?? [];
+    const zones = zonesQuery.data ?? [];
+    const activities = activitiesQuery.data ?? [];
+    const retroActs = retroActsQuery.data ?? [];
+    const rosterEntries = rosterQuery.data;
+    const stageClears = stageClearsQuery.data;
 
     const activityLookup = React.useMemo(() => buildActivityLookup(activities, retroActs), [activities, retroActs]);
 
@@ -113,7 +122,17 @@ export function Randomizer(): React.ReactElement {
     );
 
     // The recruitment pool loads only once the source filter reads it.
-    const { data: recruitment } = useQuery({ ...recruitmentDataQueryOptions(server), enabled: needsRecruitPool(settings.acquisition) });
+    const recruitmentQuery = useQuery({ ...recruitmentDataQueryOptions(server), enabled: needsRecruitPool(settings.acquisition) });
+    const recruitment = recruitmentQuery.data;
+
+    // Every query here defaults to an empty list, so a failure would otherwise read as an empty
+    // pool ("0 operators available") with nothing saying why. The tier-list queries are left out:
+    // a failure there already turns the tier filter off, which widens the pool instead.
+    const poolQueries = [operatorsQuery, stagesQuery, zonesQuery, activitiesQuery, retroActsQuery, rosterQuery, stageClearsQuery, recruitmentQuery];
+    const failedPoolQueries = poolQueries.filter((q) => q.isError);
+    const retryPool = () => {
+        for (const q of failedPoolQueries) void q.refetch();
+    };
     const recruitable = React.useMemo(() => new Set((recruitment?.operators ?? []).map((op) => op.id)), [recruitment]);
 
     // Mirrors every operator-tab constraint, so the roster picker only lists what can be drawn.
@@ -187,7 +206,17 @@ export function Randomizer(): React.ReactElement {
             />
 
             <div className="mt-6 flex flex-col gap-3 sm:gap-4" key={rollSeq}>
-                {!hasResult && <EmptyState />}
+                {failedPoolQueries.length > 0 ? (
+                    <div role="alert" className="flex flex-col items-center gap-3 rounded-2xl border border-border/70 bg-card/60 px-6 py-10 text-center">
+                        <p className="m-0 text-muted-foreground text-sm">{t("randomizer.loadError")}</p>
+                        <Button type="button" variant="outline" size="sm" onClick={retryPool}>
+                            <RotateCwIcon aria-hidden="true" />
+                            {t("randomizer.retry")}
+                        </Button>
+                    </div>
+                ) : (
+                    !hasResult && <EmptyState />
+                )}
                 {rolledStage && <StageSlab stage={rolledStage} zone={zoneById.get(rolledStage.zoneId)} lookup={activityLookup} onReroll={rollStage} />}
                 {rolledSquad.length > 0 && <SquadSlab operators={rolledSquad} squadSize={settings.squadSize} onReroll={rollSquad} />}
                 {rolledChallenge && <ModifierSlab challenge={rolledChallenge} onReroll={rollChallenge} />}

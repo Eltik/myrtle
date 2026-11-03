@@ -281,11 +281,11 @@ export function DpsCalculator({ importParam, onImportConsumed, shareParam, onSha
                 </aside>
 
                 {isRank ? (
-                    <main className="flex min-w-0 flex-col gap-4 xl:col-start-2 xl:row-span-2 xl:row-start-1">
+                    <div className="flex min-w-0 flex-col gap-4 xl:col-start-2 xl:row-span-2 xl:row-start-1">
                         <RankingView state={state} dispatch={dispatch} ctx={teamCtx} />
-                    </main>
+                    </div>
                 ) : (
-                    <main className="flex min-w-0 flex-col gap-4 xl:sticky xl:top-20 xl:col-start-2 xl:row-span-2 xl:row-start-1 xl:max-h-[calc(100vh-6rem)] xl:overflow-y-auto xl:pr-1">
+                    <div className="flex min-w-0 flex-col gap-4 xl:sticky xl:top-20 xl:col-start-2 xl:row-span-2 xl:row-start-1 xl:max-h-[calc(100vh-6rem)] xl:overflow-y-auto xl:pr-1">
                         <Card>
                             <CardHeader className="pb-3">
                                 <AxisControls
@@ -350,7 +350,7 @@ export function DpsCalculator({ importParam, onImportConsumed, shareParam, onSha
                         </Card>
 
                         <KpiPanel instances={state.instances} snapshots={snapshots} leaderKey={state.yMetric} leaderLabel={t(Y_METRIC_LABEL_KEYS[state.yMetric])} columns={columns} renderDetail={renderDetail} />
-                    </main>
+                    </div>
                 )}
 
                 {!isRank && (

@@ -1,9 +1,7 @@
 import { createFileRoute, stripSearchParams } from "@tanstack/react-router";
-import { AlertTriangle } from "lucide-react";
 import { MAX_SELECTED_TAGS } from "#/components/tools/recruitment/impl/constants";
 import { RecruitmentCalculator } from "#/components/tools/recruitment/RecruitmentCalculator";
-import { Button } from "#/components/ui/button";
-import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "#/components/ui/empty";
+import { RouteError } from "#/components/ui/route-error";
 import { resolveGamedataServer } from "#/lib/api/gamedata";
 import { recruitmentDataQueryOptions } from "#/lib/api/recruitment";
 import { metaT } from "#/lib/meta";
@@ -36,7 +34,7 @@ function parseTagsParam(raw: unknown): number[] {
 
 export const Route = createFileRoute("/tools/recruitment")({
     component: RouteComponent,
-    errorComponent: RecruitmentErrorComponent,
+    errorComponent: RouteError,
     validateSearch: (search: Record<string, unknown>): IRecruitmentSearch => ({
         tags: parseTagsParam(search.tags),
     }),
@@ -76,24 +74,4 @@ export const Route = createFileRoute("/tools/recruitment")({
 
 function RouteComponent() {
     return <RecruitmentCalculator />;
-}
-
-function RecruitmentErrorComponent({ error, reset }: { error: unknown; reset: () => void }) {
-    const message = error instanceof Error ? error.message : String(error);
-    return (
-        <div className="relative z-1 mx-auto w-[min(640px,calc(100%-2rem))] py-20">
-            <Empty>
-                <EmptyHeader>
-                    <EmptyMedia variant="icon">
-                        <AlertTriangle className="text-destructive" />
-                    </EmptyMedia>
-                    <EmptyTitle>Recruitment Calculator failed to load</EmptyTitle>
-                    <EmptyDescription>{message || "An unexpected error occurred while loading recruitment data. Try again, or check the browser console for details."}</EmptyDescription>
-                </EmptyHeader>
-                <Button onClick={reset} variant="outline">
-                    Retry
-                </Button>
-            </Empty>
-        </div>
-    );
 }

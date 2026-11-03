@@ -236,15 +236,20 @@ function SkinViewerBody({ skins, ownedIds, profileOwnedCount, operatorsMap, colo
                         <Search aria-hidden className="absolute left-2.5 h-3.5 w-3.5 text-muted-foreground/60" />
                         <input
                             aria-label={t("profile.skins.search.aria")}
-                            className="w-full rounded-md border border-border bg-background py-1.5 pr-8 pl-8 text-sm outline-none transition-colors placeholder:text-muted-foreground/50 focus:border-foreground/30 sm:w-64"
+                            className="w-full rounded-md border border-border bg-background py-1.5 pr-8 pl-8 text-sm transition-colors placeholder:text-muted-foreground sm:w-64"
                             onChange={handleQueryChange}
                             placeholder={t("profile.skins.search.placeholder")}
                             type="search"
                             value={query}
                         />
                         {query && (
-                            <button aria-label={t("profile.skins.search.clear")} className="absolute right-1.5 flex h-6 w-6 cursor-pointer items-center justify-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground" onClick={clearSearch} type="button">
-                                <X className="h-3 w-3" />
+                            <button
+                                aria-label={t("profile.skins.search.clear")}
+                                className="pointer-coarse:after:-translate-1/2 absolute right-1.5 flex h-6 w-6 cursor-pointer items-center justify-center rounded-full text-muted-foreground pointer-coarse:after:absolute pointer-coarse:after:top-1/2 pointer-coarse:after:left-1/2 pointer-coarse:after:size-11 hover:bg-muted hover:text-foreground"
+                                onClick={clearSearch}
+                                type="button"
+                            >
+                                <X aria-hidden="true" className="h-3 w-3" />
                             </button>
                         )}
                     </div>

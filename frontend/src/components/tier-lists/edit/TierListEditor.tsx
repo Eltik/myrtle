@@ -460,7 +460,7 @@ function EditorContent({ slug, detail, queryClient }: IEditorContentProps) {
 
     return (
         <DragControllerProvider entityByKey={entityByKey} onPlace={handlePlace} onUnplace={handleUnplace}>
-            <main className="min-h-dvh pb-24">
+            <div className="min-h-dvh pb-24">
                 <EditHero
                     slug={slug}
                     title={state.title}
@@ -547,7 +547,7 @@ function EditorContent({ slug, detail, queryClient }: IEditorContentProps) {
                 />
 
                 <PublishVersionDialog open={publishOpen} publishing={publishMutation.isPending} latestVersion={latestVersion} nextVersion={nextVersion} publishError={publishError} onClose={handleClosePublishDialog} onPublish={handlePublish} />
-            </main>
+            </div>
         </DragControllerProvider>
     );
 }
@@ -598,13 +598,13 @@ function EditorMissing() {
     const t: TypedT<typeof messages> = useT("tierLists");
 
     return (
-        <main className="mx-auto w-[min(720px,calc(100%-2rem))] py-20 text-center">
+        <div className="mx-auto w-[min(720px,calc(100%-2rem))] py-20 text-center">
             <h1 className="m-0 font-bold font-sans text-2xl text-foreground tracking-tight">{t("edit.missing.title")}</h1>
             <p className="mt-3 font-sans text-muted-foreground text-sm">{t("edit.missing.body")}</p>
             <Button render={<Link to="/tier-lists/my" search={{ sort: "recent", type: "all", view: "grid", q: "" }} />} variant="outline" className="mt-6">
                 {t("edit.missing.action")}
             </Button>
-        </main>
+        </div>
     );
 }
 
@@ -612,12 +612,12 @@ function EditorForbidden({ slug }: { slug: string }) {
     const t: TypedT<typeof messages> = useT("tierLists");
 
     return (
-        <main className="mx-auto w-[min(720px,calc(100%-2rem))] py-20 text-center">
+        <div className="mx-auto w-[min(720px,calc(100%-2rem))] py-20 text-center">
             <h1 className="m-0 font-bold font-sans text-2xl text-foreground tracking-tight">{t("edit.forbidden.title")}</h1>
             <p className="mt-3 font-sans text-muted-foreground text-sm">{t("edit.forbidden.body")}</p>
             <Button render={<Link to="/tier-lists/$id" params={{ id: slug }} />} variant="outline" className="mt-6">
                 {t("edit.forbidden.action")}
             </Button>
-        </main>
+        </div>
     );
 }

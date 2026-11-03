@@ -2,7 +2,9 @@ import { ArrowDown, ArrowUp, Grid3x3, LayoutGrid } from "lucide-react";
 import { useMemo } from "react";
 import { ActiveFilterChips } from "#/components/operators/list/impl/components/ActiveFilterChips";
 import { FilterToggleButton } from "#/components/operators/list/impl/components/FilterToggleButton";
+import type { messages as listConstantsMessages } from "#/components/operators/list/impl/constants.messages";
 import { buildSharedChips } from "#/components/operators/list/impl/shared-filters";
+import { useOperatorFactLabel } from "#/components/operators/OperatorFacts";
 import { Button } from "#/components/ui/button";
 import { Input } from "#/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
@@ -46,15 +48,18 @@ const SOURCE_CHIP_LABELS: Record<Exclude<SourceFilter, "any">, MessageKey> = {
 
 export function RosterTab({ roster, operatorsIndex, operatorsStatic }: IRosterTabProps) {
     const t: TypedT<typeof messages> = useT("user");
+    // The roster reuses the operators list's chips, so their wording comes from that namespace.
+    const ot: TypedT<typeof listConstantsMessages> = useT("operators");
+    const fact = useOperatorFactLabel();
     const { filters, set, toggleSortOrder, visible, totalCount, displayCount, lastRef, filtersVisible, toggleFilters, filterOptions, removeFrom, setShared, clearFilters, activeFilterCount, hasActiveFilters } = useRoster(roster, operatorsIndex, operatorsStatic);
     const { search, ownership, sortBy, sortOrder, viewMode } = filters;
     const activeChips = useMemo(() => {
-        const chips = buildSharedChips(filters, removeFrom, filterOptions.labels);
+        const chips = buildSharedChips(filters, removeFrom, filterOptions.labels, fact, (type) => ot("filters.chip.module", { type }));
         if (filters.source !== "any") {
             chips.push({ key: `source-${filters.source}`, label: t(SOURCE_CHIP_LABELS[filters.source]), onRemove: () => set("source", "any") });
         }
         return chips;
-    }, [filters, filterOptions.labels, removeFrom, set, t]);
+    }, [filters, filterOptions.labels, removeFrom, set, t, ot, fact]);
 
     return (
         <section className="flex flex-col gap-4" aria-label={t("profile.roster.aria")}>

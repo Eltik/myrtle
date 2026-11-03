@@ -155,7 +155,7 @@ export function Browse() {
     };
 
     return (
-        <main className="min-h-dvh pb-24">
+        <div className="min-h-dvh pb-24">
             <Hero total={allLists.length} canCreate={Boolean(user)} />
 
             {!isLoading && !isError && !viewingFavorites && !byAuthor && (
@@ -259,6 +259,6 @@ export function Browse() {
                     )}
                 </div>
             </div>
-        </main>
+        </div>
     );
 }

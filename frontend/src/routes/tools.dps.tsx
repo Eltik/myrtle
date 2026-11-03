@@ -1,9 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { AlertTriangle } from "lucide-react";
 import * as React from "react";
 import { DpsCalculator } from "#/components/tools/dps/DpsCalculator";
-import { Button } from "#/components/ui/button";
-import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "#/components/ui/empty";
+import { RouteError } from "#/components/ui/route-error";
 import { dpsOperatorsQueryOptions } from "#/lib/api/dps";
 import { metaT } from "#/lib/meta";
 import { defaultOgURL } from "#/lib/og";
@@ -18,7 +16,7 @@ export interface IDpsSearch {
 
 export const Route = createFileRoute("/tools/dps")({
     component: RouteComponent,
-    errorComponent: DpsErrorComponent,
+    errorComponent: RouteError,
     validateSearch: (search: Record<string, unknown>): IDpsSearch => ({
         ...(typeof search.import === "string" && search.import.length > 0 ? { import: search.import } : {}),
         ...(typeof search.s === "string" && search.s.length > 0 ? { s: search.s } : {}),
@@ -50,24 +48,4 @@ function RouteComponent() {
     // Replace, not push: the link follows every edit, and Back should leave the page, not undo a slider.
     const onShareParamChange = React.useCallback((s: string | undefined) => void navigate({ to: "/tools/dps", search: (prev) => ({ import: prev.import, s }), replace: true, resetScroll: false }), [navigate]);
     return <DpsCalculator importParam={search.import} onImportConsumed={onImportConsumed} shareParam={search.s} onShareParamChange={onShareParamChange} />;
-}
-
-function DpsErrorComponent({ error, reset }: { error: unknown; reset: () => void }) {
-    const message = error instanceof Error ? error.message : String(error);
-    return (
-        <div className="relative z-1 mx-auto w-[min(640px,calc(100%-2rem))] py-20">
-            <Empty>
-                <EmptyHeader>
-                    <EmptyMedia variant="icon">
-                        <AlertTriangle className="text-destructive" />
-                    </EmptyMedia>
-                    <EmptyTitle>DPS Calculator failed to load</EmptyTitle>
-                    <EmptyDescription>{message || "An unexpected error occurred while loading the DPS engine. Try again, or check the browser console for details."}</EmptyDescription>
-                </EmptyHeader>
-                <Button onClick={reset} variant="outline">
-                    Retry
-                </Button>
-            </Empty>
-        </div>
-    );
 }

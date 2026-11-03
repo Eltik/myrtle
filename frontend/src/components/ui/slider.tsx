@@ -19,7 +19,7 @@ export function Slider({ className, children, defaultValue, value, min = 0, max 
         <SliderPrimitive.Root className={cn("data-[orientation=horizontal]:w-full", className)} defaultValue={defaultValue} max={max} min={min} thumbAlignment="edge" value={value} {...props}>
             {children}
             <SliderPrimitive.Control
-                className="flex touch-none select-none data-disabled:pointer-events-none data-[orientation=vertical]:h-full data-[orientation=vertical]:min-h-44 data-[orientation=horizontal]:w-full data-[orientation=horizontal]:min-w-44 data-[orientation=vertical]:flex-col data-disabled:opacity-64"
+                className="flex touch-none select-none data-[orientation=vertical]:h-full data-[orientation=vertical]:min-h-44 data-[orientation=horizontal]:w-full data-[orientation=horizontal]:min-w-44 data-disabled:cursor-not-allowed data-[orientation=vertical]:flex-col data-disabled:opacity-64"
                 data-slot="slider-control"
             >
                 <SliderPrimitive.Track
@@ -29,7 +29,7 @@ export function Slider({ className, children, defaultValue, value, min = 0, max 
                     <SliderPrimitive.Indicator className="select-none rounded-full bg-primary data-[orientation=horizontal]:ms-0.5 data-[orientation=vertical]:mb-0.5" data-slot="slider-indicator" />
                     {Array.from({ length: _values.length }, (_, index) => (
                         <SliderPrimitive.Thumb
-                            className="block size-5 shrink-0 select-none rounded-full border border-input bg-background not-dark:bg-clip-padding shadow-xs/5 outline-none transition-[box-shadow,scale] before:absolute before:inset-0 before:rounded-full before:shadow-[0_1px_--theme(--color-black/4%)] has-focus-visible:ring-3 has-focus-visible:ring-ring/24 data-dragging:scale-120 sm:size-4 dark:border-background dark:bg-foreground dark:has-focus-visible:ring-ring/48 [:has(*:focus-visible),[data-dragging]]:shadow-none"
+                            className="pointer-coarse:after:-translate-1/2 block pointer-coarse:size-6 size-5 shrink-0 select-none rounded-full border border-input bg-background not-dark:bg-clip-padding shadow-xs/5 outline-none transition-[box-shadow,scale] before:absolute before:inset-0 before:rounded-full before:shadow-[0_1px_--theme(--color-black/4%)] pointer-coarse:after:absolute pointer-coarse:after:top-1/2 pointer-coarse:after:left-1/2 pointer-coarse:after:size-11 has-focus-visible:ring-2 has-focus-visible:ring-ring has-focus-visible:ring-offset-1 has-focus-visible:ring-offset-background data-dragging:scale-120 sm:size-4 dark:border-background dark:bg-foreground [:has(*:focus-visible),[data-dragging]]:shadow-none"
                             data-slot="slider-thumb"
                             index={index}
                             key={String(index)}

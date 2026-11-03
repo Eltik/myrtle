@@ -8,6 +8,7 @@ import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { Markdown } from "#/lib/markdown";
 import { cn } from "#/lib/utils";
+import { LoadError } from "./LoadError";
 import type { messages } from "./OperatorNotes.messages";
 
 interface IOperatorNotesProps {
@@ -41,7 +42,7 @@ function ExpandableText({ text, markdown = false }: { text: string; markdown?: b
                 {!expanded && overflows && <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-linear-to-t from-secondary/40 to-transparent" />}
             </div>
             {overflows && (
-                <button className="mt-2 inline-flex items-center gap-1 font-medium text-primary text-xs hover:underline" onClick={() => setExpanded((v) => !v)} type="button">
+                <button className="mt-2 inline-flex items-center gap-1 font-medium text-foreground text-xs underline decoration-primary underline-offset-2 hover:decoration-2" onClick={() => setExpanded((v) => !v)} type="button">
                     {expanded ? t("notes.showLess") : t("notes.showMore")}
                     <ChevronDown className={cn("h-3 w-3 transition-transform", expanded && "rotate-180")} />
                 </button>
@@ -52,7 +53,12 @@ function ExpandableText({ text, markdown = false }: { text: string; markdown?: b
 
 export function OperatorNotes({ operatorId }: IOperatorNotesProps) {
     const t: TypedT<typeof messages> = useT("operators");
-    const { data: note, isLoading } = useQuery({
+    const {
+        data: note,
+        isLoading,
+        isError,
+        refetch,
+    } = useQuery({
         ...operatorNoteQueryOptions(operatorId ?? ""),
         enabled: !!operatorId,
     });
@@ -60,11 +66,14 @@ export function OperatorNotes({ operatorId }: IOperatorNotesProps) {
 
     if (isLoading) {
         return (
-            <div className="flex items-center justify-center py-4">
-                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-            </div>
+            <output className="flex items-center justify-center py-4">
+                <Loader2 aria-hidden="true" className="h-5 w-5 animate-spin text-muted-foreground" />
+                <span className="sr-only">{t("notes.loading")}</span>
+            </output>
         );
     }
+
+    if (isError) return <LoadError message={t("notes.error")} onRetry={() => void refetch()} />;
 
     if (!note) return null;
 

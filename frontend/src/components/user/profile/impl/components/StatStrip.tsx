@@ -15,7 +15,6 @@ interface IStatCardProps {
     hidden?: boolean;
     value: string | number | null;
     accent?: boolean;
-    live?: boolean;
     compactOnMobile?: boolean;
     unformatted?: boolean;
     onClick?: () => void;
@@ -37,7 +36,7 @@ function formatCompact(value: string | number | null) {
     return `${sign}${abs}`;
 }
 
-function StatCard({ kicker, hidden, value, accent, live, compactOnMobile, unformatted, onClick }: IStatCardProps) {
+function StatCard({ kicker, hidden, value, accent, compactOnMobile, unformatted, onClick }: IStatCardProps) {
     const f = useFormatters();
     const interactive = typeof onClick === "function";
     const className = cn(
@@ -54,12 +53,6 @@ function StatCard({ kicker, hidden, value, accent, live, compactOnMobile, unform
         <>
             {accent && <div aria-hidden className="pointer-events-none absolute inset-x-0 -top-px h-px bg-linear-to-r from-transparent via-primary/60 to-transparent" />}
             <div className="flex items-center gap-1.5 sm:gap-2">
-                {live && (
-                    <span className="relative inline-flex h-1.5 w-1.5 shrink-0">
-                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-70" />
-                        <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                    </span>
-                )}
                 <span
                     className={cn("truncate font-medium font-mono text-muted-foreground uppercase tracking-wider sm:tracking-widest", hidden && "pr-5")}
                     style={{
@@ -145,7 +138,7 @@ export function StatStrip({ profile, rosterCount, isOwner = false }: IStatStripP
         const hidden = isOwner && isHidden(layout, card);
         switch (card) {
             case "operators":
-                return <StatCard key={card} hidden={hidden} kicker={t("profile.strip.operators.kicker")} value={rosterCount ?? profile.operator_count} live />;
+                return <StatCard key={card} hidden={hidden} kicker={t("profile.strip.operators.kicker")} value={rosterCount ?? profile.operator_count} />;
             case "skins":
                 return <StatCard key={card} hidden={hidden} kicker={t("profile.strip.skins.kicker")} value={profile.non_default_skin_count} />;
             case "items":

@@ -6,17 +6,17 @@ import { itemIcon } from "#/components/operators/detail/impl/assets";
 import { useArt } from "#/components/tools/release/impl/components/shared";
 import { fromUnix } from "#/components/tools/release/impl/helpers";
 import { useReleaseTagLabel } from "#/components/tools/release/impl/labels";
+import { Button } from "#/components/ui/button";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
-import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { DEFAULT_GAMEDATA_SERVER, resolveGamedataServer } from "#/lib/api/gamedata";
 import { liveFeedQueryOptions } from "#/lib/api/live";
-import { useFormatters, useGamedataServer, useT } from "#/lib/i18n";
+import { useFormatters, useGamedataServer, useLocale, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { languageOf } from "#/lib/story/book/book";
+import { useNow } from "./clock";
 import type { messages } from "./HappeningNow.messages";
 import styles from "./HappeningNow.module.css";
 import { countdownParts, elapsedPercent, LIVE_LIMIT, type LiveItem, namedFeatured, selectLive, showsBannerPlaceholder } from "./live";
-import { useNow, useReveal } from "./motion";
 import shared from "./shared.module.css";
 
 type LiveT = TypedT<typeof messages>;
@@ -39,17 +39,14 @@ const NAMES_BEFORE_MORE = 2;
  */
 const PERMIT_ICON = itemIcon("7003", "TKT_GACHA", null);
 
-/** Cards reveal in a 60 ms stagger that restarts every fourth card. */
-const CARD_STAGGER_MS = 60;
-const CARD_STAGGER_PERIOD = 4;
-
 export default function HappeningNow({ id }: { id: string }) {
     const t: LiveT = useT("home");
     const server = useGamedataServer();
     const serverName = useGamedataServerName()(server);
     const feed = useQuery(liveFeedQueryOptions(server));
     const now = useNow();
-    const revealHead = useReveal<HTMLDivElement>();
+    // The release planner forecasts the default server only, so only there does it cover what a card shows.
+    const forecasts = resolveGamedataServer(server) === DEFAULT_GAMEDATA_SERVER;
 
     const loading = feed.isPending;
     const failed = !loading && feed.isError && !feed.data;
@@ -57,11 +54,11 @@ export default function HappeningNow({ id }: { id: string }) {
     // out, and the next one in the feed takes its place.
     const items = selectLive(feed.data?.items ?? [], now / 1000);
     const names: FeaturedNames = feed.data?.names ?? {};
-    const cards = loading ? SKELETON_KEYS.map((key) => <div key={key} className={styles.skeleton} aria-hidden="true" />) : items.map((item, i) => <LiveCard key={item.key} item={item} index={i} now={now} server={server} names={names} />);
+    const cards = loading ? SKELETON_KEYS.map((key) => <div key={key} className={styles.skeleton} aria-hidden="true" />) : items.map((item) => <LiveCard key={item.key} item={item} now={now} server={server} forecasts={forecasts} names={names} />);
 
     return (
         <section id={id} className={`${shared.container} ${styles.section}`}>
-            <div {...revealHead} className={`${shared.reveal} ${styles.head}`}>
+            <div className={styles.head}>
                 <div className={styles.headText}>
                     <h2 className={styles.title}>{t("live.title")}</h2>
                 </div>
@@ -71,12 +68,18 @@ export default function HappeningNow({ id }: { id: string }) {
                 </Link>
             </div>
 
-            {failed && <div className={styles.empty}>{t("live.error", { server: serverName })}</div>}
+            {failed && (
+                <div className={`${styles.empty} ${styles.emptyRow}`}>
+                    <span>{t("live.error", { server: serverName })}</span>
+                    <Button variant="outline" size="sm" loading={feed.isFetching} onClick={() => void feed.refetch()}>
+                        {t("live.retry")}
+                    </Button>
+                </div>
+            )}
             {!loading && !failed && items.length === 0 && (
                 <div className={`${styles.empty} ${styles.emptyRow}`}>
                     <span>{t("live.empty", { server: serverName })}</span>
-                    {/* The release planner forecasts the default server only. */}
-                    {resolveGamedataServer(server) === DEFAULT_GAMEDATA_SERVER && (
+                    {forecasts && (
                         <Link to="/tools/release" className={shared.moreLink}>
                             {t("live.upcoming")}
                         </Link>
@@ -84,25 +87,30 @@ export default function HappeningNow({ id }: { id: string }) {
                 </div>
             )}
 
-            <div className={styles.grid}>{cards}</div>
+            {/* Mounted from the first render and only its text changes, so a screen reader announces the load. */}
+            <output className="sr-only">{loading ? t("live.loading", { server: serverName }) : ""}</output>
+            <div className={styles.grid} aria-busy={loading}>
+                {cards}
+            </div>
         </section>
     );
 }
 
 interface ILiveCardProps {
     item: LiveItem;
-    index: number;
     now: number;
     server: string;
+    /** Whether the release planner forecasts this server, and so covers the card. */
+    forecasts: boolean;
     /** Featured operators' display names, resolved server-side; an id missing here shows as itself. */
     names: FeaturedNames;
 }
 
-function LiveCard({ item, index, now, server, names: featuredNames }: ILiveCardProps): React.ReactElement {
+function LiveCard({ item, now, server, forecasts, names: featuredNames }: ILiveCardProps): React.ReactElement {
     const t: LiveT = useT("home");
     const f = useFormatters();
+    const locale = useLocale();
     const tagLabel = useReleaseTagLabel();
-    const reveal = useReveal<HTMLAnchorElement>((index % CARD_STAGGER_PERIOD) * CARD_STAGGER_MS);
     // Each art path in turn, then the faces: a rerun's own art, then its side story's.
     const firstArt = useArt(item.artPaths[0]);
     const nextArt = useArt(item.artPaths[1]);
@@ -112,6 +120,8 @@ function LiveCard({ item, index, now, server, names: featuredNames }: ILiveCardP
     let kind: string;
     let detail: string;
     let faces: { id: string; name: string }[] = [];
+    // Set when `detail` cuts the featured list short: the whole list, for screen readers.
+    let fullNames: string | null = null;
 
     if (item.kind === "event") {
         kind = tagLabel(item.type);
@@ -123,19 +133,28 @@ function LiveCard({ item, index, now, server, names: featuredNames }: ILiveCardP
         // A pool with no 6★ rate-up still has its 5★ ones worth naming.
         const featured = namedFeatured(item).map((charId) => ({ id: charId, name: featuredNames[charId] ?? charId }));
         const names = featured.map((f) => f.name);
-        detail = placeholder ? t("live.bannerUnlisted") : names.length > MAX_LISTED_NAMES ? t("live.bannerMore", { names: names.slice(0, NAMES_BEFORE_MORE).join(", "), count: names.length - NAMES_BEFORE_MORE }) : names.join(", ");
+        const listed = new Intl.ListFormat(locale, { type: "unit", style: "short" });
+        if (placeholder) {
+            detail = t("live.bannerUnlisted");
+        } else if (names.length > MAX_LISTED_NAMES) {
+            detail = t("live.bannerMore", { names: listed.format(names.slice(0, NAMES_BEFORE_MORE)), count: names.length - NAMES_BEFORE_MORE });
+            fullNames = new Intl.ListFormat(locale, { type: "conjunction" }).format(names);
+        } else {
+            detail = listed.format(names);
+        }
         faces = featured.slice(0, MAX_FACES);
     }
 
     const left = countdownParts(item.end * 1000 - now);
     const pct = elapsedPercent(item.start, item.end, now / 1000);
 
-    return (
-        <Link to="/tools/release" {...reveal} className={`${shared.reveal} ${styles.card}`}>
+    const content = (
+        <>
             {art.src ? (
                 <img
                     src={art.src}
-                    alt={item.name}
+                    // The card's text names the event or banner right below.
+                    alt=""
                     loading="lazy"
                     className={styles.art}
                     onError={art.onError}
@@ -147,31 +166,32 @@ function LiveCard({ item, index, now, server, names: featuredNames }: ILiveCardP
                 />
             ) : placeholder ? (
                 <div className={styles.placeholder}>
-                    <img src={PERMIT_ICON} alt="" loading="lazy" decoding="async" className={styles.permit} />
+                    <img src={PERMIT_ICON} alt="" width={184} height={184} loading="lazy" decoding="async" className={styles.permit} />
                 </div>
             ) : (
-                <div className={styles.faces} style={{ "--faces": faces.length } as React.CSSProperties}>
+                // The faces repeat the names in the detail line, which is what a screen reader gets.
+                <div className={styles.faces} style={{ "--faces": faces.length } as React.CSSProperties} aria-hidden="true">
                     {faces.map((face) => (
-                        <Tooltip key={face.id}>
-                            <TooltipTrigger render={<span className={styles.face} />}>
-                                <OperatorAvatar charId={face.id} name={face.name} server={server} />
-                            </TooltipTrigger>
-                            <TooltipPopup>{face.name}</TooltipPopup>
-                        </Tooltip>
+                        <span key={face.id} className={styles.face}>
+                            <OperatorAvatar charId={face.id} name={face.name} server={server} />
+                        </span>
                     ))}
                 </div>
             )}
             <div className={styles.body}>
                 <div className={styles.text}>
                     <div>
-                        <span className={shared.tag}>{kind}</span>
+                        <span className="kicker">{kind}</span>
                     </div>
                     <span className={styles.name} lang={languageOf(server)}>
                         {item.name}
                     </span>
                     {detail && (
-                        <span className={styles.detail} suppressHydrationWarning>
-                            {detail}
+                        <span className={styles.detail}>
+                            <span aria-hidden={fullNames ? true : undefined} suppressHydrationWarning>
+                                {detail}
+                            </span>
+                            {fullNames && <span className="sr-only">{fullNames}</span>}
                         </span>
                     )}
                 </div>
@@ -184,6 +204,24 @@ function LiveCard({ item, index, now, server, names: featuredNames }: ILiveCardP
                     </span>
                 </div>
             </div>
-        </Link>
+        </>
     );
+
+    // The planner covers every card on its server. Elsewhere a banner goes to the community
+    // page's banner list, which reads the same server; an event there has no page to open.
+    if (forecasts) {
+        return (
+            <Link to="/tools/release" className={`${styles.card} ${styles.cardLink}`}>
+                {content}
+            </Link>
+        );
+    }
+    if (item.kind === "banner") {
+        return (
+            <Link to="/gacha/community" hash="banner-runs" className={`${styles.card} ${styles.cardLink}`}>
+                {content}
+            </Link>
+        );
+    }
+    return <div className={styles.card}>{content}</div>;
 }

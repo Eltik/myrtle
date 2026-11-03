@@ -91,7 +91,7 @@ function GridSkeleton() {
 /** The page while the profile record loads: the hero, stat strip, tab bar and the Stats tab's first rows. */
 function ProfileSkeleton() {
     return (
-        <main className="page-shell flex flex-1 flex-col gap-7 [--page-max:1440px]">
+        <div className="page-shell flex flex-1 flex-col gap-7 [--page-max:1440px]">
             <div className="relative h-48 w-full overflow-hidden rounded-3xl border border-border/50 bg-card/40">
                 <Skeleton className="absolute inset-0 rounded-3xl opacity-60" />
                 <div className="relative flex h-full items-center gap-6 p-6">
@@ -147,7 +147,7 @@ function ProfileSkeleton() {
                 </div>
             </div>
             <GridSkeleton />
-        </main>
+        </div>
     );
 }
 
@@ -155,13 +155,13 @@ function ProfileNotFound({ id }: { id: string }) {
     const t: TypedT<typeof messages> = useT("user");
     const rt: TypedRichT<typeof messages> = useRichT("user");
     return (
-        <main className="page-shell flex flex-1 flex-col gap-7 [--page-max:1440px]">
+        <div className="page-shell flex flex-1 flex-col gap-7 [--page-max:1440px]">
             <div className="flex flex-col items-center justify-center gap-3 rounded-3xl border border-border bg-card px-8 py-16 text-center">
                 <span className="font-mono text-[11px] text-muted-foreground uppercase tracking-widest">{t("profile.notFound.eyebrow")}</span>
                 <h1 className="font-bold text-2xl tracking-tight">{t("profile.notFound.title")}</h1>
                 <p className="max-w-sm text-muted-foreground text-sm">{rt("profile.notFound.desc", { id: <code className="font-mono">{id}</code> })}</p>
             </div>
-        </main>
+        </div>
     );
 }
 
@@ -295,7 +295,7 @@ export function UserProfile() {
 
     return (
         <DynamicArtProvider server={data.server}>
-            <main className="page-shell flex flex-1 flex-col gap-7 [--page-max:1440px]">
+            <div className="page-shell flex flex-1 flex-col gap-7 [--page-max:1440px]">
                 <Hero profile={headerProfile} background={layout?.background ?? null} isOwner={isOwner} onChangeBackground={isOwner ? () => setEditingBackground(true) : undefined} onEditHeader={isOwner ? () => setEditingHeader(true) : undefined} />
                 {isOwner && editingBackground && (
                     <Suspense fallback={null}>
@@ -353,7 +353,7 @@ export function UserProfile() {
                         {activeTab === "lookback" && <LookbackTab uid={id} server={data.server} operatorsIndex={operatorsIndex ?? []} rosterPrivate={!canReadRoster} />}
                     </Suspense>
                 )}
-            </main>
+            </div>
         </DynamicArtProvider>
     );
 }

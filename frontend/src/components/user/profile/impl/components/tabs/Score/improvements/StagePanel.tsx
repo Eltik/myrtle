@@ -72,8 +72,7 @@ function AnnihilationSection({ stages, accent }: { stages: IStageGap[]; accent: 
 
     return (
         <div className="flex flex-col gap-3">
-            {/* "Annihilation" is the game mode's own name and stays as game vocabulary. */}
-            <SectionHeader title="Annihilation" count={t("score.improvements.stage.annihilation.count", { n: available.length })} accent={accent} />
+            <SectionHeader title={t("score.improvements.stage.annihilation.title")} count={t("score.improvements.stage.annihilation.count", { n: available.length })} accent={accent} />
             {available.length > 0 ? <StageList title={t("score.improvements.stage.annihilation.available")} subtitle={t("score.improvements.stage.annihilation.availableSubtitle")} stages={available} accent={accent} emptyLabel="" /> : <EmptyHint>{t("score.improvements.stage.annihilation.maxed")}</EmptyHint>}
             {locked.length > 0 && <StageList title={t("score.improvements.stage.annihilation.locked")} subtitle={t("score.improvements.stage.annihilation.lockedSubtitle")} stages={locked} accent={accent} emptyLabel="" locked />}
         </div>

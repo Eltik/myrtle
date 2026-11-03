@@ -139,7 +139,7 @@ function SortPicker({ sort, onSort, operators }: { sort: string; onSort: (next: 
                                         onClick={() => chooseMetric(key)}
                                         className={cn(
                                             "inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-lg border px-2.5 font-medium font-sans text-xs leading-none transition-colors",
-                                            active ? "border-primary/40 bg-[color-mix(in_srgb,var(--primary)_10%,transparent)] text-primary" : "border-input bg-card text-foreground hover:border-foreground/20",
+                                            active ? "border-primary/40 bg-[color-mix(in_srgb,var(--primary)_10%,transparent)] text-foreground [&>svg]:text-primary" : "border-input bg-card text-foreground hover:border-foreground/20",
                                         )}
                                     >
                                         {active ? <Check className="size-3" aria-hidden /> : null}

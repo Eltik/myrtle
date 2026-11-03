@@ -4,6 +4,7 @@ import { useState } from "react";
 import { operatorQueryOptions } from "#/lib/api/operators";
 import { useGamedataServer } from "#/lib/i18n";
 import { CnUpdatesContext, useCnUpdatesFor } from "./impl/cnUpdates";
+import { CnChangeSummary } from "./impl/components/CnMarkers";
 import { OperatorFormSwitcher } from "./impl/components/OperatorFormSwitcher";
 import { OperatorHero } from "./impl/components/OperatorHero";
 import { OperatorTabs } from "./impl/components/OperatorTabs";
@@ -24,6 +25,7 @@ export function OperatorDetail() {
             <OperatorHero operator={operator} />
             <div className="relative z-10 mx-auto box-border w-full min-w-0 max-w-6xl px-3 pb-16 sm:px-4 md:px-8">
                 <OperatorFormSwitcher operator={operator} />
+                {updates && <CnChangeSummary changes={updates.changes} className="mb-4" />}
                 <CnUpdatesContext value={updates}>
                     <OperatorTabs activeTab={activeTab} onTabChange={setActiveTab} operator={shown} />
                 </CnUpdatesContext>

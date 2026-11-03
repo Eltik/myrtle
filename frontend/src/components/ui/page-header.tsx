@@ -1,6 +1,7 @@
 import { ChevronRight } from "lucide-react";
 import type * as React from "react";
 import { Fragment } from "react";
+import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "#/components/ui/breadcrumb";
 import { cn } from "#/lib/utils";
 
 export interface IPageHeaderProps {
@@ -32,15 +33,26 @@ export function PageHeader({ breadcrumb, breadcrumbLabel, title, description, ti
     return (
         <div className={cn("flex flex-col", className)}>
             {breadcrumb && breadcrumb.length > 0 ? (
-                <nav aria-label={breadcrumbLabel} className="mb-2.5 flex items-center gap-1.5 font-medium font-sans text-[12px] text-muted-foreground leading-none">
-                    {breadcrumb.map((crumb, i) => (
-                        // biome-ignore lint/suspicious/noArrayIndexKey: crumbs are a fixed positional trail, not a reorderable list
-                        <Fragment key={i}>
-                            {i > 0 ? <ChevronRight className="size-2.5" aria-hidden="true" /> : null}
-                            <span className={cn(i === breadcrumb.length - 1 && "text-foreground")}>{crumb}</span>
-                        </Fragment>
-                    ))}
-                </nav>
+                // The kit's list, so a screen reader hears "list, 3 items" and the
+                // last crumb as the current page. The overrides hold the trail at
+                // its own 12 px size and 6 px rhythm, a size the kit list does not
+                // ship. The label is passed only when given, or the kit's own
+                // `breadcrumb` default would be overwritten with undefined.
+                <Breadcrumb className="mb-2.5" {...(breadcrumbLabel ? { "aria-label": breadcrumbLabel } : {})}>
+                    <BreadcrumbList className="flex-nowrap gap-1.5 font-medium font-sans text-[12px] leading-none sm:gap-1.5">
+                        {breadcrumb.map((crumb, i) => (
+                            // biome-ignore lint/suspicious/noArrayIndexKey: crumbs are a fixed positional trail, not a reorderable list
+                            <Fragment key={i}>
+                                {i > 0 ? (
+                                    <BreadcrumbSeparator className="flex opacity-100 [&>svg]:size-2.5">
+                                        <ChevronRight />
+                                    </BreadcrumbSeparator>
+                                ) : null}
+                                <BreadcrumbItem>{i === breadcrumb.length - 1 ? <BreadcrumbPage className="font-medium">{crumb}</BreadcrumbPage> : crumb}</BreadcrumbItem>
+                            </Fragment>
+                        ))}
+                    </BreadcrumbList>
+                </Breadcrumb>
             ) : null}
             {/* `flex-1` is `flex: 1 1 0%`, and with `min-w-0` that lets the title
                 block shrink to nothing rather than pushing the actions onto the

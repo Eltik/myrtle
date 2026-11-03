@@ -10,11 +10,17 @@ interface IFilterChipProps {
     className?: string;
 }
 
-/** Rounded toggle chip with an optional count badge, for list filter rows. */
+/**
+ * Toggle chip with an optional count badge, for list filter rows. It keeps the Toggle's
+ * radius and type scale. The active tint goes through `data-pressed:`: unprefixed, the
+ * Toggle's own `data-pressed:bg-input` outranked it, so the chip measured `--input`
+ * (light) and foreground/12 (dark) when pressed and the primary tint and its 1px ring
+ * never painted. Text stays foreground, since primary text on a tint fails AA.
+ */
 export function FilterChip({ label, active, count, onSelect, className }: IFilterChipProps) {
     return (
         <Toggle
-            className={cn("h-8 gap-2 rounded-full px-3 font-medium text-[13px]", active && "border-primary/50 bg-primary/10 text-foreground shadow-[0_0_0_1px_color-mix(in_srgb,var(--primary)_25%,transparent),0_0_12px_color-mix(in_srgb,var(--primary)_20%,transparent)] hover:bg-primary/15", className)}
+            className={cn("h-8 gap-2 px-3 data-pressed:inset-ring-0 data-pressed:border-primary/50 data-pressed:bg-primary/10 data-pressed:text-foreground data-pressed:hover:bg-primary/15 dark:data-pressed:bg-primary/10 dark:data-pressed:hover:bg-primary/15", className)}
             onPressedChange={() => onSelect()}
             pressed={active}
             size="sm"

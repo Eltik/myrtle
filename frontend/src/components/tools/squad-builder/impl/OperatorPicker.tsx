@@ -432,7 +432,7 @@ const PickerTile = React.memo(function PickerTile({ op, build, showOwnership, se
             <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                 <span className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
                     <span className="break-words font-semibold text-[14px] text-foreground leading-snug">{op.name}</span>
-                    {current && <span className="rounded-sm bg-primary/15 px-1 font-semibold text-[10.5px] text-primary uppercase leading-4 tracking-wide">{t("squad.picker.currentForm")}</span>}
+                    {current && <span className="rounded-sm bg-primary/15 px-1 font-semibold text-[10.5px] text-foreground uppercase leading-4 tracking-wide">{t("squad.picker.currentForm")}</span>}
                 </span>
                 <span className="flex items-center gap-1 text-[12px] text-muted-foreground leading-tight">
                     <ClassIcon profession={op.profession} size={14} className="size-3.5! shrink-0" />

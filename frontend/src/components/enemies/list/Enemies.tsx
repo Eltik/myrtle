@@ -162,7 +162,7 @@ export function EnemiesList() {
         <div className="page-shell [--page-max:1400px]">
             <PageHeader className="pb-1.5" breadcrumbLabel={t("list.breadcrumb")} breadcrumb={[t("list.breadcrumb.collection"), t("list.breadcrumb.enemies")]} title={t("list.title")} description={rt("list.blurb", { count: <strong className="text-foreground">{visibleCount}</strong> })} />
 
-            <main className="flex min-w-0 flex-col gap-5.5 pt-5" aria-label={t("list.results.aria")}>
+            <section className="flex min-w-0 flex-col gap-5.5 pt-5" aria-label={t("list.results.aria")}>
                 <EnemyFilterChips filters={filters} setLevels={setLevels} setDamageTypes={setDamageTypes} setAttackTypes={setAttackTypes} setRaces={setRaces} setImmunities={setImmunities} races={availableRaces} />
 
                 {locationTree.length > 0 && <EnemyLocationFilter tree={locationTree} selected={filters.appearsIn} onChange={setAppearsIn} />}
@@ -348,7 +348,7 @@ export function EnemiesList() {
                 )}
 
                 <Pagination currentPage={page} totalPages={totalPages} onPageChange={handlePageChange} />
-            </main>
+            </section>
 
             <DynamicExportDialog open={exportOpen} onOpenChange={setExportOpen} schema={enemiesExportSchema} allRows={enriched} filteredRows={filteredEnemies} pageRows={paginated} title={t("list.export.dialogTitle")} />
         </div>

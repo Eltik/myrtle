@@ -1,10 +1,13 @@
 "use client";
 
-import { Toast } from "@base-ui/react/toast";
-import { CircleAlertIcon, CircleCheckIcon, InfoIcon, LoaderCircleIcon, TriangleAlertIcon } from "lucide-react";
+import { Toast, type ToastManagerUpdateOptions, type ToastObject } from "@base-ui/react/toast";
+import { CircleAlertIcon, CircleCheckIcon, InfoIcon, LoaderCircleIcon, TriangleAlertIcon, XIcon } from "lucide-react";
 import type React from "react";
 import { buttonVariants } from "#/components/ui/button";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
+import type { messages } from "./toast.messages";
 
 const TOAST_ICONS = {
     error: CircleAlertIcon,
@@ -41,6 +44,7 @@ function upsertReplayClassName(toast: { type?: string; updateKey?: number }): st
 }
 
 function Toasts({ position }: { position: ToastPosition }): React.ReactElement {
+    const t: TypedT<typeof messages> = useT("common");
     const { toasts } = Toast.useToastManager();
     const swipeDirection = getSwipeDirection(position);
 
@@ -130,6 +134,9 @@ function Toasts({ position }: { position: ToastPosition }): React.ReactElement {
                                         {toast.actionProps.children}
                                     </Toast.Action>
                                 )}
+                                <Toast.Close aria-label={t("toast.close")} className={cn(buttonVariants({ size: "icon-xs", variant: "ghost" }), "-me-1.5 shrink-0 self-start text-muted-foreground hover:text-foreground")} data-slot="toast-close">
+                                    <XIcon aria-hidden="true" />
+                                </Toast.Close>
                             </Toast.Content>
                         </Toast.Root>
                     );
@@ -199,7 +206,25 @@ function AnchoredToasts(): React.ReactElement {
     );
 }
 
-export const toastManager: ReturnType<typeof Toast.createToastManager> = Toast.createToastManager();
+type ToastManager = ReturnType<typeof Toast.createToastManager>;
+
+/*
+ * An error toast stays until it is closed. Error bodies run to about 25 words
+ * (see `error-message.messages.ts`) and the provider's 5 s default took them
+ * away before they could be read. A caller that passes its own `timeout` keeps
+ * it; only an error with no say in the matter is made to persist.
+ */
+function persistErrors<T extends { type?: string; timeout?: number }>(options: T): T {
+    return options.type === "error" && options.timeout === undefined ? { ...options, timeout: 0 } : options;
+}
+
+const baseToastManager: ToastManager = Toast.createToastManager();
+
+export const toastManager: ToastManager = {
+    ...baseToastManager,
+    add: (options) => baseToastManager.add(persistErrors(options)),
+    update: <T extends object>(id: string, updates: ToastManagerUpdateOptions<T> | ((prevToast: ToastObject<T>) => ToastManagerUpdateOptions<T>)) => baseToastManager.update<T>(id, typeof updates === "function" ? (prev) => persistErrors(updates(prev)) : persistErrors(updates)),
+};
 
 export const anchoredToastManager: ReturnType<typeof Toast.createToastManager> = Toast.createToastManager();
 

@@ -38,7 +38,8 @@ export function PullsTab({ uid, profile, isOwner, pools, onPoolsChange }: IPulls
     // the first time it opens rather than on every shared link.
     const [wantAll, setWantAll] = useState(false);
     const all = useQuery({ ...userGachaRecordsQueryOptions(uid, []), enabled: pools.length > 0 && wantAll });
-    const bannersById = useBannersById(profile.server);
+    const banners = useBannersById(profile.server);
+    const bannersById = banners.byId;
 
     const data = records.data ?? null;
     const optionSource = pools.length === 0 ? data : (all.data ?? data);
@@ -81,7 +82,7 @@ export function PullsTab({ uid, profile, isOwner, pools, onPoolsChange }: IPulls
                     </div>
                 ) : null}
             </div>
-            {empty ? <Note>{t("profile.pulls.emptyFiltered")}</Note> : <HistoryBody records={data} bannersById={bannersById} isLoading={records.isLoading} filtered={pools.length > 0} />}
+            {empty ? <Note>{t("profile.pulls.emptyFiltered")}</Note> : <HistoryBody records={data} banners={banners} isLoading={records.isLoading} filtered={pools.length > 0} />}
         </div>
     );
 }

@@ -16,8 +16,8 @@ export const messages = {
         description: "Stand-in row label when the caller supplied no name for a level. Very tight space.",
     },
     "breakdown.you": {
-        text: "you",
-        description: "Tiny uppercase marker on the row the signed-in reader is at.",
+        text: "You",
+        description: "Small marker after the level label on the row the signed-in reader is at.",
     },
     "breakdown.rowTooltip": {
         text: "{users} of {total} {cohort} ({pct}%){own, select, yes { - where you are} other {}}",
