@@ -38,8 +38,13 @@ export function OperatorCardCompact({ operator, statMetric }: IOperatorCardCompa
                             <span className="truncate text-[0.625rem] text-foreground leading-tight sm:text-xs sm:leading-4.25">{displayName}</span>
                         </div>
                         <div className="relative box-content aspect-square h-20 overflow-hidden sm:h-30" style={{ borderBottom: `4px solid ${rarityColor}` }}>
-                            {operator.ownership && <OwnershipBadge info={operator.ownership} metric={statMetric} color={rarityColor} className="absolute top-0.5 left-0.5 z-10" />}
-                            {operator.cnChanges && <CnUpdateBadge changes={operator.cnChanges} className="absolute top-0.5 right-0.5 z-10" />}
+                            {/* One wrapping row, as on the grid card: two corner-pinned pills overlapped in the 80px phone tile. */}
+                            {operator.ownership || operator.cnChanges ? (
+                                <div className="pointer-events-none absolute inset-x-0.5 top-0.5 z-10 flex flex-wrap items-start gap-0.5 [&>*]:pointer-events-auto">
+                                    {operator.ownership && <OwnershipBadge info={operator.ownership} metric={statMetric} color={rarityColor} />}
+                                    {operator.cnChanges && <CnUpdateBadge changes={operator.cnChanges} className="ms-auto" />}
+                                </div>
+                            ) : null}
                             <div className="pointer-events-none absolute -translate-x-3 -translate-y-2">
                                 <CampIcon groupId={factionLogoId} className="opacity-5 transition-opacity group-hover:opacity-10" size={140} />
                             </div>

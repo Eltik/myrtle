@@ -78,10 +78,13 @@ export const LevelBreakdown = memo(function LevelBreakdown({ buckets, total, tit
                                             {isOwn && <span className="ml-1 font-normal text-[11px] text-muted-foreground">{t("breakdown.you")}</span>}
                                         </span>
 
-                                        <span className="h-1.5 w-full overflow-hidden rounded-full bg-border/70">
+                                        <span className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
                                             {bucket.users > 0 && (
                                                 <span
-                                                    className={cn("block h-full rounded-full", isNone ? "bg-muted-foreground/45" : bucket.level === 3 ? "bg-primary" : "bg-primary/55")}
+                                                    // One neutral fill for every level: the label beside the
+                                                    // bar names the level, so colour carries nothing. Fill
+                                                    // vs bg-muted track 6.25:1 light, 5.35:1 dark.
+                                                    className="block h-full rounded-full bg-muted-foreground"
                                                     // Share of the WHOLE cohort, the same
                                                     // quantity as the percentage beside it,
                                                     // so bar and number cannot disagree.

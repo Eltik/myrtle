@@ -11,7 +11,7 @@ import type { messages } from "./DropsSection.messages";
 import { SectionHead } from "./primitives";
 import type { IDropGroup, IResolvedDrop } from "./types";
 
-function RateMeter({ occ }: { occ: { labelKey: StageDetailMessageKey; level: number; tone: string } }) {
+function RateMeter({ occ }: { occ: { labelKey: StageDetailMessageKey; level: number } }) {
     const t: TypedT<typeof messages> = useT("stages");
     const tConst: TypedT<typeof detailConstantsMessages> = useT("stages");
     const label = tConst(occ.labelKey);
@@ -20,12 +20,10 @@ function RateMeter({ occ }: { occ: { labelKey: StageDetailMessageKey; level: num
             <TooltipTrigger render={<span className="inline-flex items-center gap-1.5" />}>
                 <span aria-hidden="true" className="flex items-center gap-0.5">
                     {[0, 1, 2, 3, 4].map((i) => (
-                        <span key={i} className="h-2.5 w-1 rounded-[1px]" style={{ background: i < occ.level ? occ.tone : "color-mix(in oklch, var(--muted-foreground) 28%, transparent)" }} />
+                        <span key={i} className="h-2.5 w-1 rounded-[1px]" style={{ background: i < occ.level ? "var(--muted-foreground)" : "color-mix(in oklch, var(--muted-foreground) 28%, transparent)" }} />
                     ))}
                 </span>
-                <span className="font-medium font-mono text-[10px] leading-none" style={{ color: occ.tone }}>
-                    {label}
-                </span>
+                <span className="font-medium font-mono text-[10px] text-muted-foreground leading-none">{label}</span>
             </TooltipTrigger>
             <TooltipPopup>{t("drops.rateTitle", { rate: label })}</TooltipPopup>
         </Tooltip>
@@ -54,7 +52,19 @@ function DropCard({ drop }: { drop: IResolvedDrop }) {
                 }}
             >
                 {!errored ? (
-                    <img src={drop.iconURL} alt={drop.name} loading="lazy" decoding="async" className="h-full w-full object-contain" onError={() => setErrored(true)} />
+                    <img
+                        ref={(el) => {
+                            // An error that fires before hydration never reaches onError, which left a blank box (Pure Gold on main_01-07).
+                            if (el?.complete && el.naturalWidth === 0) setErrored(true);
+                        }}
+                        src={drop.iconURL}
+                        alt={drop.name}
+                        loading="lazy"
+                        decoding="async"
+                        className="h-full w-full object-contain"
+                        onLoad={(e) => e.currentTarget.naturalWidth === 0 && setErrored(true)}
+                        onError={() => setErrored(true)}
+                    />
                 ) : (
                     <span className="font-bold font-mono text-[12px]" style={{ color: rarityInk(drop.rarity) }}>
                         {initials}

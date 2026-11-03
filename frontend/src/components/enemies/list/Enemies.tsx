@@ -16,7 +16,7 @@ import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useLocalStorageState } from "#/hooks/use-local-storage-state";
 import { enemiesQueryOptions, enemyStageTableQueryOptions } from "#/lib/api/enemies";
 import { enemiesExportSchema } from "#/lib/export";
-import { type TypedRichT, useGamedataServer, useRichT, useT } from "#/lib/i18n";
+import { type TypedRichT, useFormatters, useGamedataServer, useRichT, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { values } from "#/lib/records";
 import type { StageGroupKey } from "#/lib/registry/stage-groups";
@@ -36,6 +36,7 @@ import { useEnemyFilters } from "./impl/useEnemyFilters";
 export function EnemiesList() {
     const t: TypedT<typeof messages> = useT("enemies");
     const rt: TypedRichT<typeof messages> = useRichT("enemies");
+    const f = useFormatters();
     const tConst: TypedT<typeof listConstantsMessages> = useT("enemies");
     const server = useGamedataServer();
     const { data: handbook } = useQuery(enemiesQueryOptions(server));
@@ -177,7 +178,7 @@ export function EnemiesList() {
 
     return (
         <div className="page-shell [--page-max:1400px]">
-            <PageHeader className="pb-1.5" breadcrumbLabel={t("list.breadcrumb")} breadcrumb={[t("list.breadcrumb.collection"), t("list.breadcrumb.enemies")]} title={t("list.title")} description={rt("list.blurb", { count: <strong className="text-foreground">{visibleCount}</strong> })} />
+            <PageHeader className="pb-1.5" breadcrumbLabel={t("list.breadcrumb")} breadcrumb={[t("list.breadcrumb.collection"), t("list.breadcrumb.enemies")]} title={t("list.title")} description={rt("list.blurb", { count: <strong className="text-foreground">{f.number(visibleCount)}</strong> })} />
 
             <section className="flex min-w-0 flex-col gap-5.5 pt-5" aria-label={t("list.results.aria")}>
                 {/* Below md the panel moves into a sheet, as on Operators and Stories: inline it pushed the first card ~1000px down at 375. */}
@@ -272,9 +273,9 @@ export function EnemiesList() {
                             <Skeleton className="inline-block h-3 w-40 align-middle" aria-hidden="true" />
                         ) : (
                             rt("list.showing", {
-                                from: <strong className="text-foreground">{fromIndex}</strong>,
-                                to: <strong className="text-foreground">{toIndex}</strong>,
-                                total: <strong className="text-foreground">{filteredEnemies.length}</strong>,
+                                from: <strong className="text-foreground">{f.number(fromIndex)}</strong>,
+                                to: <strong className="text-foreground">{f.number(toIndex)}</strong>,
+                                total: <strong className="text-foreground">{f.number(filteredEnemies.length)}</strong>,
                             })
                         )}
                         {activeFilterCount > 0 && (

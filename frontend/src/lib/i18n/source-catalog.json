@@ -3750,7 +3750,6 @@
     "stages.occ.SOMETIMES": "Very Rare",
     "stages.occ.USUAL": "Uncommon",
     "stages.overview.dpTick": "DP / Tick",
-    "stages.overview.dpTick.alt": "DP per tick",
     "stages.overview.dpTick.info": "How often you passively gain 1 DP. A lower number means DP regenerates faster.",
     "stages.overview.initialCost": "Initial DP",
     "stages.overview.initialCost.info": "The amount of Deployment Points (DP) you start the battle with.",

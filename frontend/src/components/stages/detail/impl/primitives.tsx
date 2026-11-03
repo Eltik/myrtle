@@ -20,16 +20,9 @@ export function SectionHead({ children, aside }: { children: React.ReactNode; as
     );
 }
 
-export function GameIcon({ src, alt }: { src: string; alt: string }) {
-    return <img src={src} alt={alt} loading="lazy" decoding="async" className="h-6 w-6 object-contain drop-shadow-[0_1px_1px_rgba(0,0,0,0.55)]" />;
-}
-
-export function StatCard({ icon, label, value, info }: { icon: React.ReactNode; label: string; value: string; info?: React.ReactNode }) {
+export function StatCard({ label, value, info }: { label: string; value: string; info?: React.ReactNode }) {
     return (
         <div className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3">
-            <span aria-hidden="true" className="flex shrink-0 items-center text-muted-foreground">
-                {icon}
-            </span>
             <div className="flex min-w-0 flex-col gap-1">
                 <span className="flex items-center gap-1 font-medium font-sans text-[12px] text-muted-foreground leading-none">
                     {label}

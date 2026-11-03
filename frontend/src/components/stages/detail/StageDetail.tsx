@@ -55,7 +55,7 @@ export function StageDetail({ stage, zone, level, enemyData, materials }: { stag
     }
 
     return (
-        <div className="page-shell [--page-max:1600px]">
+        <div className="page-shell">
             <nav className="pb-3.5 font-medium font-sans text-[12px] text-muted-foreground leading-none" aria-label={t("detail.breadcrumb")}>
                 <ol className="flex items-center gap-1.5">
                     <li>

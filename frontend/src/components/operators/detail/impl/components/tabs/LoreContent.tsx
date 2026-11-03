@@ -100,7 +100,7 @@ function StoryEntry({ text }: { text: string }) {
 
 /**
  * The handbook writes stories as line-oriented markup: `[Header] value` rows
- * (stat rows get a monospace cell), `-` bullets, quoted lines, and prose.
+ * (measurements set in mono), `-` bullets, quoted lines, and prose.
  */
 function renderParagraph(paragraph: string, idx: number) {
     const trimmed = paragraph.trim();
@@ -110,19 +110,22 @@ function renderParagraph(paragraph: string, idx: number) {
         const close = trimmed.indexOf("]");
         const header = trimmed.substring(1, close).trim();
         const content = trimmed.substring(close + 1).trim();
-        const isStat = STAT_HEADERS.has(header);
+        // Mono only where the value is a measurement ("165cm", "0.13u/L"); words stay sans.
+        const isNumeric = STAT_HEADERS.has(header) && /^\d/.test(content);
         return (
-            <div className="flex flex-col gap-1 py-1.5 sm:flex-row sm:items-baseline sm:gap-3" key={`hdr-${idx}`}>
-                <span className="min-w-40 shrink-0 font-medium text-muted-foreground text-xs sm:text-right">{header}</span>
-                <span className={cn("flex-1 text-foreground text-sm leading-relaxed", isStat && "rounded-md bg-secondary/40 px-2 py-1 font-mono text-xs")}>{content ? <GameText text={content} /> : "-"}</span>
-            </div>
+            <dl className="grid gap-x-4 gap-y-0.5 py-1.5 sm:grid-cols-[10rem_1fr] sm:items-baseline" key={`hdr-${idx}`}>
+                <dt className="text-muted-foreground text-sm">{header}</dt>
+                <dd className={cn("text-foreground text-sm leading-relaxed", isNumeric && "font-mono tabular-nums")}>{content ? <GameText text={content} /> : "-"}</dd>
+            </dl>
         );
     }
 
     if (/^[-•·]/.test(trimmed)) {
         return (
             <div className="flex gap-3 py-1 pl-2" key={`bul-${idx}`}>
-                <span className="mt-1 text-primary">•</span>
+                <span aria-hidden="true" className="mt-1 text-muted-foreground">
+                    •
+                </span>
                 <span className="flex-1 text-muted-foreground text-sm leading-relaxed">
                     <GameText text={trimmed.substring(1).trim()} />
                 </span>
@@ -132,7 +135,7 @@ function renderParagraph(paragraph: string, idx: number) {
 
     if (isQuoted(trimmed)) {
         return (
-            <blockquote className="my-3 rounded-r-lg border-primary/40 border-l-4 bg-secondary/30 py-3 pr-4 pl-4" key={`q-${idx}`}>
+            <blockquote className="my-3 border-border border-l-2 py-1 pl-4" key={`q-${idx}`}>
                 <p className="text-muted-foreground text-sm italic leading-relaxed">
                     <GameText text={unquote(trimmed)} />
                 </p>

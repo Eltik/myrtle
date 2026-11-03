@@ -30,7 +30,7 @@ export function OperatorCardGrid({ operator, statMetric }: IOperatorCardGridProp
         <HoverCard>
             <HoverCardTrigger
                 render={
-                    <Link to="/operators/$id" params={{ id: operator.id ?? "" }} preload={dataSaver ? false : undefined} className={cn("group relative flex aspect-2/3 overflow-clip rounded-md border border-muted/50 bg-card contain-content hover:rounded-lg", styles["card-hover-transition"])}>
+                    <Link to="/operators/$id" params={{ id: operator.id ?? "" }} preload={dataSaver ? false : undefined} className={cn("group relative flex aspect-2/3 overflow-clip rounded-md border border-muted/50 bg-card contain-content", styles["card-hover-transition"])}>
                         {/* One wrapping row: on a three-column phone grid the two pills side by side ran past the card's edge. */}
                         {operator.ownership || operator.cnChanges ? (
                             <div className="pointer-events-none absolute inset-x-1 top-1 z-20 flex flex-wrap items-start gap-1 [&>*]:pointer-events-auto">

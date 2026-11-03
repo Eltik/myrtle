@@ -276,7 +276,7 @@ export const SkillsContent = memo(function SkillsContent({ operator }: ISkillsCo
             </div>
 
             {!comparisonMode && skillData && (
-                <div className="rounded-lg border border-border bg-card/30 p-5 md:p-6">
+                <div className="rounded-2xl border border-border bg-card p-5 md:p-6">
                     <div className="mb-5 flex items-start gap-4">
                         {operator.skills[selectedSkillIndex].static?.image && (
                             <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-md border border-border bg-secondary/50">
@@ -325,7 +325,7 @@ export const SkillsContent = memo(function SkillsContent({ operator }: ISkillsCo
                         </div>
                     </dl>
 
-                    <div className="rounded-sm border border-border/50 bg-secondary/10 p-4">
+                    <div>
                         <p
                             lang={selectedIsCn ? "zh-CN" : undefined}
                             className="text-foreground text-sm leading-relaxed"
@@ -336,7 +336,7 @@ export const SkillsContent = memo(function SkillsContent({ operator }: ISkillsCo
                     </div>
 
                     {skillRange && (
-                        <div className="mt-5 rounded-sm border border-border/50 bg-secondary/10 p-4">
+                        <div className="mt-5 border-border border-t pt-5">
                             <div className="mb-3 flex items-center justify-between">
                                 <span className="kicker">{t("skills.range")}</span>
                                 {baseRange && (
@@ -498,7 +498,7 @@ export const SkillComparisonRow = memo(function SkillComparisonRow({ levelIndex,
                     />
                 )}
                 {range && (
-                    <div className="mt-4 rounded-sm border border-border/50 bg-secondary/10 p-3">
+                    <div className="mt-4 border-border border-t pt-4">
                         <div className="mb-2 flex items-center justify-between">
                             <span className="kicker">{t("skills.range")}</span>
                             {baseRange && onToggleRangeDiff && (

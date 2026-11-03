@@ -120,7 +120,7 @@ export function FilterToolbar({ type, sort, query, selectedFlairs, flairOptions,
                                 <circle cx="7.5" cy="7.5" r="1.25" fill="currentColor" stroke="none" />
                             </svg>
                             <span>{t("browse.flairs")}</span>
-                            {selectedFlairs.length > 0 && <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 font-mono font-semibold text-[9.5px] text-primary-foreground tabular-nums leading-none">{selectedFlairs.length}</span>}
+                            {selectedFlairs.length > 0 && <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-foreground px-1 font-mono font-semibold text-[9.5px] text-background tabular-nums leading-none">{selectedFlairs.length}</span>}
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={cn("h-3 w-3 opacity-80 transition-transform duration-200", flairsOpen && "rotate-180")} aria-hidden="true">
                                 <path d="m6 9 6 6 6-6" />
                             </svg>
@@ -164,7 +164,7 @@ export function FilterToolbar({ type, sort, query, selectedFlairs, flairOptions,
                         >
                             <span className="inline-flex items-center gap-1.5">
                                 <span>{t("browse.flairs")}</span>
-                                {selectedFlairs.length > 0 && <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 font-mono font-semibold text-[9.5px] text-primary-foreground tabular-nums leading-none">{selectedFlairs.length}</span>}
+                                {selectedFlairs.length > 0 && <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-foreground px-1 font-mono font-semibold text-[9.5px] text-background tabular-nums leading-none">{selectedFlairs.length}</span>}
                             </span>
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={cn("h-3 w-3 transition-transform duration-200", flairsOpen && "rotate-180")} aria-hidden="true">
                                 <path d="m6 9 6 6 6-6" />

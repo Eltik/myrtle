@@ -15,10 +15,6 @@ export const messages = {
         text: "The amount of Deployment Points (DP) you start the battle with.",
         description: "Tooltip on the Initial DP stat card. 'Deployment Points' is the in-game term.",
     },
-    "overview.dpTick.alt": {
-        text: "DP per tick",
-        description: "Alt text of the icon on the DP / Tick stat card. Spelled out because a screen reader reads it aloud.",
-    },
     "overview.dpTick": {
         text: "DP / Tick",
         description: "Stat card label: how many seconds pass between passive DP gains. Very tight space.",

@@ -81,7 +81,6 @@ export function VersionsBar({ slug, versions, selectedVersion, isLatestView }: I
                         aria-label={t("detail.versions.trigger", { version: triggerLabel })}
                     >
                         <span className="flex min-w-0 items-center gap-2">
-                            <span className={cn("h-1.5 w-1.5 shrink-0 rounded-full", isLatestView ? "bg-primary" : "bg-muted-foreground")} aria-hidden="true" />
                             <span className="truncate">{triggerLabel}</span>
                             {triggerHint && <span className="hidden text-muted-foreground sm:inline">· {triggerHint}</span>}
                         </span>
@@ -90,7 +89,7 @@ export function VersionsBar({ slug, versions, selectedVersion, isLatestView }: I
                     <MenuPopup align="start" sideOffset={6} className="w-80 max-w-[calc(100vw-1.5rem)]">
                         <MenuItem render={<Link to="/tier-lists/$id" params={{ id: slug }} search={{}} replace resetScroll={false} preload={false} />} className={cn("flex-col items-start gap-0.5 py-2", isLatestView && "bg-accent/60 text-accent-foreground")}>
                             <span className="flex w-full items-center gap-2">
-                                <span className="h-1.5 w-1.5 rounded-full bg-primary" aria-hidden="true" />
+                                <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground" aria-hidden="true" />
                                 <span className="font-medium">{t("detail.versions.latest")}</span>
                                 {isLatestView && <CheckIcon className="ml-auto h-3.5 w-3.5" aria-hidden="true" />}
                             </span>

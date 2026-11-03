@@ -66,9 +66,8 @@ export function EnemyHero({ enemy }: { enemy: IEnemyView }) {
 
 export function SectionHead({ children }: { children: React.ReactNode }) {
     return (
-        <div className="mb-3 flex items-center gap-2.5">
+        <div className="mb-3">
             <Kicker className="leading-none">{children}</Kicker>
-            <span className="h-px flex-1 bg-border" />
         </div>
     );
 }
@@ -107,8 +106,7 @@ export function OverviewTab({ enemy }: { enemy: IEnemyView }) {
     return (
         <div className="flex flex-col gap-5 sm:gap-5.5">
             {enemy.description && (
-                <section>
-                    <SectionHead>{t("overview.description")}</SectionHead>
+                <section aria-label={t("overview.description")}>
                     <p className="m-0 text-pretty font-sans text-[13.5px] text-foreground leading-relaxed">{enemy.description}</p>
                 </section>
             )}
@@ -169,9 +167,8 @@ export function OverviewTab({ enemy }: { enemy: IEnemyView }) {
 
 function PhaseHeader({ phase, label }: { phase: IEnemyLevelStats; label: string }) {
     return (
-        <div className="flex items-center gap-2 rounded-md border border-[color-mix(in_oklch,var(--primary)_45%,transparent)] bg-[color-mix(in_oklch,var(--primary)_14%,transparent)] px-2.5 py-1.5 leading-none">
-            <span aria-hidden="true" className="inline-block h-1.25 w-1.25 rounded-full bg-primary" />
-            <span className="kicker truncate text-foreground">{label}</span>
+        <div className="flex items-baseline gap-2 px-0.5 leading-none">
+            <h4 className="m-0 truncate font-medium font-sans text-[13px] text-foreground">{label}</h4>
             <span className="ml-auto font-mono text-[10px] text-muted-foreground tracking-[0.12em]">L{phase.level}</span>
         </div>
     );
@@ -252,7 +249,7 @@ function PhaseStatsBlock({ phase, label }: { phase: IEnemyLevelStats; label: str
         <div className="flex flex-col gap-2">
             <PhaseHeader phase={phase} label={label} />
             <div className="rounded-2xl border border-border bg-[color-mix(in_oklch,var(--muted)_22%,transparent)] p-3">
-                <dl className="m-0 grid grid-cols-1 gap-1 sm:grid-cols-2">
+                <dl className="m-0 grid grid-cols-1 gap-y-1 sm:grid-cols-2 sm:gap-x-6">
                     {STAT_ROWS.map((row) => (
                         <div key={row.labelKey} className="flex items-baseline justify-between gap-2 border-border/40 border-b py-1 last:border-b-0 sm:nth-last-[2]:border-b-0">
                             <dt className="kicker leading-none">{t(row.labelKey)}</dt>

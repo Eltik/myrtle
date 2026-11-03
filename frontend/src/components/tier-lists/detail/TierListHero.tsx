@@ -26,7 +26,7 @@ export function TierListHero({ detail }: ITierListHeroProps) {
 
     return (
         <header className="border-border/60 border-b">
-            <div className="page-gutter pt-5 pb-6 [--page-max:1080px] sm:pt-10 sm:pb-9">
+            <div className="page-gutter pt-5 pb-6 [--page-max:1200px] sm:pt-10 sm:pb-9">
                 <Breadcrumb className="mb-3">
                     <BreadcrumbList className="text-xs">
                         <BreadcrumbItem>
@@ -41,18 +41,6 @@ export function TierListHero({ detail }: ITierListHeroProps) {
 
                 <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
                     <div className="min-w-0 flex-1">
-                        <div className="mb-2 flex flex-wrap items-center gap-1.5">
-                            {/* Kind, flair and trending are neutral labels; only the flair's own colour means something, so it alone tints. */}
-                            <Badge variant="outline">{isOfficial ? t("detail.hero.official") : t("detail.hero.community")}</Badge>
-                            {flair && (
-                                // Free-form flair colours measured 2.46 to 2.94 as text on their own tint; the tint and border carry the colour, the text stays foreground.
-                                <Badge variant={flair.color ? "tint" : "outline"} style={flair.color ? ({ "--tone": flair.color } as React.CSSProperties) : undefined}>
-                                    {flair.label}
-                                </Badge>
-                            )}
-                            {stats?.isTrending && <Badge variant="outline">{t("detail.hero.trending")}</Badge>}
-                        </div>
-
                         <h1 className="m-0 font-bold font-sans text-2xl text-foreground leading-tight tracking-tight sm:text-3xl md:text-4xl">{detail.title}</h1>
 
                         {detail.description && <ExpandableDescription text={detail.description} markdown className="mt-3 max-w-160 font-sans text-muted-foreground text-sm leading-relaxed sm:text-[15px]" />}
@@ -66,7 +54,7 @@ export function TierListHero({ detail }: ITierListHeroProps) {
                                         {author.avatarId && <AvatarImage src={getAvatarById(author.avatarId)} alt="" />}
                                         <AvatarFallback>{(author.nickname?.charAt(0) || "?").toUpperCase()}</AvatarFallback>
                                     </Avatar>
-                                    <span className="min-w-0 truncate font-medium transition-colors group-hover:text-primary">{author.nickname?.trim() || t("detail.hero.authorFallback")}</span>
+                                    <span className="min-w-0 truncate font-medium transition-colors group-hover:underline">{author.nickname?.trim() || t("detail.hero.authorFallback")}</span>
                                 </Link>
                             ) : (
                                 <span className="inline-flex items-center gap-2">
@@ -109,6 +97,18 @@ export function TierListHero({ detail }: ITierListHeroProps) {
                                     </Tooltip>
                                 </>
                             )}
+
+                            {/* Kind, flair and trending are neutral labels in the meta row, under the title they describe; only the flair's own colour means something, so it alone tints. */}
+                            <span className="inline-flex flex-wrap items-center gap-1.5">
+                                <Badge variant="outline">{isOfficial ? t("detail.hero.official") : t("detail.hero.community")}</Badge>
+                                {flair && (
+                                    // Free-form flair colours measured 2.46 to 2.94 as text on their own tint; the tint and border carry the colour, the text stays foreground.
+                                    <Badge variant={flair.color ? "tint" : "outline"} style={flair.color ? ({ "--tone": flair.color } as React.CSSProperties) : undefined}>
+                                        {flair.label}
+                                    </Badge>
+                                )}
+                                {stats?.isTrending && <Badge variant="outline">{t("detail.hero.trending")}</Badge>}
+                            </span>
                         </div>
                     </div>
 

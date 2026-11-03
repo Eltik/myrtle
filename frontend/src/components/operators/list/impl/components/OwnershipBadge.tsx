@@ -39,7 +39,7 @@ export const OwnershipBadge = memo(function OwnershipBadge({ info, metric, color
     return (
         // The text is foreground, the rarity hue only a dot: as text it measured 1.38 (5★) to 2.42 (6★)
         // on the light page.
-        <span role="img" className={cn("inline-flex items-center gap-1 rounded-full bg-background/85 px-1.5 py-0.5 font-mono font-semibold text-[11px] text-foreground tabular-nums leading-none shadow-sm", className)} title={title} aria-label={ariaLabel}>
+        <span role="img" className={cn("inline-flex items-center gap-1 rounded-sm bg-background/85 px-1.5 py-0.5 font-mono font-semibold text-[11px] text-foreground tabular-nums leading-none shadow-sm", className)} title={title} aria-label={ariaLabel}>
             <span aria-hidden="true" className="size-1.5 shrink-0 rounded-full" style={{ backgroundColor: color }} />
             {label}
         </span>
