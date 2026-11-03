@@ -433,6 +433,16 @@
     aspect-ratio: 177 / 268;
 }
 
+/* Below sm an empty seat is square: twelve card-tall empty cells ran the grid
+   to about 1200px on a phone. In a row beside a filled card it stretches to the
+   card's height (the li is a stretched grid item), so the row stays even. */
+@media (max-width: 639.98px) {
+    .empty {
+        aspect-ratio: 1;
+        height: 100%;
+    }
+}
+
 @media (prefers-reduced-motion: reduce) {
     .card,
     .shine,

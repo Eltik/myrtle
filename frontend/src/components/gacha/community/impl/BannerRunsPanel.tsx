@@ -216,9 +216,10 @@ function Segmented<T extends string>({ label, options, value, onChange }: { labe
                 size="sm"
                 value={[value]}
                 variant="outline"
+                className="grid w-full auto-cols-fr grid-flow-col sm:flex sm:w-fit"
             >
                 {options.map((o) => (
-                    <ToggleGroupItem key={o.key} className="px-2.5 text-[12px]" value={o.key}>
+                    <ToggleGroupItem key={o.key} className="min-w-0 px-2.5 text-[12px]" value={o.key}>
                         {o.label}
                     </ToggleGroupItem>
                 ))}

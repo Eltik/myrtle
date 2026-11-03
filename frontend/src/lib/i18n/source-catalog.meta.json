@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-11-03T16:14:35.885Z",
+    "generatedAt": "2026-11-03T16:32:17.200Z",
     "entries": [
         {
             "key": "admin.home.access.everyList",
@@ -6040,6 +6040,13 @@
             "placeholders": []
         },
         {
+            "key": "archives.network.legend",
+            "namespace": "archives",
+            "source_text": "Factions",
+            "description": "Accessible name of the faction list shown under the territories map on phone widths, where the on-map labels are hidden. Each entry opens that faction's chart.",
+            "placeholders": []
+        },
+        {
             "key": "archives.network.noMatch",
             "namespace": "archives",
             "source_text": "Nobody on the network by that name",
@@ -10372,6 +10379,20 @@
             "namespace": "enemies",
             "source_text": "Enemies",
             "description": "Headline of the export dialog, naming what is being exported.",
+            "placeholders": []
+        },
+        {
+            "key": "enemies.list.filters.button",
+            "namespace": "enemies",
+            "source_text": "Filters",
+            "description": "Button beside the search box on phone and tablet widths; opens a side sheet holding the level, damage, attack, race, immunity and Appears In filters. A count badge follows when any are on.",
+            "placeholders": []
+        },
+        {
+            "key": "enemies.list.filters.title",
+            "namespace": "enemies",
+            "source_text": "Filters",
+            "description": "Title of the side sheet that holds the enemy filters on phone and tablet widths.",
             "placeholders": []
         },
         {

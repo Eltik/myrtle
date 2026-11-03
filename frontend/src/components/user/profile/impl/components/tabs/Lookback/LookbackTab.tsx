@@ -108,10 +108,10 @@ function TimelineCard({ snapshots, ownership, live }: ITimelineProps) {
                 ) : (
                     <div className="h-52">
                         <ResponsiveContainer width="100%" height="100%">
-                            <LineChart margin={{ top: 4, right: 8, bottom: 0, left: -18 }}>
+                            <LineChart margin={{ top: 4, right: 8, bottom: 0, left: 0 }}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" strokeOpacity={0.4} vertical={false} />
                                 <XAxis dataKey="ts" type="number" scale="time" domain={["dataMin", "dataMax"]} allowDuplicatedCategory={false} tickFormatter={(ts: number) => f.date(ts, TICK_DATE)} tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} tickLine={false} axisLine={false} minTickGap={40} />
-                                <YAxis domain={["auto", "auto"]} allowDecimals={false} tickFormatter={(v: number) => f.number(v)} tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} tickLine={false} axisLine={false} width={46} />
+                                <YAxis domain={["auto", "auto"]} allowDecimals={false} tickFormatter={(v: number) => f.number(v)} tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} tickLine={false} axisLine={false} width={48} />
                                 <Tooltip
                                     content={({ active, payload }) => {
                                         const p = active && payload?.[0]?.payload ? (payload[0].payload as ISeriesPoint) : null;

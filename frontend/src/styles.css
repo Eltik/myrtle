@@ -721,3 +721,27 @@ pre code {
         background-attachment: local, local, scroll, scroll;
     }
 }
+
+/* The same affordance on a horizontal scroller (a tab strip that runs past a
+   phone's width): the shadow sits on the left and right edges instead. A
+   utility, not a component class, so a variant can switch it on
+   (`data-overflow:scroll-shadows-x` in the kit TabsList). */
+@utility scroll-shadows-x {
+    background-image:
+        linear-gradient(to right, var(--scroll-shadow-bg, var(--background)), transparent),
+        linear-gradient(to left, var(--scroll-shadow-bg, var(--background)), transparent),
+        linear-gradient(to right, oklch(0 0 0 / 0.12), transparent),
+        linear-gradient(to left, oklch(0 0 0 / 0.12), transparent);
+    background-position:
+        0 0,
+        100% 0,
+        0 0,
+        100% 0;
+    background-size:
+        1.25rem 100%,
+        1.25rem 100%,
+        0.5rem 100%,
+        0.5rem 100%;
+    background-repeat: no-repeat;
+    background-attachment: local, local, scroll, scroll;
+}

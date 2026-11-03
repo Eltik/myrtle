@@ -53,8 +53,9 @@ export function EnemyCardGrid({ enemy, statMax }: IEnemyCardGridProps) {
             </div>
 
             <div className="flex flex-col gap-2 px-2 pt-2 pb-2.5 sm:px-3 sm:pt-2.5 sm:pb-3">
-                <div className="flex min-h-6 items-start gap-1.5 sm:min-h-7.5">
-                    <h3 className="m-0 line-clamp-2 min-w-0 flex-1 font-sans font-semibold text-[11px] text-foreground leading-[1.15] sm:text-[12.5px]">{enemy.name}</h3>
+                {/* Two reserved lines, so a one-line name keeps its HP/ATK/DEF rows level with a two-line neighbour's. */}
+                <div className="flex items-start gap-1.5">
+                    <h3 className="m-0 line-clamp-2 min-h-[2lh] min-w-0 flex-1 font-sans font-semibold text-[11px] text-foreground leading-[1.15] sm:text-[12.5px]">{enemy.name}</h3>
                     <DamageDots types={enemy.damageType} />
                 </div>
 

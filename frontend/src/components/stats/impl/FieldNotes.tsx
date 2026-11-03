@@ -57,12 +57,16 @@ interface IStatusPickerProps {
     t: FieldNotesT;
 }
 
-/** A single-select kit ToggleGroup: one tab stop, arrow keys move focus, the kit carries the coarse 44px hit area. */
+/**
+ * A single-select kit ToggleGroup: one tab stop, arrow keys move focus, the kit carries the coarse 44px hit area.
+ * Unpressed items keep a border so they read as options, not text. Below sm the five statuses sit 3 + 2 on a
+ * six-track grid, so no row ends with one orphaned chip ("Levitate" wrapped alone at 375).
+ */
 function StatusPicker({ value, onChange, t }: IStatusPickerProps) {
     return (
-        <ToggleGroup aria-label={t("fieldNotes.picker")} value={[value]} onValueChange={(next) => next[0] && onChange(next[0] as FieldNoteStatus)} size="sm" className="flex-wrap">
+        <ToggleGroup aria-label={t("fieldNotes.picker")} value={[value]} onValueChange={(next) => next[0] && onChange(next[0] as FieldNoteStatus)} size="sm" className="flex-wrap max-sm:grid max-sm:w-full max-sm:grid-cols-6 max-sm:*:col-span-2 max-sm:*:nth-[n+4]:col-span-3">
             {FIELD_NOTE_STATUSES.map((status) => (
-                <ToggleGroupItem key={status} value={status} className="px-2.5 text-[12.5px]">
+                <ToggleGroupItem key={status} value={status} className="border-border px-2.5 text-[12.5px]">
                     {t("fieldNotes.status", { status })}
                 </ToggleGroupItem>
             ))}
@@ -110,7 +114,7 @@ export function FieldNotes() {
                 <Kicker className="mb-0">{t("fieldNotes.kicker")}</Kicker>
                 <StatusPicker value={status} onChange={setStatus} t={t} />
             </div>
-            <div className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-border bg-border lg:grid-cols-5">
+            <div className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-border bg-border max-sm:-mx-4 max-sm:rounded-none max-sm:border-x-0 lg:grid-cols-5">
                 <FactTile
                     label={t("fieldNotes.immune.label")}
                     fraction={shareOf(enemies, () => immunity ?? null)}

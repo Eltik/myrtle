@@ -32,9 +32,13 @@ export function SettingsShell({ nav, active, onChange, children }: ISettingsShel
                 <p className="m-0 mt-1.5 max-w-[60ch] font-sans text-[14px] text-muted-foreground leading-[1.55] sm:text-[15px]">{t("shell.subtitle")}</p>
             </div>
 
-            <div className="grid grid-cols-1 items-start gap-5 sm:grid-cols-[232px_1fr] sm:gap-8">
-                <SettingsNav nav={nav} active={active} onChange={onChange} />
-                <div className="min-w-0">{children}</div>
+            {/* One section (signed out: Appearance alone) needs no section nav; the sticky
+                strip spent about 85px of a phone screen naming the only page there is. */}
+            <div className={cn("grid grid-cols-1 items-start gap-5", nav.length > 1 && "sm:grid-cols-[232px_1fr] sm:gap-8")}>
+                {nav.length > 1 ? <SettingsNav nav={nav} active={active} onChange={onChange} /> : null}
+                {/* Below sm the card's 24px padding stacked on the page gutter put every row
+                    about 37px in from each screen edge; 16px lets the labels breathe. */}
+                <div className="min-w-0 max-sm:[&_[data-slot=card]>[data-slot^=card-]]:px-4">{children}</div>
             </div>
         </div>
     );
@@ -63,7 +67,7 @@ function SettingsNav({ nav, active, onChange }: { nav: ISettingsNavItem[]; activ
 
     return (
         <nav aria-label={t("shell.sectionsNav")} className={cn("page-bleed sm:mx-0", "sticky top-(--site-header-height) z-20 border-border border-b bg-background", "sm:top-20 sm:z-0 sm:self-start sm:rounded-2xl sm:border sm:border-sidebar-border sm:bg-sidebar/60 sm:p-2")}>
-            <div ref={scrollerRef} className="flex gap-1 overflow-x-auto px-3 py-2 [scrollbar-width:none] sm:flex-col sm:gap-0.5 sm:overflow-visible sm:p-0 [&::-webkit-scrollbar]:hidden">
+            <div ref={scrollerRef} className="max-sm:scroll-shadows-x flex gap-1 overflow-x-auto px-3 py-2 [scrollbar-width:none] sm:flex-col sm:gap-0.5 sm:overflow-visible sm:p-0 [&::-webkit-scrollbar]:hidden">
                 {mainItems.map((item) => (
                     <SettingsNavButton key={item.id} item={item} isActive={active === item.id} activeRef={active === item.id ? activeRef : undefined} onSelect={onChange} />
                 ))}

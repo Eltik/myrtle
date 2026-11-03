@@ -55,7 +55,8 @@ export function OperatorCardGrid({ operator, statMetric }: IOperatorCardGridProp
                             <div className="relative">
                                 {/* Solid: a blur per card cost up to 100 backdrop passes a page, and the name never needed the art behind it. */}
                                 <div className="h-12 w-full bg-background" />
-                                <h2 className="absolute bottom-1 left-1 line-clamp-2 max-w-[92%] font-bold text-xs opacity-60 opacity-transition group-hover:opacity-100 sm:text-sm md:text-sm">{operator.name}</h2>
+                                {/* Ends short of the class icon (16px, 24px from md) so "Leizi the Thunderbringer" wraps instead of running under it; two tight lines fit the 48px bar. */}
+                                <h2 className="absolute right-5 bottom-1 left-1 line-clamp-2 font-bold text-xs leading-tight opacity-60 opacity-transition group-hover:opacity-100 sm:text-sm md:right-7 md:text-sm">{operator.name}</h2>
                                 <div className="card-hover-transition absolute right-1 bottom-1 flex scale-75 items-center opacity-90 transition-transform group-hover:scale-100 group-hover:opacity-100">
                                     <div className="h-4 w-4 md:h-6 md:w-6">
                                         <ClassIcon profession={operator.profession} size={160} />

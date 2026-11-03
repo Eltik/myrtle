@@ -81,8 +81,9 @@ function useColumnWidth(ref: React.RefObject<HTMLUListElement | null>, enabled: 
  * The `SQUAD_SIZE` seats and the support in ONE grid. On `lg` and up the
  * support takes the last column beside the two rows of seats, set off by a rule drawn in
  * the gutter, with its caption directly under the card in the same cell;
- * below `lg` the support flows after the last seat like any other card, so
- * nothing ever sits beside a narrow grid. Seven columns need `lg`: at `md` a
+ * below `lg` the support takes a row of its own, card in the first column and
+ * its caption beside it: flowing after the last seat it sat alone in a phone
+ * row with its caption cut to a 100px column. Seven columns need `lg`: at `md` a
  * column is 99px and the badges go below their floors. Only the twelve seats
  * carry `data-seat`, so a drag never lands on the support.
  */
@@ -132,8 +133,10 @@ export function SeatGrid(props: ISeatGridProps): React.ReactElement {
                 })}
                 <li
                     className={cn(
-                        "relative flex min-w-0 flex-col gap-2",
-                        compact ? "md:before:absolute md:before:inset-y-0 md:before:-left-1.5 md:before:w-px md:before:bg-border" : "lg:col-start-(--seat-cols) lg:row-span-2 lg:row-start-1 lg:before:absolute lg:before:inset-y-0 lg:before:-left-1.5 lg:before:w-px lg:before:bg-border",
+                        "relative min-w-0",
+                        compact
+                            ? "flex flex-col gap-2 md:before:absolute md:before:inset-y-0 md:before:-left-1.5 md:before:w-px md:before:bg-border"
+                            : "col-span-full grid grid-cols-3 items-center gap-2 sm:grid-cols-4 sm:gap-3 lg:col-span-1 lg:col-start-(--seat-cols) lg:row-span-2 lg:row-start-1 lg:flex lg:flex-col lg:items-stretch lg:gap-2 lg:before:absolute lg:before:inset-y-0 lg:before:-left-1.5 lg:before:w-px lg:before:bg-border",
                     )}
                 >
                     <SeatCard
@@ -153,7 +156,7 @@ export function SeatGrid(props: ISeatGridProps): React.ReactElement {
                         onOpenDps={() => onOpenDps(SUPPORT_SEAT)}
                         t={t}
                     />
-                    {!compact && <p className="text-[10.5px] text-muted-foreground leading-snug">{t("squad.grid.supportCaption")}</p>}
+                    {!compact && <p className="col-span-2 text-[12px] text-muted-foreground leading-snug sm:col-span-3 lg:text-[10.5px]">{t("squad.grid.supportCaption")}</p>}
                 </li>
             </ul>
             {!readOnly && !compact && <p className="mt-2 text-[11.5px] text-muted-foreground">{t("squad.grid.dragHint")}</p>}

@@ -178,6 +178,9 @@ card, where `text-destructive` measured 1.80 on its own tint), never a raw `-300
   sticky bar or a scroll rail out to the content edge.
 - `--site-header-height`: 57px below `sm`, 65px from `sm`.
 - `.scroll-shadows`: CSS-only edge shadows on a scroller, so a cut line reads as "more".
+- `.scroll-shadows-x`: the same on a horizontal scroller. Kit `TabsList` (horizontal) scrolls
+  with a hidden scrollbar, adds it only while it overflows, and scrolls the active tab into view.
+  `--scroll-shadow-bg` must be the surface under the strip.
 - Body reserves `--music-bar-reserve` while the music player bar is mounted.
 
 ## Components

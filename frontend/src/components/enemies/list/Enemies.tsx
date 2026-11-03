@@ -1,13 +1,15 @@
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { ArrowDown, ArrowUp, Download, LayoutGrid, LayoutList, RotateCwIcon, Search } from "lucide-react";
+import { ArrowDown, ArrowUp, Download, Filter, LayoutGrid, LayoutList, RotateCwIcon, Search } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DynamicExportDialog } from "#/components/export/ExportDialog.lazy";
 import { SearchField } from "#/components/SearchField";
 import { Alert, AlertAction, AlertDescription } from "#/components/ui/alert";
+import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import { PageHeader } from "#/components/ui/page-header";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
+import { Sheet, SheetHeader, SheetPanel, SheetPopup, SheetTitle } from "#/components/ui/sheet";
 import { Skeleton } from "#/components/ui/skeleton";
 import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
@@ -163,21 +165,54 @@ export function EnemiesList() {
     }, [filteredEnemies, page, pageSize]);
 
     const [exportOpen, setExportOpen] = useState(false);
+    const [filtersOpen, setFiltersOpen] = useState(false);
+    // The search box stays on the page, so the sheet's badge counts only what the sheet holds.
+    const sheetFilterCount = activeFilterCount - (filters.q ? 1 : 0);
+    const filterControls = (
+        <>
+            <EnemyFilterChips filters={filters} setLevels={setLevels} setDamageTypes={setDamageTypes} setAttackTypes={setAttackTypes} setRaces={setRaces} setImmunities={setImmunities} races={availableRaces} />
+            {locationTree.length > 0 && <EnemyLocationFilter tree={locationTree} selected={filters.appearsIn} onChange={setAppearsIn} />}
+        </>
+    );
 
     return (
         <div className="page-shell [--page-max:1400px]">
             <PageHeader className="pb-1.5" breadcrumbLabel={t("list.breadcrumb")} breadcrumb={[t("list.breadcrumb.collection"), t("list.breadcrumb.enemies")]} title={t("list.title")} description={rt("list.blurb", { count: <strong className="text-foreground">{visibleCount}</strong> })} />
 
             <section className="flex min-w-0 flex-col gap-5.5 pt-5" aria-label={t("list.results.aria")}>
-                <EnemyFilterChips filters={filters} setLevels={setLevels} setDamageTypes={setDamageTypes} setAttackTypes={setAttackTypes} setRaces={setRaces} setImmunities={setImmunities} races={availableRaces} />
-
-                {locationTree.length > 0 && <EnemyLocationFilter tree={locationTree} selected={filters.appearsIn} onChange={setAppearsIn} />}
+                {/* Below md the panel moves into a sheet, as on Operators and Stories: inline it pushed the first card ~1000px down at 375. */}
+                <div className="flex flex-col gap-5.5 max-md:hidden">{filterControls}</div>
+                <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
+                    <SheetPopup side="left" variant="inset" className="max-w-80">
+                        <SheetHeader className="pb-4">
+                            <SheetTitle className="flex items-center gap-2 text-base">
+                                <Filter className="size-4 text-muted-foreground" aria-hidden="true" />
+                                {t("list.filters.title")}
+                                {sheetFilterCount > 0 ? (
+                                    <Badge className="font-mono tabular-nums" size="sm">
+                                        {sheetFilterCount}
+                                    </Badge>
+                                ) : null}
+                            </SheetTitle>
+                        </SheetHeader>
+                        <SheetPanel className="flex flex-col gap-5.5 px-5 pb-6">{filterControls}</SheetPanel>
+                    </SheetPopup>
+                </Sheet>
                 {locationsFailed && filters.appearsIn.length === 0 && <LocationsFailed onRetry={() => void refetchStageTable()} />}
 
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     <SearchField className="min-w-55 max-w-100 flex-1" value={filters.q} onChange={setSearchQuery} placeholder={t("list.search.placeholder")} label={t("list.search.aria")} />
 
                     <div className="inline-flex flex-wrap items-center gap-2">
+                        <Button variant="outline" className="relative md:hidden" onClick={() => setFiltersOpen(true)} aria-expanded={filtersOpen}>
+                            <Filter aria-hidden="true" />
+                            {t("list.filters.button")}
+                            {sheetFilterCount > 0 && (
+                                <Badge className="font-mono tabular-nums" size="sm">
+                                    {sheetFilterCount}
+                                </Badge>
+                            )}
+                        </Button>
                         <ToggleGroup aria-label={t("list.viewMode.aria")} value={[viewMode]} onValueChange={(next) => next[0] && setViewMode(next[0] as ViewMode)} variant="outline">
                             <Tooltip>
                                 <TooltipTrigger render={<ToggleGroupItem aria-label={t("list.viewMode.grid")} value="grid" />}>

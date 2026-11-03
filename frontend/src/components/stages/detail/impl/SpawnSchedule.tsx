@@ -51,7 +51,7 @@ function SpawnCard({ row, onFocusEnemy }: { row: ISpawnRow; onFocusEnemy: (id: s
                 <SpawnEnemyIdentity iconClass="h-9 w-9" onActivate={() => onFocusEnemy(row.id, row.time)} row={row} />
                 <span className="shrink-0 font-mono text-[10px] text-muted-foreground tabular-nums">#{row.idx + 1}</span>
             </div>
-            <dl className="grid grid-cols-3 gap-x-3 gap-y-2.5 rounded-md bg-[color-mix(in_oklch,var(--muted)_30%,transparent)] px-3 py-2.5">
+            <dl className="grid grid-cols-2 gap-x-3 gap-y-2.5 rounded-md bg-[color-mix(in_oklch,var(--muted)_30%,transparent)] px-3 py-2.5 max-sm:*:last:odd:col-span-2 sm:grid-cols-3">
                 <SpawnStat label={t("spawns.col.wave")} value={String(row.wave)} />
                 <SpawnStat label={t("spawns.col.count")} strong value={`×${row.count}`} />
                 <SpawnStat label={t("spawns.col.start")} strong value={`${row.time.toFixed(1)}s`} />

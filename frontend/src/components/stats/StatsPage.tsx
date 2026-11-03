@@ -59,17 +59,17 @@ export function StatsPage() {
 
             <KpiStrip cells={headlineCells} />
 
-            <section className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4.5 sm:p-6">
+            <section className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 sm:p-6">
                 <header className="flex flex-col gap-1">
                     <Kicker>{t("page.catalog.kicker")}</Kicker>
                     <h2 className="m-0 text-balance font-sans font-semibold text-[22px] text-foreground leading-[1.15] tracking-[-0.02em]">{t("page.catalog.title")}</h2>
                     <p className="m-0 font-sans text-[13px] text-muted-foreground leading-normal">{t("page.catalog.blurb")}</p>
                 </header>
-                {data ? <CatalogGrid gameData={data.gameData} tierLists={data.tierLists} rosters={data.rosters} /> : <Skeleton className="h-[328px] rounded-xl border border-border lg:h-[164px]" />}
+                {data ? <CatalogGrid gameData={data.gameData} tierLists={data.tierLists} rosters={data.rosters} /> : <Skeleton className="h-[328px] rounded-xl border border-border max-sm:-mx-4 max-sm:rounded-none max-sm:border-x-0 lg:h-[164px]" />}
                 <FieldNotes />
             </section>
 
-            <section className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4.5 sm:p-6">
+            <section className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 sm:p-6">
                 <header className="flex flex-col gap-1">
                     <Kicker>{t("page.community.kicker")}</Kicker>
                     <h2 className="m-0 text-balance font-sans font-semibold text-[22px] text-foreground leading-[1.15] tracking-[-0.02em]">{t("page.community.title")}</h2>
@@ -80,7 +80,8 @@ export function StatsPage() {
                         })}
                     </p>
                 </header>
-                <div className="grid grid-cols-[repeat(4,1fr)] overflow-hidden rounded-2xl border border-border bg-card max-[1180px]:grid-cols-2 max-[520px]:grid-cols-1">
+                {/* Below sm the inner grids drop their own frame and run to the card's edge, so cell text sits 17px in like the strip above, not 36px. */}
+                <div className="grid grid-cols-[repeat(4,1fr)] overflow-hidden rounded-2xl border border-border bg-card max-sm:-mx-4 max-sm:rounded-none max-sm:border-x-0 max-[1180px]:grid-cols-2 max-[520px]:grid-cols-1">
                     {data ? (
                         <>
                             <KpiCell label={t("page.cell.totalLists")} value={f.number(data.tierLists.total)} meta={<span>{t("page.cell.totalLists.meta", { count: f.number(Math.max(0, data.tierLists.total - data.tierLists.active)) })}</span>} />

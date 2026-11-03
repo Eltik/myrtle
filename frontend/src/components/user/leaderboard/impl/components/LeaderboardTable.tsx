@@ -75,8 +75,10 @@ export function LeaderboardTable({ rows, ranking, onRanking, catalog, materials,
             </div>
             {/* No header row on phones: the toolbar's "Rank by" control sits
                 directly above the cards, so a second one here was a duplicate. */}
-            <div className="block p-3 md:hidden">
-                <div className="flex flex-col gap-2">
+            {/* Below sm the rows are a divided list, not cards inside the list card: the second
+                border and padding left a phone row about 50px narrower than the screen. */}
+            <div className="block sm:p-3 md:hidden">
+                <div className="flex flex-col sm:gap-2">
                     {rows.map((row) => (
                         <MobileRow key={`${row.server}:${row.uid}`} row={row} ranking={ranking} topValue={topValue} intervalKey={intervalKey} />
                     ))}
@@ -180,7 +182,14 @@ function MobileRow({ row, ranking, topValue, intervalKey }: { row: IRankedRow; r
     const { nickname, initials, avatarSrc } = playerIdentity(row);
 
     return (
-        <Link to="/user/$id" params={{ id: row.uid }} className={cn("grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-2xl border border-border bg-card px-3 py-3 no-underline transition-colors hover:border-foreground/15", row.isSelf && "bg-[color-mix(in_srgb,var(--primary)_6%,transparent)]")}>
+        <Link
+            to="/user/$id"
+            params={{ id: row.uid }}
+            className={cn(
+                "grid grid-cols-[auto_1fr_auto] items-center gap-3 border-border border-b px-4 py-3 no-underline transition-colors last:border-b-0 hover:bg-muted/40 sm:rounded-2xl sm:border sm:bg-card sm:px-3 sm:hover:border-foreground/15 sm:hover:bg-card sm:last:border-b",
+                row.isSelf && "bg-[color-mix(in_srgb,var(--primary)_6%,transparent)]",
+            )}
+        >
             <span className="inline-flex flex-col items-center gap-1">
                 <span className="inline-flex size-9 items-center justify-center rounded-[10px] bg-muted font-mono font-semibold text-[13px] text-foreground tabular-nums leading-none">#{row.rank ?? "-"}</span>
                 <RankMovement delta={row.delta} intervalKey={intervalKey} />
@@ -232,10 +241,10 @@ export function LeaderboardTableSkeleton({ rows = 8 }: { rows?: number }) {
                     ))}
                 </div>
             </div>
-            <div className="block p-3 md:hidden">
-                <div className="flex flex-col gap-2">
+            <div className="block sm:p-3 md:hidden">
+                <div className="flex flex-col sm:gap-2">
                     {Array.from({ length: Math.min(rows, 6) }, (_, i) => `mobile-skeleton-${i}`).map((key) => (
-                        <div key={key} className="grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-2xl border border-border bg-card px-3 py-3">
+                        <div key={key} className="grid grid-cols-[auto_1fr_auto] items-center gap-3 border-border border-b px-4 py-3 last:border-b-0 sm:rounded-2xl sm:border sm:bg-card sm:px-3 sm:last:border-b">
                             <span className="size-9 rounded-[10px] bg-muted" />
                             <div className="flex flex-col gap-1.5">
                                 <span className="h-3 w-32 rounded bg-muted" />

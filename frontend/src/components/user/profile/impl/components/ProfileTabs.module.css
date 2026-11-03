@@ -3,8 +3,9 @@
     top: 56px;
     z-index: 30;
     border-bottom: 1px solid var(--border);
-    /* Opaque, not a blur: the bar sits over scrolling text (R-10). */
-    background: color-mix(in srgb, var(--background) 95%, transparent);
+    /* Opaque: at 95% the page text showed through the bar at 375px. Only the
+       colour is set, so `.scroll-shadows-x` can paint its edge shadows. */
+    background-color: var(--background);
     /* Full bleed: pull out to the viewport edges so the sticky bar's border and
        backdrop run edge to edge, then pad the tabs back in so they line up with
        the page content underneath. The pull-out MUST equal the page gutter, so

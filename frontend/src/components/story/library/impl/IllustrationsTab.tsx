@@ -43,7 +43,7 @@ export function IllustrationsTab({ groups, records }: IIllustrationsTabProps): R
 
     return (
         <Tabs value={kind} onValueChange={(value) => setKind(String(value) as ArtKind)} className="gap-0">
-            <TabsList variant="underline" className="msv-scroll w-full max-w-full justify-start overflow-x-auto border-border border-b pb-0">
+            <TabsList variant="underline" className="w-full justify-start border-border border-b pb-0">
                 {ART_KINDS.map((key) => (
                     <TabsTab key={key} value={key} className="grow-0 px-3 max-sm:min-h-11">
                         {t(`illustrations.kind.${key}`)}

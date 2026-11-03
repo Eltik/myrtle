@@ -148,120 +148,151 @@ function Network({ data, chart, onChart, onOpenFile, server, t }: INetworkTabPro
     };
 
     return (
-        <div ref={wrapRef} className={cn("relative overflow-hidden rounded-2xl border border-border bg-card", fullscreen ? "h-screen" : "h-[min(72vh,600px)] min-h-90")}>
-            <PanZoom
-                content={content}
-                insets={insets}
-                onZoom={onZoom}
-                handle={panRef}
-                className="absolute inset-0 size-full select-none"
-                label={group ? group.name : t("network.territories")}
-                minZoom={0.4}
-                maxZoom={group ? 6 : 10}
-                overlay={group ? undefined : (view) => <TerritoryLabels data={data} view={view} hover={hover} onHover={setHover} onPick={goChart} t={t} />}
-            >
-                {group ? <ChartLayer group={group} people={people} server={server} picked={picked} onOpenFile={openFile} /> : <TerritoriesLayer data={data} t={t} hover={hover} onHover={setHover} onPick={goChart} />}
-            </PanZoom>
+        <div className="flex flex-col gap-3">
+            <div ref={wrapRef} className={cn("relative overflow-hidden rounded-2xl border border-border bg-card", fullscreen ? "h-screen" : "h-[min(72vh,600px)] min-h-90")}>
+                <PanZoom
+                    content={content}
+                    insets={insets}
+                    onZoom={onZoom}
+                    handle={panRef}
+                    className="absolute inset-0 size-full select-none"
+                    label={group ? group.name : t("network.territories")}
+                    minZoom={0.4}
+                    maxZoom={group ? 6 : 10}
+                    overlay={group ? undefined : (view) => <TerritoryLabels data={data} view={view} hover={hover} onHover={setHover} onPick={goChart} t={t} />}
+                >
+                    {group ? <ChartLayer group={group} people={people} server={server} picked={picked} onOpenFile={openFile} /> : <TerritoriesLayer data={data} t={t} hover={hover} onHover={setHover} onPick={goChart} />}
+                </PanZoom>
 
-            <div ref={toolbarRef} className="pointer-events-none absolute inset-x-3 top-3 flex flex-wrap items-start justify-between gap-2">
-                <div className="pointer-events-auto flex min-w-0 flex-col gap-2">
-                    <nav aria-label={t("network.breadcrumb")} className="flex items-center gap-1 self-start rounded-md border border-border bg-background/95 px-2 py-1 font-mono text-[10.5px] uppercase tracking-[0.14em]">
-                        <button type="button" className={cn("relative cursor-pointer pointer-coarse:after:absolute pointer-coarse:after:-inset-x-2 pointer-coarse:after:-inset-y-3.5", group ? "text-muted-foreground hover:text-foreground" : "text-primary")} onClick={() => goChart(undefined)}>
-                            {t("network.territories")}
-                        </button>
+                <div ref={toolbarRef} className="pointer-events-none absolute inset-x-3 top-3 flex flex-wrap items-start justify-between gap-2">
+                    <div className="pointer-events-auto flex min-w-0 flex-col gap-2">
+                        <nav aria-label={t("network.breadcrumb")} className="flex items-center gap-1 self-start rounded-md border border-border bg-background/95 px-2 py-1 font-mono text-[10.5px] uppercase tracking-[0.14em]">
+                            <button type="button" className={cn("relative cursor-pointer pointer-coarse:after:absolute pointer-coarse:after:-inset-x-2 pointer-coarse:after:-inset-y-3.5", group ? "text-muted-foreground hover:text-foreground" : "text-primary")} onClick={() => goChart(undefined)}>
+                                {t("network.territories")}
+                            </button>
+                            {group ? (
+                                <>
+                                    <ChevronRightIcon aria-hidden className="size-3 text-muted-foreground" />
+                                    <span className="text-primary">{group.name}</span>
+                                </>
+                            ) : null}
+                        </nav>
+                        <div className="relative w-64 max-w-[70vw]">
+                            <SearchField value={query} onChange={setQuery} placeholder={t("network.search")} label={t("network.searchLabel")} className="bg-background/95" />
+                            {query.trim() ? (
+                                <ul className="absolute inset-x-0 top-full z-10 m-0 mt-1 max-h-72 list-none overflow-y-auto rounded-md border border-border bg-popover p-1 shadow-md">
+                                    {results.length === 0 ? (
+                                        <li className="px-2 py-1.5 text-[12px] text-muted-foreground">{t("network.noMatch")}</li>
+                                    ) : (
+                                        results.map((p) => (
+                                            <li key={p.id}>
+                                                <button type="button" className="flex w-full cursor-pointer flex-col rounded-sm px-2 py-1 text-left hover:bg-accent" onClick={() => pickPerson(p)}>
+                                                    <span className="text-[13px] text-foreground">{p.name}</span>
+                                                    <span className="font-mono text-[10px] text-muted-foreground uppercase tracking-[0.1em]">{[data.forces.find((fo) => fo.id === p.factionId)?.name ?? p.factionId, p.number].filter(Boolean).join(" · ")}</span>
+                                                </button>
+                                            </li>
+                                        ))
+                                    )}
+                                </ul>
+                            ) : null}
+                        </div>
+                    </div>
+                    <div className="pointer-events-auto flex items-center gap-1.5">
                         {group ? (
-                            <>
-                                <ChevronRightIcon aria-hidden className="size-3 text-muted-foreground" />
-                                <span className="text-primary">{group.name}</span>
-                            </>
+                            <Tooltip>
+                                <TooltipTrigger
+                                    render={
+                                        <Button
+                                            size="sm"
+                                            variant="outline"
+                                            className="bg-background/95"
+                                            onClick={() => {
+                                                leaveFullscreen();
+                                                setRosters(true);
+                                            }}
+                                        />
+                                    }
+                                >
+                                    <UsersIcon aria-hidden className="size-3.5" />
+                                    {t("network.rosters")}
+                                </TooltipTrigger>
+                                <TooltipPopup side="bottom" portalProps={{ container: wrapRef }}>
+                                    {t("network.rostersHint")}
+                                </TooltipPopup>
+                            </Tooltip>
                         ) : null}
-                    </nav>
-                    <div className="relative w-64 max-w-[70vw]">
-                        <SearchField value={query} onChange={setQuery} placeholder={t("network.search")} label={t("network.searchLabel")} className="bg-background/95" />
-                        {query.trim() ? (
-                            <ul className="absolute inset-x-0 top-full z-10 m-0 mt-1 max-h-72 list-none overflow-y-auto rounded-md border border-border bg-popover p-1 shadow-md">
-                                {results.length === 0 ? (
-                                    <li className="px-2 py-1.5 text-[12px] text-muted-foreground">{t("network.noMatch")}</li>
-                                ) : (
-                                    results.map((p) => (
-                                        <li key={p.id}>
-                                            <button type="button" className="flex w-full cursor-pointer flex-col rounded-sm px-2 py-1 text-left hover:bg-accent" onClick={() => pickPerson(p)}>
-                                                <span className="text-[13px] text-foreground">{p.name}</span>
-                                                <span className="font-mono text-[10px] text-muted-foreground uppercase tracking-[0.1em]">{[data.forces.find((fo) => fo.id === p.factionId)?.name ?? p.factionId, p.number].filter(Boolean).join(" · ")}</span>
-                                            </button>
-                                        </li>
-                                    ))
-                                )}
-                            </ul>
-                        ) : null}
-                    </div>
-                </div>
-                <div className="pointer-events-auto flex items-center gap-1.5">
-                    {group ? (
+                        <div className="flex items-center rounded-md border border-border bg-background/95">
+                            <Tooltip>
+                                <TooltipTrigger render={<Button size="icon-xs" variant="ghost" aria-label={t("network.zoomOut")} onClick={() => panRef.current?.zoomBy(1.25)} />}>
+                                    <MinusIcon aria-hidden />
+                                </TooltipTrigger>
+                                <TooltipPopup side="bottom" portalProps={{ container: wrapRef }}>
+                                    {t("network.zoomOut")}
+                                </TooltipPopup>
+                            </Tooltip>
+                            <span className="min-w-12 text-center font-mono text-[11px] text-foreground tabular-nums">{f.percent(zoom)}</span>
+                            <Tooltip>
+                                <TooltipTrigger render={<Button size="icon-xs" variant="ghost" aria-label={t("network.zoomIn")} onClick={() => panRef.current?.zoomBy(0.8)} />}>
+                                    <PlusIcon aria-hidden />
+                                </TooltipTrigger>
+                                <TooltipPopup side="bottom" portalProps={{ container: wrapRef }}>
+                                    {t("network.zoomIn")}
+                                </TooltipPopup>
+                            </Tooltip>
+                        </div>
                         <Tooltip>
-                            <TooltipTrigger
-                                render={
-                                    <Button
-                                        size="sm"
-                                        variant="outline"
-                                        className="bg-background/95"
-                                        onClick={() => {
-                                            leaveFullscreen();
-                                            setRosters(true);
-                                        }}
-                                    />
-                                }
-                            >
-                                <UsersIcon aria-hidden className="size-3.5" />
-                                {t("network.rosters")}
+                            <TooltipTrigger render={<Button size="icon-sm" variant="outline" className="bg-background/95" aria-label={t("network.fit")} onClick={() => panRef.current?.fit()} />}>
+                                <LocateFixedIcon aria-hidden />
                             </TooltipTrigger>
                             <TooltipPopup side="bottom" portalProps={{ container: wrapRef }}>
-                                {t("network.rostersHint")}
+                                {t("network.fit")}
                             </TooltipPopup>
                         </Tooltip>
-                    ) : null}
-                    <div className="flex items-center rounded-md border border-border bg-background/95">
                         <Tooltip>
-                            <TooltipTrigger render={<Button size="icon-xs" variant="ghost" aria-label={t("network.zoomOut")} onClick={() => panRef.current?.zoomBy(1.25)} />}>
-                                <MinusIcon aria-hidden />
+                            <TooltipTrigger render={<Button size="icon-sm" variant="outline" className="bg-background/95" aria-label={fullscreen ? t("network.exitFullscreen") : t("network.fullscreen")} onClick={toggleFullscreen} />}>
+                                {fullscreen ? <MinimizeIcon aria-hidden /> : <MaximizeIcon aria-hidden />}
                             </TooltipTrigger>
                             <TooltipPopup side="bottom" portalProps={{ container: wrapRef }}>
-                                {t("network.zoomOut")}
-                            </TooltipPopup>
-                        </Tooltip>
-                        <span className="min-w-12 text-center font-mono text-[11px] text-foreground tabular-nums">{f.percent(zoom)}</span>
-                        <Tooltip>
-                            <TooltipTrigger render={<Button size="icon-xs" variant="ghost" aria-label={t("network.zoomIn")} onClick={() => panRef.current?.zoomBy(0.8)} />}>
-                                <PlusIcon aria-hidden />
-                            </TooltipTrigger>
-                            <TooltipPopup side="bottom" portalProps={{ container: wrapRef }}>
-                                {t("network.zoomIn")}
+                                {fullscreen ? t("network.exitFullscreen") : t("network.fullscreen")}
                             </TooltipPopup>
                         </Tooltip>
                     </div>
-                    <Tooltip>
-                        <TooltipTrigger render={<Button size="icon-sm" variant="outline" className="bg-background/95" aria-label={t("network.fit")} onClick={() => panRef.current?.fit()} />}>
-                            <LocateFixedIcon aria-hidden />
-                        </TooltipTrigger>
-                        <TooltipPopup side="bottom" portalProps={{ container: wrapRef }}>
-                            {t("network.fit")}
-                        </TooltipPopup>
-                    </Tooltip>
-                    <Tooltip>
-                        <TooltipTrigger render={<Button size="icon-sm" variant="outline" className="bg-background/95" aria-label={fullscreen ? t("network.exitFullscreen") : t("network.fullscreen")} onClick={toggleFullscreen} />}>{fullscreen ? <MinimizeIcon aria-hidden /> : <MaximizeIcon aria-hidden />}</TooltipTrigger>
-                        <TooltipPopup side="bottom" portalProps={{ container: wrapRef }}>
-                            {fullscreen ? t("network.exitFullscreen") : t("network.fullscreen")}
-                        </TooltipPopup>
-                    </Tooltip>
                 </div>
+
+                <p ref={hintRef} className="pointer-events-none absolute bottom-2 left-3 m-0 font-mono text-[10px] text-muted-foreground uppercase tracking-[0.14em]">
+                    {group ? (group.cells.length === 0 ? t("network.emptyChart") : t("network.hintChart")) : t("network.hintMap")}
+                </p>
+
+                {group ? <RostersSheet open={rosters} onOpenChange={setRosters} group={group} people={people} server={server} onOpenFile={onOpenFile} t={t} /> : null}
             </div>
-
-            <p ref={hintRef} className="pointer-events-none absolute bottom-2 left-3 m-0 font-mono text-[10px] text-muted-foreground uppercase tracking-[0.14em]">
-                {group ? (group.cells.length === 0 ? t("network.emptyChart") : t("network.hintChart")) : t("network.hintMap")}
-            </p>
-
-            {group ? <RostersSheet open={rosters} onOpenChange={setRosters} group={group} people={people} server={server} onOpenFile={onOpenFile} t={t} /> : null}
+            {group ? null : <TerritoryLegend data={data} onPick={goChart} t={t} />}
         </div>
+    );
+}
+
+/**
+ * Below sm the on-map plates are hidden (they sat on the clusters and covered them at 375), so the
+ * factions are listed under the map instead, most people first, the order the plates win space in.
+ */
+function TerritoryLegend({ data, onPick, t }: { data: ArchiveNetwork; onPick: (groupId: string) => void; t: ArchivesT }): React.ReactElement {
+    const f = useFormatters();
+    const forces = useMemo(() => [...data.forces].sort((a, b) => b.memberCount - a.memberCount || b.hexes.length - a.hexes.length), [data.forces]);
+    return (
+        <ul aria-label={t("network.legend")} className="m-0 grid list-none grid-cols-2 gap-2 p-0 sm:hidden">
+            {forces.map((fo) => (
+                <li key={fo.id} className="min-w-0">
+                    <button
+                        type="button"
+                        onClick={() => onPick(fo.groupId)}
+                        className="flex min-h-11 w-full min-w-0 cursor-pointer flex-col items-start rounded-lg border border-border border-l-2 bg-card px-2.5 py-1.5 text-left transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        style={{ borderLeftColor: hexColor(fo.cardColor, hexColor(fo.color)) }}
+                    >
+                        <span className="w-full truncate font-semibold text-[12.5px] text-foreground leading-tight">{fo.name}</span>
+                        <span className="font-mono text-[10px] text-muted-foreground tabular-nums">{t("network.forceCounts", { people: f.number(fo.memberCount), hexes: fo.hexes.length })}</span>
+                    </button>
+                </li>
+            ))}
+        </ul>
     );
 }
 
@@ -410,7 +441,11 @@ function TerritoryLabels({ data, view, hover, onHover, onPick, t }: { data: Arch
                         onClick={() => onPick(fo.groupId)}
                         onPointerEnter={() => onHover(fo.id)}
                         onPointerLeave={() => onHover(null)}
-                        className={cn("absolute top-0 left-0 flex w-max cursor-pointer flex-col whitespace-nowrap rounded-[3px] border-l-2 text-left shadow-sm transition-[background-color,box-shadow]", visible ? "pointer-events-auto" : "invisible", lit ? "z-10 bg-background ring-1 ring-border" : "bg-background/95")}
+                        className={cn(
+                            "absolute top-0 left-0 flex w-max cursor-pointer flex-col whitespace-nowrap rounded-[3px] border-l-2 text-left shadow-sm transition-[background-color,box-shadow]",
+                            visible ? "pointer-events-auto max-sm:invisible" : "invisible",
+                            lit ? "z-10 bg-background ring-1 ring-border" : "bg-background/95",
+                        )}
                         style={{ borderLeftColor: color, transform: box ? `translate(${Math.round(box.x)}px, ${Math.round(box.y)}px)` : undefined }}
                     >
                         <span className={cn("px-2 pt-1 pb-0.5 font-semibold text-foreground leading-tight", fo.cardScale >= BIG_CARD ? "text-[13px]" : "text-[11.5px]")}>{fo.name}</span>

@@ -143,28 +143,26 @@ export function StoryLibrary(): React.ReactElement {
             {hero ? <ContinueCard pick={hero} progress={progress} gameRead={gameRead} onViewChapter={viewChapter} /> : null}
 
             <Tabs value={tab} onValueChange={(value) => setTab(String(value))}>
-                <div className="msv-scroll flex max-w-full items-center gap-1 overflow-x-auto">
-                    <TabsList className="shrink-0">
-                        <TabsTab value="browse" className="shrink-0 max-sm:min-h-11">
-                            {t("library.tab.browse")}
-                        </TabsTab>
-                        <TabsTab value="reading" className="shrink-0 max-sm:min-h-11">
-                            {t("library.tab.reading")}
-                        </TabsTab>
-                        <TabsTab value="illustrations" className="shrink-0 max-sm:min-h-11">
-                            {t("library.tab.illustrations")}
-                        </TabsTab>
-                        <TabsTab value="progress" className="shrink-0 max-sm:min-h-11">
-                            {t("library.tab.progress")}
-                        </TabsTab>
-                        <TabsTab value="community" className="shrink-0 max-sm:min-h-11">
-                            {t("community.tab")}
-                        </TabsTab>
-                        <TabsTab value="characters" className="shrink-0 max-sm:min-h-11">
-                            {t("sprites.tab")}
-                        </TabsTab>
-                    </TabsList>
-                </div>
+                <TabsList className="shrink-0">
+                    <TabsTab value="browse" className="shrink-0 max-sm:min-h-11">
+                        {t("library.tab.browse")}
+                    </TabsTab>
+                    <TabsTab value="reading" className="shrink-0 max-sm:min-h-11">
+                        {t("library.tab.reading")}
+                    </TabsTab>
+                    <TabsTab value="illustrations" className="shrink-0 max-sm:min-h-11">
+                        {t("library.tab.illustrations")}
+                    </TabsTab>
+                    <TabsTab value="progress" className="shrink-0 max-sm:min-h-11">
+                        {t("library.tab.progress")}
+                    </TabsTab>
+                    <TabsTab value="community" className="shrink-0 max-sm:min-h-11">
+                        {t("community.tab")}
+                    </TabsTab>
+                    <TabsTab value="characters" className="shrink-0 max-sm:min-h-11">
+                        {t("sprites.tab")}
+                    </TabsTab>
+                </TabsList>
                 <TabsPanel value="browse" className="pt-4">
                     <Browse index={index} progress={progress} gameRead={gameRead} openGroup={openGroup} onOpenHandled={onOpenHandled} />
                 </TabsPanel>

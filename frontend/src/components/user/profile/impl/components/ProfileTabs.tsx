@@ -1,6 +1,6 @@
 import { EyeOffIcon } from "lucide-react";
 import { type ReactNode, useEffect, useRef, useState } from "react";
-import { Tabs, TabsPrimitive } from "#/components/ui/tabs";
+import { Tabs, TabsPrimitive, useTabStripScroll } from "#/components/ui/tabs";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
@@ -38,6 +38,8 @@ export const PROFILE_STICKY_OFFSET_PX = 64 + 44;
 export function ProfileTabs({ tabs, active, onChange, onIntent, end }: IProfileTabsProps) {
     const t: TypedT<typeof messages> = useT("user");
     const wrapRef = useRef<HTMLDivElement>(null);
+    const stripRef = useRef<HTMLDivElement>(null);
+    const overflowing = useTabStripScroll(stripRef);
     const [indicator, setIndicator] = useState({ left: 0, width: 0 });
 
     // Re-measured when the order changes too: saving a layout moves the active tab.
@@ -55,7 +57,7 @@ export function ProfileTabs({ tabs, active, onChange, onIntent, end }: IProfileT
     // bar keeps its own look and measured indicator. No tabpanels: the profile
     // body below is the panel, swapped by the route.
     return (
-        <Tabs value={active} onValueChange={(value) => onChange(value as TabId)} className={cn(styles.tabs, "block overflow-y-hidden")}>
+        <Tabs value={active} onValueChange={(value) => onChange(value as TabId)} ref={stripRef} className={cn(styles.tabs, "block overflow-y-hidden", overflowing && "scroll-shadows-x")}>
             <div className={styles.inner} ref={wrapRef}>
                 <TabsPrimitive.List className={styles.list} activateOnFocus={false} aria-label={t("profile.tabs.label")}>
                     {tabs.map((tab) => (

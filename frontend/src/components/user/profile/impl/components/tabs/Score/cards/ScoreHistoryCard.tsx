@@ -64,10 +64,10 @@ export function ScoreHistoryCard({ score, history, isLoading, onRetry }: IProps)
                 ) : (
                     <div className="h-44">
                         <ResponsiveContainer width="100%" height="100%">
-                            <LineChart data={points} margin={{ top: 4, right: 8, bottom: 0, left: -18 }}>
+                            <LineChart data={points} margin={{ top: 4, right: 8, bottom: 0, left: 0 }}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" strokeOpacity={0.4} vertical={false} />
                                 <XAxis dataKey="ts" type="number" scale="time" domain={["dataMin", "dataMax"]} tickFormatter={(ts: number) => f.date(ts, TICK_DATE)} tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} tickLine={false} axisLine={false} minTickGap={40} />
-                                <YAxis domain={[(min: number) => Math.max(0, Math.floor(min - 2)), (max: number) => Math.min(100, Math.ceil(max + 2))]} tickFormatter={(v: number) => `${v}%`} tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} tickLine={false} axisLine={false} width={46} />
+                                <YAxis domain={[(min: number) => Math.max(0, Math.floor(min - 2)), (max: number) => Math.min(100, Math.ceil(max + 2))]} tickFormatter={(v: number) => `${v}%`} tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} tickLine={false} axisLine={false} width={40} />
                                 <Tooltip
                                     content={({ active, payload }) => {
                                         const p = active && payload?.[0]?.payload ? (payload[0].payload as IChartPoint) : null;

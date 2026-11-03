@@ -81,7 +81,7 @@ export function EnemyPanel({ enemy, hydrationToken, onChangeEnemy, onChangeSecon
                     <NumField key={`targets-${hydrationToken}-${presetVersion}`} label={t("dps.enemy.targets")} value={enemy.targets} min={1} max={20} step={1} disabled={sec.enabled} onChange={(v) => onChangeEnemy({ targets: Math.max(1, v) })} />
                 </div>
 
-                <div className="space-y-2 rounded-md border border-border bg-muted/30 px-2.5 py-2">
+                <div className="space-y-2 sm:rounded-md sm:border sm:border-border sm:bg-muted/30 sm:px-2.5 sm:py-2">
                     <div className="flex items-center justify-between gap-2">
                         <span id="dps-secondary-label" className="font-semibold text-foreground text-sm">
                             {t("dps.enemy.secondary")}

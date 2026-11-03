@@ -39,7 +39,8 @@ interface IToolbarProps {
 }
 
 /** Filter trigger: 44px under a coarse pointer, 36px on narrow screens, the site's 32px on desktop. */
-const FILTER = "inline-flex h-9 cursor-pointer items-center gap-2 rounded-lg border border-input bg-card px-2.5 font-medium font-sans text-foreground text-xs leading-none transition-colors hover:border-foreground/20 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-input sm:h-8 pointer-coarse:h-11";
+const FILTER =
+    "inline-flex h-9 w-full cursor-pointer items-center justify-center gap-2 sm:w-auto rounded-lg border border-input bg-card px-2.5 font-medium font-sans text-foreground text-xs leading-none transition-colors hover:border-foreground/20 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-input sm:h-8 pointer-coarse:h-11";
 
 export function Toolbar({ ranking, onRanking, catalog, materials, catalogError, onRetryCatalog, scope, onScope, server, onServer, interval, onInterval, movementOnly, onMovementOnly, query, onQuery }: IToolbarProps) {
     const t: ToolbarT = useT("user");
@@ -69,7 +70,9 @@ export function Toolbar({ ranking, onRanking, catalog, materials, catalogError, 
                 </InputGroup>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2">
+            {/* Below sm a two-column grid of equal-height controls: wrapped as a flex row, the
+                segment, the two menus and the switch broke into ragged rows of mixed heights. */}
+            <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
                 <Segmented
                     label={t("leaderboard.toolbar.scope.label")}
                     value={scope}
@@ -99,7 +102,7 @@ export function Toolbar({ ranking, onRanking, catalog, materials, catalogError, 
                     </DropdownMenuContent>
                 </DropdownMenu>
                 <DropdownMenu>
-                    <HintWrap hint={movementHint}>
+                    <HintWrap hint={movementHint} className="w-full sm:w-auto">
                         <DropdownMenuTrigger className={FILTER} aria-label={t("leaderboard.toolbar.intervalLabel")} disabled={!movementAvailable}>
                             <Kicker className="mb-0">{t("leaderboard.toolbar.interval")}</Kicker>
                             <span className="font-semibold text-foreground tabular-nums">{t(intervalShortKey)}</span>
@@ -115,7 +118,7 @@ export function Toolbar({ ranking, onRanking, catalog, materials, catalogError, 
                         ))}
                     </DropdownMenuContent>
                 </DropdownMenu>
-                <HintWrap hint={movementHint ?? (movementOnly ? t("leaderboard.toolbar.movementOnly.on") : t("leaderboard.toolbar.movementOnly.off"))}>
+                <HintWrap hint={movementHint ?? (movementOnly ? t("leaderboard.toolbar.movementOnly.on") : t("leaderboard.toolbar.movementOnly.off"))} className="col-span-2 w-full sm:w-auto">
                     <button
                         type="button"
                         role="switch"
@@ -123,7 +126,7 @@ export function Toolbar({ ranking, onRanking, catalog, materials, catalogError, 
                         disabled={!movementAvailable}
                         onClick={() => onMovementOnly(!movementOnly)}
                         className={cn(
-                            "inline-flex h-9 pointer-coarse:h-11 cursor-pointer items-center gap-1.5 rounded-lg border px-2.5 font-medium font-sans text-xs leading-none transition-colors disabled:cursor-not-allowed disabled:opacity-50 sm:h-8",
+                            "inline-flex h-9 pointer-coarse:h-11 w-full cursor-pointer items-center justify-center gap-1.5 rounded-lg border px-2.5 font-medium font-sans text-xs leading-none transition-colors disabled:cursor-not-allowed disabled:opacity-50 sm:h-8 sm:w-auto",
                             movementOnly && movementAvailable
                                 ? "border-primary/40 bg-[color-mix(in_srgb,var(--primary)_10%,transparent)] text-foreground hover:bg-[color-mix(in_srgb,var(--primary)_14%,transparent)] [&>svg]:text-primary"
                                 : "border-input bg-card text-foreground hover:border-foreground/20 disabled:hover:border-input",
@@ -148,10 +151,10 @@ interface ISegmentedOption<T extends string> {
 /** Single-choice filter: a kit ToggleGroup, so it carries pressed state and a 44px coarse target, not tab roles without panels. */
 function Segmented<T extends string>({ label, value, onChange, options }: { label: string; value: T; onChange: (next: T) => void; options: ISegmentedOption<T>[] }) {
     return (
-        <ToggleGroup aria-label={label} variant="outline" value={[value]} onValueChange={(next) => next[0] && onChange(next[0] as T)}>
+        <ToggleGroup aria-label={label} variant="outline" value={[value]} onValueChange={(next) => next[0] && onChange(next[0] as T)} className="col-span-2 grid w-full auto-cols-fr grid-flow-col sm:flex sm:w-fit">
             {options.map((opt) => (
-                <HintWrap key={opt.value} hint={opt.hint}>
-                    <ToggleGroupItem value={opt.value} disabled={opt.disabled} className="px-3 text-xs sm:text-xs">
+                <HintWrap key={opt.value} hint={opt.hint} className="w-full sm:w-auto">
+                    <ToggleGroupItem value={opt.value} disabled={opt.disabled} className="h-9 pointer-coarse:h-11 w-full px-3 text-xs sm:h-8 sm:w-auto sm:text-xs">
                         {opt.label}
                     </ToggleGroupItem>
                 </HintWrap>

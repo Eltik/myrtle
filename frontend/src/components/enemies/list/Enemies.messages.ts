@@ -99,6 +99,14 @@ export const messages = {
         text: "{count, plural, one {Clear # filter} other {Clear # filters}}",
         description: "Inline link after the result count that drops every active filter, counting how many are on.",
     },
+    "list.filters.button": {
+        text: "Filters",
+        description: "Button beside the search box on phone and tablet widths; opens a side sheet holding the level, damage, attack, race, immunity and Appears In filters. A count badge follows when any are on.",
+    },
+    "list.filters.title": {
+        text: "Filters",
+        description: "Title of the side sheet that holds the enemy filters on phone and tablet widths.",
+    },
     "list.hint": {
         text: "Click a card for details",
         description: "Hint beside the pager, hidden on phone widths, telling the reader a card opens the enemy's page.",

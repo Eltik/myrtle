@@ -113,7 +113,7 @@ function StackingSummary({ team, ctx }: { team: ITeamBuffs; ctx: ITeamBuffsConte
     const zones = ZONE_FIELDS.filter((f) => ctx.sources.some((s) => s.zone === f.key));
     if (zones.length === 0) return null;
     return (
-        <div className="space-y-1.5 rounded-md border border-border bg-muted/30 p-2">
+        <div className="space-y-1.5 sm:rounded-md sm:border sm:border-border sm:bg-muted/30 sm:p-2">
             <h3 className="font-semibold text-foreground text-sm">{t("dps.stacking.title")}</h3>
             {zones.map((f) => {
                 const r = resolveZone(f.key, [{ origin: "team", zones: team.zones }], ctx.sources);

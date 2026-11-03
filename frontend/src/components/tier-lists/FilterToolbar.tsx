@@ -62,46 +62,50 @@ export function FilterToolbar({ type, sort, query, selectedFlairs, flairOptions,
     const flairsOpen = flairsOpenOverride ?? isDesktop;
 
     return (
-        <div className="page-bleed sticky top-14 z-30 border-border border-y bg-background/95 px-(--page-gutter) sm:top-16">
-            <div className="py-3">
-                <div className="flex flex-wrap items-center gap-2.5">
-                    <ToggleGroup aria-label={t("browse.type.label")} value={[type]} onValueChange={(next) => next[0] && onTypeChange(next[0] as TierListType)} variant="outline" size="sm" className="shrink-0">
-                        {typeTabs.map((tab) => (
-                            <ToggleGroupItem key={tab.value} value={tab.value} className="gap-1.5 px-3 text-xs sm:text-xs">
-                                {tab.value === "favorites" && (
-                                    <svg viewBox="0 0 24 24" fill={type === tab.value ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-3" aria-hidden="true">
-                                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-                                    </svg>
-                                )}
-                                {t(tab.labelKey)}
-                            </ToggleGroupItem>
-                        ))}
-                    </ToggleGroup>
-
-                    <Menu>
-                        <MenuTrigger
-                            className={cn("relative inline-flex h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-lg border border-border bg-popover px-2.5 font-medium font-sans text-foreground text-xs leading-none transition-colors hover:bg-accent", "[&>svg]:h-3 [&>svg]:w-3 [&>svg]:opacity-80", COARSE_HIT)}
-                            aria-label={t("browse.sortTrigger", { label: activeSort ? t(activeSort.labelKey) : "" })}
-                        >
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                                <path d="M3 6h18" />
-                                <path d="M7 12h10" />
-                                <path d="M11 18h2" />
-                            </svg>
-                            <span>{activeSort ? t(activeSort.labelKey) : ""}</span>
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                                <path d="m6 9 6 6 6-6" />
-                            </svg>
-                        </MenuTrigger>
-                        <MenuPopup align="start" sideOffset={6} className="min-w-56">
-                            {SORT_OPTIONS.map((opt) => (
-                                <MenuItem key={opt.value} onClick={() => onSortChange(opt.value)} className={cn("flex-col items-start gap-0.5 py-1.5", opt.value === sort && "bg-accent/60 text-accent-foreground")}>
-                                    <span className="font-medium">{t(opt.labelKey)}</span>
-                                    <span className="font-mono text-[10.5px] text-muted-foreground">{t(opt.hintKey)}</span>
-                                </MenuItem>
+        // Below sm the bar dissolves (display: contents) so only the type/sort row sticks: the full stack was ~240px, 47% of a 375px viewport.
+        // At sm and up the bar stays inside the content column: bleeding by the gutter hung its hairlines past the cards at 1440.
+        <div className="max-sm:contents sm:sticky sm:top-16 sm:z-30 sm:border-border sm:border-y sm:bg-background">
+            <div className="max-sm:contents sm:py-3">
+                <div className="flex flex-wrap items-center gap-2.5 max-sm:contents">
+                    <div className="page-bleed sticky top-14 z-30 flex flex-wrap items-center gap-2.5 border-border border-y bg-background px-(--page-gutter) py-2.5 sm:contents">
+                        <ToggleGroup aria-label={t("browse.type.label")} value={[type]} onValueChange={(next) => next[0] && onTypeChange(next[0] as TierListType)} variant="outline" size="sm" className="shrink-0">
+                            {typeTabs.map((tab) => (
+                                <ToggleGroupItem key={tab.value} value={tab.value} className="gap-1.5 px-3 text-xs sm:text-xs">
+                                    {tab.value === "favorites" && (
+                                        <svg viewBox="0 0 24 24" fill={type === tab.value ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-3" aria-hidden="true">
+                                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                                        </svg>
+                                    )}
+                                    {t(tab.labelKey)}
+                                </ToggleGroupItem>
                             ))}
-                        </MenuPopup>
-                    </Menu>
+                        </ToggleGroup>
+
+                        <Menu>
+                            <MenuTrigger
+                                className={cn("relative inline-flex h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-lg border border-border bg-popover px-2.5 font-medium font-sans text-foreground text-xs leading-none transition-colors hover:bg-accent", "[&>svg]:h-3 [&>svg]:w-3 [&>svg]:opacity-80", COARSE_HIT)}
+                                aria-label={t("browse.sortTrigger", { label: activeSort ? t(activeSort.labelKey) : "" })}
+                            >
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                    <path d="M3 6h18" />
+                                    <path d="M7 12h10" />
+                                    <path d="M11 18h2" />
+                                </svg>
+                                <span>{activeSort ? t(activeSort.labelKey) : ""}</span>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                    <path d="m6 9 6 6 6-6" />
+                                </svg>
+                            </MenuTrigger>
+                            <MenuPopup align="start" sideOffset={6} className="min-w-56">
+                                {SORT_OPTIONS.map((opt) => (
+                                    <MenuItem key={opt.value} onClick={() => onSortChange(opt.value)} className={cn("flex-col items-start gap-0.5 py-1.5", opt.value === sort && "bg-accent/60 text-accent-foreground")}>
+                                        <span className="font-medium">{t(opt.labelKey)}</span>
+                                        <span className="font-mono text-[10.5px] text-muted-foreground">{t(opt.hintKey)}</span>
+                                    </MenuItem>
+                                ))}
+                            </MenuPopup>
+                        </Menu>
+                    </div>
 
                     {flairOptions.length > 0 && (
                         <button
@@ -123,9 +127,7 @@ export function FilterToolbar({ type, sort, query, selectedFlairs, flairOptions,
                         </button>
                     )}
 
-                    {authorFilter ? <div className="order-last w-full sm:order-none sm:ml-auto sm:w-auto">{authorFilter}</div> : null}
-
-                    <div className={cn("relative min-w-0 flex-1 sm:w-72 sm:max-w-72 sm:flex-none", !authorFilter && "sm:ml-auto")}>
+                    <div className={cn("relative mt-2.5 min-w-0 flex-1 sm:order-2 sm:mt-0 sm:w-72 sm:max-w-72 sm:flex-none", !authorFilter && "sm:ml-auto")}>
                         <span aria-hidden="true" className="pointer-events-none absolute inset-y-0 left-2.5 z-10 flex items-center text-black dark:text-muted-foreground">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5" aria-hidden="true">
                                 <circle cx="11" cy="11" r="8" />
@@ -147,6 +149,8 @@ export function FilterToolbar({ type, sort, query, selectedFlairs, flairOptions,
                             </button>
                         )}
                     </div>
+
+                    {authorFilter ? <div className="mt-2.5 w-full sm:order-1 sm:mt-0 sm:ml-auto sm:w-auto">{authorFilter}</div> : null}
                 </div>
 
                 {flairOptions.length > 0 && (

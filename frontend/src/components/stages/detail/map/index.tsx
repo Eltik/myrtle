@@ -43,6 +43,21 @@ const H_GUTTER = 24;
 const HOVER_OPEN_DELAY = 180;
 /** Keep the board within this fraction of the viewport height so tall maps stay fully visible without dominating the page. */
 const MAX_VIEWPORT_HEIGHT_FRACTION = 0.82;
+/** The board's `perspective-[900px]`, in px. */
+const PERSPECTIVE_PX = 900;
+/** The 3D board's `rotate-x-30` tilt. */
+const TILT_RAD = Math.PI / 6;
+
+/**
+ * How much wider than its flat width the tilted board draws. The tilt brings the board's near edge
+ * H/2 * sin(30deg) toward the viewer, and the perspective magnifies it by d / (d - z): a 496px-tall board
+ * draws its near row 1.16x wide, which is what cut the edge cells off at 375 when the fit used the flat width.
+ */
+function perspectiveSpread(naturalHeight: number, is3D: boolean): number {
+    if (!is3D) return 1;
+    const nearZ = (naturalHeight / 2) * Math.sin(TILT_RAD);
+    return PERSPECTIVE_PX / Math.max(PERSPECTIVE_PX - nearZ, PERSPECTIVE_PX / 4);
+}
 
 function MapControls({ onPrev, onNext, atStart, atEnd, hasRoutes, is3D, onToggle3D }: { onPrev: () => void; onNext: () => void; atStart: boolean; atEnd: boolean; hasRoutes: boolean; is3D: boolean; onToggle3D: () => void }) {
     const t: TypedT<typeof messages> = useT("stages");
@@ -169,7 +184,7 @@ const MapBoard = forwardRef<IMapViewHandle, { level: ILevel; code?: string; sett
         const el = containerRef.current;
         if (!el) return;
         const update = () => {
-            const widthScale = (el.clientWidth - H_GUTTER) / naturalWidth;
+            const widthScale = (el.clientWidth - H_GUTTER) / (naturalWidth * perspectiveSpread(naturalHeight, is3D));
             const viewportH = typeof window === "undefined" ? Infinity : window.innerHeight;
             const heightScale = (viewportH * MAX_VIEWPORT_HEIGHT_FRACTION) / naturalHeight;
             setScale(Math.min(1, Math.max(0.1, Math.min(widthScale, heightScale))));
@@ -184,7 +199,7 @@ const MapBoard = forwardRef<IMapViewHandle, { level: ILevel; code?: string; sett
             ro.disconnect();
             window.removeEventListener("resize", update);
         };
-    }, [naturalWidth, naturalHeight]);
+    }, [naturalWidth, naturalHeight, is3D]);
 
     const step = useCallback((delta: number) => setFocus((f) => Math.max(-1, Math.min(maxIndex, f + delta))), [maxIndex]);
     const prev = useCallback(() => step(-1), [step]);

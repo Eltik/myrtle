@@ -42,6 +42,7 @@ export const messages = {
         text: "{name}: {people, plural, one {# person} other {# people}}, {hexes, plural, one {# hex} other {# hexes}}",
         description: "Accessible name of a faction on the territories map. {name} is the faction name from game data.",
     },
+    "network.legend": { text: "Factions", description: "Accessible name of the faction list shown under the territories map on phone widths, where the on-map labels are hidden. Each entry opens that faction's chart." },
     "network.forceCounts": {
         text: "{people, plural, one {# person} other {# people}} · {hexes, plural, one {# hex} other {# hexes}}",
         description: "Small counts on a faction label on the map.",

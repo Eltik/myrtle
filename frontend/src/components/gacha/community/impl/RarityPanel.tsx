@@ -125,25 +125,29 @@ function RarityRow({ row, count, observed, hasData, personal }: { row: IRarityRo
 
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[10.5px] text-muted-foreground">
                 <span className="tabular-nums">{hasData ? t("community.rarity.pulls", { count: f.number(count) }) : "-"}</span>
-                <span className="text-subtle-foreground" aria-hidden>
-                    ·
+                {/* Each separator is the first child of the item after it, so a wrap carries it to the
+                    next line instead of leaving "26,173 pulls ·" dangling at the end of this one. */}
+                <span className="inline-flex items-center gap-3">
+                    <span className="text-subtle-foreground" aria-hidden>
+                        ·
+                    </span>
+                    <ComparisonChip label={t("community.rarity.chip.vsExpected")} baseline={row.expected} comparison={vsExpected} />
                 </span>
-                <ComparisonChip label={t("community.rarity.chip.vsExpected")} baseline={row.expected} comparison={vsExpected} />
                 {personal != null && personalVsCommunity != null ? (
-                    <>
+                    <span className="inline-flex items-center gap-3">
                         <span className="text-subtle-foreground" aria-hidden>
                             ·
                         </span>
                         <ComparisonChip label={t("community.rarity.chip.youVsCommunity")} baseline={observed} comparison={personalVsCommunity} highlight />
-                    </>
+                    </span>
                 ) : null}
                 {personal != null && personalVsExpected != null ? (
-                    <>
+                    <span className="inline-flex items-center gap-3">
                         <span className="text-subtle-foreground" aria-hidden>
                             ·
                         </span>
                         <ComparisonChip label={t("community.rarity.chip.youVsExpected")} baseline={row.expected} comparison={personalVsExpected} highlight />
-                    </>
+                    </span>
                 ) : null}
             </div>
         </div>

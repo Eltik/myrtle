@@ -127,8 +127,8 @@ const STAGE_VIRTUAL_OVERSCAN = 6;
  */
 type FlatRow =
     | { key: string; kind: "group"; group: IGroupVM; first: boolean }
-    | { key: string; kind: "event"; group: IGroupVM; event: IEventVM; open: boolean; containerFirst: boolean; blockLast: boolean; containerLast: boolean }
-    | { key: string; kind: "stages"; group: IGroupVM; event: IEventVM; cards: IStageCardVM[]; first: boolean; last: boolean; blockLast: boolean; containerLast: boolean };
+    | { key: string; kind: "event"; group: IGroupVM; event: IEventVM; open: boolean; containerFirst: boolean; containerLast: boolean }
+    | { key: string; kind: "stages"; group: IGroupVM; event: IEventVM; cards: IStageCardVM[]; first: boolean; last: boolean; containerLast: boolean };
 
 function buildFlatRows(groups: IGroupVM[], searching: boolean, open: Record<string, boolean>, closedSections: Record<string, boolean>, cols: number): FlatRow[] {
     const rows: FlatRow[] = [];
@@ -142,23 +142,49 @@ function buildFlatRows(groups: IGroupVM[], searching: boolean, open: Record<stri
             if (zoneOpen(event.zoneId)) {
                 const chunks: IStageCardVM[][] = [];
                 for (let i = 0; i < event.stages.length; i += cols) chunks.push(event.stages.slice(i, i + cols));
-                const headerBlockLast = chunks.length === 0;
-                rows.push({ key: `e-${event.zoneId}`, kind: "event", group, event, open: true, containerFirst: ei === 0, blockLast: headerBlockLast, containerLast: headerBlockLast && isLastEvent });
+                const headerLast = chunks.length === 0;
+                rows.push({ key: `e-${event.zoneId}`, kind: "event", group, event, open: true, containerFirst: ei === 0, containerLast: headerLast && isLastEvent });
                 chunks.forEach((cards, ci) => {
                     const last = ci === chunks.length - 1;
-                    rows.push({ key: `s-${event.zoneId}-${ci}`, kind: "stages", group, event, cards, first: ci === 0, last, blockLast: last, containerLast: last && isLastEvent });
+                    rows.push({ key: `s-${event.zoneId}-${ci}`, kind: "stages", group, event, cards, first: ci === 0, last, containerLast: last && isLastEvent });
                 });
             } else {
-                rows.push({ key: `e-${event.zoneId}`, kind: "event", group, event, open: false, containerFirst: ei === 0, blockLast: true, containerLast: isLastEvent });
+                rows.push({ key: `e-${event.zoneId}`, kind: "event", group, event, open: false, containerFirst: ei === 0, containerLast: isLastEvent });
             }
         });
     });
     return rows;
 }
 
-/** Rebuilds the group's `overflow-hidden rounded-2xl border` card across the flattened rows it spans. */
-function containerBorder(row: { containerFirst?: boolean; blockLast: boolean; containerLast: boolean }): string {
-    return cn("border-border border-r border-l bg-card", row.containerFirst && "overflow-hidden rounded-t-2xl border-t", row.blockLast && "border-b", row.containerLast && "overflow-hidden rounded-b-2xl");
+/**
+ * A row's place inside its group's panel. The panel itself is one element drawn behind the rows (see
+ * `GroupPanels`): per-row side borders read as separate square strips with hairline gaps where the
+ * measured row heights rounded. Rows sit 1px inside the panel border and only clip their own tint to its corners.
+ */
+function containerRow(row: { containerFirst?: boolean; containerLast: boolean }): string {
+    return cn("mx-px", row.containerFirst && "overflow-hidden rounded-t-[calc(var(--radius-2xl)-1px)]", row.containerLast && "overflow-hidden rounded-b-[calc(var(--radius-2xl)-1px)]");
+}
+
+/** One `rounded-2xl border bg-card` panel per open group, spanning its first zone row to its last. */
+function GroupPanels({ rows, measurements, scrollMargin }: { rows: FlatRow[]; measurements: ReadonlyArray<{ start: number; end: number }>; scrollMargin: number }) {
+    const spans: Array<{ key: string; top: number; height: number }> = [];
+    let first = -1;
+    rows.forEach((row, i) => {
+        if (row.kind === "event" && row.containerFirst) first = i;
+        if (row.kind !== "group" && row.containerLast && first >= 0) {
+            const a = measurements[first];
+            const b = measurements[i];
+            if (a && b) spans.push({ key: row.group.key, top: a.start - scrollMargin - 1, height: b.end - a.start + 2 });
+            first = -1;
+        }
+    });
+    return (
+        <>
+            {spans.map((span) => (
+                <div key={span.key} aria-hidden="true" className="pointer-events-none absolute inset-x-0 rounded-2xl border border-border bg-card" style={{ top: span.top, height: span.height }} />
+            ))}
+        </>
+    );
 }
 
 interface IVirtualStageTreeProps {
@@ -232,9 +258,12 @@ function VirtualStageTree({ groups, searching, open, closedSections, onToggleSec
         onScrolled();
     }, [scrollZone, rows, virtualizer, onScrolled]);
 
+    const virtualItems = virtualizer.getVirtualItems();
+
     return (
         <div ref={parentRef} style={{ height: virtualizer.getTotalSize(), position: "relative", width: "100%" }}>
-            {virtualizer.getVirtualItems().map((vi) => {
+            <GroupPanels rows={rows} measurements={virtualizer.measurementsCache} scrollMargin={scrollMargin} />
+            {virtualItems.map((vi) => {
                 const row = rows[vi.index];
                 if (!row) return null;
                 return (
@@ -281,7 +310,7 @@ function EventHeaderRow({ row, onToggle, onDetails }: { row: Extract<FlatRow, { 
     const { event, open, group } = row;
     const cover = coverImage(event);
     return (
-        <div className={containerBorder(row)} style={{ ["--rowtone" as string]: event.tone }} {...(row.containerFirst ? { id: `section-${group.key}` } : {})}>
+        <div className={cn(containerRow(row), !row.containerFirst && "border-border border-t")} style={{ ["--rowtone" as string]: event.tone }} {...(row.containerFirst ? { id: `section-${group.key}` } : {})}>
             <div id={`zone-${event.zoneId}`} className="msv-row relative flex items-center gap-3 px-3.5 py-3.5 sm:gap-4 sm:px-4.5" style={{ background: open ? `color-mix(in oklch, ${event.tone} 7%, transparent)` : "transparent" }}>
                 {open && <span className="pointer-events-none absolute top-0 bottom-0 left-0 z-1 w-0.5 rounded-r" style={{ background: event.tone }} />}
 
@@ -323,7 +352,7 @@ function EventHeaderRow({ row, onToggle, onDetails }: { row: Extract<FlatRow, { 
 function StagesRow({ row, cols }: { row: Extract<FlatRow, { kind: "stages" }>; cols: number }) {
     const { event } = row;
     return (
-        <div className={containerBorder(row)} style={{ ["--rowtone" as string]: event.tone }}>
+        <div className={containerRow(row)} style={{ ["--rowtone" as string]: event.tone }}>
             <div className={cn("bg-background/40 px-3 sm:px-4", row.first ? "border-border border-t pt-5" : "pt-2.5 sm:pt-3", row.last && "pb-4 sm:pb-4.5")}>
                 <div className="grid gap-2.5 sm:gap-3" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
                     {row.cards.map((st) => (
@@ -442,7 +471,10 @@ function FeaturedHero({ event, onBrowse, onDetails }: { event: IEventVM; onBrows
             {cover && <StagePreview src={cover} />}
             {/* Legibility + brand wash: side sweep for wide screens, bottom anchor so text survives bright art at any width. */}
             <div className="pointer-events-none absolute inset-0" style={{ background: "linear-gradient(90deg, rgba(7,9,12,0.86) 0%, rgba(7,9,12,0.55) 42%, rgba(7,9,12,0.15) 100%)" }} />
-            <div className="pointer-events-none absolute inset-0" style={{ background: "linear-gradient(0deg, rgba(7,9,12,0.85) 0%, rgba(7,9,12,0.35) 45%, rgba(7,9,12,0) 70%)" }} />
+            <div className="pointer-events-none absolute inset-0 max-sm:hidden" style={{ background: "linear-gradient(0deg, rgba(7,9,12,0.85) 0%, rgba(7,9,12,0.35) 45%, rgba(7,9,12,0) 70%)" }} />
+            {/* Below sm the title wraps up into the art and runs full width, past the side sweep. Every point a title or meta line can
+                reach (the lower 75%) keeps >= 0.68 of the scrim: over pure-white art white text then measures >= 7.16:1, white/75 >= 4.89:1. */}
+            <div className="pointer-events-none absolute inset-0 sm:hidden" style={{ background: "linear-gradient(0deg, rgba(7,9,12,0.82) 0%, rgba(7,9,12,0.78) 62%, rgba(7,9,12,0.5) 100%)" }} />
             <div className="pointer-events-none absolute inset-0" style={{ background: "radial-gradient(90% 130% at 90% 0%, color-mix(in oklch, var(--primary) 26%, transparent), transparent 55%)" }} />
 
             <div className="absolute inset-0 flex flex-col justify-between p-4.5 sm:p-7">
@@ -450,7 +482,7 @@ function FeaturedHero({ event, onBrowse, onDetails }: { event: IEventVM; onBrows
                     <span className="inline-flex h-5.5 items-center rounded-full border px-2.5 font-mono font-semibold text-[10px] text-white" style={{ borderColor: `color-mix(in oklch, ${event.tone} 55%, transparent)`, background: `color-mix(in oklch, ${event.tone} 16%, rgba(0,0,0,0.35))` }}>
                         {tNav(STAGE_GROUP_LABEL_KEY[event.group])}
                     </span>
-                    {event.kicker && <span className="font-mono text-[10px] text-white/55 uppercase tracking-[0.12em]">{event.kicker}</span>}
+                    {event.kicker && <span className="font-mono text-[10px] text-white/75 uppercase tracking-[0.12em]">{event.kicker}</span>}
                 </div>
                 <div>
                     <div className="text-balance font-bold font-sans text-[25px] text-white leading-[1.02] tracking-[-0.03em] sm:max-w-[80%] sm:text-[34px]" style={{ textShadow: "0 2px 24px rgba(0,0,0,0.55)" }}>
