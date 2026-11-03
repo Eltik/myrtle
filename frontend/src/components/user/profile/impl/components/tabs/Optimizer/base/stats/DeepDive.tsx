@@ -1,5 +1,5 @@
-import { Camera, ChevronDown, Copy, X } from "lucide-react";
-import { useState } from "react";
+import { Camera, Check, ChevronDown, Copy, X } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Button } from "#/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "#/components/ui/collapsible";
 import { Input } from "#/components/ui/input";
@@ -124,6 +124,13 @@ export function DeepDive() {
     const periodMult = { day: 1, week: 7, month: 30, year: 365 }[period];
     const periodLabel = t(PERIOD_SUFFIX[period]);
     const [snapshot, setSnapshot] = useState<ISnapshot | null>(null);
+    // The copy button says it worked for two seconds; nothing else on screen changes.
+    const [copied, setCopied] = useState(false);
+    useEffect(() => {
+        if (!copied) return;
+        const timer = setTimeout(() => setCopied(false), 2000);
+        return () => clearTimeout(timer);
+    }, [copied]);
     const api = useBaseOptimizer();
     const evaluation = api.evaluation;
     if (!evaluation) return null;
@@ -149,7 +156,7 @@ export function DeepDive() {
 
     return (
         <Collapsible onOpenChange={setOpen} open={open}>
-            <CollapsibleTrigger className="flex w-full items-center justify-between rounded-2xl border border-border bg-card px-4 py-2.5 transition-colors hover:bg-muted/40">
+            <CollapsibleTrigger className="flex pointer-coarse:min-h-11 w-full items-center justify-between rounded-2xl border border-border bg-card px-4 py-2.5 transition-colors hover:bg-muted/40">
                 <span className="font-medium text-[13px]">{t("profile.base.deep.title")}</span>
                 <ChevronDown className={cn("size-4 text-muted-foreground transition-transform", open && "rotate-180")} />
             </CollapsibleTrigger>
@@ -164,7 +171,7 @@ export function DeepDive() {
                                     <span className="text-[12px]">{rt("profile.base.deep.logInBefore", { time: <span className="font-semibold text-foreground">{clockAfter(claim.next_full_hours, f)}</span> })}</span>
                                     <span className="text-[11px] text-muted-foreground">
                                         {t("profile.base.deep.stalls", { room: stallRoom ? roomLabel(stallRoom.room_type, api.catalog) : t("profile.base.deep.firstRoom"), duration: hoursLabel(claim.next_full_hours, t) })}{" "}
-                                        <TileTooltip label={<span className="block max-w-64">{t("profile.base.deep.conservative.tooltip")}</span>}>
+                                        <TileTooltip focusable label={<span className="block max-w-64">{t("profile.base.deep.conservative.tooltip")}</span>}>
                                             <span className="cursor-help underline decoration-dotted underline-offset-2">{t("profile.base.deep.conservative")}</span>
                                         </TileTooltip>
                                     </span>
@@ -213,7 +220,7 @@ export function DeepDive() {
                                         </span>
                                     )}
                                 </div>
-                                <div className="flex items-center gap-2">
+                                <div className="flex flex-wrap items-center gap-2">
                                     <ToggleGroup
                                         aria-label={t("profile.base.deep.cadence.aria")}
                                         onValueChange={(next: string[]) => {
@@ -322,9 +329,9 @@ export function DeepDive() {
                     )}
 
                     <section className="flex flex-col gap-1.5">
-                        <div className="flex items-center justify-between gap-3">
+                        <div className="flex flex-wrap items-center justify-between gap-3">
                             <h3 className="kicker">{t("profile.base.deep.compare")}</h3>
-                            <div className="flex items-center gap-1.5">
+                            <div className="flex flex-wrap items-center gap-1.5">
                                 <Button
                                     disabled={!api.rotation}
                                     onClick={() => {
@@ -336,13 +343,16 @@ export function DeepDive() {
                                                 lines.push(`  ${t("profile.base.deep.copy.room", { room: roomLabel(r.room_type, api.catalog), operators: r.recommended.map((o) => o.name).join(", ") })}`);
                                             }
                                         }
-                                        void navigator.clipboard.writeText(lines.join("\n"));
+                                        navigator.clipboard.writeText(lines.join("\n")).then(
+                                            () => setCopied(true),
+                                            () => setCopied(false),
+                                        );
                                     }}
                                     size="sm"
                                     variant="ghost"
                                 >
-                                    <Copy />
-                                    {t("profile.base.deep.copyPlan")}
+                                    {copied ? <Check /> : <Copy />}
+                                    <span aria-live="polite">{copied ? t("profile.base.deep.copied") : t("profile.base.deep.copyPlan")}</span>
                                 </Button>
                                 <Button onClick={() => setSnapshot(live)} size="sm" variant="outline">
                                     <Camera />

@@ -216,6 +216,10 @@ export const messages = {
         text: "Copy plan",
         description: "Button that copies the planned staffing to the clipboard as text.",
     },
+    "profile.base.deep.copied": {
+        text: "Copied",
+        description: "Replaces the Copy plan button label for two seconds after the plan text reached the clipboard.",
+    },
     "profile.base.deep.copy.header": {
         text: "Base plan - {lmd} LMD/day, {exp} EXP/day",
         description: "First line of the copied plan. 'LMD' and 'EXP' are the game's own abbreviations.",

@@ -45,7 +45,7 @@ export function ResolutionBadge({ resolution, today, note, caption, returning, c
         return (
             <div className={cn("flex flex-col items-start gap-0.5 sm:items-end", className)}>
                 <Tooltip>
-                    <TooltipTrigger render={<Badge variant="secondary" />}>{t("release.badge.returning")}</TooltipTrigger>
+                    <TooltipTrigger render={<Badge variant="secondary" tabIndex={0} />}>{t("release.badge.returning")}</TooltipTrigger>
                     <TooltipPopup className="max-w-xs">{t("release.badge.returning.title")}</TooltipPopup>
                 </Tooltip>
                 {note && <span className="font-sans text-[11px] text-muted-foreground">{note}</span>}
@@ -58,7 +58,7 @@ export function ResolutionBadge({ resolution, today, note, caption, returning, c
             <div className={cn("flex flex-col items-start gap-0.5 sm:items-end", className)}>
                 {hint ? (
                     <Tooltip>
-                        <TooltipTrigger render={<Badge variant="secondary" className="text-muted-foreground" />}>{label}</TooltipTrigger>
+                        <TooltipTrigger render={<Badge variant="secondary" tabIndex={0} className="text-muted-foreground" />}>{label}</TooltipTrigger>
                         <TooltipPopup className="max-w-xs">{hint}</TooltipPopup>
                     </Tooltip>
                 ) : (
@@ -117,9 +117,11 @@ export function ResolutionBadge({ resolution, today, note, caption, returning, c
         </>
     );
     if (!title) return <div className={blockClassName}>{body}</div>;
+    // biome-ignore lint/a11y/noNoninteractiveTabindex: the override note and the overdue explanation live only in this tooltip, so a keyboard reader has to reach it
+    const trigger = <div tabIndex={0} className={blockClassName} />;
     return (
         <Tooltip>
-            <TooltipTrigger render={<div className={blockClassName} />}>{body}</TooltipTrigger>
+            <TooltipTrigger render={trigger}>{body}</TooltipTrigger>
             <TooltipPopup className="max-w-xs">{title}</TooltipPopup>
         </Tooltip>
     );

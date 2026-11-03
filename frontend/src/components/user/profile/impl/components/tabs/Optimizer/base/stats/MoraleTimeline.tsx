@@ -1,7 +1,6 @@
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import type { IMoraleTimeline } from "#/lib/api/user";
 import { type Catalog, roomLabel } from "#/lib/base/catalog";
-import { roomAccent } from "#/lib/base/room-colors";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
@@ -21,18 +20,22 @@ function Sparkline({ samples }: { samples: number[] }) {
     const points = samples.map((morale, index) => `${(pad + index * step).toFixed(1)},${y(morale).toFixed(1)}`).join(" ");
 
     return (
-        <svg className="shrink-0" height={h} role="img" viewBox={`0 0 ${w} ${h}`} width={w}>
+        <svg className="shrink-0 text-muted-foreground" height={h} role="img" viewBox={`0 0 ${w} ${h}`} width={w}>
             <title>{t("profile.base.morale.sparkline")}</title>
-            <polyline fill="none" points={points} stroke="var(--color-red-500, #ef4444)" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" />
+            <polyline fill="none" points={points} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" />
         </svg>
     );
 }
 
-export function MoraleTimeline({ catalog, timeline }: { catalog: Catalog; timeline: IMoraleTimeline[] }) {
+/**
+ * `label` names the scroll region: it scrolls but holds nothing focusable, so
+ * it takes the tab stop itself and keyboard users can scroll it.
+ */
+export function MoraleTimeline({ catalog, timeline, label }: { catalog: Catalog; timeline: IMoraleTimeline[]; label: string }) {
     return (
-        <div className="grid max-h-72 grid-cols-1 gap-1.5 overflow-y-auto pr-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        // biome-ignore lint/a11y/noNoninteractiveTabindex: a scroll region with no focusable content needs the tab stop to be scrollable by keyboard
+        <section aria-label={label} className="grid max-h-72 grid-cols-1 gap-1.5 overflow-y-auto pr-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" tabIndex={0}>
             {timeline.map((row) => {
-                const accent = roomAccent(row.room_type);
                 const low = row.end < MORALE_MAX / 2;
 
                 return (
@@ -42,18 +45,16 @@ export function MoraleTimeline({ catalog, timeline }: { catalog: Catalog; timeli
                         </span>
                         <div className="flex min-w-0 flex-1 flex-col">
                             <span className="truncate font-medium text-[10px]">{row.operator.name}</span>
-                            <span className="truncate text-[9px]" style={{ color: accent.text }}>
-                                {roomLabel(row.room_type, catalog)}
-                            </span>
+                            <span className="truncate text-[9px] text-muted-foreground">{roomLabel(row.room_type, catalog)}</span>
                             <Sparkline samples={row.samples} />
                         </div>
-                        <span className={cn("shrink-0 font-mono font-semibold text-[11px] tabular-nums", low ? "text-destructive-foreground" : "text-foreground/80")}>
+                        <span className={cn("shrink-0 font-mono font-semibold text-[11px] tabular-nums", low ? "text-destructive-foreground" : "text-foreground")}>
                             {row.end.toFixed(1)}
                             <span className="text-[9px] text-subtle-foreground">/{MORALE_MAX}</span>
                         </span>
                     </div>
                 );
             })}
-        </div>
+        </section>
     );
 }

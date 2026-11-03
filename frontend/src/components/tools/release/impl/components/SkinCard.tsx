@@ -76,11 +76,21 @@ export function SkinCard({ skin, on, lookup, onPick }: { skin: IPlanSkin; on: bo
                 />
                 <TooltipPopup>{t("release.card.title", { operator: opName, skin: skinName })}</TooltipPopup>
             </Tooltip>
-            {art.src ? <img src={art.src} alt="" loading="lazy" onError={art.onError} className={styles.portrait} /> : <span className={cn(styles.portrait, "flex items-center justify-center font-bold text-[40px] text-white/30")}>{opName.charAt(0)}</span>}
+            {art.src ? (
+                <img src={art.src} alt="" loading="lazy" onError={art.onError} className={styles.portrait} />
+            ) : (
+                <span aria-hidden="true" className={cn(styles.portrait, "flex items-center justify-center font-bold text-[40px] text-white/30")}>
+                    {opName.charAt(0)}
+                </span>
+            )}
             <span className={styles.shine} />
             <Tooltip>
                 <TooltipTrigger render={<span className={styles.price} />}>
-                    <span className={cn(styles.priceNumber, !skin.price.store && styles.priceLabel)}>{skin.price.store ? skin.price.price : obtainShort(skin.price.obtain, t)}</span>
+                    {/* The card's button names only the outfit; the price or how it is obtained reaches a screen reader here. */}
+                    <span className="sr-only">{priceTitle(skin.price, t)}</span>
+                    <span aria-hidden="true" className={cn(styles.priceNumber, !skin.price.store && styles.priceLabel)}>
+                        {skin.price.store ? skin.price.price : obtainShort(skin.price.obtain, t)}
+                    </span>
                     {entry && (
                         <span className={styles.priceClass}>
                             <ClassIcon profession={entry.profession} size={28} />

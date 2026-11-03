@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Calculator } from "lucide-react";
 import { useState } from "react";
 import { Button } from "#/components/ui/button";
+import { LoadFailed } from "#/components/ui/load-failed";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { Switch } from "#/components/ui/switch";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
@@ -76,7 +77,7 @@ export function AccountOptimizer({ uid }: IOptimizerProps) {
                 </div>
             </div>
 
-            {query.isError && <p className="text-[12px] text-destructive">{t("profile.account.maxLevel.error")}</p>}
+            {query.isError && <LoadFailed layout="inline" message={t("profile.account.maxLevel.error")} onRetry={() => void query.refetch()} />}
 
             {data && (
                 <div className="flex flex-wrap gap-6 rounded-2xl border border-border bg-card px-4 py-3">

@@ -26,11 +26,16 @@ export function EventShop({ event }: { event: { shop: EventShopData | null; miss
 
     return (
         <div className="flex flex-col gap-2 border-border/40 border-t pt-3">
-            <button type="button" aria-expanded={open} onClick={() => setOpen((value) => !value)} className="flex w-full cursor-pointer items-center gap-1.5 text-left">
+            <button
+                type="button"
+                aria-expanded={open}
+                onClick={() => setOpen((value) => !value)}
+                className="relative flex w-full cursor-pointer items-center gap-1.5 text-left pointer-coarse:after:absolute pointer-coarse:after:inset-x-0 pointer-coarse:after:top-1/2 pointer-coarse:after:h-11 pointer-coarse:after:-translate-y-1/2"
+            >
                 <ShopIcon item={shop.token} size="size-4" />
                 <span className="font-sans font-semibold text-[12px] text-foreground">{t("release.events.shop")}</span>
                 <span className="font-mono text-[11px] text-muted-foreground tabular-nums">· {t("release.events.shop.toFarmValue", { sanity: f.number(buyout.sanity) })}</span>
-                <ChevronDown className={cn("ml-auto size-4 text-muted-foreground transition-transform", open && "rotate-180")} />
+                <ChevronDown aria-hidden="true" className={cn("ml-auto size-4 text-muted-foreground transition-transform", open && "rotate-180")} />
             </button>
             {open && (
                 <div className="flex flex-col gap-2">

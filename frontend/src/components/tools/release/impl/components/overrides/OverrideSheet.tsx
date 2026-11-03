@@ -20,6 +20,7 @@ import { formatDate, formatDateRange, useReleaseTimeZone } from "../../helpers";
 import type { messages as helperMessages } from "../../helpers.messages";
 import { type IOverrideForm, OVERRIDE_KINDS, type OverrideFormError, type OverrideFormField, type OverrideKind, overrideForm, overrideKey, putOverrideInput, validateOverrideForm } from "../../overrides";
 import { useReleaseOverrides } from "../../useReleaseOverrides";
+import { ReleaseError } from "../shared";
 import type { messages } from "./OverrideSheet.messages";
 
 /** The sheet renders its own chrome plus the date wording `helpers.ts` derives. */
@@ -98,22 +99,27 @@ export function OverrideSheet({ target, onClose }: IOverrideSheetProps): React.R
     return (
         <Sheet open={target !== null} onOpenChange={(next) => (next ? undefined : onClose())}>
             <SheetPopup side="right" variant="inset">
-                {shown && (query.isPending ? <OverrideSheetLoading /> : <OverrideForm key={`${shown.mode}:${overrideKey(shown.kind, shown.cnId)}`} target={shown} onClose={onClose} />)}
+                {/* A failed list read would open the form as "new" and hide the row it replaces, so it shows the failure instead. */}
+                {shown && (query.isPending ? <OverrideSheetStatus /> : query.isError ? <OverrideSheetStatus failed={<ReleaseError onRetry={() => query.refetch()} />} /> : <OverrideForm key={`${shown.mode}:${overrideKey(shown.kind, shown.cnId)}`} target={shown} onClose={onClose} />)}
             </SheetPopup>
         </Sheet>
     );
 }
 
-function OverrideSheetLoading(): React.ReactElement {
+function OverrideSheetStatus({ failed }: { failed?: React.ReactNode }): React.ReactElement {
     const t: OverrideT = useT("tools");
     return (
         <>
             <SheetHeader>
                 <SheetTitle>{t("release.override.title.add")}</SheetTitle>
             </SheetHeader>
-            <SheetPanel className="flex items-center justify-center py-10">
-                <Spinner className="size-5 text-muted-foreground" />
-            </SheetPanel>
+            {failed ? (
+                <SheetPanel>{failed}</SheetPanel>
+            ) : (
+                <SheetPanel className="flex items-center justify-center py-10">
+                    <Spinner className="size-5 text-muted-foreground" />
+                </SheetPanel>
+            )}
         </>
     );
 }

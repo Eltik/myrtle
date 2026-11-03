@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ListChecks, RotateCcw, X } from "lucide-react";
 import * as React from "react";
 import { Button } from "#/components/ui/button";
+import { InfoHint } from "#/components/ui/info-hint";
 import { Input } from "#/components/ui/input";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useAuth } from "#/hooks/use-auth";
@@ -136,7 +137,10 @@ export function PlannerTab({ today }: IPlannerTabProps): React.ReactElement {
                             <div className="flex items-center gap-2">
                                 <Button
                                     size="sm"
-                                    variant={summary ? "default" : "outline"}
+                                    variant="outline"
+                                    aria-pressed={summary}
+                                    data-pressed={summary || undefined}
+                                    className="data-pressed:inset-ring data-pressed:inset-ring-foreground/40 data-pressed:bg-input dark:data-pressed:bg-foreground/12"
                                     onClick={() => {
                                         setSummary(true);
                                         showDetail();
@@ -238,7 +242,8 @@ const EventCard = React.memo(function EventCard({ row, total, picks, hidden, act
         <button
             type="button"
             onClick={() => onOpen(row.key)}
-            className={cn("grid w-full cursor-pointer gap-x-3 gap-y-2 rounded-2xl border p-2.5 text-left transition-all hover:border-primary/50 sm:grid-cols-[minmax(0,1fr)_auto]", active ? "border-primary bg-primary/5 ring-2 ring-primary/20" : "border-border/60 bg-card")}
+            aria-current={active || undefined}
+            className={cn("grid w-full cursor-pointer gap-x-3 gap-y-2 rounded-2xl border p-2.5 text-left transition-colors hover:border-foreground/40 sm:grid-cols-[minmax(0,1fr)_auto]", active ? "border-foreground bg-muted" : "border-border/60 bg-card")}
         >
             <div className="flex min-w-0 flex-col gap-1">
                 <CnName cn={row.nameCn} en={row.nameEn} auto={row.nameAuto} compact primaryClassName="font-sans font-semibold text-[13px] text-foreground">
@@ -325,13 +330,11 @@ function EventDetail({ row, state, clears, hidden, total, today, lookup, onPick,
                                 ]
                                     .filter(Boolean)
                                     .join(t("release.planner.stages.tallyJoin"));
-                                return tally.unknown > 0 ? (
-                                    <Tooltip>
-                                        <TooltipTrigger render={<span className="cursor-help font-sans text-[11px] text-muted-foreground" />}>{tallyText}</TooltipTrigger>
-                                        <TooltipPopup className="max-w-xs">{t("release.planner.stages.unknownTitle", { count: tally.unknown })}</TooltipPopup>
-                                    </Tooltip>
-                                ) : (
-                                    <span className="font-sans text-[11px] text-muted-foreground">{tallyText}</span>
+                                return (
+                                    <span className="inline-flex items-center gap-1 font-sans text-[11px] text-muted-foreground">
+                                        {tallyText}
+                                        {tally.unknown > 0 && <InfoHint label={t("release.planner.stages.unknownHint")}>{t("release.planner.stages.unknownTitle", { count: tally.unknown })}</InfoHint>}
+                                    </span>
                                 );
                             })()}
                         {row.ended ? (
@@ -376,12 +379,12 @@ function EventDetail({ row, state, clears, hidden, total, today, lookup, onPick,
                                     onClick={() => onStage(row, stageKey(st), !on)}
                                     className={cn(
                                         "inline-flex pointer-coarse:min-h-11 cursor-pointer items-center gap-1.5 rounded-md border px-2 py-1 font-mono text-[11px] transition-colors disabled:cursor-default",
-                                        on ? "border-primary/50 bg-primary/10 text-foreground" : "border-border/60 bg-muted/30 text-muted-foreground",
+                                        on ? "border-foreground/40 bg-input text-foreground dark:bg-foreground/12" : "border-border/60 bg-muted/30 text-muted-foreground",
                                         st.challenge && "border-dashed",
                                         status === "claimed" && !on && "line-through",
                                     )}
                                 >
-                                    <span aria-hidden="true" className={cn("size-2 rounded-full", on ? "bg-primary" : status === "unknown" && clears ? "border border-muted-foreground/60 bg-transparent" : "bg-muted-foreground/40")} />
+                                    <span aria-hidden="true" className={cn("size-2 rounded-full", on ? "bg-foreground" : status === "unknown" && clears ? "border border-muted-foreground/60 bg-transparent" : "bg-muted-foreground/40")} />
                                     {st.code}
                                     {st.challenge ? t("release.planner.stages.cm") : ""}
                                     {st.op !== 1 ? t("release.planner.stages.multiplier", { count: st.op }) : ""}

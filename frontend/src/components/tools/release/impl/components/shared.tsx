@@ -45,9 +45,11 @@ export function AutoTag({ source, className }: { source: AutoNameSource; classNa
     const t: SharedT = useT("tools");
     const label = t(AUTO_TAG_KEYS[source].label);
     const title = t(AUTO_TAG_KEYS[source].title);
+    // biome-ignore lint/a11y/noNoninteractiveTabindex: focusable so a keyboard reader can bring up the explanation, as a hover does
+    const trigger = <span tabIndex={0} className={cn("inline-flex shrink-0 cursor-help items-center rounded-sm border border-border/60 px-1 py-px font-sans text-[9.5px] text-subtle-foreground leading-[1.3]", className)} translate="no" />;
     return (
         <Tooltip>
-            <TooltipTrigger render={<span className={cn("inline-flex shrink-0 cursor-help items-center rounded-sm border border-border/60 px-1 py-px font-sans text-[9.5px] text-subtle-foreground leading-[1.3]", className)} translate="no" />}>{label}</TooltipTrigger>
+            <TooltipTrigger render={trigger}>{label}</TooltipTrigger>
             <TooltipPopup className="max-w-xs">{title}</TooltipPopup>
         </Tooltip>
     );
@@ -90,6 +92,7 @@ export function CnName({ cn: cnText, en, auto, className, primaryClassName, comp
         const row = (
             <span className={cn("flex min-w-0 items-center gap-1", className)}>
                 {primary}
+                {tip && <span className="sr-only">{` (${tip})`}</span>}
                 {children}
             </span>
         );
@@ -212,7 +215,12 @@ export function OpRef({ id, lookup, name }: { id: string; lookup: OperatorLookup
     const { displayName } = parseOperatorName(entry.name);
     const rarity = rarityToNumber(entry.rarity);
     return (
-        <Link to="/operators/$id" params={{ id }} className="inline-flex items-center gap-1.5 rounded-md border border-border/60 bg-secondary/40 py-0.5 pr-2 pl-0.5 font-medium font-sans text-[12px] text-foreground hover:bg-accent/50" title={entry.name}>
+        <Link
+            to="/operators/$id"
+            params={{ id }}
+            className="relative inline-flex items-center gap-1.5 rounded-md border border-border/60 bg-secondary/40 py-0.5 pr-2 pl-0.5 font-medium font-sans text-[12px] text-foreground pointer-coarse:after:absolute pointer-coarse:after:inset-x-0 pointer-coarse:after:top-1/2 pointer-coarse:after:h-11 pointer-coarse:after:-translate-y-1/2 hover:bg-accent/50"
+            title={entry.name}
+        >
             <span className="inline-flex size-5 shrink-0 items-center justify-center overflow-hidden rounded font-bold font-sans text-[10px] text-white" style={{ backgroundColor: `var(--rarity-${rarity})` }}>
                 <OperatorAvatar charId={id} name={entry.name} />
             </span>
@@ -256,7 +264,8 @@ export function ListRow({ visual, wide = false, badge, children }: IListRowProps
 }
 
 export function RowImage({ src, alt, title, onError, wide = false }: { src: string; alt: string; title?: string; onError: () => void; wide?: boolean }): React.ReactElement {
-    const img = <img src={src} alt={alt} loading="lazy" onError={onError} className={cn("w-full rounded-md bg-muted object-cover", wide ? "aspect-[5/2] sm:w-60" : "aspect-video sm:w-40")} />;
+    // The tooltip names where borrowed art came from; the alt says it too, since a hover is the only way to the tooltip.
+    const img = <img src={src} alt={title ?? alt} loading="lazy" onError={onError} className={cn("w-full rounded-md bg-muted object-cover", wide ? "aspect-[5/2] sm:w-60" : "aspect-video sm:w-40")} />;
     if (!title) return img;
     return (
         <Tooltip>

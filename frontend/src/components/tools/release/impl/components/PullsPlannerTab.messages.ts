@@ -264,10 +264,6 @@ export const messages = {
         text: "Pulls to spend",
         description: "Input label for how many pulls to commit to a banner.",
     },
-    "release.pulls.plan.max": {
-        text: "Spend everything",
-        description: "Accessible name for the control committing every remaining pull to this banner.",
-    },
     "release.pulls.plan.potMore": {
         text: "One more copy of {operator}",
         description: "Accessible name for the control raising how many copies of an operator to pull for.",

@@ -15,6 +15,14 @@ export const messages = {
         text: "EN schedules these itself: {list}. Their rows say so unless the rate-ups match a known EN pool.",
         description: "Note listing the banner types the English server schedules on its own. {list} is a comma-separated list built from the item below.",
     },
+    "release.banners.independence.hint": {
+        text: "How this is measured",
+        description: "Accessible label of the info button beside the note about EN-scheduled banner types; it opens the measurement explanation.",
+    },
+    "release.banners.roster.entered.hint": {
+        text: "Where these rate-ups come from",
+        description: "Accessible label of the info button beside the 'entered' rate-up label on a banner row.",
+    },
     "release.banners.independence.item": {
         text: "{type} ({rate}% of {count} events)",
         description: "One entry in the EN-scheduled list, e.g. 'limited (62% of 34 events)'. {type} is a banner rule type from the game data, lowercased.",

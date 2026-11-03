@@ -16,6 +16,10 @@ export const messages = {
         text: "{name}, level {level}, {staffed} of {seats} staffed",
         description: "Accessible name of one board tile. {name} is the room's name, {staffed} and {seats} count operators.",
     },
+    "profile.base.tile.aria.changes": {
+        text: "{label}; {changes}",
+        description: "Accessible name of a board tile whose crew the planned rotation changes. {label} is the tile's accessible name, {changes} lists the changed operators, each read as in the crew tooltips.",
+    },
     "profile.base.tile.crew.added": {
         text: "{name} - joins this shift",
         description: "Tooltip on an operator the planned rotation moves into this room for the shift being viewed.",

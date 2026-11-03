@@ -9,13 +9,14 @@ import { cn } from "#/lib/utils";
 import { useAutoTranslate } from "../autoTranslate";
 import { formatDateRange, weekdayNames } from "../helpers";
 import type { messages as helperMessages } from "../helpers.messages";
-import { DAY_SECS, dayOf, dayStart, type IScheduleItem, overlaps, packLanes, type ScheduleKind, useSchedule } from "../schedule";
+import { DAY_SECS, dayOf, dayStart, type IScheduleItem, KIND_LABEL_KEYS, overlaps, packLanes, type ScheduleKind, useSchedule } from "../schedule";
+import type { messages as scheduleMessages } from "../schedule.messages";
 import type { messages } from "./CalendarTab.messages";
 import { ALL_KINDS, itemName, KIND_STYLE, ScheduleControls, ScheduleDetail } from "./ScheduleShared";
 import { ReleaseEmpty, ReleaseError, ReleaseLoading } from "./shared";
 
 /** This tab renders its own chrome plus the date wording `helpers.ts` derives. */
-type CalendarT = TypedT<typeof messages & typeof helperMessages>;
+type CalendarT = TypedT<typeof messages & typeof helperMessages & typeof scheduleMessages>;
 const DAY_HEADER_PX = 26;
 const LANE_PX = 22;
 const MIN_WEEK_PX = DAY_HEADER_PX + 3 * LANE_PX;
@@ -181,7 +182,9 @@ function CalendarWeek({ weekStart, monthFrom, monthTo, todayDay, items, selected
                 const n = new Date(d * 1000).getDate();
                 return (
                     <div key={d} className={cn("border-border/60 border-l pt-1 pr-1.5 text-right font-sans text-[12px] tabular-nums first:border-l-0 sm:pr-2", outside ? "text-subtle-foreground" : "text-foreground")} style={{ gridColumn: i + 1, gridRow: `1 / span ${rows + 2}` }}>
-                        <span className={cn("inline-flex size-5 items-center justify-center rounded-full", isToday && "bg-primary font-semibold text-primary-foreground")}>{n}</span>
+                        <span aria-current={isToday ? "date" : undefined} className={cn("inline-flex size-5 items-center justify-center rounded-full", isToday && "bg-primary font-semibold text-primary-foreground")}>
+                            {n}
+                        </span>
                     </div>
                 );
             })}
@@ -213,6 +216,8 @@ function CalendarWeek({ weekStart, monthFrom, monthTo, todayDay, items, selected
                             >
                                 {!continuesLeft && <span aria-hidden="true" className={cn("size-2 shrink-0 rounded-full", it.estimated ? "border-[1.5px] border-current bg-transparent" : style.dot)} />}
                                 <span className="truncate">{name}</span>
+                                {/* The kind is the pill's hue and the confirmed / estimated state is the dot's shape; neither reaches a screen reader. */}
+                                <span className="sr-only">{` (${t(KIND_LABEL_KEYS[it.kind])}${it.estimated ? `, ${t("release.calendar.estimated")}` : ""})`}</span>
                             </TooltipTrigger>
                             <TooltipPopup>{t("release.calendar.pillTitle", { name, dates: formatDateRange(it.start, it.end, locale, t) })}</TooltipPopup>
                         </Tooltip>

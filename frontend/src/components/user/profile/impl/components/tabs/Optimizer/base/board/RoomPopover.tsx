@@ -1,4 +1,5 @@
 import { Sparkles } from "lucide-react";
+import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import type { ISkillLine } from "#/lib/api/user";
@@ -59,14 +60,20 @@ function LedgerChip({ line }: { line: ISkillLine }) {
         // A count skill's marginal is spread over the skills it counts (its
         // own included), so the chip explains itself rather than reading as a
         // separate flat bonus.
-        return line.note ? <TileTooltip label={<span className="block max-w-56">{line.note}</span>}>{chip}</TileTooltip> : chip;
+        return line.note ? (
+            <TileTooltip focusable label={<span className="block max-w-56">{line.note}</span>}>
+                {chip}
+            </TileTooltip>
+        ) : (
+            chip
+        );
     }
     const labelKey = DISPOSITION_LABEL[line.disposition];
     const label = labelKey ? t(labelKey) : line.disposition;
     const hintKey = DISPOSITION_HINT[line.disposition];
     const hint = hintKey ? t(hintKey) : undefined;
     return (
-        <TileTooltip label={<span className="block max-w-56">{hint}</span>}>
+        <TileTooltip focusable label={<span className="block max-w-56">{hint}</span>}>
             <span className={cn("shrink-0 text-[9px]", line.disposition === "inactive" ? "text-subtle-foreground line-through" : "text-muted-foreground")}>{label}</span>
         </TileTooltip>
     );
@@ -159,23 +166,27 @@ export function RoomPopover({ tile }: { tile: ITile }) {
                                 </span>
                                 <span className="min-w-0 flex-1 truncate text-[12px]">{op.name}</span>
                                 {sustained.has(op.id) && (
-                                    <TileTooltip label={<span className="block max-w-56">{t("profile.base.room.sustained.tooltip")}</span>}>
-                                        <span className="shrink-0 rounded border border-emerald-500/50 bg-emerald-500/10 px-1 py-px font-mono text-[9px] text-success-foreground">{t("profile.base.room.sustained")}</span>
+                                    <TileTooltip focusable label={<span className="block max-w-56">{t("profile.base.room.sustained.tooltip")}</span>}>
+                                        <Badge className="font-mono text-[9px]" size="sm" style={{ "--tone": "var(--success)" } as React.CSSProperties} variant="tint">
+                                            {t("profile.base.room.sustained")}
+                                        </Badge>
                                     </TileTooltip>
                                 )}
                                 {benched.has(op.id) && (
-                                    <TileTooltip label={<span className="block max-w-56">{t("profile.base.room.bench.tooltip")}</span>}>
+                                    <TileTooltip focusable label={<span className="block max-w-56">{t("profile.base.room.bench.tooltip")}</span>}>
                                         <span className="shrink-0 rounded border border-border px-1 py-px text-[9px] text-muted-foreground">{t("profile.base.room.bench")}</span>
                                     </TileTooltip>
                                 )}
                                 {parked.has(op.id) && (
-                                    <TileTooltip label={<span className="block max-w-56">{t("profile.base.room.parked.tooltip")}</span>}>
-                                        <span className="shrink-0 rounded border border-amber-500/50 bg-amber-500/10 px-1 py-px font-mono text-[9px] text-warning-foreground">{t("profile.base.room.parked")}</span>
+                                    <TileTooltip focusable label={<span className="block max-w-56">{t("profile.base.room.parked.tooltip")}</span>}>
+                                        <Badge className="font-mono text-[9px]" size="sm" style={{ "--tone": "var(--warning)" } as React.CSSProperties} variant="tint">
+                                            {t("profile.base.room.parked")}
+                                        </Badge>
                                     </TileTooltip>
                                 )}
                             </div>
                             {op.skills.length > 0 && (
-                                <div className={`ml-3 flex flex-col gap-1.5 border-border border-l pl-2.5 ${benched.has(op.id) ? "opacity-60" : ""}`}>
+                                <div className="ml-3 flex flex-col gap-1.5 border-border border-l pl-2.5">
                                     {op.skills.map((skill) => {
                                         const line = lineFor(op.id, skill.buffId);
                                         // A superseded lower tier: unlocked, but a promotion replaced
@@ -184,8 +195,8 @@ export function RoomPopover({ tile }: { tile: ITile }) {
                                         // it too.
                                         const replaced = skill.unlocked && !skill.live;
                                         return (
-                                            <div className={cn("flex items-start justify-between gap-2", replaced && "opacity-40")} key={skill.buffId}>
-                                                <BaseSkill skill={skill} />
+                                            <div className="flex items-start justify-between gap-2" key={skill.buffId}>
+                                                <BaseSkill dim={replaced || benched.has(op.id)} skill={skill} />
                                                 {line && <LedgerChip line={line} />}
                                                 {replaced && <span className="shrink-0 text-[9px] text-muted-foreground">{t("profile.base.room.replaced")}</span>}
                                             </div>
@@ -224,7 +235,7 @@ export function RoomPopover({ tile }: { tile: ITile }) {
                 </Button>
             )}
             {change && (
-                <div className="flex items-baseline justify-between gap-2 rounded-md border border-primary/30 bg-primary/5 px-2 py-1.5">
+                <div className="flex items-baseline justify-between gap-2 rounded-md border border-border px-2 py-1.5">
                     <span className="kicker">{t("profile.base.room.optimized")}</span>
                     <span className="font-mono text-[11px] tabular-nums">
                         {Math.round(change.efficiency_before)}% → <span className="font-semibold text-foreground">{Math.round(change.efficiency_after)}%</span>

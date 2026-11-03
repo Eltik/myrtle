@@ -356,7 +356,7 @@ export function PullsBudget({ settings, setSettings, days, committed, freePulls,
                                     {skins.unpriced > 0 && ` ${t("release.pulls.income.skinUnpriced", { count: skins.unpriced })}`}
                                 </p>
                                 {warning && (
-                                    <output className="m-0 block rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 font-sans text-[12px] text-warning-foreground leading-normal">{t("release.pulls.income.originiteShort", { needed: f.number(warning.needed), available: f.number(warning.available) })}</output>
+                                    <output className="m-0 block rounded-md border border-warning/30 bg-warning/10 px-3 py-2 font-sans text-[12px] text-warning-foreground leading-normal">{t("release.pulls.income.originiteShort", { needed: f.number(warning.needed), available: f.number(warning.available) })}</output>
                                 )}
                             </div>
                         </div>

@@ -56,7 +56,8 @@ button.riic-tile:focus-visible {
 .riic-tile-unbuilt {
     --slab: #262626;
     --slab-ink: rgb(255 255 255 / 0.6);
-    --slab-ink-dim: rgb(255 255 255 / 0.4);
+    /* 0.55 white on #262626 measures 5.60; the old 0.4 measured 3.67 under the "Not built" label. */
+    --slab-ink-dim: rgb(255 255 255 / 0.55);
 }
 .riic-tile-unbuilt {
     border-style: dashed;
@@ -281,7 +282,8 @@ button.riic-tile:focus-visible {
 }
 
 .riic-cc-subtitle {
-    color: rgb(255 255 255 / 0.45);
+    /* 0.55 white on the #323232 slab measures 5.07; 0.45 measured 3.93. */
+    color: var(--slab-ink-dim);
     font-size: 7px;
     letter-spacing: 1.6px;
     line-height: 1;

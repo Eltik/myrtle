@@ -131,6 +131,10 @@ export const messages = {
         text: "{income} of {potential}",
         description: "How much of a row's Originite Prime the plan counts on; the currency icon follows.",
     },
+    "release.planner.stages.unknownHint": {
+        text: "About stages with no record",
+        description: "Accessible label of the info button beside the stage tally; it opens the note about stages with no clear record on the account.",
+    },
     "release.planner.stages.unknownTitle": {
         text: "{count, plural, one {# stage has} other {# stages have}} no record on your account; tick any you did not clear.",
         description: "Tooltip on the stage tally when some stages have no clear record.",

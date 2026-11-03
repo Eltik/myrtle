@@ -201,3 +201,16 @@
 .card.selected .overlay {
     opacity: 1;
 }
+
+/* R-03: the inspect square is 32px at the default card width; a coarse pointer gets 44px,
+   grown down and left from the corner because the card clips anything outside it. */
+@media (pointer: coarse) {
+    .inspect::after {
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 44px;
+        height: 44px;
+        content: "";
+    }
+}

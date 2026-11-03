@@ -1,5 +1,6 @@
-import { Maximize2, Minus, Plus, RotateCcw, Sparkles } from "lucide-react";
+import { CircleAlert, Maximize2, Minus, Plus, RotateCcw, Sparkles, TriangleAlert } from "lucide-react";
 import { useLayoutEffect, useRef, useState } from "react";
+import { Alert, AlertDescription } from "#/components/ui/alert";
 import { Button } from "#/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "#/components/ui/dialog";
 import { TooltipProvider } from "#/components/ui/tooltip";
@@ -39,14 +40,17 @@ export function BasePanel({ board }: { board: IBoard }) {
     return (
         <TooltipProvider closeDelay={0} delay={350}>
             <div className="flex flex-col gap-3">
-                <p className="rounded-2xl border border-amber-500/40 bg-amber-500/10 px-4 py-2 text-[12px] text-foreground">
-                    {t("profile.base.wip")}{" "}
-                    <a className="underline underline-offset-2" href="/discord" rel="noreferrer" target="_blank">
-                        {t("profile.base.wip.link")}
-                    </a>
-                </p>
+                <Alert variant="warning">
+                    <TriangleAlert />
+                    <AlertDescription className="block text-[12px] text-foreground">
+                        {t("profile.base.wip")}{" "}
+                        <a className="relative underline underline-offset-2 pointer-coarse:after:absolute pointer-coarse:after:inset-x-0 pointer-coarse:after:top-1/2 pointer-coarse:after:h-11 pointer-coarse:after:-translate-y-1/2" href="/discord" rel="noreferrer" target="_blank">
+                            {t("profile.base.wip.link")}
+                        </a>
+                    </AlertDescription>
+                </Alert>
                 <div className="flex flex-wrap items-end justify-between gap-3 rounded-2xl border border-border bg-card px-4 py-3">
-                    <div className="flex flex-wrap gap-6">
+                    <div aria-busy={api.evaluating} className="flex flex-wrap gap-6">
                         <Headline hint={t("profile.base.headline.efficiency.hint")} label={t("profile.base.headline.efficiency")} value={totals ? `${Math.round(totals.total_production_efficiency)}%` : "-"} />
                         <Headline label={t("profile.base.headline.lmd")} value={totals ? f.number(Math.round(totals.yield_lmd_per_day)) : "-"} />
                         <Headline label={t("profile.base.headline.exp")} value={totals ? f.number(Math.round(totals.yield_exp_per_day)) : "-"} />
@@ -81,8 +85,18 @@ export function BasePanel({ board }: { board: IBoard }) {
                     {planned && sustainability && <SustainabilityBadge depletedCount={sustainability.depleted.length} dormOverflow={sustainability.dorm_overflow} horizonHours={sustainability.horizon_hours} verdict={sustainability.verdict} />}
                 </div>
 
-                {api.evaluationError && <p className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-[12px] text-destructive">{t("profile.base.evaluationError", { error: api.evaluationError.message })}</p>}
-                {api.optimizeError && <p className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-[12px] text-destructive">{t("profile.base.optimizeError", { error: api.optimizeError.message })}</p>}
+                {api.evaluationError && (
+                    <Alert variant="error">
+                        <CircleAlert />
+                        <AlertDescription className="text-[12px] text-foreground">{t("profile.base.evaluationError", { error: api.evaluationError.message })}</AlertDescription>
+                    </Alert>
+                )}
+                {api.optimizeError && (
+                    <Alert variant="error">
+                        <CircleAlert />
+                        <AlertDescription className="text-[12px] text-foreground">{t("profile.base.optimizeError", { error: api.optimizeError.message })}</AlertDescription>
+                    </Alert>
+                )}
 
                 <div className="relative rounded-2xl border border-border bg-card p-3">
                     <Button aria-label={t("profile.base.fullscreen")} className="absolute top-5 right-5 z-10" onClick={() => setBoardFullscreen(true)} size="icon-sm" variant="outline">
@@ -128,7 +142,7 @@ function BoardFullscreen({ board }: { board: IBoard }) {
         <>
             <DialogTitle className="sr-only">{t("profile.base.boardTitle")}</DialogTitle>
             <div className="relative min-h-0 flex-1">
-                <div className="absolute top-3 left-3 z-10 flex items-center gap-1 rounded-lg border border-border/60 bg-background/80 p-1 shadow-sm backdrop-blur-sm">
+                <div className="absolute top-3 left-3 z-10 flex items-center gap-1 rounded-lg border border-border bg-card p-1">
                     <Button aria-label={t("profile.base.zoomOut")} onClick={() => changeZoom(-0.1)} size="icon-sm" variant="outline">
                         <Minus />
                     </Button>

@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-11-03T18:51:06.328Z",
+    "generatedAt": "2026-11-03T19:08:34.047Z",
     "entries": [
         {
             "key": "admin.home.access.everyList",
@@ -46815,6 +46815,13 @@
             ]
         },
         {
+            "key": "tools.release.banners.independence.hint",
+            "namespace": "tools",
+            "source_text": "How this is measured",
+            "description": "Accessible label of the info button beside the note about EN-scheduled banner types; it opens the measurement explanation.",
+            "placeholders": []
+        },
+        {
             "key": "tools.release.banners.independence.item",
             "namespace": "tools",
             "source_text": "{type} ({rate}% of {count} events)",
@@ -46860,6 +46867,13 @@
             "namespace": "tools",
             "source_text": "Rate-ups (entered)",
             "description": "Label before rate-up operators a person typed into this site's override table.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.banners.roster.entered.hint",
+            "namespace": "tools",
+            "source_text": "Where these rate-ups come from",
+            "description": "Accessible label of the info button beside the 'entered' rate-up label on a banner row.",
             "placeholders": []
         },
         {
@@ -46918,6 +46932,13 @@
             "namespace": "tools",
             "source_text": "Nothing dated",
             "description": "Empty-state heading when no row has an English date at all.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.calendar.estimated",
+            "namespace": "tools",
+            "source_text": "estimated",
+            "description": "Screen-reader text inside a calendar entry whose date is an estimate (the visible mark is a hollow dot).",
             "placeholders": []
         },
         {
@@ -47337,16 +47358,6 @@
             "placeholders": [
                 "item",
                 "rate"
-            ]
-        },
-        {
-            "key": "tools.release.farm.stageTitle",
-            "namespace": "tools",
-            "source_text": "{code}: {ap} sanity",
-            "description": "Tooltip on a farming stage: its code and what it costs to run. 'Sanity' is the game's own name for the energy a stage spends.",
-            "placeholders": [
-                "ap",
-                "code"
             ]
         },
         {
@@ -48329,6 +48340,13 @@
             ]
         },
         {
+            "key": "tools.release.planner.stages.unknownHint",
+            "namespace": "tools",
+            "source_text": "About stages with no record",
+            "description": "Accessible label of the info button beside the stage tally; it opens the note about stages with no clear record on the account.",
+            "placeholders": []
+        },
+        {
             "key": "tools.release.planner.stages.unknownTitle",
             "namespace": "tools",
             "source_text": "{count, plural, one {# stage has} other {# stages have}} no record on your account; tick any you did not clear.",
@@ -49196,13 +49214,6 @@
             "namespace": "tools",
             "source_text": "Commit pulls to the banners you want. Everything you spend comes out of the same pool, so a banner you save for is one you can still afford later.",
             "description": "Explains that allocating pulls to one banner reduces what is left for the others.",
-            "placeholders": []
-        },
-        {
-            "key": "tools.release.pulls.plan.max",
-            "namespace": "tools",
-            "source_text": "Spend everything",
-            "description": "Accessible name for the control committing every remaining pull to this banner.",
             "placeholders": []
         },
         {
@@ -55132,8 +55143,8 @@
         {
             "key": "user.profile.account.maxLevel.error",
             "namespace": "user",
-            "source_text": "The calculation failed. Try again.",
-            "description": "Shown when the max-level cost request fails.",
+            "source_text": "Couldn't calculate the cost.",
+            "description": "Shown when the max-level cost request fails. A Try again button follows it.",
             "placeholders": []
         },
         {
@@ -55840,6 +55851,13 @@
             "namespace": "user",
             "source_text": "Order sizes are modeled conservatively (small orders, fast turnover), so real deadlines can be later than shown, never earlier. Trading posts are assumed gold-supplied.",
             "description": "Tooltip on the word 'conservative'. 'Trading post' is the game's own room name.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.base.deep.copied",
+            "namespace": "user",
+            "source_text": "Copied",
+            "description": "Replaces the Copy plan button label for two seconds after the plan text reached the clipboard.",
             "placeholders": []
         },
         {
@@ -57310,6 +57328,16 @@
             ]
         },
         {
+            "key": "user.profile.base.tile.aria.changes",
+            "namespace": "user",
+            "source_text": "{label}; {changes}",
+            "description": "Accessible name of a board tile whose crew the planned rotation changes. {label} is the tile's accessible name, {changes} lists the changed operators, each read as in the crew tooltips.",
+            "placeholders": [
+                "changes",
+                "label"
+            ]
+        },
+        {
             "key": "user.profile.base.tile.crew.added",
             "namespace": "user",
             "source_text": "{name} - joins this shift",
@@ -58671,6 +58699,13 @@
             "placeholders": [
                 "name"
             ]
+        },
+        {
+            "key": "user.profile.optimizer.loadFailed",
+            "namespace": "user",
+            "source_text": "Couldn't load this base.",
+            "description": "Shown in place of the base optimizer when the base layout or the room catalog failed to load. A Try again button follows.",
+            "placeholders": []
         },
         {
             "key": "user.profile.optimizer.noBaseData",

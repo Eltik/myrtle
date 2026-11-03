@@ -36,8 +36,8 @@ export const messages = {
         description: "Button label while the calculation runs.",
     },
     "profile.account.maxLevel.error": {
-        text: "The calculation failed. Try again.",
-        description: "Shown when the max-level cost request fails.",
+        text: "Couldn't calculate the cost.",
+        description: "Shown when the max-level cost request fails. A Try again button follows it.",
     },
     "profile.account.maxLevel.remaining": {
         text: "Operators left",

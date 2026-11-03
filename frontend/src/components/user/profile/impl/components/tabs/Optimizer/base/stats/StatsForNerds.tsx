@@ -73,7 +73,7 @@ export function StatsForNerds() {
 
     return (
         <Collapsible onOpenChange={setOpen} open={open}>
-            <CollapsibleTrigger className="flex w-full items-center justify-between rounded-2xl border border-border bg-card px-4 py-2.5 transition-colors hover:bg-muted/40">
+            <CollapsibleTrigger className="flex pointer-coarse:min-h-11 w-full items-center justify-between rounded-2xl border border-border bg-card px-4 py-2.5 transition-colors hover:bg-muted/40">
                 <span className="font-medium text-[13px]">{t("profile.base.nerds.title")}</span>
                 <ChevronDown className={cn("size-4 text-muted-foreground transition-transform", open && "rotate-180")} />
             </CollapsibleTrigger>
@@ -216,7 +216,7 @@ export function StatsForNerds() {
                     {timeline.length > 0 && (
                         <div className="md:col-span-2">
                             <Section title={t("profile.base.nerds.moraleOverTime")}>
-                                <MoraleTimeline catalog={api.catalog} timeline={timeline} />
+                                <MoraleTimeline catalog={api.catalog} label={t("profile.base.nerds.moraleOverTime")} timeline={timeline} />
                             </Section>
                         </div>
                     )}

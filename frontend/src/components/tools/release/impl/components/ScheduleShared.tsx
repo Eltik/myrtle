@@ -59,6 +59,10 @@ function occLabel(occ: string, t: ScheduleSharedT): string {
  *
  * `tone` is the hue as a CSS colour for the kind tag and filter chip, which tint with it and keep
  * foreground text.
+ *
+ * Pill text is `foreground`, not a per-hue 950 / 100 step: foreground measured 14.68 to 17.11
+ * light and 9.08 to 11.94 dark on the resting tints over the card (5.57 lowest, yellow, on the
+ * dark hover tint).
  */
 /**
  * `ink` is the pressed filter-chip border where the plain tone misses 3:1 on the light page:
@@ -69,33 +73,33 @@ function occLabel(occ: string, t: ScheduleSharedT): string {
  */
 export const KIND_STYLE: Record<ScheduleKind, { pill: string; swatch: string; dot: string; tone: string; ink?: string }> = {
     event: {
-        pill: "ring-1 ring-inset ring-sky-500/45 bg-sky-500/22 text-sky-950 hover:bg-sky-500/35 dark:ring-sky-400/45 dark:bg-sky-400/25 dark:text-sky-100 dark:hover:bg-sky-400/40",
+        pill: "ring-1 ring-inset ring-sky-500/45 bg-sky-500/22 text-foreground hover:bg-sky-500/35 dark:ring-sky-400/45 dark:bg-sky-400/25 dark:hover:bg-sky-400/40",
         swatch: "border-sky-500/55 bg-sky-500/22 dark:border-sky-400/55 dark:bg-sky-400/25",
         dot: "bg-sky-500",
         tone: "var(--color-sky-500)",
         ink: "oklch(0.588 0.158 241.966)",
     },
     banner: {
-        pill: "ring-1 ring-inset ring-yellow-500/50 bg-yellow-400/30 text-yellow-950 hover:bg-yellow-400/45 dark:ring-yellow-300/45 dark:bg-yellow-300/25 dark:text-yellow-100 dark:hover:bg-yellow-300/40",
+        pill: "ring-1 ring-inset ring-yellow-500/50 bg-yellow-400/30 text-foreground hover:bg-yellow-400/45 dark:ring-yellow-300/45 dark:bg-yellow-300/25 dark:hover:bg-yellow-300/40",
         swatch: "border-yellow-500/60 bg-yellow-400/30 dark:border-yellow-300/55 dark:bg-yellow-300/25",
         dot: "bg-yellow-400",
         tone: "var(--color-yellow-500)",
         ink: "oklch(0.554 0.135 66.442)",
     },
     skin: {
-        pill: "ring-1 ring-inset ring-pink-500/45 bg-pink-500/22 text-pink-950 hover:bg-pink-500/35 dark:ring-pink-400/45 dark:bg-pink-400/25 dark:text-pink-100 dark:hover:bg-pink-400/40",
+        pill: "ring-1 ring-inset ring-pink-500/45 bg-pink-500/22 text-foreground hover:bg-pink-500/35 dark:ring-pink-400/45 dark:bg-pink-400/25 dark:hover:bg-pink-400/40",
         swatch: "border-pink-500/55 bg-pink-500/22 dark:border-pink-400/55 dark:bg-pink-400/25",
         dot: "bg-pink-500",
         tone: "var(--color-pink-500)",
     },
     rerun: {
-        pill: "ring-1 ring-inset ring-violet-500/45 bg-violet-500/22 text-violet-950 hover:bg-violet-500/35 dark:ring-violet-400/45 dark:bg-violet-400/25 dark:text-violet-100 dark:hover:bg-violet-400/40",
+        pill: "ring-1 ring-inset ring-violet-500/45 bg-violet-500/22 text-foreground hover:bg-violet-500/35 dark:ring-violet-400/45 dark:bg-violet-400/25 dark:hover:bg-violet-400/40",
         swatch: "border-violet-500/55 bg-violet-500/22 dark:border-violet-400/55 dark:bg-violet-400/25",
         dot: "bg-violet-500",
         tone: "var(--color-violet-500)",
     },
     review: {
-        pill: "ring-1 ring-inset ring-teal-500/45 bg-teal-500/22 text-teal-950 hover:bg-teal-500/35 dark:ring-teal-400/45 dark:bg-teal-400/25 dark:text-teal-100 dark:hover:bg-teal-400/40",
+        pill: "ring-1 ring-inset ring-teal-500/45 bg-teal-500/22 text-foreground hover:bg-teal-500/35 dark:ring-teal-400/45 dark:bg-teal-400/25 dark:hover:bg-teal-400/40",
         swatch: "border-teal-500/55 bg-teal-500/22 dark:border-teal-400/55 dark:bg-teal-400/25",
         dot: "bg-teal-500",
         tone: "var(--color-teal-500)",
@@ -165,9 +169,11 @@ export function AnchorCaption({ anchor }: { anchor: EventAnchor }): React.ReactE
     const rt: ScheduleSharedRichT = useRichT("tools");
     const autoOn = useAutoTranslate();
     const name = resolveName(anchor.nameCn, anchor.nameEn, anchor.nameEnAuto, autoOn);
+    // biome-ignore lint/a11y/noNoninteractiveTabindex: focusable so a keyboard reader can bring up the explanation, as a hover does
+    const trigger = <span tabIndex={0} />;
     return (
         <Tooltip>
-            <TooltipTrigger render={<span />}>
+            <TooltipTrigger render={trigger}>
                 {rt("release.anchor.with", {
                     event: (
                         <span className="text-foreground" lang={name.untranslated ? "zh-CN" : undefined} translate={name.untranslated ? "yes" : undefined}>
@@ -205,8 +211,7 @@ export function ScheduleDetail({ item, lookup, today, onClose }: IScheduleDetail
     const target = canEdit ? scheduleOverrideTarget(item.key) : null;
     const badge = <ResolutionBadge resolution={item.resolution} today={today} caption={item.anchor ? <AnchorCaption anchor={item.anchor} /> : undefined} />;
     return (
-        <Card className="relative gap-0 overflow-hidden p-3 pl-4 sm:p-4 sm:pl-5">
-            <span aria-hidden="true" className={cn("absolute inset-y-0 left-0 w-1", style.dot)} />
+        <Card className="relative gap-0 p-3 sm:p-4">
             <Button variant="ghost" size="icon-sm" onClick={onClose} aria-label={t("release.detail.close")} className="absolute top-2 right-2 text-muted-foreground">
                 <X aria-hidden="true" />
             </Button>
@@ -260,14 +265,23 @@ export function FarmStages({ stages, compact = false }: { stages: FarmStage[]; c
     return (
         <div className={cn("flex flex-wrap", compact ? "gap-1.5" : "gap-2")}>
             {stages.map((st) => (
-                <div key={st.stageId} className={cn("flex items-center gap-2 rounded-md border border-border/60 bg-muted/30", compact ? "px-1.5 py-1" : "px-2 py-1.5")} title={t("release.farm.stageTitle", { code: st.code, ap: st.apCost })}>
+                <div key={st.stageId} className={cn("flex items-center gap-2 rounded-md border border-border/60 bg-muted/30", compact ? "px-1.5 py-1" : "px-2 py-1.5")}>
                     <span className="flex flex-col leading-tight">
                         <span className="font-mono font-semibold text-[11.5px] text-foreground">{st.code}</span>
                         <span className="font-mono text-[10px] text-muted-foreground tabular-nums">{t("release.farm.ap", { ap: st.apCost })}</span>
                     </span>
                     {st.drops.map((d) => (
                         <Tooltip key={d.itemId}>
-                            <TooltipTrigger render={<span className="flex items-center gap-1" />}>
+                            <TooltipTrigger
+                                render={
+                                    compact ? (
+                                        // biome-ignore lint/a11y/noNoninteractiveTabindex: compact rows show only the icon, so the item and its rate are reachable by keyboard here
+                                        <span role="img" tabIndex={0} aria-label={t("release.farm.dropTitle", { item: d.nameEn ?? d.name, rate: occLabel(d.occ, t) })} className="flex items-center gap-1" />
+                                    ) : (
+                                        <span className="flex items-center gap-1" />
+                                    )
+                                }
+                            >
                                 <img src={itemIcon(d.itemId, d.iconId, null, d.nameEn ? undefined : "cn")} alt="" loading="lazy" className={cn("rounded-full bg-black/40 object-contain", compact ? "size-7" : "size-9")} />
                                 {!compact && (
                                     <span className="flex flex-col leading-tight">

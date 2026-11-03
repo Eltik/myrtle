@@ -27,6 +27,10 @@ export const messages = {
         text: "Nothing has an EN date yet.",
         description: "Empty-state body when no row has an English date. 'EN' is the English game server.",
     },
+    "release.calendar.estimated": {
+        text: "estimated",
+        description: "Screen-reader text inside a calendar entry whose date is an estimate (the visible mark is a hollow dot).",
+    },
     "release.calendar.pillTitle": {
         text: "{name}\n{dates}",
         description: "Tooltip on a calendar pill: the row's name, then its dates on a second line. Keep the line break.",
