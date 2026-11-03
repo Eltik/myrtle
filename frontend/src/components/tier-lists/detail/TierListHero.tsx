@@ -91,7 +91,9 @@ export function TierListHero({ detail }: ITierListHeroProps) {
 
                         {detail.description && <ExpandableDescription text={detail.description} markdown className="mt-3 max-w-160 font-sans text-muted-foreground text-sm leading-relaxed sm:text-[15px]" />}
 
-                        <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 font-sans text-[12.5px] text-muted-foreground">
+                        {/* The byline is its own band under a hairline, so the description's "Show more"
+                            ends the description block instead of sitting on the byline's edge. */}
+                        <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 border-border/60 border-t pt-4 font-sans text-[12.5px] text-muted-foreground">
                             {author ? (
                                 <Link to="/user/$id" params={{ id: author.uid }} className="group inline-flex min-w-0 items-center gap-2 text-foreground no-underline">
                                     <Avatar className="h-6 w-6 shrink-0 rounded-full border border-border bg-linear-to-br from-muted to-border font-sans font-semibold text-[10px] text-foreground">

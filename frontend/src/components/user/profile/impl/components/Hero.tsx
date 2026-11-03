@@ -80,7 +80,7 @@ export function Hero({ profile, background, onChangeBackground, onEditHeader, is
     const showSignIn = typeof profile.cumulative_signin === "number" && profile.cumulative_signin > 0;
 
     return (
-        <section className="relative overflow-hidden rounded-2xl border border-[oklch(0.28_0.005_285)] bg-card shadow-sm">
+        <section className="relative overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
             {background && <HeroArt key={`${background.kind}:${background.id}:${background.elite ?? ""}`} background={background} fallback={null} />}
 
             <div className="relative grid grid-cols-[auto_1fr] items-start gap-4 px-5 pt-5 pb-5 sm:grid-cols-[auto_1fr_auto] sm:items-center sm:gap-6 sm:px-7 sm:pt-7 sm:pb-6 lg:gap-7 lg:px-8 lg:pt-8 lg:pb-7">
@@ -149,7 +149,7 @@ export function Hero({ profile, background, onChangeBackground, onEditHeader, is
                 <div className="col-span-2 flex min-w-0 flex-col sm:order-2 sm:col-span-1">
                     <div className="mb-1.5 flex flex-wrap items-center gap-2">
                         <span className="font-medium font-mono text-[11px] text-muted-foreground leading-none">{profile.uid}</span>
-                        <span className="inline-flex items-center gap-1 rounded-full border border-[oklch(0.28_0.005_285)] bg-muted px-2 py-0.5 font-medium font-mono text-[11px] text-muted-foreground leading-none">{t("profile.hero.serverTag", { server: profile.server })}</span>
+                        <span className="inline-flex items-center gap-1 rounded-full border border-border bg-muted px-2 py-0.5 font-medium font-mono text-[11px] text-muted-foreground leading-none">{t("profile.hero.serverTag", { server: profile.server })}</span>
                     </div>
                     <h1 className="wrap-break-word mb-1 flex flex-wrap items-baseline gap-x-1.5 font-bold font-sans text-2xl leading-[1.1] tracking-tight sm:text-3xl lg:text-[36px] lg:leading-[1.05]">
                         <Tooltip>

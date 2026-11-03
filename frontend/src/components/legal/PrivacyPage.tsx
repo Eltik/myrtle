@@ -1,9 +1,8 @@
 import { Link } from "@tanstack/react-router";
-import { ChevronDown, Eye, Lock, ShieldIcon, UserCog } from "lucide-react";
+import { Calendar, ChevronDown, Eye, Lock, UserCog } from "lucide-react";
 import type { ReactNode } from "react";
-import { LegalContainer, LegalDivider, RelatedDocLink, RelatedLinksFooter, SectionHeading } from "#/components/legal/LegalShell";
+import { LegalContainer, LegalDivider, LegalHeader, LegalHeaderLine, RelatedDocLink, RelatedLinksFooter, SectionHeading } from "#/components/legal/LegalShell";
 import { Alert, AlertDescription, AlertTitle } from "#/components/ui/alert";
-import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import { CONTACT_EMAIL, CONTACT_MAILTO, PRIVACY_EMAIL, PRIVACY_MAILTO, REPO_URL } from "#/lib/constants";
 import { type TypedRichT, useRichT, useT } from "#/lib/i18n";
@@ -122,21 +121,9 @@ export function PrivacyPage() {
 
     return (
         <LegalContainer>
-            <header className="relative z-1 mb-12 flex flex-col items-center text-center">
-                <div className="mb-5.5 inline-flex size-18 items-center justify-center rounded-full bg-primary/10 text-primary">
-                    <ShieldIcon className="size-10" strokeWidth={1.8} />
-                </div>
-                <h1 className="m-0 mb-3.5 text-balance font-extrabold text-[clamp(36px,5vw,52px)] text-foreground leading-[1.05] tracking-[-0.02em]">{t("privacy.hero.title")}</h1>
-                <p className="m-0 max-w-[56ch] font-sans text-[20px] text-muted-foreground leading-[1.55]">{t("privacy.hero.subtitle")}</p>
-                <div className="mt-5.5 flex flex-wrap items-center justify-center gap-2">
-                    <Badge variant="secondary" size="lg">
-                        {t("privacy.hero.effective", { date: EFFECTIVE_DATE })}
-                    </Badge>
-                    <Badge variant="outline" size="lg">
-                        {t("privacy.hero.version", { version: VERSION })}
-                    </Badge>
-                </div>
-            </header>
+            <LegalHeader title={t("privacy.hero.title")} subtitle={t("privacy.hero.subtitle")} version={t("privacy.hero.version", { version: VERSION })}>
+                <LegalHeaderLine icon={<Calendar className="size-4" aria-hidden="true" />}>{t("privacy.hero.effective", { date: EFFECTIVE_DATE })}</LegalHeaderLine>
+            </LegalHeader>
 
             <Alert className="mb-10 border-[color-mix(in_srgb,var(--primary)_32%,transparent)] bg-[color-mix(in_srgb,var(--primary)_5%,transparent)] [&>svg]:text-primary">
                 <Eye strokeWidth={2} />

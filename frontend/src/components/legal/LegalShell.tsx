@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
+import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import { Separator } from "#/components/ui/separator";
 import { useT } from "#/lib/i18n";
@@ -11,6 +12,50 @@ export function LegalContainer({ children }: { children: ReactNode }) {
         <div className="relative overflow-x-clip">
             <article className="page-gutter relative z-1 py-14 [--page-max:880px] sm:py-16">{children}</article>
         </div>
+    );
+}
+
+interface ILegalHeaderProps {
+    title: ReactNode;
+    subtitle: ReactNode;
+    /** The document's version, already worded ("Version 2.0"), as an outline badge at the right. */
+    version: ReactNode;
+    /** The dated lines under the standfirst (effective, last updated), each an icon and its text. */
+    children: ReactNode;
+}
+
+/** The one header both legal documents open with: title and standfirst left, the version badge right, the dates under a rule. */
+export function LegalHeader({ title, subtitle, version, children }: ILegalHeaderProps) {
+    return (
+        <header className="mb-12 border-border border-b pb-8">
+            {/* Below sm the version badge drops under the subtitle: beside it, it left the
+                subtitle about 60% of a 375 px screen. */}
+            <div className="flex flex-col items-start gap-4 sm:flex-row sm:justify-between">
+                <div className="min-w-0">
+                    <h1 className="m-0 mb-3.5 text-balance font-extrabold text-[clamp(36px,5vw,52px)] text-foreground leading-[1.05] tracking-[-0.02em]">{title}</h1>
+                    <p className="m-0 max-w-[56ch] font-sans text-[20px] text-muted-foreground leading-[1.55]">{subtitle}</p>
+                </div>
+                <div className="flex shrink-0 gap-2 sm:pt-2">
+                    <Badge variant="outline" size="lg">
+                        {version}
+                    </Badge>
+                </div>
+            </div>
+            <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 font-sans text-[14px] text-muted-foreground">{children}</div>
+        </header>
+    );
+}
+
+/** One dated line in the header; a hairline separates it from the line before it from sm up. */
+export function LegalHeaderLine({ icon, children, separated = false }: { icon: ReactNode; children: ReactNode; separated?: boolean }) {
+    return (
+        <>
+            {separated ? <span className="hidden h-4 w-px bg-border sm:inline-block" aria-hidden="true" /> : null}
+            <span className="inline-flex items-center gap-2">
+                {icon}
+                {children}
+            </span>
+        </>
     );
 }
 

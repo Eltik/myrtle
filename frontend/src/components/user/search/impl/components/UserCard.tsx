@@ -29,7 +29,7 @@ export function UserCard({ user, sort = DEFAULT_SORT }: IUserCardProps) {
 
     return (
         <Card className="group transition-shadow duration-150 hover:shadow-md">
-            <Link to="/user/$id" params={{ id: user.uid }} className="flex items-center gap-3.5 px-4 py-3.5 no-underline">
+            <Link to="/user/$id" params={{ id: user.uid }} className="flex h-full items-center gap-3.5 px-4 py-3.5 no-underline">
                 <Avatar className="h-14 w-14 shrink-0 rounded-xl border border-border transition-transform duration-200 group-hover:scale-105">
                     <AvatarImage src={avatarSrc} alt={nickname} />
                     <AvatarFallback className="rounded-xl text-sm">{initials}</AvatarFallback>
@@ -52,25 +52,24 @@ export function UserCard({ user, sort = DEFAULT_SORT }: IUserCardProps) {
                         </Badge>
                     </div>
 
-                    <div className="mt-1.5 flex items-center gap-2.5 font-sans text-[11.5px] text-muted-foreground leading-none">
-                        {metric != null && <span className="font-semibold text-primary">{metric}</span>}
-                        {user.level != null && (
-                            <span>
-                                <span className="font-medium text-foreground">{t("search.card.level", { level: user.level })}</span>
-                            </span>
-                        )}
+                    {/* Two fixed columns, each stat on one line: a free flex row wrapped inside its
+                        spans ("Lv" over "120") on some cards and not others, so no two cards in a
+                        row lined up. The sort's metric, when there is one, takes the full row. */}
+                    <div className="mt-1.5 grid grid-cols-2 gap-x-3 gap-y-1 font-sans text-[11.5px] text-muted-foreground leading-tight">
+                        {metric != null && <span className="col-span-2 truncate font-semibold text-primary">{metric}</span>}
+                        {user.level != null && <span className="truncate font-medium text-foreground">{t("search.card.level", { level: user.level })}</span>}
                         {user.total_score != null && (
-                            <span>
+                            <span className="truncate">
                                 <span className="font-medium text-foreground">{f.number(user.total_score)}</span> {t("search.card.points")}
                             </span>
                         )}
                         {user.operator_count != null && sort !== "operators" && (
-                            <span>
+                            <span className="truncate">
                                 <span className="font-medium text-foreground">{f.number(user.operator_count)}</span> {t("search.card.operators")}
                             </span>
                         )}
                         {user.skin_count != null && sort !== "skins" && (
-                            <span>
+                            <span className="truncate">
                                 <span className="font-medium text-foreground">{f.number(user.skin_count)}</span> {t("search.card.skins")}
                             </span>
                         )}

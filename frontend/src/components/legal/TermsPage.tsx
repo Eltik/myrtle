@@ -1,8 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { Calendar, FileText, ShieldIcon } from "lucide-react";
-import { LegalContainer, LegalDivider, RelatedDocLink, RelatedLinksFooter } from "#/components/legal/LegalShell";
+import { LegalContainer, LegalDivider, LegalHeader, LegalHeaderLine, RelatedDocLink, RelatedLinksFooter } from "#/components/legal/LegalShell";
 import { Alert, AlertDescription } from "#/components/ui/alert";
-import { Badge } from "#/components/ui/badge";
 import { CONTACT_EMAIL, CONTACT_MAILTO, PRIVACY_EMAIL, PRIVACY_MAILTO, REPO_URL } from "#/lib/constants";
 import { type TypedRichT, useRichT, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -72,32 +71,12 @@ export function TermsPage() {
 
     return (
         <LegalContainer>
-            <header className="mb-12 border-border border-b pb-8">
-                {/* Below sm the version badge drops under the subtitle: beside it, it left the
-                    subtitle about 60% of a 375 px screen. */}
-                <div className="flex flex-col items-start gap-4 sm:flex-row sm:justify-between">
-                    <div className="min-w-0">
-                        <h1 className="m-0 mb-3.5 text-balance font-extrabold text-[clamp(36px,5vw,52px)] text-foreground leading-[1.05] tracking-[-0.02em]">{t("terms.hero.title")}</h1>
-                        <p className="m-0 max-w-[56ch] font-sans text-[20px] text-muted-foreground leading-[1.55]">{t("terms.hero.subtitle")}</p>
-                    </div>
-                    <div className="flex shrink-0 gap-2 sm:pt-2">
-                        <Badge variant="outline" size="lg">
-                            {t("terms.hero.version", { version: VERSION })}
-                        </Badge>
-                    </div>
-                </div>
-                <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 font-sans text-[14px] text-muted-foreground">
-                    <span className="inline-flex items-center gap-2">
-                        <Calendar className="size-4" aria-hidden="true" />
-                        {t("terms.hero.effective", { date: EFFECTIVE_DATE })}
-                    </span>
-                    <span className="hidden h-4 w-px bg-border sm:inline-block" aria-hidden="true" />
-                    <span className="inline-flex items-center gap-2">
-                        <FileText className="size-4" aria-hidden="true" />
-                        {t("terms.hero.lastUpdated", { date: LAST_UPDATED })}
-                    </span>
-                </div>
-            </header>
+            <LegalHeader title={t("terms.hero.title")} subtitle={t("terms.hero.subtitle")} version={t("terms.hero.version", { version: VERSION })}>
+                <LegalHeaderLine icon={<Calendar className="size-4" aria-hidden="true" />}>{t("terms.hero.effective", { date: EFFECTIVE_DATE })}</LegalHeaderLine>
+                <LegalHeaderLine icon={<FileText className="size-4" aria-hidden="true" />} separated>
+                    {t("terms.hero.lastUpdated", { date: LAST_UPDATED })}
+                </LegalHeaderLine>
+            </LegalHeader>
 
             <Alert className="mb-10 border-[color-mix(in_srgb,var(--primary)_32%,transparent)] bg-[color-mix(in_srgb,var(--primary)_5%,transparent)] [&>svg]:text-primary">
                 <ShieldIcon strokeWidth={1.8} />

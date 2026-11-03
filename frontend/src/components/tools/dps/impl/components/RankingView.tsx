@@ -105,9 +105,12 @@ export function RankingView({ state, dispatch, ctx }: IRankingViewProps): React.
                             <TooltipTrigger render={<Label className="block cursor-help text-subtle-foreground text-xs leading-none" />}>{t("dps.rank.preset")}</TooltipTrigger>
                             <TooltipPopup className="max-w-64">{t("dps.rank.preset.hint")}</TooltipPopup>
                         </Tooltip>
-                        <ToggleGroup aria-label={t("dps.rank.preset")} variant="outline" size="sm" value={[rank.preset]} onValueChange={(v) => v[0] && dispatch({ type: "SET_RANK", patch: { preset: v[0] as RankPreset } })}>
+                        {/* One framed group with borderless items inside, so all three presets share one
+                            outline: as joined outline items the pressed fill swallowed its own border and
+                            "Calculator default" read as sitting outside the pill. */}
+                        <ToggleGroup aria-label={t("dps.rank.preset")} size="sm" className="max-w-full flex-wrap rounded-lg border border-input bg-background p-0.5" value={[rank.preset]} onValueChange={(v) => v[0] && dispatch({ type: "SET_RANK", patch: { preset: v[0] as RankPreset } })}>
                             {PRESETS.map((p) => (
-                                <ToggleGroupItem key={p} value={p} className="text-[12px]">
+                                <ToggleGroupItem key={p} value={p} className="px-2.5 text-[12px] sm:text-[12px]">
                                     {presetLabel(p)}
                                 </ToggleGroupItem>
                             ))}

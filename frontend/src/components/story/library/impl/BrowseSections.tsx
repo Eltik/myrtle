@@ -285,12 +285,19 @@ export const JumpBar = memo(function JumpBar({ chips, tools }: { chips: readonly
     const pickerCurrent = phone ? current : (chips[0] ?? null);
 
     return (
-        <nav aria-label={t("browse.jump.aria")} className="page-bleed sticky top-(--site-header-height) z-20 mt-4 border-border/60 border-b bg-background/95 px-(--page-gutter) pt-1 pb-0.75 sm:py-2">
+        <nav
+            aria-label={t("browse.jump.aria")}
+            // The fill bleeds to the page edges; the 1 px rule is an inset pseudo-element held to the
+            // content column, because a border on the bled box ran out past the content to x 5. The
+            // bottom padding grew 1 px to keep the 52 / 66 px bar the border made.
+            className="page-bleed sticky top-(--site-header-height) z-20 mt-4 bg-background/95 px-(--page-gutter) pt-1 pb-1 after:pointer-events-none after:absolute after:inset-x-(--page-gutter) after:bottom-0 after:h-px after:bg-border/60 sm:pt-2 sm:pb-2.25"
+        >
             <div className="flex items-center gap-2 sm:gap-1.5">
                 {current === null ? (
                     // A sort flattens the shelves, so there is nothing to jump between;
-                    // the bar stays for its search button and names the one list.
-                    <span className="min-w-0 flex-1 truncate font-bold font-heading text-[14px] text-foreground">{t("browse.section.sorted")}</span>
+                    // the bar stays for its search button. It prints no name: the flat
+                    // list's own heading says "All chapters" just under it.
+                    <span className="min-w-0 flex-1" />
                 ) : (
                     <>
                         {pickerCurrent ? <SectionPicker chips={chips} current={pickerCurrent} t={t} /> : null}

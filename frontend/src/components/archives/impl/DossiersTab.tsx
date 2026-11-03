@@ -25,6 +25,16 @@ type SortKey = "name" | "race" | "birthplace" | "height" | "experience" | "infec
 /** The pinned first column: opaque so the scrolled cells pass under it, with a hairline on its right edge. */
 const STICKY_COL = "sticky left-0 z-1 bg-card shadow-[inset_-1px_0_0_var(--border)]";
 
+/**
+ * A free-text cell, capped so one long entry wraps instead of widening its whole column.
+ * Cells are `nowrap`, and the 61-character height "35cm (sitting) 75cm (stretching,
+ * including tail, approximate)" and a 63-character assimilation note made those two
+ * columns mostly blank space on every other row.
+ */
+function Prose({ children }: { children: string | null | undefined }) {
+    return <span className="block max-w-44 whitespace-normal leading-snug">{children ?? ""}</span>;
+}
+
 const FILTERS_KEY = "archives:dossiers:filters";
 const FILTERS_VISIBLE_KEY = "archives:dossiers:filtersVisible";
 
@@ -176,12 +186,22 @@ export function DossiersTab({ onOpenFile }: { onOpenFile: (id: string) => void }
                                                     <span className="font-medium text-foreground">{d.name}</span>
                                                 </button>
                                             </TableCell>
-                                            <TableCell className="text-muted-foreground">{d.race ?? ""}</TableCell>
-                                            <TableCell className="text-muted-foreground">{d.birthplace ?? ""}</TableCell>
-                                            <TableCell className="tabular-nums">{d.height ?? ""}</TableCell>
-                                            <TableCell>{d.combatExperience ?? ""}</TableCell>
+                                            <TableCell className="text-muted-foreground">
+                                                <Prose>{d.race}</Prose>
+                                            </TableCell>
+                                            <TableCell className="text-muted-foreground">
+                                                <Prose>{d.birthplace}</Prose>
+                                            </TableCell>
+                                            <TableCell className="tabular-nums">
+                                                <Prose>{d.height}</Prose>
+                                            </TableCell>
+                                            <TableCell>
+                                                <Prose>{d.combatExperience}</Prose>
+                                            </TableCell>
                                             <TableCell className={cn(d.infectionState === "infected" && "text-destructive-foreground")}>{t(INFECTION_KEY[d.infectionState])}</TableCell>
-                                            <TableCell className="tabular-nums">{d.assimilation ?? ""}</TableCell>
+                                            <TableCell className="tabular-nums">
+                                                <Prose>{d.assimilation}</Prose>
+                                            </TableCell>
                                             <TableCell className="text-right tabular-nums">{d.storyCount > 0 ? f.number(d.storyCount) : ""}</TableCell>
                                             <TableCell className="text-right tabular-nums">{d.recordCount > 0 ? f.number(d.recordCount) : ""}</TableCell>
                                             <TableCell className="text-right tabular-nums">{d.linkCount > 0 ? f.number(d.linkCount) : ""}</TableCell>

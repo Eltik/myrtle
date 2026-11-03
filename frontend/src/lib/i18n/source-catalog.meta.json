@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-11-03T18:08:42.259Z",
+    "generatedAt": "2026-11-03T18:18:09.137Z",
     "entries": [
         {
             "key": "admin.home.access.everyList",
@@ -17463,7 +17463,7 @@
             "key": "legal.privacy.hero.effective",
             "namespace": "legal",
             "source_text": "Effective: {date}",
-            "description": "Badge giving the date the policy took effect. {date} is an already-formatted date such as 'Jan 12, 2026'.",
+            "description": "Line giving the date the policy took effect. {date} is an already-formatted date such as 'Jan 12, 2026'.",
             "placeholders": [
                 "date"
             ]

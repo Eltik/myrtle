@@ -24,6 +24,26 @@ interface IOperatorHeroProps {
     operator: IOperatorListItem;
 }
 
+/**
+ * The desktop scrim, page colour at the bottom to clear at the top. The three-stop
+ * `from-background via-background/80 to-transparent` it replaces read as horizontal
+ * bands across the full width over the art at 1440; nine eased stops at the same
+ * coverage (solid at 0, 80% at the middle, clear at the top) step finely enough not to.
+ */
+const EASED_SCRIM = `linear-gradient(to top, ${[
+    [100, 0],
+    [96, 15],
+    [90, 30],
+    [80, 50],
+    [62, 62],
+    [42, 74],
+    [22, 85],
+    [8, 93],
+    [0, 100],
+]
+    .map(([alpha, at]) => `color-mix(in oklab, var(--background) ${alpha}%, transparent) ${at}%`)
+    .join(", ")})`;
+
 export function OperatorHero({ operator }: IOperatorHeroProps) {
     const t: TypedT<typeof messages & typeof cardListMessages> = useT("operators");
     const ref = useParallaxProgress<HTMLDivElement>();
@@ -114,7 +134,7 @@ export function OperatorHero({ operator }: IOperatorHeroProps) {
                         </div>
                     </div>
                     {!showArt && <ArtPlaceholder operator={operator} onLoad={requestArt} className="top-12 right-[5%] w-130 lg:right-[10%] lg:w-150" />}
-                    <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-linear-to-t from-background via-background/80 to-transparent" />
+                    <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3" style={{ backgroundImage: EASED_SCRIM }} />
                     <div className={cn("backface-hidden relative z-10 mx-auto flex h-full max-w-6xl flex-col justify-end px-8 pb-6 will-change-[transform,opacity] lg:pb-8", styles["parallax-content"])}>
                         <Breadcrumb className="mb-3">
                             <BreadcrumbList>
