@@ -1,6 +1,6 @@
 import type { IEnemy, IEnemyHandbook, IEnemyLevel } from "#/lib/api/enemies";
 import { ENEMY_LEVELS } from "./constants";
-import type { ApplyWay, IEnemyFlatStats, IEnemyImmunities, IEnemyStatMax, IEnemyStatMaxByLevel, IEnemyView } from "./types";
+import type { ApplyWay, IEnemyFlatStats, IEnemyImmunities, IEnemyStatMaxByLevel, IEnemyView } from "./types";
 
 const EMPTY_STATS: IEnemyFlatStats = {
     maxHp: 0,
@@ -89,28 +89,44 @@ export function enrichEnemies(enemies: IEnemy[], raceData?: IEnemyHandbook["race
     return enemies.map((e) => enrichEnemy(e, raceData));
 }
 
-function emptyMax(): IEnemyStatMax {
-    return { hp: 0, atk: 0, def: 0 };
+/** The value at fraction `p` of an ascending list (nearest rank); 0 for an empty one. */
+function percentile(sorted: number[], p: number): number {
+    if (sorted.length === 0) return 0;
+    return sorted[Math.min(sorted.length - 1, Math.round(p * (sorted.length - 1)))] ?? 0;
 }
 
+/**
+ * The value a card's stat bar fills to, per level tier: the 95th percentile, not the maximum.
+ * A handful of outliers set the maximum (EN 2026-10-20: Elite HP max 2,500,000 against a
+ * median of 15,000), which left 99% of Elite HP bars and 88 to 100% of Normal bars under
+ * a tenth full. Against the 95th percentile the median sits at 12 to 44% and the top 5%
+ * read full. The printed value beside each bar is unchanged.
+ */
 export function computeStatMaxByLevel(enemies: IEnemyView[]): IEnemyStatMaxByLevel {
-    const out: IEnemyStatMaxByLevel = {
-        NORMAL: emptyMax(),
-        ELITE: emptyMax(),
-        BOSS: emptyMax(),
+    const cols: Record<IEnemyLevel, { hp: number[]; atk: number[]; def: number[] }> = {
+        NORMAL: { hp: [], atk: [], def: [] },
+        ELITE: { hp: [], atk: [], def: [] },
+        BOSS: { hp: [], atk: [], def: [] },
     };
     for (const e of enemies) {
         if (e.hideInHandbook) continue;
-        const bucket = out[e.enemyLevel];
-        if (e.flatStats.maxHp > bucket.hp) bucket.hp = e.flatStats.maxHp;
-        if (e.flatStats.atk > bucket.atk) bucket.atk = e.flatStats.atk;
-        if (e.flatStats.def > bucket.def) bucket.def = e.flatStats.def;
+        const bucket = cols[e.enemyLevel];
+        bucket.hp.push(e.flatStats.maxHp);
+        bucket.atk.push(e.flatStats.atk);
+        bucket.def.push(e.flatStats.def);
     }
-    // Floor every tier with at least 1 so an unused tier doesn't divide by zero.
+    const scale = (values: number[]) =>
+        Math.max(
+            1,
+            percentile(
+                values.sort((a, b) => a - b),
+                0.95,
+            ),
+        );
+    const out = {} as IEnemyStatMaxByLevel;
+    // Floored at 1 so an unused tier doesn't divide by zero.
     for (const level of ENEMY_LEVELS as readonly IEnemyLevel[]) {
-        if (out[level].hp === 0) out[level].hp = 1;
-        if (out[level].atk === 0) out[level].atk = 1;
-        if (out[level].def === 0) out[level].def = 1;
+        out[level] = { hp: scale(cols[level].hp), atk: scale(cols[level].atk), def: scale(cols[level].def) };
     }
     return out;
 }

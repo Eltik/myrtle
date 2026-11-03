@@ -9,6 +9,7 @@ import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { cn, RARITY_HEX_MUTED, rarityInk } from "#/lib/utils";
 import { guaranteedFloorRarity } from "../calculator";
+import { SENIOR_OPERATOR_TAG_ID, TOP_OPERATOR_TAG_ID } from "../constants";
 import { getStarsDisplay } from "../helpers";
 import { type IRarityNewOdds, newOddsPercent, newOperatorOdds } from "../newOperatorOdds";
 import type { IRecruitableOperator, IRosterOverlay, ITagCombinationResult, ResultLayout } from "../types";
@@ -34,11 +35,7 @@ export function ResultCard({ result, roster }: IResultCardProps): React.ReactEle
     return (
         <div className="grid grid-cols-1 gap-2 px-3 py-2.5 sm:grid-cols-[12rem_1fr] sm:gap-3 sm:px-4">
             <div className="flex min-w-0 flex-wrap content-start items-center gap-1">
-                {result.tagNames.map((name) => (
-                    <Badge key={name} variant="outline" size="default">
-                        {name}
-                    </Badge>
-                ))}
+                <ResultTagBadges result={result} />
                 <span className="basis-full max-sm:hidden" aria-hidden="true" />
                 <GuaranteedBadge result={result} layout="compact" />
                 {roster?.showNewOdds ? (
@@ -54,6 +51,29 @@ export function ResultCard({ result, roster }: IResultCardProps): React.ReactEle
                 ))}
             </ul>
         </div>
+    );
+}
+
+/** The two qualification tags that guarantee a rarity carry that rarity's tone, as they do in the tag picker. */
+const TAG_RARITY: Partial<Record<number, number>> = { [TOP_OPERATOR_TAG_ID]: 6, [SENIOR_OPERATOR_TAG_ID]: 5 };
+
+/** A combination's tags; foreground on a 12% rarity tint measures 17.73 / 14.94 (6★) and 18.92 / 13.70 (5★), light / dark. */
+export function ResultTagBadges({ result }: { result: ITagCombinationResult }): React.ReactElement {
+    return (
+        <>
+            {result.tagNames.map((name, i) => {
+                const rarity = TAG_RARITY[result.tags[i] ?? -1];
+                return rarity ? (
+                    <Badge key={name} variant="tint" size="default" style={{ "--tone": `var(--rarity-${rarity})` } as React.CSSProperties}>
+                        {name}
+                    </Badge>
+                ) : (
+                    <Badge key={name} variant="outline" size="default">
+                        {name}
+                    </Badge>
+                );
+            })}
+        </>
     );
 }
 
@@ -252,7 +272,7 @@ function OperatorTile({ operator, roster }: { operator: IRecruitableOperator; ro
                     openOnHover
                     delay={150}
                     render={(props) => (
-                        <button {...props} type="button" className="flex w-full cursor-pointer flex-col items-center gap-0.5 rounded-md p-0.5 text-center transition-colors hover:bg-accent focus-visible:outline-2 focus-visible:outline-ring data-popup-open:bg-accent">
+                        <button {...props} type="button" className="flex w-full cursor-pointer flex-col items-center gap-0.5 rounded-md p-0.5 text-center transition-colors hover:bg-accent/40 focus-visible:outline-2 focus-visible:outline-ring data-popup-open:bg-accent/40">
                             <span className="relative block size-11 shrink-0 overflow-hidden rounded-md font-semibold text-[13px] leading-11" style={{ backgroundColor: `${hex}33`, boxShadow: `inset 0 0 0 1px ${hex}73` }}>
                                 <span aria-hidden="true" className={cn("block size-full", showPotential && !owned && "opacity-50 grayscale")}>
                                     <OperatorAvatar charId={operator.id} name={operator.name} />
@@ -260,7 +280,11 @@ function OperatorTile({ operator, roster }: { operator: IRecruitableOperator; ro
                                 <span aria-hidden="true" className="absolute inset-x-0 bottom-0 h-0.75" style={{ backgroundColor: hex }} />
                                 {potentialLabel && potential !== undefined && potential > 0 && <img alt={potentialLabel} className="icon-theme-aware absolute bottom-0.5 left-0 h-4 w-3.5 object-contain drop-shadow-sm" decoding="async" height={16} loading="lazy" src={potentialIcon(potential)} width={14} />}
                             </span>
-                            <span className="w-full truncate font-medium text-[10.5px] text-foreground leading-tight">{operator.name}</span>
+                            {/* The name in its rarity ink, so a row reads by rarity at a glance. The hover and open fill is accent/40
+                                because the inks measure 4.06 to 4.17 on full accent; on accent/40 4.52 to 4.65 (light), 6.86+ dark. */}
+                            <span className="w-full truncate font-medium text-[10.5px] leading-tight" style={{ color: rarityInk(operator.rarity) }}>
+                                {operator.name}
+                            </span>
                             {upgrade && (
                                 <span data-slot="recruit-next-potential" title={upgrade.text} className={cn("w-full truncate text-[9.5px] leading-tight tracking-tight", UPGRADE_TONE_CLASS[upgrade.tone])}>
                                     {upgrade.text}

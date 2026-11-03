@@ -13,7 +13,7 @@ import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import { cn } from "#/lib/utils";
+import { cn, RARITY_LABELS, rarityInk, rarityToNumber } from "#/lib/utils";
 import { conditionalFlagFor, conditionalLabel, conditionalSwitchOn } from "./conditionals";
 import type { messages as conditionalMessages } from "./conditionals.messages";
 import type { messages } from "./InstanceCard.messages";
@@ -58,6 +58,7 @@ export function InstanceCard({ inst, index, isFirst, isLast, onUpdate, onToggleC
     const { op, config, color, visible, collapsed } = inst;
     const [buffsOpen, setBuffsOpen] = React.useState(false);
     const detail = useOperatorDetail(op);
+    const rarity = detail.raw ? rarityToNumber(detail.raw.rarity) : null;
 
     const promotion = config.promotion ?? Math.max(0, detail.phaseCount - 1);
     const maxLevel = detail.maxLevelForPromotion(promotion);
@@ -78,6 +79,12 @@ export function InstanceCard({ inst, index, isFirst, isLast, onUpdate, onToggleC
                 <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1.5">
                         <span className="truncate font-semibold text-[13px] leading-tight">{op.name}</span>
+                        {/* Rarity in its ink once the operator has loaded: 4.85 to 4.98 on the light card, 7.58+ dark. */}
+                        {rarity !== null && (
+                            <span className="shrink-0 font-mono text-[10.5px] leading-tight" style={{ color: rarityInk(rarity) }}>
+                                {RARITY_LABELS[rarity]}
+                            </span>
+                        )}
                         <span className="shrink-0 rounded bg-muted px-1 py-0.5 font-mono text-[9.5px] text-muted-foreground">#{index + 1}</span>
                     </div>
                     <div className="truncate text-[11px] text-muted-foreground">{t("calc.instance.buildSummary", { skill: skillSummary, rank: skillRankLabel(config.skillRank, t), module: moduleSummary })}</div>

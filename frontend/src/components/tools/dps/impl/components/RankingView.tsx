@@ -17,7 +17,7 @@ import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { dpsOperatorsQueryOptions, dpsRankQueryOptions, type IDpsRankRow } from "#/lib/api/dps";
 import { useLocale, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import { cn, formatProfession } from "#/lib/utils";
+import { cn, formatProfession, rarityInk } from "#/lib/utils";
 import type { DamageKind } from "#/types/generated/DamageKind";
 import type { RankPreset } from "#/types/generated/RankPreset";
 import type { messages as dpsConstantsMessages } from "../constants.messages";
@@ -289,7 +289,7 @@ export function RankRowView({ row, index, columns, sortBy, top, withRetention, w
     const num = (v: number | undefined) => <span className="text-right font-mono tabular-nums">{v === undefined ? "-" : formatLargeNumber(v, locale)}</span>;
     const secs = (v: number | undefined) => <span className="text-right font-mono text-muted-foreground tabular-nums">{v === undefined ? "-" : formatSeconds(v)}</span>;
     return (
-        <div className={cn("grid h-full items-center gap-x-2 border-border/60 border-b px-2 text-[12px]", added && "bg-primary/6")} style={{ gridTemplateColumns: columns }}>
+        <div className={cn("grid h-full items-center gap-x-2 border-border/60 border-b px-2 text-[12px]", added && "bg-primary/4")} style={{ gridTemplateColumns: columns }}>
             <span className="text-right font-mono text-[11px] text-muted-foreground tabular-nums">{index + 1}</span>
             <span className="flex min-w-0 items-center gap-2">
                 <span aria-hidden="true" className="inline-flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-md bg-muted text-[9px]">
@@ -297,8 +297,10 @@ export function RankRowView({ row, index, columns, sortBy, top, withRetention, w
                 </span>
                 <span className="min-w-0">
                     <span className="block truncate font-medium">{row.name}</span>
+                    {/* Rarity in its ink: 4.85 to 4.98 on the card and 4.56 to 4.68 on the added row's primary/4
+                        (primary/6 measured 4.41 for 5★), light; 6.86+ dark. */}
                     <span className="block truncate text-[10.5px] text-muted-foreground">
-                        {row.rarity}★ {formatProfession(row.profession)}
+                        <span style={{ color: rarityInk(row.rarity) }}>{row.rarity}★</span> {formatProfession(row.profession)}
                     </span>
                 </span>
             </span>

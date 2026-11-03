@@ -81,7 +81,7 @@ export function StatBar({ label, value, max, color }: IStatBarProps) {
     return (
         <div className="grid items-center gap-1 sm:gap-1.5" style={{ gridTemplateColumns: "24px 1fr 32px" }}>
             <span className="font-medium font-mono text-[10px] text-muted-foreground uppercase leading-none tracking-widest">{label}</span>
-            <div className="relative h-0.75 overflow-hidden rounded-full bg-[color-mix(in_oklch,var(--muted-foreground)_14%,transparent)]">
+            <div className="relative h-1 overflow-hidden rounded-full bg-[color-mix(in_oklch,var(--muted-foreground)_14%,transparent)]">
                 <div className="absolute top-0 bottom-0 left-0 rounded-full" style={{ width: `${pct}%`, background: color }} />
             </div>
             <span className="text-right font-medium font-mono text-[10px] text-foreground tabular-nums leading-none sm:text-[10.5px]">{formatStatValue(value)}</span>

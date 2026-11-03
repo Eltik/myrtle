@@ -56,13 +56,14 @@ export function EnemyCardGrid({ enemy, statMax }: IEnemyCardGridProps) {
                 {/* Two reserved lines, so a one-line name keeps its HP/ATK/DEF rows level with a two-line neighbour's. */}
                 <div className="flex items-start gap-1.5">
                     <h3 className="m-0 line-clamp-2 min-h-[2lh] min-w-0 flex-1 font-sans font-semibold text-[11px] text-foreground leading-[1.15] sm:text-[12.5px]">{enemy.name}</h3>
-                    <DamageDots types={enemy.damageType} />
+                    <DamageDots types={enemy.damageType} size={8} />
                 </div>
 
+                {/* Every bar in the level's hue (Elite amber, Boss red, Normal grey); the label and the value beside each bar say which stat. */}
                 <div className="flex flex-col gap-1">
-                    <StatBar label={t("cardGrid.hp")} value={enemy.flatStats.maxHp} max={tierMax.hp} color={tok.accent} />
-                    <StatBar label={t("cardGrid.atk")} value={enemy.flatStats.atk} max={tierMax.atk} color="color-mix(in oklch, var(--foreground) 50%, transparent)" />
-                    <StatBar label={t("cardGrid.def")} value={enemy.flatStats.def} max={tierMax.def} color="color-mix(in oklch, var(--foreground) 30%, transparent)" />
+                    <StatBar label={t("cardGrid.hp")} value={enemy.flatStats.maxHp} max={tierMax.hp} color={tok.ink} />
+                    <StatBar label={t("cardGrid.atk")} value={enemy.flatStats.atk} max={tierMax.atk} color={tok.ink} />
+                    <StatBar label={t("cardGrid.def")} value={enemy.flatStats.def} max={tierMax.def} color={tok.ink} />
                 </div>
             </div>
         </Link>

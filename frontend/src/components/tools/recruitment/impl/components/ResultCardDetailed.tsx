@@ -2,7 +2,6 @@ import { ChevronDown } from "lucide-react";
 import type * as React from "react";
 import { useState } from "react";
 import { potentialIcon } from "#/components/operators/detail/impl/assets";
-import { Badge } from "#/components/ui/badge";
 import { Card, CardHeader, CardPanel } from "#/components/ui/card";
 import { Kicker } from "#/components/ui/kicker";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
@@ -12,7 +11,7 @@ import { cn, rarityInk } from "#/lib/utils";
 import { PROFESSION_LABELS } from "../constants";
 import { getStarsDisplay } from "../helpers";
 import type { IRecruitableOperator, IRosterOverlay, ITagCombinationResult } from "../types";
-import { GuaranteedBadge, NewOddsLabel, nextUpgradeLabel, OperatorTagList, type ResultT, UPGRADE_TONE_CLASS } from "./ResultCard";
+import { GuaranteedBadge, NewOddsLabel, nextUpgradeLabel, OperatorTagList, type ResultT, ResultTagBadges, UPGRADE_TONE_CLASS } from "./ResultCard";
 
 interface IResultCardDetailedProps {
     result: ITagCombinationResult;
@@ -30,11 +29,7 @@ export function ResultCardDetailed({ result, roster }: IResultCardDetailedProps)
         <Card>
             <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-x-3 gap-y-1.5 px-3 py-2.5 sm:px-4 sm:py-3">
                 <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5">
-                    {result.tagNames.map((name) => (
-                        <Badge key={name} variant="outline" size="default">
-                            {name}
-                        </Badge>
-                    ))}
+                    <ResultTagBadges result={result} />
                 </div>
                 <GuaranteedBadge result={result} layout="detailed" />
                 {roster?.showNewOdds ? <NewOddsLabel result={result} roster={roster} /> : null}

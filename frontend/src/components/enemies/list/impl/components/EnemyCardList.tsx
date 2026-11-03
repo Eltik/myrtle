@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { assetURL } from "#/lib/assets";
 import { useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -24,7 +24,6 @@ export function EnemyCardList({ enemy, statMax }: IEnemyCardListProps) {
     const tok = LEVEL_TOKENS[enemy.enemyLevel];
     const hasPortrait = !!enemy.portrait && !imgError;
     const portraitSrc = hasPortrait && enemy.portrait ? assetURL(enemy.portrait) : undefined;
-    const dmgLabel = enemy.damageType.length ? enemy.damageType.map((dt) => (DAMAGE_TOKENS[dt] ? tConst(DAMAGE_TOKENS[dt].labelKey) : dt)).join(" · ") : "-";
     const tierMaxHp = statMax[enemy.enemyLevel].hp;
     const hpPct = tierMaxHp > 0 ? Math.min(100, (enemy.flatStats.maxHp / tierMaxHp) * 100) : 0;
 
@@ -36,14 +35,6 @@ export function EnemyCardList({ enemy, statMax }: IEnemyCardListProps) {
             style={{ gridTemplateColumns: LIST_GRID_COLS }}
             aria-label={t("cardList.aria", { name: enemy.name, index: enemy.enemyIndex })}
         >
-            <span
-                aria-hidden="true"
-                className="absolute top-1/2 left-0 h-8 w-0.5 -translate-y-1/2 rounded-full opacity-60 transition-opacity group-hover:opacity-100"
-                style={{
-                    background: enemy.enemyLevel === "NORMAL" ? "transparent" : tok.accent,
-                }}
-            />
-
             <div className="relative h-12 w-12 overflow-hidden rounded-md border border-[color-mix(in_oklch,var(--border)_60%,transparent)] bg-[color-mix(in_oklch,var(--muted)_40%,transparent)]">
                 {hasPortrait && portraitSrc ? (
                     <img src={portraitSrc} alt={t("cardList.portraitAlt", { name: enemy.name })} loading="lazy" decoding="async" onError={() => setImgError(true)} className="absolute inset-0 h-full w-full object-contain transition-transform duration-200 ease-out group-hover:scale-110" />
@@ -64,8 +55,16 @@ export function EnemyCardList({ enemy, statMax }: IEnemyCardListProps) {
 
             <div className="inline-flex items-center gap-2">
                 <DamageDots types={enemy.damageType} size={7} decorative />
+                {/* Each damage type in its ink: 4.89 to 5.39 on the row's card/50 over the page, light; 5.69+ dark. */}
                 <span className="truncate font-sans text-[12.5px] text-muted-foreground">
-                    {dmgLabel}
+                    {enemy.damageType.length
+                        ? enemy.damageType.map((dt, i) => (
+                              <Fragment key={dt}>
+                                  {i > 0 ? " · " : ""}
+                                  <span style={{ color: DAMAGE_TOKENS[dt]?.ink }}>{DAMAGE_TOKENS[dt] ? tConst(DAMAGE_TOKENS[dt].labelKey) : dt}</span>
+                              </Fragment>
+                          ))
+                        : "-"}
                     {enemy.applyWay ? ` · ${tConst(APPLY_WAY_LABEL_KEY[enemy.applyWay])}` : ""}
                 </span>
             </div>
@@ -73,7 +72,7 @@ export function EnemyCardList({ enemy, statMax }: IEnemyCardListProps) {
             <div className="text-right">
                 <span className="font-mono font-semibold text-[13px] text-foreground tabular-nums leading-none">{f.number(enemy.flatStats.maxHp)}</span>
                 <div className="mt-1 h-0.5 overflow-hidden rounded-full bg-[color-mix(in_oklch,var(--muted-foreground)_14%,transparent)]">
-                    <div className="h-full" style={{ width: `${hpPct}%`, background: tok.accent }} />
+                    <div className="h-full" style={{ width: `${hpPct}%`, background: tok.ink }} />
                 </div>
             </div>
         </Link>
