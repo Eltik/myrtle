@@ -67,7 +67,7 @@ export function FilterToolbar({ type, sort, query, selectedFlairs, flairOptions,
     const flairsOpen = flairsOpenOverride ?? isDesktop;
 
     return (
-        <div className="sticky top-14 z-30 mx-[calc(50%-50vw)] w-screen border-border border-y bg-card/85 backdrop-blur-md backdrop-saturate-150 sm:top-16" style={{ maskImage: FADE_MASK, WebkitMaskImage: FADE_MASK }}>
+        <div className="sticky top-14 z-30 mx-[calc(50%-50vw)] w-screen border-border border-y bg-background/95 sm:top-16" style={{ maskImage: FADE_MASK, WebkitMaskImage: FADE_MASK }}>
             <div className="page-gutter py-3 [--page-max:1080px]">
                 <div className="flex flex-wrap items-center gap-2.5">
                     <ToggleGroup aria-label={t("browse.type.label")} value={[type]} onValueChange={(next) => next[0] && onTypeChange(next[0] as TierListType)} variant="outline" size="sm" className="shrink-0">

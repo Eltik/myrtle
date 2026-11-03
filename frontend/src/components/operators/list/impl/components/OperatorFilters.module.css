@@ -109,15 +109,7 @@
     user-select: none;
 }
 /* The one uppercase tier on the list: it heads a block of filters, so it takes the `.kicker` voice.
-   Every caption, button and chip below it is sentence-case sans. The operator list now renders kit
-   Kicker and FilterChip; `.lbl`, `.rarityRow`, `.rarityBtn`, `.tagRow` and `.tg` stay for the
-   archives DossierFilters, which still imports this module. */
-.sectionHead .lbl {
-    font: 600 10.5px / 1 var(--font-mono);
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
-    color: var(--muted-foreground);
-}
+   Every caption, button and chip below it is sentence-case sans. */
 .sectionHead .line {
     flex: 1;
     height: 1px;
@@ -145,136 +137,8 @@
     margin-bottom: 8px;
 }
 
-.rarityRow {
-    display: grid;
-    grid-template-columns: repeat(6, minmax(0, 1fr));
-    gap: 5px;
-}
-@container (max-width: 240px) {
-    .rarityRow {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-}
-@container (max-width: 140px) {
-    .rarityRow {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-}
-.rarityBtn {
-    all: unset;
-    cursor: pointer;
-    height: 28px;
-    padding: 0 4px;
-    border-radius: var(--radius-md);
-    border: 1px solid var(--border);
-    background: color-mix(in oklch, var(--secondary) 50%, transparent);
-    font: 600 12.5px / 1 var(--font-sans);
-    color: var(--muted-foreground);
-    box-sizing: border-box;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    transition:
-        border-color 140ms ease,
-        background-color 140ms ease,
-        color 140ms ease;
-}
-.rarityBtn[data-rarity="6"] {
-    --rc: var(--rarity-6);
-    --rci: var(--rarity-6-ink);
-}
-.rarityBtn[data-rarity="5"] {
-    --rc: var(--rarity-5);
-    --rci: var(--rarity-5-ink);
-}
-.rarityBtn[data-rarity="4"] {
-    --rc: var(--rarity-4);
-    --rci: var(--rarity-4-ink);
-}
-.rarityBtn[data-rarity="3"] {
-    --rc: var(--rarity-3);
-    --rci: var(--rarity-3-ink);
-}
-.rarityBtn[data-rarity="2"] {
-    --rc: var(--rarity-2);
-    --rci: var(--rarity-2-ink);
-}
-.rarityBtn[data-rarity="1"] {
-    --rc: var(--rarity-1);
-    --rci: var(--rarity-1-ink);
-}
-.rarityBtn:hover {
-    border-color: color-mix(in oklch, var(--rc, var(--primary)) 55%, var(--border));
-    color: var(--foreground);
-}
-/* The hue goes on the tint and the border, never the label: as text on its own 18% tint every one
-   of the six failed in light mode. The border takes the ink token so the selected edge clears 3:1 on
-   the card in both themes; the plain 5-star hue there measured 1.44. */
-.rarityBtn.on {
-    background: color-mix(in oklch, var(--rc) 18%, transparent);
-    color: var(--foreground);
-    border-color: var(--rci, var(--rc));
-}
-
 .tagRow {
     display: flex;
     flex-wrap: wrap;
     gap: 5px;
-}
-.tg {
-    all: unset;
-    cursor: pointer;
-    font: 500 11.5px / 1 var(--font-sans);
-    height: 26px;
-    padding: 0 10px;
-    border-radius: var(--radius-md);
-    border: 1px solid var(--border);
-    background: color-mix(in oklch, var(--secondary) 50%, transparent);
-    color: var(--muted-foreground);
-    display: inline-flex;
-    align-items: center;
-    transition:
-        border-color 140ms ease,
-        background-color 140ms ease,
-        color 140ms ease;
-}
-.tg:hover {
-    color: var(--foreground);
-}
-/* Foreground on the tint: primary text on its own 16% tint sat near 4.0:1 at 11.5px. The tint and
-   the primary border stay the selection cue. */
-.tg.on {
-    background: color-mix(in oklch, var(--primary) 16%, transparent);
-    border-color: var(--primary);
-    color: var(--foreground);
-}
-
-/* `all: unset` on these buttons also unsets the outline, and a module rule is unlayered, so
-   it beats the base `:focus-visible` mark: without this they had no keyboard focus at all. */
-.rarityBtn:focus-visible,
-.tg:focus-visible {
-    outline: 2px solid var(--ring);
-    outline-offset: 2px;
-}
-
-/* 28px rarity buttons and 26px tags, grown to the 44px touch floor by an invisible box centred on
-   each, the kit Button's pattern; the visible size and the grid stay as they are. */
-@media (pointer: coarse) {
-    .rarityBtn,
-    .tg {
-        position: relative;
-    }
-    .rarityBtn::after,
-    .tg::after {
-        content: "";
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        width: 100%;
-        height: 100%;
-        min-width: 44px;
-        min-height: 44px;
-        transform: translate(-50%, -50%);
-    }
 }

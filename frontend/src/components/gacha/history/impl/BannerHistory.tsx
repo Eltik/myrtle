@@ -335,7 +335,7 @@ export function BannerHistory({ records, operatorsById, bannersById, isLoading }
                         // filtering to 6* and switching to a tab without any greys out the
                         // one control that would undo it.
                         const isDisabled = count === 0 && !isActive;
-                        return <FilterChip key={rarity} active={isActive} aria-label={t("history.banners.rarityChip", { rarity, count })} count={count} disabled={isDisabled} label={`${rarity}★`} onSelect={() => toggleRarity(rarity)} tone={`var(--rarity-${rarity})`} />;
+                        return <FilterChip key={rarity} active={isActive} aria-label={t("history.banners.rarityChip", { rarity, count })} count={count} disabled={isDisabled} label={`${rarity}★`} onSelect={() => toggleRarity(rarity)} tone={`var(--rarity-${rarity})`} toneInk={rarityInk(rarity)} />;
                     })}
                 </div>
             </div>

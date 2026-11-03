@@ -250,7 +250,7 @@ export function OperatorPicker({ seat, operators, operatorsFailed, onRetryOperat
     return (
         <section aria-label={title} onKeyDown={onSectionKeyDown} className="rounded-2xl border border-border bg-card">
             {/* Pinned under the site header from 640 px up, so the filters stay in reach down a long list. */}
-            <div className="z-20 flex flex-col gap-3 rounded-t-2xl border-border border-b bg-card/95 p-3 backdrop-blur-md supports-[backdrop-filter]:bg-card/85 sm:sticky sm:top-16 sm:p-4">
+            <div className="z-20 flex flex-col gap-3 rounded-t-2xl border-border border-b bg-card p-3 sm:sticky sm:top-16 sm:p-4">
                 <div className="flex items-center justify-between gap-2">
                     <h3 className="font-semibold text-[15px]">{title}</h3>
                     <Button variant="ghost" size="icon" aria-label={t("squad.picker.close")} onClick={onClose} className="pointer-coarse:size-11">

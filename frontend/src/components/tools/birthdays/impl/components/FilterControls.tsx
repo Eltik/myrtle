@@ -12,7 +12,7 @@ import type { TypedT } from "#/lib/i18n/messages";
 import { cn, formatNationId, professionLabel } from "#/lib/utils";
 import type { OperatorProfession } from "#/types/operators";
 import { PROFESSIONS, RARITIES } from "../constants";
-import { rarityVar } from "../helpers";
+import { rarityInkVar, rarityVar } from "../helpers";
 import type { IBirthdayFilters } from "../types";
 import type { messages } from "./FilterControls.messages";
 
@@ -85,7 +85,7 @@ export function FilterControls({ filters, onChange, nations, classNames }: IFilt
             <Section label={t("birthdays.filters.rarity")} t={t} onClear={filters.rarities.size > 0 ? () => onChange({ ...filters, rarities: new Set() }) : undefined}>
                 <div className="flex flex-wrap gap-1.5">
                     {RARITIES.map((r) => (
-                        <FilterChip key={r} active={filters.rarities.has(r)} label={t("birthdays.filters.rarityChip", { rarity: r })} onSelect={() => toggleRarity(r)} tone={rarityVar(r)} />
+                        <FilterChip key={r} active={filters.rarities.has(r)} label={t("birthdays.filters.rarityChip", { rarity: r })} onSelect={() => toggleRarity(r)} tone={rarityVar(r)} toneInk={rarityInkVar(r)} />
                     ))}
                 </div>
             </Section>

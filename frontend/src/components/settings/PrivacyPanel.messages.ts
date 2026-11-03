@@ -19,10 +19,6 @@ export const messages = {
         text: "Who can see your roster and account stats.",
         description: "Card description over the visibility switches.",
     },
-    "privacy.visibility.column": {
-        text: "user_settings.public_profile",
-        description: "Database column name substituted into privacy.visibility.desc as {column}, shown in monospace. An identifier, not prose - leave it exactly as it is.",
-    },
     "privacy.publicProfile.title": {
         text: "Public profile",
         description: "Label of the switch that makes the profile world-readable, and the switch's accessible name.",
@@ -43,10 +39,6 @@ export const messages = {
         text: "/user/leaderboard",
         description: "URL path substituted into privacy.leaderboards.desc as {path}, shown in monospace. Leave it exactly as it is.",
     },
-    "privacy.leaderboards.column": {
-        text: "share_stats",
-        description: "Database column name substituted into privacy.leaderboards.desc as {column}, shown in monospace. Leave it exactly as it is.",
-    },
     "privacy.gacha.title": {
         text: "Store gacha history",
         description: "Label of the switch that keeps a record of the visitor's pulls, and the switch's accessible name. 'Gacha' is the game's random-draw system.",
@@ -55,10 +47,6 @@ export const messages = {
         text: "Saves your synced pulls so you can browse them in Gacha → History and contribute aggregate stats.",
         description: "Caption under the gacha switch. 'Gacha → History' names a menu path in this site's own navigation.",
     },
-    "privacy.gacha.column": {
-        text: "store_gacha",
-        description: "Database column name substituted into privacy.gacha.desc as {column}, shown in monospace. Leave it exactly as it is.",
-    },
     "privacy.publicGacha.title": {
         text: "Public pull history",
         description: "Label of the switch that lets visitors see the player's pull history on their profile and through links they share, and the switch's accessible name. 'Pull' is one draw on a headhunting banner.",
@@ -66,10 +54,6 @@ export const messages = {
     "privacy.publicGacha.desc": {
         text: "Shows your stored pulls on your profile's Pulls tab and through the links you share from Gacha → History. Off by default, and only on a public profile.",
         description: "Caption under the public pull history switch. 'Gacha → History' names a menu path in this site's own navigation.",
-    },
-    "privacy.publicGacha.column": {
-        text: "public_gacha",
-        description: "Database column name substituted into privacy.publicGacha.desc as {column}, shown in monospace. Leave it exactly as it is.",
     },
 } satisfies MessageMap;
 

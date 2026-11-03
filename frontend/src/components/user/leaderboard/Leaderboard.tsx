@@ -114,6 +114,8 @@ export function Leaderboard() {
                         onRanking={handleRanking}
                         catalog={data.catalog}
                         materials={data.materials}
+                        catalogError={data.catalogError}
+                        onRetryCatalog={data.refetchCatalog}
                         scope={scope}
                         onScope={(next) => setSearch({ scope: next })}
                         server={server}
@@ -136,7 +138,18 @@ export function Leaderboard() {
                         ) : data.isLoading && data.rows.length === 0 ? (
                             <LeaderboardTableSkeleton />
                         ) : (
-                            <LeaderboardTable rows={data.rows} ranking={ranking} onRanking={handleRanking} catalog={data.catalog} materials={data.materials} topValue={byItem ? data.topValue : null} isLoading={data.isLoading} intervalKey={intervalMeta.sinceKey} />
+                            <LeaderboardTable
+                                rows={data.rows}
+                                ranking={ranking}
+                                onRanking={handleRanking}
+                                catalog={data.catalog}
+                                materials={data.materials}
+                                catalogError={data.catalogError}
+                                onRetryCatalog={data.refetchCatalog}
+                                topValue={byItem ? data.topValue : null}
+                                isLoading={data.isLoading}
+                                intervalKey={intervalMeta.sinceKey}
+                            />
                         )}
                         <div className="flex flex-wrap items-center justify-between gap-3 border-border border-t bg-[color-mix(in_srgb,var(--muted)_30%,transparent)] px-3 py-3 sm:px-4 sm:py-3.5">
                             <span className="font-mono text-muted-foreground text-xs tabular-nums leading-none">{t(byItem ? "leaderboard.showingHolders" : "leaderboard.showing", { start, end, count: data.total })}</span>

@@ -441,11 +441,13 @@ function SeatCard(props: ISeatCardProps): React.ReactElement {
  * skill tile wears the mastery glyph, or the skill rank as a numeral below
  * mastery; the module tile wears its rank. The icons need the operator
  * detail, which the seat editor shares through the query cache; until it
- * lands the tiles show `S3` and the module's type label from the index.
+ * lands the tiles show `S3` and the module's type label from the index. If it
+ * fails they keep those labels and only a screen reader hears why: the seat
+ * editor, which shares the query, carries the retry.
  */
 function SeatLoadout({ resolved, op, t }: { resolved: IResolvedSeat; op: IOperatorIndexEntry; t: GridT }): React.ReactElement {
     const server = useGamedataServer();
-    const { data: detail } = useQuery(operatorQueryOptions(resolved.member.char_id, server));
+    const { data: detail, isError: detailFailed } = useQuery(operatorQueryOptions(resolved.member.char_id, server));
     const { member, build } = resolved;
     // A 1 or 2 star operator has no skill at all (`skillCount` 0), which is not the same as a skill whose icon has not loaded.
     const hasSkill = op.skillCount > 0;
@@ -486,6 +488,7 @@ function SeatLoadout({ resolved, op, t }: { resolved: IResolvedSeat; op: IOperat
             ) : (
                 <span role="img" aria-label={t("squad.grid.noModule")} title={t("squad.grid.noModule")} className={cn(styles.tile, styles.tileEmpty)} />
             )}
+            {detailFailed && <span className="sr-only">{t("squad.grid.detailsFailed")}</span>}
         </>
     );
 }

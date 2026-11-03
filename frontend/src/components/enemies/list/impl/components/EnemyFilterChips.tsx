@@ -53,7 +53,7 @@ export function EnemyFilterChips({ filters, setLevels, setDamageTypes, setAttack
         <div className="flex flex-wrap items-center gap-x-3.5 gap-y-2.5 rounded-2xl border border-border bg-[color-mix(in_oklch,var(--card)_60%,transparent)] px-3.5 py-3">
             <ChipGroup label={t("chips.threat")}>
                 {ENEMY_LEVELS.map((lv) => (
-                    <FilterChip key={lv} active={filters.levels.includes(lv)} tone={LEVEL_TOKENS[lv].accent} onSelect={() => setLevels(toggleArray(filters.levels, lv))} label={tConst(ENEMY_LEVEL_LABEL_KEY[lv])} />
+                    <FilterChip key={lv} active={filters.levels.includes(lv)} tone={LEVEL_TOKENS[lv].accent} toneInk={LEVEL_TOKENS[lv].ink} onSelect={() => setLevels(toggleArray(filters.levels, lv))} label={tConst(ENEMY_LEVEL_LABEL_KEY[lv])} />
                 ))}
             </ChipGroup>
 
@@ -65,6 +65,7 @@ export function EnemyFilterChips({ filters, setLevels, setDamageTypes, setAttack
                         key={d}
                         active={filters.damageTypes.includes(d)}
                         tone={DAMAGE_TOKENS[d].color}
+                        toneInk={DAMAGE_TOKENS[d].ink}
                         onSelect={() => setDamageTypes(toggleArray(filters.damageTypes, d))}
                         label={
                             <span className="inline-flex items-center gap-1.75">

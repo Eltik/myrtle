@@ -1,5 +1,6 @@
 import { Check, ChevronDown, Search, X } from "lucide-react";
 import { useDeferredValue, useMemo, useState } from "react";
+import { LoadError } from "#/components/operators/detail/impl/components/LoadError";
 import { Button } from "#/components/ui/button";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "#/components/ui/input-group";
 import { Kicker } from "#/components/ui/kicker";
@@ -24,6 +25,9 @@ interface IRankByPickerProps {
     onRanking: (next: Ranking) => void;
     catalog: ICatalog;
     materials: IMaterials | undefined;
+    /** The item catalog or the item names failed: the Inventory group says so, with a retry, instead of listing nameless items. */
+    catalogError?: boolean;
+    onRetryCatalog?: () => void;
     /** `toolbar` is the labelled control; `header` is the compact trigger in the table's value column. */
     variant: "toolbar" | "header";
     className?: string;
@@ -44,7 +48,7 @@ function useRankingLabel(ranking: Ranking, catalog: ICatalogItem[], materials: I
     }, [ranking, catalog, materials, t]);
 }
 
-export function RankByPicker({ ranking, onRanking, catalog, materials, variant, className }: IRankByPickerProps) {
+export function RankByPicker({ ranking, onRanking, catalog, materials, catalogError = false, onRetryCatalog, variant, className }: IRankByPickerProps) {
     const t: PickerT = useT("user");
     const [open, setOpen] = useState(false);
     const [query, setQuery] = useState("");
@@ -107,7 +111,7 @@ export function RankByPicker({ ranking, onRanking, catalog, materials, variant, 
                     </InputGroup>
                 </div>
                 <div className="max-h-[min(420px,60dvh)] overflow-y-auto p-1">
-                    {scoreOptions.length === 0 && itemOptions.length === 0 ? <p className="m-0 px-3 py-6 text-center font-sans text-muted-foreground text-sm">{t("leaderboard.rankBy.empty")}</p> : null}
+                    {scoreOptions.length === 0 && itemOptions.length === 0 && !catalogError ? <p className="m-0 px-3 py-6 text-center font-sans text-muted-foreground text-sm">{t("leaderboard.rankBy.empty")}</p> : null}
 
                     {scoreOptions.length > 0 ? (
                         <section aria-label={t("leaderboard.rankBy.group.score")}>
@@ -139,7 +143,12 @@ export function RankByPicker({ ranking, onRanking, catalog, materials, variant, 
                         </section>
                     ) : null}
 
-                    {itemOptions.length > 0 ? (
+                    {catalogError ? (
+                        <section aria-label={t("leaderboard.rankBy.group.items")} className={scoreOptions.length > 0 ? "mt-1 border-border/70 border-t pt-1" : undefined}>
+                            <GroupHeading>{t("leaderboard.rankBy.group.items")}</GroupHeading>
+                            <LoadError className="m-1.5 rounded-lg" message={t("leaderboard.rankBy.loadFailed")} onRetry={() => onRetryCatalog?.()} />
+                        </section>
+                    ) : itemOptions.length > 0 ? (
                         <section aria-label={t("leaderboard.rankBy.group.items")} className={scoreOptions.length > 0 ? "mt-1 border-border/70 border-t pt-1" : undefined}>
                             <GroupHeading hint={!deferred && catalog.items.length > 0 ? t("leaderboard.rankBy.group.items.hint", { count: catalog.items.length }) : undefined}>{t("leaderboard.rankBy.group.items")}</GroupHeading>
                             <ul className="m-0 list-none p-0">

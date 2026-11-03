@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-11-03T15:54:22.642Z",
+    "generatedAt": "2026-11-03T16:05:16.914Z",
     "entries": [
         {
             "key": "admin.home.access.everyList",
@@ -24218,9 +24218,11 @@
         {
             "key": "operators.ownership.e2.aria",
             "namespace": "operators",
-            "source_text": "E2''d by {pct} of owners",
-            "description": "Accessible name of the community badge in E2 mode. {pct} is an already-formatted percentage. The doubled apostrophe is ICU escaping and renders as one.",
+            "source_text": "E2''d by {pct} of owners ({e2Owners} of {owners})",
+            "description": "Accessible name of the community badge in E2 mode. {pct} is an already-formatted percentage; {e2Owners} and {owners} are formatted counts, the same ones the hover text gives mouse users. The doubled apostrophe is ICU escaping and renders as one.",
             "placeholders": [
+                "e2Owners",
+                "owners",
                 "pct"
             ]
         },
@@ -24238,9 +24240,10 @@
         {
             "key": "operators.ownership.owned.aria",
             "namespace": "operators",
-            "source_text": "Owned by {pct} of players",
-            "description": "Accessible name of the community badge in ownership mode. {pct} is an already-formatted percentage.",
+            "source_text": "Owned by {pct} of players ({owners} owners)",
+            "description": "Accessible name of the community badge in ownership mode. {pct} is an already-formatted percentage; {owners} is a formatted count, the same one the hover text gives mouse users.",
             "placeholders": [
+                "owners",
                 "pct"
             ]
         },
@@ -26025,13 +26028,6 @@
             "placeholders": []
         },
         {
-            "key": "settings.privacy.gacha.column",
-            "namespace": "settings",
-            "source_text": "store_gacha",
-            "description": "Database column name substituted into privacy.gacha.desc as {column}, shown in monospace. Leave it exactly as it is.",
-            "placeholders": []
-        },
-        {
             "key": "settings.privacy.gacha.desc",
             "namespace": "settings",
             "source_text": "Saves your synced pulls so you can browse them in Gacha → History and contribute aggregate stats.",
@@ -26043,13 +26039,6 @@
             "namespace": "settings",
             "source_text": "Store gacha history",
             "description": "Label of the switch that keeps a record of the visitor's pulls, and the switch's accessible name. 'Gacha' is the game's random-draw system.",
-            "placeholders": []
-        },
-        {
-            "key": "settings.privacy.leaderboards.column",
-            "namespace": "settings",
-            "source_text": "share_stats",
-            "description": "Database column name substituted into privacy.leaderboards.desc as {column}, shown in monospace. Leave it exactly as it is.",
             "placeholders": []
         },
         {
@@ -26073,13 +26062,6 @@
             "namespace": "settings",
             "source_text": "Show on leaderboards",
             "description": "Label of the switch that opts into public rankings, and the switch's accessible name.",
-            "placeholders": []
-        },
-        {
-            "key": "settings.privacy.publicGacha.column",
-            "namespace": "settings",
-            "source_text": "public_gacha",
-            "description": "Database column name substituted into privacy.publicGacha.desc as {column}, shown in monospace. Leave it exactly as it is.",
             "placeholders": []
         },
         {
@@ -26108,13 +26090,6 @@
             "namespace": "settings",
             "source_text": "Public profile",
             "description": "Label of the switch that makes the profile world-readable, and the switch's accessible name.",
-            "placeholders": []
-        },
-        {
-            "key": "settings.privacy.visibility.column",
-            "namespace": "settings",
-            "source_text": "user_settings.public_profile",
-            "description": "Database column name substituted into privacy.visibility.desc as {column}, shown in monospace. An identifier, not prose - leave it exactly as it is.",
             "placeholders": []
         },
         {
@@ -52631,6 +52606,13 @@
             "placeholders": []
         },
         {
+            "key": "tools.squad.grid.detailsFailed",
+            "namespace": "tools",
+            "source_text": "Details failed to load",
+            "description": "Screen-reader-only note on a squad seat card when the operator's skill and module details could not be fetched; the tiles fall back to text labels such as S3. Retry lives in the seat editor.",
+            "placeholders": []
+        },
+        {
             "key": "tools.squad.grid.dragHint",
             "namespace": "tools",
             "source_text": "Drag a card onto another to swap them.",
@@ -54645,6 +54627,13 @@
                 "share",
                 "total"
             ]
+        },
+        {
+            "key": "user.leaderboard.rankBy.loadFailed",
+            "namespace": "user",
+            "source_text": "The item list did not load.",
+            "description": "Failure line in the 'Rank by' picker's Inventory group, in place of the item list, when the item catalog or item names failed to load, beside a Try again button. The score metrics above it still work.",
+            "placeholders": []
         },
         {
             "key": "user.leaderboard.rankBy.search.clear",

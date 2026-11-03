@@ -883,7 +883,7 @@
 .rowPlay:hover,
 .rowPlay[data-sounding="true"] {
     border-color: color-mix(in oklab, var(--primary) 45%, transparent);
-    color: var(--primary);
+    color: var(--primary-ink);
 }
 
 /* Room for the glyph, taken out of the chevron's own margin so the row's text column is untouched. */

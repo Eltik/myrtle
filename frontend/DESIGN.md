@@ -191,7 +191,10 @@ component, never inline.
   check mark, a tone tint and border, and foreground text. Data-coloured text on its own
   tint measured 1.66 to 3.96, which is why the tone never colours the label. The pressed
   border is solid: `toneInk` (an `-ink` token) when given, else the tone, else `--ring`;
-  the old `--tone/50` measured 2.28 light / 2.79 dark on the page.
+  the old `--tone/50` measured 2.28 light / 2.79 dark on the page. Every caller with a data
+  `tone` passes its ink; the release-schedule kinds have no token, so `KIND_STYLE.ink` is a
+  literal Tailwind step that clears 3:1 on both pages (sky-600, yellow-700, teal-600), and
+  pink-500 / violet-500 go without one, since they clear it as they are.
 - Pressed looks: multi-select filter chips are `FilterChip` (tone tint, solid edge, check
   mark); single-select segments and toolbar toggles are `Toggle` / `ToggleGroup` (grey fill
   plus `inset-ring-foreground/40`, no check, since the group already says one is chosen).

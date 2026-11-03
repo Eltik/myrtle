@@ -25,6 +25,8 @@ interface ILeaderboardTableProps {
     onRanking: (next: Ranking) => void;
     catalog: ICatalog;
     materials: IMaterials | undefined;
+    catalogError?: boolean;
+    onRetryCatalog?: () => void;
     /** For an item ranking, the largest holding; every row's bar is drawn against it. */
     topValue: number | null;
     isLoading?: boolean;
@@ -43,14 +45,14 @@ function fill(ranking: Ranking, value: number | null, topValue: number | null): 
     return Math.max(0, Math.min(100, (value / topValue) * 100));
 }
 
-export function LeaderboardTable({ rows, ranking, onRanking, catalog, materials, topValue, isLoading, intervalKey = "leaderboard.interval.day.since" }: ILeaderboardTableProps) {
+export function LeaderboardTable({ rows, ranking, onRanking, catalog, materials, catalogError, onRetryCatalog, topValue, isLoading, intervalKey = "leaderboard.interval.day.since" }: ILeaderboardTableProps) {
     const t: TableT = useT("user");
 
     if (!isLoading && rows.length === 0) {
         return <div className="px-6 py-12 text-center font-sans text-muted-foreground text-sm">{ranking.kind === "item" ? t("leaderboard.table.empty.item") : t("leaderboard.table.empty")}</div>;
     }
 
-    const picker = <RankByPicker ranking={ranking} onRanking={onRanking} catalog={catalog} materials={materials} variant="header" />;
+    const picker = <RankByPicker ranking={ranking} onRanking={onRanking} catalog={catalog} materials={materials} catalogError={catalogError} onRetryCatalog={onRetryCatalog} variant="header" />;
 
     return (
         <>

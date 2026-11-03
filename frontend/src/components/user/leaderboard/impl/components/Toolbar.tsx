@@ -24,6 +24,8 @@ interface IToolbarProps {
     onRanking: (next: Ranking) => void;
     catalog: ICatalog;
     materials: IMaterials | undefined;
+    catalogError: boolean;
+    onRetryCatalog: () => void;
     scope: LeaderboardScope;
     onScope: (next: LeaderboardScope) => void;
     server: ServerCode | "All";
@@ -39,7 +41,7 @@ interface IToolbarProps {
 /** Filter trigger: 44px under a coarse pointer, 36px on narrow screens, the site's 32px on desktop. */
 const FILTER = "inline-flex h-9 cursor-pointer items-center gap-2 rounded-lg border border-input bg-card px-2.5 font-medium font-sans text-foreground text-xs leading-none transition-colors hover:border-foreground/20 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-input sm:h-8 pointer-coarse:h-11";
 
-export function Toolbar({ ranking, onRanking, catalog, materials, scope, onScope, server, onServer, interval, onInterval, movementOnly, onMovementOnly, query, onQuery }: IToolbarProps) {
+export function Toolbar({ ranking, onRanking, catalog, materials, catalogError, onRetryCatalog, scope, onScope, server, onServer, interval, onInterval, movementOnly, onMovementOnly, query, onQuery }: IToolbarProps) {
     const t: ToolbarT = useT("user");
     const intervalShortKey = INTERVALS.find((i) => i.value === interval)?.shortKey ?? "leaderboard.interval.day.short";
     // Rank movement comes from score snapshots; item holdings are not
@@ -51,7 +53,7 @@ export function Toolbar({ ranking, onRanking, catalog, materials, scope, onScope
     return (
         <div className="flex flex-col gap-2.5">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                <RankByPicker ranking={ranking} onRanking={onRanking} catalog={catalog} materials={materials} variant="toolbar" className="w-full sm:w-auto sm:max-w-80" />
+                <RankByPicker ranking={ranking} onRanking={onRanking} catalog={catalog} materials={materials} catalogError={catalogError} onRetryCatalog={onRetryCatalog} variant="toolbar" className="w-full sm:w-auto sm:max-w-80" />
                 <InputGroup className="w-full sm:ml-auto sm:w-72">
                     <InputGroupAddon>
                         <Search aria-hidden="true" />

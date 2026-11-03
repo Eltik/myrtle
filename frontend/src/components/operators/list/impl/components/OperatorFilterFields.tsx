@@ -6,7 +6,7 @@ import { FilterChip } from "#/components/ui/filter-chip";
 import { Kicker } from "#/components/ui/kicker";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import { cn, formatNationId, nationLabel, professionLabel, rarityToNumber, subProfessionLabel, subProfessionToProfession } from "#/lib/utils";
+import { cn, formatNationId, nationLabel, professionLabel, rarityInk, rarityToNumber, subProfessionLabel, subProfessionToProfession } from "#/lib/utils";
 import { GENDERS, MODULE_TYPES, PROFESSION_ORDER, RARITIES } from "../constants";
 import type { ArrayFilterKey, IFilterOptions, ISharedFilters } from "../types";
 import { ClassPicker, toggle } from "./ClassPicker";
@@ -68,7 +68,7 @@ export function OperatorFilterFields({
                     <div className="grid grid-cols-3 gap-1.5">
                         {RARITIES.map((r) => {
                             const n = rarityToNumber(r);
-                            return <FilterChip key={r} active={filters.rarities.includes(r)} className="w-full" label={`${n}★`} onSelect={() => onChange("rarities", toggle(filters.rarities, r))} tone={`var(--rarity-${n})`} />;
+                            return <FilterChip key={r} active={filters.rarities.includes(r)} className="w-full" label={`${n}★`} onSelect={() => onChange("rarities", toggle(filters.rarities, r))} tone={`var(--rarity-${n})`} toneInk={rarityInk(n)} />;
                         })}
                     </div>
                 </div>

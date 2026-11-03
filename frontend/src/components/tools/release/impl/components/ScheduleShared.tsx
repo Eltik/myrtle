@@ -60,18 +60,27 @@ function occLabel(occ: string, t: ScheduleSharedT): string {
  * `tone` is the hue as a CSS colour for the kind tag and filter chip, which tint with it and keep
  * foreground text.
  */
-export const KIND_STYLE: Record<ScheduleKind, { pill: string; swatch: string; dot: string; tone: string }> = {
+/**
+ * `ink` is the pressed filter-chip border where the plain tone misses 3:1 on the light page:
+ * sky-500 2.60, yellow-500 1.83, teal-500 2.32. The inks are literal oklch (Tailwind sky-600,
+ * yellow-700, teal-600) so they hold in both themes without a token: 3.85 / 5.01, 4.71 / 4.09,
+ * 3.50 / 5.50 on the light / dark page. Pink-500 (3.43 / 5.62) and violet-500 (4.21 / 4.57)
+ * clear it as they are.
+ */
+export const KIND_STYLE: Record<ScheduleKind, { pill: string; swatch: string; dot: string; tone: string; ink?: string }> = {
     event: {
         pill: "ring-1 ring-inset ring-sky-500/45 bg-sky-500/22 text-sky-950 hover:bg-sky-500/35 dark:ring-sky-400/45 dark:bg-sky-400/25 dark:text-sky-100 dark:hover:bg-sky-400/40",
         swatch: "border-sky-500/55 bg-sky-500/22 dark:border-sky-400/55 dark:bg-sky-400/25",
         dot: "bg-sky-500",
         tone: "var(--color-sky-500)",
+        ink: "oklch(0.588 0.158 241.966)",
     },
     banner: {
         pill: "ring-1 ring-inset ring-yellow-500/50 bg-yellow-400/30 text-yellow-950 hover:bg-yellow-400/45 dark:ring-yellow-300/45 dark:bg-yellow-300/25 dark:text-yellow-100 dark:hover:bg-yellow-300/40",
         swatch: "border-yellow-500/60 bg-yellow-400/30 dark:border-yellow-300/55 dark:bg-yellow-300/25",
         dot: "bg-yellow-400",
         tone: "var(--color-yellow-500)",
+        ink: "oklch(0.554 0.135 66.442)",
     },
     skin: {
         pill: "ring-1 ring-inset ring-pink-500/45 bg-pink-500/22 text-pink-950 hover:bg-pink-500/35 dark:ring-pink-400/45 dark:bg-pink-400/25 dark:text-pink-100 dark:hover:bg-pink-400/40",
@@ -90,6 +99,7 @@ export const KIND_STYLE: Record<ScheduleKind, { pill: string; swatch: string; do
         swatch: "border-teal-500/55 bg-teal-500/22 dark:border-teal-400/55 dark:bg-teal-400/25",
         dot: "bg-teal-500",
         tone: "var(--color-teal-500)",
+        ink: "oklch(0.6 0.118 184.704)",
     },
 };
 
@@ -130,6 +140,7 @@ export function ScheduleControls({ kinds, onKindsChange, stageOnly, onStageOnlyC
                         active={on}
                         onSelect={() => toggle(k)}
                         tone={KIND_STYLE[k].tone}
+                        toneInk={KIND_STYLE[k].ink}
                         count={counts[k]}
                         label={
                             <span className="inline-flex items-center gap-1.5">

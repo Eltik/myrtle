@@ -5,10 +5,12 @@ import { SubProfessionIcon } from "#/components/operators/list/impl/components/I
 import type { messages as fieldMessages } from "#/components/operators/list/impl/components/OperatorFilterFields.messages";
 import styles from "#/components/operators/list/impl/components/OperatorFilters.module.css";
 import { PROFESSION_ORDER, RARITIES } from "#/components/operators/list/impl/constants";
+import { FilterChip } from "#/components/ui/filter-chip";
+import { Kicker } from "#/components/ui/kicker";
 import { Slider } from "#/components/ui/slider";
-import { useFormatters, useT } from "#/lib/i18n";
+import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import { cn, professionLabel, rarityToNumber, subProfessionToProfession } from "#/lib/utils";
+import { cn, professionLabel, rarityInk, rarityToNumber, subProfessionToProfession } from "#/lib/utils";
 import { type DossierListKey, type IDossierFilters, type IDossierOptions, INFECTION_ORDER, type IOption, optionLabel, type Range } from "./dossierMatch";
 import { type ArchivesT, FactionLogo, INFECTION_KEY } from "./shared";
 
@@ -25,7 +27,7 @@ interface IDossierFilterFieldsProps {
 
 /**
  * The Dossiers filter fields, built from the /operators sidebar's own parts
- * (class picker, rarity buttons, multi-select dropdowns, tag rows) so the two
+ * (class picker, rarity chips, multi-select dropdowns, tag rows) so the two
  * pages read and behave alike. A field whose values no row carries is left
  * out rather than shown empty.
  */
@@ -41,15 +43,12 @@ export function DossierFilterFields({ filters, options, infectionCounts, onChang
                 <ClassPicker selected={filters.classes} onChange={(v) => onChange("classes", v)} />
                 <div className={styles.field}>
                     <div className={styles.fieldLabel}>{ft("filters.rarity")}</div>
-                    <div className={styles.rarityRow}>
-                        {STARS.map((r) => {
-                            const on = filters.rarities.includes(r);
-                            return (
-                                <button key={r} type="button" data-rarity={r} className={cn(styles.rarityBtn, on && styles.on)} onClick={() => onChange("rarities", toggle(filters.rarities, r))} aria-pressed={on}>
-                                    {r}★
-                                </button>
-                            );
-                        })}
+                    {/* Three across, as on /operators: six across the sidebar leave each chip too
+                        narrow for the check mark and the label side by side. */}
+                    <div className="grid grid-cols-3 gap-1.5">
+                        {STARS.map((r) => (
+                            <FilterChip key={r} active={filters.rarities.includes(r)} className="w-full" label={`${r}★`} onSelect={() => onChange("rarities", toggle(filters.rarities, r))} tone={`var(--rarity-${r})`} toneInk={rarityInk(r)} />
+                        ))}
                     </div>
                 </div>
                 <MultiTagRow label={t("dossiers.filter.infection")} options={INFECTION_ORDER.map((s) => ({ value: s, label: t(INFECTION_KEY[s]), count: infectionCounts.get(s) ?? 0 })).filter((o) => o.count > 0)} selected={filters.infection} onChange={(v) => onChange("infection", v as IDossierFilters["infection"])} />
@@ -86,7 +85,7 @@ function factionIcon(id: string): React.ReactElement {
 function SectionHead({ label }: { label: string }): React.ReactElement {
     return (
         <div className={styles.sectionHead}>
-            <span className={styles.lbl}>{label}</span>
+            <Kicker className="mb-0">{label}</Kicker>
             <span className={styles.line} />
         </div>
     );
@@ -94,20 +93,13 @@ function SectionHead({ label }: { label: string }): React.ReactElement {
 
 /** The /operators tag row, any number on at once, each tag with its row count. */
 function MultiTagRow({ label, options, selected, onChange }: { label: string; options: readonly IOption[]; selected: readonly string[]; onChange: (v: string[]) => void }): React.ReactElement {
-    const f = useFormatters();
     return (
         <div className={styles.field}>
             <div className={styles.fieldLabel}>{label}</div>
             <div className={styles.tagRow}>
-                {options.map((o) => {
-                    const on = selected.includes(o.value);
-                    return (
-                        <button key={o.value} type="button" className={cn(styles.tg, on && styles.on)} onClick={() => onChange(toggle([...selected], o.value))} aria-pressed={on}>
-                            {o.label}
-                            <span className="ml-1.5 font-mono text-[10px] tabular-nums">{f.number(o.count)}</span>
-                        </button>
-                    );
-                })}
+                {options.map((o) => (
+                    <FilterChip key={o.value} active={selected.includes(o.value)} count={o.count} label={o.label} onSelect={() => onChange(toggle([...selected], o.value))} />
+                ))}
             </div>
         </div>
     );

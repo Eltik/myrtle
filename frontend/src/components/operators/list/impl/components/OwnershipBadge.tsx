@@ -17,7 +17,7 @@ interface IOwnershipBadgeProps {
 
 /** Compact pill showing a community rate for an operator; the exact figure and
  *  its denominator are in the native title here and in visible text in the
- *  hover preview.
+ *  hover preview, and the counts are in the accessible name.
  *
  *  Renders nothing on the `e2` metric when the operator has no conversion rate
  *  to report - nobody owns them, or they cannot be promoted to E2 at all. An
@@ -33,7 +33,8 @@ export const OwnershipBadge = memo(function OwnershipBadge({ info, metric, color
     const label = f.percent(pct);
     const exact = (pct * 100).toFixed(2);
     const title = isE2 ? t("ownership.e2.title", { e2Owners: f.number(info.e2Owners), owners: f.number(info.owners), exact }) : t("ownership.owned.title", { owners: f.number(info.owners), exact });
-    const ariaLabel = isE2 ? t("ownership.e2.aria", { pct: label }) : t("ownership.owned.aria", { pct: label });
+    // The counts go in the name too: the title reaches mouse users only.
+    const ariaLabel = isE2 ? t("ownership.e2.aria", { pct: label, e2Owners: f.number(info.e2Owners), owners: f.number(info.owners) }) : t("ownership.owned.aria", { pct: label, owners: f.number(info.owners) });
 
     return (
         // The text is foreground, the rarity hue only a dot: as text it measured 1.38 (5★) to 2.42 (6★)
