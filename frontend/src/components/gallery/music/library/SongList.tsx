@@ -171,7 +171,7 @@ export function SongList({ tracks, source, houseArtist, playlist, pageKey }: ISo
             </ul>
             <ShowMore page={page} />
             {selectedTracks.length > 0 ? (
-                <div className="sticky bottom-24 z-20 mx-auto mt-4 flex w-fit items-center gap-2 rounded-xl border border-border bg-popover px-3 py-2 shadow-lg/10">
+                <div className="sticky bottom-24 z-20 mx-auto mt-4 flex w-fit items-center gap-2 rounded-2xl border border-border bg-popover px-3 py-2 shadow-lg/10">
                     <span className="font-sans font-semibold text-[13px] tabular-nums">{t("music.list.selected", { count: selectedTracks.length })}</span>
                     <AddMenu
                         tracks={selectedTracks}
@@ -291,7 +291,7 @@ const SongRow = memo(function SongRow({ index, track, tracks, source, houseArtis
                 <span className="relative size-7 shrink-0 overflow-hidden rounded-[4px] bg-muted">{track.coverUrl ? <img referrerPolicy="no-referrer" src={sizedCover(track.coverUrl, 28)} alt="" loading="lazy" decoding="async" className="size-full object-cover" /> : null}</span>
                 <span className="flex min-w-0 flex-1 flex-col leading-tight">
                     <span className="flex min-w-0 items-center gap-1.5">
-                        <span className={cn("truncate font-medium font-sans text-[13px]", current ? "text-primary" : "text-foreground")}>{title}</span>
+                        <span className={cn("truncate font-sans text-[13px] text-foreground", current ? "font-semibold" : "font-medium")}>{title}</span>
                         {track.instrumental ? (
                             <Badge variant="outline" size="sm" className="shrink-0 font-mono tracking-[0.06em]">
                                 {t("music.list.inst")}

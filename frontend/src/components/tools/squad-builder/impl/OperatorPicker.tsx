@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { X } from "lucide-react";
 import * as React from "react";
+import { LoadError } from "#/components/operators/detail/impl/components/LoadError";
 import { ClassIcon, SubProfessionIcon } from "#/components/operators/list/impl/components/Icons";
 import { PROFESSION_ORDER } from "#/components/operators/list/impl/constants";
 import { eliteIcon, potentialIcon, specializedIcon } from "#/components/tools/shared/icons";
@@ -102,7 +103,9 @@ export function OperatorPicker({ seat, operators, roster, seated, onPick, onClos
 
     // The recruitment pool loads only once a filter reads it; until it lands, "Gachaless" shows the welfare operators alone.
     const server = useGamedataServer();
-    const { data: recruitment } = useQuery({ ...recruitmentDataQueryOptions(server), enabled: needsRecruitPool(source) });
+    const { data: recruitment, isError: recruitError, refetch: refetchRecruitment } = useQuery({ ...recruitmentDataQueryOptions(server), enabled: needsRecruitPool(source) });
+    // A failed pool used to drop every recruitable operator from the list without a word.
+    const recruitFailed = needsRecruitPool(source) && recruitError && !recruitment;
     const recruitable = React.useMemo(() => new Set((recruitment?.operators ?? []).map((op) => op.id)), [recruitment]);
 
     const pool = React.useMemo(() => {
@@ -348,6 +351,7 @@ export function OperatorPicker({ seat, operators, roster, seated, onPick, onClos
             </div>
 
             <div className="p-3 sm:p-4">
+                {recruitFailed && <LoadError className="mb-3" message={t("squad.picker.recruitFailed")} onRetry={() => void refetchRecruitment()} />}
                 {operators.length === 0 ? (
                     <p className="py-8 text-center text-[13px] text-muted-foreground">{t("squad.picker.loading")}</p>
                 ) : shown.length === 0 ? (

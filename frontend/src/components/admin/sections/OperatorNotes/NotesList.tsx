@@ -94,7 +94,7 @@ export function NotesList({ listRef, hidden, q, onQuery, status, counts, onStatu
                     ))}
                 </div>
                 {filtersOpen ? (
-                    <div className="flex flex-col gap-3 rounded-xl bg-muted p-3">
+                    <div className="flex flex-col gap-3 rounded-2xl bg-muted p-3">
                         <FilterGroup label={t("notes.filters.rarity")}>
                             {RARITY_CHIPS.map((r) => (
                                 <FilterChip key={r} label={t("notes.filters.rarityChip", { rarity: f.number(r) })} active={rarities.includes(r)} onSelect={() => setRarities((cur) => toggle(cur, r))} />

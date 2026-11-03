@@ -139,6 +139,10 @@ export const messages = {
         text: "Dur",
         description: "Narrow column header: duration, short for 'duration'. Four characters at most.",
     },
+    "skills.range.error": {
+        text: "The skill's attack range did not load.",
+        description: "Shown in place of the skill's range grid, beside a Try again button, when the range data failed to load.",
+    },
 } satisfies MessageMap;
 
 export const { keys } = defineMessages({ namespace, messages });

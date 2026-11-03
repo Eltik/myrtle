@@ -43,7 +43,7 @@ export function OperatorPlannerDialog({ open, onOpenChange, initialOperatorId }:
         ...operatorQueryOptions(selectedOperatorId ?? "", server),
         enabled: !!selectedOperatorId,
     });
-    const { options, selectedOption, isLoading: isOptionsLoading } = useOperatorOptions(server, searchQuery, selectedOperatorId);
+    const { options, selectedOption, isLoading: isOptionsLoading, failed: isOptionsFailed, retry: retryOptions } = useOperatorOptions(server, searchQuery, selectedOperatorId);
 
     const { data: roster = [], isSuccess: isRosterLoaded } = useQuery({
         ...userRosterQueryOptions(user?.uid ?? ""),
@@ -117,7 +117,7 @@ export function OperatorPlannerDialog({ open, onOpenChange, initialOperatorId }:
 
                 <DialogPanel className="min-h-0 flex-1">
                     <div className="space-y-6">
-                        <OperatorSelector options={options} selectedOption={selectedOption} isLoading={isOptionsLoading} onSelect={setSelectedOperatorId} onSearchQueryChange={setSearchQuery} />
+                        <OperatorSelector options={options} selectedOption={selectedOption} isLoading={isOptionsLoading} failed={isOptionsFailed} onRetry={retryOptions} onSelect={setSelectedOperatorId} onSearchQueryChange={setSearchQuery} />
 
                         {selectedOperatorId && isOperatorDetailLoading && (
                             <div className="flex flex-col items-center justify-center gap-3 py-16">

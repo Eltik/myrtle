@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import * as React from "react";
 
+import { LoadError } from "#/components/operators/detail/impl/components/LoadError";
 import { Combobox, ComboboxEmpty, ComboboxInput, ComboboxItem, ComboboxList, ComboboxPopup, ComboboxPrimitive } from "#/components/ui/combobox";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { useOperatorName } from "#/hooks/use-operator-name";
@@ -56,8 +57,10 @@ export function useOperatorOptions(server: string, searchQuery: string, selected
     // tags. The full table is ~40 MB decoded through a server fn, and a slow or
     // failed fetch of it would leave the picker on "Loading operators..." with
     // only the upcoming CN operators listed.
-    const { data: operators = [], isLoading: isOperatorsLoading } = useQuery(operatorsIndexQueryOptions(server));
-    const { data: upcoming = [], isLoading: isUpcomingLoading } = useQuery(upcomingQueryOptions(server));
+    const operatorsQuery = useQuery(operatorsIndexQueryOptions(server));
+    const upcomingQuery = useQuery(upcomingQueryOptions(server));
+    const { data: operators = [], isLoading: isOperatorsLoading } = operatorsQuery;
+    const { data: upcoming = [], isLoading: isUpcomingLoading } = upcomingQuery;
 
     const sortedOptions = React.useMemo(() => {
         const upcomingOptions = upcoming.filter((op) => !op.isNotObtainable).map((op) => toOption(op, operatorName(op), true));
@@ -80,19 +83,31 @@ export function useOperatorOptions(server: string, searchQuery: string, selected
         return sortedOptions.find((item) => item.id === selectedOperatorId) || null;
     }, [selectedOperatorId, sortedOptions]);
 
-    return { options, selectedOption, isLoading: isOperatorsLoading || isUpcomingLoading };
+    // A failed list used to read "No operators found." in the picker.
+    const failed = (operatorsQuery.isError && !operatorsQuery.data) || (upcomingQuery.isError && !upcomingQuery.data);
+    const { refetch: refetchOperators } = operatorsQuery;
+    const { refetch: refetchUpcoming } = upcomingQuery;
+    const retry = React.useCallback(() => {
+        void refetchOperators();
+        void refetchUpcoming();
+    }, [refetchOperators, refetchUpcoming]);
+
+    return { options, selectedOption, isLoading: isOperatorsLoading || isUpcomingLoading, failed, retry };
 }
 
 interface IOperatorSelectorProps {
     options: IOperatorOption[];
     selectedOption: IOperatorOption | null;
     isLoading: boolean;
+    /** The list failed to load; `onRetry` refetches it. */
+    failed?: boolean;
+    onRetry?: () => void;
     onSelect: (operatorId: string | null) => void;
     onSearchQueryChange: (query: string) => void;
 }
 
 /** The dialog's operator search. Ranking is done by `useOperatorOptions`, so the combobox's own filter is off. */
-export function OperatorSelector({ options, selectedOption, isLoading, onSelect, onSearchQueryChange }: IOperatorSelectorProps): React.ReactElement {
+export function OperatorSelector({ options, selectedOption, isLoading, failed, onRetry, onSelect, onSearchQueryChange }: IOperatorSelectorProps): React.ReactElement {
     const t: TypedT<typeof messages> = useT("tools");
 
     return (
@@ -119,6 +134,7 @@ export function OperatorSelector({ options, selectedOption, isLoading, onSelect,
                     </ComboboxList>
                 </ComboboxPopup>
             </Combobox>
+            {failed && onRetry && <LoadError message={t("planner.dialog.operatorsFailed")} onRetry={onRetry} />}
         </div>
     );
 }
@@ -128,6 +144,9 @@ interface IOperatorMultiSelectorProps {
     /** The picked operators, in the order they were picked. */
     selectedOptions: IOperatorOption[];
     isLoading: boolean;
+    /** The list failed to load; `onRetry` refetches it. */
+    failed?: boolean;
+    onRetry?: () => void;
     onSelectedChange: (options: IOperatorOption[]) => void;
     searchQuery: string;
     onSearchQueryChange: (query: string) => void;
@@ -138,7 +157,7 @@ interface IOperatorMultiSelectorProps {
  * `OperatorSelector`, but every pick toggles in and the popup stays open.
  * The input is always the search box; the picks are listed by the dialog.
  */
-export function OperatorMultiSelector({ options, selectedOptions, isLoading, onSelectedChange, searchQuery, onSearchQueryChange }: IOperatorMultiSelectorProps): React.ReactElement {
+export function OperatorMultiSelector({ options, selectedOptions, isLoading, failed, onRetry, onSelectedChange, searchQuery, onSearchQueryChange }: IOperatorMultiSelectorProps): React.ReactElement {
     const t: TypedT<typeof messages & typeof bulkMessages> = useT("tools");
     const selectedIds = React.useMemo(() => new Set(selectedOptions.map((op) => op.id)), [selectedOptions]);
     const unpickedMatches = options.filter((op) => !selectedIds.has(op.id));
@@ -146,44 +165,47 @@ export function OperatorMultiSelector({ options, selectedOptions, isLoading, onS
     const addAllMatches = () => onSelectedChange([...selectedOptions, ...unpickedMatches]);
 
     return (
-        <Combobox<IOperatorOption, true>
-            multiple
-            items={options}
-            value={selectedOptions}
-            onValueChange={onSelectedChange}
-            filter={null}
-            inputValue={searchQuery}
-            onInputValueChange={onSearchQueryChange}
-            isItemEqualToValue={(a, b) => a.id === b.id}
-            itemToStringLabel={(op) => op?.displayName ?? ""}
-            itemToStringValue={(op) => op?.id ?? ""}
-        >
-            <ComboboxInput id="bulk-operator-selector" placeholder={isLoading ? t("planner.dialog.loadingOperators") : t("planner.dialog.searchOperators")} />
-            <ComboboxPopup className="max-w-100">
-                {searchQuery.trim() && unpickedMatches.length > 0 && (
-                    <div className="border-border border-b p-1">
-                        <button type="button" onClick={addAllMatches} className="flex w-full items-center rounded-md px-2 py-1.5 text-left font-medium text-primary text-xs hover:bg-primary/10 hover:text-foreground">
-                            {t("planner.bulk.addAllResults", { count: unpickedMatches.length })}
-                        </button>
-                    </div>
-                )}
-                <ComboboxEmpty>{t("planner.dialog.noOperators")}</ComboboxEmpty>
-                <ComboboxList>
-                    {(op: IOperatorOption) => {
-                        const isSelected = selectedIds.has(op.id);
-                        return (
-                            <ComboboxPrimitive.Item key={op.id} value={op} className="flex min-h-8 cursor-default items-center gap-3 rounded-sm px-2 py-1 text-sm outline-none data-disabled:pointer-events-none data-highlighted:bg-accent data-highlighted:text-accent-foreground data-disabled:opacity-64">
-                                <CheckMark checked={isSelected} />
-                                <span aria-hidden="true" className="relative flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-muted/50">
-                                    <OperatorAvatar charId={op.id} name={op.displayName} className="block h-full w-full object-cover" server={op.isUpcoming ? "cn" : undefined} />
-                                </span>
-                                <span className="flex-1 font-medium text-foreground text-sm">{op.displayName}</span>
-                                <span className="font-normal text-muted-foreground text-xs">{t("planner.dialog.rarityClass", { rarity: op.rarity, class: professionLabel(op.profession) })}</span>
-                            </ComboboxPrimitive.Item>
-                        );
-                    }}
-                </ComboboxList>
-            </ComboboxPopup>
-        </Combobox>
+        <>
+            <Combobox<IOperatorOption, true>
+                multiple
+                items={options}
+                value={selectedOptions}
+                onValueChange={onSelectedChange}
+                filter={null}
+                inputValue={searchQuery}
+                onInputValueChange={onSearchQueryChange}
+                isItemEqualToValue={(a, b) => a.id === b.id}
+                itemToStringLabel={(op) => op?.displayName ?? ""}
+                itemToStringValue={(op) => op?.id ?? ""}
+            >
+                <ComboboxInput id="bulk-operator-selector" placeholder={isLoading ? t("planner.dialog.loadingOperators") : t("planner.dialog.searchOperators")} />
+                <ComboboxPopup className="max-w-100">
+                    {searchQuery.trim() && unpickedMatches.length > 0 && (
+                        <div className="border-border border-b p-1">
+                            <button type="button" onClick={addAllMatches} className="flex w-full items-center rounded-md px-2 py-1.5 text-left font-medium text-primary text-xs hover:bg-primary/10 hover:text-foreground">
+                                {t("planner.bulk.addAllResults", { count: unpickedMatches.length })}
+                            </button>
+                        </div>
+                    )}
+                    <ComboboxEmpty>{t("planner.dialog.noOperators")}</ComboboxEmpty>
+                    <ComboboxList>
+                        {(op: IOperatorOption) => {
+                            const isSelected = selectedIds.has(op.id);
+                            return (
+                                <ComboboxPrimitive.Item key={op.id} value={op} className="flex min-h-8 cursor-default items-center gap-3 rounded-sm px-2 py-1 text-sm outline-none data-disabled:pointer-events-none data-highlighted:bg-accent data-highlighted:text-accent-foreground data-disabled:opacity-64">
+                                    <CheckMark checked={isSelected} />
+                                    <span aria-hidden="true" className="relative flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-muted/50">
+                                        <OperatorAvatar charId={op.id} name={op.displayName} className="block h-full w-full object-cover" server={op.isUpcoming ? "cn" : undefined} />
+                                    </span>
+                                    <span className="flex-1 font-medium text-foreground text-sm">{op.displayName}</span>
+                                    <span className="font-normal text-muted-foreground text-xs">{t("planner.dialog.rarityClass", { rarity: op.rarity, class: professionLabel(op.profession) })}</span>
+                                </ComboboxPrimitive.Item>
+                            );
+                        }}
+                    </ComboboxList>
+                </ComboboxPopup>
+            </Combobox>
+            {failed && onRetry && <LoadError message={t("planner.dialog.operatorsFailed")} onRetry={onRetry} />}
+        </>
     );
 }

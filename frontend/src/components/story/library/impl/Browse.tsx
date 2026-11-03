@@ -220,7 +220,7 @@ export function Browse({ index, progress, gameRead, openGroup, onOpenHandled }: 
                 most likely to want its sort changed back. */}
             <JumpBar chips={flat === null ? chips : NO_CHIPS} tools={tools} />
 
-            {(flat === null ? library.sections.length === 0 : flat.length === 0) && library.records.length === 0 ? <div className="mt-6 rounded-[14px] border border-border border-dashed p-14 text-center font-sans text-[14px] text-muted-foreground">{t("browse.empty")}</div> : null}
+            {(flat === null ? library.sections.length === 0 : flat.length === 0) && library.records.length === 0 ? <div className="mt-6 rounded-2xl border border-border border-dashed p-14 text-center font-sans text-[14px] text-muted-foreground">{t("browse.empty")}</div> : null}
 
             {flat !== null ? (
                 flat.length > 0 ? (
@@ -274,15 +274,15 @@ const Cards = memo(function Cards({ groups, view, fractionOf, onOpen }: ICardsPr
     if (view === "grid")
         return (
             <GroupGrid>
-                {groups.map((group, at) => (
-                    <GroupCard key={group.id} group={group} fraction={fractionOf(group)} onOpen={onOpen} index={at} />
+                {groups.map((group) => (
+                    <GroupCard key={group.id} group={group} fraction={fractionOf(group)} onOpen={onOpen} />
                 ))}
             </GroupGrid>
         );
     return (
         <GroupRowList>
-            {groups.map((group, at) => (
-                <GroupRow key={group.id} group={group} fraction={fractionOf(group)} onOpen={onOpen} index={at} />
+            {groups.map((group) => (
+                <GroupRow key={group.id} group={group} fraction={fractionOf(group)} onOpen={onOpen} />
             ))}
         </GroupRowList>
     );

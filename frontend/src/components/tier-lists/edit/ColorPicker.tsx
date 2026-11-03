@@ -1,9 +1,11 @@
+import { Check } from "lucide-react";
 import { useEffect, useId, useState } from "react";
 import { Field, FieldLabel } from "#/components/ui/field";
 import { Input } from "#/components/ui/input";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
+import { readableTextColor } from "../detail/contrast";
 import { isHexColor, normalizeHexColor } from "../shared";
 import type { messages } from "./ColorPicker.messages";
 import styles from "./Editor.module.css";
@@ -41,9 +43,15 @@ export function ColorPicker({ value, onChange }: IColorPickerProps) {
             <div>
                 <p className="m-0 mb-2 font-bold font-mono text-[10.5px] text-muted-foreground uppercase leading-none tracking-[0.14em]">{t("edit.color.presets")}</p>
                 <div className="grid grid-cols-6 gap-1.5">
-                    {PRESET_SWATCHES.map((c) => (
-                        <button key={c} type="button" className={styles.swatch} style={{ background: c }} data-selected={c.toLowerCase() === value.toLowerCase() || undefined} aria-label={t("edit.color.useColor", { hex: c })} onClick={() => onChange(c)} />
-                    ))}
+                    {PRESET_SWATCHES.map((c) => {
+                        const selected = c.toLowerCase() === value.toLowerCase();
+                        return (
+                            <button key={c} type="button" className={styles.swatch} style={{ background: c }} data-selected={selected || undefined} aria-pressed={selected} aria-label={t("edit.color.useColor", { hex: c })} onClick={() => onChange(c)}>
+                                {/* R-39: the selection reads by shape, not only the ring. readableTextColor picks black on every preset, 5.24 to 10.63. */}
+                                {selected && <Check className="size-4" style={{ color: readableTextColor(c) }} strokeWidth={3} aria-hidden="true" />}
+                            </button>
+                        );
+                    })}
                 </div>
             </div>
 

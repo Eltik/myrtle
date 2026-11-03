@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { Button } from "#/components/ui/button";
 import { Skeleton } from "#/components/ui/skeleton";
 import { useAuth } from "#/hooks/use-auth";
 import { useDebounce } from "#/hooks/use-debounce";
@@ -202,14 +203,9 @@ export function Browse() {
                     ) : isError ? (
                         <div className="rounded-lg border border-border border-dashed bg-muted/20 px-5 py-10 text-center">
                             <p className="m-0 font-sans text-muted-foreground text-sm">{t("browse.error")}</p>
-                            <button
-                                type="button"
-                                onClick={() => refetch()}
-                                disabled={isFetching}
-                                className="mt-3 inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-lg border border-border bg-popover px-3 font-medium font-sans text-foreground text-xs leading-none transition-colors hover:bg-accent disabled:opacity-60"
-                            >
+                            <Button variant="outline" size="sm" className="mt-3" onClick={() => refetch()} disabled={isFetching}>
                                 {isFetching ? t("browse.retrying") : t("browse.retry")}
-                            </button>
+                            </Button>
                         </div>
                     ) : sorted.length === 0 ? (
                         viewingFavorites && allLists.length === 0 ? (
@@ -219,17 +215,17 @@ export function Browse() {
                                 </svg>
                                 <p className="mt-3 mb-0 font-medium font-sans text-foreground text-sm">{t("browse.favorites.emptyTitle")}</p>
                                 <p className="mt-1 font-sans text-[12.5px] text-muted-foreground">{t("browse.favorites.emptyBody")}</p>
-                                <button type="button" onClick={() => setType("all")} className="mt-4 inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-lg border border-border bg-popover px-3 font-medium font-sans text-foreground text-xs leading-none transition-colors hover:bg-accent">
+                                <Button variant="outline" size="sm" className="mt-4" onClick={() => setType("all")}>
                                     {t("browse.favorites.emptyAction")}
-                                </button>
+                                </Button>
                             </div>
                         ) : (
                             <div className="rounded-lg border border-border border-dashed bg-muted/20 px-5 py-12 text-center">
                                 <p className="m-0 font-medium font-sans text-foreground text-sm">{t("browse.filtered.emptyTitle")}</p>
                                 <p className="mt-1 font-sans text-[12.5px] text-muted-foreground">{t("browse.filtered.emptyBody")}</p>
-                                <button type="button" onClick={clearAllFilters} className="mt-4 inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-lg border border-border bg-popover px-3 font-medium font-sans text-foreground text-xs leading-none transition-colors hover:bg-accent">
+                                <Button variant="outline" size="sm" className="mt-4" onClick={clearAllFilters}>
                                     {t("browse.filtered.clear")}
-                                </button>
+                                </Button>
                             </div>
                         )
                     ) : (
@@ -242,17 +238,12 @@ export function Browse() {
 
                             {hasMore && (
                                 <div className="mt-6 flex justify-center">
-                                    <button
-                                        type="button"
-                                        onClick={() => setVisibleCount((n) => n + PAGE_INCREMENT)}
-                                        className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-border border-dashed bg-transparent px-4 py-2.5 font-medium font-sans text-[12.5px] text-muted-foreground leading-none transition-colors hover:border-primary hover:bg-[color-mix(in_srgb,var(--primary)_5%,transparent)] hover:text-foreground"
-                                    >
-                                        <span className="h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_8px_color-mix(in_srgb,var(--primary)_50%,transparent)]" aria-hidden="true" />
+                                    <Button variant="outline" className="border-dashed" onClick={() => setVisibleCount((n) => n + PAGE_INCREMENT)}>
                                         <span>{t("browse.loadMore", { count: Math.min(PAGE_INCREMENT, sorted.length - visibleCount) })}</span>
-                                        <span className="font-mono text-[10.5px] text-subtle-foreground tabular-nums">
+                                        <span className="font-mono text-[10.5px] text-muted-foreground tabular-nums">
                                             {visibleCount} / {sorted.length}
                                         </span>
-                                    </button>
+                                    </Button>
                                 </div>
                             )}
                         </>

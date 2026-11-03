@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ChevronDown, RefreshCw } from "lucide-react";
 import * as React from "react";
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { LoadError } from "#/components/operators/detail/impl/components/LoadError";
 import { Button } from "#/components/ui/button";
 import { Card } from "#/components/ui/card";
 import { Collapsible, CollapsiblePanel, CollapsibleTrigger } from "#/components/ui/collapsible";
@@ -204,6 +205,7 @@ export function PullsBudget({ settings, setSettings, days, committed, freePulls,
                         <span className={HINT_TEXT}>{t("release.pulls.resources.signedOut")}</span>
                     )}
                 </div>
+                {uid && profile.isError && !profile.data && <LoadError message={t("release.pulls.resources.loadFailed")} onRetry={() => void profile.refetch()} />}
 
                 <div className="flex flex-wrap gap-x-4 gap-y-3">
                     <PullsNumber id="pulls-orundum" label={<CurrencyLabel name="orundum">{t("release.pulls.resources.orundum")}</CurrencyLabel>} flash={flash} value={settings.orundum} onChange={(v) => setSettings((s) => ({ ...s, orundum: v, manual: true }))} step={600} />

@@ -64,7 +64,10 @@ export function MyListCard({ tl, onEdit, onDelete, onCopyLink }: IMyListCardProp
                     </Link>
 
                     <Menu>
-                        <MenuTrigger aria-label={t("my.card.actions")} className="inline-flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-md border border-transparent text-muted-foreground transition-colors hover:border-border hover:bg-accent hover:text-foreground">
+                        <MenuTrigger
+                            aria-label={t("my.card.actions")}
+                            className="pointer-coarse:after:-translate-1/2 relative inline-flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-transparent text-muted-foreground transition-colors pointer-coarse:after:absolute pointer-coarse:after:top-1/2 pointer-coarse:after:left-1/2 pointer-coarse:after:size-11 hover:border-border hover:bg-accent hover:text-foreground"
+                        >
                             <MoreHorizontalIcon className="h-4 w-4" />
                         </MenuTrigger>
                         <MenuPopup align="end" sideOffset={6} className="min-w-44">

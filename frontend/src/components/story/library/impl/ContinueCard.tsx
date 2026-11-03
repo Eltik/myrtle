@@ -51,7 +51,7 @@ export function ContinueCard({ pick, progress, gameRead, onViewChapter }: IConti
     const primaryLabel = fresh ? th("hero.startReading") : th("hero.continue");
 
     return (
-        <section className="relative mb-5 flex items-center gap-3 overflow-hidden rounded-xl border border-border bg-card px-3.5 py-3 sm:flex-wrap sm:gap-x-4">
+        <section className="relative mb-5 flex items-center gap-3 overflow-hidden rounded-2xl border border-border bg-card px-3.5 py-3 sm:flex-wrap sm:gap-x-4">
             {banner ? (
                 <span aria-hidden="true" className="pointer-events-none absolute inset-y-0 right-0 hidden w-[46%] sm:block">
                     <img src={banner} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover object-center opacity-45" />

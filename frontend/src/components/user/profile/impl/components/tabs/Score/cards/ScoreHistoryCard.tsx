@@ -1,6 +1,7 @@
 import { TrendingUp } from "lucide-react";
 import { useMemo } from "react";
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { LoadError } from "#/components/operators/detail/impl/components/LoadError";
 import type { IScoreHistoryPoint, IUserScore } from "#/lib/api/user";
 import { useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -14,6 +15,8 @@ interface IProps {
     score: IUserScore;
     history: IScoreHistoryPoint[] | null | undefined;
     isLoading: boolean;
+    /** Set when the history request failed; the card offers a retry instead of the empty line. */
+    onRetry?: () => void;
 }
 
 interface IChartPoint {
@@ -30,7 +33,7 @@ const TICK_DATE: Intl.DateTimeFormatOptions = { month: "short", day: "numeric" }
  * score. Snapshots are taken by the leaderboard job, so the series thickens
  * on its own as the account ages.
  */
-export function ScoreHistoryCard({ score, history, isLoading }: IProps) {
+export function ScoreHistoryCard({ score, history, isLoading, onRetry }: IProps) {
     /** 'global' is declared once, on the sibling overall-grade card. */
     const t: TypedT<typeof messages & typeof overallMessages> = useT("user");
     const f = useFormatters();
@@ -54,7 +57,9 @@ export function ScoreHistoryCard({ score, history, isLoading }: IProps) {
                     <Kicker icon={TrendingUp} label={t("score.history.title")} />
                     {points.length > 1 && <TrendChip points={points} />}
                 </div>
-                {points.length < 2 ? (
+                {points.length < 2 && onRetry ? (
+                    <LoadError message={t("score.history.loadFailed")} onRetry={onRetry} />
+                ) : points.length < 2 ? (
                     <p className="rounded-md border border-border/40 border-dashed bg-muted/15 px-3 py-2 text-[11px] text-muted-foreground">{isLoading ? t("score.history.loading") : t("score.history.empty")}</p>
                 ) : (
                     <div className="h-44">

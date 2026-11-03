@@ -73,7 +73,7 @@ export function SkinDetailContent({ skin, opName, skinName, avatarURL, server, p
                         <dl className="flex flex-col gap-3 text-sm">
                             {price?.label && (
                                 <DetailRow label={t("detail.row.price")}>
-                                    <span className={cn("font-semibold", price.kind === "free" && "text-emerald-600 dark:text-emerald-400")}>{price.label}</span>
+                                    <span className={cn("font-semibold", price.kind === "free" && "text-success-foreground")}>{price.label}</span>
                                     {price.tooltip && <span className="ml-2 text-muted-foreground text-xs">- {price.tooltip}</span>}
                                 </DetailRow>
                             )}
@@ -96,7 +96,7 @@ export function SkinDetailContent({ skin, opName, skinName, avatarURL, server, p
                             {extraRows}
                         </dl>
 
-                        <DialogClose className="mt-auto cursor-pointer rounded-md border border-border bg-muted/40 px-3 py-2 font-medium text-xs transition-colors hover:bg-muted md:hidden">{closeLabel ?? t("detail.back")}</DialogClose>
+                        <DialogClose className="mt-auto min-h-11 cursor-pointer rounded-lg border border-border bg-muted/40 px-3 py-2 font-medium text-xs transition-colors hover:bg-muted md:hidden">{closeLabel ?? t("detail.back")}</DialogClose>
                     </div>
                 </ScrollArea>
             </div>

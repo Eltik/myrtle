@@ -131,6 +131,10 @@ export const messages = {
         text: "Stages to clear:",
         description: "Label before the links to the stages that unlock an item's recipe. Keep the colon.",
     },
+    "planner.req.loadFailed": {
+        text: "Couldn't load each operator's requirements.",
+        description: "Shown in the by-operator view, beside a Retry button, when the per-operator requirements failed to load. Distinct from 'No matching requirements.', which means the filters leave nothing.",
+    },
 } satisfies MessageMap;
 
 export const { keys } = defineMessages({ namespace, messages });

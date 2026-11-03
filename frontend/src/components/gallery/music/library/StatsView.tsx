@@ -87,7 +87,7 @@ export function StatsView({ catalog }: { catalog: ICatalog }): React.ReactElemen
 
 function Tile({ value, label }: { value: string; label: string }): React.ReactElement {
     return (
-        <div className="rounded-xl border border-border bg-card/55 px-4 py-3.5">
+        <div className="rounded-2xl border border-border bg-card/55 px-4 py-3.5">
             <div className="font-light font-sans text-[28px] text-primary tabular-nums leading-none tracking-[-0.02em]">{value}</div>
             <div className="mt-1.5 font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.12em]">{label}</div>
         </div>

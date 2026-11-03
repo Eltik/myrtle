@@ -26,6 +26,11 @@ export const badgeVariants = cva(
                 info: "bg-info/8 text-info-foreground dark:bg-info/16",
                 outline: "border-input bg-background text-foreground dark:bg-input/32 [button&,a&]:hover:bg-accent/50 dark:[button&,a&]:hover:bg-input/48",
                 secondary: "bg-secondary text-secondary-foreground [button&,a&]:hover:bg-secondary/90",
+                // A data tone (rarity, enemy level, stage group) as a badge: the tone tints the
+                // fill and draws the border, the text stays foreground. Tone text on its own
+                // tint measured 1.66 to 3.96 across audit-002; foreground on a 12% tint reads.
+                // Set the hue with `style={{ "--tone": "var(--enemy-elite)" }}`; primary by default.
+                tint: "border-(--tone)/45 bg-(--tone)/12 text-foreground [--tone:var(--primary)]",
                 success: "bg-success/8 text-success-foreground dark:bg-success/16",
                 warning: "bg-warning/8 text-warning-foreground dark:bg-warning/16",
             },

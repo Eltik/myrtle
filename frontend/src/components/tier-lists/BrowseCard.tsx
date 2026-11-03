@@ -86,9 +86,10 @@ export default function BrowseCard({ tl, size = "default", rank, onOpen, onAutho
                                 type="button"
                                 onClick={() => onAuthorClick({ id: authorId, name: tl.author.name })}
                                 title={t("browse.card.byAuthor", { name: tl.author.name })}
-                                className="relative z-[2] min-w-0 cursor-pointer truncate rounded-sm font-medium font-sans text-[11.5px] text-foreground underline-offset-2 hover:text-primary hover:underline focus-visible:outline-2 focus-visible:outline-ring"
+                                className="pointer-coarse:after:-translate-1/2 relative z-[2] min-w-0 cursor-pointer rounded-sm font-medium font-sans text-[11.5px] text-foreground underline-offset-2 pointer-coarse:after:absolute pointer-coarse:after:top-1/2 pointer-coarse:after:left-1/2 pointer-coarse:after:h-11 pointer-coarse:after:w-[max(100%,2.75rem)] hover:text-primary hover:underline focus-visible:outline-2 focus-visible:outline-ring"
                             >
-                                {tl.author.name}
+                                {/* Truncation sits on the inner span: overflow on the button would clip its touch hit area (Z3 measured the name at 18x12). */}
+                                <span className="block truncate">{tl.author.name}</span>
                             </button>
                         ) : (
                             <span className="min-w-0 truncate font-medium font-sans text-[11.5px] text-foreground">{tl.author.name}</span>

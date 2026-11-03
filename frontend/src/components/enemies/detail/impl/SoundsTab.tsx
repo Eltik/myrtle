@@ -193,7 +193,7 @@ function SoundRow({ item, player, t }: { item: ISoundItem; player: ReturnType<ty
     const isUnavailable = item.urls.every((u) => player.errored.has(u));
 
     return (
-        <div className={cn("relative overflow-hidden rounded-lg border transition-colors", isPlaying ? "border-primary bg-primary/10" : "border-border bg-card/30 hover:bg-secondary/30", isUnavailable && "opacity-60")}>
+        <div className={cn("relative overflow-hidden rounded-lg border transition-colors", isPlaying ? "border-primary bg-primary/10" : "border-border bg-card/30 hover:bg-secondary/30", isUnavailable && "border-dashed")}>
             <div className="flex items-center gap-3 p-2.5">
                 <button
                     type="button"

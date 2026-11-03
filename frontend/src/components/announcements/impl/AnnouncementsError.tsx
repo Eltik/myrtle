@@ -15,7 +15,7 @@ interface IRetryProps {
 export function AnnouncementsError({ onRetry, retrying }: IRetryProps) {
     const t: TypedT<typeof messages> = useT("announcements");
     return (
-        <Empty role="alert" className="rounded-xl border border-dashed py-10">
+        <Empty role="alert" className="rounded-2xl border border-dashed py-10">
             <EmptyHeader>
                 <EmptyMedia variant="icon">
                     <CloudOff aria-hidden="true" />

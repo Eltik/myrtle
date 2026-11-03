@@ -104,7 +104,7 @@ export function Rail({ selection }: { selection: LibrarySelection }): React.Reac
                 {newButton}
             </div>
 
-            <nav aria-label={t("music.rail.aria")} className="hidden self-start rounded-xl border border-border bg-card/55 p-2 md:sticky md:top-20 md:block">
+            <nav aria-label={t("music.rail.aria")} className="hidden self-start rounded-2xl border border-border bg-card/55 p-2 md:sticky md:top-20 md:block">
                 <ul className="m-0 flex list-none flex-col gap-0.5 p-0">
                     {LIBRARY_VIEWS.map((v) => {
                         const Icon = ICONS[v];

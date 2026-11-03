@@ -48,7 +48,7 @@ export const TrackRow = memo(function TrackRow({ track, record, onPlay }: { trac
     const playable = Boolean(record.loopUrl);
 
     return (
-        <li className={cn("rounded-xl border bg-card/55 transition-colors", current ? "border-primary/60" : "border-border")}>
+        <li className={cn("rounded-2xl border bg-card/55 transition-colors", current ? "border-primary/60" : "border-border")}>
             <div className="flex items-center gap-2.5 px-2.5 py-2 sm:gap-3 sm:px-3">
                 <Button size="icon-xl" variant={current ? "default" : "outline"} className="shrink-0 rounded-full" disabled={!playable} onClick={() => onPlay(track)} aria-label={sounding ? t("music.row.pause", { name }) : t("music.row.play", { name })}>
                     {sounding ? <PauseIcon aria-hidden="true" /> : <PlayIcon aria-hidden="true" />}
@@ -151,7 +151,7 @@ function PlaceRow({ place }: { place: MusicPlace }): React.ReactElement {
                         <PlaceItem key={`${item.id ?? ""}\u0000${item.code ?? ""}\u0000${item.name ?? ""}`} kind={place.kind} item={item} />
                     ))}
                     {hidden > 0 ? (
-                        <button type="button" className="min-h-7 cursor-pointer rounded-md px-1.5 font-sans text-[11.5px] text-primary hover:underline" onClick={() => setAll(true)}>
+                        <button type="button" className="min-h-7 pointer-coarse:min-h-11 cursor-pointer rounded-md px-1.5 font-sans text-[11.5px] text-primary hover:underline" onClick={() => setAll(true)}>
                             {t("music.row.more", { count: hidden })}
                         </button>
                     ) : null}

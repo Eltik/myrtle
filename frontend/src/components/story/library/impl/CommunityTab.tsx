@@ -1,7 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
+import { RotateCwIcon } from "lucide-react";
 import type React from "react";
 import { useMemo, useState } from "react";
+import { Button } from "#/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
 import { Skeleton } from "#/components/ui/skeleton";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
@@ -40,7 +42,7 @@ export function CommunityTab({ index, onViewChapter }: ICommunityTabProps): Reac
     const t: CommunityT = useT("story");
     const f = useFormatters();
     const server = useGamedataServer();
-    const { data, isPending } = useQuery(storyCommunityQueryOptions(server));
+    const { data, isPending, isError, refetch } = useQuery(storyCommunityQueryOptions(server));
     const ranked = useMemo(() => rankCommunity(index, data), [index, data]);
 
     if (isPending) {
@@ -53,9 +55,22 @@ export function CommunityTab({ index, onViewChapter }: ICommunityTabProps): Reac
         );
     }
 
+    // A failed request is not "nothing computed yet": it gets its own line and a retry instead of the empty copy.
+    if (isError && data === undefined) {
+        return (
+            <div role="alert" className="mt-4 flex flex-col items-center gap-3 rounded-2xl border border-border bg-card p-5 text-center">
+                <p className="m-0 font-sans text-[12.5px] text-muted-foreground">{t("community.error")}</p>
+                <Button type="button" variant="outline" size="sm" className="max-sm:min-h-11" onClick={() => void refetch()}>
+                    <RotateCwIcon aria-hidden="true" />
+                    {t("community.retry")}
+                </Button>
+            </div>
+        );
+    }
+
     if (!ranked) {
         return (
-            <div className="mt-4 rounded-[14px] border border-border bg-card p-5 text-center">
+            <div className="mt-4 rounded-2xl border border-border bg-card p-5 text-center">
                 <h3 className="m-0 font-sans font-semibold text-[14px] text-foreground">{t("community.empty.title")}</h3>
                 <p className="mx-auto mt-1.5 mb-0 max-w-prose font-sans text-[12.5px] text-muted-foreground">{t("community.empty.body")}</p>
             </div>
@@ -86,7 +101,7 @@ export function CommunityTab({ index, onViewChapter }: ICommunityTabProps): Reac
 
 function Section({ heading, blurb, children }: { heading: string; blurb: string; children: React.ReactNode }): React.ReactElement {
     return (
-        <section className="rounded-[14px] border border-border bg-card p-4 sm:p-5">
+        <section className="rounded-2xl border border-border bg-card p-4 sm:p-5">
             <h3 className="m-0 font-sans font-semibold text-[14px] text-foreground">{heading}</h3>
             <p className="mt-1 mb-3 max-w-prose font-sans text-[12.5px] text-muted-foreground">{blurb}</p>
             <div className="flex flex-col">{children}</div>
@@ -197,7 +212,7 @@ function DepthStrip({ groups, initial, t, f }: { groups: ICommunityDepthGroup[];
     const group = groups.find((g) => g.id === pick) ?? groups[0] ?? null;
 
     return (
-        <section className="rounded-[14px] border border-border bg-card p-4 sm:p-5">
+        <section className="rounded-2xl border border-border bg-card p-4 sm:p-5">
             <h3 className="m-0 font-sans font-semibold text-[14px] text-foreground">{t("community.section.depth")}</h3>
             <p className="mt-1 mb-3 max-w-prose font-sans text-[12.5px] text-muted-foreground">{t("community.section.depth.blurb")}</p>
             {group === null ? (

@@ -78,7 +78,7 @@ export const OperatorsTab = memo(function OperatorsTab({ records, progress, game
             ) : null}
 
             {visible.length === 0 ? (
-                <div className="rounded-[14px] border border-border border-dashed p-14 text-center font-sans text-[14px] text-muted-foreground">{t("operators.empty")}</div>
+                <div className="rounded-2xl border border-border border-dashed p-14 text-center font-sans text-[14px] text-muted-foreground">{t("operators.empty")}</div>
             ) : (
                 <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
                     {shown.map((record) => (
@@ -113,7 +113,7 @@ function OperatorCard({ record, progress, gameRead, onOpen }: { record: LibRecor
             onClick={onOpen}
             aria-haspopup="dialog"
             aria-label={t("operators.card.open", { name: record.name })}
-            className="group flex cursor-pointer items-center gap-2.5 rounded-xl border border-border bg-card p-2 text-left ring-inset transition-colors hover:border-primary/45 focus-visible:ring-2 focus-visible:ring-ring max-sm:min-h-11"
+            className="group flex cursor-pointer items-center gap-2.5 rounded-2xl border border-border bg-card p-2 text-left ring-inset transition-colors hover:border-primary/45 focus-visible:ring-2 focus-visible:ring-ring max-sm:min-h-11"
         >
             <span className="relative block size-12 shrink-0 overflow-hidden rounded-[9px] bg-secondary/60 sm:size-13" style={{ borderBottom: `3px solid ${tone}` }}>
                 <img src={avatar} alt="" aria-hidden="true" loading="lazy" decoding="async" className="h-full w-full object-cover" />

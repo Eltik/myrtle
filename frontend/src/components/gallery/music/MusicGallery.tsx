@@ -102,7 +102,7 @@ export function MusicGallery(): React.ReactElement {
                     sirenStatus === "ready" && catalog.albums.length > 0 ? (
                         <Coverflow albums={catalog.albums} onOpen={openAlbum} />
                     ) : sirenStatus === "loading" ? (
-                        <Skeleton className="h-75 w-full rounded-xl" />
+                        <Skeleton className="h-75 w-full rounded-2xl" />
                     ) : (
                         <div className="flex flex-col items-center gap-3">
                             <div className="w-full">

@@ -190,7 +190,8 @@ export function GapList({ items, label }: IGapListProps) {
 }
 
 function pillClasses(expanded: boolean): string {
-    return cn("inline-flex cursor-pointer items-center gap-1.5 rounded-md px-1.5 py-0.5 transition-colors hover:bg-muted/50", expanded && "bg-muted/60");
+    // The pill is 20px tall in a text row; under a coarse pointer an overlay gives it a 44px touch area without moving the row.
+    return cn("relative inline-flex cursor-pointer items-center gap-1.5 rounded-md px-1.5 py-0.5 transition-colors pointer-coarse:after:absolute pointer-coarse:after:inset-x-0 pointer-coarse:after:top-1/2 pointer-coarse:after:h-11 pointer-coarse:after:-translate-y-1/2 hover:bg-muted/50", expanded && "bg-muted/60");
 }
 
 interface IGapPillContentProps {

@@ -6,7 +6,7 @@
     --op-pad-x: 8px;
     --op-pad-y: 8px;
     --op-radius: 8px;
-    border-radius: 12px;
+    border-radius: var(--radius-2xl);
     overflow: hidden;
     background: var(--card);
     border: 1px solid var(--border);
@@ -31,7 +31,6 @@
         --op-size: 64px;
         --op-pad-x: 12px;
         --op-pad-y: 10px;
-        border-radius: 14px;
     }
 }
 

@@ -453,7 +453,7 @@ export function Coverflow({ albums, onOpen }: { albums: readonly IAlbum[]; onOpe
                 onPointerMove={onPointerMove}
                 onPointerUp={onPointerUp}
                 onPointerCancel={onPointerCancel}
-                className="relative h-[calc(var(--cf-cover)*1.58)] w-full touch-pan-y select-none overflow-hidden rounded-xl outline-none [--cf-cover:190px] focus-visible:ring-2 focus-visible:ring-ring max-sm:[--cf-cover:128px]"
+                className="relative h-[calc(var(--cf-cover)*1.58)] w-full touch-pan-y select-none overflow-hidden rounded-2xl outline-none [--cf-cover:190px] focus-visible:ring-2 focus-visible:ring-ring max-sm:[--cf-cover:128px]"
                 style={{
                     perspective: "1200px",
                     perspectiveOrigin: "50% 42%",
@@ -471,7 +471,7 @@ export function Coverflow({ albums, onOpen }: { albums: readonly IAlbum[]; onOpe
             </div>
             <div className="mt-1 flex min-h-11 flex-col items-center px-4 text-center" aria-live="polite">
                 <span className="max-w-full truncate font-sans font-semibold text-[15px] text-foreground">{current?.name ?? ""}</span>
-                {current ? <span className="font-mono text-[10.5px] text-primary/80 uppercase tracking-[0.14em]">{t("music.list.trackCount", { count: current.trackCount })}</span> : null}
+                {current ? <span className="font-mono text-[10.5px] text-primary uppercase tracking-[0.14em]">{t("music.list.trackCount", { count: current.trackCount })}</span> : null}
             </div>
             <p className="mt-2 mb-0 text-center font-sans text-[11.5px] text-muted-foreground">
                 <span className="pointer-coarse:hidden">

@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { StatTile } from "#/components/admin/Primitives";
+import { PanelRetry, StatTile } from "#/components/admin/Primitives";
 import { type IAdminAccess, useAdminAccess } from "#/components/admin/shell/access";
 import { PageHead } from "#/components/admin/shell/PageHead";
 import type { IAdminHomeSearch } from "#/components/admin/shell/search";
@@ -58,6 +58,8 @@ function StatTiles(): React.ReactElement {
     const totalUsers = byRole ? byRole.user + byRole.translator + byRole.tierListEditor + byRole.tierListAdmin + byRole.superAdmin : undefined;
     const staffCount = byRole && totalUsers !== undefined ? totalUsers - byRole.user : undefined;
     const dash = "-";
+
+    if (statsQuery.isError) return <PanelRetry className="rounded-2xl border border-border bg-card p-5" message={t("home.tile.loadFailed")} retryLabel={t("home.loadFailed.retry")} onRetry={() => void statsQuery.refetch()} />;
 
     return (
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">

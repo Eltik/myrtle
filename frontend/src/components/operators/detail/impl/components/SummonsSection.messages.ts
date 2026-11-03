@@ -27,6 +27,10 @@ export const messages = {
         text: "Melee/Ranged",
         description: "Badge for a summon that can go on either tile type. The game's own terms, joined by a slash.",
     },
+    "summons.attackRange.error": {
+        text: "The summon's attack range did not load.",
+        description: "Shown in place of the summon's range grid, beside a Try again button, when the range data failed to load.",
+    },
 } satisfies MessageMap;
 
 export const { keys } = defineMessages({ namespace, messages });

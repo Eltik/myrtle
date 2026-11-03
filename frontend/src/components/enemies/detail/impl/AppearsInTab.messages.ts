@@ -77,11 +77,23 @@ export const messages = {
     },
     "appears.chip.spawns": {
         text: "{count, plural, one {# spawn} other {# spawns}}",
-        description: "Part of a stage chip's hover text: how many of this enemy the operation sends. Joined to the stage name with ' · '.",
+        description: "Read by screen readers on a stage chip (sighted users see '×N'): how many of this enemy the operation sends.",
     },
     "appears.chip.conditional": {
         text: "summoned / conditional",
-        description: "Part of a stage chip's hover text, in place of a spawn count, when the enemy only appears if something summons it or a condition is met.",
+        description: "Shown on a stage chip in place of a spawn count, when the enemy only appears if something summons it or a condition is met.",
+    },
+    "appears.chip.adverse": {
+        text: "Adverse",
+        description: "Small badge on a stage chip marking the stage's harder variant. Use the game's own word for 'Adverse' (the Adverse Environment variant) in this language.",
+    },
+    "appears.failed": {
+        text: "Couldn't load where this enemy appears.",
+        description: "Error line in an enemy's Appears In tab when the stage list for that enemy fails to load.",
+    },
+    "appears.retry": {
+        text: "Try again",
+        description: "Button beside the load error in the Appears In tab; refetches the stage list.",
     },
 } satisfies MessageMap;
 

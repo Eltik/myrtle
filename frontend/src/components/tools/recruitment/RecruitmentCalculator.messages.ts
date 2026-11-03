@@ -27,6 +27,10 @@ export const messages = {
         text: "Options",
         description: "Heading of the card holding the which-operators-count switches and the sort order.",
     },
+    "recruit.loadFailed": {
+        text: "Couldn't load the recruitment tags.",
+        description: "Shown above the calculator, beside a Retry button, when the tag and operator data failed to load. Without it the tag list read as empty.",
+    },
 } satisfies MessageMap;
 
 export const { keys } = defineMessages({ namespace, messages });

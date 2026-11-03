@@ -79,7 +79,7 @@ interface ICatalogTile {
 
 function CatalogCell({ icon, label, value, meta }: ICatalogTile) {
     return (
-        <div className="relative flex flex-col gap-2 rounded-xl border border-border bg-card px-4 py-3.5">
+        <div className="relative flex flex-col gap-2 rounded-2xl border border-border bg-card px-4 py-3.5">
             <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-border bg-muted/70 text-primary [&>svg]:h-4 [&>svg]:w-4">
                 <CatalogIcon name={icon} />
             </span>

@@ -34,8 +34,8 @@ interface IToolbarProps {
     onQuery: (next: string) => void;
 }
 
-/** Filter trigger: a 36px tap target on touch widths, the site's 32px on desktop. */
-const FILTER = "inline-flex h-9 cursor-pointer items-center gap-2 rounded-lg border border-input bg-card px-2.5 font-medium font-sans text-foreground text-xs leading-none transition-colors hover:border-foreground/20 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-input sm:h-8";
+/** Filter trigger: 44px under a coarse pointer, 36px on narrow screens, the site's 32px on desktop. */
+const FILTER = "inline-flex h-9 cursor-pointer items-center gap-2 rounded-lg border border-input bg-card px-2.5 font-medium font-sans text-foreground text-xs leading-none transition-colors hover:border-foreground/20 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-input sm:h-8 pointer-coarse:h-11";
 
 export function Toolbar({ ranking, onRanking, catalog, materials, scope, onScope, server, onServer, interval, onInterval, movementOnly, onMovementOnly, query, onQuery }: IToolbarProps) {
     const t: ToolbarT = useT("user");
@@ -115,7 +115,7 @@ export function Toolbar({ ranking, onRanking, catalog, materials, scope, onScope
                         disabled={!movementAvailable}
                         onClick={() => onMovementOnly(!movementOnly)}
                         className={cn(
-                            "inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-lg border px-2.5 font-medium font-sans text-xs leading-none transition-colors disabled:cursor-not-allowed disabled:opacity-50 sm:h-8",
+                            "inline-flex h-9 pointer-coarse:h-11 cursor-pointer items-center gap-1.5 rounded-lg border px-2.5 font-medium font-sans text-xs leading-none transition-colors disabled:cursor-not-allowed disabled:opacity-50 sm:h-8",
                             movementOnly && movementAvailable
                                 ? "border-primary/40 bg-[color-mix(in_srgb,var(--primary)_10%,transparent)] text-foreground hover:bg-[color-mix(in_srgb,var(--primary)_14%,transparent)] [&>svg]:text-primary"
                                 : "border-input bg-card text-foreground hover:border-foreground/20 disabled:hover:border-input",
@@ -139,7 +139,7 @@ interface ISegmentedOption<T extends string> {
 
 function Segmented<T extends string>({ value, onChange, options }: { value: T; onChange: (next: T) => void; options: ISegmentedOption<T>[] }) {
     return (
-        <div role="tablist" className="inline-flex h-9 items-center rounded-lg border border-border bg-muted p-0.75 sm:h-8">
+        <div role="tablist" className="inline-flex h-9 pointer-coarse:h-11 items-center rounded-lg border border-border bg-muted p-0.75 sm:h-8">
             {options.map((opt) => {
                 const isActive = opt.value === value;
                 return (
@@ -151,7 +151,8 @@ function Segmented<T extends string>({ value, onChange, options }: { value: T; o
                             disabled={opt.disabled}
                             onClick={() => !opt.disabled && onChange(opt.value)}
                             className={cn(
-                                "inline-flex h-full items-center rounded-md px-3 font-medium font-sans text-xs leading-none transition-colors",
+                                // The segment sits inside the track's padding, so its 44px touch area is an overlay, not its height.
+                                "relative inline-flex h-full items-center rounded-md px-3 font-medium font-sans text-xs leading-none transition-colors pointer-coarse:after:absolute pointer-coarse:after:inset-x-0 pointer-coarse:after:top-1/2 pointer-coarse:after:h-11 pointer-coarse:after:-translate-y-1/2",
                                 isActive ? "bg-card text-foreground shadow-[0_1px_2px_rgb(0_0_0/0.06)]" : "text-muted-foreground hover:text-foreground",
                                 opt.disabled && "cursor-not-allowed opacity-60",
                             )}

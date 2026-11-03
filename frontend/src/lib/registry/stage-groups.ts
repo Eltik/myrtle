@@ -36,8 +36,6 @@ export const STAGE_GROUPS: IStageGroup[] = [
     { key: "other", label: "Other Modes" },
 ];
 
-export const STAGE_GROUP_LABEL: Record<StageGroupKey, string> = Object.fromEntries(STAGE_GROUPS.map((g) => [g.key, g.label])) as Record<StageGroupKey, string>;
-
 /**
  * One-line blurb per group, shown in the stage-list detail dialog. These are
  * message KEYS, not text: this module has no React, so the dialog resolves
@@ -56,7 +54,7 @@ export const STAGE_GROUP_DESCRIPTION_KEY: Record<StageGroupKey, StageGroupMessag
     other: "stageGroup.other.desc",
 };
 
-/** The localised name of each group, a message key resolved with `t()` in the `nav` namespace. `label` above stays the English fallback for consumers not yet moved. */
+/** The localised name of each group, a message key resolved with `t()` in the `nav` namespace. Every rendered group name goes through it; `label` above is only the English search and sort key. */
 export const STAGE_GROUP_LABEL_KEY: Record<StageGroupKey, StageGroupMessageKey> = {
     story: "stageGroup.story.label",
     events: "stageGroup.events.label",

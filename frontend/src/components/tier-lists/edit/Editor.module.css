@@ -251,6 +251,19 @@
     filter: brightness(1.1);
 }
 
+/* R-03: the 18px cross keeps its size and gains a centred 44px hit area on touch. */
+@media (pointer: coarse) {
+    .chipRemove::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 44px;
+        height: 44px;
+        transform: translate(-50%, -50%);
+    }
+}
+
 .chipRemove:focus-visible {
     outline: 2px solid var(--ring);
     outline-offset: 1px;
@@ -338,6 +351,9 @@
 }
 
 .swatch {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     width: 100%;
     aspect-ratio: 1;
     border-radius: 8px;

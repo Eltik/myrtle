@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Navigate, useNavigate } from "@tanstack/react-router";
 import { useCallback, useMemo } from "react";
+import { PanelRetry } from "#/components/admin/Primitives";
 import { useAdminAccess } from "#/components/admin/shell/access";
 import { atLeast } from "#/components/admin/shell/model";
 import { PageHead } from "#/components/admin/shell/PageHead";
@@ -89,6 +90,14 @@ function Workspace({ search, grants, grantsLoading, enabled: canOpen }: IWorkspa
                 <Skeleton className={cn("h-[110px] rounded-2xl", LOCALE_PICKER_ITEM)} />
                 <Skeleton className={cn("h-[110px] rounded-2xl", LOCALE_PICKER_ITEM)} />
             </div>
+        );
+    }
+
+    if (localesQuery.isError) {
+        return (
+            <Card>
+                <PanelRetry className="items-center px-6 py-10" message={t("translations.locale.loadFailed")} retryLabel={t("translations.list.retry")} onRetry={() => void localesQuery.refetch()} />
+            </Card>
         );
     }
 

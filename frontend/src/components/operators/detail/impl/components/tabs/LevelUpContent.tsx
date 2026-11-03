@@ -13,6 +13,7 @@ import type { ILevelUpCostItem, IOperatorListItem, IUnlockCondition } from "#/ty
 import { asset, itemIcon } from "../../assets";
 import { useCnUpdatesContext } from "../../cnUpdates";
 import { CnTag } from "../CnMarkers";
+import { LoadError } from "../LoadError";
 import type { messages } from "./LevelUpContent.messages";
 
 interface ILevelUpContentProps {
@@ -127,7 +128,7 @@ export const LevelUpContent = memo(function LevelUpContent({ operator }: ILevelU
     const [activeSkill, setActiveSkill] = useState(0);
     const cnUpdates = useCnUpdatesContext();
     const localeServer = useGamedataServer();
-    const { data: materials } = useQuery(materialsQueryOptions(operatorGamedataServer(operator.server, localeServer)));
+    const { data: materials, isError: materialsFailed, refetch: refetchMaterials } = useQuery(materialsQueryOptions(operatorGamedataServer(operator.server, localeServer)));
 
     const elitePromotions = useMemo(() => operator.phases.map((p, idx) => ({ to: idx, cost: p.evolveCost ?? [] })).filter((r) => r.cost.length > 0), [operator.phases]);
     const levelingRows = useMemo(() => operator.phases.map((p, idx) => ({ phase: idx, maxLevel: p.maxLevel, cost: p.levelUpCost ?? [] })).filter((r) => r.cost.length > 0), [operator.phases]);
@@ -185,6 +186,7 @@ export const LevelUpContent = memo(function LevelUpContent({ operator }: ILevelU
             </div>
 
             <div className="flex flex-col gap-5">
+                {materialsFailed && !materials && <LoadError message={t("levelup.materialsFailed")} onRetry={() => void refetchMaterials()} />}
                 {levelingRows.length > 0 && (
                     <Section icon={<TrendingUp className="h-4 w-4" />} subtitle={t("levelup.section.operatorLevel.desc")} title={t("levelup.section.operatorLevel")}>
                         {levelingRows.map((r) => (

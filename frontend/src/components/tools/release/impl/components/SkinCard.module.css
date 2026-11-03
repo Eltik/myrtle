@@ -1,9 +1,3 @@
-@property --planner-angle {
-    syntax: "<angle>";
-    inherits: false;
-    initial-value: 90deg;
-}
-
 .card {
     --planner-angle: 90deg;
     position: relative;
@@ -38,7 +32,6 @@
 
 .card:hover,
 .card.selected {
-    animation: planner-spin 2.4s linear infinite;
     box-shadow:
         0 0 4px 1px var(--planner-c0),
         6px 6px 4px rgba(0, 0, 0, 0.7);
@@ -207,10 +200,4 @@
 
 .card.selected .overlay {
     opacity: 1;
-}
-
-@keyframes planner-spin {
-    to {
-        --planner-angle: 450deg;
-    }
 }

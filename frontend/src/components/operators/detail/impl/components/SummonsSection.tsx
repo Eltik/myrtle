@@ -12,6 +12,7 @@ import type { IDrone } from "#/types/operators";
 import type { messages as detailConstantsMessages } from "../constants.messages";
 import { descriptionToHtml } from "../description";
 import { clampDronePhase, droneTalentBlackboard, getDroneAttributeStats } from "../helpers";
+import { LoadError } from "./LoadError";
 import { OperatorRange } from "./OperatorRange";
 import type { messages } from "./SummonsSection.messages";
 
@@ -98,7 +99,7 @@ function SummonCard({ drone, parentPhaseIndex, parentLevel, server }: ISummonCar
     const t: SummonsT = useT("operators");
     const f = useFormatters();
     const localeServer = useGamedataServer();
-    const { data: ranges } = useQuery(rangesQueryOptions(operatorGamedataServer(server, localeServer)));
+    const { data: ranges, isError: rangesFailed, refetch: refetchRanges } = useQuery(rangesQueryOptions(operatorGamedataServer(server, localeServer)));
 
     const phaseIndex = clampDronePhase(drone, parentPhaseIndex);
     const phase = drone.phases[phaseIndex];
@@ -171,12 +172,14 @@ function SummonCard({ drone, parentPhaseIndex, parentLevel, server }: ISummonCar
                 ))}
             </div>
 
-            {range && (
+            {range ? (
                 <div className="mt-4">
                     <h5 className="mb-2 font-medium text-foreground text-xs">{t("summons.attackRange")}</h5>
                     <OperatorRange range={range} />
                 </div>
-            )}
+            ) : phase?.rangeId && rangesFailed && !ranges ? (
+                <LoadError className="mt-4" message={t("summons.attackRange.error")} onRetry={() => void refetchRanges()} />
+            ) : null}
 
             {visibleTalents.length > 0 && (
                 <div className="mt-4 space-y-2">

@@ -70,7 +70,10 @@ export function RankByPicker({ ranking, onRanking, catalog, materials, variant, 
 
     const trigger =
         variant === "toolbar" ? (
-            <PopoverTrigger aria-label={t("leaderboard.rankBy.aria")} className={cn("inline-flex h-9 min-w-0 cursor-pointer items-center gap-2 rounded-lg border border-input bg-card pr-2.5 pl-2 font-medium font-sans text-foreground text-xs leading-none transition-colors hover:border-foreground/20 sm:h-8", className)}>
+            <PopoverTrigger
+                aria-label={t("leaderboard.rankBy.aria")}
+                className={cn("inline-flex h-9 pointer-coarse:h-11 min-w-0 cursor-pointer items-center gap-2 rounded-lg border border-input bg-card pr-2.5 pl-2 font-medium font-sans text-foreground text-xs leading-none transition-colors hover:border-foreground/20 sm:h-8", className)}
+            >
                 {activeItem ? <ItemIcon item={toIconEntry(activeItem)} size={20} className="rounded" /> : null}
                 <span className="shrink-0 font-medium font-mono text-[10.5px] text-muted-foreground uppercase leading-none tracking-[0.14em]">{t("leaderboard.rankBy.label")}</span>
                 <span className="min-w-0 truncate font-semibold text-foreground">{label}</span>
@@ -121,7 +124,7 @@ export function RankByPicker({ ranking, onRanking, catalog, materials, variant, 
                                                 aria-pressed={active}
                                                 onClick={() => choose({ kind: "score", sort: opt.value as LeaderboardSort })}
                                                 className={cn(
-                                                    "inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-lg border px-2.5 font-medium font-sans text-xs leading-none transition-colors",
+                                                    "inline-flex h-8 pointer-coarse:h-11 cursor-pointer items-center gap-1.5 rounded-lg border px-2.5 font-medium font-sans text-xs leading-none transition-colors",
                                                     active ? "border-primary/40 bg-[color-mix(in_srgb,var(--primary)_10%,transparent)] text-foreground [&>svg]:text-primary" : "border-input bg-card text-foreground hover:border-foreground/20",
                                                 )}
                                             >

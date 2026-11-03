@@ -91,7 +91,7 @@ export function MarkdownEditor({ id, name, value, onChange, placeholder, maxLeng
             className={cn(
                 "flex w-full min-w-0 flex-col rounded-lg border border-input bg-background not-dark:bg-clip-padding shadow-xs/5 transition-shadow",
                 "focus-within:border-ring focus-within:ring-2 focus-within:ring-ring",
-                ariaInvalid && "border-destructive/36 focus-within:border-destructive/64 focus-within:ring-destructive/16",
+                ariaInvalid && "border-destructive/36 focus-within:border-destructive/64 focus-within:ring-destructive-foreground",
                 disabled && "opacity-64",
                 "dark:bg-input/32",
                 className,

@@ -9,6 +9,7 @@ export const messages = {
         description: "Line under the Archives heading.",
     },
     "page.error": { text: "Couldn't load this part of the Archives.", description: "Shown when an Archives request fails." },
+    "page.retry": { text: "Try again", description: "Button beside the Archives load error: refetch the failed tab." },
     "page.loading": { text: "Loading…", description: "Placeholder while an Archives tab loads." },
 
     "tabs.label": { text: "Archives sections", description: "Accessible name of the Archives tab strip." },

@@ -64,7 +64,7 @@ export function EnemyPanel({ enemy, hydrationToken, onChangeEnemy, onChangeSecon
                                                 onClick={() => onApplyPreset(preset)}
                                                 aria-pressed={selected}
                                                 className={cn(
-                                                    "flex h-7 cursor-pointer items-center justify-center rounded-md border bg-card px-2 font-medium text-[11px] transition-colors",
+                                                    "flex h-7 pointer-coarse:h-11 cursor-pointer items-center justify-center rounded-md border bg-card px-2 font-medium text-[11px] transition-colors",
                                                     selected ? "border-primary bg-primary/10 text-foreground ring-1 ring-primary/30" : "border-border text-muted-foreground hover:border-primary/50 hover:text-foreground",
                                                 )}
                                             >

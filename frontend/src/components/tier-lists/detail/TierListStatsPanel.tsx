@@ -40,7 +40,7 @@ export function TierListStatsPanel({ detail }: ITierListStatsPanelProps) {
 
     return (
         <aside aria-label={t("detail.stats.panelLabel")} className="lg:sticky lg:top-20">
-            <div className="rounded-2xl border border-border bg-card/60 backdrop-blur-sm">
+            <div className="rounded-2xl border border-border bg-card">
                 <header className="flex items-baseline justify-between gap-3 border-border/60 border-b px-4 py-3">
                     <h2 className="m-0 font-sans font-semibold text-foreground text-sm tracking-tight">{t("detail.stats.title")}</h2>
                     {stats?.isTrending && <span className="inline-flex items-center gap-1 font-bold font-mono text-[10.5px] text-primary uppercase tracking-wider">{t("detail.stats.trending")}</span>}

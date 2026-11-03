@@ -143,10 +143,6 @@
     text-align: left;
     cursor: pointer;
     outline: none;
-    /* `backwards`, never `both`: a forwards fill pins transform to `none` and the
-       hover scale below never lands. */
-    animation: ticket-in 0.32s cubic-bezier(0.2, 0, 0, 1) backwards;
-    animation-delay: calc(var(--i, 0) * 34ms);
 }
 
 .ticket {
@@ -163,17 +159,6 @@
     transition:
         filter 0.25s,
         transform 0.25s cubic-bezier(0.2, 0, 0, 1);
-}
-
-@keyframes ticket-in {
-    from {
-        opacity: 0;
-        transform: translateY(12px) scale(0.97);
-    }
-    to {
-        opacity: 1;
-        transform: none;
-    }
 }
 
 .card:hover .ticket,
@@ -566,19 +551,6 @@
     transition:
         border-color 0.2s,
         background 0.2s;
-    animation: row-in 0.32s cubic-bezier(0.2, 0, 0, 1) backwards;
-    animation-delay: calc(var(--i, 0) * 34ms);
-}
-
-@keyframes row-in {
-    from {
-        opacity: 0;
-        transform: translateY(12px) scale(0.98);
-    }
-    to {
-        opacity: 1;
-        transform: none;
-    }
 }
 
 .row:hover {
@@ -791,10 +763,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .card,
-    .row {
-        animation: none;
-    }
     .ticket,
     .stub,
     .progressFill {
@@ -925,8 +893,9 @@
 
 /* 44 px target, always shown. The width query is not redundant: `hover: none`
    is about the pointer, so a 390 px window with a mouse got a 34 px glyph that
-   appeared only on hover. */
-@media (hover: none), (max-width: 640px) {
+   appeared only on hover. `pointer: coarse` catches a touch screen that also
+   reports hover (audit-002 Z3: 96 of 219 /stories targets at 28x28). */
+@media (hover: none), (pointer: coarse), (max-width: 640px) {
     .cardPlay {
         opacity: 1;
         backdrop-filter: blur(2px);

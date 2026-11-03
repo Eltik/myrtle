@@ -70,7 +70,7 @@ function CompactBar({ nav }: { nav: IAdminNav }): React.ReactElement {
 
     return (
         <div className="flex items-center gap-2.5 border-border border-b bg-card px-4 py-2 md:px-8 lg:hidden">
-            <button type="button" aria-haspopup="dialog" aria-expanded={open} onClick={() => setOpen(true)} className="flex h-10 min-w-0 flex-1 cursor-pointer items-center gap-2.5 rounded-[10px] border border-input bg-background pr-3 pl-3.5 text-foreground transition-colors hover:bg-accent">
+            <button type="button" aria-haspopup="dialog" aria-expanded={open} onClick={() => setOpen(true)} className="flex h-11 min-w-0 flex-1 cursor-pointer items-center gap-2.5 rounded-[10px] border border-input bg-background pr-3 pl-3.5 text-foreground transition-colors hover:bg-accent">
                 <Kicker tone="accent" className="mb-0 shrink-0">
                     {t("shell.kicker")}
                 </Kicker>

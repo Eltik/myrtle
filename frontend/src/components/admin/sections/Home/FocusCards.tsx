@@ -1,10 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useMemo } from "react";
+import { PanelRetry } from "#/components/admin/Primitives";
 import { useLevelLabel } from "#/components/admin/sections/Users/labels";
 import type { IAdminAccess } from "#/components/admin/shell/access";
 import { useAdminLocales } from "#/components/admin/shell/locales";
-import { useEmptyOperators } from "#/components/admin/shell/useInboxQueue";
+import { useEmptyOperatorsQuery } from "#/components/admin/shell/useInboxQueue";
 import { Button } from "#/components/ui/button";
 import { Card, CardDescription, CardHeader, CardPanel, CardTitle } from "#/components/ui/card";
 import { Progress } from "#/components/ui/progress";
@@ -39,7 +40,8 @@ export function FocusCards({ access }: { access: IAdminAccess }): React.ReactEle
 
     const progressQuery = useQuery({ ...translationProgressQueryOptions(isAuthenticated), enabled: isAuthenticated && translates });
     const locales = useAdminLocales(translates);
-    const empty = useEmptyOperators(isAuthenticated && isEditor);
+    const emptyQuery = useEmptyOperatorsQuery(isAuthenticated && isEditor);
+    const empty = emptyQuery.data;
     const grantedQuery = useQuery({ ...grantedTierListsQueryOptions(isAuthenticated), enabled: isAuthenticated && isEditor });
     const browseQuery = useQuery({ ...browseTierListsQueryOptions(useGamedataServer()), enabled: isEditor && (grantedQuery.data?.length ?? 0) > 0 });
 
@@ -63,8 +65,16 @@ export function FocusCards({ access }: { access: IAdminAccess }): React.ReactEle
         return [...access.myLoc].sort((a, b) => (order.get(a.code) ?? 999) - (order.get(b.code) ?? 999));
     }, [access.myLoc, locales.list]);
 
+    const failed = (translates && (progressQuery.isError || locales.failed)) || (isEditor && (emptyQuery.failed || grantedQuery.isError));
+    const retry = (): void => {
+        if (progressQuery.isError) void progressQuery.refetch();
+        if (locales.failed) locales.retry();
+        if (emptyQuery.failed) emptyQuery.retry();
+        if (grantedQuery.isError) void grantedQuery.refetch();
+    };
     const loading = access.grantsLoading || (translates && (!progressQuery.data || !locales.loaded)) || (isEditor && (!empty || !grantedQuery.data));
 
+    if (failed) return <PanelRetry className="rounded-2xl border border-border border-dashed p-7" message={t("home.focus.loadFailed")} retryLabel={t("home.loadFailed.retry")} onRetry={retry} />;
     if (loading) return <div className="rounded-2xl border border-border border-dashed p-7 text-[14px] text-muted-foreground">{t("home.focus.loading")}</div>;
 
     const cards = buildFocusCards({ role: access.role, localeGrants, progress: progressQuery.data ?? [], emptyOps: empty?.empty ?? [], totalOps: empty?.total ?? 0, tierLists });

@@ -2,7 +2,7 @@ import { type UseQueryResult, useMutation, useQuery, useQueryClient } from "@tan
 import { Link } from "@tanstack/react-router";
 import { ChevronDownIcon } from "lucide-react";
 import { useMemo, useState } from "react";
-import { PanelMessage, stackedCardAction, stackedCardHeader, stickyActionsCell } from "#/components/admin/Primitives";
+import { PanelMessage, PanelRetry, stackedCardAction, stackedCardHeader, stickyActionsCell } from "#/components/admin/Primitives";
 import { invalidateTierListGrants } from "#/components/admin/shell/invalidate";
 import { GRANT_LEVELS, levelVariant } from "#/components/admin/shell/model";
 import { toastError, toastSuccess } from "#/components/admin/shell/toast";
@@ -51,7 +51,7 @@ export function AccessTab({ query }: { query: UseQueryResult<ITierListGrant[]> }
                 </CardAction>
             </CardHeader>
             {query.isError ? (
-                <PanelMessage className="p-8">{t("tierLists.access.loadError")}</PanelMessage>
+                <PanelRetry className="p-8" message={t("tierLists.access.loadError")} retryLabel={t("tierLists.access.retry")} onRetry={() => void query.refetch()} />
             ) : (
                 <Table>
                     <TableHeader>
@@ -141,7 +141,11 @@ function GrantRow({ grant }: { grant: ITierListGrant }): React.ReactElement {
             </TableCell>
             <TableCell>
                 <DropdownMenu>
-                    <DropdownMenuTrigger disabled={busy} aria-label={t("tierLists.access.changeLevel", { name, title: grant.title })} className={cn(badgeVariants({ variant: levelVariant(grant.permission, "default") }), "pointer-coarse:min-h-9 cursor-pointer gap-0.5 pointer-coarse:px-2.5 pe-0.5")}>
+                    <DropdownMenuTrigger
+                        disabled={busy}
+                        aria-label={t("tierLists.access.changeLevel", { name, title: grant.title })}
+                        className={cn(badgeVariants({ variant: levelVariant(grant.permission, "default") }), "pointer-coarse:after:-translate-1/2 relative cursor-pointer gap-0.5 pe-0.5 pointer-coarse:after:absolute pointer-coarse:after:top-1/2 pointer-coarse:after:left-1/2 pointer-coarse:after:size-11")}
+                    >
                         {levelLabel(grant.permission)}
                         <ChevronDownIcon className="size-3!" />
                     </DropdownMenuTrigger>

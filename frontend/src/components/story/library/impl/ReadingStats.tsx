@@ -40,7 +40,7 @@ export function ReadingStats({ index, progress, gameRead }: IReadingStatsProps):
     const pace = paceSpan(minutesLeft, minutesPerDay);
 
     return (
-        <section className="rounded-[14px] border border-border bg-card p-4 sm:p-5">
+        <section className="rounded-2xl border border-border bg-card p-4 sm:p-5">
             <h3 className="m-0 font-sans font-semibold text-[14px] text-foreground">{t("stats.heading")}</h3>
 
             {!stats.counted ? (
@@ -169,7 +169,7 @@ function NumberSetting({ id, label, unit, value, min, max, step, onChange }: { i
 
 function Stat({ label, value }: { label: string; value: string }): React.ReactElement {
     return (
-        <div className="rounded-xl border border-border bg-background/60 p-3">
+        <div className="rounded-2xl border border-border bg-background/60 p-3">
             <div className="font-mono text-[10px] text-muted-foreground uppercase tracking-[0.12em]">{label}</div>
             <div className="mt-1 font-light font-mono text-[18px] text-foreground tabular-nums tracking-[-0.02em] sm:text-[22px]">{value}</div>
         </div>

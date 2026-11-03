@@ -27,7 +27,7 @@ export function ScoreTab({ score, isLoading, improvements, isImprovementsLoading
     // score row; both are public leaderboard data, so a private-profile 404
     // simply leaves their sections off.
     const { data: standing } = useQuery({ ...playerStandingQueryOptions({ uid, server, interval: "7 days" }), enabled: Boolean(score) });
-    const { data: history, isLoading: isHistoryLoading } = useQuery({ ...scoreHistoryQueryOptions(uid), enabled: Boolean(score) });
+    const { data: history, isLoading: isHistoryLoading, isError: isHistoryError, refetch: refetchHistory } = useQuery({ ...scoreHistoryQueryOptions(uid), enabled: Boolean(score) });
 
     if (isLoading && !score) return <ScoreTabSkeleton />;
     if (!score) return <ScoreTabEmpty />;
@@ -41,7 +41,7 @@ export function ScoreTab({ score, isLoading, improvements, isImprovementsLoading
             <div className="grid grid-cols-1 items-start gap-3 sm:grid-cols-2">
                 <OverallGradeCard score={score} standing={standing} />
                 <ContributionCard score={score} />
-                <ScoreHistoryCard score={score} history={history} isLoading={isHistoryLoading} />
+                <ScoreHistoryCard score={score} history={history} isLoading={isHistoryLoading} onRetry={isHistoryError && !history ? () => void refetchHistory() : undefined} />
                 {SUBSCORES.map((sub) => (
                     <SubscoreCard key={sub.key} score={score[sub.key]} sub={sub} improvements={improvements} isImprovementsLoading={isImprovementsLoading} scoreRow={score} />
                 ))}

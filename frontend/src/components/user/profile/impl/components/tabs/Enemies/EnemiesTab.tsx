@@ -16,6 +16,7 @@ import { type TypedRichT, useFormatters, useGamedataServer, useRichT, useT } fro
 import type { TypedT } from "#/lib/i18n/messages";
 import { compactForSearch } from "#/lib/search/fuzzy";
 import { cn } from "#/lib/utils";
+import { LoadFailed } from "../LoadFailed";
 import type { messages } from "./EnemiesTab.messages";
 
 type EnemiesT = TypedT<typeof messages>;
@@ -60,7 +61,7 @@ interface IEnemiesTabProps {
 
 export function EnemiesTab({ encountered, isLoading }: IEnemiesTabProps) {
     const t: EnemiesT = useT("user");
-    const { data: handbook, isLoading: isHandbookLoading } = useQuery(enemiesListQueryOptions(useGamedataServer()));
+    const { data: handbook, isLoading: isHandbookLoading, isError: isHandbookError, refetch: refetchHandbook } = useQuery(enemiesListQueryOptions(useGamedataServer()));
     const { data: community } = useQuery(enemyCommunityAverageQueryOptions());
     const [status, setStatus] = useState<StatusFilter>("all");
     const [level, setLevel] = useState<LevelFilter>("ALL");
@@ -89,6 +90,11 @@ export function EnemiesTab({ encountered, isLoading }: IEnemiesTabProps) {
             return true;
         });
     }, [rows, status, level, search]);
+
+    // A failed handbook read as "0 of 0 encountered" with an empty grid.
+    if (isHandbookError && !handbook) {
+        return <LoadFailed message={t("profile.enemies.loadFailed")} onRetry={() => void refetchHandbook()} />;
+    }
 
     if (isLoading || isHandbookLoading) {
         return (

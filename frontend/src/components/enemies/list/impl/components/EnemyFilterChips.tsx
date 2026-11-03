@@ -1,4 +1,5 @@
 import type React from "react";
+import { FilterChip } from "#/components/ui/filter-chip";
 import type { IEnemyDamageType, IEnemyLevel } from "#/lib/api/enemies";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -7,46 +8,6 @@ import type { messages as listConstantsMessages } from "../constants.messages";
 import { DAMAGE_TOKENS, LEVEL_TOKENS } from "../tokens";
 import type { ApplyWay, IEnemyImmunities, IFilterState } from "../types";
 import type { messages } from "./EnemyFilterChips.messages";
-
-interface IChipProps {
-    on: boolean;
-    color?: string;
-    /** The selected text colour; the tint measured 1.66 to 3.85 as text on its own fill. Defaults to the foreground. */
-    ink?: string;
-    onClick: () => void;
-    children: React.ReactNode;
-}
-
-function Chip({ on, color, ink, onClick, children }: IChipProps) {
-    const tint = color ?? "var(--primary)";
-    return (
-        <button
-            type="button"
-            onClick={onClick}
-            aria-pressed={on}
-            className="inline-flex h-7 cursor-pointer items-center gap-1.75 rounded-full border px-2.75 font-medium font-sans text-[12px] leading-none transition-all duration-150"
-            style={{
-                borderColor: on ? tint : "var(--border)",
-                background: on ? `color-mix(in oklch, ${tint} 14%, transparent)` : "color-mix(in oklch, var(--secondary) 50%, transparent)",
-                color: on ? (ink ?? "var(--foreground)") : "var(--muted-foreground)",
-            }}
-            onMouseEnter={(e) => {
-                if (!on) {
-                    e.currentTarget.style.borderColor = `color-mix(in oklch, ${tint} 50%, var(--border))`;
-                    e.currentTarget.style.color = "var(--foreground)";
-                }
-            }}
-            onMouseLeave={(e) => {
-                if (!on) {
-                    e.currentTarget.style.borderColor = "var(--border)";
-                    e.currentTarget.style.color = "var(--muted-foreground)";
-                }
-            }}
-        >
-            {children}
-        </button>
-    );
-}
 
 interface IChipGroupProps {
     label: string;
@@ -89,12 +50,10 @@ export function EnemyFilterChips({ filters, setLevels, setDamageTypes, setAttack
     const t: TypedT<typeof messages> = useT("enemies");
     const tConst: TypedT<typeof listConstantsMessages> = useT("enemies");
     return (
-        <div className="flex flex-wrap items-center gap-x-3.5 gap-y-2.5 rounded-xl border border-border bg-[color-mix(in_oklch,var(--card)_60%,transparent)] px-3.5 py-3">
+        <div className="flex flex-wrap items-center gap-x-3.5 gap-y-2.5 rounded-2xl border border-border bg-[color-mix(in_oklch,var(--card)_60%,transparent)] px-3.5 py-3">
             <ChipGroup label={t("chips.threat")}>
                 {ENEMY_LEVELS.map((lv) => (
-                    <Chip key={lv} on={filters.levels.includes(lv)} color={LEVEL_TOKENS[lv].accent} ink={LEVEL_TOKENS[lv].ink} onClick={() => setLevels(toggleArray(filters.levels, lv))}>
-                        {tConst(ENEMY_LEVEL_LABEL_KEY[lv])}
-                    </Chip>
+                    <FilterChip key={lv} active={filters.levels.includes(lv)} tone={LEVEL_TOKENS[lv].accent} onSelect={() => setLevels(toggleArray(filters.levels, lv))} label={tConst(ENEMY_LEVEL_LABEL_KEY[lv])} />
                 ))}
             </ChipGroup>
 
@@ -102,10 +61,18 @@ export function EnemyFilterChips({ filters, setLevels, setDamageTypes, setAttack
 
             <ChipGroup label={t("chips.damage")}>
                 {DAMAGE_TYPES.map((d) => (
-                    <Chip key={d} on={filters.damageTypes.includes(d)} color={DAMAGE_TOKENS[d].color} ink={DAMAGE_TOKENS[d].ink} onClick={() => setDamageTypes(toggleArray(filters.damageTypes, d))}>
-                        <span className="inline-block h-1.5 w-1.5 rounded-[1.5px]" style={{ background: DAMAGE_TOKENS[d].color }} />
-                        {tConst(DAMAGE_TOKENS[d].labelKey)}
-                    </Chip>
+                    <FilterChip
+                        key={d}
+                        active={filters.damageTypes.includes(d)}
+                        tone={DAMAGE_TOKENS[d].color}
+                        onSelect={() => setDamageTypes(toggleArray(filters.damageTypes, d))}
+                        label={
+                            <span className="inline-flex items-center gap-1.75">
+                                <span aria-hidden="true" className="inline-block h-1.5 w-1.5 rounded-[1.5px]" style={{ background: DAMAGE_TOKENS[d].color }} />
+                                {tConst(DAMAGE_TOKENS[d].labelKey)}
+                            </span>
+                        }
+                    />
                 ))}
             </ChipGroup>
 
@@ -113,9 +80,7 @@ export function EnemyFilterChips({ filters, setLevels, setDamageTypes, setAttack
 
             <ChipGroup label={t("chips.range")}>
                 {APPLY_WAYS.map((a) => (
-                    <Chip key={a} on={filters.attackTypes.includes(a)} onClick={() => setAttackTypes(toggleArray(filters.attackTypes, a))}>
-                        {tConst(APPLY_WAY_LABEL_KEY[a])}
-                    </Chip>
+                    <FilterChip key={a} active={filters.attackTypes.includes(a)} onSelect={() => setAttackTypes(toggleArray(filters.attackTypes, a))} label={tConst(APPLY_WAY_LABEL_KEY[a])} />
                 ))}
             </ChipGroup>
 
@@ -124,9 +89,7 @@ export function EnemyFilterChips({ filters, setLevels, setDamageTypes, setAttack
             {/* AND, unlike the other groups: several picks keep only enemies immune to all of them. */}
             <ChipGroup label={t("chips.immune")}>
                 {IMMUNITY_KEYS.map((k) => (
-                    <Chip key={k} on={filters.immunities.includes(k)} onClick={() => setImmunities(toggleArray(filters.immunities, k))}>
-                        {tConst(IMMUNITY_LABEL_KEY[k])}
-                    </Chip>
+                    <FilterChip key={k} active={filters.immunities.includes(k)} onSelect={() => setImmunities(toggleArray(filters.immunities, k))} label={tConst(IMMUNITY_LABEL_KEY[k])} />
                 ))}
             </ChipGroup>
 
@@ -135,9 +98,7 @@ export function EnemyFilterChips({ filters, setLevels, setDamageTypes, setAttack
                     <ChipDivider />
                     <ChipGroup label={t("chips.race")}>
                         {races.map((r) => (
-                            <Chip key={r.id} on={filters.races.includes(r.id)} onClick={() => setRaces(toggleArray(filters.races, r.id))}>
-                                {r.label}
-                            </Chip>
+                            <FilterChip key={r.id} active={filters.races.includes(r.id)} onSelect={() => setRaces(toggleArray(filters.races, r.id))} label={r.label} />
                         ))}
                     </ChipGroup>
                 </>

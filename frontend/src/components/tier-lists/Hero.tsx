@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { Button } from "#/components/ui/button";
 import { Kicker } from "#/components/ui/kicker";
 import { authActions } from "#/lib/auth/store";
 import { useFormatters, useT } from "#/lib/i18n";
@@ -32,21 +33,17 @@ export function Hero({ total, canCreate }: IHeroProps) {
                 </div>
 
                 {canCreate ? (
-                    <Link
-                        to="/tier-lists/my"
-                        search={{ sort: "recent", type: "all", view: "grid", q: "" }}
-                        className="inline-flex items-center gap-1.5 rounded-lg border border-primary bg-primary px-3.5 py-2 font-medium font-sans text-primary-foreground text-sm leading-none no-underline shadow-xs transition-shadow hover:shadow-md"
-                    >
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4" aria-hidden="true">
+                    <Button render={<Link to="/tier-lists/my" search={{ sort: "recent", type: "all", view: "grid", q: "" }} />}>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-4" aria-hidden="true">
                             <path d="M12 5v14" />
                             <path d="M5 12h14" />
                         </svg>
                         {t("browse.hero.create")}
-                    </Link>
+                    </Button>
                 ) : (
-                    <button type="button" onClick={() => authActions.openLoginDialog()} className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-border bg-muted px-3.5 py-2 font-medium font-sans text-foreground text-sm leading-none transition-colors hover:bg-accent">
+                    <Button variant="secondary" onClick={() => authActions.openLoginDialog()}>
                         {t("browse.hero.signIn")}
-                    </button>
+                    </Button>
                 )}
             </div>
         </section>

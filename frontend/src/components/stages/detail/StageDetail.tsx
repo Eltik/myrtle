@@ -76,14 +76,14 @@ export function StageDetail({ stage, zone, level, enemyData, materials }: { stag
             <div className="mt-7 flex flex-col gap-3">
                 {level ? (
                     <>
-                        <div className="relative overflow-hidden rounded-[14px] border border-border bg-[#181818]">
+                        <div className="relative overflow-hidden rounded-2xl border border-border bg-[#181818]">
                             <MapView ref={mapRef} code={stage.code} enemyData={enemyData} level={level} onSettingsChange={setMapSettings} settings={mapSettings} statsFor={statsFor} />
                         </div>
                         <TileLegend />
                         <MapSettings settings={mapSettings} onChange={setMapSettings} />
                     </>
                 ) : (
-                    <div className="flex min-h-70 items-center justify-center rounded-[14px] border border-border border-dashed p-10 text-center">
+                    <div className="flex min-h-70 items-center justify-center rounded-2xl border border-border border-dashed p-10 text-center">
                         <p className="m-0 font-sans text-[13px] text-muted-foreground">{t("detail.noMap")}</p>
                     </div>
                 )}
@@ -98,7 +98,7 @@ export function StageDetail({ stage, zone, level, enemyData, materials }: { stag
                         <WavesSection level={level} />
                     </div>
                     <div className="flex min-w-0 flex-col gap-6">
-                        <EnemiesSection tally={tally} onFocusEnemy={focusEnemy} />
+                        <EnemiesSection tally={tally} onFocusEnemy={focusEnemy} statsFor={statsFor} />
                         <PropertiesSection stage={stage} level={level} />
                     </div>
                 </div>

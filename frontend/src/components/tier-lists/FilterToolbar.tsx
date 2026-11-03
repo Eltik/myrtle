@@ -1,6 +1,8 @@
+import { Check } from "lucide-react";
 import { useState } from "react";
 import { Input } from "#/components/ui/input";
 import { Menu, MenuItem, MenuPopup, MenuTrigger } from "#/components/ui/menu";
+import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import { useMediaQuery } from "#/hooks/use-media-query";
 import { type TypedRichT, useRichT, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -51,6 +53,9 @@ const BASE_TYPE_TABS: Array<{ value: TierListType; labelKey: FilterToolbarMessag
 const CONTENT_WIDTH = "1080px";
 const FADE_MASK = `linear-gradient(to right, transparent, #000 max(0px, (100vw - ${CONTENT_WIDTH}) / 2), #000 min(100vw, (100vw + ${CONTENT_WIDTH}) / 2), transparent)`;
 
+// R-03: the 32px desktop controls keep their size and gain a centred 44px hit area on touch.
+const COARSE_HIT = "pointer-coarse:after:absolute pointer-coarse:after:top-1/2 pointer-coarse:after:left-1/2 pointer-coarse:after:size-11 pointer-coarse:after:-translate-1/2";
+
 export function FilterToolbar({ type, sort, query, selectedFlairs, flairOptions, resultCount, totalCount, showFavoritesTab, onTypeChange, onSortChange, onQueryChange, onFlairToggle, onClearFlairs, authorFilter, authorActive = false }: IFilterToolbarProps) {
     const t: FilterToolbarT = useT("tierLists");
     const rt: FilterToolbarRichT = useRichT("tierLists");
@@ -65,36 +70,22 @@ export function FilterToolbar({ type, sort, query, selectedFlairs, flairOptions,
         <div className="sticky top-14 z-30 mx-[calc(50%-50vw)] w-screen border-border border-y bg-card/85 backdrop-blur-md backdrop-saturate-150 sm:top-16" style={{ maskImage: FADE_MASK, WebkitMaskImage: FADE_MASK }}>
             <div className="page-gutter py-3 [--page-max:1080px]">
                 <div className="flex flex-wrap items-center gap-2.5">
-                    <div role="tablist" aria-label={t("browse.type.label")} className="inline-flex shrink-0 gap-0.5 rounded-[10px] border border-border bg-muted p-0.75">
-                        {typeTabs.map((tab) => {
-                            const active = type === tab.value;
-                            const isFavorites = tab.value === "favorites";
-                            return (
-                                <button
-                                    key={tab.value}
-                                    role="tab"
-                                    type="button"
-                                    aria-selected={active}
-                                    onClick={() => onTypeChange(tab.value)}
-                                    className={cn(
-                                        "inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-[7px] border-0 px-3 font-medium font-sans text-xs leading-none transition-colors",
-                                        active ? "bg-primary text-primary-foreground shadow-[0_2px_6px_color-mix(in_srgb,var(--primary)_30%,transparent)]" : "bg-transparent text-muted-foreground hover:bg-muted/60 hover:text-foreground",
-                                    )}
-                                >
-                                    {isFavorites && (
-                                        <svg viewBox="0 0 24 24" fill={active ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3" aria-hidden="true">
-                                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-                                        </svg>
-                                    )}
-                                    {t(tab.labelKey)}
-                                </button>
-                            );
-                        })}
-                    </div>
+                    <ToggleGroup aria-label={t("browse.type.label")} value={[type]} onValueChange={(next) => next[0] && onTypeChange(next[0] as TierListType)} variant="outline" size="sm" className="shrink-0">
+                        {typeTabs.map((tab) => (
+                            <ToggleGroupItem key={tab.value} value={tab.value} className="gap-1.5 px-3 text-xs sm:text-xs">
+                                {tab.value === "favorites" && (
+                                    <svg viewBox="0 0 24 24" fill={type === tab.value ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-3" aria-hidden="true">
+                                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                                    </svg>
+                                )}
+                                {t(tab.labelKey)}
+                            </ToggleGroupItem>
+                        ))}
+                    </ToggleGroup>
 
                     <Menu>
                         <MenuTrigger
-                            className={cn("inline-flex h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-lg border border-border bg-popover px-2.5 font-medium font-sans text-foreground text-xs leading-none transition-colors hover:bg-accent", "[&>svg]:h-3 [&>svg]:w-3 [&>svg]:opacity-80")}
+                            className={cn("relative inline-flex h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-lg border border-border bg-popover px-2.5 font-medium font-sans text-foreground text-xs leading-none transition-colors hover:bg-accent", "[&>svg]:h-3 [&>svg]:w-3 [&>svg]:opacity-80", COARSE_HIT)}
                             aria-label={t("browse.sortTrigger", { label: activeSort ? t(activeSort.labelKey) : "" })}
                         >
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -123,7 +114,7 @@ export function FilterToolbar({ type, sort, query, selectedFlairs, flairOptions,
                             onClick={() => setFlairsOpenOverride(!flairsOpen)}
                             aria-expanded={flairsOpen}
                             aria-controls="tier-list-flairs"
-                            className="hidden h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-lg border border-border bg-popover px-2.5 font-medium font-sans text-foreground text-xs leading-none transition-colors hover:bg-accent sm:inline-flex"
+                            className={cn("relative hidden h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-lg border border-border bg-popover px-2.5 font-medium font-sans text-foreground text-xs leading-none transition-colors hover:bg-accent sm:inline-flex", COARSE_HIT)}
                         >
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3 opacity-80" aria-hidden="true">
                                 <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
@@ -148,7 +139,12 @@ export function FilterToolbar({ type, sort, query, selectedFlairs, flairOptions,
                         </span>
                         <Input type="search" size="sm" value={query} onChange={(e) => onQueryChange((e.target as HTMLInputElement).value)} placeholder={t("browse.search.placeholder")} aria-label={t("browse.search.label")} className="pl-7.5" />
                         {query.length > 0 && (
-                            <button type="button" onClick={() => onQueryChange("")} aria-label={t("browse.search.clear")} className="absolute inset-y-0 right-1.5 my-auto inline-flex h-5 w-5 items-center justify-center rounded-full text-black hover:bg-accent hover:text-foreground dark:text-muted-foreground">
+                            <button
+                                type="button"
+                                onClick={() => onQueryChange("")}
+                                aria-label={t("browse.search.clear")}
+                                className={cn("absolute inset-y-0 right-1.5 my-auto inline-flex h-5 w-5 items-center justify-center rounded-full text-black hover:bg-accent hover:text-foreground dark:text-muted-foreground", COARSE_HIT)}
+                            >
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3" aria-hidden="true">
                                     <path d="M18 6 6 18" />
                                     <path d="m6 6 12 12" />
@@ -165,7 +161,7 @@ export function FilterToolbar({ type, sort, query, selectedFlairs, flairOptions,
                             onClick={() => setFlairsOpenOverride(!flairsOpen)}
                             aria-expanded={flairsOpen}
                             aria-controls="tier-list-flairs"
-                            className="mt-2.5 flex w-full items-center justify-between gap-2 rounded-md border border-border bg-muted/40 px-2.5 py-1.5 font-mono text-[10.5px] text-muted-foreground uppercase tracking-wider transition-colors hover:bg-muted hover:text-foreground sm:hidden"
+                            className="mt-2.5 flex pointer-coarse:min-h-11 w-full items-center justify-between gap-2 rounded-lg border border-border bg-muted/40 px-2.5 py-1.5 font-mono text-[10.5px] text-muted-foreground uppercase tracking-wider transition-colors hover:bg-muted hover:text-foreground sm:hidden"
                         >
                             <span className="inline-flex items-center gap-1.5">
                                 <span>{t("browse.flairs")}</span>
@@ -189,7 +185,7 @@ export function FilterToolbar({ type, sort, query, selectedFlairs, flairOptions,
                                         aria-pressed={active}
                                         aria-label={hasMatches ? t("browse.flair.chip", { label: flair.label, count }) : t("browse.flair.chipEmpty", { label: flair.label })}
                                         disabled={!hasMatches && !active}
-                                        className={cn("inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border px-2.5 py-1 font-medium font-sans text-xs leading-none transition-colors disabled:cursor-not-allowed disabled:opacity-50")}
+                                        className="inline-flex pointer-coarse:min-h-11 shrink-0 cursor-pointer items-center gap-1.5 rounded-full border px-2.5 py-1 font-medium font-sans text-xs leading-none transition-colors disabled:cursor-not-allowed disabled:opacity-50"
                                         style={
                                             active
                                                 ? {
@@ -205,6 +201,7 @@ export function FilterToolbar({ type, sort, query, selectedFlairs, flairOptions,
                                                   }
                                         }
                                     >
+                                        {active ? <Check className="size-3" style={{ color: "var(--foreground)" }} aria-hidden="true" /> : null}
                                         <span className="h-1.5 w-1.5 rounded-full" style={{ background: color }} aria-hidden="true" />
                                         <span>{flair.label}</span>
                                         {flair.count !== undefined && (
@@ -223,7 +220,7 @@ export function FilterToolbar({ type, sort, query, selectedFlairs, flairOptions,
                                 <button
                                     type="button"
                                     onClick={onClearFlairs}
-                                    className="inline-flex shrink-0 cursor-pointer items-center gap-1 rounded-full border border-border border-dashed bg-transparent px-2.5 py-1 font-medium font-sans text-muted-foreground text-xs leading-none transition-colors hover:border-foreground/40 hover:text-foreground"
+                                    className="inline-flex pointer-coarse:min-h-11 shrink-0 cursor-pointer items-center gap-1 rounded-full border border-border border-dashed bg-transparent px-2.5 py-1 font-medium font-sans text-muted-foreground text-xs leading-none transition-colors hover:border-foreground/40 hover:text-foreground"
                                 >
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3" aria-hidden="true">
                                         <path d="M18 6 6 18" />

@@ -107,6 +107,10 @@ export const messages = {
         text: "Not encountered",
         description: "Native tooltip on the padlock marking an enemy the account has never met.",
     },
+    "profile.enemies.loadFailed": {
+        text: "Couldn't load the enemy handbook.",
+        description: "Shown in place of the enemies tab, beside a Retry button, when the handbook failed to load. Without it the tab read 0 of 0 encountered.",
+    },
 } satisfies MessageMap;
 
 // `dynamic`: the tier names are stored in the LEVEL_FILTERS table and resolved

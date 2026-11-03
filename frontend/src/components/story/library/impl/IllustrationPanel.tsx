@@ -152,7 +152,8 @@ export function ArtLightbox({ view, onClose }: { view: IArtView | null; onClose:
                     <DialogTitle className="truncate font-mono text-[12.5px]">{view.name}</DialogTitle>
                 </DialogHeader>
                 <DialogPanel className="flex max-h-[72dvh] items-center justify-center overflow-auto bg-secondary/35">
-                    <img src={view.url} alt={view.name} decoding="async" className="max-h-[70dvh] w-auto max-w-full object-contain" />
+                    {/* The table carries no CG size, so a 16:9 box (the story CG frame) holds the dialog still while the file loads; other shapes letterbox. */}
+                    <img src={view.url} alt={view.name} decoding="async" className="aspect-video w-[min(100%,calc(70dvh*16/9))] object-contain" />
                 </DialogPanel>
                 <DialogFooter>
                     <DialogClose render={<Button variant="outline" className="max-sm:min-h-11" />}>{t("illustrations.viewer.close")}</DialogClose>
@@ -185,7 +186,7 @@ function Body({
 
     if (unavailable) {
         return (
-            <div className="rounded-xl border border-border border-dashed p-8 text-center">
+            <div className="rounded-2xl border border-border border-dashed p-8 text-center">
                 <p className="m-0 font-sans text-[13px] text-muted-foreground">{t("illustrations.panel.unavailable")}</p>
                 <p className="mt-1.5 mb-0 font-mono text-[11px] text-subtle-foreground">{t("illustrations.panel.unavailableNote")}</p>
             </div>
@@ -201,7 +202,7 @@ function Body({
             </output>
         );
     }
-    if (summary.rows === 0) return <div className="rounded-xl border border-border border-dashed p-8 text-center font-sans text-[13px] text-muted-foreground">{t("illustrations.panel.empty")}</div>;
+    if (summary.rows === 0) return <div className="rounded-2xl border border-border border-dashed p-8 text-center font-sans text-[13px] text-muted-foreground">{t("illustrations.panel.empty")}</div>;
 
     return (
         <>

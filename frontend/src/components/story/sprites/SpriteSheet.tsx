@@ -91,7 +91,7 @@ function SpriteSheetBody({ detail }: { detail: StorySpriteDetail }): React.React
         <div className="grid gap-5 md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
             <div className="flex min-w-0 flex-col gap-3">
                 {current ? (
-                    <div className="relative overflow-hidden rounded-xl border border-border bg-secondary/40">
+                    <div className="relative overflow-hidden rounded-2xl border border-border bg-secondary/40">
                         <SpriteFigure key={current.key} variant={current} name={entry.base} crop={null} className="aspect-square w-full" />
                         <span className="absolute top-2 left-2 rounded-md bg-background/80 px-1.5 py-0.5 font-mono text-[11px] text-foreground tabular-nums backdrop-blur-sm">{current.key}</span>
                         <span className="absolute right-2 bottom-2 rounded-md bg-background/80 px-1.5 py-0.5 font-mono text-[10.5px] text-muted-foreground backdrop-blur-sm">
@@ -158,10 +158,14 @@ function SpriteSheetBody({ detail }: { detail: StorySpriteDetail }): React.React
                                             tabIndex={on ? 0 : -1}
                                             aria-label={t("sprites.sheet.variantAria", { key: v.key })}
                                             onClick={() => setSelected(i)}
-                                            className={cn("flex min-h-11 cursor-pointer flex-col overflow-hidden rounded-[9px] border bg-secondary/40 p-0 text-left ring-inset transition-colors focus-visible:ring-2 focus-visible:ring-ring", on ? "border-primary" : "border-border hover:border-primary/45")}
+                                            className={cn(
+                                                "flex min-h-11 cursor-pointer flex-col overflow-hidden rounded-[9px] border bg-secondary/40 p-0 text-left ring-inset transition-colors focus-visible:ring-2 focus-visible:ring-ring",
+                                                on ? "border-primary" : "border-border hover:border-primary/45",
+                                                v.uses === 0 && "border-dashed",
+                                            )}
                                         >
                                             <SpriteFigure variant={v} name={entry.base} crop={CELL_CROP} lazy thumb={spriteThumbUrl(entry.base, v.key, server)} className="aspect-square w-full" />
-                                            <span className={cn("truncate px-1 py-0.5 font-mono text-[10px] tabular-nums", on ? "text-primary" : "text-muted-foreground", v.uses === 0 && !on ? "opacity-60" : undefined)}>{v.key}</span>
+                                            <span className={cn("truncate px-1 py-0.5 font-mono text-[10px] tabular-nums", on ? "text-primary" : "text-muted-foreground")}>{v.key}</span>
                                         </button>
                                     );
                                 })}
@@ -198,7 +202,7 @@ function SpriteSheetState({ base }: { base: string }): React.ReactElement {
     if (q.isLoading) {
         return (
             <output className="grid gap-5 md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]" aria-label={t("sprites.sheet.loading")}>
-                <Skeleton className="aspect-square w-full rounded-xl" />
+                <Skeleton className="aspect-square w-full rounded-2xl" />
                 <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-6">
                     {Array.from({ length: SKELETON_CELLS }, (_, i) => (
                         // biome-ignore lint/suspicious/noArrayIndexKey: a placeholder has no identity beyond its position

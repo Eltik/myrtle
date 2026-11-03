@@ -1,9 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
-import { ChevronDown } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { ChevronDown, RotateCwIcon } from "lucide-react";
 import { useMemo, useState } from "react";
+import { Alert, AlertAction, AlertDescription } from "#/components/ui/alert";
+import { Button } from "#/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "#/components/ui/collapsible";
 import { Skeleton } from "#/components/ui/skeleton";
-import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { enemyAppearsInQueryOptions, type IEnemyStageRef } from "#/lib/api/enemies";
 import { zonesQueryOptions } from "#/lib/api/stages";
 import { type TypedRichT, useGamedataServer, useRichT, useT } from "#/lib/i18n";
@@ -110,8 +112,8 @@ export function AppearsInTab({ enemyId }: { enemyId: string }) {
     // than warmed by the route loader. The refs carry a pre-resolved `zoneName`;
     // the zones table is still needed for group `type` labels + `zoneIndex` sort.
     const server = useGamedataServer();
-    const { data: refs = [], isLoading: refsLoading } = useQuery(enemyAppearsInQueryOptions(enemyId, server));
-    const { data: zones = [], isLoading: zonesLoading } = useQuery(zonesQueryOptions(server));
+    const { data: refs = [], isLoading: refsLoading, isError: refsFailed, refetch: refetchRefs } = useQuery(enemyAppearsInQueryOptions(enemyId, server));
+    const { data: zones = [], isLoading: zonesLoading, isError: zonesFailed, refetch: refetchZones } = useQuery(zonesQueryOptions(server));
 
     const { sections, totalStages, totalZones } = useMemo(() => {
         const zonesById = new Map(zones.map((z) => [z.zoneId, z]));
@@ -123,19 +125,42 @@ export function AppearsInTab({ enemyId }: { enemyId: string }) {
         return { sections, totalStages: refs.length, totalZones: groups.length };
     }, [refs, zones]);
 
+    // Before the empty state: a failed fetch is not "this enemy never appears".
+    if (refsFailed || zonesFailed) {
+        return (
+            <Alert variant="error">
+                <AlertDescription>{t("appears.failed")}</AlertDescription>
+                <AlertAction>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                            if (refsFailed) void refetchRefs();
+                            if (zonesFailed) void refetchZones();
+                        }}
+                    >
+                        <RotateCwIcon aria-hidden="true" />
+                        {t("appears.retry")}
+                    </Button>
+                </AlertAction>
+            </Alert>
+        );
+    }
+
     if (refsLoading || zonesLoading) {
         return (
             <div className="flex flex-col gap-2">
-                <Skeleton className="h-12 w-full rounded-xl" />
-                <Skeleton className="h-12 w-full rounded-xl" />
-                <Skeleton className="h-12 w-full rounded-xl" />
+                <Skeleton className="h-12 w-full rounded-2xl" />
+                <Skeleton className="h-12 w-full rounded-2xl" />
+                <Skeleton className="h-12 w-full rounded-2xl" />
             </div>
         );
     }
 
     if (sections.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center rounded-[14px] border border-border border-dashed bg-card/50 px-6 py-14 text-center">
+            <div className="flex flex-col items-center justify-center rounded-2xl border border-border border-dashed bg-card/50 px-6 py-14 text-center">
                 <h3 className="m-0 font-sans font-semibold text-[15px] text-foreground leading-none">{t("appears.empty.title")}</h3>
                 <p className="m-0 mt-2 max-w-96 text-pretty font-sans text-[13px] text-muted-foreground leading-normal">{t("appears.empty.body")}</p>
             </div>
@@ -176,14 +201,14 @@ function ZoneCollapsible({ group, defaultOpen }: { group: IAppearanceGroup; defa
 
     return (
         <Collapsible open={open} onOpenChange={setOpen}>
-            <div className="overflow-hidden rounded-xl border border-border bg-[color-mix(in_oklch,var(--muted)_22%,transparent)]">
+            <div className="overflow-hidden rounded-2xl border border-border bg-[color-mix(in_oklch,var(--muted)_22%,transparent)]">
                 <CollapsibleTrigger className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left transition-colors hover:bg-[color-mix(in_oklch,var(--muted)_36%,transparent)] sm:px-3.5">
                     <ChevronDown className={cn("h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200 motion-reduce:transition-none", open && "rotate-180")} aria-hidden="true" />
                     <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                         <h4 className="m-0 truncate font-sans font-semibold text-[13.5px] text-foreground leading-tight">{group.title}</h4>
                         {group.subtitle && <span className="truncate font-medium font-mono text-[10px] text-muted-foreground uppercase leading-none tracking-[0.12em]">{group.subtitle}</span>}
                     </div>
-                    {typeLabelKey && <span className="shrink-0 rounded-full border border-border bg-card px-2 py-0.75 font-medium font-mono text-[9.5px] text-muted-foreground uppercase leading-none tracking-[0.12em]">{t(typeLabelKey)}</span>}
+                    {typeLabelKey && <span className="shrink-0 rounded-full border border-border bg-card px-2 py-0.75 font-medium font-mono text-[10px] text-muted-foreground uppercase leading-none tracking-[0.12em]">{t(typeLabelKey)}</span>}
                     <span className="shrink-0 rounded-full bg-[color-mix(in_oklch,var(--muted)_60%,transparent)] px-1.75 py-0.75 font-medium font-mono text-[10px] text-muted-foreground tabular-nums leading-none">{group.refs.length}</span>
                 </CollapsibleTrigger>
                 <CollapsibleContent>
@@ -228,17 +253,25 @@ function ChipRow({ refs }: { refs: IEnemyStageRef[] }) {
 
 function StageChip({ stage }: { stage: IEnemyStageRef }) {
     const t: TypedT<typeof messages> = useT("enemies");
-    // "(Adverse)" and the "Adv" badge below are the game's own name for a
-    // stage's harder variant, so they stay with the game-data vocabulary.
-    const title = [stage.stageName, stage.isHard ? "(Adverse)" : null, stage.count > 0 ? t("appears.chip.spawns", { count: stage.count }) : t("appears.chip.conditional")].filter(Boolean).join(" · ");
+    const code = stage.code || stage.stageId;
     return (
-        <Tooltip>
-            <TooltipTrigger render={<span className="inline-flex items-center gap-1.5 rounded-md border bg-card px-2 py-1 font-medium font-mono text-[11.5px] text-foreground leading-none" style={{ borderColor: stage.isHard ? "color-mix(in oklch, var(--destructive) 45%, var(--border))" : "var(--border)" }} />}>
-                <span className="tabular-nums">{stage.code || stage.stageId}</span>
-                {stage.isHard && <span className="rounded-[3px] bg-[color-mix(in_oklch,var(--destructive)_18%,transparent)] px-1 py-px font-mono text-[10px] text-destructive-foreground uppercase leading-none tracking-[0.08em]">Adv</span>}
-                {stage.count > 0 && <span className="text-muted-foreground tabular-nums">×{stage.count}</span>}
-            </TooltipTrigger>
-            <TooltipPopup>{title}</TooltipPopup>
-        </Tooltip>
+        <Link
+            to="/stages/$stageId"
+            params={{ stageId: stage.stageId }}
+            className="inline-flex min-h-8 pointer-coarse:min-h-11 max-w-full items-center gap-1.5 rounded-lg border bg-card px-2 py-1 font-medium text-[11.5px] text-foreground leading-none transition-colors hover:bg-[color-mix(in_oklch,var(--muted)_36%,transparent)] focus-visible:ring-2 focus-visible:ring-ring"
+            style={{ borderColor: stage.isHard ? "color-mix(in oklch, var(--destructive) 45%, var(--border))" : "var(--border)" }}
+        >
+            <span className="font-mono tabular-nums">{code}</span>
+            {stage.stageName && stage.stageName !== code && <span className="min-w-0 truncate font-sans text-muted-foreground">{stage.stageName}</span>}
+            {stage.isHard && <span className="rounded-[3px] bg-[color-mix(in_oklch,var(--destructive)_18%,transparent)] px-1 py-px font-mono text-[10px] text-destructive-foreground leading-none">{t("appears.chip.adverse")}</span>}
+            {stage.count > 0 ? (
+                <span className="font-mono text-muted-foreground tabular-nums">
+                    <span aria-hidden="true">×{stage.count}</span>
+                    <span className="sr-only">{t("appears.chip.spawns", { count: stage.count })}</span>
+                </span>
+            ) : (
+                <span className="font-sans text-muted-foreground">{t("appears.chip.conditional")}</span>
+            )}
+        </Link>
     );
 }

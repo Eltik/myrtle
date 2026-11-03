@@ -22,6 +22,7 @@ import { useCommunityDefaults } from "../../useCommunityDefaults";
 import { CnDescription, CnTag, CnValue } from "../CnMarkers";
 import { CommunitySharePill } from "../CommunitySharePill";
 import { LevelBreakdown } from "../LevelBreakdown";
+import { LoadError } from "../LoadError";
 import { OperatorRange } from "../OperatorRange";
 import type { messages } from "./SkillsContent.messages";
 
@@ -72,7 +73,7 @@ export const SkillsContent = memo(function SkillsContent({ operator }: ISkillsCo
     const levelsCount = (operator.skills[selectedSkillIndex]?.static?.levels ?? []).length;
 
     const localeServer = useGamedataServer();
-    const { data: ranges } = useQuery(rangesQueryOptions(operatorGamedataServer(operator.server, localeServer)));
+    const { data: ranges, isError: rangesFailed, refetch: refetchRanges } = useQuery(rangesQueryOptions(operatorGamedataServer(operator.server, localeServer)));
     const baseRangeId = operator.phases[operator.phases.length - 1]?.rangeId ?? null;
     const baseRange: IRange | undefined = baseRangeId ? ranges?.[baseRangeId] : undefined;
     const skillRangeId = skillData?.rangeId ?? null;
@@ -377,6 +378,8 @@ export const SkillsContent = memo(function SkillsContent({ operator }: ISkillsCo
                             )}
                         </div>
                     )}
+                    {/* A skill that changes the range showed no range at all when the request failed. */}
+                    {rangeChanges && rangesFailed && !ranges && <LoadError className="mt-5" message={t("skills.range.error")} onRetry={() => void refetchRanges()} />}
                 </div>
             )}
             {comparisonMode && (

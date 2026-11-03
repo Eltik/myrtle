@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { FilterXIcon, RotateCwIcon, SearchIcon, SlidersHorizontalIcon, Trash2Icon } from "lucide-react";
+import { CheckIcon, FilterXIcon, RotateCwIcon, SearchIcon, SlidersHorizontalIcon, Trash2Icon } from "lucide-react";
 import { type RefObject, useEffect, useMemo, useRef, useState } from "react";
 import { FacetFilter, useEdgeFade } from "#/components/tier-lists/edit/FacetFilter";
 import { anyFacetSelected, type FacetSelection, matchesFacets, matchesSearch } from "#/components/tier-lists/edit/poolFilters";
@@ -11,6 +11,7 @@ import { Dialog, DialogClose, DialogDescription, DialogFooter, DialogHeader, Dia
 import { InputGroup, InputGroupAddon, InputGroupInput } from "#/components/ui/input-group";
 import { ScrollArea } from "#/components/ui/scroll-area";
 import { Spinner } from "#/components/ui/spinner";
+import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import { TooltipProvider } from "#/components/ui/tooltip";
 import { type ITierEntity, type TierEntityKind, toTierEntity, UNPLACED } from "#/lib/api/tier-entities";
 import { tierEntityCatalogueQueryOptions } from "#/lib/api/tier-lists";
@@ -151,29 +152,24 @@ export function EntityPickerBody({ kinds, current, selected, onPick, searchRef }
     return (
         // On a short screen the tabs, search and filters can outgrow the dialog, and flex would squeeze the tiles to nothing; there the whole body scrolls and the tiles keep a floor.
         <div className="flex min-h-0 flex-1 flex-col gap-3 px-6 pb-3 [@media(max-height:32rem)]:overflow-y-auto">
-            {/* The vertical padding, cancelled by the margin, is room for a tab's 44 px touch area, which the scroller would clip. Its horizontal scroller would also let flex shrink it away, hence `shrink-0`. */}
-            <div ref={tabsFade.ref} style={tabsFade.style} className="-mx-6 -my-1.5 shrink-0 overflow-x-auto px-6 py-1.5 max-sm:[scrollbar-width:none] max-sm:[&::-webkit-scrollbar]:hidden" role="tablist" aria-label={t("picker.kinds")}>
-                <div className="flex w-max gap-1.5">
+            {/* The vertical padding, cancelled by the margin, is room for a kind toggle's 44 px touch area, which the scroller would clip. Its horizontal scroller would also let flex shrink it away, hence `shrink-0`. */}
+            <div ref={tabsFade.ref} style={tabsFade.style} className="-mx-6 -my-1.5 shrink-0 overflow-x-auto px-6 py-1.5 max-sm:[scrollbar-width:none] max-sm:[&::-webkit-scrollbar]:hidden">
+                {/* R-39: one shared tile grid, no per-kind panels, so a single-select toggle group (arrow keys, aria-pressed), not tabs. */}
+                <ToggleGroup aria-label={t("picker.kinds")} value={[kind]} onValueChange={(next) => next[0] && selectKind(next[0] as TierEntityKind)} className="w-max gap-1.5">
                     {tabs.map((k) => (
-                        <button
+                        <ToggleGroupItem
                             key={k}
-                            type="button"
-                            role="tab"
-                            aria-selected={k === kind}
+                            value={k}
                             onClick={(e) => {
-                                selectKind(k);
-                                // A tab clicked with a mouse hands focus back to the search, so the author can type at once; a keyboard user stays on the tabs, and a touch does not raise the keyboard.
+                                // A kind clicked with a mouse hands focus back to the search, so the author can type at once; a keyboard user stays on the kinds, and a touch does not raise the keyboard.
                                 if (e.detail > 0 && (e.nativeEvent as PointerEvent).pointerType === "mouse") search.current?.focus();
                             }}
-                            className={cn(
-                                "relative inline-flex h-8 shrink-0 cursor-pointer items-center rounded-full border px-3 font-medium font-sans text-xs leading-none transition-colors pointer-coarse:after:absolute pointer-coarse:after:size-full pointer-coarse:after:min-h-11",
-                                k === kind ? "border-primary bg-primary text-primary-foreground" : "border-border bg-popover text-muted-foreground hover:bg-accent hover:text-foreground",
-                            )}
+                            className="h-8 border-border px-3 text-xs sm:h-8 sm:text-xs"
                         >
                             {labels.plural(k)}
-                        </button>
+                        </ToggleGroupItem>
                     ))}
-                </div>
+                </ToggleGroup>
             </div>
 
             <div className="flex shrink-0 gap-2">
@@ -244,6 +240,11 @@ export function EntityPickerBody({ kinds, current, selected, onPick, searchRef }
                                         >
                                             <span className="relative flex aspect-square w-full items-center justify-center overflow-hidden bg-[oklch(0.2_0.005_285)] text-lg text-white">
                                                 <EntityAvatar entity={entity} face="tile" tone="dark" server={fromPreview ? PREVIEW_SERVER : undefined} />
+                                                {isSelected && (
+                                                    <span className="absolute top-1 right-1 inline-flex size-5 items-center justify-center rounded-full bg-primary text-primary-foreground" aria-hidden="true">
+                                                        <CheckIcon className="size-3.5" strokeWidth={3} />
+                                                    </span>
+                                                )}
                                                 {fromPreview && (
                                                     <span className="absolute top-1 left-1 rounded-sm bg-black/70 px-1 py-px font-sans font-semibold text-[9px] text-white uppercase leading-none tracking-wide" aria-hidden="true">
                                                         {t("picker.previewBadge")}

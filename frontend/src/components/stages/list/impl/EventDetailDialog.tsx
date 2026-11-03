@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Dialog, DialogDescription, DialogPopup, DialogTitle } from "#/components/ui/dialog";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import { STAGE_GROUP_DESCRIPTION_KEY, STAGE_GROUP_LABEL } from "#/lib/registry/stage-groups";
+import { STAGE_GROUP_DESCRIPTION_KEY, STAGE_GROUP_LABEL_KEY } from "#/lib/registry/stage-groups";
 import { coverImage, type IEventVM } from "./derive";
 import type { messages } from "./EventDetailDialog.messages";
 import { PreviewFallback, STAGE_GROUP_ICON } from "./PreviewFallback";
@@ -12,7 +12,7 @@ import { StagePreview } from "./StagePreview";
 function Stat({ label, value, tone }: { label: string; value: string; tone?: string }) {
     return (
         <div className="rounded-[10px] border border-border bg-secondary/40 px-3 py-2.5">
-            <div className="font-mono text-[9px] text-muted-foreground uppercase tracking-[0.14em]">{label}</div>
+            <div className="font-mono text-[10px] text-muted-foreground uppercase tracking-[0.14em]">{label}</div>
             <div className="mt-1 truncate font-mono font-semibold text-[13px]" style={{ color: tone ?? "var(--foreground)" }}>
                 {value}
             </div>
@@ -56,11 +56,11 @@ export function EventDetailDialog({ event, onClose, onBrowse }: { event: IEventV
                     <div className="absolute right-4.5 bottom-4 left-4.5 sm:right-6 sm:bottom-4.5 sm:left-6">
                         <div className="mb-2 flex flex-wrap items-center gap-2">
                             <span
-                                className="inline-flex h-5.5 items-center gap-1.5 rounded-full border px-2.5 font-mono font-semibold text-[9.5px] text-white uppercase tracking-[0.09em]"
+                                className="inline-flex h-5.5 items-center gap-1.5 rounded-full border px-2.5 font-mono font-semibold text-[10px] text-white uppercase tracking-[0.09em]"
                                 style={{ borderColor: `color-mix(in oklch, ${ev.tone} 55%, transparent)`, background: `color-mix(in oklch, ${ev.tone} 16%, rgba(0,0,0,0.4))` }}
                             >
                                 <Icon className="h-3 w-3" aria-hidden="true" />
-                                {STAGE_GROUP_LABEL[ev.group]}
+                                {tNav(STAGE_GROUP_LABEL_KEY[ev.group])}
                             </span>
                             {ev.kicker && <span className="font-mono text-[10px] text-white/60 uppercase tracking-[0.12em]">{ev.kicker}</span>}
                         </div>
@@ -82,7 +82,7 @@ export function EventDetailDialog({ event, onClose, onBrowse }: { event: IEventV
 
                     {previews.length > 0 && (
                         <div>
-                            <div className="mb-2 font-mono text-[9.5px] text-muted-foreground uppercase tracking-[0.14em]">{t("event.previews")}</div>
+                            <div className="mb-2 font-mono text-[10px] text-muted-foreground uppercase tracking-[0.14em]">{t("event.previews")}</div>
                             <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-6">
                                 {previews.map((s) => (
                                     <div key={s.stageId} className="relative aspect-16/10 overflow-hidden rounded-md border border-border">
@@ -101,12 +101,12 @@ export function EventDetailDialog({ event, onClose, onBrowse }: { event: IEventV
                                     <Skull className="h-3 w-3" aria-hidden="true" /> {t("event.bossInside", { count: ev.bossCount })}
                                 </span>
                             )}
-                            {ev.statusLabel}
+                            {tNav(STAGE_GROUP_LABEL_KEY[ev.group])}
                         </span>
                         <button
                             type="button"
                             onClick={() => onBrowse(ev)}
-                            className="inline-flex h-10 w-full flex-none cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-lg bg-primary px-4 font-sans font-semibold text-[12.5px] text-primary-foreground shadow-sm transition-transform hover:-translate-y-px sm:h-8.5 sm:w-auto"
+                            className="relative inline-flex h-10 w-full flex-none cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-lg bg-primary px-4 font-sans font-semibold text-[12.5px] text-primary-foreground shadow-sm transition-transform pointer-coarse:after:absolute pointer-coarse:after:inset-x-0 pointer-coarse:after:top-1/2 pointer-coarse:after:h-11 pointer-coarse:after:-translate-y-1/2 hover:-translate-y-px sm:h-8.5 sm:w-auto"
                         >
                             {t("event.browse")}
                             <ChevronRight className="h-3.25 w-3.25" aria-hidden="true" />

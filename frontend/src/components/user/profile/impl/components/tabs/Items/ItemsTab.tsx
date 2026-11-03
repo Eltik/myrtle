@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { ArrowDown, ArrowUp, Grid3x3, LayoutGrid, Search } from "lucide-react";
+import { LoadError } from "#/components/operators/detail/impl/components/LoadError";
 import { Button } from "#/components/ui/button";
 import { FilterChip } from "#/components/ui/filter-chip";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "#/components/ui/input-group";
@@ -61,13 +62,14 @@ function getRarityLabel(value: ItemRarityFilter, t: TabT): string {
 export function ItemsTab({ inventory }: IItemsTabProps) {
     const t: TabT = useT("user");
     const f = useFormatters();
-    const { data: materials, isPending: materialsPending } = useQuery(materialsQueryOptions(useGamedataServer()));
+    const { data: materials, isPending: materialsPending, isError: materialsFailed, refetch: refetchMaterials } = useQuery(materialsQueryOptions(useGamedataServer()));
     const { filters, set, toggleSortOrder, sorted, categoryCounts, totalQty } = useItems(inventory, materials, materialsPending);
 
     const visibleCategories = CATEGORY_ORDER.filter((c) => c === "all" || (categoryCounts.get(c) ?? 0) > 0);
 
     return (
         <section aria-label={t("profile.items.aria")} className="flex flex-col gap-4">
+            {materialsFailed && !materials && <LoadError message={t("profile.items.materialsFailed")} onRetry={() => void refetchMaterials()} />}
             <div className="flex flex-wrap items-center gap-2">
                 {visibleCategories.map((c) => (
                     <FilterChip key={c} label={t(CATEGORY_LABELS[c])} active={c === filters.category} count={categoryCounts.get(c) ?? 0} onSelect={() => set("category", c)} />

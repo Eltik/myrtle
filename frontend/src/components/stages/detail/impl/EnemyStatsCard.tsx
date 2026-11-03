@@ -1,14 +1,15 @@
 import { enemyIconURL, type IEnemy } from "#/lib/api/enemies";
 import { useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import { ENEMY_LEVEL_ACCENT, ENEMY_LEVEL_INK } from "./constants";
+import { ENEMY_LEVEL_ACCENT, ENEMY_LEVEL_INK, ENEMY_LEVEL_LABEL_KEY } from "./constants";
+import type { messages as detailConstantsMessages } from "./constants.messages";
 import type { messages } from "./EnemyStatsCard.messages";
 import type { IStageEnemyStats } from "./types";
 
 function StatCell({ label, value }: { label: string; value: string }) {
     return (
         <div className="flex flex-col gap-1 rounded-md border border-border bg-[color-mix(in_oklch,var(--muted)_30%,transparent)] px-2 py-1.5">
-            <span className="font-medium font-mono text-[8px] text-muted-foreground uppercase leading-none tracking-[0.12em]">{label}</span>
+            <span className="font-medium font-mono text-[10px] text-muted-foreground uppercase leading-none tracking-[0.12em]">{label}</span>
             <span className="font-mono font-semibold text-[12.5px] text-foreground tabular-nums leading-none">{value}</span>
         </div>
     );
@@ -16,6 +17,7 @@ function StatCell({ label, value }: { label: string; value: string }) {
 
 export function EnemyStatsCard({ id, enemy, stats }: { id: string; enemy: IEnemy | null; stats: IStageEnemyStats | null }) {
     const t: TypedT<typeof messages> = useT("stages");
+    const tConst: TypedT<typeof detailConstantsMessages> = useT("stages");
     const f = useFormatters();
     const level = enemy?.enemyLevel ?? "NORMAL";
     const accent = ENEMY_LEVEL_ACCENT[level];
@@ -28,8 +30,8 @@ export function EnemyStatsCard({ id, enemy, stats }: { id: string; enemy: IEnemy
                 </span>
                 <div className="flex min-w-0 flex-col gap-1">
                     <span className="truncate font-sans font-semibold text-[13px] text-foreground leading-tight">{enemy?.name ?? id}</span>
-                    <span className="flex items-center gap-1.5 font-medium font-mono text-[8.5px] uppercase leading-none tracking-[0.14em]">
-                        <span style={{ color: ink }}>{level}</span>
+                    <span className="flex items-center gap-1.5 font-medium font-mono text-[10px] leading-none">
+                        <span style={{ color: ink }}>{tConst(ENEMY_LEVEL_LABEL_KEY[level])}</span>
                         {stats && stats.phaseCount > 1 && <span className="text-muted-foreground">· L{stats.levelIndex}</span>}
                     </span>
                 </div>

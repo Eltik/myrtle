@@ -37,7 +37,10 @@ export function StageHeader({ stage, zone, variants }: { stage: IStage; zone: IZ
                                     to="/stages/$stageId"
                                     params={{ stageId: v.stageId }}
                                     aria-current={current ? "page" : undefined}
-                                    className={cn("rounded-full px-2.5 py-1 font-medium font-sans text-[11.5px] leading-none transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring", current ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground")}
+                                    className={cn(
+                                        "pointer-coarse:after:-translate-1/2 relative rounded-full px-2.5 py-1 font-medium font-sans text-[11.5px] leading-none transition-colors pointer-coarse:after:absolute pointer-coarse:after:top-1/2 pointer-coarse:after:left-1/2 pointer-coarse:after:h-11 pointer-coarse:after:w-full pointer-coarse:after:min-w-11 focus-visible:ring-2 focus-visible:ring-ring",
+                                        current ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground",
+                                    )}
                                 >
                                     {v.kind === "cm" ? t("header.variant.cm") : v.kind === "adverse" ? t("header.variant.adverse") : t("header.variant.standard")}
                                 </Link>

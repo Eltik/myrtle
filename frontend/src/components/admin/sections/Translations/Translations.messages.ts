@@ -36,6 +36,10 @@ export const messages = {
         text: "Complete",
         description: "Line under a language's progress bar when nothing is out of date or missing.",
     },
+    "translations.locale.loadFailed": {
+        text: "Couldn't load the languages.",
+        description: "Shown in place of the language cards when the language list failed to load.",
+    },
     "translations.locale.none": {
         text: "There are no languages to translate yet.",
         description: "Shown in place of the language cards when the site has no languages besides English.",

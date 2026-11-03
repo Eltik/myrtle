@@ -1,11 +1,12 @@
 import { Link } from "@tanstack/react-router";
-import { CopyIcon, ExternalLinkIcon, HeartIcon, LayoutGridIcon, MoreHorizontalIcon, PencilIcon, ShieldCheckIcon, TrashIcon } from "lucide-react";
+import { CopyIcon, ExternalLinkIcon, LayoutGridIcon, MoreHorizontalIcon, PencilIcon, ShieldCheckIcon, TrashIcon } from "lucide-react";
 import { Menu, MenuItem, MenuPopup, MenuTrigger } from "#/components/ui/menu";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import type { ITierListBrowseItem } from "#/lib/api/tier-lists";
 import { useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { CardEntityAvatar, cardEntityKey } from "../CardEntityAvatar";
+import { CardStat } from "../CardStat";
 import type { messages } from "./MyListRow.messages";
 
 interface IMyListRowProps {
@@ -79,28 +80,16 @@ export function MyListRow({ tl, onEdit, onDelete, onCopyLink }: IMyListRowProps)
             </Link>
 
             <div className="hidden shrink-0 items-center gap-4 font-mono text-[11px] text-muted-foreground tabular-nums leading-none sm:flex">
-                <Tooltip>
-                    <TooltipTrigger render={<span className="inline-flex items-center gap-1" />}>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3 opacity-70" aria-hidden="true">
-                            <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
-                            <circle cx="12" cy="12" r="3" />
-                        </svg>
-                        <span className="font-semibold text-foreground">{f.compact(tl.views)}</span>
-                    </TooltipTrigger>
-                    <TooltipPopup>{t("my.row.views", { count: f.number(tl.views) })}</TooltipPopup>
-                </Tooltip>
-                <Tooltip>
-                    <TooltipTrigger render={<span className="inline-flex items-center gap-1" />}>
-                        <HeartIcon className="h-2.75 w-2.75 fill-current opacity-70" aria-hidden="true" />
-                        <span className="font-semibold text-foreground">{f.compact(tl.favorites)}</span>
-                    </TooltipTrigger>
-                    <TooltipPopup>{t("my.row.favorites", { count: f.number(tl.favorites) })}</TooltipPopup>
-                </Tooltip>
+                <CardStat kind="views" value={f.compact(tl.views)} title={t("my.row.views", { count: f.number(tl.views) })} />
+                <CardStat kind="favorites" value={f.compact(tl.favorites)} title={t("my.row.favorites", { count: f.number(tl.favorites) })} />
                 <span className="w-16 shrink-0 text-right text-[10.5px] text-subtle-foreground">{tl.updated}</span>
             </div>
 
             <Menu>
-                <MenuTrigger aria-label={t("my.row.actions")} className="inline-flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-md border border-transparent text-muted-foreground transition-colors hover:border-border hover:bg-accent hover:text-foreground max-sm:order-2">
+                <MenuTrigger
+                    aria-label={t("my.row.actions")}
+                    className="pointer-coarse:after:-translate-1/2 relative inline-flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-transparent text-muted-foreground transition-colors pointer-coarse:after:absolute pointer-coarse:after:top-1/2 pointer-coarse:after:left-1/2 pointer-coarse:after:size-11 hover:border-border hover:bg-accent hover:text-foreground max-sm:order-2"
+                >
                     <MoreHorizontalIcon className="h-4 w-4" />
                 </MenuTrigger>
                 <MenuPopup align="end" sideOffset={6} className="min-w-44">

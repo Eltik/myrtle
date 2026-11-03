@@ -258,6 +258,22 @@ export const messages = {
         text: "Nothing is waiting on you right now.",
         description: "Shown on a translator's or editor's landing page when they have nothing to work on.",
     },
+    "home.focus.loadFailed": {
+        text: "Couldn't load your work.",
+        description: "Shown on a translator's or editor's landing page when their languages, progress or lists failed to load.",
+    },
+    "home.loadFailed.retry": {
+        text: "Try again",
+        description: "Button on the admin landing page that reloads a panel after it failed to load.",
+    },
+    "home.tile.loadFailed": {
+        text: "Couldn't load the site totals.",
+        description: "Shown in place of the four staff total tiles (players, rosters, tier lists, placements) when they failed to load.",
+    },
+    "home.recent.loadFailed": {
+        text: "Couldn't load the recent changes.",
+        description: "Shown in the recent changes card when the edit history failed to load.",
+    },
     "home.focus.loading": {
         text: "Loading your work…",
         description: "Shown on a translator's or editor's landing page while their work loads.",

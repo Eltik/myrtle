@@ -26,7 +26,7 @@ export function EnemyHero({ enemy }: { enemy: IEnemyView }) {
     const meta = [enemy.enemyIndex, enemy.race, enemy.applyWay ? tConst(APPLY_WAY_LABEL_KEY[enemy.applyWay]) : null].filter(Boolean).join(" · ");
 
     return (
-        <div className="flex gap-4 rounded-[14px] border border-border bg-card p-4 sm:gap-5 sm:p-5">
+        <div className="flex gap-4 rounded-2xl border border-border bg-card p-4 sm:gap-5 sm:p-5">
             <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-[10px] border bg-[color-mix(in_oklch,var(--muted)_40%,transparent)] sm:h-28 sm:w-28" style={{ borderColor: enemy.enemyLevel === "NORMAL" ? "var(--border)" : tok.badgeBorder }}>
                 {hasPortrait && portraitSrc ? <img src={portraitSrc} alt={enemy.name} onError={() => setImgError(true)} className="absolute inset-0 h-full w-full object-contain" /> : <EnemyPlaceholder className="absolute inset-0 h-full w-full p-2.5" />}
                 {enemy.enemyLevel !== "NORMAL" && <span aria-hidden="true" className="absolute right-0 bottom-0 left-0 h-0.75" style={{ background: tok.accent }} />}
@@ -165,10 +165,10 @@ export function OverviewTab({ enemy }: { enemy: IEnemyView }) {
 
 function PhaseHeader({ phase, label }: { phase: IEnemyLevelStats; label: string }) {
     return (
-        <div className="flex items-center gap-2 rounded-md border border-[color-mix(in_oklch,var(--primary)_45%,transparent)] bg-[color-mix(in_oklch,var(--primary)_14%,transparent)] px-2.5 py-1.5 font-medium font-mono text-[10.5px] text-primary uppercase leading-none tracking-[0.14em]">
+        <div className="flex items-center gap-2 rounded-md border border-[color-mix(in_oklch,var(--primary)_45%,transparent)] bg-[color-mix(in_oklch,var(--primary)_14%,transparent)] px-2.5 py-1.5 font-medium font-mono text-[10.5px] text-foreground uppercase leading-none tracking-[0.14em]">
             <span aria-hidden="true" className="inline-block h-1.25 w-1.25 rounded-full bg-primary" />
             <span className="truncate">{label}</span>
-            <span className="ml-auto font-mono text-[9.5px] text-muted-foreground tracking-[0.12em]">L{phase.level}</span>
+            <span className="ml-auto font-mono text-[10px] text-muted-foreground tracking-[0.12em]">L{phase.level}</span>
         </div>
     );
 }
@@ -247,7 +247,7 @@ function PhaseStatsBlock({ phase, label }: { phase: IEnemyLevelStats; label: str
     return (
         <div className="flex flex-col gap-2">
             <PhaseHeader phase={phase} label={label} />
-            <div className="rounded-[10px] border border-border bg-[color-mix(in_oklch,var(--muted)_22%,transparent)] p-3">
+            <div className="rounded-2xl border border-border bg-[color-mix(in_oklch,var(--muted)_22%,transparent)] p-3">
                 <dl className="m-0 grid grid-cols-1 gap-1 sm:grid-cols-2">
                     {STAT_ROWS.map((row) => (
                         <div key={row.labelKey} className="flex items-baseline justify-between gap-2 border-border/40 border-b py-1 last:border-b-0 sm:nth-last-[2]:border-b-0">
@@ -280,7 +280,7 @@ function ImmunityIcon({ on }: { on: boolean }) {
 function ImmunityCompareGrid({ phases, labels }: { phases: IEnemyLevelStats[]; labels: string[] }) {
     const t: TypedT<typeof messages> = useT("enemies");
     return (
-        <div className="overflow-x-auto rounded-[10px] border border-border">
+        <div className="overflow-x-auto rounded-2xl border border-border">
             <table className="w-full border-collapse text-left">
                 <thead>
                     <tr className="border-border/60 border-b bg-[color-mix(in_oklch,var(--muted)_30%,transparent)]">
@@ -388,7 +388,7 @@ function skillsAreEqual(a: IEnemySkill[], b: IEnemySkill[]): boolean {
 function SkillCard({ skill }: { skill: IEnemySkill }) {
     const t: TypedT<typeof messages> = useT("enemies");
     return (
-        <div className="rounded-[10px] border border-border bg-[color-mix(in_oklch,var(--muted)_30%,transparent)] p-3 sm:p-3.5">
+        <div className="rounded-2xl border border-border bg-[color-mix(in_oklch,var(--muted)_30%,transparent)] p-3 sm:p-3.5">
             <div className="flex items-center justify-between gap-2">
                 <span className="truncate font-medium font-mono text-[12px] text-foreground leading-none">{skill.prefabKey}</span>
                 <span className="font-mono text-[10.5px] text-muted-foreground uppercase leading-none tracking-[0.12em]">P{skill.priority}</span>

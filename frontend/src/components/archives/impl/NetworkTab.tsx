@@ -16,7 +16,7 @@ import type { ArchivePerson } from "#/types/generated/ArchivePerson";
 import { bounds, CELL_R, centroid, directionVector, hexColor, hexPoints, type IPoint, NEUTRAL_HEX, outlineSegments, TERRITORY_R, toSvg } from "./geometry";
 import { declutter, type ILabelBox, type IView, placeLabel, project } from "./labels";
 import { type IInsets, type IPanZoomHandle, PanZoom } from "./PanZoom";
-import { type ArchivesT, FactionLogo, FactionLogoSvg, hoverProps, PersonChip, peopleById, rarityColor, TabMessage, useArchivesT } from "./shared";
+import { type ArchivesT, FactionLogo, FactionLogoSvg, hoverProps, PersonChip, peopleById, rarityColor, TabFailed, useArchivesT } from "./shared";
 
 /** Space kept between the overlaid controls and the fitted content, in screen pixels. */
 const CONTROL_GAP = 8;
@@ -44,10 +44,10 @@ interface INetworkTabProps {
 export function NetworkTab({ chart, onChart, onOpenFile }: INetworkTabProps): React.ReactElement {
     const t = useArchivesT();
     const server = useGamedataServer();
-    const { data, isLoading, isError } = useQuery(archiveNetworkQueryOptions(server));
-    if (isError) return <TabMessage>{t("page.error")}</TabMessage>;
-    if (isLoading || !data) return <div className="h-[min(70vh,560px)] animate-pulse rounded-[14px] border border-border bg-muted/40" />;
-    if (!data.imported) return <p className="rounded-[14px] border border-border bg-card p-5 text-muted-foreground text-sm">{t("network.notImported")}</p>;
+    const { data, isLoading, isError, refetch } = useQuery(archiveNetworkQueryOptions(server));
+    if (isError) return <TabFailed onRetry={() => void refetch()} />;
+    if (isLoading || !data) return <div className="h-[min(70vh,560px)] animate-pulse rounded-2xl border border-border bg-muted/40" />;
+    if (!data.imported) return <p className="rounded-2xl border border-border bg-card p-5 text-muted-foreground text-sm">{t("network.notImported")}</p>;
     return <Network data={data} chart={chart} onChart={onChart} onOpenFile={onOpenFile} server={server} t={t} />;
 }
 
@@ -145,8 +145,7 @@ function Network({ data, chart, onChart, onOpenFile, server, t }: INetworkTabPro
     };
 
     return (
-        <div ref={wrapRef} className={cn("relative overflow-hidden rounded-[14px] border border-border bg-card", fullscreen ? "h-screen" : "h-[min(72vh,600px)] min-h-90")}>
-            <div aria-hidden className="pointer-events-none absolute inset-0 opacity-50" style={{ backgroundImage: "radial-gradient(circle at 1px 1px, color-mix(in oklab, var(--muted-foreground) 25%, transparent) 1px, transparent 0)", backgroundSize: "22px 22px" }} />
+        <div ref={wrapRef} className={cn("relative overflow-hidden rounded-2xl border border-border bg-card", fullscreen ? "h-screen" : "h-[min(72vh,600px)] min-h-90")}>
             <PanZoom
                 content={content}
                 insets={insets}
@@ -163,7 +162,7 @@ function Network({ data, chart, onChart, onOpenFile, server, t }: INetworkTabPro
 
             <div ref={toolbarRef} className="pointer-events-none absolute inset-x-3 top-3 flex flex-wrap items-start justify-between gap-2">
                 <div className="pointer-events-auto flex min-w-0 flex-col gap-2">
-                    <nav aria-label={t("network.breadcrumb")} className="flex items-center gap-1 self-start rounded-md border border-border bg-background/85 px-2 py-1 font-mono text-[10.5px] uppercase tracking-[0.14em] backdrop-blur">
+                    <nav aria-label={t("network.breadcrumb")} className="flex items-center gap-1 self-start rounded-md border border-border bg-background/95 px-2 py-1 font-mono text-[10.5px] uppercase tracking-[0.14em]">
                         <button type="button" className={cn("relative cursor-pointer pointer-coarse:after:absolute pointer-coarse:after:-inset-x-2 pointer-coarse:after:-inset-y-3.5", group ? "text-muted-foreground hover:text-foreground" : "text-primary")} onClick={() => goChart(undefined)}>
                             {t("network.territories")}
                         </button>
@@ -175,7 +174,7 @@ function Network({ data, chart, onChart, onOpenFile, server, t }: INetworkTabPro
                         ) : null}
                     </nav>
                     <div className="relative w-64 max-w-[70vw]">
-                        <SearchField value={query} onChange={setQuery} placeholder={t("network.search")} label={t("network.searchLabel")} className="bg-background/85 backdrop-blur" />
+                        <SearchField value={query} onChange={setQuery} placeholder={t("network.search")} label={t("network.searchLabel")} className="bg-background/95" />
                         {query.trim() ? (
                             <ul className="absolute inset-x-0 top-full z-10 m-0 mt-1 max-h-72 list-none overflow-y-auto rounded-md border border-border bg-popover p-1 shadow-md">
                                 {results.length === 0 ? (
@@ -202,7 +201,7 @@ function Network({ data, chart, onChart, onOpenFile, server, t }: INetworkTabPro
                                     <Button
                                         size="sm"
                                         variant="outline"
-                                        className="bg-background/85 backdrop-blur"
+                                        className="bg-background/95"
                                         onClick={() => {
                                             leaveFullscreen();
                                             setRosters(true);
@@ -218,7 +217,7 @@ function Network({ data, chart, onChart, onOpenFile, server, t }: INetworkTabPro
                             </TooltipPopup>
                         </Tooltip>
                     ) : null}
-                    <div className="flex items-center rounded-md border border-border bg-background/85 backdrop-blur">
+                    <div className="flex items-center rounded-md border border-border bg-background/95">
                         <Tooltip>
                             <TooltipTrigger render={<Button size="icon-xs" variant="ghost" aria-label={t("network.zoomOut")} onClick={() => panRef.current?.zoomBy(1.25)} />}>
                                 <MinusIcon aria-hidden />
@@ -238,7 +237,7 @@ function Network({ data, chart, onChart, onOpenFile, server, t }: INetworkTabPro
                         </Tooltip>
                     </div>
                     <Tooltip>
-                        <TooltipTrigger render={<Button size="icon-sm" variant="outline" className="bg-background/85 backdrop-blur" aria-label={t("network.fit")} onClick={() => panRef.current?.fit()} />}>
+                        <TooltipTrigger render={<Button size="icon-sm" variant="outline" className="bg-background/95" aria-label={t("network.fit")} onClick={() => panRef.current?.fit()} />}>
                             <LocateFixedIcon aria-hidden />
                         </TooltipTrigger>
                         <TooltipPopup side="bottom" portalProps={{ container: wrapRef }}>
@@ -246,9 +245,7 @@ function Network({ data, chart, onChart, onOpenFile, server, t }: INetworkTabPro
                         </TooltipPopup>
                     </Tooltip>
                     <Tooltip>
-                        <TooltipTrigger render={<Button size="icon-sm" variant="outline" className="bg-background/85 backdrop-blur" aria-label={fullscreen ? t("network.exitFullscreen") : t("network.fullscreen")} onClick={toggleFullscreen} />}>
-                            {fullscreen ? <MinimizeIcon aria-hidden /> : <MaximizeIcon aria-hidden />}
-                        </TooltipTrigger>
+                        <TooltipTrigger render={<Button size="icon-sm" variant="outline" className="bg-background/95" aria-label={fullscreen ? t("network.exitFullscreen") : t("network.fullscreen")} onClick={toggleFullscreen} />}>{fullscreen ? <MinimizeIcon aria-hidden /> : <MaximizeIcon aria-hidden />}</TooltipTrigger>
                         <TooltipPopup side="bottom" portalProps={{ container: wrapRef }}>
                             {fullscreen ? t("network.exitFullscreen") : t("network.fullscreen")}
                         </TooltipPopup>
@@ -294,11 +291,14 @@ function TerritoriesLayer({ data, t, hover, onHover, onPick }: { data: ArchiveNe
                         role="button"
                         tabIndex={0}
                         aria-label={label}
-                        className="cursor-pointer outline-none [&:focus-visible_line]:stroke-[4]"
+                        className="cursor-pointer outline-none [&:focus-visible_line]:stroke-(--ring) [&:focus-visible_line]:stroke-[4]"
                         onClick={() => onPick(fo.groupId)}
                         {...hoverProps(onHover, fo.id)}
                         onKeyDown={(e) => {
-                            if (e.key === "Enter" || e.key === " ") onPick(fo.groupId);
+                            if (e.key === "Enter" || e.key === " ") {
+                                e.preventDefault();
+                                onPick(fo.groupId);
+                            }
                         }}
                     >
                         <title>{label}</title>
@@ -381,11 +381,7 @@ function TerritoryLabels({ data, view, hover, onHover, onPick, t }: { data: Arch
                         onClick={() => onPick(fo.groupId)}
                         onPointerEnter={() => onHover(fo.id)}
                         onPointerLeave={() => onHover(null)}
-                        className={cn(
-                            "absolute top-0 left-0 flex w-max cursor-pointer flex-col whitespace-nowrap rounded-[3px] border-l-2 text-left shadow-sm backdrop-blur-[2px] transition-[background-color,box-shadow]",
-                            visible ? "pointer-events-auto" : "invisible",
-                            lit ? "z-10 bg-background ring-1 ring-border" : "bg-background/85",
-                        )}
+                        className={cn("absolute top-0 left-0 flex w-max cursor-pointer flex-col whitespace-nowrap rounded-[3px] border-l-2 text-left shadow-sm transition-[background-color,box-shadow]", visible ? "pointer-events-auto" : "invisible", lit ? "z-10 bg-background ring-1 ring-border" : "bg-background/95")}
                         style={{ borderLeftColor: color, transform: box ? `translate(${Math.round(box.x)}px, ${Math.round(box.y)}px)` : undefined }}
                     >
                         <span className={cn("px-2 pt-1 pb-0.5 font-semibold text-foreground leading-tight", fo.cardScale >= BIG_CARD ? "text-[13px]" : "text-[11.5px]")}>{fo.name}</span>
@@ -458,7 +454,7 @@ function ChartLayer({ group, people, server, picked, onOpenFile }: { group: Arch
                 const body = (
                     <>
                         <title>{name}</title>
-                        {c.charId === picked ? <polygon points={hexPoints(p, r * 1.22)} fill="none" stroke="var(--primary)" strokeWidth={6} className="animate-pulse" /> : null}
+                        {c.charId === picked ? <polygon points={hexPoints(p, r * 1.22)} fill="none" stroke="var(--primary)" strokeWidth={9} /> : null}
                         <polygon points={hexPoints(p, r)} fill="var(--card)" stroke={color} strokeWidth={c.outline ? 4 : 2} />
                         <polygon points={hexPoints(p, r)} fill={color} fillOpacity={0.16} />
                         {person && !person.npc ? <image href={getAvatarById(c.charId, server)} x={p.x - img / 2} y={p.y - img / 2 - r * 0.12} width={img} height={img} clipPath={`url(#${clipId})`} preserveAspectRatio="xMidYMid slice" /> : null}
@@ -482,10 +478,13 @@ function ChartLayer({ group, people, server, picked, onOpenFile }: { group: Arch
                         role="button"
                         tabIndex={0}
                         aria-label={name}
-                        className="cursor-pointer outline-none [&:focus-visible>polygon]:stroke-[6] [&:hover>polygon]:stroke-[6]"
+                        className="cursor-pointer outline-none [&:focus-visible>polygon]:stroke-(--ring) [&:focus-visible>polygon]:stroke-[6] [&:hover>polygon]:stroke-[6]"
                         onClick={open}
                         onKeyDown={(e) => {
-                            if (e.key === "Enter" || e.key === " ") open();
+                            if (e.key === "Enter" || e.key === " ") {
+                                e.preventDefault();
+                                open();
+                            }
                         }}
                     >
                         {body}

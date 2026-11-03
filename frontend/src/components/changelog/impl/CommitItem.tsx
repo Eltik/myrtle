@@ -36,7 +36,7 @@ export function CommitItem({ commit }: { commit: IChangelogCommit }) {
                 </span>
             </div>
 
-            <div className="min-w-0 rounded-xl border border-border bg-card px-3.5 py-3 transition-colors hover:border-border/70 sm:px-4">
+            <div className="min-w-0 rounded-2xl border border-border bg-card px-3.5 py-3 transition-colors hover:border-border/70 sm:px-4">
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
                     <span className={cn("inline-flex shrink-0 items-center gap-1 rounded-md px-1.5 py-0.5 font-medium text-[11px] uppercase leading-none tracking-wide ring-1 ring-inset", style.pillClass)}>
                         <Icon className="size-3" strokeWidth={2} aria-hidden="true" />

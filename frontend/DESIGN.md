@@ -127,10 +127,14 @@ card, where `text-destructive` measured 1.80 on its own tint), never a raw `-300
 - Motion: hover and press transitions, skeleton shimmer, toast success/error keyframes,
   the router progress bar. No scroll reveals, parallax or decorative loops. One base
   `prefers-reduced-motion` rule collapses every transition and animation except spinners.
+  Kept loops: the stage map's tile effects (`stages/detail/map/impl/effects.css`) copy the game's animated tiles, so the motion is data that tells tile kinds apart; reduced motion still stops them.
 - Focus: one base `:focus-visible` outline, 2px solid `--ring` at a 2px offset (4.59 light,
   8.06 dark); kit controls that draw their own ring set `outline-none`. That ring is
-  solid `ring-ring` at its width (`ring-2`, kit fields `ring-3`), never an alpha step:
-  `ring-ring/24` measured 1.46 and `/60` 2.70, under the 3:1 a focus mark needs.
+  solid `ring-ring` at `ring-2`, never an alpha step: `ring-ring/24` measured 1.46 and
+  `/60` 2.70, under the 3:1 a focus mark needs. Kit fields dropped from a 3px halo to the
+  same 2px solid ring. An invalid field focuses in `ring-destructive-foreground` (6.16
+  light, 6.61 dark), not `ring-destructive/16`, which faded the focus mark exactly where
+  the user has to fix something.
 - Touch: kit controls reach 44px under `pointer-coarse` through a centred `::after` hit
   area (pattern in `ui/button.tsx`), without changing the desktop layout. A tooltip opens on
   a tap when its trigger has no action of its own; a trigger that is a working button or
@@ -155,6 +159,15 @@ card, where `text-destructive` measured 1.80 on its own tint), never a raw `-300
 `src/components/ui` is a shadcn-style kit on Base UI with `cva` and `tailwind-merge`.
 Icons are lucide-react. Charts are recharts. Strings live in `*.messages.ts` next to the
 component, never inline.
+
+- Toggle chips in a filter row: `FilterChip` (`label`, `active`, `count?`, `tone?`). It is
+  a kit Toggle, so it carries `aria-pressed` and the coarse 44px hit area; pressed shows a
+  check mark, a tone tint and border, and foreground text. Data-coloured text on its own
+  tint measured 1.66 to 3.96, which is why the tone never colours the label.
+- Static data badges: `<Badge variant="tint">` with `--tone` set inline (primary by
+  default): tone fill at 12%, tone border, foreground text.
+- Error states read `isError` before the empty and skeleton branches and offer a retry;
+  reuse `LoadError`, `LoadFailed` or `PanelRetry` rather than a new shape.
 
 ## Do not touch from a design pass
 

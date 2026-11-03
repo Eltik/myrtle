@@ -65,7 +65,6 @@ export function TierDetailsDialog({ tier, color }: ITierDetailsDialogProps) {
                         background: color,
                         color: textColor,
                         textShadow: rarityShadow(textColor),
-                        boxShadow: `0 6px 24px color-mix(in srgb, ${color} 30%, transparent)`,
                     }}
                     aria-hidden="true"
                 >

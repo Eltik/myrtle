@@ -71,7 +71,7 @@ export function IllustrationsTab({ groups, records }: IIllustrationsTabProps): R
                 </div>
 
                 {!active || active.groups.length === 0 ? (
-                    <div className="rounded-[14px] border border-border border-dashed p-14 text-center font-sans text-[14px] text-muted-foreground">{t("illustrations.empty")}</div>
+                    <div className="rounded-2xl border border-border border-dashed p-14 text-center font-sans text-[14px] text-muted-foreground">{t("illustrations.empty")}</div>
                 ) : (
                     <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
                         {active.groups.map((group) => (
@@ -108,7 +108,7 @@ function ArtCard({ group, kind, onOpen }: { group: IArtGroup; kind: ArtKind; onO
             type="button"
             onClick={onOpen}
             aria-label={t("illustrations.card.open", { name: group.name })}
-            className="group flex cursor-pointer flex-col overflow-hidden rounded-xl border border-border bg-card text-left ring-inset transition-colors hover:border-primary/45 focus-visible:ring-2 focus-visible:ring-ring"
+            className="group flex cursor-pointer flex-col overflow-hidden rounded-2xl border border-border bg-card text-left ring-inset transition-colors hover:border-primary/45 focus-visible:ring-2 focus-visible:ring-ring"
         >
             <span className="relative block aspect-16/9 w-full overflow-hidden bg-secondary/55">
                 {art ? (

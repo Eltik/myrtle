@@ -69,13 +69,11 @@ export interface IGroupCardProps {
     fraction: IReadFraction;
     /** Must be stable (a state setter or a `useCallback`), or `memo` never skips. */
     onOpen: (groupId: string) => void;
-    /** Position in its section, for the reveal stagger. */
-    index?: number;
 }
 
 /** Row inks go on the button because the row's left rule reads `--ticket-c1`; the ticket's live on `InkDot` / `InkFill`. */
-function inkVars(palette: ITicketPalette, index: number): React.CSSProperties {
-    return { "--ticket-c1": palette.c1, "--ticket-c2": palette.c2, "--i": index } as React.CSSProperties;
+function inkVars(palette: ITicketPalette): React.CSSProperties {
+    return { "--ticket-c1": palette.c1, "--ticket-c2": palette.c2 } as React.CSSProperties;
 }
 
 /**
@@ -138,7 +136,7 @@ function FittedTitle({ name }: { name: string }): React.ReactElement {
  * `stage_mix_story_overall_group_item_view` (`ui/[uc]mixstory.ab`): key visual
  * cover-fitted at 113%, 516x260 logotype on top. Dark in both themes.
  */
-export const GroupCard = memo(function GroupCard({ group, fraction, onOpen, index = 0 }: IGroupCardProps): React.ReactElement {
+export const GroupCard = memo(function GroupCard({ group, fraction, onOpen }: IGroupCardProps): React.ReactElement {
     const t: BrowseT = useT("story");
     const { wpm } = useReadingSpeed();
     // Key visual first, cover as fallback, and the inks sample the same pick:
@@ -148,11 +146,10 @@ export const GroupCard = memo(function GroupCard({ group, fraction, onOpen, inde
     const title = titleSource(group);
     const pct = fraction.total > 0 ? Math.round((fraction.read / fraction.total) * 100) : 0;
     const spec = specParts(group, t, wpm);
-    const stagger = useMemo(() => ({ "--i": index }) as React.CSSProperties, [index]);
 
     return (
         <div className={styles.cardWrap}>
-            <button type="button" onClick={() => onOpen(group.id)} aria-label={t("browse.card.openWithProgress", { name: group.name, read: fraction.read, total: fraction.total })} className={styles.card} style={stagger}>
+            <button type="button" onClick={() => onOpen(group.id)} aria-label={t("browse.card.openWithProgress", { name: group.name, read: fraction.read, total: fraction.total })} className={styles.card}>
                 <span className={styles.ticket}>
                     <span className={cn(styles.half, styles.body)}>
                         {art ? <img src={art} alt="" crossOrigin="anonymous" data-source={plate.kind} loading="lazy" decoding="async" className={styles.kv} style={{ objectPosition: plateCrop(group) }} /> : null}
@@ -208,7 +205,7 @@ function specParts(group: LibGroup, t: BrowseT, wpm: number): string[] {
 }
 
 /** One chapter as a list row. Title is the name, never the logotype: a 516x260 plate in an 18.9 px line is unreadable. */
-export const GroupRow = memo(function GroupRow({ group, fraction, onOpen, index = 0 }: IGroupCardProps): React.ReactElement {
+export const GroupRow = memo(function GroupRow({ group, fraction, onOpen }: IGroupCardProps): React.ReactElement {
     const t: BrowseT = useT("story");
     const { wpm } = useReadingSpeed();
     const art = plateSource(group);
@@ -218,7 +215,7 @@ export const GroupRow = memo(function GroupRow({ group, fraction, onOpen, index 
     const pct = fraction.total > 0 ? Math.round((fraction.read / fraction.total) * 100) : 0;
     const code = cardCode(group);
     const chapter = chapterNumberOf(group);
-    const inks = useMemo(() => inkVars(palette, index), [palette, index]);
+    const inks = useMemo(() => inkVars(palette), [palette]);
 
     return (
         <div className={styles.rowWrap} data-music={group.music ? "" : undefined}>

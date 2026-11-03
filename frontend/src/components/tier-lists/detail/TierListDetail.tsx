@@ -1,6 +1,10 @@
 import { useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { Link, useParams } from "@tanstack/react-router";
+import { RotateCwIcon } from "lucide-react";
 import { useEffect, useMemo, useRef } from "react";
+import { Alert, AlertAction, AlertDescription, AlertTitle } from "#/components/ui/alert";
+import { Button } from "#/components/ui/button";
+import { Skeleton } from "#/components/ui/skeleton";
 import { type ITierListDetail, recordTierListViewFn, snapshotToTiers, tierListDetailQueryOptions, tierListVersionsQueryOptions } from "#/lib/api/tier-lists";
 import { useGamedataServer, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -17,7 +21,8 @@ export function TierListDetail() {
     const { v: requestedVersion } = DetailRoute.useSearch();
     const gamedataServer = useGamedataServer();
     const { data: detail } = useSuspenseQuery(tierListDetailQueryOptions(id, gamedataServer));
-    const { data: versionsData } = useQuery(tierListVersionsQueryOptions(id, gamedataServer));
+    const versionsQuery = useQuery(tierListVersionsQueryOptions(id, gamedataServer));
+    const versionsData = versionsQuery.data;
     const queryClient = useQueryClient();
 
     const versions = useMemo(() => versionsData ?? [], [versionsData]);
@@ -71,6 +76,8 @@ export function TierListDetail() {
     }
 
     const boardDetail: ITierListDetail = snapshotTiers ? { ...detail, tiers: snapshotTiers } : detail;
+    // R-27: a `?v=` link whose versions query failed or missed used to render the latest board as if it were that snapshot.
+    const snapshotState = requestedVersion == null ? "none" : versionsQuery.isError ? "failed" : versionsQuery.isPending ? "loading" : selectedVersion ? "ok" : "missing";
 
     return (
         <div className="min-h-dvh pb-20">
@@ -79,8 +86,26 @@ export function TierListDetail() {
             <VersionsBar slug={detail.slug} versions={versions} selectedVersion={selectedVersion} isLatestView={isLatestView} />
 
             <div className="page-gutter mt-4 grid gap-4 [--page-max:1200px] sm:mt-6 sm:gap-6 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-start lg:gap-8">
-                <div className="min-w-0">
-                    <TierListBoard detail={boardDetail} />
+                <div className="flex min-w-0 flex-col gap-4">
+                    {snapshotState === "failed" && (
+                        <Alert variant="error">
+                            <AlertTitle>{t("detail.snapshot.failedTitle", { version: requestedVersion ?? 0 })}</AlertTitle>
+                            <AlertDescription>{t("detail.snapshot.failedBody")}</AlertDescription>
+                            <AlertAction>
+                                <Button variant="outline" size="sm" onClick={() => versionsQuery.refetch()} disabled={versionsQuery.isFetching}>
+                                    <RotateCwIcon aria-hidden="true" />
+                                    {t("detail.snapshot.retry")}
+                                </Button>
+                            </AlertAction>
+                        </Alert>
+                    )}
+                    {snapshotState === "missing" && (
+                        <Alert variant="warning">
+                            <AlertTitle>{t("detail.snapshot.missingTitle", { version: requestedVersion ?? 0 })}</AlertTitle>
+                            <AlertDescription>{t("detail.snapshot.missingBody")}</AlertDescription>
+                        </Alert>
+                    )}
+                    {snapshotState === "loading" ? <Skeleton className="h-96 rounded-2xl" /> : <TierListBoard detail={boardDetail} />}
                 </div>
                 <TierListStatsPanel detail={detail} />
             </div>

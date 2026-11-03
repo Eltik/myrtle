@@ -6,7 +6,8 @@ import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import type { SparseRecord } from "#/lib/records";
 import { cn } from "#/lib/utils";
-import { ENEMY_LEVEL_ACCENT, ENEMY_LEVEL_INK } from "./constants";
+import { ENEMY_LEVEL_ACCENT, ENEMY_LEVEL_INK, ENEMY_LEVEL_LABEL_KEY } from "./constants";
+import type { messages as detailConstantsMessages } from "./constants.messages";
 import type { messages as enemiesSectionMessages } from "./EnemiesSection.messages";
 import { buildSpawnSchedule } from "./helpers";
 import { Pill } from "./primitives";
@@ -15,6 +16,7 @@ import type { ISpawnRow } from "./types";
 
 function SpawnEnemyIdentity({ row, iconClass, onActivate }: { row: ISpawnRow; iconClass: string; onActivate: () => void }) {
     const tEnemies: TypedT<typeof enemiesSectionMessages> = useT("stages");
+    const tConst: TypedT<typeof detailConstantsMessages> = useT("stages");
     const accent = ENEMY_LEVEL_ACCENT[row.enemy?.enemyLevel ?? "NORMAL"];
     const ink = ENEMY_LEVEL_INK[row.enemy?.enemyLevel ?? "NORMAL"];
     return (
@@ -24,8 +26,8 @@ function SpawnEnemyIdentity({ row, iconClass, onActivate }: { row: ISpawnRow; ic
             </span>
             <span className="flex min-w-0 flex-col gap-0.5">
                 <span className="truncate font-medium font-sans text-[12.5px] text-foreground leading-tight transition-colors group-hover/enemy:text-primary">{row.enemy?.name ?? row.id}</span>
-                <span className="font-medium font-mono text-[9px] uppercase leading-none tracking-widest" style={{ color: ink }}>
-                    {row.enemy?.enemyLevel ?? row.actionType}
+                <span className="font-medium font-mono text-[10px] leading-none" style={{ color: ink }}>
+                    {tConst(row.enemy ? ENEMY_LEVEL_LABEL_KEY[row.enemy.enemyLevel] : "enemyLevel.UNKNOWN")}
                 </span>
             </span>
         </button>
@@ -35,7 +37,7 @@ function SpawnEnemyIdentity({ row, iconClass, onActivate }: { row: ISpawnRow; ic
 function SpawnStat({ label, value, strong }: { label: string; value: string; strong?: boolean }) {
     return (
         <div className="flex min-w-0 flex-col gap-1">
-            <dt className="font-medium font-mono text-[8.5px] text-muted-foreground uppercase leading-none tracking-widest">{label}</dt>
+            <dt className="font-medium font-mono text-[10px] text-muted-foreground uppercase leading-none tracking-widest">{label}</dt>
             <dd className={cn("font-mono text-[12px] tabular-nums leading-none", strong ? "font-semibold text-foreground" : "text-muted-foreground")}>{value}</dd>
         </div>
     );
@@ -65,14 +67,14 @@ export function SpawnSchedule({ level, enemyData, onFocusEnemy }: { level: ILeve
     const { rows, hiddenGroups } = useMemo(() => buildSpawnSchedule(level, enemyData), [level, enemyData]);
     if (rows.length === 0) return null;
     return (
-        <section className="overflow-hidden rounded-[14px] border border-border bg-card">
+        <section className="overflow-hidden rounded-2xl border border-border bg-card">
             <div className="flex flex-wrap items-center gap-2.5 border-border border-b px-4 py-3">
                 <Kicker className="mb-0 leading-none">{t("spawns.title")}</Kicker>
                 <span className="font-mono text-[11px] text-muted-foreground tabular-nums">{t("spawns.groups", { count: rows.length })}</span>
                 <span className="h-px flex-1 bg-border" />
                 {hiddenGroups.length > 0 && (
                     <span className="flex flex-wrap items-center gap-1.5">
-                        <span className="font-medium font-mono text-[9.5px] text-muted-foreground uppercase tracking-[0.12em]">{t("spawns.hiddenRoutes")}</span>
+                        <span className="font-medium font-mono text-[10px] text-muted-foreground uppercase tracking-[0.12em]">{t("spawns.hiddenRoutes")}</span>
                         {hiddenGroups.map((g) => (
                             <Pill key={g}>{g}</Pill>
                         ))}
@@ -87,7 +89,7 @@ export function SpawnSchedule({ level, enemyData, onFocusEnemy }: { level: ILeve
                 </ul>
                 <table className="hidden w-full min-w-150 border-collapse text-left sm:table">
                     <thead className="sticky top-0 z-10 bg-card">
-                        <tr className="border-border border-b [&>th]:px-3 [&>th]:py-2.5 [&>th]:font-medium [&>th]:font-mono [&>th]:text-[9.5px] [&>th]:text-muted-foreground [&>th]:uppercase [&>th]:tracking-widest">
+                        <tr className="border-border border-b [&>th]:px-3 [&>th]:py-2.5 [&>th]:font-medium [&>th]:font-mono [&>th]:text-[10px] [&>th]:text-muted-foreground [&>th]:uppercase [&>th]:tracking-widest">
                             <th className="w-10 text-right">#</th>
                             <th>{t("spawns.col.enemy")}</th>
                             <th className="text-center">{t("spawns.col.wave")}</th>

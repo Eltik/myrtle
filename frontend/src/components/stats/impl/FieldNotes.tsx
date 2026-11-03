@@ -1,7 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import type * as React from "react";
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { Kicker } from "#/components/ui/kicker";
+import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import { enemiesListQueryOptions, enemyCommunityAverageQueryOptions } from "#/lib/api/enemies";
 import { operatorOwnershipQueryOptions, operatorsIndexQueryOptions, operatorsRosterQueryOptions } from "#/lib/api/operators";
 import { useFormatters, useGamedataServer, useT } from "#/lib/i18n";
@@ -27,7 +28,7 @@ function FactTile({ label, fraction, sentence, meta, className }: IFactTileProps
     const f = useFormatters();
     const loading = fraction === undefined;
     return (
-        <div className={cn("flex min-w-0 flex-col gap-2 rounded-xl border border-border bg-card px-4 py-3.5", className)} aria-busy={loading || undefined}>
+        <div className={cn("flex min-w-0 flex-col gap-2 rounded-2xl border border-border bg-card px-4 py-3.5", className)} aria-busy={loading || undefined}>
             <span className="font-medium font-mono text-[10.5px] text-muted-foreground uppercase leading-none tracking-[0.14em]">{label}</span>
             {loading ? (
                 <>
@@ -55,45 +56,16 @@ interface IStatusPickerProps {
     t: FieldNotesT;
 }
 
-/** A radiogroup of chips: one tab stop, arrow keys move the selection. */
+/** A single-select kit ToggleGroup: one tab stop, arrow keys move focus, the kit carries the coarse 44px hit area. */
 function StatusPicker({ value, onChange, t }: IStatusPickerProps) {
-    const refs = useRef<(HTMLButtonElement | null)[]>([]);
-    const onKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
-        const step = event.key === "ArrowRight" || event.key === "ArrowDown" ? 1 : event.key === "ArrowLeft" || event.key === "ArrowUp" ? -1 : 0;
-        const edge = event.key === "Home" ? 0 : event.key === "End" ? FIELD_NOTE_STATUSES.length - 1 : null;
-        if (step === 0 && edge === null) return;
-        event.preventDefault();
-        const current = FIELD_NOTE_STATUSES.indexOf(value);
-        const next = edge ?? (current + step + FIELD_NOTE_STATUSES.length) % FIELD_NOTE_STATUSES.length;
-        onChange(FIELD_NOTE_STATUSES[next]);
-        refs.current[next]?.focus();
-    };
     return (
-        <div role="radiogroup" aria-label={t("fieldNotes.picker")} onKeyDown={onKeyDown} className="flex flex-wrap gap-1 rounded-lg border border-border bg-muted/40 p-0.5">
-            {FIELD_NOTE_STATUSES.map((status, i) => {
-                const checked = status === value;
-                return (
-                    // biome-ignore lint/a11y/useSemanticElements: a chip row with roving focus; native radio inputs would need hidden inputs plus labels for the same result
-                    <button
-                        key={status}
-                        ref={(el) => {
-                            refs.current[i] = el;
-                        }}
-                        type="button"
-                        role="radio"
-                        aria-checked={checked}
-                        tabIndex={checked ? 0 : -1}
-                        onClick={() => onChange(status)}
-                        className={cn(
-                            "rounded-md px-2.5 py-1 font-medium font-mono text-[11px] uppercase leading-none tracking-[0.08em] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                            checked ? "bg-card text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground",
-                        )}
-                    >
-                        {t("fieldNotes.status", { status })}
-                    </button>
-                );
-            })}
-        </div>
+        <ToggleGroup aria-label={t("fieldNotes.picker")} value={[value]} onValueChange={(next) => next[0] && onChange(next[0] as FieldNoteStatus)} size="sm" className="flex-wrap">
+            {FIELD_NOTE_STATUSES.map((status) => (
+                <ToggleGroupItem key={status} value={status} className="px-2.5 text-[12.5px]">
+                    {t("fieldNotes.status", { status })}
+                </ToggleGroupItem>
+            ))}
+        </ToggleGroup>
     );
 }
 

@@ -190,6 +190,10 @@ export const messages = {
         text: "Create plan",
         description: "Footer button that saves a new plan.",
     },
+    "planner.dialog.operatorsFailed": {
+        text: "Couldn't load the operator list.",
+        description: "Shown under the operator picker, beside a Retry button, when the list of operators failed to load. Without it the picker said 'No operators found.'",
+    },
 } satisfies MessageMap;
 
 export const { keys } = defineMessages({ namespace, messages });

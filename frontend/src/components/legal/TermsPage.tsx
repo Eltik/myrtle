@@ -56,7 +56,11 @@ function LI({ children }: { children: React.ReactNode }) {
 
 function A({ href, children, external }: { href: string; children: React.ReactNode; external?: boolean }) {
     return (
-        <a href={href} {...(external ? { target: "_blank", rel: "noreferrer" } : {})} className="text-primary no-underline transition-colors hover:underline hover:underline-offset-[3px]">
+        <a
+            href={href}
+            {...(external ? { target: "_blank", rel: "noreferrer" } : {})}
+            className="relative text-primary underline decoration-1 underline-offset-[3px] transition-[text-decoration-thickness] pointer-coarse:after:absolute pointer-coarse:after:inset-x-0 pointer-coarse:after:top-1/2 pointer-coarse:after:h-11 pointer-coarse:after:-translate-y-1/2 hover:decoration-2"
+        >
             {children}
         </a>
     );
@@ -98,12 +102,12 @@ export function TermsPage() {
                 <AlertDescription className="text-[15px] text-muted-foreground leading-[1.55]">{t("terms.tldr")}</AlertDescription>
             </Alert>
 
-            <nav aria-label={t("terms.toc.nav")} className="mb-12 rounded-xl border border-border bg-[color-mix(in_srgb,var(--muted)_50%,var(--card))] p-6">
+            <nav aria-label={t("terms.toc.nav")} className="mb-12 rounded-2xl border border-border bg-card p-6">
                 <h2 className="m-0 mb-3.5 font-semibold text-[18px] text-foreground leading-[1.3]">{t("terms.toc.heading")}</h2>
                 <ol className="m-0 list-decimal pl-6 font-sans text-[14.5px] leading-[1.6]">
                     {TOC.map((entry) => (
-                        <li key={entry.id} className="my-1.5">
-                            <a href={`#${entry.id}`} className="text-primary no-underline transition-colors hover:underline hover:underline-offset-[3px]">
+                        <li key={entry.id} className="my-1.5 pointer-coarse:my-0">
+                            <a href={`#${entry.id}`} className="pointer-coarse:inline-flex pointer-coarse:min-h-11 pointer-coarse:items-center text-primary underline decoration-1 underline-offset-[3px] transition-[text-decoration-thickness] hover:decoration-2">
                                 {t(entry.labelKey)}
                             </a>
                         </li>
@@ -244,7 +248,7 @@ export function TermsPage() {
             <Section id="contact">
                 <H2>{t("terms.s9.heading")}</H2>
                 <P>{t("terms.s9.intro")}</P>
-                <div className="rounded-xl border border-border bg-[color-mix(in_srgb,var(--muted)_50%,var(--card))] px-6 py-5">
+                <div className="rounded-2xl border border-border bg-card px-6 py-5">
                     <div className="my-3.5 first:mt-0 last:mb-0">
                         <p className="m-0 mb-1 font-medium font-sans text-[14px] text-foreground">{t("terms.s9.gdpr.label")}</p>
                         <A href={PRIVACY_MAILTO}>{PRIVACY_EMAIL}</A>
@@ -262,7 +266,10 @@ export function TermsPage() {
                     </div>
                     <div className="my-3.5 first:mt-0 last:mb-0">
                         <p className="m-0 mb-1 font-medium font-sans text-[14px] text-foreground">{t("terms.s9.inApp.label")}</p>
-                        <Link to="/" className="font-sans text-[14px] text-primary no-underline transition-colors hover:underline hover:underline-offset-[3px]">
+                        <Link
+                            to="/"
+                            className="relative font-sans text-[14px] text-primary underline decoration-1 underline-offset-[3px] transition-[text-decoration-thickness] pointer-coarse:after:absolute pointer-coarse:after:inset-x-0 pointer-coarse:after:top-1/2 pointer-coarse:after:h-11 pointer-coarse:after:-translate-y-1/2 hover:decoration-2"
+                        >
                             {t("terms.s9.inApp.link")}
                         </Link>
                     </div>

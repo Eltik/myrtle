@@ -175,6 +175,10 @@ export const messages = {
         text: "Loading operators...",
         description: "Shown in the picker while the operator list loads.",
     },
+    "squad.picker.recruitFailed": {
+        text: "Couldn't load the recruitment pool, so recruitable operators are missing from this filter.",
+        description: "Shown above the picker's list, beside a Retry button, when a Gachaless or Recruitment filter is on and the recruitment pool failed to load.",
+    },
 } satisfies MessageMap;
 
 export const { keys } = defineMessages({ namespace, messages });

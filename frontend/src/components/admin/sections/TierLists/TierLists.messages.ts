@@ -273,8 +273,12 @@ export const messages = {
         text: "No one holds a per-list grant yet.",
         description: "Shown in the grants table when there are no grants.",
     },
+    "tierLists.access.retry": {
+        text: "Try again",
+        description: "Button that reloads the grants table after it failed to load.",
+    },
     "tierLists.access.loadError": {
-        text: "Couldn’t load the grants. Try again in a moment.",
+        text: "Couldn’t load the grants.",
         description: "Shown in place of the grants table when loading failed.",
     },
     "tierLists.access.toast.revoked": {

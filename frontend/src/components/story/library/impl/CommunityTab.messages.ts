@@ -11,6 +11,14 @@ export const messages = {
         text: "{players} synced players · computed {when}",
         description: "Line at the top of the Community tab: how many accounts the numbers are counted over and how long ago they were counted.",
     },
+    "community.error": {
+        text: "Couldn't load what the community has read.",
+        description: "Shown in place of the Community tab when its request fails (not when the server has nothing computed).",
+    },
+    "community.retry": {
+        text: "Try again",
+        description: "Button beside the Community tab's load error: refetch it.",
+    },
     "community.empty.title": {
         text: "Community reading is not available yet",
         description: "Heading shown in place of the Community tab when the backend serves no reading aggregate.",

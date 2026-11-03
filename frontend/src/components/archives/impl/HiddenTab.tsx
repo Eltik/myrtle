@@ -13,7 +13,7 @@ import type { ArchiveHiddenFactions } from "#/types/generated/ArchiveHiddenFacti
 import type { ArchivePerson } from "#/types/generated/ArchivePerson";
 import type { ArchiveSecret } from "#/types/generated/ArchiveSecret";
 import { FLOW_GAP, type IFlowNode, layoutFlow } from "./flow";
-import { BigStat, FactionLogo, hoverProps, Panel, PersonChip, peopleById, SectionHead, StatStrip, TabMessage, useArchivesT } from "./shared";
+import { BigStat, FactionLogo, hoverProps, Panel, PersonChip, peopleById, SectionHead, StatStrip, TabFailed, TabMessage, useArchivesT } from "./shared";
 
 type Pick = { kind: "shown"; id: string } | { kind: "hidden"; id: string } | { kind: "band"; shown: string; hidden: string };
 
@@ -36,8 +36,8 @@ const bandKey = (shown: string, hidden: string) => `${shown}\u0000${hidden}`;
 export function HiddenTab({ onOpenFile }: { onOpenFile: (id: string) => void }): React.ReactElement {
     const t = useArchivesT();
     const server = useGamedataServer();
-    const { data, isLoading, isError } = useQuery(archiveHiddenFactionsQueryOptions(server));
-    if (isError) return <TabMessage>{t("page.error")}</TabMessage>;
+    const { data, isLoading, isError, refetch } = useQuery(archiveHiddenFactionsQueryOptions(server));
+    if (isError) return <TabFailed onRetry={() => void refetch()} />;
     if (isLoading || !data) return <TabMessage>{t("page.loading")}</TabMessage>;
     return <Hidden data={data} onOpenFile={onOpenFile} server={server} />;
 }
@@ -84,7 +84,7 @@ function Hidden({ data, onOpenFile, server }: { data: ArchiveHiddenFactions; onO
 
             <section className="flex flex-col gap-3">
                 <SectionHead index="01" title={t("hidden.s1.title")} blurb={t("hidden.s1.blurb")} />
-                <div className="flex flex-wrap items-center gap-2 rounded-[14px] border border-border bg-card p-2">
+                <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-border bg-card p-2">
                     <div className="relative min-w-0 flex-1 basis-56">
                         <SearchIcon aria-hidden className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
                         <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t("hidden.search")} aria-label={t("hidden.search")} className="pl-8" />
@@ -182,6 +182,8 @@ function FlowChart({ secret, shownName, hiddenName, pick, onPick, lit }: { secre
         const isPicked = samePick(pick, p);
         const isRelated = related.has(`${side}:${node.id}`);
         const left = side === "shown";
+        // Unrelated nodes dim the logo only; the text drops to muted, never below it (opacity-40 put 12px text at 2.71 / 3.60).
+        const dim = pick !== null && !isPicked && !isRelated;
         return (
             <div key={node.id} className={cn("flex items-center", left ? "justify-end" : "justify-start")} style={{ height: node.slot, marginBottom: FLOW_GAP }}>
                 <button
@@ -192,14 +194,13 @@ function FlowChart({ secret, shownName, hiddenName, pick, onPick, lit }: { secre
                     onClick={() => onPick(p)}
                     {...hoverProps(setHover, p)}
                     className={cn(
-                        "inline-flex h-6 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-md px-2 text-[12px] outline-none transition-[opacity,color,background-color] focus-visible:ring-2 focus-visible:ring-ring",
+                        "relative inline-flex h-6 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-md px-2 text-[12px] outline-none transition-[color,background-color] pointer-coarse:after:absolute pointer-coarse:after:inset-x-0 pointer-coarse:after:top-1/2 pointer-coarse:after:h-11 pointer-coarse:after:-translate-y-1/2 focus-visible:ring-2 focus-visible:ring-ring",
                         left ? "flex-row" : "flex-row-reverse",
-                        isPicked ? "bg-primary font-semibold text-primary-foreground" : "text-foreground hover:text-primary",
-                        pick && !isPicked && !isRelated ? "opacity-40" : "",
+                        isPicked ? "bg-primary font-semibold text-primary-foreground" : dim ? "text-muted-foreground hover:text-foreground" : "text-foreground hover:text-primary",
                     )}
                 >
                     <span className={cn("font-mono tabular-nums", isPicked ? "" : "text-muted-foreground")}>{f.number(node.count)}</span>
-                    <FactionLogo id={node.id} className="size-3.5" />
+                    <FactionLogo id={node.id} className={cn("size-3.5", dim && "opacity-40")} />
                     <span className="font-medium">{name}</span>
                 </button>
             </div>
@@ -226,6 +227,7 @@ function FlowChart({ secret, shownName, hiddenName, pick, onPick, lit }: { secre
                             const isPicked = samePick(pick, p);
                             const on = lit.has(bandKey(b.shown, b.hidden));
                             const text = t("hidden.bandLabel", { count: b.count, shown: shownName(b.shown), hidden: hiddenName(b.hidden) });
+                            const dimBand = pick !== null && !isPicked && !covers(pick, b.shown, b.hidden);
                             return (
                                 <button
                                     key={bandKey(b.shown, b.hidden)}
@@ -235,13 +237,12 @@ function FlowChart({ secret, shownName, hiddenName, pick, onPick, lit }: { secre
                                     title={text}
                                     onClick={() => onPick(p)}
                                     className={cn(
-                                        "inline-flex min-h-11 cursor-pointer items-center gap-1.5 rounded-md border px-2.5 text-[12px] outline-none transition-[opacity,color,background-color] focus-visible:ring-2 focus-visible:ring-ring",
-                                        isPicked ? "border-primary bg-primary font-semibold text-primary-foreground" : on ? "border-primary text-primary" : "border-border text-foreground",
-                                        pick && !isPicked && !covers(pick, b.shown, b.hidden) ? "opacity-40" : "",
+                                        "inline-flex min-h-11 cursor-pointer items-center gap-1.5 rounded-md border px-2.5 text-[12px] outline-none transition-[color,background-color] focus-visible:ring-2 focus-visible:ring-ring",
+                                        isPicked ? "border-primary bg-primary font-semibold text-primary-foreground" : on ? "border-primary text-primary" : dimBand ? "border-border/60 text-muted-foreground" : "border-border text-foreground",
                                     )}
                                 >
                                     <CornerDownRightIcon aria-hidden className="size-3.5 opacity-60" />
-                                    <FactionLogo id={b.hidden} className="size-3.5" />
+                                    <FactionLogo id={b.hidden} className={cn("size-3.5", dimBand && "opacity-40")} />
                                     <span className="font-medium">{hiddenName(b.hidden)}</span>
                                     <span className={cn("font-mono tabular-nums", isPicked ? "" : "text-muted-foreground")}>{f.number(b.count)}</span>
                                 </button>
@@ -290,7 +291,7 @@ function FlowChart({ secret, shownName, hiddenName, pick, onPick, lit }: { secre
                                                 tabIndex={0}
                                                 aria-label={text}
                                                 aria-pressed={samePick(pick, p)}
-                                                className="cursor-pointer outline-none transition-[stroke-opacity]"
+                                                className="cursor-pointer outline-none transition-[stroke-opacity] focus-visible:stroke-(--ring) focus-visible:[stroke-opacity:1]"
                                                 style={{ pointerEvents: "stroke" }}
                                                 onClick={() => onPick(p)}
                                                 {...hoverProps(setHover, p)}

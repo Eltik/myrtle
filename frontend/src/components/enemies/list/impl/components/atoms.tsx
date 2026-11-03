@@ -14,7 +14,7 @@ export function LevelBadge({ level, size = "default" }: ILevelBadgeProps) {
     const t: TypedT<typeof listConstantsMessages> = useT("enemies");
     const tok = LEVEL_TOKENS[level];
     if (!tok || level === "NORMAL") return null;
-    const sizeClass = size === "sm" ? "px-1.25 py-0.5 text-[8.5px]" : "px-1.75 py-0.75 text-[9.5px]";
+    const sizeClass = size === "sm" ? "px-1.25 py-0.5 text-[10px]" : "px-1.75 py-0.75 text-[10px]";
     return (
         <span
             className={`inline-flex shrink-0 items-center whitespace-nowrap rounded-sm border font-mono font-semibold uppercase leading-none tracking-[0.14em] ${sizeClass}`}
@@ -32,26 +32,31 @@ export function LevelBadge({ level, size = "default" }: ILevelBadgeProps) {
 interface IDamageDotsProps {
     types: IEnemyDamageType[];
     size?: number;
+    /** True where the damage types are already written out beside the dots, so the dots stay out of the accessible name. */
+    decorative?: boolean;
 }
 
-export function DamageDots({ types, size = 6 }: IDamageDotsProps) {
+export function DamageDots({ types, size = 6, decorative = false }: IDamageDotsProps) {
     const t: TypedT<typeof listConstantsMessages> = useT("enemies");
     if (!types || types.length === 0) return null;
     return (
-        <span className="inline-flex items-center gap-0.75">
+        <span className="inline-flex items-center gap-0.75" aria-hidden={decorative || undefined}>
             {types.map((dt) => {
                 const tok = DAMAGE_TOKENS[dt];
+                const label = tok ? t(tok.labelKey) : dt;
                 return (
-                    <span
-                        key={dt}
-                        title={tok ? t(tok.labelKey) : dt}
-                        className="rounded-[1.5px]"
-                        style={{
-                            width: size,
-                            height: size,
-                            background: tok?.color ?? "var(--dmg-none)",
-                        }}
-                    />
+                    <span key={dt} title={label} className="inline-flex">
+                        <span
+                            aria-hidden="true"
+                            className="rounded-[1.5px]"
+                            style={{
+                                width: size,
+                                height: size,
+                                background: tok?.color ?? "var(--dmg-none)",
+                            }}
+                        />
+                        {!decorative && <span className="sr-only">{label}</span>}
+                    </span>
                 );
             })}
         </span>
@@ -74,12 +79,12 @@ function formatStatValue(value: number): string {
 export function StatBar({ label, value, max, color }: IStatBarProps) {
     const pct = max > 0 ? Math.min(100, (value / max) * 100) : 0;
     return (
-        <div className="grid items-center gap-1 sm:gap-1.5" style={{ gridTemplateColumns: "20px 1fr 30px" }}>
-            <span className="font-medium font-mono text-[9px] text-muted-foreground uppercase leading-none tracking-widest">{label}</span>
+        <div className="grid items-center gap-1 sm:gap-1.5" style={{ gridTemplateColumns: "24px 1fr 32px" }}>
+            <span className="font-medium font-mono text-[10px] text-muted-foreground uppercase leading-none tracking-widest">{label}</span>
             <div className="relative h-0.75 overflow-hidden rounded-full bg-[color-mix(in_oklch,var(--muted-foreground)_14%,transparent)]">
                 <div className="absolute top-0 bottom-0 left-0 rounded-full" style={{ width: `${pct}%`, background: color }} />
             </div>
-            <span className="text-right font-medium font-mono text-[9.5px] text-foreground tabular-nums leading-none sm:text-[10.5px]">{formatStatValue(value)}</span>
+            <span className="text-right font-medium font-mono text-[10px] text-foreground tabular-nums leading-none sm:text-[10.5px]">{formatStatValue(value)}</span>
         </div>
     );
 }

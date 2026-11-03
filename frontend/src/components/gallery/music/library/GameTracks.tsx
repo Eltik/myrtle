@@ -56,7 +56,7 @@ export function GameTracks({ catalog, query, kind, collator, state }: { catalog:
             <output className="flex flex-col gap-2" aria-label={t("music.loading")}>
                 {Array.from({ length: SKELETON_ROWS }, (_, i) => (
                     // biome-ignore lint/suspicious/noArrayIndexKey: a placeholder has no identity beyond its position
-                    <Skeleton key={i} className="h-15 w-full rounded-xl" />
+                    <Skeleton key={i} className="h-15 w-full rounded-2xl" />
                 ))}
             </output>
         );

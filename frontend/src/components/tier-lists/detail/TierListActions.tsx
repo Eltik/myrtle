@@ -128,10 +128,10 @@ export function TierListActions({ detail }: ITierListActionsProps) {
                 aria-label={favorited ? t("detail.actions.favorite.remove") : t("detail.actions.favorite.add")}
                 className={cn(
                     "inline-flex h-11 min-w-11 cursor-pointer items-center justify-center gap-1.5 rounded-lg border px-3 font-medium font-sans text-sm leading-none transition-colors disabled:opacity-60 sm:h-9 sm:min-w-0",
-                    favorited ? "border-[color-mix(in_srgb,var(--primary)_50%,transparent)] bg-[color-mix(in_srgb,var(--primary)_12%,transparent)] text-primary hover:bg-[color-mix(in_srgb,var(--primary)_18%,transparent)]" : "border-border bg-popover text-foreground hover:bg-accent",
+                    favorited ? "border-[color-mix(in_srgb,var(--primary)_50%,transparent)] bg-[color-mix(in_srgb,var(--primary)_12%,transparent)] text-foreground hover:bg-[color-mix(in_srgb,var(--primary)_18%,transparent)]" : "border-border bg-popover text-foreground hover:bg-accent",
                 )}
             >
-                <Heart className={cn("h-4 w-4", favorited ? "fill-current" : "fill-none")} aria-hidden="true" />
+                <Heart className={cn("h-4 w-4", favorited ? "fill-current text-primary" : "fill-none")} aria-hidden="true" />
                 <span className="hidden sm:inline">{favorited ? t("detail.actions.favorited") : t("detail.actions.favorite")}</span>
             </button>
 

@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { Check, Search, X } from "lucide-react";
 import { memo, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { LoadError } from "#/components/operators/detail/impl/components/LoadError";
 import { DetailRow, type ISkinPrice, SkinDetailContent } from "#/components/skins/SkinDetailDialog";
 import { Dialog, DialogContent, DialogTitle } from "#/components/ui/dialog";
 import { ScrollArea } from "#/components/ui/scroll-area";
@@ -116,7 +117,7 @@ function SkinViewerBody({ skins, ownedIds, profileOwnedCount, operatorsMap, colo
     const [renderBudget, setRenderBudget] = useState(INITIAL_RENDER_CHUNK);
     const [, startRenderTransition] = useTransition();
 
-    const { data: popularity } = useQuery(skinPopularityQueryOptions());
+    const { data: popularity, isError: popularityFailed, refetch: refetchPopularity } = useQuery(skinPopularityQueryOptions());
 
     const popularityMap = useMemo(() => {
         if (!popularity || popularity.totalUsers <= 0) return null;
@@ -255,6 +256,8 @@ function SkinViewerBody({ skins, ownedIds, profileOwnedCount, operatorsMap, colo
                     </div>
                 </div>
             </header>
+
+            {sort === "popularity" && popularityFailed && !popularity && <LoadError className="mx-3 mt-3 sm:mx-4" message={t("profile.skins.popularityFailed")} onRetry={() => void refetchPopularity()} />}
 
             {totalFiltered === 0 ? (
                 <div className="flex flex-1 flex-col items-center justify-center gap-2 p-8 text-center">

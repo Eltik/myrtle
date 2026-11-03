@@ -16,7 +16,7 @@ import { cn, professionLabel } from "#/lib/utils";
 import type { ArchiveDossier } from "#/types/generated/ArchiveDossier";
 import { DossierFilterFields } from "./DossierFilters";
 import { buildDossierOptions, countDossierFilters, type DossierListKey, EMPTY_DOSSIER_FILTERS, type IDossierFilters, INFECTION_ORDER, matchesDossier, optionLabel } from "./dossierMatch";
-import { type ArchivesT, INFECTION_KEY, rarityColor, TabMessage, useArchivesT } from "./shared";
+import { type ArchivesT, INFECTION_KEY, rarityColor, TabFailed, TabMessage, useArchivesT } from "./shared";
 
 type SortKey = "name" | "race" | "birthplace" | "height" | "experience" | "infection" | "assimilation" | "stories" | "records" | "links";
 
@@ -71,7 +71,7 @@ export function DossiersTab({ onOpenFile }: { onOpenFile: (id: string) => void }
     const t = useArchivesT();
     const f = useFormatters();
     const server = useGamedataServer();
-    const { data, isLoading, isError } = useQuery(archiveDossiersQueryOptions(server));
+    const { data, isLoading, isError, refetch } = useQuery(archiveDossiersQueryOptions(server));
     const [query, setQuery] = useState("");
     const deferred = useDeferredValue(query);
     const [filters, setFilters] = useLocalStorageState<IDossierFilters>(FILTERS_KEY, EMPTY_DOSSIER_FILTERS, { parse: parseFilters });
@@ -101,7 +101,7 @@ export function DossiersTab({ onOpenFile }: { onOpenFile: (id: string) => void }
         return [...list].sort((a, b) => compare(a, b, sort.key, sort.desc) || a.name.localeCompare(b.name));
     }, [all, filters, deferred, sort]);
 
-    if (isError) return <TabMessage>{t("page.error")}</TabMessage>;
+    if (isError) return <TabFailed onRetry={() => void refetch()} />;
 
     const header = (key: SortKey, label: string, className?: string) => {
         const active = sort.key === key;
@@ -138,7 +138,7 @@ export function DossiersTab({ onOpenFile }: { onOpenFile: (id: string) => void }
                 {isLoading ? (
                     <TabMessage>{t("page.loading")}</TabMessage>
                 ) : (
-                    <div className="overflow-x-auto rounded-[14px] border border-border bg-card">
+                    <div className="overflow-x-auto rounded-2xl border border-border bg-card">
                         <Table className="min-w-[880px]">
                             <TableHeader>
                                 <TableRow>

@@ -4,6 +4,7 @@ import { ChevronDown, ChevronRight, Info, LayoutList, List, Users } from "lucide
 import * as React from "react";
 
 import { itemIcon } from "#/components/operators/detail/impl/assets";
+import { LoadError } from "#/components/operators/detail/impl/components/LoadError";
 import { Input } from "#/components/ui/input";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { Popover, PopoverPopup, PopoverTrigger } from "#/components/ui/popover";
@@ -331,10 +332,15 @@ function ByOperatorView({ plans, maxTier, predicate, collapsedSections, onToggle
     // per active plan, each carrying every plan: 193 plans meant 193 copies of the
     // whole list, all refetched after any edit or delete.
     const activeIds = React.useMemo(() => plans.map((p) => p.operator_id), [plans]);
-    const { data, isLoading } = useQuery({ ...plansQueryOptions(activeIds, maxTier || undefined, true), enabled: activeIds.length > 0 });
+    const { data, isLoading, isError, refetch } = useQuery({ ...plansQueryOptions(activeIds, maxTier || undefined, true), enabled: activeIds.length > 0 });
 
     if (plans.length === 0) {
         return <p className="mt-6 text-center text-muted-foreground text-sm">{t("planner.req.noActivePlans")}</p>;
+    }
+
+    // Without this every section read "No matching requirements." when the request failed.
+    if (isError && !data) {
+        return <LoadError className="mt-3" message={t("planner.req.loadFailed")} onRetry={() => void refetch()} />;
     }
 
     return (

@@ -49,7 +49,7 @@ export function AnnouncementDetail({ server, id }: { server: string; id: string 
         return (
             <div aria-busy="true" className="flex flex-col gap-4">
                 <BackLink server={server} />
-                <Skeleton className="aspect-[16/7] w-full rounded-xl" />
+                <Skeleton className="aspect-[16/7] w-full rounded-2xl" />
                 <Skeleton className="h-7 w-3/4" />
                 <Skeleton className="h-4 w-1/3" />
                 <div className="flex flex-col gap-2 pt-2">
@@ -74,7 +74,7 @@ export function AnnouncementDetail({ server, id }: { server: string; id: string 
         return (
             <div className="flex flex-col gap-3">
                 <BackLink server={server} />
-                <Empty className="rounded-xl border border-dashed py-10">
+                <Empty className="rounded-2xl border border-dashed py-10">
                     <EmptyHeader>
                         <EmptyMedia variant="icon">
                             <FileQuestion aria-hidden="true" />
@@ -98,7 +98,7 @@ export function AnnouncementDetail({ server, id }: { server: string; id: string 
     return (
         <article className="flex min-w-0 flex-col gap-4">
             <BackLink server={server} />
-            {notice.banner_url ? <img src={notice.banner_url} alt={t("detail.bannerAlt", { title: notice.title })} className="block h-auto w-full max-w-full rounded-xl border border-border bg-muted" /> : null}
+            {notice.banner_url ? <img src={notice.banner_url} alt={t("detail.bannerAlt", { title: notice.title })} className="block aspect-[16/7] w-full max-w-full rounded-2xl border border-border bg-muted object-cover" /> : null}
             <header className="flex min-w-0 flex-col gap-1.5">
                 <h2 ref={heading} tabIndex={-1} className="wrap-break-word m-0 font-bold text-[22px] text-foreground leading-tight tracking-tight outline-none sm:text-[26px]">
                     {notice.title}
@@ -142,9 +142,9 @@ export function AnnouncementDetail({ server, id }: { server: string; id: string 
 /** The reading pane before a notice is picked (wide screens only; phones show the list instead). */
 export function DetailPlaceholder({ loading }: { loading: boolean }) {
     const t: TypedT<typeof messages> = useT("announcements");
-    if (loading) return <Skeleton className="aspect-[16/9] w-full rounded-xl" />;
+    if (loading) return <Skeleton className="aspect-[16/9] w-full rounded-2xl" />;
     return (
-        <Empty className="hidden rounded-xl border border-dashed py-16 lg:flex">
+        <Empty className="hidden rounded-2xl border border-dashed py-16 lg:flex">
             <EmptyHeader>
                 <EmptyMedia variant="icon">
                     <Newspaper aria-hidden="true" />

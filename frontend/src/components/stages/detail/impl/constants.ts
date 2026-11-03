@@ -38,6 +38,13 @@ export const ENEMY_LEVEL_INK: Record<IEnemy["enemyLevel"], string> = {
     BOSS: "var(--enemy-boss-ink)",
 };
 
+/** The level as words, so the raw NORMAL / ELITE / BOSS enum never renders. */
+export const ENEMY_LEVEL_LABEL_KEY: Record<IEnemy["enemyLevel"], StageDetailMessageKey> = {
+    NORMAL: "enemyLevel.NORMAL",
+    ELITE: "enemyLevel.ELITE",
+    BOSS: "enemyLevel.BOSS",
+};
+
 export const DROP_TYPE_META: Record<string, { labelKey: StageDetailMessageKey; order: number }> = {
     ONCE: { labelKey: "dropType.ONCE", order: 0 },
     COMPLETE: { labelKey: "dropType.COMPLETE", order: 1 },

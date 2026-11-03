@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import * as React from "react";
+import { LoadError } from "#/components/operators/detail/impl/components/LoadError";
 import { SkinDetailContent } from "#/components/skins/SkinDetailDialog";
 import { Dialog, DialogContent, DialogTitle } from "#/components/ui/dialog";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
@@ -61,10 +62,16 @@ function SkinPopup({ selection, lookup }: { selection: ISkinSelection; lookup: O
     const opName = operatorLabel(selection.charId, lookup.get(selection.charId), selection.charName, autoOn).text;
     if (!entry) {
         const pending = en.isPending || cn.isPending;
+        // A failed index used to read as "missing", which is a claim about the outfit, not the request.
+        const failed = (en.isError && !en.data) || (cn.isError && !cn.data);
+        const retry = () => {
+            if (en.isError) void en.refetch();
+            if (cn.isError) void cn.refetch();
+        };
         return (
             <DialogContent bottomStickOnMobile={false} className="w-full max-w-120 p-6" showCloseButton>
                 <DialogTitle className="font-heading font-semibold text-base">{selection.skinName}</DialogTitle>
-                <p className="font-sans text-[13px] text-muted-foreground">{pending ? t("release.popup.loading") : t("release.popup.missing")}</p>
+                {pending ? <p className="font-sans text-[13px] text-muted-foreground">{t("release.popup.loading")}</p> : failed ? <LoadError message={t("release.popup.loadFailed")} onRetry={retry} /> : <p className="font-sans text-[13px] text-muted-foreground">{t("release.popup.missing")}</p>}
             </DialogContent>
         );
     }

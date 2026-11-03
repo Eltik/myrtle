@@ -1,7 +1,6 @@
-import { Info } from "lucide-react";
 import type React from "react";
+import { InfoHint as KitInfoHint } from "#/components/ui/info-hint";
 import { Kicker } from "#/components/ui/kicker";
-import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
@@ -9,18 +8,7 @@ import type { messages } from "./primitives.messages";
 
 export function InfoHint({ children, label }: { children: React.ReactNode; label?: string }) {
     const t: TypedT<typeof messages> = useT("stages");
-    return (
-        <Tooltip>
-            <TooltipTrigger
-                render={(triggerProps) => (
-                    <button {...triggerProps} type="button" aria-label={label ?? t("primitives.moreInfo")} className="inline-flex cursor-help items-center text-subtle-foreground transition-colors hover:text-foreground focus-visible:text-foreground focus-visible:outline-none">
-                        <Info className="h-3.5 w-3.5" aria-hidden="true" />
-                    </button>
-                )}
-            />
-            <TooltipPopup className="max-w-64 px-2.5 py-1.5 text-[12px] leading-snug">{children}</TooltipPopup>
-        </Tooltip>
-    );
+    return <KitInfoHint label={label ?? t("primitives.moreInfo")}>{children}</KitInfoHint>;
 }
 
 export function SectionHead({ children, aside }: { children: React.ReactNode; aside?: React.ReactNode }) {
@@ -39,7 +27,7 @@ export function GameIcon({ src, alt }: { src: string; alt: string }) {
 
 export function StatCard({ icon, label, value, accent, info }: { icon: React.ReactNode; label: string; value: string; accent?: string; info?: React.ReactNode }) {
     return (
-        <div className="flex items-center gap-3 rounded-[10px] border border-border bg-card p-3">
+        <div className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3">
             <span
                 aria-hidden="true"
                 className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-md [&_svg]:h-4.5 [&_svg]:w-4.5"
@@ -65,8 +53,9 @@ export function StatCard({ icon, label, value, accent, info }: { icon: React.Rea
 export function Pill({ children, tone = "muted" }: { children: React.ReactNode; tone?: "muted" | "primary" | "warning" | "danger" }) {
     const tones: Record<string, string> = {
         muted: "border-border bg-[color-mix(in_oklch,var(--muted)_40%,transparent)] text-muted-foreground",
-        primary: "border-[color-mix(in_oklch,var(--primary)_40%,transparent)] bg-[color-mix(in_oklch,var(--primary)_12%,transparent)] text-primary",
-        warning: "border-[color-mix(in_oklch,var(--warning)_45%,transparent)] bg-[color-mix(in_oklch,var(--warning)_14%,transparent)] text-warning-foreground",
+        // Tone text on its own tint measured 3.80 (primary) and 4.36 (amber-700 on the 14% amber, light background), so the tone moves to the border and fill and the text stays foreground.
+        primary: "border-[color-mix(in_oklch,var(--primary)_45%,transparent)] bg-[color-mix(in_oklch,var(--primary)_8%,transparent)] text-foreground",
+        warning: "border-[color-mix(in_oklch,var(--warning)_60%,transparent)] bg-[color-mix(in_oklch,var(--warning)_8%,transparent)] text-foreground",
         danger: "border-[color-mix(in_oklch,var(--destructive)_45%,transparent)] bg-[color-mix(in_oklch,var(--destructive)_14%,transparent)] text-destructive-foreground",
     };
     return <span className={cn("inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 font-medium font-sans text-[11.5px] leading-none", tones[tone])}>{children}</span>;
@@ -112,7 +101,7 @@ const LEGEND_SWATCHES: ILegendSwatch[] = [
 export function TileLegend() {
     const t: TypedT<typeof messages> = useT("stages");
     return (
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-[10px] border border-border bg-card px-3.5 py-2.5">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-2xl border border-border bg-card px-3.5 py-2.5">
             <Kicker className="mb-0 leading-none">{t("legend.title")}</Kicker>
             {LEGEND_SWATCHES.map((s) => (
                 <span key={s.labelKey} className="inline-flex items-center gap-1.5">

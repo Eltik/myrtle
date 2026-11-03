@@ -260,7 +260,7 @@ function NewsItem({ item }: { item: ArchiveNewsItem }): React.ReactElement {
                         </p>
                     ) : line.url ? (
                         // biome-ignore lint/suspicious/noArrayIndexKey: same
-                        <img key={at} src={asset(line.url)} alt={line.name} loading="lazy" decoding="async" className="w-full rounded-[7px] object-contain" />
+                        <img key={at} src={asset(line.url)} alt={line.name} loading="lazy" decoding="async" className="aspect-video w-full rounded-[7px] object-contain" />
                     ) : null,
                 )}
             </div>
@@ -274,7 +274,7 @@ function FileCard({ file }: { file: ArchiveFile }): React.ReactElement {
         <article className="flex flex-col gap-2 rounded-[10px] border border-border bg-secondary/25 px-3 py-3">
             {file.titlePictureUrl ? <img src={asset(file.titlePictureUrl)} alt={file.title} loading="lazy" decoding="async" className="h-9 w-auto max-w-full self-start object-contain" /> : <h4 className="m-0 font-sans font-semibold text-[13.5px] text-foreground leading-snug">{file.title}</h4>}
             {file.date ? <span className="font-mono text-[10.5px] text-muted-foreground tabular-nums">{file.date}</span> : null}
-            {file.pictureUrl ? <img src={asset(file.pictureUrl)} alt="" aria-hidden="true" loading="lazy" decoding="async" className="w-full rounded-[7px] object-contain" /> : null}
+            {file.pictureUrl ? <img src={asset(file.pictureUrl)} alt="" aria-hidden="true" loading="lazy" decoding="async" className="aspect-video w-full rounded-[7px] object-contain" /> : null}
             <p className="m-0 whitespace-pre-line font-sans text-[12.5px] text-foreground/90 leading-relaxed">
                 <GameText text={file.text} />
             </p>

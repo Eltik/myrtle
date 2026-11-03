@@ -63,7 +63,7 @@ export function EnemyCardList({ enemy, statMax }: IEnemyCardListProps) {
             <div className="justify-self-start">{enemy.enemyLevel === "NORMAL" ? <span className="font-medium font-sans text-[11.5px] text-muted-foreground">{tConst(ENEMY_LEVEL_LABEL_KEY.NORMAL)}</span> : <LevelBadge level={enemy.enemyLevel} />}</div>
 
             <div className="inline-flex items-center gap-2">
-                <DamageDots types={enemy.damageType} size={7} />
+                <DamageDots types={enemy.damageType} size={7} decorative />
                 <span className="truncate font-sans text-[12.5px] text-muted-foreground">
                     {dmgLabel}
                     {enemy.applyWay ? ` · ${tConst(APPLY_WAY_LABEL_KEY[enemy.applyWay])}` : ""}

@@ -171,6 +171,10 @@ export const messages = {
         text: "Outfit Store",
         description: "Tooltip on a paid outfit's price chip, naming the in-game store it is sold in.",
     },
+    "profile.skins.popularityFailed": {
+        text: "Couldn't load outfit popularity, so this sort has nothing to order by.",
+        description: "Shown above the outfit grid, beside a Try again button, when the popularity sort is chosen and the popularity data failed to load.",
+    },
 } satisfies MessageMap;
 
 // `dynamic`: the filter, sort, channel and price keys are stored in the tables

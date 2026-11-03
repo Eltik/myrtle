@@ -112,6 +112,10 @@ export const messages = {
         text: "This player's inventory is empty.",
         description: "Empty-state body when the account has no inventory on file. 'Doctor' is what Arknights calls the player; keep the apostrophe.",
     },
+    "profile.items.materialsFailed": {
+        text: "Item names did not load, so items show their ids.",
+        description: "Shown above the depot list, beside a Try again button, when the item table failed to load.",
+    },
 } satisfies MessageMap;
 
 // `dynamic`: the sort and rarity names are resolved through the SORT_LABELS and

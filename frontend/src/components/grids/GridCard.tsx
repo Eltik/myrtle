@@ -28,8 +28,8 @@ export function GridCard({ grid, badge, actions }: IGridCardProps) {
     const forks = Number(grid.fork_count);
 
     return (
-        <article className="group relative flex flex-col overflow-hidden rounded-xl border border-border bg-card shadow-[0_1px_2px_oklch(0_0_0/0.04)] transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-foreground/20 hover:shadow-lg motion-reduce:transition-none motion-reduce:hover:translate-y-0">
-            <Link to="/grids/$slug" params={{ slug: grid.slug }} className="flex flex-1 flex-col no-underline" aria-label={grid.title}>
+        <article className="group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-[0_1px_2px_oklch(0_0_0/0.04)] transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-foreground/20 hover:shadow-lg motion-reduce:transition-none motion-reduce:hover:translate-y-0">
+            <Link to="/grids/$slug" params={{ slug: grid.slug }} className="flex flex-1 flex-col no-underline">
                 <GridThumb grid={grid} />
                 <div className="flex flex-col gap-1.5 px-3.5 pt-3 pb-3">
                     <h3 className="m-0 line-clamp-1 font-sans font-semibold text-[15px] text-foreground leading-snug tracking-tight transition-colors group-hover:text-primary" title={grid.title}>
@@ -42,7 +42,9 @@ export function GridCard({ grid, badge, actions }: IGridCardProps) {
                         <Tooltip>
                             <TooltipTrigger render={<span className="ml-auto inline-flex shrink-0 items-center gap-1 tabular-nums" />}>
                                 <GitForkIcon className="h-3 w-3" aria-hidden="true" />
-                                {f.compact(forks)}
+                                <span aria-hidden="true">{f.compact(forks)}</span>
+                                {/* R-39: the tooltip never reaches a screen reader on a plain span, so the full count is read from here. */}
+                                <span className="sr-only">{t("card.forks", { count: forks, formatted: f.number(forks) })}</span>
                             </TooltipTrigger>
                             <TooltipPopup>{t("card.forks", { count: forks, formatted: f.number(forks) })}</TooltipPopup>
                         </Tooltip>

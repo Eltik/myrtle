@@ -128,7 +128,7 @@ function AlbumBody({ album, catalog }: { album: IAlbum; catalog: ICatalog }): Re
                             {playing ? <PauseIcon aria-hidden="true" /> : <PlayIcon aria-hidden="true" />}
                             {playing ? t("music.album.pause") : t("music.album.play")}
                         </Button>
-                        <Button variant={shuffle ? "secondary" : "outline"} className={cn("max-sm:min-h-11", shuffle && "text-primary")} aria-pressed={shuffle} disabled={playable.length === 0} onClick={onShuffle}>
+                        <Button variant={shuffle ? "secondary" : "outline"} className={cn("max-sm:min-h-11", shuffle && "[&_svg]:text-primary")} aria-pressed={shuffle} disabled={playable.length === 0} onClick={onShuffle}>
                             <ShuffleIcon aria-hidden="true" />
                             {t("music.album.shuffle")}
                         </Button>
@@ -249,7 +249,7 @@ const AlbumTrack = memo(function AlbumTrack({ track, index, tracks, source, hous
                         </>
                     )}
                 </span>
-                <span className={cn("min-w-0 truncate font-sans text-[13.5px]", current ? "font-medium text-primary" : "text-foreground")}>{title}</span>
+                <span className={cn("min-w-0 truncate font-sans text-[13.5px] text-foreground", current && "font-semibold")}>{title}</span>
                 {track.instrumental ? (
                     <Badge variant="outline" size="sm" className="shrink-0 font-mono tracking-[0.06em]">
                         {t("music.list.inst")}

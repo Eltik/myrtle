@@ -1,13 +1,16 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { ChevronDown, ChevronRight, Info, Lock, Maximize2, Search, Skull } from "lucide-react";
+import { ChevronDown, ChevronRight, Info, Lock, Maximize2, Skull } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { SearchField } from "#/components/SearchField";
+import { Button } from "#/components/ui/button";
+import { FilterChip } from "#/components/ui/filter-chip";
 import { PageHeader } from "#/components/ui/page-header";
 import { useWindowVirtualRows } from "#/hooks/use-window-virtual-rows";
 import { stageIndexQueryOptions } from "#/lib/api/stages";
 import { useFormatters, useGamedataServer, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import { STAGE_GROUP_INK, type StageGroupKey } from "#/lib/registry/stage-groups";
+import { STAGE_GROUP_INK, STAGE_GROUP_LABEL_KEY, type StageGroupKey } from "#/lib/registry/stage-groups";
 import { cn } from "#/lib/utils";
 import { buildStageTree, coverImage, filterTree, type IEventVM, type IGroupVM, type IStageCardVM } from "./impl/derive";
 import { EventDetailDialog } from "./impl/EventDetailDialog";
@@ -17,6 +20,7 @@ import type { messages } from "./StageList.messages";
 
 export function StageList() {
     const t: TypedT<typeof messages> = useT("stages");
+    const tNav = useT("nav");
     const f = useFormatters();
     const { data: entries } = useSuspenseQuery(stageIndexQueryOptions(useGamedataServer()));
     const tree = useMemo(() => buildStageTree(entries), [entries]);
@@ -80,35 +84,26 @@ export function StageList() {
             )}
 
             <div className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-2.5">
-                <div className="relative min-w-0 flex-1 basis-full sm:max-w-100 sm:basis-auto">
-                    <Search className="pointer-events-none absolute top-1/2 left-3.5 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
-                    <input
-                        value={q}
-                        onChange={(e) => setQ(e.target.value)}
-                        placeholder={t("list.search.placeholder")}
-                        aria-label={t("list.search.aria")}
-                        className="h-10 w-full rounded-[9px] border border-border bg-secondary/50 pr-3.5 pl-9 font-sans text-[13px] text-foreground outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring sm:h-9.5"
-                    />
-                </div>
+                <SearchField className="min-w-0 flex-1 basis-full sm:max-w-100 sm:basis-auto" value={q} onChange={setQ} placeholder={t("list.search.placeholder")} label={t("list.search.aria")} />
                 <span className="font-mono text-[11px] text-muted-foreground">{searching ? t("list.count.matches", { count: visibleStageCount }) : t("list.count.zones", { count: visibleEvents.length })}</span>
-                <div className="ml-auto flex gap-0.5 rounded-[9px] border border-border bg-secondary/45 p-0.75">
-                    <button type="button" onClick={collapseAll} className="h-8 cursor-pointer rounded-md px-2.5 font-sans font-semibold text-[11.5px] text-muted-foreground transition-colors hover:text-foreground sm:h-6.5">
+                <div className="ml-auto flex gap-1">
+                    <Button onClick={collapseAll} size="xs" variant="ghost">
                         {t("list.collapse")}
-                    </button>
-                    <button type="button" onClick={expandAll} className="h-8 cursor-pointer rounded-md px-2.5 font-sans font-semibold text-[11.5px] text-muted-foreground transition-colors hover:text-foreground sm:h-6.5">
+                    </Button>
+                    <Button onClick={expandAll} size="xs" variant="ghost">
                         {t("list.expandAll")}
-                    </button>
+                    </Button>
                 </div>
             </div>
 
             <div className="msv-scroll mb-8 flex gap-1.5 overflow-x-auto pb-1.5">
-                <FilterPill label={t("list.filter.all")} count={tree.totalZones} tone="var(--primary)" active={filter === "all"} onClick={() => setFilter("all")} />
+                <FilterChip className="flex-none" label={t("list.filter.all")} count={tree.totalZones} active={filter === "all"} onSelect={() => setFilter("all")} />
                 {tree.groups.map((g) => (
-                    <FilterPill key={g.key} label={g.label} count={g.zoneCount} tone={g.tone} active={filter === g.key} onClick={() => setFilter((f) => (f === g.key ? "all" : g.key))} />
+                    <FilterChip className="flex-none" key={g.key} label={tNav(STAGE_GROUP_LABEL_KEY[g.key])} count={g.zoneCount} tone={g.tone} active={filter === g.key} onSelect={() => setFilter((f) => (f === g.key ? "all" : g.key))} />
                 ))}
             </div>
 
-            {empty && <div className="rounded-[14px] border border-border border-dashed p-14 text-center font-sans text-[14px] text-muted-foreground">{t("list.empty")}</div>}
+            {empty && <div className="rounded-2xl border border-border border-dashed p-14 text-center font-sans text-[14px] text-muted-foreground">{t("list.empty")}</div>}
 
             {/* Timeline spine: decoration only above sm, so phones get the full width back. */}
             <div className="relative sm:pl-6.5">
@@ -118,33 +113,6 @@ export function StageList() {
 
             <EventDetailDialog event={detailEvent} onClose={() => setDetailEvent(null)} onBrowse={browseEvent} />
         </div>
-    );
-}
-
-function FilterPill({ label, count, tone, active, onClick }: { label: string; count: number; tone: string; active: boolean; onClick: () => void }) {
-    return (
-        <button
-            type="button"
-            onClick={onClick}
-            aria-pressed={active}
-            className="msv-pill inline-flex h-8.5 flex-none cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full border px-3 font-sans font-semibold text-[12px] transition-colors sm:h-7.5"
-            style={{
-                borderColor: active ? tone : "var(--border)",
-                background: active ? `color-mix(in oklch, ${tone} 15%, transparent)` : "color-mix(in oklch, var(--secondary) 45%, transparent)",
-                color: active ? "var(--foreground)" : "var(--muted-foreground)",
-            }}
-        >
-            <span>{label}</span>
-            <span
-                className="rounded-full px-1.5 py-px font-mono font-semibold text-[9.5px]"
-                style={{
-                    background: active ? `color-mix(in oklch, ${tone} 22%, transparent)` : "color-mix(in oklch, var(--muted) 55%, transparent)",
-                    color: active ? "var(--foreground)" : "var(--muted-foreground)",
-                }}
-            >
-                {count}
-            </span>
-        </button>
     );
 }
 
@@ -188,9 +156,9 @@ function buildFlatRows(groups: IGroupVM[], searching: boolean, open: Record<stri
     return rows;
 }
 
-/** Rebuilds the group's `overflow-hidden rounded-xl border` card across the flattened rows it spans. */
+/** Rebuilds the group's `overflow-hidden rounded-2xl border` card across the flattened rows it spans. */
 function containerBorder(row: { containerFirst?: boolean; blockLast: boolean; containerLast: boolean }): string {
-    return cn("border-border border-r border-l bg-card/40", row.containerFirst && "overflow-hidden rounded-t-xl border-t", row.blockLast && "border-b", row.containerLast && "overflow-hidden rounded-b-xl");
+    return cn("border-border border-r border-l bg-card/40", row.containerFirst && "overflow-hidden rounded-t-2xl border-t", row.blockLast && "border-b", row.containerLast && "overflow-hidden rounded-b-2xl");
 }
 
 interface IVirtualStageTreeProps {
@@ -280,6 +248,7 @@ function VirtualStageTree({ groups, searching, open, closedSections, onToggleSec
 
 function GroupHeaderRow({ row, open, onToggle }: { row: Extract<FlatRow, { kind: "group" }>; open: boolean; onToggle: () => void }) {
     const t: TypedT<typeof messages> = useT("stages");
+    const tNav = useT("nav");
     const { group, first } = row;
     const Icon = STAGE_GROUP_ICON[group.key];
     return (
@@ -289,7 +258,7 @@ function GroupHeaderRow({ row, open, onToggle }: { row: Extract<FlatRow, { kind:
                 <h2 className="m-0">
                     <button type="button" onClick={onToggle} aria-expanded={open} aria-controls={`section-${group.key}`} className="group/section flex w-full cursor-pointer flex-wrap items-baseline gap-x-3 gap-y-0.5 rounded-md py-1 text-left ring-inset focus-visible:ring-2 focus-visible:ring-ring">
                         <Icon className="h-3.75 w-3.75 flex-none self-center" style={{ color: STAGE_GROUP_INK[group.key] }} aria-hidden="true" />
-                        <span className="font-bold font-sans text-[17px] text-foreground tracking-[-0.02em]">{group.label}</span>
+                        <span className="font-bold font-sans text-[17px] text-foreground tracking-[-0.02em]">{tNav(STAGE_GROUP_LABEL_KEY[group.key])}</span>
                         <span className="whitespace-nowrap font-mono text-[10px] text-muted-foreground tracking-widest">{t("list.group.counts", { zones: group.zoneCount, stages: group.stageCount })}</span>
                         <span className="h-px flex-1 bg-border" />
                         <ChevronDown className="h-3.75 w-3.75 flex-none self-center text-muted-foreground transition-[transform,color] duration-200 group-hover/section:text-foreground" style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)" }} aria-hidden="true" />
@@ -302,6 +271,7 @@ function GroupHeaderRow({ row, open, onToggle }: { row: Extract<FlatRow, { kind:
 
 function EventHeaderRow({ row, onToggle, onDetails }: { row: Extract<FlatRow, { kind: "event" }>; onToggle: () => void; onDetails: () => void }) {
     const t: TypedT<typeof messages> = useT("stages");
+    const tNav = useT("nav");
     const { event, open, group } = row;
     const cover = coverImage(event);
     return (
@@ -311,7 +281,13 @@ function EventHeaderRow({ row, onToggle, onDetails }: { row: Extract<FlatRow, { 
 
                 <button type="button" onClick={onToggle} aria-expanded={open} aria-label={open ? t("list.zone.collapse", { title: event.title }) : t("list.zone.expand", { title: event.title })} className="absolute inset-0 cursor-pointer rounded-none ring-inset focus-visible:ring-2 focus-visible:ring-ring" />
 
-                <button type="button" onClick={onDetails} aria-haspopup="dialog" aria-label={t("list.zone.about", { title: event.title })} className="group relative z-1 h-10 w-16 flex-none cursor-zoom-in overflow-hidden rounded-md border border-border ring-inset focus-visible:ring-2 focus-visible:ring-ring">
+                <button
+                    type="button"
+                    onClick={onDetails}
+                    aria-haspopup="dialog"
+                    aria-label={t("list.zone.about", { title: event.title })}
+                    className="group relative z-1 h-10 pointer-coarse:h-11 w-16 flex-none cursor-zoom-in overflow-hidden rounded-md border border-border ring-inset focus-visible:ring-2 focus-visible:ring-ring"
+                >
                     <PreviewFallback tone={event.tone} group={event.group} iconClassName="h-3.5 w-3.5" />
                     {cover && <StagePreview src={cover} />}
                     <span className="absolute inset-0 flex items-center justify-center bg-black/45 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100">
@@ -333,10 +309,10 @@ function EventHeaderRow({ row, onToggle, onDetails }: { row: Extract<FlatRow, { 
                     {event.bossCount > 0 ? ` · ${t("list.zone.boss", { count: event.bossCount })}` : ""}
                 </span>
                 <span
-                    className="pointer-events-none relative z-1 hidden h-5.25 flex-none items-center whitespace-nowrap rounded-full border px-2.5 font-mono font-semibold text-[9px] sm:inline-flex"
+                    className="pointer-events-none relative z-1 hidden h-5.25 flex-none items-center whitespace-nowrap rounded-full border px-2.5 font-mono font-semibold text-[10px] sm:inline-flex"
                     style={{ borderColor: `color-mix(in oklch, ${event.tone} 45%, transparent)`, background: `color-mix(in oklch, ${event.tone} 11%, transparent)`, color: "var(--foreground)" }}
                 >
-                    {event.statusLabel}
+                    {tNav(STAGE_GROUP_LABEL_KEY[event.group])}
                 </span>
                 <ChevronDown className="pointer-events-none relative z-1 h-3.75 w-3.75 flex-none text-muted-foreground transition-transform duration-200" style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)" }} aria-hidden="true" />
             </div>
@@ -380,10 +356,7 @@ function StageCardInner({ card, tone, group }: { card: IStageCardVM; tone: strin
                     </span>
                 )}
                 {card.boss && (
-                    <span
-                        className="absolute top-1.75 right-1.75 z-2 inline-flex h-4.25 items-center gap-1 rounded-full px-1.75 font-bold font-mono text-[8.5px] text-white"
-                        style={{ background: "color-mix(in oklch, var(--enemy-boss) 88%, black)", boxShadow: "0 0 10px color-mix(in oklch, var(--enemy-boss) 60%, transparent)" }}
-                    >
+                    <span className="absolute top-1.75 right-1.75 z-2 inline-flex h-4.5 items-center gap-1 rounded-full px-1.75 font-bold font-mono text-[10px] text-white" style={{ background: "color-mix(in oklch, var(--enemy-boss) 88%, black)" }}>
                         <Skull className="h-2.5 w-2.5" /> {t("list.card.boss")}
                     </span>
                 )}
@@ -391,7 +364,7 @@ function StageCardInner({ card, tone, group }: { card: IStageCardVM; tone: strin
             <div className="flex flex-col gap-1.5 px-2.5 pt-2 pb-2.5">
                 <span className="line-clamp-2 min-h-8 font-sans font-semibold text-[12.5px] text-foreground leading-tight">{card.title}</span>
                 <div className="flex items-center justify-between gap-1.5">
-                    <span className="font-mono text-[9.5px] text-muted-foreground">{card.apCost > 0 ? t("list.card.sanity", { cost: card.apCost }) : t("list.card.free")}</span>
+                    <span className="font-mono text-[10px] text-muted-foreground">{card.apCost > 0 ? t("list.card.sanity", { cost: card.apCost }) : t("list.card.free")}</span>
                 </div>
             </div>
         </>
@@ -430,7 +403,7 @@ function StageVariantLinks({ card }: { card: IStageCardVM }) {
             {card.variants.map((v) => {
                 const text = v.kind === "cm" ? t("list.card.cm") : t("list.card.adverse");
                 const label = v.kind === "cm" ? t("list.card.cm.label", { title: card.title }) : t("list.card.adverse.label", { title: card.title });
-                const chip = "inline-flex h-4.5 items-center rounded-[5px] border border-border px-1.5 font-mono font-semibold text-[9px] leading-none";
+                const chip = "inline-flex h-4.5 items-center rounded-[5px] border border-border px-1.5 font-mono font-semibold text-[10px] leading-none";
                 if (!v.canView) {
                     return (
                         <span key={v.stageId} className={cn(chip, "gap-0.5 bg-card text-subtle-foreground")} title={t("list.card.variant.unavailable", { label })}>
@@ -441,7 +414,16 @@ function StageVariantLinks({ card }: { card: IStageCardVM }) {
                     );
                 }
                 return (
-                    <Link key={v.stageId} to="/stages/$stageId" params={{ stageId: v.stageId }} aria-label={label} className={cn(chip, "bg-card text-muted-foreground transition-colors hover:border-(--rowtone) hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring")}>
+                    <Link
+                        key={v.stageId}
+                        to="/stages/$stageId"
+                        params={{ stageId: v.stageId }}
+                        aria-label={label}
+                        className={cn(
+                            chip,
+                            "pointer-coarse:after:-translate-1/2 relative bg-card text-muted-foreground transition-colors pointer-coarse:after:absolute pointer-coarse:after:top-1/2 pointer-coarse:after:left-1/2 pointer-coarse:after:size-11 hover:border-(--rowtone) hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring",
+                        )}
+                    >
                         {text}
                     </Link>
                 );
@@ -452,6 +434,7 @@ function StageVariantLinks({ card }: { card: IStageCardVM }) {
 
 function FeaturedHero({ event, onBrowse, onDetails }: { event: IEventVM; onBrowse: () => void; onDetails: () => void }) {
     const t: TypedT<typeof messages> = useT("stages");
+    const tNav = useT("nav");
     const cover = coverImage(event);
     return (
         <div className="relative mb-7 h-66 overflow-hidden rounded-2xl border border-border bg-card sm:mb-8 sm:h-60">
@@ -464,8 +447,8 @@ function FeaturedHero({ event, onBrowse, onDetails }: { event: IEventVM; onBrows
 
             <div className="absolute inset-0 flex flex-col justify-between p-4.5 sm:p-7">
                 <div className="flex items-center gap-2.5">
-                    <span className="inline-flex h-5.5 items-center rounded-full border px-2.5 font-mono font-semibold text-[9.5px] text-white" style={{ borderColor: `color-mix(in oklch, ${event.tone} 55%, transparent)`, background: `color-mix(in oklch, ${event.tone} 16%, rgba(0,0,0,0.35))` }}>
-                        {event.statusLabel}
+                    <span className="inline-flex h-5.5 items-center rounded-full border px-2.5 font-mono font-semibold text-[10px] text-white" style={{ borderColor: `color-mix(in oklch, ${event.tone} 55%, transparent)`, background: `color-mix(in oklch, ${event.tone} 16%, rgba(0,0,0,0.35))` }}>
+                        {tNav(STAGE_GROUP_LABEL_KEY[event.group])}
                     </span>
                     {event.kicker && <span className="font-mono text-[10px] text-white/55 uppercase tracking-[0.12em]">{event.kicker}</span>}
                 </div>
@@ -487,7 +470,11 @@ function FeaturedHero({ event, onBrowse, onDetails }: { event: IEventVM; onBrows
                                 </span>
                             </>
                         )}
-                        <button type="button" onClick={onBrowse} className="inline-flex h-10 flex-none cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-lg bg-primary px-4 font-sans font-semibold text-[12.5px] text-primary-foreground shadow-sm transition-transform hover:-translate-y-px sm:ml-1 sm:h-8.5">
+                        <button
+                            type="button"
+                            onClick={onBrowse}
+                            className="relative inline-flex h-10 flex-none cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-lg bg-primary px-4 font-sans font-semibold text-[12.5px] text-primary-foreground shadow-sm transition-transform pointer-coarse:after:absolute pointer-coarse:after:inset-x-0 pointer-coarse:after:top-1/2 pointer-coarse:after:h-11 pointer-coarse:after:-translate-y-1/2 hover:-translate-y-px sm:ml-1 sm:h-8.5"
+                        >
                             {t("list.hero.browse")}
                             <ChevronRight className="h-3.25 w-3.25" aria-hidden="true" />
                         </button>
@@ -495,7 +482,7 @@ function FeaturedHero({ event, onBrowse, onDetails }: { event: IEventVM; onBrows
                             type="button"
                             onClick={onDetails}
                             aria-haspopup="dialog"
-                            className="inline-flex h-10 flex-none cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-lg border border-white/25 bg-white/10 px-3.5 font-sans font-semibold text-[12.5px] text-white backdrop-blur-sm transition-colors hover:bg-white/18 sm:h-8.5"
+                            className="relative inline-flex h-10 flex-none cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-lg border border-white/25 bg-white/10 px-3.5 font-sans font-semibold text-[12.5px] text-white backdrop-blur-sm transition-colors pointer-coarse:after:absolute pointer-coarse:after:inset-x-0 pointer-coarse:after:top-1/2 pointer-coarse:after:h-11 pointer-coarse:after:-translate-y-1/2 hover:bg-white/18 sm:h-8.5"
                         >
                             <Info className="h-3.25 w-3.25" aria-hidden="true" />
                             {t("list.hero.details")}

@@ -92,7 +92,7 @@ export function BulkPlanDialog({ open, onOpenChange }: IBulkPlanDialogProps): Re
         setFailures({});
     }, [open]);
 
-    const { options, isLoading: isOptionsLoading } = useOperatorOptions(server, searchQuery, null);
+    const { options, isLoading: isOptionsLoading, failed: isOptionsFailed, retry: retryOptions } = useOperatorOptions(server, searchQuery, null);
     const { data: roster, isSuccess: isRosterLoaded } = useQuery({
         ...userRosterQueryOptions(user?.uid ?? ""),
         enabled: !!user?.uid,
@@ -208,7 +208,7 @@ export function BulkPlanDialog({ open, onOpenChange }: IBulkPlanDialogProps): Re
                                     </Button>
                                 )}
                             </div>
-                            <OperatorMultiSelector options={pickableOptions} selectedOptions={selected} isLoading={isOptionsLoading} onSelectedChange={setSelected} searchQuery={searchQuery} onSearchQueryChange={setSearchQuery} />
+                            <OperatorMultiSelector options={pickableOptions} selectedOptions={selected} isLoading={isOptionsLoading} failed={isOptionsFailed} onRetry={retryOptions} onSelectedChange={setSelected} searchQuery={searchQuery} onSearchQueryChange={setSearchQuery} />
 
                             {failureCount > 0 && (
                                 <div role="alert" className="rounded-lg border border-destructive/30 bg-destructive/8 px-3 py-2 text-destructive-foreground text-xs">

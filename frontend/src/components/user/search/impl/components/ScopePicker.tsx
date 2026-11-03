@@ -57,7 +57,7 @@ export function scopeProfession(scope: Scope | null, operators: IOperatorIndexEn
     return mapped === "OTHER" ? null : mapped;
 }
 
-const CHIP = "inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-lg border px-2.5 font-medium font-sans text-xs leading-none transition-colors";
+const CHIP = "inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-lg border px-2.5 font-medium font-sans text-xs leading-none transition-colors pointer-coarse:h-11";
 const CHIP_ON = "border-primary/40 bg-[color-mix(in_srgb,var(--primary)_10%,transparent)] text-foreground [&>svg]:text-primary";
 const CHIP_OFF = "border-input bg-card text-foreground hover:border-foreground/20";
 

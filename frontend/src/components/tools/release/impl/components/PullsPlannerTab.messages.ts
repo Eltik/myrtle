@@ -679,6 +679,10 @@ export const messages = {
         text: "At {count, plural, one {# pull} other {# pulls}} the limited operator comes once more as a free bonus copy, without touching pity",
         description: "Describes the Limited banner's one-time gift: after that many total pulls the player receives an extra copy of the limited operator, which does not reset or advance the six-star pity counter.",
     },
+    "release.pulls.resources.loadFailed": {
+        text: "Couldn't load your account, so the fill button is off.",
+        description: "Shown in the resources card, beside a Try again button, when the signed-in player's profile failed to load.",
+    },
 } satisfies MessageMap;
 
 export const { keys } = defineMessages({ namespace, messages });

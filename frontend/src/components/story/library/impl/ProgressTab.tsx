@@ -111,7 +111,7 @@ export function ProgressTab({ index, progress, gameRead, onProgressChanged }: IP
             )}
 
             {isAuthenticated && overridden.length > 0 ? (
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-2.5 rounded-[14px] border border-border bg-card p-4 sm:p-5">
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2.5 rounded-2xl border border-border bg-card p-4 sm:p-5">
                     <div className="min-w-0 flex-1">
                         <h3 className="m-0 font-sans font-semibold text-[14px] text-foreground">{t("progress.overrides", { count: f.number(overridden.length) })}</h3>
                         <p className="mt-0.5 mb-0 font-sans text-[12.5px] text-muted-foreground">{t("progress.overrides.blurb")}</p>
@@ -131,7 +131,7 @@ export function ProgressTab({ index, progress, gameRead, onProgressChanged }: IP
                 </div>
             ) : null}
 
-            <div className="rounded-[14px] border border-border bg-card p-4 sm:p-5">
+            <div className="rounded-2xl border border-border bg-card p-4 sm:p-5">
                 <h3 className="m-0 font-sans font-semibold text-[14px] text-foreground">{t("progress.manage")}</h3>
                 <p className="mt-1 mb-3 max-w-prose font-sans text-[12.5px] text-muted-foreground">{isAuthenticated ? t("progress.manageBlurbSynced") : t("progress.manageBlurb")}</p>
                 <div className="flex flex-wrap gap-2">
@@ -223,7 +223,7 @@ function SyncRow({ state, signedIn, gameImport, onSyncNow, t, f }: { state: Excl
     const Icon = failed ? (state.reason === "offline" ? CloudOffIcon : TriangleAlertIcon) : busy ? LoaderCircleIcon : CloudIcon;
 
     return (
-        <div className="rounded-[14px] border border-border bg-card p-4 sm:p-5">
+        <div className="rounded-2xl border border-border bg-card p-4 sm:p-5">
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2.5">
                 <Icon className={`size-4 shrink-0 ${failed ? "text-destructive" : "text-muted-foreground"} ${busy ? "animate-spin" : ""}`} aria-hidden="true" />
                 <div className="min-w-0 flex-1">
@@ -261,7 +261,7 @@ function SyncRow({ state, signedIn, gameImport, onSyncNow, t, f }: { state: Excl
 
 function Stat({ label, value, muted }: { label: string; value: string; muted?: boolean }): React.ReactElement {
     return (
-        <div className="rounded-xl border border-border bg-card p-3 sm:p-3.5">
+        <div className="rounded-2xl border border-border bg-card p-3 sm:p-3.5">
             <div className="font-mono text-[10px] text-muted-foreground uppercase tracking-[0.12em]">{label}</div>
             <div className={muted ? "mt-1 font-sans text-[14px] text-muted-foreground" : "mt-1 font-light font-mono text-[20px] text-foreground tabular-nums tracking-[-0.02em] sm:text-[24px]"}>{value}</div>
         </div>

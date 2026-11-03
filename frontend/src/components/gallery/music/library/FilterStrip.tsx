@@ -41,7 +41,7 @@ export function FilterStrip(props: IFilterStripProps): React.ReactElement {
     const sortable = mode === "albums" || mode === "songs";
 
     return (
-        <div className="mb-4 rounded-xl border border-border bg-card/55 p-2">
+        <div className="mb-4 rounded-2xl border border-border bg-card/55 p-2">
             <div className="flex flex-wrap items-center gap-2">
                 {sortable ? (
                     <>

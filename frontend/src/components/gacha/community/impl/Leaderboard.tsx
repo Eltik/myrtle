@@ -37,7 +37,8 @@ export function Leaderboard({ ops, operatorsById, isLoading }: ILeaderboardProps
                             key={r}
                             type="button"
                             onClick={() => setRarity(r)}
-                            className={`h-6.5 cursor-pointer rounded-md px-3 font-medium font-sans text-xs transition-colors ${rarity === r ? "bg-card text-foreground shadow-[0_1px_2px_oklch(0_0_0/0.4)]" : "bg-transparent text-muted-foreground hover:text-foreground"}`}
+                            aria-pressed={rarity === r}
+                            className={`relative h-6.5 cursor-pointer rounded-md px-3 font-medium font-sans text-xs transition-colors pointer-coarse:after:absolute pointer-coarse:after:inset-x-0 pointer-coarse:after:top-1/2 pointer-coarse:after:h-11 pointer-coarse:after:-translate-y-1/2 ${rarity === r ? "bg-card text-foreground shadow-[0_1px_2px_oklch(0_0_0/0.4)]" : "bg-transparent text-muted-foreground hover:text-foreground"}`}
                         >
                             {r}★
                         </button>

@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { ArrowDownWideNarrow, ArrowUpNarrowWide, Check, ChevronDown, X } from "lucide-react";
 import { useMemo, useState } from "react";
+import { LoadError } from "#/components/operators/detail/impl/components/LoadError";
 import { Button } from "#/components/ui/button";
 import { Popover, PopoverPopup, PopoverTrigger } from "#/components/ui/popover";
 import { operatorsIndexQueryOptions } from "#/lib/api/operators";
@@ -18,8 +19,8 @@ import type { messages } from "./SearchToolbar.messages";
 /** The sort names in `searchControls.messages.ts` are rendered here too. */
 type ToolbarT = TypedT<typeof messages & typeof sortMessages>;
 
-/** Filter trigger: a 36px tap target on touch widths, the site's 32px on desktop. */
-const FILTER = "inline-flex h-9 cursor-pointer items-center gap-2 rounded-lg border border-input bg-card px-2.5 font-medium font-sans text-foreground text-xs leading-none transition-colors hover:border-foreground/20 sm:h-8";
+/** Filter trigger: 44px under a coarse pointer, 36px on narrow screens, the site's 32px on desktop. */
+const FILTER = "inline-flex h-9 cursor-pointer items-center gap-2 rounded-lg border border-input bg-card px-2.5 font-medium font-sans text-foreground text-xs leading-none transition-colors hover:border-foreground/20 sm:h-8 pointer-coarse:h-11";
 const KICKER = "shrink-0 font-medium font-mono text-[10.5px] text-muted-foreground uppercase leading-none tracking-[0.14em]";
 const GROUP_HEADING = "font-medium font-mono text-[10px] text-muted-foreground uppercase leading-none tracking-[0.16em]";
 
@@ -45,18 +46,19 @@ export function useSortLabel(sort: string): string {
     return t(METRIC_SORT_LABEL_KEYS[(sort in METRIC_SORT_LABEL_KEYS ? sort : "score") as MetricSort]);
 }
 
-/** Obtainable operators, rarity first then by name: the order both pickers list. */
-function useObtainableOperators(): IOperatorIndexEntry[] | undefined {
-    const { data } = useQuery(operatorsIndexQueryOptions(useGamedataServer()));
-    return useMemo(() => {
+/** Obtainable operators, rarity first then by name: the order both pickers list. `failed` = the index request failed with nothing cached. */
+function useObtainableOperators(): { operators: IOperatorIndexEntry[] | undefined; failed: boolean; retry: () => void } {
+    const { data, isError, refetch } = useQuery(operatorsIndexQueryOptions(useGamedataServer()));
+    const operators = useMemo(() => {
         if (!data) return undefined;
         return data.filter((op) => !op.isNotObtainable).sort((a, b) => (b.rarity !== a.rarity ? b.rarity - a.rarity : a.name.localeCompare(b.name)));
     }, [data]);
+    return { operators, failed: isError && !data, retry: () => void refetch() };
 }
 
 export function SearchToolbar({ controls }: { controls: ISearchControls }) {
     const t: TypedT<typeof messages> = useT("user");
-    const operators = useObtainableOperators();
+    const { operators, failed: operatorsFailed, retry: retryOperators } = useObtainableOperators();
 
     return (
         <div className="flex flex-col gap-2.5">
@@ -97,6 +99,8 @@ export function SearchToolbar({ controls }: { controls: ISearchControls }) {
                     <AllPicker scope={controls.all} onChange={controls.setAll} operators={operators} />
                 </div>
             </div>
+            {/* Without this the pickers sat on their loading state for good. */}
+            {operatorsFailed && <LoadError message={t("search.toolbar.operatorsFailed")} onRetry={retryOperators} />}
         </div>
     );
 }
@@ -138,7 +142,7 @@ function SortPicker({ sort, onSort, operators }: { sort: string; onSort: (next: 
                                         aria-pressed={active}
                                         onClick={() => chooseMetric(key)}
                                         className={cn(
-                                            "inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-lg border px-2.5 font-medium font-sans text-xs leading-none transition-colors",
+                                            "inline-flex h-8 pointer-coarse:h-11 cursor-pointer items-center gap-1.5 rounded-lg border px-2.5 font-medium font-sans text-xs leading-none transition-colors",
                                             active ? "border-primary/40 bg-[color-mix(in_srgb,var(--primary)_10%,transparent)] text-foreground [&>svg]:text-primary" : "border-input bg-card text-foreground hover:border-foreground/20",
                                         )}
                                     >

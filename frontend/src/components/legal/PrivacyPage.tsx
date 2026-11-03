@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { ChevronDown, Database, Eye, KeyRound, Lock, Mail, Settings as SettingsIcon, ShieldIcon, UserCog } from "lucide-react";
 import type { ReactNode } from "react";
-import { LegalContainer, LegalDivider, RelatedDocLink, RelatedLinksFooter } from "#/components/legal/LegalShell";
+import { LegalContainer, LegalDivider, RelatedDocLink, RelatedLinksFooter, SectionHeading } from "#/components/legal/LegalShell";
 import { Alert, AlertDescription, AlertTitle } from "#/components/ui/alert";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
@@ -18,18 +18,6 @@ function Section({ id, children }: { id: string; children: ReactNode }) {
         <section id={id} className="mb-10 scroll-mt-22">
             {children}
         </section>
-    );
-}
-
-function SectionHead({ icon, title, subtitle }: { icon: ReactNode; title: string; subtitle?: string }) {
-    return (
-        <div className="mb-4 flex items-center gap-3">
-            <div className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">{icon}</div>
-            <div className="min-w-0">
-                <h2 className="m-0 font-(--font-heading) text-[26px] text-foreground leading-[1.2] tracking-[-0.02em] sm:text-[30px]">{title}</h2>
-                {subtitle ? <p className="m-0 mt-1 font-sans text-[14px] text-muted-foreground leading-normal">{subtitle}</p> : null}
-            </div>
-        </div>
     );
 }
 
@@ -55,7 +43,11 @@ function LI({ children }: { children: ReactNode }) {
 
 function A({ href, children, external }: { href: string; children: ReactNode; external?: boolean }) {
     return (
-        <a href={href} {...(external ? { target: "_blank", rel: "noreferrer" } : {})} className="text-primary no-underline transition-colors hover:underline hover:underline-offset-[3px]">
+        <a
+            href={href}
+            {...(external ? { target: "_blank", rel: "noreferrer" } : {})}
+            className="relative text-primary underline decoration-1 underline-offset-[3px] transition-[text-decoration-thickness] pointer-coarse:after:absolute pointer-coarse:after:inset-x-0 pointer-coarse:after:top-1/2 pointer-coarse:after:h-11 pointer-coarse:after:-translate-y-1/2 hover:decoration-2"
+        >
             {children}
         </a>
     );
@@ -63,7 +55,7 @@ function A({ href, children, external }: { href: string; children: ReactNode; ex
 
 function Tile({ icon, title, desc }: { icon: ReactNode; title: string; desc: string }) {
     return (
-        <div className="relative rounded-xl border border-border bg-card p-4.5 shadow-xs/5">
+        <div className="relative rounded-2xl border border-border bg-card p-4.5 shadow-xs/5">
             <div className="mb-2.5 text-primary [&_svg]:size-5.5">{icon}</div>
             <p className="m-0 mb-1.5 font-sans font-semibold text-[14.5px] text-foreground leading-[1.3]">{title}</p>
             <p className="m-0 font-sans text-[13.5px] text-muted-foreground leading-[1.55]">{desc}</p>
@@ -78,7 +70,7 @@ function Callout({ children, tone }: { children: ReactNode; tone?: "primary" | "
             : tone === "success"
               ? "border-[color-mix(in_srgb,var(--success)_20%,transparent)] bg-[color-mix(in_srgb,var(--success)_5%,transparent)]"
               : "border-border bg-[color-mix(in_srgb,var(--muted)_40%,transparent)]";
-    return <div className={`my-4 rounded-xl border px-4.5 py-4 ${toneCls}`}>{children}</div>;
+    return <div className={`my-4 rounded-2xl border px-4.5 py-4 ${toneCls}`}>{children}</div>;
 }
 
 function CalloutTitle({ children, withIcon }: { children: ReactNode; withIcon?: ReactNode }) {
@@ -115,7 +107,7 @@ function BulletList({ items }: { items: { label: ReactNode; body: ReactNode }[] 
 function Disclosure({ summary, children, defaultOpen }: { summary: string; children: ReactNode; defaultOpen?: boolean }) {
     return (
         <details open={defaultOpen} className="group my-2 rounded-lg border border-border bg-[color-mix(in_srgb,var(--muted)_40%,transparent)] px-4.5 [&_summary::-webkit-details-marker]:hidden">
-            <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-3.5 font-medium font-sans text-[15px] text-foreground outline-none">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-3.5 font-medium font-sans text-[15px] text-foreground">
                 <span>{summary}</span>
                 <ChevronDown className="size-4 text-muted-foreground transition-transform duration-200 group-open:rotate-180" strokeWidth={2} />
             </summary>
@@ -164,7 +156,7 @@ export function PrivacyPage() {
             <LegalDivider />
 
             <Section id="yostar">
-                <SectionHead icon={<KeyRound className="size-5" strokeWidth={1.8} />} title={t("privacy.yostar.heading")} subtitle={t("privacy.yostar.subheading")} />
+                <SectionHeading icon={<KeyRound className="size-5" strokeWidth={1.8} />} title={t("privacy.yostar.heading")} subtitle={t("privacy.yostar.subheading")} />
                 <div className="pl-13 max-sm:pl-0">
                     <P>{t("privacy.yostar.intro")}</P>
 
@@ -196,7 +188,7 @@ export function PrivacyPage() {
             <LegalDivider />
 
             <Section id="information-we-collect">
-                <SectionHead icon={<Database className="size-5" strokeWidth={1.8} />} title={t("privacy.collect.heading")} subtitle={t("privacy.collect.subheading")} />
+                <SectionHeading icon={<Database className="size-5" strokeWidth={1.8} />} title={t("privacy.collect.heading")} subtitle={t("privacy.collect.subheading")} />
                 <div className="pl-13 max-sm:pl-0">
                     <H3>{t("privacy.collect.account.heading")}</H3>
                     <p className="m-0 mb-2 font-sans text-[15px] text-muted-foreground leading-[1.6]">{t("privacy.collect.account.intro")}</p>
@@ -240,7 +232,7 @@ export function PrivacyPage() {
             <LegalDivider />
 
             <Section id="how-we-use">
-                <SectionHead icon={<Eye className="size-5" strokeWidth={1.8} />} title={t("privacy.use.heading")} subtitle={t("privacy.use.subheading")} />
+                <SectionHeading icon={<Eye className="size-5" strokeWidth={1.8} />} title={t("privacy.use.heading")} subtitle={t("privacy.use.subheading")} />
                 <div className="pl-13 max-sm:pl-0">
                     <Disclosure summary={t("privacy.use.service.summary")} defaultOpen>
                         {t("privacy.use.service.body")}
@@ -254,7 +246,7 @@ export function PrivacyPage() {
             <LegalDivider />
 
             <Section id="settings">
-                <SectionHead icon={<SettingsIcon className="size-5" strokeWidth={1.8} />} title={t("privacy.settings.heading")} subtitle={t("privacy.settings.subheading")} />
+                <SectionHeading icon={<SettingsIcon className="size-5" strokeWidth={1.8} />} title={t("privacy.settings.heading")} subtitle={t("privacy.settings.subheading")} />
                 <div className="pl-13 max-sm:pl-0">
                     <P>{t("privacy.settings.intro")}</P>
                     <div className="my-4 grid grid-cols-1 gap-3.5 sm:grid-cols-2">
@@ -304,7 +296,7 @@ export function PrivacyPage() {
             <LegalDivider />
 
             <Section id="security">
-                <SectionHead icon={<Lock className="size-5" strokeWidth={1.8} />} title={t("privacy.security.heading")} subtitle={t("privacy.security.subheading")} />
+                <SectionHeading icon={<Lock className="size-5" strokeWidth={1.8} />} title={t("privacy.security.heading")} subtitle={t("privacy.security.subheading")} />
                 <div className="pl-13 max-sm:pl-0">
                     <P>{t("privacy.security.intro")}</P>
                     <div className="my-4 grid grid-cols-1 gap-3.5 sm:grid-cols-2">
@@ -344,7 +336,7 @@ export function PrivacyPage() {
             <LegalDivider />
 
             <Section id="rights">
-                <SectionHead icon={<UserCog className="size-5" strokeWidth={1.8} />} title={t("privacy.rights.heading")} subtitle={t("privacy.rights.subheading")} />
+                <SectionHeading icon={<UserCog className="size-5" strokeWidth={1.8} />} title={t("privacy.rights.heading")} subtitle={t("privacy.rights.subheading")} />
                 <div className="pl-13 max-sm:pl-0">
                     <P>{t("privacy.rights.intro")}</P>
                     <Disclosure summary={t("privacy.rights.access.summary")}>{t("privacy.rights.access.body")}</Disclosure>
@@ -391,9 +383,9 @@ export function PrivacyPage() {
             <LegalDivider />
 
             <Section id="contact">
-                <SectionHead icon={<Mail className="size-5" strokeWidth={1.8} />} title={t("privacy.contact.heading")} subtitle={t("privacy.contact.subheading")} />
+                <SectionHeading icon={<Mail className="size-5" strokeWidth={1.8} />} title={t("privacy.contact.heading")} subtitle={t("privacy.contact.subheading")} />
                 <div className="pl-13 max-sm:pl-0">
-                    <div className="rounded-xl border border-border bg-[color-mix(in_srgb,var(--muted)_50%,var(--card))] px-6 py-5">
+                    <div className="rounded-2xl border border-border bg-card px-6 py-5">
                         <p className="m-0 font-sans font-semibold text-[15px] text-foreground">{t("privacy.contact.getInTouch")}</p>
                         <p className="m-0 mt-1.5 mb-4 font-sans text-[14px] text-muted-foreground leading-[1.55]">{t("privacy.contact.intro")}</p>
                         <div className="my-3.5 first:mt-0 last:mb-0">
@@ -413,7 +405,10 @@ export function PrivacyPage() {
                         </div>
                         <div className="my-3.5 first:mt-0 last:mb-0">
                             <p className="m-0 mb-1 font-medium font-sans text-[14px] text-foreground">{t("privacy.contact.inApp.label")}</p>
-                            <Link to="/settings" className="font-sans text-[14px] text-primary no-underline transition-colors hover:underline hover:underline-offset-[3px]">
+                            <Link
+                                to="/settings"
+                                className="relative font-sans text-[14px] text-primary underline decoration-1 underline-offset-[3px] transition-[text-decoration-thickness] pointer-coarse:after:absolute pointer-coarse:after:inset-x-0 pointer-coarse:after:top-1/2 pointer-coarse:after:h-11 pointer-coarse:after:-translate-y-1/2 hover:decoration-2"
+                            >
                                 {t("privacy.contact.inApp.link")}
                             </Link>
                         </div>

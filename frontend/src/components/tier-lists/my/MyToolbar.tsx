@@ -1,6 +1,7 @@
 import { ChevronDownIcon, LayoutGridIcon, ListIcon, SearchIcon, SlidersHorizontalIcon, XIcon } from "lucide-react";
 import { Input } from "#/components/ui/input";
 import { Menu, MenuItem, MenuPopup, MenuTrigger } from "#/components/ui/menu";
+import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import { type TypedRichT, useRichT, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
@@ -10,6 +11,9 @@ import type { messages } from "./MyToolbar.messages";
 type MyToolbarT = TypedT<typeof messages>;
 type MyToolbarRichT = TypedRichT<typeof messages>;
 type MyToolbarMessageKey = keyof typeof messages & string;
+
+// R-03: the 32px desktop controls keep their size and gain a centred 44px hit area on touch.
+const COARSE_HIT = "pointer-coarse:after:absolute pointer-coarse:after:top-1/2 pointer-coarse:after:left-1/2 pointer-coarse:after:size-11 pointer-coarse:after:-translate-1/2";
 
 const TYPE_TABS: Array<{ value: MyListTypeFilter; labelKey: MyToolbarMessageKey }> = [
     { value: "all", labelKey: "my.type.all" },
@@ -42,31 +46,18 @@ export function MyToolbar({ sort, type, view, query, resultCount, totalCount, ha
             <div className="page-gutter py-3 [--page-max:1080px]">
                 <div className="flex flex-wrap items-center gap-2.5">
                     {hasOfficial && (
-                        <div role="tablist" aria-label={t("my.type.label")} className="inline-flex shrink-0 gap-0.5 rounded-[10px] border border-border bg-muted p-0.75">
-                            {TYPE_TABS.map((tab) => {
-                                const active = type === tab.value;
-                                return (
-                                    <button
-                                        key={tab.value}
-                                        role="tab"
-                                        type="button"
-                                        aria-selected={active}
-                                        onClick={() => onTypeChange(tab.value)}
-                                        className={cn(
-                                            "h-7 cursor-pointer rounded-[7px] border-0 px-3 font-medium font-sans text-xs leading-none transition-colors",
-                                            active ? "bg-primary text-primary-foreground shadow-[0_2px_6px_color-mix(in_srgb,var(--primary)_30%,transparent)]" : "bg-transparent text-muted-foreground hover:bg-muted/60 hover:text-foreground",
-                                        )}
-                                    >
-                                        {t(tab.labelKey)}
-                                    </button>
-                                );
-                            })}
-                        </div>
+                        <ToggleGroup aria-label={t("my.type.label")} value={[type]} onValueChange={(next) => next[0] && onTypeChange(next[0] as MyListTypeFilter)} variant="outline" size="sm" className="shrink-0">
+                            {TYPE_TABS.map((tab) => (
+                                <ToggleGroupItem key={tab.value} value={tab.value} className="px-3 text-xs sm:text-xs">
+                                    {t(tab.labelKey)}
+                                </ToggleGroupItem>
+                            ))}
+                        </ToggleGroup>
                     )}
 
                     <Menu>
                         <MenuTrigger
-                            className={cn("inline-flex h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-lg border border-border bg-popover px-2.5 font-medium font-sans text-foreground text-xs leading-none transition-colors hover:bg-accent", "[&>svg]:h-3 [&>svg]:w-3 [&>svg]:opacity-80")}
+                            className={cn("relative inline-flex h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-lg border border-border bg-popover px-2.5 font-medium font-sans text-foreground text-xs leading-none transition-colors hover:bg-accent", "[&>svg]:h-3 [&>svg]:w-3 [&>svg]:opacity-80", COARSE_HIT)}
                             aria-label={t("my.sortTrigger", { label: activeSort ? t(activeSort.labelKey) : "" })}
                         >
                             <SlidersHorizontalIcon aria-hidden="true" />
@@ -84,28 +75,14 @@ export function MyToolbar({ sort, type, view, query, resultCount, totalCount, ha
                         </MenuPopup>
                     </Menu>
 
-                    <div role="tablist" aria-label={t("my.view.label")} className="inline-flex shrink-0 gap-0.5 rounded-[10px] border border-border bg-muted p-0.75">
-                        <button
-                            type="button"
-                            role="tab"
-                            aria-selected={view === "grid"}
-                            aria-label={t("my.view.grid")}
-                            onClick={() => onViewChange("grid")}
-                            className={cn("inline-flex h-7 w-7 cursor-pointer items-center justify-center rounded-[7px] border-0 transition-colors", view === "grid" ? "bg-background text-foreground shadow-[0_1px_2px_oklch(0_0_0/0.06)]" : "bg-transparent text-muted-foreground hover:bg-muted/60 hover:text-foreground")}
-                        >
-                            <LayoutGridIcon className="h-3.5 w-3.5" />
-                        </button>
-                        <button
-                            type="button"
-                            role="tab"
-                            aria-selected={view === "list"}
-                            aria-label={t("my.view.list")}
-                            onClick={() => onViewChange("list")}
-                            className={cn("inline-flex h-7 w-7 cursor-pointer items-center justify-center rounded-[7px] border-0 transition-colors", view === "list" ? "bg-background text-foreground shadow-[0_1px_2px_oklch(0_0_0/0.06)]" : "bg-transparent text-muted-foreground hover:bg-muted/60 hover:text-foreground")}
-                        >
-                            <ListIcon className="h-3.5 w-3.5" />
-                        </button>
-                    </div>
+                    <ToggleGroup aria-label={t("my.view.label")} value={[view]} onValueChange={(next) => next[0] && onViewChange(next[0] as MyViewMode)} variant="outline" size="sm" className="shrink-0">
+                        <ToggleGroupItem value="grid" aria-label={t("my.view.grid")}>
+                            <LayoutGridIcon className="size-3.5" aria-hidden="true" />
+                        </ToggleGroupItem>
+                        <ToggleGroupItem value="list" aria-label={t("my.view.list")}>
+                            <ListIcon className="size-3.5" aria-hidden="true" />
+                        </ToggleGroupItem>
+                    </ToggleGroup>
 
                     <div className="relative w-full sm:ml-auto sm:w-72 sm:max-w-72">
                         <span aria-hidden="true" className="pointer-events-none absolute inset-y-0 left-2.5 flex items-center text-muted-foreground">
@@ -113,7 +90,7 @@ export function MyToolbar({ sort, type, view, query, resultCount, totalCount, ha
                         </span>
                         <Input type="search" size="sm" value={query} onChange={(e) => onQueryChange((e.target as HTMLInputElement).value)} placeholder={t("my.search.placeholder")} aria-label={t("my.search.label")} className="pl-7.5" />
                         {query.length > 0 && (
-                            <button type="button" onClick={() => onQueryChange("")} aria-label={t("my.search.clear")} className="absolute inset-y-0 right-1.5 my-auto inline-flex h-5 w-5 items-center justify-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground">
+                            <button type="button" onClick={() => onQueryChange("")} aria-label={t("my.search.clear")} className={cn("absolute inset-y-0 right-1.5 my-auto inline-flex h-5 w-5 items-center justify-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground", COARSE_HIT)}>
                                 <XIcon className="h-3 w-3" />
                             </button>
                         )}

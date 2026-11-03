@@ -136,7 +136,7 @@ function GalleryBody({ loading, failed, unavailable, empty, children }: { loadin
     const t: SpritesT = useT("story");
     if (unavailable) {
         return (
-            <div className="rounded-xl border border-border border-dashed p-10 text-center">
+            <div className="rounded-2xl border border-border border-dashed p-10 text-center">
                 <p className="m-0 font-sans text-[13px] text-muted-foreground">{t("sprites.unavailable")}</p>
                 <p className="mt-1.5 mb-0 font-mono text-[11px] text-subtle-foreground">{t("sprites.unavailableNote")}</p>
             </div>
@@ -148,11 +148,11 @@ function GalleryBody({ loading, failed, unavailable, empty, children }: { loadin
             <output className={GRID} aria-label={t("sprites.loading")}>
                 {Array.from({ length: SKELETON_CARDS }, (_, i) => (
                     // biome-ignore lint/suspicious/noArrayIndexKey: a placeholder has no identity beyond its position
-                    <Skeleton key={i} className="aspect-3/4 w-full rounded-xl" />
+                    <Skeleton key={i} className="aspect-3/4 w-full rounded-2xl" />
                 ))}
             </output>
         );
     }
-    if (empty) return <div className="rounded-[14px] border border-border border-dashed p-14 text-center font-sans text-[14px] text-muted-foreground">{t("sprites.empty")}</div>;
+    if (empty) return <div className="rounded-2xl border border-border border-dashed p-14 text-center font-sans text-[14px] text-muted-foreground">{t("sprites.empty")}</div>;
     return <>{children}</>;
 }

@@ -52,14 +52,14 @@ export function StatsPage() {
             <PageHeader computedAt={data?.computedAt} />
 
             {isError ? (
-                <div className="rounded-[14px] border border-destructive/30 bg-destructive/8 px-5 py-4 font-sans text-foreground/90 text-sm">
+                <div className="rounded-2xl border border-destructive/30 bg-destructive/8 px-5 py-4 font-sans text-foreground/90 text-sm">
                     <strong className="font-semibold text-foreground">{t("page.error.load")}</strong> {(error as Error)?.message ?? t("page.error.unknown")}
                 </div>
             ) : null}
 
             <KpiStrip cells={headlineCells} />
 
-            <section className="flex flex-col gap-4 rounded-[14px] border border-border bg-card p-4.5 sm:p-6">
+            <section className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4.5 sm:p-6">
                 <header className="flex flex-col gap-1">
                     <Kicker>{t("page.catalog.kicker")}</Kicker>
                     <h2 className="m-0 text-balance font-sans font-semibold text-[22px] text-foreground leading-[1.15] tracking-[-0.02em]">{t("page.catalog.title")}</h2>
@@ -70,14 +70,14 @@ export function StatsPage() {
                 ) : (
                     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
                         {["a", "b", "c", "d", "e", "f", "g", "h"].map((k) => (
-                            <div key={k} className="h-28 animate-pulse rounded-xl border border-border bg-muted/40" />
+                            <div key={k} className="h-28 animate-pulse rounded-2xl border border-border bg-muted/40" />
                         ))}
                     </div>
                 )}
                 <FieldNotes />
             </section>
 
-            <section className="flex flex-col gap-4 rounded-[14px] border border-border bg-card p-4.5 sm:p-6">
+            <section className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4.5 sm:p-6">
                 <header className="flex flex-col gap-1">
                     <Kicker>{t("page.community.kicker")}</Kicker>
                     <h2 className="m-0 text-balance font-sans font-semibold text-[22px] text-foreground leading-[1.15] tracking-[-0.02em]">{t("page.community.title")}</h2>
@@ -88,7 +88,7 @@ export function StatsPage() {
                         })}
                     </p>
                 </header>
-                <div className="grid grid-cols-[repeat(4,1fr)] overflow-hidden rounded-[14px] border border-border bg-card max-[1180px]:grid-cols-2 max-[520px]:grid-cols-1">
+                <div className="grid grid-cols-[repeat(4,1fr)] overflow-hidden rounded-2xl border border-border bg-card max-[1180px]:grid-cols-2 max-[520px]:grid-cols-1">
                     {data ? (
                         <>
                             <KpiCell label={t("page.cell.totalLists")} value={f.number(data.tierLists.total)} meta={<span>{t("page.cell.totalLists.meta", { count: f.number(Math.max(0, data.tierLists.total - data.tierLists.active)) })}</span>} />

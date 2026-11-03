@@ -100,7 +100,8 @@ export function FlairDialog({ list, onClose }: { list: ITierListRow | null; onCl
         onError: (err: unknown) => toastError("tier-lists-flair-failed", t("tierLists.flair.failed"), describeError(err)),
     });
 
-    const chip = "inline-flex h-8 pointer-coarse:h-10 cursor-pointer items-center gap-1.5 rounded-md border border-border bg-card px-2.5 font-medium text-[13px] transition-shadow hover:bg-accent";
+    const chip =
+        "relative pointer-coarse:after:absolute pointer-coarse:after:top-1/2 pointer-coarse:after:left-1/2 pointer-coarse:after:size-11 pointer-coarse:after:-translate-1/2 inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-md border border-border bg-card px-2.5 font-medium text-[13px] transition-shadow hover:bg-accent";
 
     return (
         <Dialog open={list !== null} onOpenChange={(open) => !open && onClose()}>

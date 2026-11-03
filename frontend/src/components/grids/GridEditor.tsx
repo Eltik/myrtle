@@ -302,7 +302,7 @@ function EditorHeader({ slug, state, dirty, titleValid, saving, saveError, onTit
                     </div>
 
                     <div className="flex w-full shrink-0 flex-col gap-3 lg:w-72">
-                        <div className="rounded-xl border border-border bg-card p-3 shadow-[0_1px_2px_oklch(0_0_0/0.04)]">
+                        <div className="rounded-2xl border border-border bg-card p-3 shadow-[0_1px_2px_oklch(0_0_0/0.04)]">
                             <div className="flex items-center justify-between gap-2">
                                 <span className="font-bold font-mono text-[10.5px] text-muted-foreground">{dirty ? t("edit.unsaved") : t("edit.allSaved")}</span>
                                 {!dirty && <CheckIcon className="h-3.5 w-3.5 text-primary" aria-hidden="true" />}

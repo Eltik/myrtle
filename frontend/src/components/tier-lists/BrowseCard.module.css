@@ -2,7 +2,7 @@
     position: relative;
     display: flex;
     flex-direction: column;
-    border-radius: 12px;
+    border-radius: var(--radius-2xl);
     background: var(--card);
     border: 1px solid var(--border);
     box-shadow: 0 1px 2px oklch(0 0 0 / 0.04);
@@ -170,7 +170,8 @@
     padding: 0 calc(var(--op-size) * 0.22);
     margin-left: 2px;
     border-radius: calc(var(--op-size) * 0.18);
-    background: color-mix(in srgb, var(--row-color) 30%, oklch(0 0 0 / 0.22));
+    /* Neutral, the op-tile fill: white on a 30% tier tint fell under AA on the light tiers; white on this measures 16.01. */
+    background: oklch(0.25 0.005 285);
     color: white;
     font-family: var(--font-mono);
     font-size: calc(var(--op-size) * 0.42);
@@ -178,7 +179,6 @@
     line-height: 1;
     font-variant-numeric: tabular-nums;
     flex-shrink: 0;
-    text-shadow: 0 1px 0 oklch(0 0 0 / 0.3);
 }
 
 .emptyThumb {
@@ -206,7 +206,8 @@
     gap: 4px;
     padding: 3px 7px;
     border-radius: 999px;
-    background: oklch(0 0 0 / 0.6);
+    /* Solid: no blur off a sticky bar (R-10); white on this measures 17.32. */
+    background: oklch(0.22 0.005 285);
     color: white;
     font-family: var(--font-mono);
     font-size: 10px;
@@ -214,8 +215,6 @@
     line-height: 1;
     letter-spacing: 0.04em;
     text-transform: uppercase;
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
 }
 .cornerRibbon svg {
     width: 10px;
@@ -244,8 +243,6 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
 }
 .cornerBadgeOfficial {
     background: oklch(0.92 0.13 85);
