@@ -118,13 +118,14 @@
     padding: 0 calc(var(--pill-size) * 0.32);
     border-radius: 4px;
     background: var(--row-color);
-    color: white;
+    /* Set by ThumbTierRow from readableTextColor: always-white measured 1.98 to 2.83 on the light default tiers. */
+    color: var(--tier-fg, white);
     font-family: var(--font-mono);
     font-size: var(--pill-text);
     font-weight: 700;
     line-height: 1;
     letter-spacing: 0.02em;
-    text-shadow: 0 1px 0 oklch(0 0 0 / 0.25);
+    text-shadow: var(--tier-shadow, 0 1px 0 oklch(0 0 0 / 0.25));
     max-width: 55%;
     min-width: calc(var(--pill-size) + 2px);
     overflow: hidden;

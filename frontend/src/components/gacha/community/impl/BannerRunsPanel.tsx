@@ -7,7 +7,7 @@ import { type ClientGachaGroup, classifyBannerGroup, type IBanner, type IBannerP
 import { type IFormatters, type TypedRichT, useFormatters, useRichT, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import type { IOperatorIndexEntry } from "#/types/operators";
-import { BANNER_GROUP_COLOR, BANNER_GROUP_LABEL_KEYS, BANNER_STATUS_COLOR, BANNER_STATUS_LABEL_KEYS, type BannerStatus, bannerStatus } from "../../constants";
+import { BANNER_GROUP_COLOR, BANNER_GROUP_LABEL_KEYS, BANNER_STATUS_INK, BANNER_STATUS_LABEL_KEYS, type BannerStatus, bannerStatus } from "../../constants";
 import type { messages as gachaConstantsMessages } from "../../constants.messages";
 import type { messages } from "./BannerRunsPanel.messages";
 
@@ -42,7 +42,7 @@ function fmtDateRange(banner: IBanner, f: IFormatters, t: RunsT): string {
 function StatusPill({ status }: { status: Status }) {
     const t: RunsT = useT("gacha");
     return (
-        <span className="inline-flex items-center gap-1.5 font-mono text-[9.5px] uppercase leading-none tracking-[0.14em]" style={{ color: BANNER_STATUS_COLOR[status] }}>
+        <span className="inline-flex items-center gap-1.5 font-mono text-[9.5px] uppercase leading-none tracking-[0.14em]" style={{ color: BANNER_STATUS_INK[status] }}>
             <span className="block h-1.5 w-1.5 rounded-full bg-current" aria-hidden />
             {t(BANNER_STATUS_LABEL_KEYS[status])}
         </span>
@@ -79,7 +79,7 @@ function CommunityPullsLine({ stat }: { stat: IBannerPullStat | undefined }) {
     const f = useFormatters();
     // No opted-in user has pulled here yet. Said outright so it doesn't read as a failed fetch.
     if (!stat || stat.pullCount === 0) {
-        return <div className="font-mono text-[10.5px] text-muted-foreground/70 uppercase tracking-[0.12em]">{t("community.runs.noPulls")}</div>;
+        return <div className="font-mono text-[10.5px] text-subtle-foreground uppercase tracking-[0.12em]">{t("community.runs.noPulls")}</div>;
     }
     // One decimal is enough to tell banners apart; `f.number` would print up to three.
     const average = stat.userCount > 0 ? Math.round((stat.pullCount / stat.userCount) * 10) / 10 : null;
@@ -90,7 +90,7 @@ function CommunityPullsLine({ stat }: { stat: IBannerPullStat | undefined }) {
             <div className="ml-auto flex flex-col items-end gap-1 font-mono text-[10px] text-muted-foreground tabular-nums">
                 <span title={t("community.runs.contributors", { count: f.number(stat.userCount) })}>{t("community.runs.people", { count: f.compact(stat.userCount) })}</span>
                 {average !== null ? (
-                    <span className="text-muted-foreground/70" title={t("community.runs.averagePullsTitle")}>
+                    <span className="text-subtle-foreground" title={t("community.runs.averagePullsTitle")}>
                         {t("community.runs.averagePulls", { count: f.number(average) })}
                     </span>
                 ) : null}
@@ -110,7 +110,7 @@ function BannerCard({ entry, operatorsById, stat, rank, rankTitle }: { entry: IB
             <HoverCardTrigger
                 render={
                     <div
-                        className="flex cursor-default flex-col gap-2.5 rounded-xl border bg-muted/30 p-3.5 transition-colors hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                        className="flex cursor-default flex-col gap-2.5 rounded-xl border bg-muted/30 p-3.5 transition-colors hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         style={{ borderColor: status === "active" ? `color-mix(in oklch, ${groupColor.fill} 50%, var(--border))` : "var(--border)" }}
                     >
                         <div className="flex items-start justify-between gap-2">
@@ -149,14 +149,14 @@ function BannerCard({ entry, operatorsById, stat, rank, rankTitle }: { entry: IB
 
                     {banner.featured6.length > 0 ? (
                         <div className="flex flex-col gap-1.5">
-                            <span className="font-mono text-[9.5px] uppercase tracking-[0.14em]" style={{ color: "oklch(0.78 0.18 80)" }}>
+                            <span className="font-mono text-[9.5px] uppercase tracking-[0.14em]" style={{ color: "var(--featured-six-ink)" }}>
                                 {t("community.runs.featuredSixStar")}
                             </span>
                             <FeaturedAvatars ids={banner.featured6} operatorsById={operatorsById} ringColor="oklch(0.78 0.18 80)" cap={8} />
                         </div>
                     ) : null}
 
-                    <div className="break-all font-mono text-[10px] text-muted-foreground/70 tabular-nums">{banner.gachaPoolId}</div>
+                    <div className="break-all font-mono text-[10px] text-subtle-foreground tabular-nums">{banner.gachaPoolId}</div>
                 </div>
             </HoverCardContent>
         </HoverCard>
@@ -188,7 +188,7 @@ const SORT_METRIC_LABEL_KEYS: Record<Exclude<Sort, "timeline">, RunsMessageKey> 
 function Segmented<T extends string>({ label, options, value, onChange }: { label: string; options: ReadonlyArray<{ key: T; label: string }>; value: T; onChange: (key: T) => void }) {
     return (
         <div className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-2">
-            <span className="font-mono text-[9.5px] text-muted-foreground/70 uppercase tracking-[0.14em]">{label}</span>
+            <span className="font-mono text-[9.5px] text-subtle-foreground uppercase tracking-[0.14em]">{label}</span>
             <div className="grid auto-cols-fr grid-flow-col gap-1 rounded-lg border border-border bg-muted p-0.75 sm:inline-flex sm:gap-1.5 sm:rounded-[10px]">
                 {options.map((o) => {
                     const isActive = value === o.key;

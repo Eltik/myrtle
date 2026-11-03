@@ -1,20 +1,22 @@
 import { useMemo } from "react";
+import { Kicker } from "#/components/ui/kicker";
 import { enemyIconURL, type IEnemy } from "#/lib/api/enemies";
 import type { ILevel } from "#/lib/api/level";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import type { SparseRecord } from "#/lib/records";
 import { cn } from "#/lib/utils";
-import { ENEMY_LEVEL_ACCENT } from "./constants";
+import { ENEMY_LEVEL_ACCENT, ENEMY_LEVEL_INK } from "./constants";
 import type { messages as enemiesSectionMessages } from "./EnemiesSection.messages";
 import { buildSpawnSchedule } from "./helpers";
-import { Kicker, Pill } from "./primitives";
+import { Pill } from "./primitives";
 import type { messages } from "./SpawnSchedule.messages";
 import type { ISpawnRow } from "./types";
 
 function SpawnEnemyIdentity({ row, iconClass, onActivate }: { row: ISpawnRow; iconClass: string; onActivate: () => void }) {
     const tEnemies: TypedT<typeof enemiesSectionMessages> = useT("stages");
     const accent = ENEMY_LEVEL_ACCENT[row.enemy?.enemyLevel ?? "NORMAL"];
+    const ink = ENEMY_LEVEL_INK[row.enemy?.enemyLevel ?? "NORMAL"];
     return (
         <button type="button" aria-label={tEnemies("enemies.showOnMap", { name: row.enemy?.name ?? row.id })} onClick={onActivate} className="group/enemy flex min-w-0 cursor-pointer items-center gap-2.5 text-left">
             <span className={cn("flex shrink-0 items-center justify-center overflow-hidden rounded border bg-[color-mix(in_oklch,var(--muted)_40%,transparent)]", iconClass)} style={{ borderColor: `color-mix(in oklch, ${accent} 40%, var(--border))` }}>
@@ -22,7 +24,7 @@ function SpawnEnemyIdentity({ row, iconClass, onActivate }: { row: ISpawnRow; ic
             </span>
             <span className="flex min-w-0 flex-col gap-0.5">
                 <span className="truncate font-medium font-sans text-[12.5px] text-foreground leading-tight transition-colors group-hover/enemy:text-primary">{row.enemy?.name ?? row.id}</span>
-                <span className="font-medium font-mono text-[9px] uppercase leading-none tracking-widest" style={{ color: accent }}>
+                <span className="font-medium font-mono text-[9px] uppercase leading-none tracking-widest" style={{ color: ink }}>
                     {row.enemy?.enemyLevel ?? row.actionType}
                 </span>
             </span>
@@ -65,7 +67,7 @@ export function SpawnSchedule({ level, enemyData, onFocusEnemy }: { level: ILeve
     return (
         <section className="overflow-hidden rounded-[14px] border border-border bg-card">
             <div className="flex flex-wrap items-center gap-2.5 border-border border-b px-4 py-3">
-                <Kicker>{t("spawns.title")}</Kicker>
+                <Kicker className="mb-0 leading-none">{t("spawns.title")}</Kicker>
                 <span className="font-mono text-[11px] text-muted-foreground tabular-nums">{t("spawns.groups", { count: rows.length })}</span>
                 <span className="h-px flex-1 bg-border" />
                 {hiddenGroups.length > 0 && (

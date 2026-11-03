@@ -497,7 +497,7 @@ function AuditRow({ row, target, summary, filteredActor, onFilterActor, onFilter
                 <span className="min-w-0 truncate text-muted-foreground leading-[1.45]" title={summary ?? ""}>
                     {summary}
                 </span>
-                {entry.event_count > 1 ? <span className="shrink-0 font-mono text-[11px] text-muted-foreground/80 tabular-nums">{t("system.audit.events", { count: entry.event_count })}</span> : null}
+                {entry.event_count > 1 ? <span className="shrink-0 font-mono text-[11px] text-subtle-foreground tabular-nums">{t("system.audit.events", { count: entry.event_count })}</span> : null}
             </>
         );
     } else {

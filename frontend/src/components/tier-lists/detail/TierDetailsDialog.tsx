@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { ArrowUpRight } from "lucide-react";
 import { ClassIcon } from "#/components/operators/list/impl/components/Icons";
+import { Kicker } from "#/components/ui/kicker";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { isOperatorEntity } from "#/lib/api/tier-entities";
 import type { ITierEntryFull } from "#/lib/api/tier-lists";
@@ -29,6 +30,16 @@ const RARITY_VAR: Record<OperatorRarity, string> = {
     3: "var(--rarity-3)",
     2: "var(--rarity-2)",
     1: "var(--rarity-1)",
+};
+
+/** The rarity hues as text: the plain ones measure 1.39 to 2.52 on the light popover. */
+const RARITY_INK: Record<OperatorRarity, string> = {
+    6: "var(--rarity-6-ink)",
+    5: "var(--rarity-5-ink)",
+    4: "var(--rarity-4-ink)",
+    3: "var(--rarity-3-ink)",
+    2: "var(--rarity-2-ink)",
+    1: "var(--rarity-1-ink)",
 };
 
 function rarityShadow(textColor: ReadableTextColor) {
@@ -61,9 +72,9 @@ export function TierDetailsDialog({ tier, color }: ITierDetailsDialogProps) {
                     {tier.name.length <= 2 ? tier.name : tier.name.charAt(0)}
                 </span>
                 <div className="min-w-0 flex-1 pt-0.5 pr-10 sm:pr-0">
-                    <p className="m-0 font-bold font-mono text-[10px] text-muted-foreground/80 uppercase leading-none tracking-[0.2em] sm:text-[10.5px]">{t("detail.tierDialog.kicker")}</p>
+                    <Kicker className="mb-0 block leading-none">{t("detail.tierDialog.kicker")}</Kicker>
                     <h2 className="wrap-break-word m-0 mt-1.5 font-bold font-features-['ss01','cv11'] font-sans text-[22px] text-foreground leading-[1.1] tracking-[-0.015em] sm:mt-2 sm:text-[28px]">{tier.name}</h2>
-                    <p className="m-0 mt-1.5 font-mono font-semibold text-[10.5px] text-muted-foreground uppercase tabular-nums leading-none tracking-[0.14em] sm:mt-2 sm:text-[11px]">
+                    <p className="m-0 mt-1.5 font-mono font-semibold text-[10.5px] text-muted-foreground tabular-nums leading-none sm:mt-2 sm:text-[11px]">
                         <span className="text-foreground/90">{total}</span> {t("detail.tierDialog.opCount", { count: total })}
                         {stats.lastUpdatedAt && (
                             <>
@@ -97,7 +108,7 @@ export function TierDetailsDialog({ tier, color }: ITierDetailsDialogProps) {
                             {stats.rarity.map(({ rarity, count }) => (
                                 <span key={rarity} className="inline-flex items-center gap-1.5 rounded-md border bg-card px-2.5 py-1.5 font-sans font-semibold text-[12.5px] text-foreground leading-none" style={{ borderColor: `color-mix(in srgb, ${RARITY_VAR[rarity]} 38%, var(--border))` }}>
                                     <span className="h-1.5 w-1.5 rounded-full" style={{ background: RARITY_VAR[rarity] }} aria-hidden="true" />
-                                    <span className="tabular-nums" style={{ color: RARITY_VAR[rarity] }}>
+                                    <span className="tabular-nums" style={{ color: RARITY_INK[rarity] }}>
                                         {RARITY_LABELS[rarity]}
                                     </span>
                                     <span className="font-medium font-mono text-[11.5px] text-muted-foreground tabular-nums">{count}</span>
@@ -174,7 +185,7 @@ export function TierDetailsDialog({ tier, color }: ITierDetailsDialogProps) {
                                             <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                                                 <span className="truncate font-sans font-semibold text-[13.5px] text-foreground tracking-[-0.005em] transition-colors group-hover:text-primary">{op.name}</span>
                                                 <span className="truncate font-mono text-[10.5px] text-muted-foreground uppercase leading-none tracking-[0.08em]">
-                                                    <span style={{ color: RARITY_VAR[op.rarity] }} className="font-semibold">
+                                                    <span style={{ color: RARITY_INK[op.rarity] }} className="font-semibold">
                                                         {op.rarity}★
                                                     </span>
                                                     <span className="mx-1 opacity-50">·</span>
@@ -196,7 +207,11 @@ export function TierDetailsDialog({ tier, color }: ITierDetailsDialogProps) {
 }
 
 function SectionHeading({ children }: { children: React.ReactNode }) {
-    return <h3 className="m-0 font-bold font-mono text-[10.5px] text-muted-foreground/80 uppercase leading-none tracking-[0.2em]">{children}</h3>;
+    return (
+        <h3 className="m-0 leading-none">
+            <Kicker className="mb-0">{children}</Kicker>
+        </h3>
+    );
 }
 
 interface IStatProps {
@@ -208,8 +223,8 @@ interface IStatProps {
 function Stat({ label, value, muted = false }: IStatProps) {
     return (
         <div className="rounded-lg border border-border bg-card/60 px-3 py-2.5">
-            <p className="m-0 font-bold font-mono text-[9.5px] text-muted-foreground/80 uppercase leading-none tracking-[0.18em]">{label}</p>
-            <p className={`m-0 mt-2 font-extrabold font-features-['ss01','cv11'] font-sans text-[20px] tabular-nums leading-none tracking-[-0.015em] ${muted ? "text-muted-foreground/60" : "text-foreground"}`}>{value}</p>
+            <Kicker className="mb-0 block leading-none">{label}</Kicker>
+            <p className={`m-0 mt-2 font-extrabold font-features-['ss01','cv11'] font-sans text-[20px] tabular-nums leading-none tracking-[-0.015em] ${muted ? "text-subtle-foreground" : "text-foreground"}`}>{value}</p>
         </div>
     );
 }

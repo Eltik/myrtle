@@ -84,7 +84,7 @@ export function IllustrationPanel({ group, kind, onClose }: IIllustrationPanelPr
     const body = (
         <>
             {panes}
-            <p className="mt-0 mb-2.5 font-sans text-[11px] text-muted-foreground/85 leading-relaxed">{t("illustrations.panel.split", { total: counts.backgrounds + counts.cgs, backgrounds: counts.backgrounds, cgs: counts.cgs })}</p>
+            <p className="mt-0 mb-2.5 font-sans text-[11px] text-subtle-foreground leading-relaxed">{t("illustrations.panel.split", { total: counts.backgrounds + counts.cgs, backgrounds: counts.backgrounds, cgs: counts.cgs })}</p>
             <Body loading={query.isLoading} failed={query.isError} unavailable={query.isSuccess && query.data === null} pane={pane} rows={rows} summary={summary} onView={setViewer} />
         </>
     );
@@ -187,7 +187,7 @@ function Body({
         return (
             <div className="rounded-xl border border-border border-dashed p-8 text-center">
                 <p className="m-0 font-sans text-[13px] text-muted-foreground">{t("illustrations.panel.unavailable")}</p>
-                <p className="mt-1.5 mb-0 font-mono text-[11px] text-muted-foreground/80">{t("illustrations.panel.unavailableNote")}</p>
+                <p className="mt-1.5 mb-0 font-mono text-[11px] text-subtle-foreground">{t("illustrations.panel.unavailableNote")}</p>
             </div>
         );
     }
@@ -243,12 +243,12 @@ function Tile({ name, url, aspect, storyIds, extra, onView }: { name: string; ur
                     type="button"
                     onClick={() => onView({ name, url })}
                     aria-label={t("illustrations.item.view", { name })}
-                    className={cn(aspect, "block w-full cursor-pointer overflow-hidden rounded-[10px] border border-border bg-secondary/55 ring-inset transition-colors hover:border-primary/45 focus-visible:ring-2 focus-visible:ring-ring/60")}
+                    className={cn(aspect, "block w-full cursor-pointer overflow-hidden rounded-[10px] border border-border bg-secondary/55 ring-inset transition-colors hover:border-primary/45 focus-visible:ring-2 focus-visible:ring-ring")}
                 >
                     <img src={url} alt="" aria-hidden="true" loading="lazy" decoding="async" className={cn("h-full w-full", aspect === "aspect-square" ? "object-contain" : "object-cover")} />
                 </button>
             ) : (
-                <div className={cn(aspect, "flex w-full items-center justify-center rounded-[10px] border border-border border-dashed bg-secondary/25 px-2 text-center font-sans text-[10.5px] text-muted-foreground/70")}>{t("illustrations.item.notExtracted")}</div>
+                <div className={cn(aspect, "flex w-full items-center justify-center rounded-[10px] border border-border border-dashed bg-secondary/25 px-2 text-center font-sans text-[10.5px] text-subtle-foreground")}>{t("illustrations.item.notExtracted")}</div>
             )}
             <span className="truncate font-mono text-[10.5px] text-foreground" title={name}>
                 {name}

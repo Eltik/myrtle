@@ -3,6 +3,7 @@ import { Fragment, useEffect, useState } from "react";
 import { Button } from "#/components/ui/button";
 import { Dialog, DialogHeader, DialogPanel, DialogPopup, DialogTitle } from "#/components/ui/dialog";
 import { Kbd } from "#/components/ui/kbd";
+import { Kicker } from "#/components/ui/kicker";
 import { Slider, SliderPrimitive } from "#/components/ui/slider";
 import { Switch } from "#/components/ui/switch";
 import { useT } from "#/lib/i18n";
@@ -18,7 +19,11 @@ import { CROSSFADE_MAX, CROSSFADE_MIN, SLEEP_CHOICES, type SleepMinutes } from "
 function Section({ title, children }: { title: string; children: React.ReactNode }): React.ReactElement {
     return (
         <section className="flex flex-col gap-3 border-border border-t py-4 first:border-t-0 first:pt-0">
-            <h3 className="font-mono text-[10px] text-primary uppercase tracking-[0.16em]">{title}</h3>
+            <h3 className="leading-none">
+                <Kicker tone="accent" className="mb-0">
+                    {title}
+                </Kicker>
+            </h3>
             {children}
         </section>
     );
@@ -105,7 +110,7 @@ export function SettingsDialog(): React.ReactElement {
                                     <button
                                         aria-pressed={choice === m}
                                         className={cn(
-                                            "cursor-pointer border-border border-l px-3 py-1.5 font-mono text-xs uppercase outline-none transition-colors first:border-l-0 hover:bg-secondary/60 focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-inset max-sm:min-h-11",
+                                            "cursor-pointer border-border border-l px-3 py-1.5 font-mono text-xs uppercase outline-none transition-colors first:border-l-0 hover:bg-secondary/60 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset max-sm:min-h-11",
                                             choice === m ? "bg-primary text-primary-foreground hover:bg-primary" : "text-muted-foreground",
                                         )}
                                         key={m}

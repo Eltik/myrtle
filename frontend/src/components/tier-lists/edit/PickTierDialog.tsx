@@ -2,6 +2,7 @@ import { useId } from "react";
 import { Button } from "#/components/ui/button";
 import { Dialog, DialogClose, DialogDescription, DialogFooter, DialogHeader, DialogPanel, DialogPopup, DialogTitle } from "#/components/ui/dialog";
 import { Field, FieldDescription, FieldLabel } from "#/components/ui/field";
+import { Kicker } from "#/components/ui/kicker";
 import { MarkdownEditor } from "#/components/ui/markdown-editor";
 import { entityOwner, type ITierEntity } from "#/lib/api/tier-entities";
 import { useT } from "#/lib/i18n";
@@ -52,7 +53,7 @@ export function PickTierDialog({ entity, currentTierId, description, tiers, onCl
 
                 <DialogPanel className="flex flex-col gap-4">
                     <div className="flex flex-col gap-1.5">
-                        <p className="m-0 font-bold font-mono text-[10.5px] text-muted-foreground/80 uppercase leading-none tracking-[0.16em]">{t("edit.pick.placement")}</p>
+                        <Kicker className="mb-0 block leading-none">{t("edit.pick.placement")}</Kicker>
                         {!hasTiers && <p className="m-0 rounded-lg border border-border border-dashed px-3 py-3 text-muted-foreground text-sm">{t("edit.pick.noTiers")}</p>}
                         {tiers.map((tier) => {
                             const isCurrent = tier.id === currentTierId;

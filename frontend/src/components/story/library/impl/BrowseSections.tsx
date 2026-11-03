@@ -324,7 +324,7 @@ const SectionPicker = memo(function SectionPicker({ chips, current, t }: { chips
         <Sheet open={open} onOpenChange={setOpen} onOpenChangeComplete={onOpenChangeComplete}>
             <SheetTrigger
                 aria-label={t("browse.jump.picker", { name: current.name })}
-                className="flex h-11 min-w-0 flex-1 cursor-pointer items-center gap-2 rounded-[10px] border border-border bg-secondary/50 px-2.5 text-start text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 data-popup-open:border-primary/55 sm:hidden"
+                className="flex h-11 min-w-0 flex-1 cursor-pointer items-center gap-2 rounded-[10px] border border-border bg-secondary/50 px-2.5 text-start text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring data-popup-open:border-primary/55 sm:hidden"
             >
                 <SectionGlyph chip={current} place="chip" className="opacity-80" />
                 <span className="min-w-0 flex-1 truncate font-sans font-semibold text-[13px]">{current.name}</span>
@@ -350,7 +350,7 @@ const SectionPicker = memo(function SectionPicker({ chips, current, t }: { chips
                                             setOpen(false);
                                         }}
                                         className={cn(
-                                            "flex min-h-11 w-full cursor-pointer items-center gap-3 rounded-[10px] border px-2.5 py-1.5 text-start transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60",
+                                            "flex min-h-11 w-full cursor-pointer items-center gap-3 rounded-[10px] border px-2.5 py-1.5 text-start transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                                             on ? "border-primary/55 bg-primary/12 text-foreground" : "border-transparent text-foreground active:bg-secondary/60",
                                         )}
                                     >
@@ -411,7 +411,7 @@ const JumpChip = memo(function JumpChip({ chip, on, onJump, t }: { chip: IChipMo
                 onJump(chip.id);
             }}
             className={cn(
-                "flex shrink-0 items-center gap-2 rounded-[10px] border py-1.5 transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-ring/60",
+                "flex shrink-0 items-center gap-2 rounded-[10px] border py-1.5 transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-ring",
                 bare ? "px-2" : "px-2.5",
                 on ? "border-primary bg-primary text-primary-foreground" : "border-transparent text-muted-foreground hover:border-border hover:bg-secondary/50 hover:text-foreground",
             )}

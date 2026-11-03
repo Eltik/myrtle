@@ -202,7 +202,7 @@
     z-index: 2;
     overflow: hidden;
     text-align: center;
-    /* The rarity's star colour (`rarityStarColor`), set inline as --star-color. */
+    /* The rarity's star ink (`rarityInk`), set inline as --star-color. */
     color: var(--star-color);
     font-size: max(8px, calc(13 * var(--u)));
     letter-spacing: -1px;

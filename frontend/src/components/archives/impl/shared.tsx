@@ -3,10 +3,11 @@ import { EyeOffIcon } from "lucide-react";
 import type * as React from "react";
 import { useEffect, useId, useState } from "react";
 import { campLogo } from "#/components/operators/detail/impl/assets";
+import { Kicker } from "#/components/ui/kicker";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { type TypedRichT, useRichT, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import { cn, RARITY_HEX } from "#/lib/utils";
+import { cn, rarityInk } from "#/lib/utils";
 import type { ArchivePerson } from "#/types/generated/ArchivePerson";
 import type { ExamAxis } from "#/types/generated/ExamAxis";
 import type { ExamStep } from "#/types/generated/ExamStep";
@@ -52,8 +53,9 @@ export const STEP_KEY: Record<ExamStep, "exam.step.flawed" | "exam.step.normal" 
 export const INFECTED_COLOR = "var(--destructive)";
 export const CLEAR_COLOR = "var(--success)";
 
+/** The rarity edge as ink: `RARITY_HEX` paints 1★ #ffffff, invisible on the light card. */
 export function rarityColor(rarity: number | null | undefined): string {
-    return rarity ? (RARITY_HEX[rarity] ?? "var(--muted-foreground)") : "var(--muted-foreground)";
+    return rarity ? rarityInk(rarity) : "var(--muted-foreground)";
 }
 
 /** A person as a small chip: avatar, name, a rarity edge. Clickable when `onOpen` is given. */
@@ -149,7 +151,13 @@ export function SpoilerNote({ className }: { className?: string }): React.ReactE
 export function Panel({ title, children, className, footer }: { title?: React.ReactNode; children: React.ReactNode; className?: string; footer?: React.ReactNode }): React.ReactElement {
     return (
         <section className={cn("flex min-w-0 flex-col gap-3 rounded-[14px] border border-border bg-card p-4 sm:p-5", className)}>
-            {title ? <h3 className="m-0 font-bold font-sans text-[0.69rem] text-primary uppercase tracking-[0.22em]">{title}</h3> : null}
+            {title ? (
+                <h3 className="m-0 leading-none">
+                    <Kicker tone="accent" className="mb-0">
+                        {title}
+                    </Kicker>
+                </h3>
+            ) : null}
             {children}
             {footer ? <div className="font-sans text-[12px] text-muted-foreground leading-normal">{footer}</div> : null}
         </section>

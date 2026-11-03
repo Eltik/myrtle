@@ -9,11 +9,11 @@ export const messages = {
     },
     "primitives.flag.yes": {
         text: "Yes",
-        description: "Value pill on a stage property row when the flag is on. Short uppercase label in a narrow pill.",
+        description: "Value pill on a stage property row when the flag is on. Short label in a narrow pill.",
     },
     "primitives.flag.no": {
         text: "No",
-        description: "Value pill on a stage property row when the flag is off. Short uppercase label in a narrow pill.",
+        description: "Value pill on a stage property row when the flag is off. Short label in a narrow pill.",
     },
     "legend.title": {
         text: "Legend",

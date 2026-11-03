@@ -67,7 +67,7 @@ export function FilterStrip(props: IFilterStripProps): React.ReactElement {
                         onChange={(e) => onQuery(e.target.value)}
                         placeholder={mode === "game" ? t("music.search.placeholder") : t("music.filter.searchPlaceholder")}
                         aria-label={t("music.search.aria")}
-                        className="h-11 w-full rounded-[9px] border border-border bg-secondary/50 pr-3 pl-8.5 font-sans text-[13px] text-foreground outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring/40 sm:h-9"
+                        className="h-11 w-full rounded-[9px] border border-border bg-secondary/50 pr-3 pl-8.5 font-sans text-[13px] text-foreground outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring sm:h-9"
                     />
                 </div>
                 {mode === "songs" ? (

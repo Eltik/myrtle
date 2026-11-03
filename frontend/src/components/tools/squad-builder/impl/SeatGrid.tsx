@@ -12,7 +12,7 @@ import { Skeleton } from "#/components/ui/skeleton";
 import { operatorQueryOptions } from "#/lib/api/operators";
 import { useGamedataServer, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import { cn, getAvatarById, getPortraitById, parseOperatorName, rarityStarColor, subProfessionLabel } from "#/lib/utils";
+import { cn, getAvatarById, getPortraitById, parseOperatorName, rarityInk, rarityStarColor, subProfessionLabel } from "#/lib/utils";
 import type { SquadMember } from "#/types/generated/SquadMember";
 import type { IOperatorIndexEntry } from "#/types/operators";
 import { type IResolvedSeat, moduleTypeLabel, SQUAD_SIZE, SUPPORT_SEAT } from "../model";
@@ -265,7 +265,7 @@ function SeatCard(props: ISeatCardProps): React.ReactElement {
                     ringClass(focused, highlighted, dropTarget),
                 )}
             >
-                {!compact && !isSupport && seat !== 0 && <span className="absolute top-1.5 left-2 font-mono text-[10px] text-muted-foreground/70 tabular-nums">{t("squad.grid.seatTag", { seat: seat + 1 })}</span>}
+                {!compact && !isSupport && seat !== 0 && <span className="absolute top-1.5 left-2 font-mono text-[10px] text-subtle-foreground tabular-nums">{t("squad.grid.seatTag", { seat: seat + 1 })}</span>}
                 {!compact && seat === 0 && (
                     <span className="absolute top-1.5 left-2 flex items-center gap-1 font-semibold text-[10px] text-primary uppercase tracking-wide">
                         <Crown aria-hidden="true" className="size-3" />
@@ -366,7 +366,7 @@ function SeatCard(props: ISeatCardProps): React.ReactElement {
                         <img alt={eliteLabel} src={eliteIcon(build.phase)} />
                     </span>
                 </span>
-                <span role="img" aria-label={t("squad.grid.rarityAria", { rarity: op.rarity })} className={styles.stars} style={{ "--star-color": rarityStarColor(op.rarity) } as React.CSSProperties}>
+                <span role="img" aria-label={t("squad.grid.rarityAria", { rarity: op.rarity })} className={styles.stars} style={{ "--star-color": rarityInk(op.rarity) } as React.CSSProperties}>
                     {"★".repeat(op.rarity)}
                 </span>
                 <RoleTag seat={seat} t={t} />

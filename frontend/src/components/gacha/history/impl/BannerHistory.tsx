@@ -6,7 +6,7 @@ import { Skeleton } from "#/components/ui/skeleton";
 import type { IBanner, IClientGachaRecords, IGachaItem } from "#/lib/api/gacha";
 import { type IFormatters, useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import { rarityGradient, rarityStarColor } from "#/lib/utils";
+import { rarityGradient, rarityInk } from "#/lib/utils";
 import type { IOperatorIndexEntry } from "#/types/operators";
 import { BANNER_GROUP_LABEL_KEYS } from "../../constants";
 import type { messages as gachaConstantsMessages } from "../../constants.messages";
@@ -120,7 +120,7 @@ function PullTable({
                                             <div className="min-w-0">
                                                 <div className={`truncate font-sans font-semibold text-[12.5px] leading-snug sm:text-sm ${isSixStar ? "text-amber-600 dark:text-amber-400" : "text-foreground"}`}>{name}</div>
                                                 <div className="mt-0.5 flex items-center gap-1.5 font-mono text-[10px] text-muted-foreground">
-                                                    <span style={{ color: rarityStarColor(star) }} className="tracking-wider">
+                                                    <span style={{ color: rarityInk(star) }} className="tracking-wider">
                                                         {"★".repeat(star)}
                                                     </span>
                                                     {bannerInline ? <span className="truncate font-sans sm:hidden">{resolveBannerName(item, bannersById)}</span> : null}
@@ -353,7 +353,7 @@ export function BannerHistory({ records, operatorsById, bannersById, isLoading }
                                 onClick={() => toggleRarity(rarity)}
                                 className={`flex h-7 cursor-pointer items-center gap-1.5 rounded-md px-2.5 font-medium font-sans text-xs transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${isActive ? "bg-card text-foreground shadow-[0_1px_2px_oklch(0_0_0/0.4)]" : "bg-transparent text-muted-foreground hover:enabled:text-foreground"}`}
                             >
-                                <span className="tabular-nums" style={isActive ? { color: rarityStarColor(rarity) } : undefined}>
+                                <span className="tabular-nums" style={isActive ? { color: rarityInk(rarity) } : undefined}>
                                     {rarity}★
                                 </span>
                                 <span className={`inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1 font-mono text-[9.5px] tabular-nums ${isActive ? "bg-primary/15 text-foreground" : "bg-muted-foreground/15 text-muted-foreground"}`}>{f.number(count)}</span>

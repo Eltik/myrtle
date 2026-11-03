@@ -453,7 +453,7 @@ export function Coverflow({ albums, onOpen }: { albums: readonly IAlbum[]; onOpe
                 onPointerMove={onPointerMove}
                 onPointerUp={onPointerUp}
                 onPointerCancel={onPointerCancel}
-                className="relative h-[calc(var(--cf-cover)*1.58)] w-full touch-pan-y select-none overflow-hidden rounded-xl outline-none [--cf-cover:190px] focus-visible:ring-2 focus-visible:ring-ring/40 max-sm:[--cf-cover:128px]"
+                className="relative h-[calc(var(--cf-cover)*1.58)] w-full touch-pan-y select-none overflow-hidden rounded-xl outline-none [--cf-cover:190px] focus-visible:ring-2 focus-visible:ring-ring max-sm:[--cf-cover:128px]"
                 style={{
                     perspective: "1200px",
                     perspectiveOrigin: "50% 42%",
@@ -516,7 +516,7 @@ const Cover = memo(function Cover({ index, album, playing, register }: { index: 
         <div ref={(el) => register(index, el)} data-cf-index={index} className="group/cf absolute top-[46%] left-1/2 size-(--cf-cover) cursor-pointer" style={{ display: "none" }}>
             <div className="relative size-full transition-transform duration-200 ease-out not-in-data-dragging:group-hover/cf:-translate-y-2 motion-reduce:transition-none">
                 <div className={cn("relative size-full overflow-hidden rounded-[6px] bg-muted shadow-lg/20", playing && "ring-2 ring-primary")}>
-                    <DiscIcon aria-hidden="true" className="absolute inset-0 m-auto size-1/3 text-muted-foreground/40" />
+                    <DiscIcon aria-hidden="true" className="absolute inset-0 m-auto size-1/3 text-subtle-foreground" />
                     <img
                         referrerPolicy="no-referrer"
                         ref={markLoaded}

@@ -94,7 +94,7 @@ export function OperatorTabs({ operator, activeTab, onTabChange }: IOperatorTabs
                                                 />
                                             }
                                         >
-                                            <Icon className="h-4 w-4 shrink-0 text-muted-foreground/70 transition-colors group-hover:text-foreground group-data-active:text-primary" />
+                                            <Icon className="h-4 w-4 shrink-0 text-subtle-foreground transition-colors group-hover:text-foreground group-data-active:text-primary" />
                                             <span className="truncate">{t(tab.labelKey)}</span>
                                         </TooltipTrigger>
                                         <TooltipPopup side="right">{t(tab.labelKey)}</TooltipPopup>

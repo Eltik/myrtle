@@ -30,7 +30,7 @@ export function SwitchRow({ label, description, checked, onChange, locked = fals
             <div className="min-w-0 flex-1">
                 <p className="flex items-center gap-1.5 font-medium text-[12.5px] text-foreground">
                     {label}
-                    {locked && <Lock aria-hidden="true" className="h-3 w-3 text-muted-foreground/70" />}
+                    {locked && <Lock aria-hidden="true" className="h-3 w-3 text-subtle-foreground" />}
                 </p>
                 <p className="mt-0.5 text-[11.5px] text-muted-foreground leading-snug">{description}</p>
             </div>

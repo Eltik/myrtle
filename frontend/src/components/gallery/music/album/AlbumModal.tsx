@@ -5,6 +5,7 @@ import { memo, useEffect, useState } from "react";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import { Dialog, DialogPopup, DialogTitle } from "#/components/ui/dialog";
+import { Kicker } from "#/components/ui/kicker";
 import { Skeleton } from "#/components/ui/skeleton";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useLastDefined } from "#/hooks/use-last-defined";
@@ -110,7 +111,9 @@ function AlbumBody({ album, catalog }: { album: IAlbum; catalog: ICatalog }): Re
                     <div className="flex items-start gap-3">
                         <img referrerPolicy="no-referrer" src={sizedCover(album.coverUrl, 64)} alt="" className="size-16 shrink-0 rounded-md bg-muted object-cover sm:hidden" />
                         <div className="min-w-0 flex-1">
-                            <div className="font-mono text-[10px] text-primary uppercase tracking-[0.16em]">{t("music.album.kicker")}</div>
+                            <Kicker tone="accent" className="mb-0 block">
+                                {t("music.album.kicker")}
+                            </Kicker>
                             <DialogTitle className="mt-1 font-sans font-semibold text-[22px] leading-tight sm:text-[26px]">{album.name}</DialogTitle>
                             <div className="mt-1 font-sans text-[12.5px] text-muted-foreground">{t("music.album.subline", { artists: artistText, count: album.trackCount })}</div>
                             <div className="mt-0.5 font-sans text-[11.5px] text-muted-foreground sm:hidden">
@@ -227,7 +230,7 @@ const AlbumTrack = memo(function AlbumTrack({ track, index, tracks, source, hous
                 type="button"
                 onClick={() => playFrom(tracks, track, source)}
                 aria-label={playing ? t("music.row.pause", { name: title }) : t("music.row.play", { name: title })}
-                className="flex min-h-10.5 min-w-0 flex-1 cursor-pointer items-center gap-3 rounded-md pl-2 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring/40 max-sm:min-h-11"
+                className="flex min-h-10.5 min-w-0 flex-1 cursor-pointer items-center gap-3 rounded-md pl-2 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring max-sm:min-h-11"
             >
                 <span className="flex w-6 shrink-0 items-center justify-center font-mono text-[12px] text-muted-foreground tabular-nums">
                     {current ? (

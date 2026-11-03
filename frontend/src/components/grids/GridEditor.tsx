@@ -284,7 +284,7 @@ function EditorHeader({ slug, state, dirty, titleValid, saving, saveError, onTit
                         </div>
 
                         <div className="flex flex-col gap-1.5">
-                            <span className="font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.12em]">{tk("kinds.label")}</span>
+                            <Kicker className="mb-0">{tk("kinds.label")}</Kicker>
                             <div className="flex flex-wrap items-center gap-2">
                                 <KindChips kinds={state.entityKinds} />
                                 {kindsLocked ? (
@@ -304,7 +304,7 @@ function EditorHeader({ slug, state, dirty, titleValid, saving, saveError, onTit
                     <div className="flex w-full shrink-0 flex-col gap-3 lg:w-72">
                         <div className="rounded-xl border border-border bg-card p-3 shadow-[0_1px_2px_oklch(0_0_0/0.04)]">
                             <div className="flex items-center justify-between gap-2">
-                                <span className="font-bold font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.14em]">{dirty ? t("edit.unsaved") : t("edit.allSaved")}</span>
+                                <span className="font-bold font-mono text-[10.5px] text-muted-foreground">{dirty ? t("edit.unsaved") : t("edit.allSaved")}</span>
                                 {!dirty && <CheckIcon className="h-3.5 w-3.5 text-primary" aria-hidden="true" />}
                             </div>
                             <p className="mt-1 font-sans text-[12px] text-muted-foreground">{dirty ? t("edit.unsavedBody") : t("edit.upToDate")}</p>
@@ -364,7 +364,7 @@ function MobileSaveBar({ actionsRef, dirty, titleValid, saving, onSave, onDiscar
     return (
         <div data-claims-bottom="" className="fixed inset-x-0 bottom-0 z-40 border-border border-t bg-background/92 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] backdrop-blur-md lg:hidden">
             <div className="mx-auto flex max-w-[1180px] items-center gap-2">
-                <span className="min-w-0 flex-1 truncate font-bold font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.14em]">{t("edit.unsaved")}</span>
+                <span className="min-w-0 flex-1 truncate font-bold font-mono text-[10.5px] text-muted-foreground">{t("edit.unsaved")}</span>
                 <DiscardButton onDiscard={onDiscard} disabled={saving} />
                 <SaveButton onSave={onSave} disabled={saving || !titleValid} saving={saving} className="min-w-28" />
             </div>
@@ -399,7 +399,7 @@ function DiscardButton({ onDiscard, disabled }: { onDiscard: () => void; disable
 function SizeStepper({ label, value, onChange }: { label: string; value: number; onChange: (value: number) => void }) {
     return (
         <NumberField value={value} min={GRID_MIN_SIZE} max={GRID_MAX_SIZE} step={1} onValueChange={(v) => v !== null && onChange(v)} size="sm" className="w-32 gap-1">
-            <span className="font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.12em]">{label}</span>
+            <Kicker className="mb-0">{label}</Kicker>
             <NumberFieldGroup>
                 <NumberFieldDecrement />
                 <NumberFieldInput aria-label={label} />

@@ -93,6 +93,20 @@ export const STAGE_GROUP_TONE: Record<StageGroupKey, string> = {
     other: "var(--muted-foreground)",
 };
 
+/** Each group's tone for glyphs and text on the card or page: the plain hex tones measure 2.02 to 3.22 on the light card (events, RA, SSS, CC, IS, Paradox) and the dark destructive 1.91 on the dark card. */
+export const STAGE_GROUP_INK: Record<StageGroupKey, string> = {
+    story: "var(--primary)",
+    events: "var(--stage-events-ink)",
+    annihilation: "var(--destructive-foreground)",
+    is: "var(--dmg-magic-ink)",
+    ra: "var(--stage-ra-ink)",
+    sss: "var(--stage-sss-ink)",
+    paradox: "var(--rarity-4-ink)",
+    cc: "var(--stage-cc-ink)",
+    supplies: "var(--muted-foreground)",
+    other: "var(--muted-foreground)",
+};
+
 /**
  * Derive a group from a zone's `type` (and optionally the stage's `stageType`).
  * The backend's `EnemyStageRef.group` remains the source of truth for the

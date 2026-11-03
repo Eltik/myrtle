@@ -5,7 +5,7 @@ import { Skeleton } from "#/components/ui/skeleton";
 import type { IOperatorPopularity } from "#/lib/api/gacha";
 import { useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import { professionLabel, rarityGradient, rarityStarColor } from "#/lib/utils";
+import { professionLabel, rarityGradient, rarityInk } from "#/lib/utils";
 import type { IOperatorIndexEntry } from "#/types/operators";
 import { fmtPct } from "./format";
 import type { messages } from "./Leaderboard.messages";
@@ -109,7 +109,7 @@ function LeaderTable({ ops, operatorsById, isLoading }: { ops: IOperatorPopulari
                                         <div className="min-w-0 flex-1">
                                             <div className="truncate font-sans font-semibold text-[13px] text-foreground sm:text-sm">{name}</div>
                                             <div className="mt-0.5 flex flex-wrap items-center gap-1.5 font-mono text-[10.5px] text-muted-foreground sm:gap-2">
-                                                <span style={{ color: rarityStarColor(op.rarity) }} className="text-[11px] tracking-wider">
+                                                <span style={{ color: rarityInk(op.rarity) }} className="text-[11px] tracking-wider">
                                                     {"★".repeat(op.rarity)}
                                                 </span>
                                                 {role ? <span className="hidden sm:inline">· {role}</span> : null}

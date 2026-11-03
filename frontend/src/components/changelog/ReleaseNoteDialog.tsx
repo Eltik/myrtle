@@ -8,6 +8,7 @@ import { formatNoteDate, ReleaseNoteItems } from "#/components/changelog/release
 import type { messages as sharedMessages } from "#/components/changelog/release-note-shared.messages";
 import { Button } from "#/components/ui/button";
 import { Dialog, DialogDescription, DialogFooter, DialogHeader, DialogPanel, DialogPopup, DialogTitle } from "#/components/ui/dialog";
+import { Kicker } from "#/components/ui/kicker";
 import type { IReleaseNote } from "#/content/changelog/entries";
 import { LATEST_ANNOUNCED_NOTE } from "#/content/changelog/entries";
 import type { messages as entryMessages } from "#/content/changelog/entries.messages";
@@ -43,7 +44,7 @@ export function ReleaseNoteDialog(): React.ReactElement | null {
                 {note.media && <img src={note.media.src} alt={t(note.media.altKey)} className="aspect-[2/1] w-full shrink-0 rounded-t-2xl border-b object-cover max-sm:aspect-[5/2] max-sm:rounded-none" />}
 
                 <DialogHeader>
-                    <span className="font-medium text-[0.69rem] text-muted-foreground uppercase tracking-[0.18em]">{formatNoteDate(note.date, locale)}</span>
+                    <span className="font-medium text-[0.75rem] text-muted-foreground">{formatNoteDate(note.date, locale)}</span>
                     <DialogTitle>{t(note.titleKey)}</DialogTitle>
                     <DialogDescription render={<div />}>
                         <Markdown text={t(note.leadKey)} className="text-sm leading-relaxed" flush />
@@ -57,7 +58,7 @@ export function ReleaseNoteDialog(): React.ReactElement | null {
                     a line in half), and `.scroll-shadows` shows there is more below. */}
                 {note.items && note.items.length > 0 && (
                     <DialogPanel className="scroll-shadows min-h-0 max-sm:overflow-y-auto max-sm:overscroll-contain">
-                        <p className="mb-3 font-medium text-[0.69rem] text-muted-foreground uppercase tracking-[0.18em]">{t("dialog.alsoInUpdate")}</p>
+                        <Kicker className="mb-3 block">{t("dialog.alsoInUpdate")}</Kicker>
                         <ReleaseNoteItems items={note.items} />
                     </DialogPanel>
                 )}

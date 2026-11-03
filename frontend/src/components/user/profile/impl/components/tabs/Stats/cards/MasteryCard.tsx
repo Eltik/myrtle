@@ -74,7 +74,7 @@ export function MasteryCard({ masteries }: IMasteryCardProps) {
                             <span className={KICKER_TEXT}>{t("profile.stats.mastery.totalLevels")}</span>
                             <span className="font-mono text-[10.5px] text-muted-foreground tabular-nums">
                                 <span className="font-semibold text-foreground">{totalMasteryLevels}</span>
-                                <span className="text-muted-foreground/50"> / {maxPossibleMasteryLevels}</span>
+                                <span className="text-subtle-foreground"> / {maxPossibleMasteryLevels}</span>
                             </span>
                         </div>
                         <Bar color={PALETTE.mastery.accent} pct={masteryPct} />

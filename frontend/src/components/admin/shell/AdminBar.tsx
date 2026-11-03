@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { Badge } from "#/components/ui/badge";
+import { Kicker } from "#/components/ui/kicker";
 import { Sheet, SheetDescription, SheetHeader, SheetPanel, SheetPopup, SheetTitle } from "#/components/ui/sheet";
 import { Tabs, TabsList, TabsTab } from "#/components/ui/tabs";
 import { useAuth } from "#/hooks/use-auth";
@@ -40,7 +41,9 @@ function FullBar({ nav }: { nav: IAdminNav }): React.ReactElement {
     return (
         <div className="hidden border-border border-b bg-card lg:block">
             <div className="mx-auto flex min-h-[52px] max-w-[1320px] flex-nowrap items-center gap-x-5 px-8 xl:px-10">
-                <span className="shrink-0 font-bold text-[11px] text-primary uppercase tracking-[0.22em]">{t("shell.kicker")}</span>
+                <Kicker tone="accent" className="mb-0 shrink-0">
+                    {t("shell.kicker")}
+                </Kicker>
                 <div className="min-w-0 max-w-full overflow-x-auto overflow-y-hidden">
                     <Tabs value={nav.current}>
                         <TabsList variant="underline" aria-label={t("shell.nav.label")}>
@@ -68,7 +71,9 @@ function CompactBar({ nav }: { nav: IAdminNav }): React.ReactElement {
     return (
         <div className="flex items-center gap-2.5 border-border border-b bg-card px-4 py-2 md:px-8 lg:hidden">
             <button type="button" aria-haspopup="dialog" aria-expanded={open} onClick={() => setOpen(true)} className="flex h-10 min-w-0 flex-1 cursor-pointer items-center gap-2.5 rounded-[10px] border border-input bg-background pr-3 pl-3.5 text-foreground transition-colors hover:bg-accent">
-                <span className="font-bold text-[11px] text-primary uppercase tracking-[0.18em]">{t("shell.kicker")}</span>
+                <Kicker tone="accent" className="mb-0 shrink-0">
+                    {t("shell.kicker")}
+                </Kicker>
                 <span className="h-4 w-px bg-border" />
                 <span className="truncate font-medium text-[14px]">{nav.currentLabel}</span>
                 {current ? <CountBadge section={current} variant="default" /> : null}

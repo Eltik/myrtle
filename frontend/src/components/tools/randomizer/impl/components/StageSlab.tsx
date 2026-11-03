@@ -59,9 +59,9 @@ export function StageSlab({ stage, zone, lookup, onReroll }: IStageSlabProps): R
                         )}
                     </div>
                     {stage.name && <p className="wrap-break-word mt-1.5 text-[13px] text-muted-foreground sm:mt-2 sm:text-sm md:text-base">{stage.name}</p>}
-                    <p className="wrap-break-word mt-1 font-mono text-[11px] text-muted-foreground/80 uppercase tracking-[0.12em] sm:mt-1.5 sm:text-[12px] sm:tracking-[0.14em]">
+                    <p className="wrap-break-word mt-1 font-mono text-[11px] text-subtle-foreground uppercase tracking-[0.12em] sm:mt-1.5 sm:text-[12px] sm:tracking-[0.14em]">
                         {display}
-                        {family && <span className="text-muted-foreground/50">{t("randomizer.stage.family", { family })}</span>}
+                        {family && <span className="text-subtle-foreground">{t("randomizer.stage.family", { family })}</span>}
                     </p>
 
                     <div className="mt-2.5 flex flex-wrap items-center gap-1.5 sm:mt-3 sm:gap-2">

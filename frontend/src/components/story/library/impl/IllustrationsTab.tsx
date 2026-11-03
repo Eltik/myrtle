@@ -108,13 +108,13 @@ function ArtCard({ group, kind, onOpen }: { group: IArtGroup; kind: ArtKind; onO
             type="button"
             onClick={onOpen}
             aria-label={t("illustrations.card.open", { name: group.name })}
-            className="group flex cursor-pointer flex-col overflow-hidden rounded-xl border border-border bg-card text-left ring-inset transition-colors hover:border-primary/45 focus-visible:ring-2 focus-visible:ring-ring/60"
+            className="group flex cursor-pointer flex-col overflow-hidden rounded-xl border border-border bg-card text-left ring-inset transition-colors hover:border-primary/45 focus-visible:ring-2 focus-visible:ring-ring"
         >
             <span className="relative block aspect-16/9 w-full overflow-hidden bg-secondary/55">
                 {art ? (
                     <img src={art} alt="" aria-hidden="true" loading="lazy" decoding="async" data-source={group.art.kind} className={cn("h-full w-full transition-transform duration-300 group-hover:scale-103", group.art.kind === "avatar" ? "object-contain" : "object-cover")} />
                 ) : (
-                    <span data-source="none" className="flex h-full w-full items-center justify-center bg-linear-to-br from-secondary/70 to-card px-2 text-center font-black font-heading text-[15px] text-muted-foreground/70 uppercase tracking-tight sm:text-[19px]">
+                    <span data-source="none" className="flex h-full w-full items-center justify-center bg-linear-to-br from-secondary/70 to-card px-2 text-center font-black font-heading text-[15px] text-subtle-foreground uppercase tracking-tight sm:text-[19px]">
                         {group.code}
                     </span>
                 )}

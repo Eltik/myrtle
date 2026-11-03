@@ -64,12 +64,12 @@ export function BasePanel({ score, accent }: IProps) {
                             <div className="flex items-baseline justify-between gap-2">
                                 <span className="font-medium text-[12px] text-foreground/90">
                                     {t(c.labelKey)}
-                                    <span className="ml-1.5 font-mono text-[9.5px] text-muted-foreground/70 uppercase tracking-wider">{t("score.improvements.base.weight", { pct: c.weightPct })}</span>
+                                    <span className="ml-1.5 font-mono text-[9.5px] text-subtle-foreground uppercase tracking-wider">{t("score.improvements.base.weight", { pct: c.weightPct })}</span>
                                 </span>
                                 <span className="font-mono text-[11px] text-muted-foreground tabular-nums">{pct.toFixed(1)}%</span>
                             </div>
                             <Bar color={accent} pct={pct} />
-                            <p className="text-[10.5px] text-muted-foreground/80 leading-snug">{t(c.descriptionKey)}</p>
+                            <p className="text-[10.5px] text-subtle-foreground leading-snug">{t(c.descriptionKey)}</p>
                         </div>
                     );
                 })}

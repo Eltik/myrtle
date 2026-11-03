@@ -108,7 +108,7 @@ function upgradedTone(isUpgraded: boolean): string {
 }
 
 function Arrow(): React.ReactElement {
-    return <span className="text-muted-foreground/50">➔</span>;
+    return <span className="text-subtle-foreground">➔</span>;
 }
 
 function ProgressSection({ title, children }: { title: string; children: React.ReactNode }): React.ReactElement {

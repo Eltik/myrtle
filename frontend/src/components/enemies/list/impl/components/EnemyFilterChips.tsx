@@ -11,11 +11,13 @@ import type { messages } from "./EnemyFilterChips.messages";
 interface IChipProps {
     on: boolean;
     color?: string;
+    /** The selected text colour; the tint measured 1.66 to 3.85 as text on its own fill. Defaults to the foreground. */
+    ink?: string;
     onClick: () => void;
     children: React.ReactNode;
 }
 
-function Chip({ on, color, onClick, children }: IChipProps) {
+function Chip({ on, color, ink, onClick, children }: IChipProps) {
     const tint = color ?? "var(--primary)";
     return (
         <button
@@ -26,7 +28,7 @@ function Chip({ on, color, onClick, children }: IChipProps) {
             style={{
                 borderColor: on ? tint : "var(--border)",
                 background: on ? `color-mix(in oklch, ${tint} 14%, transparent)` : "color-mix(in oklch, var(--secondary) 50%, transparent)",
-                color: on ? tint : "var(--muted-foreground)",
+                color: on ? (ink ?? "var(--foreground)") : "var(--muted-foreground)",
             }}
             onMouseEnter={(e) => {
                 if (!on) {
@@ -90,7 +92,7 @@ export function EnemyFilterChips({ filters, setLevels, setDamageTypes, setAttack
         <div className="flex flex-wrap items-center gap-x-3.5 gap-y-2.5 rounded-xl border border-border bg-[color-mix(in_oklch,var(--card)_60%,transparent)] px-3.5 py-3">
             <ChipGroup label={t("chips.threat")}>
                 {ENEMY_LEVELS.map((lv) => (
-                    <Chip key={lv} on={filters.levels.includes(lv)} color={LEVEL_TOKENS[lv].accent} onClick={() => setLevels(toggleArray(filters.levels, lv))}>
+                    <Chip key={lv} on={filters.levels.includes(lv)} color={LEVEL_TOKENS[lv].accent} ink={LEVEL_TOKENS[lv].ink} onClick={() => setLevels(toggleArray(filters.levels, lv))}>
                         {tConst(ENEMY_LEVEL_LABEL_KEY[lv])}
                     </Chip>
                 ))}
@@ -100,7 +102,7 @@ export function EnemyFilterChips({ filters, setLevels, setDamageTypes, setAttack
 
             <ChipGroup label={t("chips.damage")}>
                 {DAMAGE_TYPES.map((d) => (
-                    <Chip key={d} on={filters.damageTypes.includes(d)} color={DAMAGE_TOKENS[d].color} onClick={() => setDamageTypes(toggleArray(filters.damageTypes, d))}>
+                    <Chip key={d} on={filters.damageTypes.includes(d)} color={DAMAGE_TOKENS[d].color} ink={DAMAGE_TOKENS[d].ink} onClick={() => setDamageTypes(toggleArray(filters.damageTypes, d))}>
                         <span className="inline-block h-1.5 w-1.5 rounded-[1.5px]" style={{ background: DAMAGE_TOKENS[d].color }} />
                         {tConst(DAMAGE_TOKENS[d].labelKey)}
                     </Chip>

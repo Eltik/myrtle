@@ -114,7 +114,7 @@ export function OperatorNotes({ operatorId }: IOperatorNotesProps) {
                             {hasPros && (
                                 <div className="rounded-lg border border-border bg-secondary/20 p-4">
                                     <div className="mb-2 flex items-center gap-2">
-                                        <ThumbsUp className="h-4 w-4 text-green-500" />
+                                        <ThumbsUp className="h-4 w-4 text-success-foreground" />
                                         <span className="font-medium text-sm">{t("notes.pros")}</span>
                                     </div>
                                     <ExpandableText text={pros} markdown />
@@ -123,7 +123,7 @@ export function OperatorNotes({ operatorId }: IOperatorNotesProps) {
                             {hasCons && (
                                 <div className="rounded-lg border border-border bg-secondary/20 p-4">
                                     <div className="mb-2 flex items-center gap-2">
-                                        <ThumbsDown className="h-4 w-4 text-red-500" />
+                                        <ThumbsDown className="h-4 w-4 text-destructive-foreground" />
                                         <span className="font-medium text-sm">{t("notes.cons")}</span>
                                     </div>
                                     <ExpandableText text={cons} markdown />
@@ -135,7 +135,7 @@ export function OperatorNotes({ operatorId }: IOperatorNotesProps) {
                     {hasNotes && (
                         <div className="rounded-lg border border-border bg-secondary/20 p-4">
                             <div className="mb-2 flex items-center gap-2">
-                                <StickyNote className="h-4 w-4 text-yellow-500" />
+                                <StickyNote className="h-4 w-4 text-warning-foreground" />
                                 <span className="font-medium text-sm">{t("notes.notes")}</span>
                             </div>
                             <ExpandableText text={notesText} markdown />
@@ -145,7 +145,7 @@ export function OperatorNotes({ operatorId }: IOperatorNotesProps) {
                     {hasTrivia && (
                         <div className="rounded-lg border border-border bg-secondary/20 p-4">
                             <div className="mb-2 flex items-center gap-2">
-                                <Lightbulb className="h-4 w-4 text-amber-500" />
+                                <Lightbulb className="h-4 w-4 text-warning-foreground" />
                                 <span className="font-medium text-sm">{t("notes.trivia")}</span>
                             </div>
                             <ExpandableText text={trivia} markdown />

@@ -198,7 +198,7 @@ export function SignInCalendarCard({ checkin, server }: ICardProps) {
                                     <TooltipTrigger
                                         render={
                                             <div
-                                                className={cn(CELL_BASE, state === "open" && "border-border/60 border-dashed text-muted-foreground/55", state === "upcoming" && "border-transparent text-muted-foreground/30", state === "claimed" && "border-transparent")}
+                                                className={cn(CELL_BASE, state === "open" && "border-border/60 border-dashed text-subtle-foreground", state === "upcoming" && "border-transparent text-subtle-foreground", state === "claimed" && "border-transparent")}
                                                 style={{
                                                     ...(state === "claimed" && claimedStyle()),
                                                     ...(slot === nextSlot && { boxShadow: `inset 0 0 0 1.5px color-mix(in oklch, ${SIGNIN} 55%, transparent)` }),
@@ -217,7 +217,7 @@ export function SignInCalendarCard({ checkin, server }: ICardProps) {
                 </div>
 
                 {/* Legend - state is not conveyed by color alone. */}
-                <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 font-mono text-[9.5px] text-muted-foreground/70 uppercase tracking-wide">
+                <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 font-mono text-[9.5px] text-subtle-foreground uppercase tracking-wide">
                     <span className="inline-flex items-center gap-1.5">
                         <LegendSwatch state="claimed" /> {t("profile.stats.signin.state.claimed")}
                     </span>

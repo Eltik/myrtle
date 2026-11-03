@@ -138,7 +138,7 @@ export function RosterPicker({ allOperators, visibleOperators, selected, isExpli
                     <span>
                         <span className="text-foreground">{visibleSelectedCount}</span> / {visibleOperators.length} {hasActiveFilters ? t("randomizer.roster.inView") : t("randomizer.roster.selected")}
                     </span>
-                    {hasActiveFilters && <span className="text-[10.5px] text-muted-foreground/70 normal-case tracking-normal">{t("randomizer.roster.totalInRoster", { count: selected.size })}</span>}
+                    {hasActiveFilters && <span className="text-[10.5px] text-subtle-foreground normal-case tracking-normal">{t("randomizer.roster.totalInRoster", { count: selected.size })}</span>}
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                     <Button onClick={onSelectAllVisible} size="xs" variant="ghost" disabled={allVisibleSelected || visibleOperators.length === 0}>
@@ -191,10 +191,10 @@ export function RosterPicker({ allOperators, visibleOperators, selected, isExpli
                                         className="group flex min-w-0 flex-1 items-center gap-2 rounded-md px-2 py-1.5 text-left transition-colors hover:bg-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                                     >
                                         <ChevronDown aria-hidden="true" className={cn("size-3.5 shrink-0 text-muted-foreground transition-transform", isCollapsed && "-rotate-90")} />
-                                        <span className="font-mono text-[11px] uppercase tracking-[0.18em]" style={{ color: `var(--rarity-${rarity})` }}>
+                                        <span className="font-mono text-[11px] uppercase tracking-[0.18em]" style={{ color: `var(--rarity-${rarity}-ink)` }}>
                                             {RARITY_LABELS[rarity]}
                                         </span>
-                                        <span className="font-mono text-[10.5px] text-muted-foreground/70 uppercase tracking-[0.16em]">{t("randomizer.roster.groupCount", { selected: groupSelected, total: ops.length })}</span>
+                                        <span className="font-mono text-[10.5px] text-subtle-foreground uppercase tracking-[0.16em]">{t("randomizer.roster.groupCount", { selected: groupSelected, total: ops.length })}</span>
                                     </button>
                                     <Button
                                         type="button"
@@ -238,7 +238,7 @@ function ActiveFiltersHint({ settings, hiddenCount, tierFilterTitle }: { setting
 
     return (
         <div className="flex items-start gap-2 rounded-md border border-border/60 bg-accent/30 px-3 py-2 text-[11.5px] text-muted-foreground leading-snug">
-            <Info aria-hidden="true" className="mt-0.5 size-3.5 shrink-0 text-muted-foreground/80" />
+            <Info aria-hidden="true" className="mt-0.5 size-3.5 shrink-0 text-subtle-foreground" />
             <p className="min-w-0">
                 {rt("randomizer.roster.hint", {
                     count: <span className="text-foreground">{hiddenCount}</span>,
@@ -253,7 +253,7 @@ function EmptyRoster({ query, hasActiveFilters, onReset, isExplicit }: { query: 
     const t: RosterT = useT("tools");
     return (
         <div className="flex flex-1 flex-col items-center justify-center gap-2 py-10 text-center">
-            <FilterX aria-hidden="true" className="size-6 text-muted-foreground/70" />
+            <FilterX aria-hidden="true" className="size-6 text-subtle-foreground" />
             <p className="text-foreground text-sm">{t("randomizer.roster.empty.title")}</p>
             <p className="max-w-xs text-[12px] text-muted-foreground">{query ? t("randomizer.roster.empty.search") : hasActiveFilters ? t("randomizer.roster.empty.filters") : t("randomizer.roster.empty.none")}</p>
             {!query && hasActiveFilters && isExplicit && (

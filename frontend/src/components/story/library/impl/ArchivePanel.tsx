@@ -112,7 +112,7 @@ function Section({ section, first, audio, onView }: { section: StoryArchiveSecti
 
     return (
         <Collapsible open={open} onOpenChange={setOpen}>
-            <CollapsibleTrigger className="flex min-h-11 w-full items-center justify-between gap-2 rounded-[9px] border border-border bg-secondary/35 px-3 py-2 text-left transition-colors hover:bg-secondary/55 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60">
+            <CollapsibleTrigger className="flex min-h-11 w-full items-center justify-between gap-2 rounded-[9px] border border-border bg-secondary/35 px-3 py-2 text-left transition-colors hover:bg-secondary/55 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                 <span className="flex min-w-0 items-baseline gap-2">
                     <span className="truncate font-sans font-semibold text-[13px] text-foreground">{t(`archive.section.${section.kind}`)}</span>
                     <span className="font-mono text-[10.5px] text-muted-foreground tabular-nums">{section.count}</span>
@@ -203,7 +203,7 @@ function LogChapter({ chapter }: { chapter: ArchiveLogChapter }): React.ReactEle
                 {icon ? <span className="font-mono text-[10px] text-muted-foreground uppercase tracking-[0.08em]">{icon}</span> : null}
             </h4>
             {chapter.unlockDesc ? (
-                <p className="m-0 font-sans text-[11.5px] text-muted-foreground/85 leading-relaxed">
+                <p className="m-0 font-sans text-[11.5px] text-subtle-foreground leading-relaxed">
                     <GameText text={chapter.unlockDesc} />
                 </p>
             ) : null}
@@ -294,12 +294,12 @@ function GalleryTile({ picture, onView }: { picture: ArchivePicture; onView: (vi
                     type="button"
                     onClick={() => onView({ name: picture.title, url })}
                     aria-label={t("illustrations.item.view", { name: picture.title })}
-                    className="block aspect-16/9 w-full cursor-pointer overflow-hidden rounded-[10px] border border-border bg-secondary/55 ring-inset transition-colors hover:border-primary/45 focus-visible:ring-2 focus-visible:ring-ring/60"
+                    className="block aspect-16/9 w-full cursor-pointer overflow-hidden rounded-[10px] border border-border bg-secondary/55 ring-inset transition-colors hover:border-primary/45 focus-visible:ring-2 focus-visible:ring-ring"
                 >
                     <img src={url} alt="" aria-hidden="true" loading="lazy" decoding="async" className="h-full w-full object-cover" />
                 </button>
             ) : (
-                <div className="flex aspect-16/9 w-full items-center justify-center rounded-[10px] border border-border border-dashed bg-secondary/25 px-2 text-center font-sans text-[10.5px] text-muted-foreground/70">{t("illustrations.item.notExtracted")}</div>
+                <div className="flex aspect-16/9 w-full items-center justify-center rounded-[10px] border border-border border-dashed bg-secondary/25 px-2 text-center font-sans text-[10.5px] text-subtle-foreground">{t("illustrations.item.notExtracted")}</div>
             )}
             <figcaption className="flex min-w-0 flex-col gap-0.5">
                 <span className="truncate font-sans text-[12px] text-foreground" title={picture.title}>
@@ -328,7 +328,7 @@ function TrackRow({ track, audio }: { track: ArchiveTrack; audio: IChapterAudio 
                 type="button"
                 onClick={() => audio.toggle(key, { intro: track.introUrl ?? undefined, loop: track.loopUrl }, track.name?.trim() ? track.name : null)}
                 aria-label={playing ? t("archive.theme.pause", { name }) : t("archive.theme.play", { name })}
-                className="flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-full border border-border bg-background text-foreground transition-colors hover:border-primary/45 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 sm:size-9"
+                className="flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-full border border-border bg-background text-foreground transition-colors hover:border-primary/45 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:size-9"
             >
                 {playing ? <PauseIcon className="size-4" aria-hidden="true" /> : <PlayIcon className="size-4" aria-hidden="true" />}
             </button>
@@ -363,7 +363,7 @@ function Recordings({ nodes, hidden }: { nodes: readonly ArchiveRecordingNode[];
                 <section key={node.id} className="flex flex-col gap-1.5">
                     <h4 className="m-0 font-sans font-semibold text-[13px] text-foreground">{node.title}</h4>
                     {node.unlockDesc ? (
-                        <p className="m-0 font-sans text-[11.5px] text-muted-foreground/85 leading-relaxed">
+                        <p className="m-0 font-sans text-[11.5px] text-subtle-foreground leading-relaxed">
                             <GameText text={node.unlockDesc} />
                         </p>
                     ) : null}
@@ -379,7 +379,7 @@ function Recordings({ nodes, hidden }: { nodes: readonly ArchiveRecordingNode[];
             {hidden.length > 0 ? (
                 <section className="flex flex-col gap-1.5">
                     <h4 className="m-0 font-sans font-semibold text-[13px] text-foreground">{t("archive.recordings.hidden")}</h4>
-                    <p className="m-0 font-sans text-[11.5px] text-muted-foreground/85 leading-relaxed">{t("archive.recordings.hiddenNote")}</p>
+                    <p className="m-0 font-sans text-[11.5px] text-subtle-foreground leading-relaxed">{t("archive.recordings.hiddenNote")}</p>
                     <ul className="m-0 flex list-none flex-col gap-1.5 p-0">
                         {hidden.map((clip) => (
                             <li key={`${clip.charId}-${clip.voiceId}-${clip.index}`}>
@@ -451,7 +451,7 @@ function ClipRow({ clip, player, name }: { clip: ArchiveClip; player: IClipPlaye
                 disabled={url === null}
                 onClick={() => url && player.play(url)}
                 aria-label={playing ? t("archive.clip.pause", { name }) : t("archive.clip.play", { name })}
-                className="flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-full border border-border bg-background text-foreground transition-colors hover:border-primary/45 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 disabled:cursor-default disabled:opacity-45 sm:size-9"
+                className="flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-full border border-border bg-background text-foreground transition-colors hover:border-primary/45 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-default disabled:opacity-45 sm:size-9"
             >
                 {playing ? <PauseIcon className="size-4" aria-hidden="true" /> : <PlayIcon className="size-4" aria-hidden="true" />}
             </button>
@@ -465,7 +465,7 @@ function ClipRow({ clip, player, name }: { clip: ArchiveClip; player: IClipPlaye
                         if (playing) player.stop();
                         setLanguage(e.target.value as LangType);
                     }}
-                    className="h-11 pointer-coarse:h-11 shrink-0 cursor-pointer rounded-[7px] border border-border bg-background px-1.5 font-mono text-[10.5px] text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 sm:h-8"
+                    className="h-11 pointer-coarse:h-11 shrink-0 cursor-pointer rounded-[7px] border border-border bg-background px-1.5 font-mono text-[10.5px] text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:h-8"
                 >
                     {tracks.map((track) => (
                         <option key={track.language} value={track.language}>

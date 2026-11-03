@@ -4,7 +4,7 @@ import { Card } from "#/components/ui/card";
 import { useFormatters, useLocale, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { cn, parseOperatorName } from "#/lib/utils";
-import { compareUpcoming, dayKey, daysUntil, isTodayMonthDay, monthNames, operatorRarity, rarityVar } from "../helpers";
+import { compareUpcoming, dayKey, daysUntil, isTodayMonthDay, monthNames, operatorRarity, rarityInkVar } from "../helpers";
 import type { IOperatorBirthday } from "../types";
 import { BirthdayEmpty } from "./BirthdayEmpty";
 import { OpChip } from "./OpChip";
@@ -72,7 +72,7 @@ export function UpcomingView({ items, today }: IUpcomingViewProps): React.ReactE
                                     <div key={b.operator.id} className="grid grid-cols-[auto_1fr_auto] items-center gap-2.5">
                                         <OpChip operator={b.operator} />
                                         <span className="truncate font-medium font-sans text-[13px] text-foreground">{displayName}</span>
-                                        <span className="font-sans font-semibold text-[12px]" style={{ color: rarityVar(rarity) }}>
+                                        <span className="font-sans font-semibold text-[12px]" style={{ color: rarityInkVar(rarity) }}>
                                             {t("birthdays.upcoming.rarity", { rarity })}
                                         </span>
                                     </div>

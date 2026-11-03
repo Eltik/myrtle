@@ -115,6 +115,10 @@ export const messages = {
         text: "{title}, Adverse",
         description: "Accessible name of the Adverse link on a stage card. {title} is the stage name from the game data.",
     },
+    "list.card.variant.unavailable": {
+        text: "{label}, no stage page",
+        description: "Accessible name and tooltip of a CM or Adverse chip on a stage card when that version has no level data, so it is not a link. {label} is list.card.cm.label or list.card.adverse.label.",
+    },
     "list.hero.operations": {
         text: "{count, plural, one {operation} other {operations}}",
         description: "Unit after the operation count on the featured banner; the number is rendered just before it and is not part of this string.",

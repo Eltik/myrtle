@@ -1,5 +1,6 @@
 import { createFileRoute, stripSearchParams } from "@tanstack/react-router";
 import { EnemiesList } from "#/components/enemies/list/Enemies";
+import { RouteError } from "#/components/ui/route-error";
 import { enemiesQueryOptions } from "#/lib/api/enemies";
 import { metaT } from "#/lib/meta";
 import { defaultOgURL } from "#/lib/og";
@@ -9,7 +10,7 @@ const SEARCH_DEFAULTS = { page: 1 } as const;
 
 export const Route = createFileRoute("/enemies")({
     component: RouteComponent,
-    errorComponent: RootErrorComponent,
+    errorComponent: RouteError,
     // The page number lives in the URL so returning from an enemy page lands
     // back on the page you left, with the scroll position the router restores.
     // Left optional so `<Link to="/enemies">` still means "page one" and the
@@ -44,18 +45,6 @@ export const Route = createFileRoute("/enemies")({
         };
     },
 });
-
-function RootErrorComponent({ error }: { error: unknown }) {
-    console.error("Router error:", error);
-
-    return (
-        <div style={{ padding: 20 }}>
-            <h1>Something went wrong</h1>
-            <pre style={{ color: "red" }}>{error instanceof Error ? error.message : JSON.stringify(error, null, 2)}</pre>
-            <pre>{error instanceof Error ? error.stack : null}</pre>
-        </div>
-    );
-}
 
 function RouteComponent() {
     return <EnemiesList />;

@@ -1,3 +1,5 @@
+import { Kicker } from "#/components/ui/kicker";
+
 export interface IPageHeadProps {
     kicker: string;
     title: string;
@@ -10,7 +12,9 @@ export function PageHead({ kicker, title, sub, action }: IPageHeadProps): React.
     return (
         <div className="mb-5 flex flex-col gap-3 border-border border-b pb-4 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
             <div className="flex min-w-0 flex-col gap-1.5">
-                <span className="font-bold text-[11px] text-primary uppercase tracking-[0.22em]">{kicker}</span>
+                <Kicker tone="accent" className="mb-0">
+                    {kicker}
+                </Kicker>
                 <h1 className="font-semibold text-[22px] leading-tight tracking-[-0.02em] sm:text-[26px]">{title}</h1>
                 {sub ? <p className="max-w-[64ch] text-[13px] text-muted-foreground leading-[1.55] sm:text-[13.5px]">{sub}</p> : null}
             </div>

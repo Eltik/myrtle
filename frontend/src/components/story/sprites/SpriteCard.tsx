@@ -64,19 +64,19 @@ export const SpriteCard = memo(function SpriteCard({ entry, onOpen }: ISpriteCar
                 onOpen(entry.base);
             }}
             aria-label={t("sprites.card.open", { name: view.name })}
-            className="group flex min-w-0 flex-col overflow-hidden rounded-xl border border-border bg-card text-left no-underline ring-inset transition-colors hover:border-primary/45 focus-visible:ring-2 focus-visible:ring-ring/60"
+            className="group flex min-w-0 flex-col overflow-hidden rounded-xl border border-border bg-card text-left no-underline ring-inset transition-colors hover:border-primary/45 focus-visible:ring-2 focus-visible:ring-ring"
         >
             {entry.thumb ? (
                 <SpriteFigure variant={entry.thumb} name={entry.base} crop={CARD_CROP} lazy thumb={spriteThumbUrl(entry.base, entry.thumb.key, server)} className="aspect-3/4 w-full bg-secondary/55" />
             ) : (
-                <span className="flex aspect-3/4 w-full items-center justify-center bg-secondary/30 font-mono text-[10px] text-muted-foreground/70">{entry.base}</span>
+                <span className="flex aspect-3/4 w-full items-center justify-center bg-secondary/30 font-mono text-[10px] text-subtle-foreground">{entry.base}</span>
             )}
             <span className="flex min-w-0 flex-col gap-0.5 px-2.5 pt-2 pb-2.5">
                 <span className="truncate font-sans font-semibold text-[13px] text-foreground" title={view.name}>
                     {view.name}
                 </span>
                 <span className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5 font-mono text-[10px] text-muted-foreground tabular-nums">
-                    <span className={cn("shrink-0 rounded-[4px] px-1 py-px font-sans font-semibold text-[9.5px] uppercase tracking-[0.04em]", view.kind === "operator" ? "bg-primary/15 text-primary" : "bg-secondary text-muted-foreground")}>{t(`sprites.badge.${view.kind}`)}</span>
+                    <span className={cn("shrink-0 rounded-[4px] px-1 py-px font-sans font-semibold text-[9.5px]", view.kind === "operator" ? "bg-primary/15 text-primary" : "bg-secondary text-muted-foreground")}>{t(`sprites.badge.${view.kind}`)}</span>
                     <span className="whitespace-nowrap">{t("sprites.card.stories", { count: view.stories })}</span>
                     {view.aliases > 0 ? <span className="whitespace-nowrap">{t("sprites.card.aliases", { count: view.aliases })}</span> : null}
                 </span>

@@ -90,7 +90,7 @@ export function MarkdownEditor({ id, name, value, onChange, placeholder, maxLeng
         <div
             className={cn(
                 "flex w-full min-w-0 flex-col rounded-lg border border-input bg-background not-dark:bg-clip-padding shadow-xs/5 transition-shadow",
-                "focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/24",
+                "focus-within:border-ring focus-within:ring-2 focus-within:ring-ring",
                 ariaInvalid && "border-destructive/36 focus-within:border-destructive/64 focus-within:ring-destructive/16",
                 disabled && "opacity-64",
                 "dark:bg-input/32",
@@ -151,7 +151,7 @@ export function MarkdownEditor({ id, name, value, onChange, placeholder, maxLeng
                             "w-full resize-y bg-transparent px-3 py-2.5 font-sans text-[16px] text-foreground outline-none sm:text-sm",
                             "field-sizing-content min-h-32 sm:min-h-24",
                             size === "sm" && "px-2.5 py-2 sm:text-[13px]",
-                            "placeholder:text-muted-foreground/70",
+                            "placeholder:text-subtle-foreground",
                             textareaClassName,
                         )}
                         data-slot="markdown-editor-input"
@@ -160,7 +160,7 @@ export function MarkdownEditor({ id, name, value, onChange, placeholder, maxLeng
 
                 <TabsPanel value="preview" className="flex flex-col">
                     <div className={cn("min-h-32 px-3 py-2.5 font-sans text-[15px] text-foreground sm:min-h-24 sm:text-sm", size === "sm" && "px-2.5 py-2 sm:text-[13px]")} style={{ minHeight: `${Math.max(rows, 2) * 1.6}em` }}>
-                        {value.trim() ? <Markdown text={value} flush /> : <p className="m-0 font-sans text-muted-foreground/70 text-sm italic">{t("markdownEditor.nothingToPreview")}</p>}
+                        {value.trim() ? <Markdown text={value} flush /> : <p className="m-0 font-sans text-sm text-subtle-foreground italic">{t("markdownEditor.nothingToPreview")}</p>}
                     </div>
                 </TabsPanel>
             </Tabs>

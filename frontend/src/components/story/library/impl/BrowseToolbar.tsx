@@ -82,7 +82,7 @@ function SearchBox({ state, t, className, inputRef, density }: { state: IBrowseT
                 placeholder={t("browse.search.placeholder")}
                 aria-label={t("browse.search.aria")}
                 className={cn(
-                    "w-full rounded-[9px] border border-border bg-secondary/50 pr-3.5 pl-9 font-sans text-[13px] text-foreground outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring/40",
+                    "w-full rounded-[9px] border border-border bg-secondary/50 pr-3.5 pl-9 font-sans text-[13px] text-foreground outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring",
                     density === "inline" ? "h-11 pointer-coarse:h-11 sm:h-9.5" : density === "sheet" ? "h-11" : "h-9 pointer-coarse:h-11",
                 )}
             />
@@ -103,7 +103,7 @@ function ViewToggle({ state, t, className, density }: { state: IBrowseToolbarSta
                     aria-pressed={state.view === mode}
                     aria-label={inline ? t(`browse.view.${mode}`) : undefined}
                     className={cn(
-                        "flex cursor-pointer items-center justify-center gap-1.5 rounded-md font-sans font-semibold text-[12px] transition-colors focus-visible:ring-2 focus-visible:ring-ring/60",
+                        "flex cursor-pointer items-center justify-center gap-1.5 rounded-md font-sans font-semibold text-[12px] transition-colors focus-visible:ring-2 focus-visible:ring-ring",
                         inline ? "h-11 pointer-coarse:h-11 pointer-coarse:w-11 w-11 sm:h-7.5 sm:w-9" : density === "sheet" ? "h-10" : "h-7 pointer-coarse:h-10",
                         state.view === mode ? "bg-background text-foreground shadow-sm/5" : "text-muted-foreground hover:text-foreground",
                     )}
@@ -128,7 +128,7 @@ function CategoryPills({ state, t, className, density }: { state: IBrowseToolbar
                     onClick={() => state.setFilter(key)}
                     aria-pressed={state.filter === key}
                     className={cn(
-                        "min-w-11 pointer-coarse:min-w-11 shrink-0 cursor-pointer rounded-full border px-3 font-sans font-semibold text-[12px] transition-colors focus-visible:ring-2 focus-visible:ring-ring/60",
+                        "min-w-11 pointer-coarse:min-w-11 shrink-0 cursor-pointer rounded-full border px-3 font-sans font-semibold text-[12px] transition-colors focus-visible:ring-2 focus-visible:ring-ring",
                         TALL[density],
                         inline ? "sm:min-w-0" : "",
                         state.filter === key ? "border-primary/55 bg-primary/12 text-foreground" : "border-border bg-secondary/40 text-muted-foreground hover:text-foreground",
@@ -159,7 +159,7 @@ function ReadSegmented({ state, t, className, density }: { state: IBrowseToolbar
                     onClick={() => state.setReadFilter(key)}
                     aria-pressed={state.readFilter === key}
                     className={cn(
-                        "flex min-w-11 pointer-coarse:min-w-11 shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-md px-2.5 font-sans font-semibold text-[11.5px] transition-colors focus-visible:ring-2 focus-visible:ring-ring/60",
+                        "flex min-w-11 pointer-coarse:min-w-11 shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-md px-2.5 font-sans font-semibold text-[11.5px] transition-colors focus-visible:ring-2 focus-visible:ring-ring",
                         inline ? "h-11 pointer-coarse:h-11 sm:h-7 sm:min-w-0" : density === "sheet" ? "h-10" : "h-7 pointer-coarse:h-10",
                         state.readFilter === key ? "bg-background text-foreground shadow-sm/5" : "text-muted-foreground hover:text-foreground",
                     )}
@@ -181,7 +181,7 @@ function SortSelect({ state, t, className, density }: { state: IBrowseToolbarSta
             <select
                 value={state.sort}
                 onChange={(e) => state.setSort(e.target.value as LibrarySort)}
-                className={cn("min-w-0 rounded-[9px] border border-border bg-secondary/50 px-2.5 font-sans text-[12.5px] text-foreground outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring/40", TALL[density])}
+                className={cn("min-w-0 rounded-[9px] border border-border bg-secondary/50 px-2.5 font-sans text-[12.5px] text-foreground outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring", TALL[density])}
             >
                 {LIBRARY_SORTS.map((key) => (
                     <option key={key} value={key}>
@@ -304,7 +304,7 @@ export const ToolbarButton = memo(function ToolbarButton({ state }: { state: IBr
         </>
     );
     const face =
-        "relative flex shrink-0 cursor-pointer items-center justify-center rounded-[10px] border border-border bg-secondary/50 text-foreground transition-colors hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 data-popup-open:border-primary/55 data-popup-open:bg-primary/12";
+        "relative flex shrink-0 cursor-pointer items-center justify-center rounded-[10px] border border-border bg-secondary/50 text-foreground transition-colors hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring data-popup-open:border-primary/55 data-popup-open:bg-primary/12";
 
     return (
         <>

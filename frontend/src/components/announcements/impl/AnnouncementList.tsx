@@ -121,7 +121,7 @@ export function AnnouncementList({ query, server, all, shown, groups, group, onG
                                     )}
                                 >
                                     <span className="relative block aspect-video w-24 shrink-0 overflow-hidden rounded-lg bg-muted sm:w-28">
-                                        {a.banner_url ? <img src={a.banner_url} alt="" loading="lazy" decoding="async" className="size-full object-cover" /> : <Newspaper className="absolute inset-0 m-auto size-5 text-muted-foreground/60" aria-hidden="true" />}
+                                        {a.banner_url ? <img src={a.banner_url} alt="" loading="lazy" decoding="async" className="size-full object-cover" /> : <Newspaper className="absolute inset-0 m-auto size-5 text-subtle-foreground" aria-hidden="true" />}
                                     </span>
                                     <span className="flex min-w-0 flex-1 flex-col gap-1">
                                         <span className={cn("wrap-break-word line-clamp-2 text-[14px] leading-snug", unread ? "font-semibold" : "font-medium")}>{a.title}</span>

@@ -43,7 +43,7 @@ export function ExpandableDescription({ text, className, clampLines = 3, thresho
                 </p>
             )}
             {showToggle && (
-                <button type="button" onClick={() => setExpanded((v) => !v)} aria-expanded={expanded} className="self-start font-mono text-[11px] text-primary uppercase tracking-[0.12em] hover:underline">
+                <button type="button" onClick={() => setExpanded((v) => !v)} aria-expanded={expanded} className="self-start font-mono text-[11px] text-primary hover:underline">
                     {expanded ? t("description.showLess") : t("description.showMore")}
                 </button>
             )}

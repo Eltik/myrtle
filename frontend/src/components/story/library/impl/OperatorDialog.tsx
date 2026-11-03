@@ -9,6 +9,7 @@ import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "#/components/ui/collapsible";
 import { Dialog, DialogClose, DialogFooter, DialogHeader, DialogPanel, DialogPopup, DialogTitle } from "#/components/ui/dialog";
+import { Kicker } from "#/components/ui/kicker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
 import { Sheet, SheetClose, SheetFooter, SheetHeader, SheetPanel, SheetPopup, SheetTitle } from "#/components/ui/sheet";
 import { Skeleton } from "#/components/ui/skeleton";
@@ -201,7 +202,7 @@ function Shelf<T>({ loading, failed, rows, count, words, empty, emptyNote, child
         return (
             <div className="rounded-xl border border-border border-dashed p-8 text-center">
                 <p className="m-0 font-sans text-[13px] text-muted-foreground">{empty}</p>
-                {emptyNote ? <p className="mt-1.5 mb-0 font-sans text-[11.5px] text-muted-foreground/80">{emptyNote}</p> : null}
+                {emptyNote ? <p className="mt-1.5 mb-0 font-sans text-[11.5px] text-subtle-foreground">{emptyNote}</p> : null}
             </div>
         );
     }
@@ -291,7 +292,7 @@ function HandbookText({ text }: { text: string }): React.ReactElement {
                     const value = line.slice(close + 1).trim();
                     return (
                         <div key={key} className="flex flex-col gap-0.5 sm:flex-row sm:items-baseline sm:gap-3">
-                            <span className="shrink-0 font-mono text-[10px] text-primary uppercase tracking-wide sm:w-36 sm:text-right">{header}</span>
+                            <Kicker className="mb-0 shrink-0 sm:w-36 sm:text-right">{header}</Kicker>
                             <span className="min-w-0 flex-1 font-sans text-[12.5px] text-foreground leading-relaxed">{value ? <GameText text={value} /> : "-"}</span>
                         </div>
                     );

@@ -38,7 +38,7 @@ export function SubscoreCard({ sub, score, improvements, isImprovementsLoading, 
                         <Tooltip>
                             <TooltipTrigger
                                 render={
-                                    <span className="cursor-default rounded-md border border-border/50 px-1.5 py-0.5 font-mono font-semibold text-[9.5px] text-muted-foreground/80 uppercase tabular-nums tracking-wider" style={{ background: `color-mix(in oklch, ${sub.color} 8%, transparent)` }}>
+                                    <span className="cursor-default rounded-md border border-border/50 px-1.5 py-0.5 font-mono font-semibold text-[9.5px] text-subtle-foreground uppercase tabular-nums tracking-wider" style={{ background: `color-mix(in oklch, ${sub.color} 8%, transparent)` }}>
                                         {t("score.sub.shareBadge", { share: wShare.toFixed(0) })}
                                     </span>
                                 }
@@ -62,7 +62,7 @@ export function SubscoreCard({ sub, score, improvements, isImprovementsLoading, 
                                 >
                                     {pct.toFixed(1)}
                                 </span>
-                                <span className="font-medium font-mono text-base text-muted-foreground/50 tabular-nums">%</span>
+                                <span className="font-medium font-mono text-base text-subtle-foreground tabular-nums">%</span>
                             </div>
                             <span className={KICKER_TEXT}>{t(sub.descriptionKey)}</span>
                         </div>
@@ -76,8 +76,8 @@ export function SubscoreCard({ sub, score, improvements, isImprovementsLoading, 
                         </div>
 
                         <div className="flex items-center justify-between border-border/30 border-t pt-2.5">
-                            <span className="font-mono text-[10px] text-muted-foreground/70 uppercase tracking-wider transition-colors group-hover:text-foreground/85">{open ? t("score.sub.hideBreakdown") : t("score.sub.whatToImprove")}</span>
-                            <ChevronDown aria-hidden className={cn("size-3.5 shrink-0 text-muted-foreground/65 transition-[transform,color] duration-200 group-hover:text-foreground/85", open && "rotate-180")} />
+                            <span className="font-mono text-[10px] text-subtle-foreground uppercase tracking-wider transition-colors group-hover:text-foreground/85">{open ? t("score.sub.hideBreakdown") : t("score.sub.whatToImprove")}</span>
+                            <ChevronDown aria-hidden className={cn("size-3.5 shrink-0 text-subtle-foreground transition-[transform,color] duration-200 group-hover:text-foreground/85", open && "rotate-180")} />
                         </div>
                     </div>
                 </CollapsibleTrigger>

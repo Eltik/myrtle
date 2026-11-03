@@ -195,7 +195,7 @@ export function DpsCalculator({ importParam, onImportConsumed, shareParam, onSha
                         {t("dps.intro")} <b>{t("dps.note.label")}</b>{" "}
                         {rt("dps.note.credit", {
                             link: (
-                                <a className="text-blue-500 hover:underline" href="https://github.com/WhoAteMyCQQkie/ArknightsDpsCompare" target="_blank" rel="noopener">
+                                <a className="text-primary hover:underline" href="https://github.com/WhoAteMyCQQkie/ArknightsDpsCompare" target="_blank" rel="noopener">
                                     {t("dps.note.creditLink")}
                                 </a>
                             ),

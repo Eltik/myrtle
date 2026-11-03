@@ -89,7 +89,7 @@ function Bar({ state }: { state: IPlayerBarState }): React.ReactElement {
                         type="button"
                         onClick={() => (state.paused ? resume() : pause())}
                         aria-label={state.paused ? t("nowPlaying.resume", { name }) : t("nowPlaying.pause", { name })}
-                        className="flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-full border border-border bg-background text-foreground transition-colors hover:border-primary/45 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
+                        className="flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-full border border-border bg-background text-foreground transition-colors hover:border-primary/45 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
                         {state.paused ? <PlayIcon className="size-4" aria-hidden="true" /> : <PauseIcon className="size-4" aria-hidden="true" />}
                     </button>
@@ -98,7 +98,7 @@ function Bar({ state }: { state: IPlayerBarState }): React.ReactElement {
                         type="button"
                         onClick={stop}
                         aria-label={t("nowPlaying.stop", { name })}
-                        className="flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-full border border-border bg-background text-muted-foreground transition-colors hover:border-primary/45 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
+                        className="flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-full border border-border bg-background text-muted-foreground transition-colors hover:border-primary/45 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
                         <SquareIcon className="size-3.5" aria-hidden="true" />
                     </button>
@@ -193,7 +193,7 @@ function Seek({ state, t, className }: { state: IPlayerBarState; t: NowT; classN
                         <SliderPrimitive.Indicator className="rounded-full bg-primary" />
                         {loopPercent !== null && <span aria-hidden="true" className="absolute top-1/2 h-2.5 w-px -translate-x-1/2 -translate-y-1/2 rounded-full bg-foreground/45" style={{ left: `${loopPercent}%` }} title={t("nowPlaying.loopPoint")} />}
                         <SliderPrimitive.Thumb
-                            className="block size-4 shrink-0 select-none rounded-full border border-input bg-background not-dark:bg-clip-padding shadow-xs/5 outline-none transition-[box-shadow,scale] has-focus-visible:ring-3 has-focus-visible:ring-ring/24 data-dragging:scale-120 sm:size-3.5 dark:border-background dark:bg-foreground dark:has-focus-visible:ring-ring/48"
+                            className="block size-4 shrink-0 select-none rounded-full border border-input bg-background not-dark:bg-clip-padding shadow-xs/5 outline-none transition-[box-shadow,scale] has-focus-visible:ring-3 has-focus-visible:ring-ring data-dragging:scale-120 sm:size-3.5 dark:border-background dark:bg-foreground"
                             getAriaValueText={() => t("nowPlaying.seekValue", { elapsed, total })}
                             index={0}
                         />

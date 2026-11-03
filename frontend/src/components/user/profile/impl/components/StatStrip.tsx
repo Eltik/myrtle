@@ -143,18 +143,17 @@ export function StatStrip({ profile, rosterCount, isOwner = false }: IStatStripP
                 return <StatCard key={card} hidden={hidden} kicker={t("profile.strip.skins.kicker")} value={profile.non_default_skin_count} />;
             case "items":
                 return <StatCard key={card} hidden={hidden} kicker={t("profile.strip.items.kicker")} value={profile.item_count} />;
-            // The currency names below are the game's own and stay as game vocabulary.
             case "orundum":
-                return <StatCard key={card} hidden={hidden} kicker="Orundum" value={profile.orundum} {...compact(card)} />;
+                return <StatCard key={card} hidden={hidden} kicker={t("profile.strip.orundum.kicker")} value={profile.orundum} {...compact(card)} />;
             // `null` until the account syncs again: the field arrived on 2026-09-15 and is filled per refresh.
             case "originite":
-                return <StatCard key={card} hidden={hidden} kicker="Originite Prime" value={profile.originite} {...compact(card)} />;
+                return <StatCard key={card} hidden={hidden} kicker={t("profile.strip.originite.kicker")} value={profile.originite} {...compact(card)} />;
             case "lmd":
-                return <StatCard key={card} hidden={hidden} kicker="LMD" value={profile.lmd} {...compact(card)} />;
+                return <StatCard key={card} hidden={hidden} kicker={t("profile.strip.lmd.kicker")} value={profile.lmd} {...compact(card)} />;
             case "headhunting_permits":
-                return <StatCard key={card} hidden={hidden} kicker="Headhunting Permits" value={profile.gacha_tickets} />;
+                return <StatCard key={card} hidden={hidden} kicker={t("profile.strip.headhuntingPermits.kicker")} value={profile.gacha_tickets} />;
             case "ten_pull_permits":
-                return <StatCard key={card} hidden={hidden} kicker="Ten-roll Permits" value={profile.ten_pull_tickets} />;
+                return <StatCard key={card} hidden={hidden} kicker={t("profile.strip.tenRollPermits.kicker")} value={profile.ten_pull_tickets} />;
             default:
                 return null;
         }

@@ -93,7 +93,7 @@ function ProfessionRow({ prof, expanded, maxSubNameLen, onToggle }: IProfessionR
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-1.5">
                                 <span className="font-semibold text-sm">{prof.displayName}</span>
-                                {hasSubs && <ChevronDown className={cn("h-3.5 w-3.5 text-muted-foreground/40 transition-transform duration-200", expanded && "rotate-180")} />}
+                                {hasSubs && <ChevronDown className={cn("h-3.5 w-3.5 text-subtle-foreground transition-transform duration-200", expanded && "rotate-180")} />}
                             </div>
                             <div className="flex items-baseline gap-1">
                                 <span className="font-bold text-sm tabular-nums">{prof.owned}</span>
@@ -140,11 +140,11 @@ function SubProfessionRow({ sub, color, isLast }: ISubProfessionRowProps) {
             <div className="ml-6">
                 <SubProfessionIcon className="shrink-0 opacity-60" size={15} subProfession={sub.subProfessionId} />
             </div>
-            <span className={cn("max-w-20 truncate font-mono text-[10.5px] text-muted-foreground/70 sm:max-w-none")} style={{ minWidth: "var(--sub-name-w)" }}>
+            <span className={cn("max-w-20 truncate font-mono text-[10.5px] text-subtle-foreground sm:max-w-none")} style={{ minWidth: "var(--sub-name-w)" }}>
                 {shortSubName(sub.displayName)}
             </span>
             <Bar color={color} dim pct={sub.percentage} thin />
-            <span className="w-10 shrink-0 text-right font-mono text-[10.5px] text-muted-foreground/70 tabular-nums">
+            <span className="w-10 shrink-0 text-right font-mono text-[10.5px] text-subtle-foreground tabular-nums">
                 {sub.owned}/{sub.total}
             </span>
         </div>

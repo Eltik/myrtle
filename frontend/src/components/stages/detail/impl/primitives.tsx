@@ -1,5 +1,6 @@
 import { Info } from "lucide-react";
 import type React from "react";
+import { Kicker } from "#/components/ui/kicker";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -12,7 +13,7 @@ export function InfoHint({ children, label }: { children: React.ReactNode; label
         <Tooltip>
             <TooltipTrigger
                 render={(triggerProps) => (
-                    <button {...triggerProps} type="button" aria-label={label ?? t("primitives.moreInfo")} className="inline-flex cursor-help items-center text-muted-foreground/70 transition-colors hover:text-foreground focus-visible:text-foreground focus-visible:outline-none">
+                    <button {...triggerProps} type="button" aria-label={label ?? t("primitives.moreInfo")} className="inline-flex cursor-help items-center text-subtle-foreground transition-colors hover:text-foreground focus-visible:text-foreground focus-visible:outline-none">
                         <Info className="h-3.5 w-3.5" aria-hidden="true" />
                     </button>
                 )}
@@ -22,14 +23,10 @@ export function InfoHint({ children, label }: { children: React.ReactNode; label
     );
 }
 
-export function Kicker({ children }: { children: React.ReactNode }) {
-    return <span className="font-medium font-mono text-[10.5px] text-muted-foreground uppercase leading-none tracking-[0.14em]">{children}</span>;
-}
-
 export function SectionHead({ children, aside }: { children: React.ReactNode; aside?: React.ReactNode }) {
     return (
         <div className="mb-3 flex items-center gap-2.5">
-            <Kicker>{children}</Kicker>
+            <Kicker className="mb-0 leading-none">{children}</Kicker>
             <span className="h-px flex-1 bg-border" />
             {aside}
         </div>
@@ -55,10 +52,10 @@ export function StatCard({ icon, label, value, accent, info }: { icon: React.Rea
                 {icon}
             </span>
             <div className="flex min-w-0 flex-col gap-1">
-                <span className="flex items-center gap-1 font-medium font-mono text-[10px] text-muted-foreground uppercase leading-none tracking-[0.12em]">
+                <Kicker className="mb-0 flex items-center gap-1 leading-none">
                     {label}
                     {info && <InfoHint label={label}>{info}</InfoHint>}
-                </span>
+                </Kicker>
                 <span className="font-mono font-semibold text-[15px] text-foreground tabular-nums leading-none">{value}</span>
             </div>
         </div>
@@ -83,7 +80,7 @@ export function FlagRow({ label, on, hint }: { label: string; on: boolean; hint?
                 {label}
                 {hint && <InfoHint label={label}>{hint}</InfoHint>}
             </span>
-            <span className={cn("inline-flex h-5 items-center rounded-full px-2 font-medium font-mono text-[10px] uppercase tracking-widest", on ? "bg-[color-mix(in_oklch,var(--success)_16%,transparent)] text-success-foreground" : "bg-[color-mix(in_oklch,var(--muted)_50%,transparent)] text-muted-foreground")}>
+            <span className={cn("inline-flex h-5 items-center rounded-full px-2 font-medium font-mono text-[10px]", on ? "bg-[color-mix(in_oklch,var(--success)_16%,transparent)] text-success-foreground" : "bg-[color-mix(in_oklch,var(--muted)_50%,transparent)] text-muted-foreground")}>
                 {on ? t("primitives.flag.yes") : t("primitives.flag.no")}
             </span>
         </div>
@@ -93,7 +90,7 @@ export function FlagRow({ label, on, hint }: { label: string; on: boolean; hint?
 export function Meta({ label, value }: { label: string; value: string }) {
     return (
         <div className="rounded-md bg-[color-mix(in_oklch,var(--muted)_50%,transparent)] px-2.5 py-2">
-            <div className="mb-1.25 font-medium font-mono text-[10px] text-muted-foreground uppercase leading-none tracking-[0.12em]">{label}</div>
+            <Kicker className="mb-1.25 block leading-none">{label}</Kicker>
             <div className="break-all font-medium font-mono text-[12px] text-foreground leading-tight">{value}</div>
         </div>
     );
@@ -116,7 +113,7 @@ export function TileLegend() {
     const t: TypedT<typeof messages> = useT("stages");
     return (
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-[10px] border border-border bg-card px-3.5 py-2.5">
-            <Kicker>{t("legend.title")}</Kicker>
+            <Kicker className="mb-0 leading-none">{t("legend.title")}</Kicker>
             {LEGEND_SWATCHES.map((s) => (
                 <span key={s.labelKey} className="inline-flex items-center gap-1.5">
                     <span aria-hidden="true" className="h-3.5 w-3.5 rounded-xs border" style={s.style} />

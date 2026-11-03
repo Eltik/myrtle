@@ -140,7 +140,7 @@ interface IPillProps {
 
 export function Pill({ children, color, className }: IPillProps) {
     return (
-        <span className={cn("inline-flex items-center gap-1 rounded-md border border-border/50 px-1.5 py-0.5", TEXT_KICKER, "text-muted-foreground/85", className)} style={color ? { background: `color-mix(in oklch, ${color} 8%, transparent)`, color: `color-mix(in oklch, ${color} 75%, var(--foreground))` } : undefined}>
+        <span className={cn("inline-flex items-center gap-1 rounded-md border border-border/50 px-1.5 py-0.5", TEXT_KICKER, "text-subtle-foreground", className)} style={color ? { background: `color-mix(in oklch, ${color} 8%, transparent)`, color: `color-mix(in oklch, ${color} 75%, var(--foreground))` } : undefined}>
             {children}
         </span>
     );
@@ -179,7 +179,7 @@ export function StatTile({ value, label, sub, accent, active, onClick }: { value
                 {value}
             </span>
             <span className={cn(TEXT_KICKER, "text-foreground/75")}>{label}</span>
-            {sub !== undefined && <span className={cn(TEXT_BADGE, "text-muted-foreground/70 leading-tight")}>{sub}</span>}
+            {sub !== undefined && <span className={cn(TEXT_BADGE, "text-subtle-foreground leading-tight")}>{sub}</span>}
         </Wrapper>
     );
 }

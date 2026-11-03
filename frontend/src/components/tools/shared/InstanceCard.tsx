@@ -210,7 +210,7 @@ export function InstanceCard({ inst, index, isFirst, isLast, onUpdate, onToggleC
                                 <RankChip key={`m-${m}`} rank={m} selected={config.skillRank === m} lockReason={rankLockReason(m, promotion, t)} onSelect={() => onUpdate({ skillRank: m })} t={t} />
                             ))}
                         </div>
-                        {maxRank < 10 && <p className="mt-1 text-[10px] text-muted-foreground/80 leading-snug">{maxRank < 7 ? t("calc.instance.rankHint.e1") : t("calc.instance.rankHint.e2")}</p>}
+                        {maxRank < 10 && <p className="mt-1 text-[10px] text-subtle-foreground leading-snug">{maxRank < 7 ? t("calc.instance.rankHint.e1") : t("calc.instance.rankHint.e2")}</p>}
                     </FieldRow>
 
                     {optionalModules.length > 0 && (

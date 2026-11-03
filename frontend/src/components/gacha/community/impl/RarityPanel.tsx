@@ -147,7 +147,7 @@ function ComparisonChip({ label, baseline, comparison, highlight }: { label: str
         return (
             <span className="inline-flex items-center gap-1.5">
                 <span className="uppercase tracking-[0.12em] opacity-70">{label}</span>
-                <span className="text-muted-foreground/60">-</span>
+                <span className="text-subtle-foreground">-</span>
             </span>
         );
     }

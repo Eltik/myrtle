@@ -95,7 +95,7 @@ const LyricLine = memo(function LyricLine({ index, time, text, distance, t }: { 
             <button
                 aria-current={distance === 0 ? "true" : undefined}
                 aria-label={t("music.lyrics.jump", { time: clockTime(time), line: text })}
-                className={cn("pointer-coarse:min-h-11 w-full origin-left cursor-pointer rounded-md text-left text-foreground outline-none transition-[opacity,scale] duration-200 ease-out hover:opacity-90 focus-visible:ring-2 focus-visible:ring-ring/40 motion-reduce:transition-none", lineClass(distance))}
+                className={cn("pointer-coarse:min-h-11 w-full origin-left cursor-pointer rounded-md text-left text-foreground outline-none transition-[opacity,scale] duration-200 ease-out hover:opacity-90 focus-visible:ring-2 focus-visible:ring-ring motion-reduce:transition-none", lineClass(distance))}
                 data-line={index}
                 onClick={() => seek(time)}
                 type="button"

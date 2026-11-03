@@ -227,7 +227,7 @@ export function DeepDive() {
                                     </ToggleGroup>
                                     <input
                                         aria-label={t("profile.base.deep.cadence.custom")}
-                                        className="w-14 rounded-md border border-border bg-transparent px-1.5 py-0.5 text-center font-mono text-[11px] tabular-nums placeholder:text-muted-foreground/50"
+                                        className="w-14 rounded-md border border-border bg-transparent px-1.5 py-0.5 text-center font-mono text-[11px] tabular-nums placeholder:text-subtle-foreground"
                                         inputMode="numeric"
                                         onChange={(e) => {
                                             const v = Number(e.target.value);

@@ -2,6 +2,7 @@ import { ArrowUpRight } from "lucide-react";
 import { useRef, useState } from "react";
 import { ClassIcon } from "#/components/operators/list/impl/components/Icons";
 import { Dialog, DialogPopup } from "#/components/ui/dialog";
+import { Kicker } from "#/components/ui/kicker";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "#/components/ui/preview-card";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useFitText } from "#/hooks/use-fit-text";
@@ -123,7 +124,7 @@ function TierHoverCard({ tier, color, totalOps, hasDescription, onOpen }: IHover
                     {tier.name.length <= 2 ? tier.name : tier.name.charAt(0)}
                 </span>
                 <div className="min-w-0 flex-1">
-                    <p className="m-0 font-bold font-mono text-[10px] text-muted-foreground/80 uppercase leading-none tracking-[0.18em]">{t("detail.tier.kicker")}</p>
+                    <Kicker className="mb-0 block leading-none">{t("detail.tier.kicker")}</Kicker>
                     <h3 className="wrap-break-word m-0 mt-1.5 font-bold font-features-['ss01','cv11'] font-sans text-[16.5px] text-foreground leading-[1.15] tracking-[-0.01em]">{tier.name}</h3>
                 </div>
                 <span className="shrink-0 self-start rounded-full border border-border bg-card px-2 py-1 font-mono font-semibold text-[10.5px] text-muted-foreground uppercase tabular-nums leading-none tracking-[0.06em]">
@@ -172,7 +173,7 @@ function TierHoverCard({ tier, color, totalOps, hasDescription, onOpen }: IHover
                 )}
             </div>
 
-            <div className="flex items-center justify-between gap-2 border-border border-t bg-muted/60 px-4 py-2.5 font-bold font-sans text-[10.5px] text-muted-foreground uppercase leading-none tracking-[0.14em] transition-colors group-hover:bg-[color-mix(in_srgb,var(--ring)_10%,transparent)] group-hover:text-foreground">
+            <div className="flex items-center justify-between gap-2 border-border border-t bg-muted/60 px-4 py-2.5 font-bold font-sans text-[11px] text-muted-foreground leading-none transition-colors group-hover:bg-[color-mix(in_srgb,var(--ring)_10%,transparent)] group-hover:text-foreground">
                 <span>{t("detail.tier.viewDetails")}</span>
                 <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
             </div>

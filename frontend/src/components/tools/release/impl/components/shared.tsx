@@ -37,7 +37,7 @@ export function AutoTag({ source, className }: { source: AutoNameSource; classNa
     const title = t(AUTO_TAG_KEYS[source].title);
     return (
         <Tooltip>
-            <TooltipTrigger render={<span className={cn("inline-flex shrink-0 cursor-help items-center rounded-sm border border-border/60 px-1 py-px font-sans text-[9.5px] text-muted-foreground/80 leading-[1.3]", className)} translate="no" />}>{label}</TooltipTrigger>
+            <TooltipTrigger render={<span className={cn("inline-flex shrink-0 cursor-help items-center rounded-sm border border-border/60 px-1 py-px font-sans text-[9.5px] text-subtle-foreground leading-[1.3]", className)} translate="no" />}>{label}</TooltipTrigger>
             <TooltipPopup className="max-w-xs">{title}</TooltipPopup>
         </Tooltip>
     );

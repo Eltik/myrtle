@@ -10,21 +10,27 @@
 }
 .preview[data-rarity="6"] {
     --c: var(--rarity-6);
+    --c-ink: var(--rarity-6-ink);
 }
 .preview[data-rarity="5"] {
     --c: var(--rarity-5);
+    --c-ink: var(--rarity-5-ink);
 }
 .preview[data-rarity="4"] {
     --c: var(--rarity-4);
+    --c-ink: var(--rarity-4-ink);
 }
 .preview[data-rarity="3"] {
     --c: var(--rarity-3);
+    --c-ink: var(--rarity-3-ink);
 }
 .preview[data-rarity="2"] {
     --c: var(--rarity-2);
+    --c-ink: var(--rarity-2-ink);
 }
 .preview[data-rarity="1"] {
     --c: var(--rarity-1);
+    --c-ink: var(--rarity-1-ink);
 }
 .preview::before {
     content: "";
@@ -69,7 +75,8 @@
     font-weight: 600;
     font-size: 22px;
     line-height: 1;
-    color: var(--c, var(--foreground));
+    /* Text takes the ink: the plain rarity hue measures 1.39 to 2.52 on the light popover. */
+    color: var(--c-ink, var(--foreground));
 }
 .faction {
     position: absolute;
@@ -107,7 +114,7 @@
 .rarity {
     display: inline-flex;
     gap: 1px;
-    color: var(--c, var(--primary));
+    color: var(--c-ink, var(--foreground));
     font-size: 11px;
     line-height: 1;
     margin-top: 1px;

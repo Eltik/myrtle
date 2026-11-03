@@ -3,6 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { BookView } from "#/components/story/export/BookView";
 import type { messages as readerMessages } from "#/components/story/reader/reader.messages";
 import { StoryReader } from "#/components/story/reader/StoryReader";
+import { RouteError } from "#/components/ui/route-error";
 import { storyIndexQueryOptions, storyQueryOptions } from "#/lib/api/story";
 import { useGamedataServer, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -54,7 +55,7 @@ export function exportGroupOf(index: StoryIndex, storyId: string): BookGroup | n
 
 export const Route = createFileRoute("/stories_/$storyId")({
     component: RouteComponent,
-    errorComponent: RootErrorComponent,
+    errorComponent: RouteError,
     // `?halt=N` resumes at halt N (0-based); absent means the title card, or the
     // resume prompt. It is read as MISSING rather than falsy: `Number(null)` is
     // 0 and finite, which would pin every visit to halt 0.
@@ -99,16 +100,6 @@ export const Route = createFileRoute("/stories_/$storyId")({
         };
     },
 });
-
-function RootErrorComponent({ error }: { error: unknown }) {
-    console.error("Router error:", error);
-    return (
-        <div style={{ padding: 20 }}>
-            <h1>Something went wrong</h1>
-            <pre style={{ color: "red" }}>{error instanceof Error ? error.message : JSON.stringify(error, null, 2)}</pre>
-        </div>
-    );
-}
 
 function RouteComponent() {
     const { storyId } = Route.useParams();

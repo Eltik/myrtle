@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { CheckIcon, ChevronDownIcon, HistoryIcon, RotateCcwIcon } from "lucide-react";
 import { memo, useMemo } from "react";
+import { Kicker } from "#/components/ui/kicker";
 import { Menu, MenuItem, MenuPopup, MenuTrigger } from "#/components/ui/menu";
 import type { ITierListVersion } from "#/lib/api/tier-lists";
 import { type IFormatters, useFormatters, useT } from "#/lib/i18n";
@@ -68,10 +69,10 @@ export function VersionsBar({ slug, versions, selectedVersion, isLatestView }: I
     return (
         <section aria-label={t("detail.versions.sectionLabel")} className="page-gutter mt-4 [--page-max:1200px] sm:mt-6">
             <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-card/60 px-3 py-2 backdrop-blur-sm">
-                <span className="inline-flex items-center gap-1.5 font-bold font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.14em]">
+                <Kicker className="mb-0 inline-flex items-center gap-1.5">
                     <HistoryIcon className="h-3.5 w-3.5" aria-hidden="true" />
                     {t("detail.versions.heading")}
-                </span>
+                </Kicker>
 
                 <Menu>
                     <MenuTrigger

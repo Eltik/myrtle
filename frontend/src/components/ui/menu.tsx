@@ -165,7 +165,7 @@ export function MenuSeparator({ className, ...props }: MenuPrimitive.Separator.P
 }
 
 export function MenuShortcut({ className, ...props }: React.ComponentProps<"kbd">): React.ReactElement {
-    return <kbd className={cn("ms-auto font-medium font-sans text-muted-foreground/72 text-xs tracking-widest", className)} data-slot="menu-shortcut" {...props} />;
+    return <kbd className={cn("ms-auto font-medium font-sans text-subtle-foreground text-xs tracking-widest", className)} data-slot="menu-shortcut" {...props} />;
 }
 
 export function MenuSub(props: MenuPrimitive.SubmenuRoot.Props): React.ReactElement {

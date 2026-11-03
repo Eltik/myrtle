@@ -33,7 +33,7 @@ export function ReleaseNotesList(): React.ReactElement {
                 <article key={note.id} className="overflow-hidden rounded-2xl border border-border bg-card">
                     {note.media && <img alt={t(note.media.altKey)} className="aspect-video w-full border-border border-b object-cover" src={note.media.src} />}
                     <div className="px-5 py-5 sm:px-6">
-                        <span className="font-medium text-[0.69rem] text-muted-foreground uppercase tracking-[0.18em]">{formatNoteDate(note.date, locale)}</span>
+                        <span className="font-medium text-[0.75rem] text-muted-foreground">{formatNoteDate(note.date, locale)}</span>
                         <h2 className="mt-2 font-heading font-semibold text-foreground text-lg leading-snug">{t(note.titleKey)}</h2>
                         <Markdown className="mt-2 text-muted-foreground text-sm leading-relaxed" flush text={t(note.leadKey)} />
 

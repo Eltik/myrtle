@@ -11,7 +11,7 @@ import { type IKpiCell, KpiCell, KpiStrip } from "./impl/KpiStrip";
 import { PageHeader } from "./impl/PageHeader";
 import type { messages } from "./StatsPage.messages";
 
-const SKELETON = <span className="text-muted-foreground/60">-</span>;
+const SKELETON = <span className="text-subtle-foreground">-</span>;
 
 export function StatsPage() {
     const t: TypedT<typeof messages> = useT("stats");

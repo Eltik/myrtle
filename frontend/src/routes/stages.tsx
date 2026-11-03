@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { StageList } from "#/components/stages/list/StageList";
+import { RouteError } from "#/components/ui/route-error";
 import { stageIndexQueryOptions } from "#/lib/api/stages";
 import { metaT } from "#/lib/meta";
 import { defaultOgURL } from "#/lib/og";
@@ -7,7 +8,7 @@ import { seo } from "#/lib/seo";
 
 export const Route = createFileRoute("/stages")({
     component: RouteComponent,
-    errorComponent: RootErrorComponent,
+    errorComponent: RouteError,
     loader: async ({ context }) => {
         await context.queryClient.ensureQueryData(stageIndexQueryOptions(context.i18n.gamedataServer));
     },
@@ -26,16 +27,6 @@ export const Route = createFileRoute("/stages")({
         };
     },
 });
-
-function RootErrorComponent({ error }: { error: unknown }) {
-    console.error("Router error:", error);
-    return (
-        <div style={{ padding: 20 }}>
-            <h1>Something went wrong</h1>
-            <pre style={{ color: "red" }}>{error instanceof Error ? error.message : JSON.stringify(error, null, 2)}</pre>
-        </div>
-    );
-}
 
 function RouteComponent() {
     return <StageList />;

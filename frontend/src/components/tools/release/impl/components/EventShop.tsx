@@ -42,7 +42,7 @@ export function EventShop({ event }: { event: { shop: EventShopData | null; miss
                         </dt>
                         <dd className="m-0 text-right text-foreground">{f.number(buyout.total)}</dd>
                         <dt className="font-sans text-muted-foreground">{t("release.events.shop.missions")}</dt>
-                        <dd className="m-0 text-right text-emerald-500">{t("release.events.shop.missionsValue", { count: f.number(buyout.missions) })}</dd>
+                        <dd className="m-0 text-right text-success-foreground">{t("release.events.shop.missionsValue", { count: f.number(buyout.missions) })}</dd>
                         <dt className="font-sans font-semibold text-foreground">{t("release.events.shop.toFarm")}</dt>
                         <dd className="m-0 text-right font-semibold text-foreground">{t("release.events.shop.toFarmValue", { sanity: f.number(buyout.sanity) })}</dd>
                     </dl>

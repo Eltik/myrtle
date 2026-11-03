@@ -55,6 +55,10 @@
   --input: oklch(0.88 0.005 285);
   --muted: oklch(0.94 0.005 285);
   --muted-foreground: oklch(0.45 0.01 285);
+  /* The quieter step under muted-foreground, for meta text that used to be
+     muted-foreground at an alpha (/72 measured 3.56 to 3.69, /50 2.32).
+     On background / card / muted: 5.29 / 5.52 / 4.63. */
+  --subtle-foreground: oklch(0.52 0.01 285);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0.005 285);
   --primary: oklch(0.58 0.22 25);
@@ -111,6 +115,30 @@
   --dmg-magic: #b78fe6;
   --dmg-heal: #7ed3a2;
   --dmg-none: #8a8a8a;
+
+  /* The other data hues as TEXT, built like the rarity inks: same oklch hue,
+     lightness lowered until the colour clears 4.6:1 on the page and the card
+     AND 4.5:1 on a 15% tint of its own plain hue (the badge and chip fills).
+     The plain hues stay for dots, bars, borders and tints. Ratios: on
+     background / on card / on the 15% tint over card. The plain hue on card
+     measured: enemy-normal 3.24, enemy-elite 2.53, physic 2.37, magic 2.60,
+     heal 1.79, none 3.45, events 2.02, ra 2.27, sss 3.22, cc 2.17, banner
+     active 1.88, upcoming 1.88, returning 2.08, featured 6★ 2.03. */
+  --enemy-normal-ink: oklch(0.53 0.01 285); /* 5.07 / 5.29 / 4.57 */
+  --enemy-elite-ink: oklch(0.53 0.111 75); /* 5.16 / 5.39 / 4.74 */
+  --enemy-boss-ink: oklch(0.53 0.214 25); /* 5.66 / 5.91 / 4.66 */
+  --dmg-physic-ink: oklch(0.54 0.093 65); /* 4.96 / 5.18 / 4.61 */
+  --dmg-magic-ink: oklch(0.54 0.13 304.5); /* 5.13 / 5.36 / 4.72 */
+  --dmg-heal-ink: oklch(0.53 0.109 157.5); /* 4.79 / 5.00 / 4.60 */
+  --dmg-none-ink: oklch(0.52 0 0); /* 5.27 / 5.51 / 4.72 */
+  --stage-events-ink: oklch(0.54 0.123 62.9); /* 5.02 / 5.24 / 4.73 */
+  --stage-ra-ink: oklch(0.52 0.125 156.3); /* 4.96 / 5.18 / 4.62 */
+  --stage-sss-ink: oklch(0.53 0.145 260.2); /* 5.14 / 5.37 / 4.61 */
+  --stage-cc-ink: oklch(0.54 0.115 72.5); /* 4.96 / 5.18 / 4.64 */
+  --banner-active-ink: oklch(0.52 0.163 145); /* 4.92 / 5.14 / 4.67 */
+  --banner-upcoming-ink: oklch(0.53 0.096 220); /* 4.90 / 5.11 / 4.57 */
+  --banner-returning-ink: oklch(0.55 0.12 300); /* 4.88 / 5.09 / 4.61 */
+  --featured-six-ink: oklch(0.54 0.111 80); /* 4.92 / 5.14 / 4.61 */
 }
 
 * {
@@ -206,6 +234,7 @@ pre code {
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
   --color-muted-foreground: var(--muted-foreground);
+  --color-subtle-foreground: var(--subtle-foreground);
   --color-muted: var(--muted);
   --color-input: var(--input);
   --color-foreground: var(--foreground);
@@ -229,6 +258,21 @@ pre code {
   --color-rarity-3-ink: var(--rarity-3-ink);
   --color-rarity-2-ink: var(--rarity-2-ink);
   --color-rarity-1-ink: var(--rarity-1-ink);
+  --color-enemy-normal-ink: var(--enemy-normal-ink);
+  --color-enemy-elite-ink: var(--enemy-elite-ink);
+  --color-enemy-boss-ink: var(--enemy-boss-ink);
+  --color-dmg-physic-ink: var(--dmg-physic-ink);
+  --color-dmg-magic-ink: var(--dmg-magic-ink);
+  --color-dmg-heal-ink: var(--dmg-heal-ink);
+  --color-dmg-none-ink: var(--dmg-none-ink);
+  --color-stage-events-ink: var(--stage-events-ink);
+  --color-stage-ra-ink: var(--stage-ra-ink);
+  --color-stage-sss-ink: var(--stage-sss-ink);
+  --color-stage-cc-ink: var(--stage-cc-ink);
+  --color-banner-active-ink: var(--banner-active-ink);
+  --color-banner-upcoming-ink: var(--banner-upcoming-ink);
+  --color-banner-returning-ink: var(--banner-returning-ink);
+  --color-featured-six-ink: var(--featured-six-ink);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -347,6 +391,8 @@ pre code {
   --input: oklch(0.22 0.005 285);
   --muted: oklch(0.22 0.005 285);
   --muted-foreground: oklch(0.65 0.01 285);
+  /* On background / card and popover / muted: 5.51 / 5.24 / 4.75. */
+  --subtle-foreground: oklch(0.62 0.01 285);
   --popover: oklch(0.17 0.005 285);
   --popover-foreground: oklch(0.97 0.005 285);
   --primary: oklch(0.75 0.15 25);
@@ -380,6 +426,24 @@ pre code {
   --rarity-3-ink: var(--rarity-3);
   --rarity-2-ink: var(--rarity-2);
   --rarity-1-ink: var(--rarity-1);
+  /* The plain data hues already read on the dark card (5.54 to 10.68) and on
+     their own 15% tint over it (4.63 to 8.04), so dark text takes them as-is.
+     Ratios: on card / on the 15% tint. */
+  --enemy-normal-ink: var(--enemy-normal); /* 8.58 / 6.70 */
+  --enemy-elite-ink: var(--enemy-elite); /* 7.55 / 6.06 */
+  --enemy-boss-ink: var(--enemy-boss); /* 8.07 / 6.43 */
+  --dmg-physic-ink: var(--dmg-physic); /* 8.08 / 6.39 */
+  --dmg-magic-ink: var(--dmg-magic); /* 7.36 / 5.91 */
+  --dmg-heal-ink: var(--dmg-heal); /* 10.68 / 8.04 */
+  --dmg-none-ink: var(--dmg-none); /* 5.54 / 4.63 */
+  --stage-events-ink: #f7a452; /* 9.46 / 7.31 */
+  --stage-ra-ink: #5bbf86; /* 8.42 / 6.63 */
+  --stage-sss-ink: #5a8fe8; /* 5.95 / 4.94 */
+  --stage-cc-ink: #e8a23c; /* 8.80 / 6.89 */
+  --banner-active-ink: oklch(0.78 0.18 145); /* 10.18 / 7.77 */
+  --banner-upcoming-ink: oklch(0.78 0.16 220); /* 10.18 / 7.86 */
+  --banner-returning-ink: oklch(0.78 0.12 300); /* 9.20 / 7.11 */
+  --featured-six-ink: oklch(0.78 0.18 80); /* 9.40 / 7.30 */
 }
 
 @layer base {

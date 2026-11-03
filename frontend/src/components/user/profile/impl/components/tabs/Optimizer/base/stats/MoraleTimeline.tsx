@@ -49,7 +49,7 @@ export function MoraleTimeline({ catalog, timeline }: { catalog: Catalog; timeli
                         </div>
                         <span className={cn("shrink-0 font-mono font-semibold text-[11px] tabular-nums", low ? "text-red-500/90" : "text-foreground/80")}>
                             {row.end.toFixed(1)}
-                            <span className="text-[9px] text-muted-foreground/60">/{MORALE_MAX}</span>
+                            <span className="text-[9px] text-subtle-foreground">/{MORALE_MAX}</span>
                         </span>
                     </div>
                 );

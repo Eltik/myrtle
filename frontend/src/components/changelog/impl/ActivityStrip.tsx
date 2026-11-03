@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { Kicker } from "#/components/ui/kicker";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import type { IChangelogCommit } from "#/lib/api/changelog";
 import { useFormatters, useT } from "#/lib/i18n";
@@ -39,7 +40,7 @@ export function ActivityStrip({ commits, days }: { commits: IChangelogCommit[]; 
     return (
         <div>
             <div className="mb-2 flex items-baseline justify-between">
-                <span className="font-medium font-sans text-[12px] text-muted-foreground uppercase tracking-[0.14em]">{t("activity.title")}</span>
+                <Kicker className="mb-0">{t("activity.title")}</Kicker>
                 {busiest && busiest.count > 0 ? (
                     <span className="font-sans text-[12px] text-muted-foreground">
                         {t("activity.busiest")} <span className="font-medium text-foreground/80">{busiest.label}</span> · {busiest.count}

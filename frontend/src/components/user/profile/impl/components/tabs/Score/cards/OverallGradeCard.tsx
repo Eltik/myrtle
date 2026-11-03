@@ -49,7 +49,7 @@ export function OverallGradeCard({ score, standing }: IOverallGradeCardProps) {
                         </div>
                     </div>
                     {standing && <StandingRow standing={standing} />}
-                    {calcAt && <span className="font-mono text-[10.5px] text-muted-foreground/60 tabular-nums">{t("score.overall.calculated", { date: calcAt })}</span>}
+                    {calcAt && <span className="font-mono text-[10.5px] text-subtle-foreground tabular-nums">{t("score.overall.calculated", { date: calcAt })}</span>}
                 </div>
 
                 <div className="flex flex-col justify-center gap-4 sm:border-border/50 sm:border-l sm:pl-8">
@@ -81,7 +81,7 @@ function StandingRow({ standing }: { standing: IPlayerStanding }) {
             )}
             <span>{t("score.standing.top", { pct: topPct < 1 ? topPct.toFixed(1) : Math.ceil(topPct) })}</span>
             {rank_delta != null && rank_delta !== 0 && (
-                <span className={rank_delta > 0 ? "text-emerald-500" : "text-red-400"}>
+                <span className={rank_delta > 0 ? "text-success-foreground" : "text-destructive-foreground"}>
                     {rank_delta > 0 ? `▲${rank_delta}` : `▼${Math.abs(rank_delta)}`} {t("score.standing.thisWeek")}
                 </span>
             )}
@@ -109,7 +109,7 @@ function GradeLadder({ total, color }: { total: number; color: string }) {
             </div>
             <div className="relative h-3.5">
                 {GRADE_LADDER.map((g) => (
-                    <span key={g.grade} className={cn("absolute -translate-x-1/2 font-mono text-[9px] tabular-nums", total >= g.min ? "text-foreground/75" : "text-muted-foreground/55")} style={{ left: `${g.min * 100}%` }}>
+                    <span key={g.grade} className={cn("absolute -translate-x-1/2 font-mono text-[9px] tabular-nums", total >= g.min ? "text-foreground/75" : "text-subtle-foreground")} style={{ left: `${g.min * 100}%` }}>
                         {g.grade}
                     </span>
                 ))}

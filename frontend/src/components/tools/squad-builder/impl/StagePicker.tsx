@@ -201,7 +201,7 @@ const StageTile = React.memo(function StageTile({ stage, preview, hardLabel, onP
         >
             <span className="relative block aspect-[16/9] w-full overflow-hidden bg-muted">
                 {/* Sits under the map, so it shows where a stage has no preview or the image fails. */}
-                <span aria-hidden="true" className="absolute inset-0 flex items-center justify-center text-muted-foreground/40">
+                <span aria-hidden="true" className="absolute inset-0 flex items-center justify-center text-subtle-foreground">
                     <MapIcon className="size-7" strokeWidth={1.5} />
                 </span>
                 {preview && <StagePreview src={preview} className="opacity-90 transition-opacity group-hover:opacity-100" />}

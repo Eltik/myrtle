@@ -146,7 +146,7 @@ function MedalRow({ medal, mode }: { medal: IMedalGap; mode: MedalMode }) {
                         </Tooltip>
                     )}
                 </div>
-                {medal.get_method && <p className={cn(TEXT_META, "mt-0.5 text-muted-foreground/85")}>{medal.get_method}</p>}
+                {medal.get_method && <p className={cn(TEXT_META, "mt-0.5 text-subtle-foreground")}>{medal.get_method}</p>}
             </div>
             {typeof medal.owned_pct === "number" && (
                 <Tooltip>

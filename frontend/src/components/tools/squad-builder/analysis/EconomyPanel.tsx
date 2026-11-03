@@ -252,7 +252,7 @@ function CostLadder({ seats, lineDp, floor, bonus, onStartDpChange, giverOf, ctx
                             </Tooltip>
                         </div>
                         <div className="flex items-baseline justify-end gap-1 font-mono tabular-nums" style={{ gridRow: row, gridColumn: 3 }} {...hover}>
-                            {s.base_cost !== s.cost && <span className="text-[11px] text-muted-foreground/70 line-through">{f.number(s.base_cost)}</span>}
+                            {s.base_cost !== s.cost && <span className="text-[11px] text-subtle-foreground line-through">{f.number(s.base_cost)}</span>}
                             <span className={cn("text-[13px]", open ? "text-primary" : "text-foreground")}>{f.number(s.cost)}</span>
                         </div>
                     </React.Fragment>

@@ -56,8 +56,8 @@ export function EventDetailDialog({ event, onClose, onBrowse }: { event: IEventV
                     <div className="absolute right-4.5 bottom-4 left-4.5 sm:right-6 sm:bottom-4.5 sm:left-6">
                         <div className="mb-2 flex flex-wrap items-center gap-2">
                             <span
-                                className="inline-flex h-5.5 items-center gap-1.5 rounded-full border px-2.5 font-mono font-semibold text-[9.5px] uppercase tracking-[0.09em]"
-                                style={{ borderColor: `color-mix(in oklch, ${ev.tone} 55%, transparent)`, background: `color-mix(in oklch, ${ev.tone} 16%, rgba(0,0,0,0.4))`, color: ev.tone }}
+                                className="inline-flex h-5.5 items-center gap-1.5 rounded-full border px-2.5 font-mono font-semibold text-[9.5px] text-white uppercase tracking-[0.09em]"
+                                style={{ borderColor: `color-mix(in oklch, ${ev.tone} 55%, transparent)`, background: `color-mix(in oklch, ${ev.tone} 16%, rgba(0,0,0,0.4))` }}
                             >
                                 <Icon className="h-3 w-3" aria-hidden="true" />
                                 {STAGE_GROUP_LABEL[ev.group]}
@@ -75,7 +75,7 @@ export function EventDetailDialog({ event, onClose, onBrowse }: { event: IEventV
 
                     <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                         <Stat label={t("event.stat.operations")} value={String(ev.stageCount)} />
-                        <Stat label={t("event.stat.bosses")} value={ev.bossCount > 0 ? String(ev.bossCount) : "-"} tone={ev.bossCount > 0 ? "var(--enemy-boss)" : undefined} />
+                        <Stat label={t("event.stat.bosses")} value={ev.bossCount > 0 ? String(ev.bossCount) : "-"} tone={ev.bossCount > 0 ? "var(--enemy-boss-ink)" : undefined} />
                         <Stat label={t("event.stat.codes")} value={ev.codeRange || "-"} />
                         <Stat label={t("event.stat.sanity")} value={totalSanity > 0 ? `${totalSanity} ◆` : t("event.stat.sanity.free")} />
                     </div>
@@ -97,7 +97,7 @@ export function EventDetailDialog({ event, onClose, onBrowse }: { event: IEventV
                     <div className="flex flex-col gap-3 border-border border-t pt-4 sm:flex-row sm:items-center sm:justify-between">
                         <span className="font-mono text-[10.5px] text-muted-foreground">
                             {ev.bossCount > 0 && (
-                                <span className="mr-3 inline-flex items-center gap-1" style={{ color: "var(--enemy-boss)" }}>
+                                <span className="mr-3 inline-flex items-center gap-1" style={{ color: "var(--enemy-boss-ink)" }}>
                                     <Skull className="h-3 w-3" aria-hidden="true" /> {t("event.bossInside", { count: ev.bossCount })}
                                 </span>
                             )}

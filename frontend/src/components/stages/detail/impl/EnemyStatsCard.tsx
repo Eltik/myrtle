@@ -1,7 +1,7 @@
 import { enemyIconURL, type IEnemy } from "#/lib/api/enemies";
 import { useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import { ENEMY_LEVEL_ACCENT } from "./constants";
+import { ENEMY_LEVEL_ACCENT, ENEMY_LEVEL_INK } from "./constants";
 import type { messages } from "./EnemyStatsCard.messages";
 import type { IStageEnemyStats } from "./types";
 
@@ -19,6 +19,7 @@ export function EnemyStatsCard({ id, enemy, stats }: { id: string; enemy: IEnemy
     const f = useFormatters();
     const level = enemy?.enemyLevel ?? "NORMAL";
     const accent = ENEMY_LEVEL_ACCENT[level];
+    const ink = ENEMY_LEVEL_INK[level];
     return (
         <div className="flex w-60 flex-col gap-2.5">
             <div className="flex items-center gap-2.5">
@@ -28,7 +29,7 @@ export function EnemyStatsCard({ id, enemy, stats }: { id: string; enemy: IEnemy
                 <div className="flex min-w-0 flex-col gap-1">
                     <span className="truncate font-sans font-semibold text-[13px] text-foreground leading-tight">{enemy?.name ?? id}</span>
                     <span className="flex items-center gap-1.5 font-medium font-mono text-[8.5px] uppercase leading-none tracking-[0.14em]">
-                        <span style={{ color: accent }}>{level}</span>
+                        <span style={{ color: ink }}>{level}</span>
                         {stats && stats.phaseCount > 1 && <span className="text-muted-foreground">· L{stats.levelIndex}</span>}
                     </span>
                 </div>

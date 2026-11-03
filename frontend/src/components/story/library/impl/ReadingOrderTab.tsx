@@ -136,7 +136,7 @@ function OrderSection({ section, dates, progress, gameRead, expanded, onExpand }
             <p className="mt-1 mb-0 font-mono text-[10.5px] text-muted-foreground tabular-nums">
                 {totals.total === null ? t("reading.section.totalsUncounted", { done: totals.done, groups: totals.groups }) : t("reading.section.totals", { words: f.number(totals.total), time: humanTime(minutesFor(totals.total, wpm)), done: totals.done, groups: totals.groups })}
             </p>
-            {note ? <p className="mt-1 mb-0 max-w-160 font-sans text-[11.5px] text-muted-foreground/85 leading-relaxed">{note}</p> : null}
+            {note ? <p className="mt-1 mb-0 max-w-160 font-sans text-[11.5px] text-subtle-foreground leading-relaxed">{note}</p> : null}
             <ul className="m-0 mt-2 flex list-none flex-col gap-1.5 p-0">
                 {section.rows.map((row) => (
                     <OrderRow key={row.group.id} row={row} progress={progress} gameRead={gameRead} open={expanded === row.group.id} onToggle={() => onExpand(expanded === row.group.id ? null : row.group.id)} />
@@ -172,13 +172,13 @@ function OrderRow({ row, progress, gameRead, open, onToggle }: { row: IOrderRow;
                 onClick={onToggle}
                 aria-expanded={open}
                 aria-label={open ? t("reading.row.collapse", { name: group.name }) : t("reading.row.expand", { name: group.name })}
-                className={cn("flex w-full cursor-pointer items-center gap-3 rounded-xl border border-border bg-card p-2 text-left ring-inset transition-colors hover:border-primary/45 focus-visible:ring-2 focus-visible:ring-ring/60 max-sm:min-h-11", open && "border-primary/70")}
+                className={cn("flex w-full cursor-pointer items-center gap-3 rounded-xl border border-border bg-card p-2 text-left ring-inset transition-colors hover:border-primary/45 focus-visible:ring-2 focus-visible:ring-ring max-sm:min-h-11", open && "border-primary/70")}
             >
                 <span className="relative block aspect-16/9 w-18 shrink-0 overflow-hidden rounded-lg bg-secondary/55 sm:w-24">
                     {plate ? (
                         <img src={plate} alt="" aria-hidden="true" loading="lazy" decoding="async" data-source={model.plate.kind} className="h-full w-full object-cover" />
                     ) : (
-                        <span data-source="none" className="flex h-full w-full items-center justify-center bg-linear-to-br from-secondary/70 to-card px-1 text-center font-black font-heading text-[10px] text-muted-foreground/70 uppercase tracking-tight sm:text-[12px]">
+                        <span data-source="none" className="flex h-full w-full items-center justify-center bg-linear-to-br from-secondary/70 to-card px-1 text-center font-black font-heading text-[10px] text-subtle-foreground uppercase tracking-tight sm:text-[12px]">
                             {model.code}
                         </span>
                     )}

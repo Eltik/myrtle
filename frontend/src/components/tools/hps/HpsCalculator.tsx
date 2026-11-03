@@ -185,7 +185,7 @@ export function HpsCalculator({ shareParam, onShareParamChange }: IHpsCalculator
                         {t("hps.intro")} <b>{t("hps.note.label")}</b>{" "}
                         {rt("hps.note.credit", {
                             link: (
-                                <a className="text-blue-500 hover:underline" href="https://github.com/WhoAteMyCQQkie/ArknightsDpsCompare" target="_blank" rel="noopener">
+                                <a className="text-primary hover:underline" href="https://github.com/WhoAteMyCQQkie/ArknightsDpsCompare" target="_blank" rel="noopener">
                                     {t("hps.note.creditLink")}
                                 </a>
                             ),

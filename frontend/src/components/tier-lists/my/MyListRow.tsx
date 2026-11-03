@@ -96,7 +96,7 @@ export function MyListRow({ tl, onEdit, onDelete, onCopyLink }: IMyListRowProps)
                     </TooltipTrigger>
                     <TooltipPopup>{t("my.row.favorites", { count: f.number(tl.favorites) })}</TooltipPopup>
                 </Tooltip>
-                <span className="w-16 shrink-0 text-right text-[10.5px] text-muted-foreground/80">{tl.updated}</span>
+                <span className="w-16 shrink-0 text-right text-[10.5px] text-subtle-foreground">{tl.updated}</span>
             </div>
 
             <Menu>

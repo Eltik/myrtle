@@ -1,6 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { ChevronDown } from "lucide-react";
-import { Fragment, useRef, useState } from "react";
+import { Fragment, useState } from "react";
 import { Kbd } from "#/components/ui/kbd";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "#/components/ui/menu";
 import { useIsMac } from "#/hooks/use-is-mac";
@@ -41,17 +41,6 @@ interface IMainNavProps extends React.ComponentProps<"nav"> {
 
 function HoverDropdown({ item, isActive, onOpenCommand }: { item: INavItem; isActive: boolean; onOpenCommand?: () => void }) {
     const [open, setOpen] = useState(false);
-    const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-    const openNow = () => {
-        if (closeTimer.current) clearTimeout(closeTimer.current);
-        setOpen(true);
-    };
-    const closeSoon = () => {
-        if (closeTimer.current) clearTimeout(closeTimer.current);
-        closeTimer.current = setTimeout(() => setOpen(false), 140);
-    };
-
     const isMac = useIsMac();
     const t: TypedT<typeof messages> = useT("nav");
 
@@ -74,54 +63,54 @@ function HoverDropdown({ item, isActive, onOpenCommand }: { item: INavItem; isAc
     );
 
     return (
-        // biome-ignore lint/a11y/noStaticElementInteractions: hover timers supplement the already-accessible DropdownMenu
-        <div role="presentation" onMouseEnter={openNow} onMouseLeave={closeSoon}>
-            <DropdownMenu open={open} onOpenChange={setOpen} modal={false}>
-                <DropdownMenuTrigger className={cn(styles.navLink, isActive && styles.isActive)} aria-expanded={open}>
-                    {item.label}
-                    <ChevronDown className={cn(styles.chev, open && "opacity-90")} />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" alignOffset={-8} sideOffset={10} className={cn("p-2", hasIcons ? "min-w-95" : "min-w-52")} onMouseEnter={openNow} onMouseLeave={closeSoon}>
-                    {/* Each section is a menu group labelled by its heading, so a
+        // Hover and click both go through Base UI. The old hand-rolled hover timers opened the
+        // menu on mouseenter, so the click that followed toggled it straight back shut and a
+        // mouse click read as a dead control (audit-002 Z1); Base UI's hover keeps it open.
+        <DropdownMenu open={open} onOpenChange={setOpen} modal={false}>
+            <DropdownMenuTrigger className={cn(styles.navLink, isActive && styles.isActive)} openOnHover delay={0} closeDelay={140}>
+                {item.label}
+                <ChevronDown className={cn(styles.chev, open && "opacity-90")} />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" alignOffset={-8} sideOffset={10} className={cn("p-2", hasIcons ? "min-w-95" : "min-w-52")}>
+                {/* Each section is a menu group labelled by its heading, so a
                         screen reader announces "Game Data, group" on entering it,
                         while arrow keys still run straight through every group. */}
-                    {showSectionTitles ? (
-                        sections.map((section, i) => (
-                            <Fragment key={section.title}>
-                                {i > 0 && <DropdownMenuSeparator className="mx-3 my-1.5" />}
-                                <DropdownMenuGroup className="flex flex-col gap-px">
-                                    <DropdownMenuLabel className={SECTION_LABEL}>{section.title}</DropdownMenuLabel>
-                                    {section.items.map(renderLink)}
-                                </DropdownMenuGroup>
-                            </Fragment>
-                        ))
-                    ) : (
-                        <DropdownMenuGroup className="flex flex-col gap-px">
-                            <DropdownMenuLabel className={SECTION_LABEL}>{item.label}</DropdownMenuLabel>
-                            {sections[0]?.items.map(renderLink)}
-                        </DropdownMenuGroup>
-                    )}
-                    {hasIcons && (
-                        <div className="mt-1.5 flex items-center justify-between gap-2 border-border border-t px-3 pt-2.5 pb-2 font-sans text-[11.5px] text-muted-foreground leading-none">
-                            <span className="inline-flex items-center gap-1.5 font-medium font-mono text-[11.5px]">
-                                {t("mainNav.press")} <Kbd>{modKey(isMac)}</Kbd>
-                                <Kbd>K</Kbd> {t("mainNav.forAllCommands")}
-                            </span>
-                            <button
-                                type="button"
-                                className="cursor-pointer border-none bg-transparent p-0 font-medium font-sans text-[11.5px] text-primary leading-none underline-offset-2 hover:underline"
-                                onClick={() => {
-                                    setOpen(false);
-                                    onOpenCommand?.();
-                                }}
-                            >
-                                {t("mainNav.openPalette")}
-                            </button>
-                        </div>
-                    )}
-                </DropdownMenuContent>
-            </DropdownMenu>
-        </div>
+                {showSectionTitles ? (
+                    sections.map((section, i) => (
+                        <Fragment key={section.title}>
+                            {i > 0 && <DropdownMenuSeparator className="mx-3 my-1.5" />}
+                            <DropdownMenuGroup className="flex flex-col gap-px">
+                                <DropdownMenuLabel className={SECTION_LABEL}>{section.title}</DropdownMenuLabel>
+                                {section.items.map(renderLink)}
+                            </DropdownMenuGroup>
+                        </Fragment>
+                    ))
+                ) : (
+                    <DropdownMenuGroup className="flex flex-col gap-px">
+                        <DropdownMenuLabel className={SECTION_LABEL}>{item.label}</DropdownMenuLabel>
+                        {sections[0]?.items.map(renderLink)}
+                    </DropdownMenuGroup>
+                )}
+                {hasIcons && (
+                    <div className="mt-1.5 flex items-center justify-between gap-2 border-border border-t px-3 pt-2.5 pb-2 font-sans text-[11.5px] text-muted-foreground leading-none">
+                        <span className="inline-flex items-center gap-1.5 font-medium font-mono text-[11.5px]">
+                            {t("mainNav.press")} <Kbd>{modKey(isMac)}</Kbd>
+                            <Kbd>K</Kbd> {t("mainNav.forAllCommands")}
+                        </span>
+                        <button
+                            type="button"
+                            className="cursor-pointer border-none bg-transparent p-0 font-medium font-sans text-[11.5px] text-primary leading-none underline-offset-2 hover:underline"
+                            onClick={() => {
+                                setOpen(false);
+                                onOpenCommand?.();
+                            }}
+                        >
+                            {t("mainNav.openPalette")}
+                        </button>
+                    </div>
+                )}
+            </DropdownMenuContent>
+        </DropdownMenu>
     );
 }
 

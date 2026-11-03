@@ -180,7 +180,7 @@ function CalendarWeek({ weekStart, monthFrom, monthTo, todayDay, items, selected
                 const isToday = d === todayDay;
                 const n = new Date(d * 1000).getDate();
                 return (
-                    <div key={d} className={cn("border-border/60 border-l pt-1 pr-1.5 text-right font-sans text-[12px] tabular-nums first:border-l-0 sm:pr-2", outside ? "text-muted-foreground/40" : "text-foreground")} style={{ gridColumn: i + 1, gridRow: `1 / span ${rows + 2}` }}>
+                    <div key={d} className={cn("border-border/60 border-l pt-1 pr-1.5 text-right font-sans text-[12px] tabular-nums first:border-l-0 sm:pr-2", outside ? "text-subtle-foreground" : "text-foreground")} style={{ gridColumn: i + 1, gridRow: `1 / span ${rows + 2}` }}>
                         <span className={cn("inline-flex size-5 items-center justify-center rounded-full", isToday && "bg-primary font-semibold text-primary-foreground")}>{n}</span>
                     </div>
                 );

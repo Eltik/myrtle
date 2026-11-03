@@ -1,13 +1,13 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { ChevronDown, ChevronRight, Info, Maximize2, Search, Skull } from "lucide-react";
+import { ChevronDown, ChevronRight, Info, Lock, Maximize2, Search, Skull } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { PageHeader } from "#/components/ui/page-header";
 import { useWindowVirtualRows } from "#/hooks/use-window-virtual-rows";
 import { stageIndexQueryOptions } from "#/lib/api/stages";
 import { useFormatters, useGamedataServer, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import type { StageGroupKey } from "#/lib/registry/stage-groups";
+import { STAGE_GROUP_INK, type StageGroupKey } from "#/lib/registry/stage-groups";
 import { cn } from "#/lib/utils";
 import { buildStageTree, coverImage, filterTree, type IEventVM, type IGroupVM, type IStageCardVM } from "./impl/derive";
 import { EventDetailDialog } from "./impl/EventDetailDialog";
@@ -87,7 +87,7 @@ export function StageList() {
                         onChange={(e) => setQ(e.target.value)}
                         placeholder={t("list.search.placeholder")}
                         aria-label={t("list.search.aria")}
-                        className="h-10 w-full rounded-[9px] border border-border bg-secondary/50 pr-3.5 pl-9 font-sans text-[13px] text-foreground outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring/40 sm:h-9.5"
+                        className="h-10 w-full rounded-[9px] border border-border bg-secondary/50 pr-3.5 pl-9 font-sans text-[13px] text-foreground outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring sm:h-9.5"
                     />
                 </div>
                 <span className="font-mono text-[11px] text-muted-foreground">{searching ? t("list.count.matches", { count: visibleStageCount }) : t("list.count.zones", { count: visibleEvents.length })}</span>
@@ -126,11 +126,12 @@ function FilterPill({ label, count, tone, active, onClick }: { label: string; co
         <button
             type="button"
             onClick={onClick}
+            aria-pressed={active}
             className="msv-pill inline-flex h-8.5 flex-none cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full border px-3 font-sans font-semibold text-[12px] transition-colors sm:h-7.5"
             style={{
                 borderColor: active ? tone : "var(--border)",
                 background: active ? `color-mix(in oklch, ${tone} 15%, transparent)` : "color-mix(in oklch, var(--secondary) 45%, transparent)",
-                color: active ? tone : "var(--muted-foreground)",
+                color: active ? "var(--foreground)" : "var(--muted-foreground)",
             }}
         >
             <span>{label}</span>
@@ -138,7 +139,7 @@ function FilterPill({ label, count, tone, active, onClick }: { label: string; co
                 className="rounded-full px-1.5 py-px font-mono font-semibold text-[9.5px]"
                 style={{
                     background: active ? `color-mix(in oklch, ${tone} 22%, transparent)` : "color-mix(in oklch, var(--muted) 55%, transparent)",
-                    color: active ? tone : "var(--muted-foreground)",
+                    color: active ? "var(--foreground)" : "var(--muted-foreground)",
                 }}
             >
                 {count}
@@ -286,8 +287,8 @@ function GroupHeaderRow({ row, open, onToggle }: { row: Extract<FlatRow, { kind:
             <div className="relative pb-2 sm:pb-3.5">
                 <span className="absolute top-2.5 -left-5.75 hidden h-1.75 w-1.75 rotate-45 sm:block" style={{ background: group.tone, boxShadow: "0 0 0 4px var(--background)" }} />
                 <h2 className="m-0">
-                    <button type="button" onClick={onToggle} aria-expanded={open} aria-controls={`section-${group.key}`} className="group/section flex w-full cursor-pointer flex-wrap items-baseline gap-x-3 gap-y-0.5 rounded-md py-1 text-left ring-inset focus-visible:ring-2 focus-visible:ring-ring/60">
-                        <Icon className="h-3.75 w-3.75 flex-none self-center" style={{ color: group.tone }} aria-hidden="true" />
+                    <button type="button" onClick={onToggle} aria-expanded={open} aria-controls={`section-${group.key}`} className="group/section flex w-full cursor-pointer flex-wrap items-baseline gap-x-3 gap-y-0.5 rounded-md py-1 text-left ring-inset focus-visible:ring-2 focus-visible:ring-ring">
+                        <Icon className="h-3.75 w-3.75 flex-none self-center" style={{ color: STAGE_GROUP_INK[group.key] }} aria-hidden="true" />
                         <span className="font-bold font-sans text-[17px] text-foreground tracking-[-0.02em]">{group.label}</span>
                         <span className="whitespace-nowrap font-mono text-[10px] text-muted-foreground tracking-widest">{t("list.group.counts", { zones: group.zoneCount, stages: group.stageCount })}</span>
                         <span className="h-px flex-1 bg-border" />
@@ -308,9 +309,9 @@ function EventHeaderRow({ row, onToggle, onDetails }: { row: Extract<FlatRow, { 
             <div id={`zone-${event.zoneId}`} className="msv-row relative flex items-center gap-3 px-3.5 py-3.5 sm:gap-4 sm:px-4.5" style={{ background: open ? `color-mix(in oklch, ${event.tone} 7%, transparent)` : "transparent" }}>
                 {open && <span className="pointer-events-none absolute top-0 bottom-0 left-0 z-1 w-0.5 rounded-r" style={{ background: event.tone }} />}
 
-                <button type="button" onClick={onToggle} aria-expanded={open} aria-label={open ? t("list.zone.collapse", { title: event.title }) : t("list.zone.expand", { title: event.title })} className="absolute inset-0 cursor-pointer rounded-none ring-inset focus-visible:ring-2 focus-visible:ring-ring/60" />
+                <button type="button" onClick={onToggle} aria-expanded={open} aria-label={open ? t("list.zone.collapse", { title: event.title }) : t("list.zone.expand", { title: event.title })} className="absolute inset-0 cursor-pointer rounded-none ring-inset focus-visible:ring-2 focus-visible:ring-ring" />
 
-                <button type="button" onClick={onDetails} aria-haspopup="dialog" aria-label={t("list.zone.about", { title: event.title })} className="group relative z-1 h-10 w-16 flex-none cursor-zoom-in overflow-hidden rounded-md border border-border ring-inset focus-visible:ring-2 focus-visible:ring-ring/60">
+                <button type="button" onClick={onDetails} aria-haspopup="dialog" aria-label={t("list.zone.about", { title: event.title })} className="group relative z-1 h-10 w-16 flex-none cursor-zoom-in overflow-hidden rounded-md border border-border ring-inset focus-visible:ring-2 focus-visible:ring-ring">
                     <PreviewFallback tone={event.tone} group={event.group} iconClassName="h-3.5 w-3.5" />
                     {cover && <StagePreview src={cover} />}
                     <span className="absolute inset-0 flex items-center justify-center bg-black/45 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100">
@@ -332,8 +333,8 @@ function EventHeaderRow({ row, onToggle, onDetails }: { row: Extract<FlatRow, { 
                     {event.bossCount > 0 ? ` · ${t("list.zone.boss", { count: event.bossCount })}` : ""}
                 </span>
                 <span
-                    className="pointer-events-none relative z-1 hidden h-5.25 flex-none items-center whitespace-nowrap rounded-full border px-2.5 font-mono font-semibold text-[9px] uppercase tracking-[0.09em] sm:inline-flex"
-                    style={{ borderColor: `color-mix(in oklch, ${event.tone} 45%, transparent)`, background: `color-mix(in oklch, ${event.tone} 11%, transparent)`, color: event.tone }}
+                    className="pointer-events-none relative z-1 hidden h-5.25 flex-none items-center whitespace-nowrap rounded-full border px-2.5 font-mono font-semibold text-[9px] sm:inline-flex"
+                    style={{ borderColor: `color-mix(in oklch, ${event.tone} 45%, transparent)`, background: `color-mix(in oklch, ${event.tone} 11%, transparent)`, color: "var(--foreground)" }}
                 >
                     {event.statusLabel}
                 </span>
@@ -372,15 +373,15 @@ function StageCardInner({ card, tone, group }: { card: IStageCardVM; tone: strin
                 )}
                 {card.badge && (
                     <span
-                        className="absolute bottom-1.75 left-1.75 z-2 inline-flex h-4.5 max-w-[calc(100%-14px)] items-center overflow-hidden text-ellipsis whitespace-nowrap rounded-[5px] border px-1.75 font-bold font-mono text-[10px] leading-none"
-                        style={{ borderColor: `color-mix(in oklch, ${tone} 50%, transparent)`, background: "rgba(0,0,0,0.6)", color: tone }}
+                        className="absolute bottom-1.75 left-1.75 z-2 inline-flex h-4.5 max-w-[calc(100%-14px)] items-center overflow-hidden text-ellipsis whitespace-nowrap rounded-[5px] border px-1.75 font-bold font-mono text-[10px] text-white leading-none"
+                        style={{ borderColor: `color-mix(in oklch, ${tone} 50%, transparent)`, background: "rgba(0,0,0,0.6)" }}
                     >
                         {card.badge}
                     </span>
                 )}
                 {card.boss && (
                     <span
-                        className="absolute top-1.75 right-1.75 z-2 inline-flex h-4.25 items-center gap-1 rounded-full px-1.75 font-bold font-mono text-[8.5px] text-white uppercase tracking-[0.08em]"
+                        className="absolute top-1.75 right-1.75 z-2 inline-flex h-4.25 items-center gap-1 rounded-full px-1.75 font-bold font-mono text-[8.5px] text-white"
                         style={{ background: "color-mix(in oklch, var(--enemy-boss) 88%, black)", boxShadow: "0 0 10px color-mix(in oklch, var(--enemy-boss) 60%, transparent)" }}
                     >
                         <Skull className="h-2.5 w-2.5" /> {t("list.card.boss")}
@@ -432,13 +433,15 @@ function StageVariantLinks({ card }: { card: IStageCardVM }) {
                 const chip = "inline-flex h-4.5 items-center rounded-[5px] border border-border px-1.5 font-mono font-semibold text-[9px] leading-none";
                 if (!v.canView) {
                     return (
-                        <span key={v.stageId} className={cn(chip, "text-muted-foreground/60")} title={label}>
-                            {text}
+                        <span key={v.stageId} className={cn(chip, "gap-0.5 bg-card text-subtle-foreground")} title={t("list.card.variant.unavailable", { label })}>
+                            <Lock aria-hidden="true" className="size-2.5" />
+                            <span aria-hidden="true">{text}</span>
+                            <span className="sr-only">{t("list.card.variant.unavailable", { label })}</span>
                         </span>
                     );
                 }
                 return (
-                    <Link key={v.stageId} to="/stages/$stageId" params={{ stageId: v.stageId }} aria-label={label} className={cn(chip, "bg-card text-muted-foreground transition-colors hover:border-(--rowtone) hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60")}>
+                    <Link key={v.stageId} to="/stages/$stageId" params={{ stageId: v.stageId }} aria-label={label} className={cn(chip, "bg-card text-muted-foreground transition-colors hover:border-(--rowtone) hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring")}>
                         {text}
                     </Link>
                 );
@@ -461,10 +464,7 @@ function FeaturedHero({ event, onBrowse, onDetails }: { event: IEventVM; onBrows
 
             <div className="absolute inset-0 flex flex-col justify-between p-4.5 sm:p-7">
                 <div className="flex items-center gap-2.5">
-                    <span
-                        className="inline-flex h-5.5 items-center rounded-full border px-2.5 font-mono font-semibold text-[9.5px] uppercase tracking-[0.09em]"
-                        style={{ borderColor: `color-mix(in oklch, ${event.tone} 55%, transparent)`, background: `color-mix(in oklch, ${event.tone} 16%, rgba(0,0,0,0.35))`, color: event.tone }}
-                    >
+                    <span className="inline-flex h-5.5 items-center rounded-full border px-2.5 font-mono font-semibold text-[9.5px] text-white" style={{ borderColor: `color-mix(in oklch, ${event.tone} 55%, transparent)`, background: `color-mix(in oklch, ${event.tone} 16%, rgba(0,0,0,0.35))` }}>
                         {event.statusLabel}
                     </span>
                     {event.kicker && <span className="font-mono text-[10px] text-white/55 uppercase tracking-[0.12em]">{event.kicker}</span>}
@@ -482,7 +482,7 @@ function FeaturedHero({ event, onBrowse, onDetails }: { event: IEventVM; onBrows
                         {event.bossCount > 0 && (
                             <>
                                 <span className="h-3 w-px bg-white/25" />
-                                <span className="font-mono text-[11px]" style={{ color: "var(--enemy-boss)" }}>
+                                <span className="font-mono text-[11px] text-white">
                                     {event.bossCount} {t("list.hero.bosses", { count: event.bossCount })}
                                 </span>
                             </>

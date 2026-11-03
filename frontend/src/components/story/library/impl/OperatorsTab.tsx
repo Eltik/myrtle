@@ -7,7 +7,7 @@ import { Checkbox } from "#/components/ui/checkbox";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import type { StoryProgress } from "#/lib/story/progress";
-import { cn, getAvatarById, professionLabel, RARITY_HEX, rarityToNumber } from "#/lib/utils";
+import { cn, getAvatarById, professionLabel, RARITY_HEX, rarityInk, rarityToNumber } from "#/lib/utils";
 import { filterRecords, type LibRecord, readFraction } from "./derive";
 import { OperatorDialog } from "./OperatorDialog";
 import type { messages } from "./OperatorsTab.messages";
@@ -66,7 +66,7 @@ export const OperatorsTab = memo(function OperatorsTab({ records, progress, game
                             onChange={(e) => setQuery(e.target.value)}
                             placeholder={t("operators.search.placeholder")}
                             aria-label={t("operators.search.aria")}
-                            className="h-11 w-full rounded-[9px] border border-border bg-secondary/50 pr-3.5 pl-9 font-sans text-[13px] text-foreground outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring/40 sm:h-9.5"
+                            className="h-11 w-full rounded-[9px] border border-border bg-secondary/50 pr-3.5 pl-9 font-sans text-[13px] text-foreground outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring sm:h-9.5"
                         />
                     </div>
                     <label htmlFor={hideFinishedId} className="flex cursor-pointer select-none items-center gap-2 font-sans text-[12px] text-muted-foreground max-sm:min-h-11">
@@ -113,7 +113,7 @@ function OperatorCard({ record, progress, gameRead, onOpen }: { record: LibRecor
             onClick={onOpen}
             aria-haspopup="dialog"
             aria-label={t("operators.card.open", { name: record.name })}
-            className="group flex cursor-pointer items-center gap-2.5 rounded-xl border border-border bg-card p-2 text-left ring-inset transition-colors hover:border-primary/45 focus-visible:ring-2 focus-visible:ring-ring/60 max-sm:min-h-11"
+            className="group flex cursor-pointer items-center gap-2.5 rounded-xl border border-border bg-card p-2 text-left ring-inset transition-colors hover:border-primary/45 focus-visible:ring-2 focus-visible:ring-ring max-sm:min-h-11"
         >
             <span className="relative block size-12 shrink-0 overflow-hidden rounded-[9px] bg-secondary/60 sm:size-13" style={{ borderBottom: `3px solid ${tone}` }}>
                 <img src={avatar} alt="" aria-hidden="true" loading="lazy" decoding="async" className="h-full w-full object-cover" />
@@ -124,7 +124,7 @@ function OperatorCard({ record, progress, gameRead, onOpen }: { record: LibRecor
                     <span className="flex items-center gap-px" role="img" aria-label={t("operators.rarity", { count: rarity })}>
                         {Array.from({ length: rarity }, (_, i) => (
                             // biome-ignore lint/suspicious/noArrayIndexKey: a rarity star has no identity beyond its position
-                            <StarIcon key={i} className="size-2.5 fill-current" style={{ color: tone }} aria-hidden="true" />
+                            <StarIcon key={i} className="size-2.5 fill-current" style={{ color: rarityInk(rarity) }} aria-hidden="true" />
                         ))}
                     </span>
                 ) : null}

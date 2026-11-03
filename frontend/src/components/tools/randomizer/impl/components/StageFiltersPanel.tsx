@@ -155,7 +155,7 @@ export function StageFiltersPanel({ settings, onChange, hasProfile, stages, zone
                         return (
                             <section key={section} className="flex flex-col gap-1.5">
                                 <button type="button" onClick={() => onToggleSection(section)} className="flex items-center gap-1.5 rounded-sm px-0.5 outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-expanded={isExpanded}>
-                                    <ChevronDown aria-hidden="true" className={cn("size-3 text-muted-foreground/70 transition-transform duration-150", !isExpanded && "-rotate-90")} />
+                                    <ChevronDown aria-hidden="true" className={cn("size-3 text-subtle-foreground transition-transform duration-150", !isExpanded && "-rotate-90")} />
                                     <h3 className="font-mono text-[11px] text-muted-foreground uppercase tracking-[0.2em]">{t(STAGE_SECTION_LABEL_KEYS[section])}</h3>
                                     <span className="font-mono text-[11px] text-muted-foreground uppercase tracking-[0.16em]">{t("randomizer.stages.sectionCount", { selected: selectedSectionStages, total: totalSectionStages })}</span>
                                 </button>
@@ -191,9 +191,9 @@ function EventRow({ group, isOpen, onToggleExpand, onToggleGroup, deselected, on
                     <div className="min-w-0 flex-1">
                         <p className="flex items-center gap-1.5 truncate font-medium text-[12.5px] text-foreground leading-tight">
                             {group.label}
-                            {group.section !== "MAIN" && !group.isOpen && <Lock aria-hidden="true" className="size-3 shrink-0 text-muted-foreground/60" />}
+                            {group.section !== "MAIN" && !group.isOpen && <Lock aria-hidden="true" className="size-3 shrink-0 text-subtle-foreground" />}
                         </p>
-                        <p className="mt-0.5 font-mono text-[10.5px] text-muted-foreground/80 uppercase tracking-[0.14em]">
+                        <p className="mt-0.5 font-mono text-[10.5px] text-subtle-foreground uppercase tracking-[0.14em]">
                             {group.section === "MAIN" ? t("randomizer.stages.tag.mainline") : (group.sublabel ?? (group.section === "OTHER" ? t("randomizer.stages.tag.mini") : t("randomizer.stages.tag.event")))}
                             <span className="mx-1.5 opacity-50">·</span>
                             {t("randomizer.stages.groupCount", { selected: selectedCount, total: group.stages.length })}

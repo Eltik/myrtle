@@ -52,7 +52,7 @@ export function ContributionCard({ score }: IProps) {
                             </span>
                             <span className="font-mono text-foreground/85 tabular-nums">
                                 {earned.toFixed(1)}
-                                <span className="text-muted-foreground/60"> / {share.toFixed(1)}</span>
+                                <span className="text-subtle-foreground"> / {share.toFixed(1)}</span>
                             </span>
                         </div>
                     ))}

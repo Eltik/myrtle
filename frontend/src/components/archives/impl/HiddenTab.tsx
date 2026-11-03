@@ -392,7 +392,7 @@ function PickList({
             <>
                 <div className="flex items-center gap-2">
                     {pick.kind === "band" ? null : <FactionLogo id={pick.id} className="size-5" />}
-                    <h4 className="m-0 font-semibold text-[13px] text-foreground uppercase tracking-[0.08em]">{head}</h4>
+                    <h4 className="m-0 font-semibold text-[13px] text-foreground">{head}</h4>
                     <span className="font-mono text-[12px] text-muted-foreground tabular-nums">{f.number(picked.length)}</span>
                     <Button size="xs" variant="ghost" className="ml-auto" onClick={onClear}>
                         {t("hidden.clear")}
@@ -411,7 +411,7 @@ function PickList({
                 <p className="m-0 text-[12px] text-muted-foreground">{t("hidden.noMatch")}</p>
             ) : (
                 <>
-                    <h4 className="m-0 font-semibold text-[13px] text-foreground uppercase tracking-[0.08em]">{t("hidden.found", { count: f.number(matches.length) })}</h4>
+                    <h4 className="m-0 font-semibold text-[13px] text-foreground">{t("hidden.found", { count: f.number(matches.length) })}</h4>
                     {groupBy(matches, (s) => s.hidden.id).map(([id, rows]) => sub(t("hidden.secretlyGroup", { name: hiddenName(id) }), id, rows))}
                 </>
             );

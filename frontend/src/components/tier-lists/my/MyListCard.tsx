@@ -96,7 +96,7 @@ export function MyListCard({ tl, onEdit, onDelete, onCopyLink }: IMyListCardProp
                     <CardStat kind="views" value={f.compact(tl.views)} title={t("my.card.views", { count: f.number(tl.views) })} />
                     <CardStat kind="favorites" value={f.compact(tl.favorites)} title={t("my.card.favorites", { count: f.number(tl.favorites) })} />
                     {tl.views24h > 0 && <CardStat kind="views24h" value={f.compact(tl.views24h)} title={t("my.card.views24h", { count: f.number(tl.views24h) })} />}
-                    <span className="ml-auto shrink-0 text-[10.5px] text-muted-foreground/80">{tl.updated}</span>
+                    <span className="ml-auto shrink-0 text-[10.5px] text-subtle-foreground">{tl.updated}</span>
                 </div>
             </div>
         </article>

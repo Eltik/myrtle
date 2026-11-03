@@ -8,7 +8,7 @@ interface IKpiStripProps {
     data: IGachaEnhancedStats | null;
 }
 
-const SKELETON = <span className="text-muted-foreground/60">-</span>;
+const SKELETON = <span className="text-subtle-foreground">-</span>;
 
 export function KpiStrip({ data }: IKpiStripProps) {
     const t: TypedT<typeof messages> = useT("gacha");

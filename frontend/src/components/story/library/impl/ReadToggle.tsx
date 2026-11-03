@@ -66,7 +66,7 @@ export function ReadToggle({ story, progress, gameRead, label, size = "sm", clas
                             saveProgress(toggleRead(current ? current() : progress, story.id, read));
                         }}
                         className={cn(
-                            "flex pointer-coarse:size-11 size-11 shrink-0 cursor-pointer items-center justify-center rounded-full transition-colors hover:bg-secondary/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60",
+                            "flex pointer-coarse:size-11 size-11 shrink-0 cursor-pointer items-center justify-center rounded-full transition-colors hover:bg-secondary/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                             size === "sm" ? "sm:size-8" : size === "md" ? "sm:size-9" : "sm:pointer-fine:size-10",
                             className,
                         )}

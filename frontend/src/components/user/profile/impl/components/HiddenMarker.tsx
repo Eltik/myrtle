@@ -17,7 +17,7 @@ export function HiddenMarker({ className }: { className?: string }) {
         <Tooltip>
             <TooltipTrigger
                 render={(triggerProps) => (
-                    <span {...triggerProps} role="img" aria-label={label} className={cn("inline-flex shrink-0 items-center text-muted-foreground/80 transition-colors hover:text-foreground", className)}>
+                    <span {...triggerProps} role="img" aria-label={label} className={cn("inline-flex shrink-0 items-center text-subtle-foreground transition-colors hover:text-foreground", className)}>
                         <EyeOffIcon aria-hidden="true" className="size-3.5" />
                     </span>
                 )}

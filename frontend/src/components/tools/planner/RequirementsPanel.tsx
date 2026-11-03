@@ -109,7 +109,7 @@ function PlannerRequirementRow({ item, depth, path, expandedPaths, onToggleExpan
                             <Tooltip>
                                 <TooltipTrigger
                                     render={(props) => (
-                                        <span {...props} className="inline-flex cursor-help items-center text-muted-foreground/60 hover:text-foreground">
+                                        <span {...props} className="inline-flex cursor-help items-center text-subtle-foreground hover:text-foreground">
                                             <Info className="size-3.5" />
                                         </span>
                                     )}
@@ -119,11 +119,11 @@ function PlannerRequirementRow({ item, depth, path, expandedPaths, onToggleExpan
                         </div>
                     ) : item.craftReason ? (
                         <Tooltip>
-                            <TooltipTrigger render={<span className="cursor-help text-muted-foreground/50" />}>-</TooltipTrigger>
+                            <TooltipTrigger render={<span className="cursor-help text-subtle-foreground" />}>-</TooltipTrigger>
                             <TooltipPopup className="max-w-xs">{item.craftReason}</TooltipPopup>
                         </Tooltip>
                     ) : (
-                        <span className="text-muted-foreground/50">-</span>
+                        <span className="text-subtle-foreground">-</span>
                     )}
                 </td>
                 <td className="py-2.5 pl-2 text-right text-xs tabular-nums">
@@ -164,7 +164,7 @@ function UnmetStagesPopover({ item, t }: { item: IPlanRequirementItem; t: ReqT }
                 delay={120}
                 onClick={stop}
                 render={(props) => (
-                    <button {...props} type="button" aria-label={t("planner.req.craftGate.aria", { name: item.name })} className="inline-flex cursor-help items-center text-muted-foreground/60 hover:text-foreground focus-visible:text-foreground">
+                    <button {...props} type="button" aria-label={t("planner.req.craftGate.aria", { name: item.name })} className="inline-flex cursor-help items-center text-subtle-foreground hover:text-foreground focus-visible:text-foreground">
                         <Info className="size-3.5" aria-hidden="true" />
                     </button>
                 )}

@@ -77,7 +77,7 @@ export function UserCard({ user, sort = DEFAULT_SORT }: IUserCardProps) {
                     </div>
                 </div>
 
-                <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground/50 transition-transform duration-150 group-hover:translate-x-0.5" aria-hidden="true" />
+                <ChevronRight className="h-3.5 w-3.5 shrink-0 text-subtle-foreground transition-transform duration-150 group-hover:translate-x-0.5" aria-hidden="true" />
             </Link>
         </Card>
     );

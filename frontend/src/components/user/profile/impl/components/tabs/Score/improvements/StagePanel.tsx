@@ -100,7 +100,7 @@ function StageList({ title, subtitle, stages, accent, emptyLabel, locked = false
                 <span className={cn(TEXT_KICKER, "text-muted-foreground")}>{title}</span>
                 <span className={cn(TEXT_BADGE, "text-muted-foreground")}>{t("score.improvements.stage.total", { n: stages.length })}</span>
             </div>
-            {subtitle && <p className={cn(TEXT_META, "-mt-1 text-muted-foreground/80")}>{subtitle}</p>}
+            {subtitle && <p className={cn(TEXT_META, "-mt-1 text-subtle-foreground")}>{subtitle}</p>}
             <div className="flex flex-wrap gap-1.5">
                 {visible.map((s) => (
                     <StageChip key={s.stage_id} stage={s} accent={accent} locked={locked} />

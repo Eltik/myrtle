@@ -195,7 +195,8 @@ export function FilterToolbar({ type, sort, query, selectedFlairs, flairOptions,
                                                 ? {
                                                       background: `color-mix(in srgb, ${color} 18%, transparent)`,
                                                       borderColor: `color-mix(in srgb, ${color} 50%, transparent)`,
-                                                      color,
+                                                      // Flair colours are free-form per list, so the text stays foreground: as text on their own tint they measured 2.46 to 2.94.
+                                                      color: "var(--foreground)",
                                                   }
                                                 : {
                                                       background: "var(--muted)",
@@ -209,7 +210,7 @@ export function FilterToolbar({ type, sort, query, selectedFlairs, flairOptions,
                                         {flair.count !== undefined && (
                                             <span
                                                 className="ml-0.5 inline-flex items-center justify-center rounded-full px-1.5 font-mono font-semibold text-[9.5px] tabular-nums leading-[1.4]"
-                                                style={active ? { background: `color-mix(in srgb, ${color} 26%, transparent)`, color } : { background: "color-mix(in srgb, var(--foreground) 6%, transparent)", color: "var(--muted-foreground)" }}
+                                                style={active ? { background: `color-mix(in srgb, ${color} 26%, transparent)`, color: "var(--foreground)" } : { background: "color-mix(in srgb, var(--foreground) 6%, transparent)", color: "var(--muted-foreground)" }}
                                                 aria-hidden="true"
                                             >
                                                 {count}

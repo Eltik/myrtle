@@ -44,7 +44,6 @@ export function ProfileHeaderEditor({ profile, onDraft, onClose }: IProfileHeade
     const [announcement, setAnnouncement] = useState("");
     useEffect(() => onDraft?.(draft), [draft, onDraft]);
 
-    // The currency names are the game's own and stay as game vocabulary, as on the cards.
     const labels = useMemo<Record<HeaderField, string>>(
         () => ({
             level: t("profile.headerEditor.field.level"),
@@ -53,11 +52,11 @@ export function ProfileHeaderEditor({ profile, onDraft, onClose }: IProfileHeade
             operators: t("profile.strip.operators.kicker"),
             skins: t("profile.strip.skins.kicker"),
             items: t("profile.strip.items.kicker"),
-            orundum: "Orundum",
-            originite: "Originite Prime",
-            lmd: "LMD",
-            headhunting_permits: "Headhunting Permits",
-            ten_pull_permits: "Ten-roll Permits",
+            orundum: t("profile.strip.orundum.kicker"),
+            originite: t("profile.strip.originite.kicker"),
+            lmd: t("profile.strip.lmd.kicker"),
+            headhunting_permits: t("profile.strip.headhuntingPermits.kicker"),
+            ten_pull_permits: t("profile.strip.tenRollPermits.kicker"),
         }),
         [t],
     );

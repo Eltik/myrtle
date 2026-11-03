@@ -1,7 +1,7 @@
 import { enemyIconURL, type IEnemy } from "#/lib/api/enemies";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import { ENEMY_LEVEL_ACCENT } from "./constants";
+import { ENEMY_LEVEL_ACCENT, ENEMY_LEVEL_INK } from "./constants";
 import type { messages } from "./EnemiesSection.messages";
 import { SectionHead } from "./primitives";
 import type { IEnemyTally } from "./types";
@@ -9,6 +9,7 @@ import type { IEnemyTally } from "./types";
 function EnemyTallyCard({ enemy, id, count, onFocusEnemy }: { enemy: IEnemy | null; id: string; count: number; onFocusEnemy: (id: string) => void }) {
     const t: TypedT<typeof messages> = useT("stages");
     const accent = ENEMY_LEVEL_ACCENT[enemy?.enemyLevel ?? "NORMAL"];
+    const ink = ENEMY_LEVEL_INK[enemy?.enemyLevel ?? "NORMAL"];
     return (
         <button type="button" aria-label={t("enemies.showOnMap", { name: enemy?.name ?? id })} onClick={() => onFocusEnemy(id)} className="group/enemy block h-full w-full cursor-pointer text-left">
             <span className="flex h-full items-center gap-3 rounded-[10px] border border-border bg-card p-2.5 transition-colors group-hover/enemy:border-[color-mix(in_oklch,var(--primary)_50%,transparent)]">
@@ -17,7 +18,7 @@ function EnemyTallyCard({ enemy, id, count, onFocusEnemy }: { enemy: IEnemy | nu
                 </span>
                 <span className="flex min-w-0 flex-1 flex-col gap-1">
                     <span className="truncate font-sans font-semibold text-[12.5px] text-foreground leading-tight transition-colors group-hover/enemy:text-primary">{enemy?.name ?? id}</span>
-                    <span className="font-medium font-mono text-[10px] uppercase leading-none tracking-widest" style={{ color: accent }}>
+                    <span className="font-medium font-mono text-[10px] uppercase leading-none tracking-widest" style={{ color: ink }}>
                         {enemy?.enemyLevel ?? "UNKNOWN"}
                     </span>
                 </span>

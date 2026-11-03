@@ -509,7 +509,7 @@ function RostersSheet({ open, onOpenChange, group, people, server, onOpenFile, t
                         <section key={b.forceId} className="flex flex-col gap-2">
                             <header className="flex items-center gap-2 border-border border-b pb-1.5">
                                 <FactionLogo id={b.forceId} className="size-5" />
-                                <h3 className="m-0 flex-1 font-semibold text-[13px] text-foreground uppercase tracking-[0.08em]">{b.name}</h3>
+                                <h3 className="m-0 flex-1 font-semibold text-[13px] text-foreground">{b.name}</h3>
                                 {b.home ? null : <span className="rounded-sm border border-border px-1.5 font-mono text-[9.5px] text-muted-foreground uppercase tracking-[0.12em]">{t("network.visiting")}</span>}
                                 <span className="font-mono text-[11px] text-muted-foreground tabular-nums">{t("network.rosterCount", { count: b.members.length })}</span>
                             </header>

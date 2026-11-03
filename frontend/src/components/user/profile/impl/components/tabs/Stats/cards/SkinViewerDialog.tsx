@@ -233,7 +233,7 @@ function SkinViewerBody({ skins, ownedIds, profileOwnedCount, operatorsMap, colo
                     <FilterTabs color={color} counts={{ missing: missingCount, owned: ownedCount, all: totalCount }} onChange={setFilter} value={filter} />
                     <SortTabs onChange={setSort} value={sort} />
                     <div className="relative flex items-center sm:ml-auto">
-                        <Search aria-hidden className="absolute left-2.5 h-3.5 w-3.5 text-muted-foreground/60" />
+                        <Search aria-hidden className="absolute left-2.5 h-3.5 w-3.5 text-subtle-foreground" />
                         <input
                             aria-label={t("profile.skins.search.aria")}
                             className="w-full rounded-md border border-border bg-background py-1.5 pr-8 pl-8 text-sm transition-colors placeholder:text-muted-foreground sm:w-64"

@@ -1,10 +1,10 @@
 import { Footprints, type LucideIcon, PersonStanding, Skull, Spline, Timer } from "lucide-react";
+import { Kicker } from "#/components/ui/kicker";
 import { Switch } from "#/components/ui/switch";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
 import type { messages } from "./MapSettings.messages";
-import { Kicker } from "./primitives";
 
 export interface IMapSettings {
     showRoutes: boolean;
@@ -66,7 +66,7 @@ export function MapSettings({ settings, onChange }: { settings: IMapSettings; on
     return (
         <div className="flex flex-col rounded-[10px] border border-border bg-card px-3.5 py-2.5">
             <div className="mb-1 flex items-center">
-                <Kicker>{t("mapSettings.title")}</Kicker>
+                <Kicker className="mb-0 leading-none">{t("mapSettings.title")}</Kicker>
             </div>
             <div className="grid gap-x-6 sm:grid-cols-2">
                 {SETTINGS.map((def) => (
@@ -74,7 +74,7 @@ export function MapSettings({ settings, onChange }: { settings: IMapSettings; on
                         key={def.key}
                         def={def}
                         checked={settings[def.key]}
-                        disabled={def.requires ? settings[def.requires] : false}
+                        disabled={def.requires ? !settings[def.requires] : false}
                         onChange={(v) => {
                             const next = { ...settings, [def.key]: v };
                             if (def.key === "walkingChibis" && v) next.showEnemyIcons = false;

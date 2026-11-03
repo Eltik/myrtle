@@ -46,7 +46,7 @@ export function ItemDialog({ item }: IItemDialogProps) {
                         <span aria-hidden className="opacity-40">
                             ·
                         </span>
-                        <span className="font-mono text-muted-foreground/80 normal-case tracking-normal">{item.item_id}</span>
+                        <span className="font-mono text-subtle-foreground normal-case tracking-normal">{item.item_id}</span>
                     </div>
                     <DialogTitle className="mt-1.5 text-2xl">{item.name}</DialogTitle>
                     {meta?.description && <DialogDescription className="mt-2 text-[13.5px] leading-relaxed">{meta.description}</DialogDescription>}

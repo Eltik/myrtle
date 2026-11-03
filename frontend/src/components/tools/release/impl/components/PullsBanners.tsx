@@ -64,7 +64,7 @@ export function PullsBanners({ rows, totals, lookup, charNames, today, onAllocat
                     <SectionTitle count={rows.length}>{t("release.pulls.plan.title")}</SectionTitle>
                     <p className="m-0 max-w-2xl font-sans text-[12px] text-muted-foreground leading-normal">{t("release.pulls.plan.intro")}</p>
                     <p className="m-0 max-w-2xl font-sans text-[12px] text-muted-foreground leading-normal">{t("release.pulls.plan.pickHint")}</p>
-                    {inferred > 0 && <p className="m-0 max-w-2xl font-sans text-[12px] text-amber-500/90 leading-normal">{t("release.pulls.plan.inferredCount", { count: inferred })}</p>}
+                    {inferred > 0 && <p className="m-0 max-w-2xl font-sans text-[12px] text-warning-foreground leading-normal">{t("release.pulls.plan.inferredCount", { count: inferred })}</p>}
                 </div>
                 <div className="flex flex-none items-center gap-2">
                     <Button size="sm" variant="outline" onClick={onExport} disabled={rows.length === 0}>
@@ -79,7 +79,7 @@ export function PullsBanners({ rows, totals, lookup, charNames, today, onAllocat
             <div className="flex flex-wrap items-start gap-x-8 gap-y-3 rounded-lg border border-border bg-muted/30 p-3">
                 <Stat label={t("release.pulls.plan.committed")} value={f.number(totals.spent)} />
                 <Stat label={t("release.pulls.plan.remaining")} value={f.number(totals.remaining)} />
-                {totals.shortBanners > 0 && <Stat label={t("release.pulls.plan.overrun", { count: totals.shortBanners })} value={f.number(totals.shortfall)} className="text-amber-500" />}
+                {totals.shortBanners > 0 && <Stat label={t("release.pulls.plan.overrun", { count: totals.shortBanners })} value={f.number(totals.shortfall)} className="text-warning-foreground" />}
                 {!planned && <p className="m-0 self-center font-sans text-[12px] text-muted-foreground">{t("release.pulls.plan.untouched")}</p>}
             </div>
 
@@ -223,7 +223,7 @@ function Estimated({ row, t, onPreset, onAllocate }: { row: IPlanRow; t: PullsT;
                 free rolls and the budget line above cannot (free rolls never enter the pool), so
                 they printed "40 short" vs "16 under". "30 + 24 free = 54" makes them two facts. */}
             {row.totalPulls > 0 && (
-                <span className={cn("font-mono text-[12px] tabular-nums", gap > 0 ? "text-amber-500" : "text-emerald-500")}>
+                <span className={cn("font-mono text-[12px] tabular-nums", gap > 0 ? "text-warning-foreground" : "text-success-foreground")}>
                     {row.freePulls > 0
                         ? gap > 0
                             ? t("release.pulls.plan.sumFreeGap", { spent: f.number(row.spent), free: f.number(row.freePulls), total: f.number(row.totalPulls), gap: f.number(gap), goal: f.number(active.p50) })
@@ -355,10 +355,10 @@ function PlanRow({ row, lookup, charNames, today, t, onAllocate, onPreset, onSet
                 <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5">
                     {row.allocated > 0 ? (
                         <>
-                            <span className={cn("font-bold font-mono text-[28px] tabular-nums leading-none", row.shortfall > 0 ? "text-amber-500" : "text-foreground")}>{f.number(row.allocated)}</span>
+                            <span className={cn("font-bold font-mono text-[28px] tabular-nums leading-none", row.shortfall > 0 ? "text-warning-foreground" : "text-foreground")}>{f.number(row.allocated)}</span>
                             <span className="font-sans text-[12px] text-muted-foreground">{t("release.pulls.plan.plannedHere")}</span>
                             {row.shortfall > 0 ? (
-                                <span className="font-sans text-[12px] text-amber-500">{t("release.pulls.plan.planShort", { short: f.number(row.shortfall), available: f.number(row.available) })}</span>
+                                <span className="font-sans text-[12px] text-warning-foreground">{t("release.pulls.plan.planShort", { short: f.number(row.shortfall), available: f.number(row.available) })}</span>
                             ) : (
                                 <span className="font-sans text-[12px] text-muted-foreground">{t("release.pulls.plan.planFits", { available: f.number(row.available) })}</span>
                             )}

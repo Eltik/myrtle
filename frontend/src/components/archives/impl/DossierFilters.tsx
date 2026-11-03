@@ -104,7 +104,7 @@ function MultiTagRow({ label, options, selected, onChange }: { label: string; op
                     return (
                         <button key={o.value} type="button" className={cn(styles.tg, on && styles.on)} onClick={() => onChange(toggle([...selected], o.value))} aria-pressed={on}>
                             {o.label}
-                            <span className="ml-1.5 font-mono text-[10px] tabular-nums opacity-70">{f.number(o.count)}</span>
+                            <span className="ml-1.5 font-mono text-[10px] tabular-nums">{f.number(o.count)}</span>
                         </button>
                     );
                 })}

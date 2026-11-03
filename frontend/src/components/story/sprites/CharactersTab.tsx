@@ -84,7 +84,7 @@ export default function CharactersTab(): React.ReactElement {
                         onChange={(e) => setQuery(e.target.value)}
                         placeholder={t("sprites.search.placeholder")}
                         aria-label={t("sprites.search.aria")}
-                        className="h-11 w-full rounded-[9px] border border-border bg-secondary/50 pr-3.5 pl-9 font-sans text-[13px] text-foreground outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring/40 sm:h-9.5"
+                        className="h-11 w-full rounded-[9px] border border-border bg-secondary/50 pr-3.5 pl-9 font-sans text-[13px] text-foreground outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring sm:h-9.5"
                     />
                 </div>
                 <Segmented label={t("sprites.kind.aria")} options={SPRITE_KIND_FILTERS} value={kind} onChange={setKind} render={(k) => t(`sprites.kind.${k}`)} />
@@ -138,7 +138,7 @@ function GalleryBody({ loading, failed, unavailable, empty, children }: { loadin
         return (
             <div className="rounded-xl border border-border border-dashed p-10 text-center">
                 <p className="m-0 font-sans text-[13px] text-muted-foreground">{t("sprites.unavailable")}</p>
-                <p className="mt-1.5 mb-0 font-mono text-[11px] text-muted-foreground/80">{t("sprites.unavailableNote")}</p>
+                <p className="mt-1.5 mb-0 font-mono text-[11px] text-subtle-foreground">{t("sprites.unavailableNote")}</p>
             </div>
         );
     }

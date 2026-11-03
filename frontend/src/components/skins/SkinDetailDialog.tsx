@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { skinTexture } from "#/components/operators/detail/impl/assets";
 import { DialogClose, DialogContent, DialogTitle } from "#/components/ui/dialog";
+import { Kicker } from "#/components/ui/kicker";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { ScrollArea } from "#/components/ui/scroll-area";
 import { DynamicArtOverlay } from "#/components/user/profile/impl/DynamicArtOverlay";
@@ -63,7 +64,7 @@ export function SkinDetailContent({ skin, opName, skinName, avatarURL, server, p
                                 <OperatorAvatar charId={skin.charId} name={opName} server={server} />
                             </span>
                             <div className="min-w-0 flex-1">
-                                <p className="truncate font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.12em]">{opName}</p>
+                                <Kicker className="mb-0 block truncate">{opName}</Kicker>
                                 <h3 className="wrap-break-word font-heading font-semibold text-lg leading-tight">{skinName}</h3>
                                 {groupName && groupName !== skinName && <p className="truncate text-muted-foreground text-xs">{groupName}</p>}
                             </div>
@@ -106,7 +107,9 @@ export function SkinDetailContent({ skin, opName, skinName, avatarURL, server, p
 export function DetailRow({ label, children }: { label: string; children: React.ReactNode }) {
     return (
         <div className="space-y-1">
-            <dt className="font-mono font-semibold text-[10px] text-muted-foreground uppercase tracking-[0.12em]">{label}</dt>
+            <dt>
+                <Kicker className="mb-0">{label}</Kicker>
+            </dt>
             <dd className="text-foreground/85 text-sm leading-relaxed">{children}</dd>
         </div>
     );

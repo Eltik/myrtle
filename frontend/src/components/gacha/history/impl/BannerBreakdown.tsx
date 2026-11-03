@@ -10,9 +10,9 @@ import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import type { ClientGachaGroup, IBanner, IClientGachaRecords, IGachaItem } from "#/lib/api/gacha";
 import { type IFormatters, useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import { rarityStarColor } from "#/lib/utils";
+import { rarityInk, rarityStarColor } from "#/lib/utils";
 import type { IOperatorIndexEntry } from "#/types/operators";
-import { BANNER_GROUP_COLOR, BANNER_GROUP_LABEL_KEYS, BANNER_RULE_TYPE_LABEL_KEYS, BANNER_STATUS_COLOR, BANNER_STATUS_LABEL_KEYS, bannerStatus, type GachaMessageKey } from "../../constants";
+import { BANNER_GROUP_COLOR, BANNER_GROUP_LABEL_KEYS, BANNER_RULE_TYPE_LABEL_KEYS, BANNER_STATUS_INK, BANNER_STATUS_LABEL_KEYS, bannerStatus, type GachaMessageKey } from "../../constants";
 import type { messages as gachaConstantsMessages } from "../../constants.messages";
 import type { messages } from "./BannerBreakdown.messages";
 import { type ISixStarPity, type ISixStarPullDetail, sixStarPullDetails } from "./pity";
@@ -115,10 +115,11 @@ function FeaturedRow({ ids, star, operatorsById }: { ids: string[]; star: number
     const visible = ids.slice(0, FEATURED_AVATAR_CAP);
     const extra = ids.length - visible.length;
     const ringColor = rarityStarColor(star);
+    const inkColor = rarityInk(star);
 
     return (
         <div className="flex flex-col gap-1.5">
-            <span className="font-mono text-[9.5px] uppercase tracking-[0.14em]" style={{ color: ringColor }}>
+            <span className="font-mono text-[9.5px] uppercase tracking-[0.14em]" style={{ color: inkColor }}>
                 {t("history.breakdown.featured", { rarity: star })}
             </span>
             <div className="flex flex-wrap gap-1.5">
@@ -152,7 +153,7 @@ function BannerNameCell({ banner, name, typeInkClass, typeLabelKey, sixStars, fi
     const t: BreakdownT = useT("gacha");
     const f = useFormatters();
     const trigger = (
-        <button type="button" className="flex cursor-pointer flex-col items-start gap-0.5 rounded-sm text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40">
+        <button type="button" className="flex cursor-pointer flex-col items-start gap-0.5 rounded-sm text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">
             <span className="font-medium font-sans text-[13px] text-foreground leading-snug">{name}</span>
             <span className={`font-mono text-[9.5px] uppercase tracking-[0.14em] ${typeInkClass}`}>{t(typeLabelKey)}</span>
         </button>
@@ -184,7 +185,7 @@ function BannerNameCell({ banner, name, typeInkClass, typeLabelKey, sixStars, fi
 
                     <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
                         <span className="font-sans text-[12px] text-foreground tabular-nums leading-none">{banner.returning ? t("banner.window.returning") : t("history.breakdown.dateRange", { open: fmtDateFromSeconds(banner.openTime, f), close: fmtDateFromSeconds(banner.endTime, f) })}</span>
-                        <span className="inline-flex items-center gap-1.5 font-mono text-[9.5px] uppercase leading-none tracking-[0.14em]" style={{ color: BANNER_STATUS_COLOR[status] }}>
+                        <span className="inline-flex items-center gap-1.5 font-mono text-[9.5px] uppercase leading-none tracking-[0.14em]" style={{ color: BANNER_STATUS_INK[status] }}>
                             <span className="block h-1.5 w-1.5 rounded-full bg-current" aria-hidden />
                             {t(BANNER_STATUS_LABEL_KEYS[status])}
                         </span>
@@ -214,7 +215,7 @@ function BannerNameCell({ banner, name, typeInkClass, typeLabelKey, sixStars, fi
                         </div>
                     ) : null}
 
-                    <div className="break-all font-mono text-[10px] text-muted-foreground/70 tabular-nums">{banner.gachaPoolId}</div>
+                    <div className="break-all font-mono text-[10px] text-subtle-foreground tabular-nums">{banner.gachaPoolId}</div>
                 </div>
             </HoverCardContent>
         </HoverCard>
@@ -240,19 +241,19 @@ function operatorName(item: IGachaItem, operatorsById: Map<string, IOperatorInde
 function SixStarPullDetails({ item, detail, isFeatured, bannersById, operatorsById }: { item: IGachaItem; detail: ISixStarPullDetail | undefined; isFeatured: boolean | null; bannersById: Map<string, IBanner>; operatorsById: Map<string, IOperatorIndexEntry> }) {
     const t: BreakdownT = useT("gacha");
     const f = useFormatters();
-    const ringColor = rarityStarColor(6);
+    const inkColor = rarityInk(6);
     const name = operatorName(item, operatorsById);
     const previous = detail?.previous ?? null;
 
     return (
         <div className="flex flex-col gap-3 text-left">
             <div className="flex flex-col gap-1">
-                <span className="font-mono text-[9.5px] uppercase tracking-[0.14em]" style={{ color: ringColor }}>
+                <span className="font-mono text-[9.5px] uppercase tracking-[0.14em]" style={{ color: inkColor }}>
                     6★
                     {isFeatured === null ? null : <span style={{ color: isFeatured ? undefined : "var(--muted-foreground)" }}> · {t(isFeatured ? "history.breakdown.rateUp" : "history.breakdown.offBanner")}</span>}
                 </span>
                 {operatorsById.has(item.charId) ? (
-                    <Link to="/operators/$id" params={{ id: item.charId }} className="w-fit rounded-sm font-sans font-semibold text-[14px] text-foreground leading-snug underline-offset-2 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40">
+                    <Link to="/operators/$id" params={{ id: item.charId }} className="w-fit rounded-sm font-sans font-semibold text-[14px] text-foreground leading-snug underline-offset-2 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                         {name}
                     </Link>
                 ) : (
@@ -294,7 +295,7 @@ function SixStarPullDetails({ item, detail, isFeatured, bannersById, operatorsBy
                         <span className={KICKER}>{t("history.breakdown.pull.stretch", { count: detail.count })}</span>
                         <span className="flex flex-wrap gap-x-3 gap-y-0.5 font-mono text-[11px] tabular-nums">
                             {([5, 4, 3] as const).map((rarity) => (
-                                <span key={rarity} style={{ color: rarityStarColor(rarity) }}>
+                                <span key={rarity} style={{ color: rarityInk(rarity) }}>
                                     {t("history.breakdown.pull.stretchStar", { count: f.number(detail.stretch[STRETCH_FIELD[rarity]]), rarity })}
                                 </span>
                             ))}
@@ -316,6 +317,7 @@ function SixStarPulls({ pulls, detailByPull, banner, bannersById, operatorsById 
     const t: BreakdownT = useT("gacha");
     const f = useFormatters();
     const ringColor = rarityStarColor(6);
+    const inkColor = rarityInk(6);
     // Only mark rate-up vs off-banner when the static data names the featured pool.
     const featured = banner && banner.featured6.length > 0 ? new Set(banner.featured6) : null;
     const rateUpCount = featured ? pulls.filter((item) => featured.has(item.charId)).length : 0;
@@ -324,7 +326,7 @@ function SixStarPulls({ pulls, detailByPull, banner, bannersById, operatorsById 
         <div className="motion-safe:fade-in motion-safe:slide-in-from-top-1 flex flex-col gap-2 motion-safe:animate-in motion-safe:duration-200">
             {featured ? (
                 <p className="m-0 font-mono text-[10px] text-muted-foreground uppercase tabular-nums tracking-[0.12em]">
-                    <span style={{ color: ringColor }}>{t("history.breakdown.rateUpCount", { count: rateUpCount })}</span> · {t("history.breakdown.offBannerCount", { count: pulls.length - rateUpCount })}
+                    <span style={{ color: inkColor }}>{t("history.breakdown.rateUpCount", { count: rateUpCount })}</span> · {t("history.breakdown.offBannerCount", { count: pulls.length - rateUpCount })}
                 </p>
             ) : null}
             {/* Equal-width cells instead of a ragged wrap, so names line up and truncate at one width. */}
@@ -341,7 +343,7 @@ function SixStarPulls({ pulls, detailByPull, banner, bannersById, operatorsById 
                                     render={
                                         <button
                                             type="button"
-                                            className="flex w-full min-w-0 cursor-pointer touch-manipulation items-center gap-2 rounded-lg border border-border/60 bg-card py-1.5 pr-2.5 pl-1.5 text-left transition-colors hover:border-border hover:bg-muted/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 data-popup-open:border-border data-popup-open:bg-muted/60"
+                                            className="flex w-full min-w-0 cursor-pointer touch-manipulation items-center gap-2 rounded-lg border border-border/60 bg-card py-1.5 pr-2.5 pl-1.5 text-left transition-colors hover:border-border hover:bg-muted/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring data-popup-open:border-border data-popup-open:bg-muted/60"
                                         />
                                     }
                                 >
@@ -355,7 +357,7 @@ function SixStarPulls({ pulls, detailByPull, banner, bannersById, operatorsById 
                                         <span className="flex min-w-0 items-center gap-1.5 whitespace-nowrap font-mono text-[10px] text-muted-foreground tabular-nums leading-none">
                                             <span className="shrink-0">{fmtDate(item.at, f)}</span>
                                             {isFeatured === null ? null : (
-                                                <span className="truncate uppercase tracking-[0.12em]" style={{ color: isFeatured ? ringColor : undefined }}>
+                                                <span className="truncate uppercase tracking-[0.12em]" style={{ color: isFeatured ? inkColor : undefined }}>
                                                     · {t(isFeatured ? "history.breakdown.rateUp" : "history.breakdown.offBanner")}
                                                 </span>
                                             )}
@@ -487,7 +489,7 @@ export function BannerBreakdown({ records, bannersById, operatorsById, isLoading
                                                     aria-expanded={isOpen}
                                                     aria-controls={panelId}
                                                     aria-label={t(isOpen ? "history.breakdown.hideSixStars" : "history.breakdown.showSixStars", { count: banner.sixStars, banner: banner.poolName })}
-                                                    className="-my-1 -mr-1.5 inline-flex min-h-8 pointer-coarse:min-h-11 cursor-pointer touch-manipulation items-center gap-1 rounded-md px-1.5 text-rarity-6-ink transition-colors hover:bg-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                                                    className="-my-1 -mr-1.5 inline-flex min-h-8 pointer-coarse:min-h-11 cursor-pointer touch-manipulation items-center gap-1 rounded-md px-1.5 text-rarity-6-ink transition-colors hover:bg-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                                                 >
                                                     {banner.sixStars}×6★
                                                     <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 motion-reduce:transition-none ${isOpen ? "rotate-180" : ""}`} aria-hidden />

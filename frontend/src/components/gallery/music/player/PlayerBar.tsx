@@ -59,7 +59,7 @@ export function PlayerBar({ offPage = false }: { offPage?: boolean }): React.Rea
                             <LikeButton t={t} trackId={current.id} />
                             {offPage ? (
                                 // Off the music page the cover is the way back to it.
-                                <Link aria-label={t("music.player.openPage")} className="relative z-10 size-11 shrink-0 overflow-hidden rounded-md border border-border bg-secondary/50 outline-none transition-colors hover:border-primary/45 focus-visible:ring-2 focus-visible:ring-ring/40" to="/gallery/music">
+                                <Link aria-label={t("music.player.openPage")} className="relative z-10 size-11 shrink-0 overflow-hidden rounded-md border border-border bg-secondary/50 outline-none transition-colors hover:border-primary/45 focus-visible:ring-2 focus-visible:ring-ring" to="/gallery/music">
                                     <Cover url={current.coverUrl} />
                                 </Link>
                             ) : (
@@ -73,7 +73,7 @@ export function PlayerBar({ offPage = false }: { offPage?: boolean }): React.Rea
                                 <ClippedText className="text-[11.5px] text-muted-foreground" text={subLine(current, houseArtist)} />
                             </div>
                             {/* On a phone the whole track area opens the queue. */}
-                            <button aria-label={t("music.player.openQueue")} className="absolute inset-0 cursor-pointer rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring/40 sm:hidden" onClick={() => openPanel("queue")} type="button" />
+                            <button aria-label={t("music.player.openQueue")} className="absolute inset-0 cursor-pointer rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring sm:hidden" onClick={() => openPanel("queue")} type="button" />
                         </div>
 
                         <div className="flex items-center justify-center gap-0.5 sm:gap-1">
@@ -86,7 +86,7 @@ export function PlayerBar({ offPage = false }: { offPage?: boolean }): React.Rea
                             </IconButton>
                             <button
                                 aria-label={status === "loading" ? t("music.player.loading") : playing ? t("music.player.pause") : t("music.player.play")}
-                                className="mx-1 inline-flex pointer-coarse:size-11 size-10 shrink-0 cursor-pointer items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm outline-none transition-transform hover:scale-105 focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-95 max-sm:size-11"
+                                className="mx-1 inline-flex pointer-coarse:size-11 size-10 shrink-0 cursor-pointer items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm outline-none transition-transform hover:scale-105 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-95 max-sm:size-11"
                                 onClick={togglePlay}
                                 type="button"
                             >
@@ -214,7 +214,7 @@ function SeekLine({ t }: { t: PlayerT }): React.ReactElement {
                     <SliderPrimitive.Indicator className="scale-y-[.667] bg-primary shadow-[0_0_8px_var(--color-primary)] transition-transform duration-150 ease-out group-hover:scale-y-100" />
                     {loopPercent !== null && <span aria-hidden="true" className="absolute top-1/2 h-2.5 w-0.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-foreground/60" style={{ left: `${loopPercent}%` }} title={t("music.player.loopPoint")} />}
                     <SliderPrimitive.Thumb
-                        className="block size-3 rounded-full bg-primary opacity-0 shadow outline-none transition-opacity group-hover:opacity-100 has-focus-visible:opacity-100 has-focus-visible:ring-3 has-focus-visible:ring-ring/40 data-dragging:opacity-100"
+                        className="block size-3 rounded-full bg-primary opacity-0 shadow outline-none transition-opacity group-hover:opacity-100 has-focus-visible:opacity-100 has-focus-visible:ring-3 has-focus-visible:ring-ring data-dragging:opacity-100"
                         getAriaValueText={() => t("music.player.seekValue", { elapsed, total })}
                         index={0}
                     />

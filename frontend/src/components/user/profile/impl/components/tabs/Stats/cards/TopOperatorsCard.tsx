@@ -82,7 +82,7 @@ function TopOperatorTile({ ranked, rank }: { ranked: IRanked; rank: number }) {
             <PreviewCardTrigger className="block h-full">
                 <div className="relative flex h-full flex-col gap-2.5 bg-card p-3 sm:p-4">
                     <div aria-hidden className="absolute inset-x-0 top-0 h-0.5" style={{ background: rarityColor, opacity: 0.55 }} />
-                    <div className="absolute top-2.5 right-2.5 font-bold font-mono text-[10px] text-muted-foreground/35 tabular-nums">#{rank}</div>
+                    <div className="absolute top-2.5 right-2.5 font-bold font-mono text-[10px] text-subtle-foreground tabular-nums">#{rank}</div>
 
                     <div className="flex items-center gap-2.5 pt-0.5">
                         <div className="relative shrink-0">
@@ -94,11 +94,11 @@ function TopOperatorTile({ ranked, rank }: { ranked: IRanked; rank: number }) {
                                 {displayName}
                             </p>
                             {subtitle && (
-                                <p className="truncate text-[9px] text-muted-foreground/60 leading-tight" style={{ maxWidth: "9rem" }}>
+                                <p className="truncate text-[9px] text-subtle-foreground leading-tight" style={{ maxWidth: "9rem" }}>
                                     {subtitle}
                                 </p>
                             )}
-                            <p className="font-mono text-[10.5px] text-muted-foreground/70">{t("profile.stats.top.level", { level: entry.level })}</p>
+                            <p className="font-mono text-[10.5px] text-subtle-foreground">{t("profile.stats.top.level", { level: entry.level })}</p>
                         </div>
                     </div>
 
@@ -108,7 +108,7 @@ function TopOperatorTile({ ranked, rank }: { ranked: IRanked; rank: number }) {
                         <div aria-label={t("profile.stats.top.completeAria", { pct: completenessPct })} aria-valuemax={100} aria-valuemin={0} aria-valuenow={completenessPct} className="h-1 flex-1 overflow-hidden rounded-full bg-muted/40" role="progressbar">
                             <div className="h-full rounded-full" style={{ width: `${completenessPct}%`, background: rarityColor, opacity: 0.7 }} />
                         </div>
-                        <span className="font-mono text-[10px] text-muted-foreground/70 tabular-nums">{completenessPct}%</span>
+                        <span className="font-mono text-[10px] text-subtle-foreground tabular-nums">{completenessPct}%</span>
                     </div>
                 </div>
             </PreviewCardTrigger>
@@ -128,7 +128,7 @@ function TopOperatorTile({ ranked, rank }: { ranked: IRanked; rank: number }) {
                         </div>
                     ) : (
                         <div className="flex flex-col gap-1.5">
-                            <span className="font-medium text-[10px] text-muted-foreground/60 uppercase tracking-wide">{t("profile.stats.top.remaining")}</span>
+                            <span className="font-medium text-[10px] text-subtle-foreground uppercase tracking-wide">{t("profile.stats.top.remaining")}</span>
                             <ul className="flex flex-col gap-1">
                                 {missing.map((gap) => (
                                     <li className="flex items-center gap-2 text-foreground/80 text-xs" key={gap.tag}>

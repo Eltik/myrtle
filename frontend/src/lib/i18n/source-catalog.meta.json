@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-11-02T23:17:21.678Z",
+    "generatedAt": "2026-11-03T14:55:12.154Z",
     "entries": [
         {
             "key": "admin.home.access.everyList",
@@ -27239,6 +27239,15 @@
             ]
         },
         {
+            "key": "stages.list.card.variant.unavailable",
+            "namespace": "stages",
+            "source_text": "{label}, no stage page",
+            "description": "Accessible name and tooltip of a CM or Adverse chip on a stage card when that version has no level data, so it is not a link. {label} is list.card.cm.label or list.card.adverse.label.",
+            "placeholders": [
+                "label"
+            ]
+        },
+        {
             "key": "stages.list.collapse",
             "namespace": "stages",
             "source_text": "Collapse",
@@ -27639,14 +27648,14 @@
             "key": "stages.primitives.flag.no",
             "namespace": "stages",
             "source_text": "No",
-            "description": "Value pill on a stage property row when the flag is off. Short uppercase label in a narrow pill.",
+            "description": "Value pill on a stage property row when the flag is off. Short label in a narrow pill.",
             "placeholders": []
         },
         {
             "key": "stages.primitives.flag.yes",
             "namespace": "stages",
             "source_text": "Yes",
-            "description": "Value pill on a stage property row when the flag is on. Short uppercase label in a narrow pill.",
+            "description": "Value pill on a stage property row when the flag is on. Short label in a narrow pill.",
             "placeholders": []
         },
         {
@@ -60991,10 +61000,24 @@
             "placeholders": []
         },
         {
+            "key": "user.profile.strip.headhuntingPermits.kicker",
+            "namespace": "user",
+            "source_text": "Headhunting Permits",
+            "description": "Label of the tile showing the account's single-pull Headhunting Permits. The game's own currency name: use the localized client's term.",
+            "placeholders": []
+        },
+        {
             "key": "user.profile.strip.items.kicker",
             "namespace": "user",
             "source_text": "Items",
             "description": "Label of the tile counting the distinct items in this account's inventory.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.strip.lmd.kicker",
+            "namespace": "user",
+            "source_text": "LMD",
+            "description": "Label of the tile showing the account's LMD (the game's money). The game's own currency name: use the localized client's term.",
             "placeholders": []
         },
         {
@@ -61005,10 +61028,31 @@
             "placeholders": []
         },
         {
+            "key": "user.profile.strip.originite.kicker",
+            "namespace": "user",
+            "source_text": "Originite Prime",
+            "description": "Label of the tile showing the account's Originite Prime. The game's own currency name: use the localized client's term.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.strip.orundum.kicker",
+            "namespace": "user",
+            "source_text": "Orundum",
+            "description": "Label of the tile showing the account's Orundum. The game's own currency name: use the localized client's term.",
+            "placeholders": []
+        },
+        {
             "key": "user.profile.strip.skins.kicker",
             "namespace": "user",
             "source_text": "Skins",
             "description": "Label of the tile counting the outfits this account owns.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.strip.tenRollPermits.kicker",
+            "namespace": "user",
+            "source_text": "Ten-roll Permits",
+            "description": "Label of the tile showing the account's Ten-roll Headhunting Permits. The game's own currency name: use the localized client's term.",
             "placeholders": []
         },
         {

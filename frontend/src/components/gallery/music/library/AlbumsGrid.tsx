@@ -37,9 +37,9 @@ export function AlbumsGrid({ albums, pageKey }: { albums: readonly IAlbum[]; pag
                         <button
                             type="button"
                             onClick={() => nav.openAlbum(album.id)}
-                            className={cn("group/card relative block aspect-square w-full cursor-pointer overflow-hidden rounded-lg bg-muted text-left outline-none focus-visible:ring-2 focus-visible:ring-ring/60", album.id === playingAlbum && "ring-2 ring-primary")}
+                            className={cn("group/card relative block aspect-square w-full cursor-pointer overflow-hidden rounded-lg bg-muted text-left outline-none focus-visible:ring-2 focus-visible:ring-ring", album.id === playingAlbum && "ring-2 ring-primary")}
                         >
-                            <DiscIcon aria-hidden="true" className="absolute inset-0 m-auto size-1/3 text-muted-foreground/40" />
+                            <DiscIcon aria-hidden="true" className="absolute inset-0 m-auto size-1/3 text-subtle-foreground" />
                             <img referrerPolicy="no-referrer" src={sizedCover(album.coverUrl, 240)} alt="" loading="lazy" decoding="async" className="relative size-full object-cover transition-transform duration-200 ease-out group-hover/card:scale-104 motion-reduce:transition-none" />
                             <span aria-hidden="true" className="pointer-events-none absolute inset-0 bg-black/18 transition-opacity duration-200 ease-out group-hover/card:opacity-30" />
                             <span className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_top,rgb(0_0_0/.88),rgb(0_0_0/.15)_55%,transparent_75%)]" />

@@ -139,7 +139,7 @@ const ChartTrack = memo(function ChartTrack({ row, tracks, source, houseArtist }
                 type="button"
                 onClick={() => playFrom(tracks, track, source)}
                 aria-label={t("music.charts.trackAria", { rank: row.rank, name, listens })}
-                className="flex min-h-12 min-w-0 flex-1 cursor-pointer items-center gap-2.5 rounded-md px-1.5 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+                className="flex min-h-12 min-w-0 flex-1 cursor-pointer items-center gap-2.5 rounded-md px-1.5 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
                 <span className="flex w-6 shrink-0 items-center justify-end font-mono text-[11px] text-muted-foreground tabular-nums">
                     {current ? (

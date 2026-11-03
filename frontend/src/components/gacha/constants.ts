@@ -42,11 +42,12 @@ export const BANNER_STATUS_LABEL_KEYS: Record<BannerStatus, GachaMessageKey> = {
     returning: "banner.status.returning",
 };
 
-export const BANNER_STATUS_COLOR: Record<BannerStatus, string> = {
-    active: "oklch(0.78 0.18 145)",
-    upcoming: "oklch(0.78 0.16 220)",
+/** The status as text and its dot. The old status colours, oklch(0.78 0.18 145) / (0.78 0.16 220) / (0.78 0.12 300), measured 1.88 to 2.08 on the light card; `--banner-*-ink` clear 4.5 in both themes and keep those colours in dark. */
+export const BANNER_STATUS_INK: Record<BannerStatus, string> = {
+    active: "var(--banner-active-ink)",
+    upcoming: "var(--banner-upcoming-ink)",
     ended: "var(--muted-foreground)",
-    returning: "oklch(0.78 0.12 300)",
+    returning: "var(--banner-returning-ink)",
 };
 
 /** Where `banner` stands at `nowSec` (unix seconds). */

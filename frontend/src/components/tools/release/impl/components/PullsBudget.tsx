@@ -353,7 +353,9 @@ export function PullsBudget({ settings, setSettings, days, committed, freePulls,
                                     {t("release.pulls.income.skinOriginiteHint", { count: skins.count, op: f.number(skins.originite) })}
                                     {skins.unpriced > 0 && ` ${t("release.pulls.income.skinUnpriced", { count: skins.unpriced })}`}
                                 </p>
-                                {warning && <output className="m-0 block rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 font-sans text-[12px] text-amber-500 leading-normal">{t("release.pulls.income.originiteShort", { needed: f.number(warning.needed), available: f.number(warning.available) })}</output>}
+                                {warning && (
+                                    <output className="m-0 block rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 font-sans text-[12px] text-warning-foreground leading-normal">{t("release.pulls.income.originiteShort", { needed: f.number(warning.needed), available: f.number(warning.available) })}</output>
+                                )}
                             </div>
                         </div>
                     </CollapsiblePanel>

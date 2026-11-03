@@ -43,24 +43,25 @@ export function TierListHero({ detail }: ITierListHeroProps) {
                     <div className="min-w-0 flex-1">
                         <div className="mb-2 flex flex-wrap items-center gap-1.5">
                             {isOfficial ? (
-                                <span className="inline-flex items-center gap-1 rounded-full border border-[oklch(0.92_0.13_85)] bg-[oklch(0.92_0.13_85)] px-2 py-0.5 font-bold font-mono text-[10.5px] text-[oklch(0.32_0.12_75)] uppercase leading-none tracking-wider">
+                                <span className="inline-flex items-center gap-1 rounded-full border border-[oklch(0.92_0.13_85)] bg-[oklch(0.92_0.13_85)] px-2 py-0.5 font-bold font-mono text-[10.5px] text-[oklch(0.32_0.12_75)] leading-none">
                                     <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className="h-2.5 w-2.5">
                                         <path d="M12 2 9.6 4.4 6.3 4l-.6 3.3L2.5 9 4 12l-1.5 3 3.2 1.7.6 3.3 3.3-.4L12 22l2.4-2.4 3.3.4.6-3.3L21.5 15 20 12l1.5-3-3.2-1.7-.6-3.3L14.4 4.4Zm-1.2 13.4-3.4-3.4 1.4-1.4 2 2 4.4-4.4 1.4 1.4Z" />
                                     </svg>
                                     {t("detail.hero.official")}
                                 </span>
                             ) : (
-                                <span className="inline-flex items-center gap-1 rounded-full border border-border bg-muted px-2 py-0.5 font-medium font-mono text-[10.5px] text-muted-foreground uppercase leading-none tracking-wider">{t("detail.hero.community")}</span>
+                                <span className="inline-flex items-center gap-1 rounded-full border border-border bg-muted px-2 py-0.5 font-medium font-mono text-[10.5px] text-muted-foreground leading-none">{t("detail.hero.community")}</span>
                             )}
 
                             {flair && (
                                 <span
-                                    className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-bold font-mono text-[10.5px] uppercase leading-none tracking-wider"
+                                    className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-bold font-mono text-[10.5px] leading-none"
                                     style={
                                         flair.color
                                             ? {
                                                   background: `color-mix(in srgb, ${flair.color} 18%, transparent)`,
-                                                  color: flair.color,
+                                                  // Free-form flair colours measured 2.46 to 2.94 as text on their own tint; the dot and border carry the colour.
+                                                  color: "var(--foreground)",
                                                   border: `1px solid color-mix(in srgb, ${flair.color} 50%, transparent)`,
                                               }
                                             : {
@@ -76,7 +77,7 @@ export function TierListHero({ detail }: ITierListHeroProps) {
                             )}
 
                             {stats?.isTrending && (
-                                <span className="inline-flex items-center gap-1 rounded-full border border-[color-mix(in_srgb,var(--primary)_36%,transparent)] bg-[color-mix(in_srgb,var(--primary)_10%,transparent)] px-2 py-0.5 font-bold font-mono text-[10.5px] text-primary uppercase leading-none tracking-wider">
+                                <span className="inline-flex items-center gap-1 rounded-full border border-[color-mix(in_srgb,var(--primary)_36%,transparent)] bg-[color-mix(in_srgb,var(--primary)_10%,transparent)] px-2 py-0.5 font-bold font-mono text-[10.5px] text-primary leading-none">
                                     <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className="h-2.5 w-2.5">
                                         <path d="M12 2c.6 4 4.7 5.4 4.7 9.5 0 2.6-2 4.5-4.7 4.5s-4.7-1.9-4.7-4.5C7.3 9.4 9.6 8 9 4c2.4 1.4 3 4 3 4Z" />
                                     </svg>

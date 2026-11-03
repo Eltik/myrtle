@@ -4,8 +4,8 @@ import { cnModuleTexts, placeholderKeys, rebuildFromBase, swapJustifiedNumbers, 
 import { descriptionToHtml } from "./description";
 
 const bb = (rows: [string, number][]) => rows.map(([key, value]) => ({ key, value }));
-const STRUCK = (s: string) => `<span class="rounded bg-red-500/15 px-0.5 text-red-300 line-through decoration-red-400/70">${s}</span>`;
-const MARKED = (s: string) => `<span class="rounded bg-emerald-500/15 px-0.5 text-emerald-300">${s}</span>`;
+const STRUCK = (s: string) => `<span class="rounded bg-red-500/15 px-0.5 text-destructive-foreground line-through decoration-red-400/70">${s}</span>`;
+const MARKED = (s: string) => `<span class="rounded bg-emerald-500/15 px-0.5 text-success-foreground">${s}</span>`;
 
 describe("placeholderKeys", () => {
     it("reads every placeholder, lowercased, with or without a format or sign", () => {

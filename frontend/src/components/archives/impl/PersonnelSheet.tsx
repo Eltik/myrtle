@@ -6,6 +6,7 @@ import type * as React from "react";
 import { useMemo, useState } from "react";
 import { PolarAngleAxis, PolarGrid, PolarRadiusAxis, Radar, RadarChart } from "recharts";
 import { Button } from "#/components/ui/button";
+import { Kicker } from "#/components/ui/kicker";
 import { Sheet, SheetDescription, SheetHeader, SheetPanel, SheetPopup, SheetTitle } from "#/components/ui/sheet";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { archiveOperatorQueryOptions } from "#/lib/api/archives";
@@ -63,7 +64,13 @@ function Fact({ label, value, children }: { label: string; value?: React.ReactNo
 }
 
 function SectionTitle({ children }: { children: React.ReactNode }): React.ReactElement {
-    return <h3 className="m-0 mt-6 mb-2 font-bold font-sans text-[0.69rem] text-primary uppercase tracking-[0.22em]">{children}</h3>;
+    return (
+        <h3 className="m-0 mt-6 mb-2 leading-none">
+            <Kicker tone="accent" className="mb-0">
+                {children}
+            </Kicker>
+        </h3>
+    );
 }
 
 function FileBody({ op, t, server, onOpenFile, onOpenChart, fromDossiers }: { op: ArchiveOperator; t: ArchivesT; server: string; onOpenFile: (id: string) => void; onOpenChart: (groupId: string) => void; fromDossiers: boolean }): React.ReactElement {
@@ -91,11 +98,11 @@ function FileBody({ op, t, server, onOpenFile, onOpenChart, fromDossiers }: { op
         <>
             <SheetHeader className="relative overflow-hidden">
                 {home ? <FactionLogo id={home.id} className="pointer-events-none absolute -top-2 right-10 size-28 text-foreground opacity-[0.08]" /> : null}
-                <p className="m-0 font-bold font-mono text-[10.5px] text-primary uppercase tracking-[0.2em]">
+                <Kicker tone="accent" className="mb-0 block">
                     {op.number ? `${op.number.display} · ` : ""}
                     {t("file.kicker")}
-                </p>
-                <SheetTitle className="font-bold text-[26px] uppercase leading-tight tracking-tight">{op.name}</SheetTitle>
+                </Kicker>
+                <SheetTitle className="font-bold text-[26px] leading-tight tracking-tight">{op.name}</SheetTitle>
                 <SheetDescription>{t("file.subtitle", { profession: formatProfession(op.profession), branch: op.subProfessionName ?? op.subProfessionId })}</SheetDescription>
             </SheetHeader>
             <SheetPanel className="pb-8">

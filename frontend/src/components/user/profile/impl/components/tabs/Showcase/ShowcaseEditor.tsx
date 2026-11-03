@@ -243,7 +243,7 @@ function ReferentName({ block, uid }: { block: Exclude<ShowcaseDraftBlock, Favou
     return (
         <>
             <span className="text-muted-foreground">{kind}</span>
-            <span aria-hidden="true" className="mx-1.5 text-muted-foreground/60">
+            <span aria-hidden="true" className="mx-1.5 text-subtle-foreground">
                 ·
             </span>
             {name}

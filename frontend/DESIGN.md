@@ -27,6 +27,7 @@ warm grey next to operator art.
 | border / input | `oklch(0.88 0.005 285)` | `oklch(0.28 / 0.22 0.005 285)` |
 | foreground | `oklch(0.145 0.005 285)` | `oklch(0.97 0.005 285)` |
 | muted-foreground | `oklch(0.45 0.01 285)` | `oklch(0.65 0.01 285)` |
+| subtle-foreground | `oklch(0.52 0.01 285)` | `oklch(0.62 0.01 285)` |
 | primary / ring | `oklch(0.58 0.22 25)` red | `oklch(0.75 0.15 25)` salmon |
 
 The one accent is the red primary (also `chart-1`, `enemy-boss`, `sidebar-primary`).
@@ -41,6 +42,43 @@ in light mode they work as fills, borders and tints. When a rarity has to be TEX
 glyph (stars, a coloured count), use `--rarity-N-ink` (`text-rarity-N-ink`): the same hue
 darkened to 4.65 to 4.79 on the light page, equal to the plain hue in dark. The ink
 tokens are not text-safe on the muted surface (3.97 to 4.17).
+In code, `rarityInk(n)` (`lib/utils`) returns `var(--rarity-n-ink)` for text and
+glyphs; `rarityStarColor` / `RARITY_HEX(_MUTED)` stay for fills, borders and rings.
+
+The other data colors follow the same rule, with an `-ink` twin for text and glyphs
+(same hue, darkened in light until it clears 4.6 on background and card and 4.5 on a 15%
+tint of its own plain hue; dark uses the plain hue, which already measures 5.54 to
+10.68 on the dark card and 4.63 to 8.04 on its tint). Ratios are light background /
+card / own 15% tint, then dark card / tint:
+
+| token | light | measured light | dark | measured dark |
+|---|---|---|---|---|
+| `--enemy-normal-ink` | `oklch(0.53 0.01 285)` | 5.07 / 5.29 / 4.57 | `--enemy-normal` | 8.58 / 6.70 |
+| `--enemy-elite-ink` | `oklch(0.53 0.111 75)` | 5.16 / 5.39 / 4.74 | `--enemy-elite` | 7.55 / 6.06 |
+| `--enemy-boss-ink` | `oklch(0.53 0.214 25)` | 5.66 / 5.91 / 4.66 | `--enemy-boss` | 8.07 / 6.43 |
+| `--dmg-physic-ink` | `oklch(0.54 0.093 65)` | 4.96 / 5.18 / 4.61 | `--dmg-physic` | 8.08 / 6.39 |
+| `--dmg-magic-ink` | `oklch(0.54 0.13 304.5)` | 5.13 / 5.36 / 4.72 | `--dmg-magic` | 7.36 / 5.91 |
+| `--dmg-heal-ink` | `oklch(0.53 0.109 157.5)` | 4.79 / 5.00 / 4.60 | `--dmg-heal` | 10.68 / 8.04 |
+| `--dmg-none-ink` | `oklch(0.52 0 0)` | 5.27 / 5.51 / 4.72 | `--dmg-none` | 5.54 / 4.63 |
+| `--stage-events-ink` | `oklch(0.54 0.123 62.9)` | 5.02 / 5.24 / 4.73 | `#f7a452` | 9.46 / 7.31 |
+| `--stage-ra-ink` | `oklch(0.52 0.125 156.3)` | 4.96 / 5.18 / 4.62 | `#5bbf86` | 8.42 / 6.63 |
+| `--stage-sss-ink` | `oklch(0.53 0.145 260.2)` | 5.14 / 5.37 / 4.61 | `#5a8fe8` | 5.95 / 4.94 |
+| `--stage-cc-ink` | `oklch(0.54 0.115 72.5)` | 4.96 / 5.18 / 4.64 | `#e8a23c` | 8.80 / 6.89 |
+| `--banner-active-ink` | `oklch(0.52 0.163 145)` | 4.92 / 5.14 / 4.67 | `oklch(0.78 0.18 145)` | 10.18 / 7.77 |
+| `--banner-upcoming-ink` | `oklch(0.53 0.096 220)` | 4.90 / 5.11 / 4.57 | `oklch(0.78 0.16 220)` | 10.18 / 7.86 |
+| `--banner-returning-ink` | `oklch(0.55 0.12 300)` | 4.88 / 5.09 / 4.61 | `oklch(0.78 0.12 300)` | 9.20 / 7.11 |
+| `--featured-six-ink` | `oklch(0.54 0.111 80)` | 4.92 / 5.14 / 4.61 | `oklch(0.78 0.18 80)` | 9.40 / 7.30 |
+
+All map to `text-*-ink` utilities. Code reaches them through `LEVEL_TOKENS[..].ink` /
+`DAMAGE_TOKENS[..].ink` (enemies), `ENEMY_LEVEL_INK` (stage detail), `STAGE_GROUP_INK`
+(IS reuses `--dmg-magic-ink`, Paradox `--rarity-4-ink`, Annihilation
+`--destructive-foreground`) and `BANNER_STATUS_INK` (gacha). Like the rarity inks, none
+is text-safe on the muted surface at every hue (4.07 to 4.62). A tone chip that sits on
+a busy tint (a selected filter pill, a status pill on a tinted row) keeps the tone on its
+border and fill and takes `foreground` text; a chip on an art scrim takes white. Free-form
+user colours (tier-list flairs) never become text. A label painted ON a user colour (a tier
+row's pill) takes black or white from `readableTextColor`, whichever has the higher WCAG
+ratio against it.
 
 Legacy tokens left from the TanStack starter (`--sea-ink-soft`, `--lagoon`,
 `--lagoon-deep`, `--palm`, `--surface`, `--bg-base`) survive only for the randomizer and
@@ -48,9 +86,20 @@ the leaderboard constants; the rest were deleted on 2026-11-03 with zero users.
 `--glow-primary(-intense)` is used by the changelog and profile tabs CSS modules and
 `__root.tsx`.
 
+Text has three steps: foreground, muted-foreground for secondary text, and
+`text-subtle-foreground` for the quietest meta (counts, ids, timestamps, kickers,
+separators, empty-slot placeholders, placeholder text). Subtle measures 5.29 / 5.52 /
+4.63 on background / card / muted in light and 5.51 / 5.24 / 4.75 in dark. Text never
+takes an alpha step (`text-muted-foreground/70`, `/50`): over the page those measured
+2.32 to 4.47, and 128 sites failed AA before the token replaced them. `/90` still clears
+4.5 on every surface and is tolerated; anything quieter uses subtle. On art or a
+translucent scrim, measure against the real backdrop instead.
+
 Status text uses the `*-foreground` tokens (`text-success-foreground` 5.14,
 `text-warning-foreground` 4.82, `text-info-foreground` 6.55, `text-destructive-foreground`
-6.16 on the light page), never a raw `-400` utility, which measures 1.67 to 2.89 there.
+6.16 on the light page; `text-destructive-foreground` is red-400 in dark, 6.61 on the dark
+card, where `text-destructive` measured 1.80 on its own tint), never a raw `-300` /
+`-400` / `-500` utility, which measures 1.52 to 3.82 there.
 
 ## Typography
 
@@ -79,7 +128,9 @@ Status text uses the `*-foreground` tokens (`text-success-foreground` 5.14,
   the router progress bar. No scroll reveals, parallax or decorative loops. One base
   `prefers-reduced-motion` rule collapses every transition and animation except spinners.
 - Focus: one base `:focus-visible` outline, 2px solid `--ring` at a 2px offset (4.59 light,
-  8.06 dark); kit controls that draw their own ring set `outline-none`.
+  8.06 dark); kit controls that draw their own ring set `outline-none`. That ring is
+  solid `ring-ring` at its width (`ring-2`, kit fields `ring-3`), never an alpha step:
+  `ring-ring/24` measured 1.46 and `/60` 2.70, under the 3:1 a focus mark needs.
 - Touch: kit controls reach 44px under `pointer-coarse` through a centred `::after` hit
   area (pattern in `ui/button.tsx`), without changing the desktop layout. A tooltip opens on
   a tap when its trigger has no action of its own; a trigger that is a working button or

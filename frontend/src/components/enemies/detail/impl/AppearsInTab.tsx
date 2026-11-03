@@ -235,7 +235,7 @@ function StageChip({ stage }: { stage: IEnemyStageRef }) {
         <Tooltip>
             <TooltipTrigger render={<span className="inline-flex items-center gap-1.5 rounded-md border bg-card px-2 py-1 font-medium font-mono text-[11.5px] text-foreground leading-none" style={{ borderColor: stage.isHard ? "color-mix(in oklch, var(--destructive) 45%, var(--border))" : "var(--border)" }} />}>
                 <span className="tabular-nums">{stage.code || stage.stageId}</span>
-                {stage.isHard && <span className="rounded-[3px] bg-[color-mix(in_oklch,var(--destructive)_18%,transparent)] px-1 py-px font-mono text-[8.5px] text-destructive uppercase leading-none tracking-[0.08em]">Adv</span>}
+                {stage.isHard && <span className="rounded-[3px] bg-[color-mix(in_oklch,var(--destructive)_18%,transparent)] px-1 py-px font-mono text-[10px] text-destructive-foreground uppercase leading-none tracking-[0.08em]">Adv</span>}
                 {stage.count > 0 && <span className="text-muted-foreground tabular-nums">×{stage.count}</span>}
             </TooltipTrigger>
             <TooltipPopup>{title}</TooltipPopup>

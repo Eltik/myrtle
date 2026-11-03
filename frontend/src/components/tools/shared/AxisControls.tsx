@@ -74,7 +74,7 @@ export function AxisControls({ axes, xAxis, onChangeAxis, metrics, yMetric, onCh
             <div className="flex w-full flex-col items-stretch gap-1 sm:ml-auto sm:w-auto">
                 <div className="grid grid-cols-2 items-end gap-2 sm:flex sm:items-end sm:gap-2">
                     <NumberField key={`${xAxis}-min-${hydrationToken}`} defaultValue={sweep.min} min={0} max={sweep.max - 1} step={axisInput.step} onValueChange={(v) => onChangeSweep({ min: v ?? 0 })} size="sm" className="w-full sm:w-24">
-                        <Label className="block text-[10.5px] text-muted-foreground/80 leading-none">{t("calc.axis.from")}</Label>
+                        <Label className="block text-[10.5px] text-subtle-foreground leading-none">{t("calc.axis.from")}</Label>
                         <NumberFieldGroup>
                             <NumberFieldDecrement />
                             <NumberFieldInput />
@@ -82,7 +82,7 @@ export function AxisControls({ axes, xAxis, onChangeAxis, metrics, yMetric, onCh
                         </NumberFieldGroup>
                     </NumberField>
                     <NumberField key={`${xAxis}-max-${hydrationToken}`} defaultValue={sweep.max} min={sweep.min + 1} max={axisInput.maxBound} step={axisInput.step} onValueChange={(v) => onChangeSweep({ max: v ?? 0 })} size="sm" className="w-full sm:w-24">
-                        <Label className="block text-[10.5px] text-muted-foreground/80 leading-none">{t("calc.axis.to")}</Label>
+                        <Label className="block text-[10.5px] text-subtle-foreground leading-none">{t("calc.axis.to")}</Label>
                         <NumberFieldGroup>
                             <NumberFieldDecrement />
                             <NumberFieldInput />
@@ -91,7 +91,7 @@ export function AxisControls({ axes, xAxis, onChangeAxis, metrics, yMetric, onCh
                     </NumberField>
                     {showPoints && (
                         <div className="space-y-1">
-                            <Label className="block text-[10.5px] text-muted-foreground/80 leading-none">{t("calc.axis.points")}</Label>
+                            <Label className="block text-[10.5px] text-subtle-foreground leading-none">{t("calc.axis.points")}</Label>
                             <Select value={String(sweep.steps)} onValueChange={(v) => onChangeSweep({ steps: Number(v) })}>
                                 <SelectTrigger size="sm" className="w-full sm:min-w-16">
                                     <SelectValue placeholder={t("calc.axis.pointsPlaceholder")}>{(v: string) => v}</SelectValue>
@@ -115,7 +115,7 @@ export function AxisControls({ axes, xAxis, onChangeAxis, metrics, yMetric, onCh
                         </div>
                     )}
                 </div>
-                <p className="font-mono text-[10.5px] text-muted-foreground/80 sm:text-right">{t("calc.axis.pointSummary", { count: pointCount, mode: axisInput.integer ? "whole" : "spacing", step: Math.round(stepValue), unit: axisInput.unit })}</p>
+                <p className="font-mono text-[10.5px] text-subtle-foreground sm:text-right">{t("calc.axis.pointSummary", { count: pointCount, mode: axisInput.integer ? "whole" : "spacing", step: Math.round(stepValue), unit: axisInput.unit })}</p>
             </div>
             {metricHint && (
                 <p className="order-last w-full text-[11px] text-muted-foreground leading-snug sm:basis-full">

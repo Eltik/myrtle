@@ -81,7 +81,7 @@ export function OperatorHero({ operator }: IOperatorHeroProps) {
                                 <span aria-label={t("card.rarityStars", { rarity: rarityNum })} className={cn("font-semibold text-base tracking-wider", rarityColor)} role="img">
                                     {"★".repeat(rarityNum)}
                                 </span>
-                                <span aria-hidden="true" className="text-muted-foreground/50">
+                                <span aria-hidden="true" className="text-subtle-foreground">
                                     |
                                 </span>
                                 <span className="text-muted-foreground text-sm">{subProfessionLabel(operator)}</span>
@@ -136,7 +136,7 @@ export function OperatorHero({ operator }: IOperatorHeroProps) {
                                         <span aria-label={t("card.rarityStars", { rarity: rarityNum })} className={cn("font-semibold text-lg tracking-wider", rarityColor)} role="img">
                                             {"★".repeat(rarityNum)}
                                         </span>
-                                        <span aria-hidden="true" className="text-muted-foreground/50">
+                                        <span aria-hidden="true" className="text-subtle-foreground">
                                             |
                                         </span>
                                         <span className="text-base text-muted-foreground">{subProfessionLabel(operator)}</span>

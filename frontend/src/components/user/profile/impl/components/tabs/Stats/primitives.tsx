@@ -45,7 +45,7 @@ export function StatCard({ children, color, className }: IStatCardProps) {
 export function Kicker({ icon: Icon, label }: { icon: ElementType; label: string }) {
     return (
         <div className="flex items-center gap-2">
-            <Icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground/60" />
+            <Icon className="h-3.5 w-3.5 shrink-0 text-subtle-foreground" />
             <span className={KICKER_TEXT}>{label}</span>
         </div>
     );
@@ -210,8 +210,8 @@ function GapPillContent({ item, mode, expanded = false }: IGapPillContentProps) 
                 </span>{" "}
                 {item.label}
             </span>
-            {mode === "collapse" && <ChevronDown aria-hidden className={cn("h-2.5 w-2.5 text-muted-foreground/50 transition-transform duration-200", expanded && "rotate-180")} />}
-            {mode === "dialog" && <ArrowUpRight aria-hidden className="h-2.5 w-2.5 text-muted-foreground/50" />}
+            {mode === "collapse" && <ChevronDown aria-hidden className={cn("h-2.5 w-2.5 text-subtle-foreground transition-transform duration-200", expanded && "rotate-180")} />}
+            {mode === "dialog" && <ArrowUpRight aria-hidden className="h-2.5 w-2.5 text-subtle-foreground" />}
         </>
     );
 }
@@ -284,7 +284,7 @@ function GapDetailsPanel({ title, color, items }: IGapDetailsPanelProps) {
         <div className="rounded-lg border border-border/60 bg-muted/15">
             <div className="flex items-center justify-between border-border/40 border-b px-3 py-1.5">
                 <span className={KICKER_TEXT}>{title}</span>
-                <span className="font-mono text-[10px] text-muted-foreground/70 tabular-nums">
+                <span className="font-mono text-[10px] text-subtle-foreground tabular-nums">
                     <span className="font-semibold" style={{ color }}>
                         {f.number(items.length)}
                     </span>{" "}
@@ -298,10 +298,10 @@ function GapDetailsPanel({ title, color, items }: IGapDetailsPanelProps) {
                             <OperatorAvatar charId={d.charId} name={d.name} />
                         </span>
                         <span className="min-w-0 flex-1 truncate font-medium text-xs">{d.name}</span>
-                        {d.sub && <span className="shrink-0 font-mono text-[10px] text-muted-foreground/80 tabular-nums">{d.sub}</span>}
+                        {d.sub && <span className="shrink-0 font-mono text-[10px] text-subtle-foreground tabular-nums">{d.sub}</span>}
                     </li>
                 ))}
-                {overflow > 0 && <li className="px-1.5 pt-1 text-center font-mono text-[10px] text-muted-foreground/60">{t("profile.stats.gaps.overflow", { n: f.number(overflow) })}</li>}
+                {overflow > 0 && <li className="px-1.5 pt-1 text-center font-mono text-[10px] text-subtle-foreground">{t("profile.stats.gaps.overflow", { n: f.number(overflow) })}</li>}
             </ul>
         </div>
     );

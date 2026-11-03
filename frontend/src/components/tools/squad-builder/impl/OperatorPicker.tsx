@@ -17,7 +17,7 @@ import { useFormatters, useGamedataServer, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { ACQUISITION_FILTERS, type AcquisitionFilter, matchesAcquisition, needsRecruitPool } from "#/lib/operators/acquisition";
 import { searchAndRank } from "#/lib/search/fuzzy";
-import { archetypeLabel, cn, getAvatarById, professionLabel, rarityStarColor } from "#/lib/utils";
+import { archetypeLabel, cn, getAvatarById, professionLabel, rarityInk, rarityStarColor } from "#/lib/utils";
 import type { IOperatorIndexEntry } from "#/types/operators";
 import { advancedModules, type IRosterBuild, isCurrentForm, moduleTypeLabel, rosterModuleRanks, SUPPORT_SEAT } from "../model";
 import type { messages } from "./OperatorPicker.messages";
@@ -439,7 +439,7 @@ const PickerTile = React.memo(function PickerTile({ op, build, showOwnership, se
                     <span className="min-w-0">{branch}</span>
                 </span>
                 <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5 pt-0.5 text-[11.5px] leading-4">
-                    <span role="img" aria-label={t("squad.picker.stars", { rarity: op.rarity })} className="font-semibold text-[10px] tracking-[-1px]" style={{ color }}>
+                    <span role="img" aria-label={t("squad.picker.stars", { rarity: op.rarity })} className="font-semibold text-[10px] tracking-[-1px]" style={{ color: rarityInk(op.rarity) }}>
                         {"★".repeat(op.rarity)}
                     </span>
                     {op.stats.cost > 0 && (
@@ -448,7 +448,7 @@ const PickerTile = React.memo(function PickerTile({ op, build, showOwnership, se
                         </span>
                     )}
                 </span>
-                {build ? <BuildLine op={op} build={build} t={t} /> : showOwnership && <span className="text-[11.5px] text-muted-foreground/80 italic leading-4">{t("squad.picker.notOwned")}</span>}
+                {build ? <BuildLine op={op} build={build} t={t} /> : showOwnership && <span className="text-[11.5px] text-subtle-foreground italic leading-4">{t("squad.picker.notOwned")}</span>}
             </span>
         </button>
     );

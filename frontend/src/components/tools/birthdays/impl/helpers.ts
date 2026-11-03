@@ -42,6 +42,11 @@ export function rarityVar(rarity: number): string {
     return `var(--rarity-${rarity})`;
 }
 
+/** The rarity hue as text, `var(--rarity-N-ink)`: the plain hue measures 1.39 to 2.52 on the light card. */
+export function rarityInkVar(rarity: number): string {
+    return `var(--rarity-${rarity}-ink)`;
+}
+
 export function countKnown(birthdays: IOperatorBirthday[]): number {
     return birthdays.reduce((n, b) => n + (b.known ? 1 : 0), 0);
 }

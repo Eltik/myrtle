@@ -81,7 +81,7 @@ export const LoreContent = memo(function LoreContent({ operator }: ILoreContentP
                 </div>
             ) : (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <FileText className="mb-4 h-12 w-12 text-muted-foreground/50" />
+                    <FileText className="mb-4 h-12 w-12 text-subtle-foreground" />
                     <h3 className="mb-2 font-medium text-foreground">{t("lore.empty.title")}</h3>
                     <p className="text-muted-foreground text-sm">{t("lore.empty.body")}</p>
                 </div>

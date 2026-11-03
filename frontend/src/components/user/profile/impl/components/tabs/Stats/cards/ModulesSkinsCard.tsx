@@ -75,7 +75,7 @@ export function ModulesSkinsCard({ modules, skins, charSkins, ownedSkinIds, oper
                             value={
                                 <span>
                                     {modules.unlocked}
-                                    <span className="ml-1 font-medium text-muted-foreground/50 text-sm">/ {modules.totalAvailable}</span>
+                                    <span className="ml-1 font-medium text-sm text-subtle-foreground">/ {modules.totalAvailable}</span>
                                 </span>
                             }
                         />
@@ -96,7 +96,7 @@ export function ModulesSkinsCard({ modules, skins, charSkins, ownedSkinIds, oper
                         value={
                             <span>
                                 {skins.totalOwned}
-                                <span className="ml-1 font-medium text-muted-foreground/50 text-sm">/ {skins.totalAvailable}</span>
+                                <span className="ml-1 font-medium text-sm text-subtle-foreground">/ {skins.totalAvailable}</span>
                             </span>
                         }
                     />

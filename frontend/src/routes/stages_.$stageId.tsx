@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { StageDetail } from "#/components/stages/detail/StageDetail";
+import { RouteError } from "#/components/ui/route-error";
 import { stageDetailQueryOptions } from "#/lib/api/stages";
 import { metaT } from "#/lib/meta";
 import { defaultOgURL } from "#/lib/og";
@@ -10,7 +11,7 @@ import type { IStage, IZone } from "#/types/stages";
 
 export const Route = createFileRoute("/stages_/$stageId")({
     component: RouteComponent,
-    errorComponent: RootErrorComponent,
+    errorComponent: RouteError,
     loader: async ({ context, params }) => {
         // One slim endpoint returns the stage + zone + level + only the
         // enemies/materials this stage references. Procedural IS/RA/CC nodes
@@ -47,16 +48,6 @@ export const Route = createFileRoute("/stages_/$stageId")({
         };
     },
 });
-
-function RootErrorComponent({ error }: { error: unknown }) {
-    console.error("Router error:", error);
-    return (
-        <div style={{ padding: 20 }}>
-            <h1>Something went wrong</h1>
-            <pre style={{ color: "red" }}>{error instanceof Error ? error.message : JSON.stringify(error, null, 2)}</pre>
-        </div>
-    );
-}
 
 function RouteComponent() {
     const { stage, zone, level, enemyData, materials } = Route.useLoaderData();

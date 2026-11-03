@@ -1,5 +1,6 @@
 import type React from "react";
 import { useMemo, useState } from "react";
+import { Kicker } from "#/components/ui/kicker";
 import type { IEnemyAttributes, IEnemyLevelStats, IEnemySkill } from "#/lib/api/enemies";
 import { assetURL } from "#/lib/assets";
 import { emphasizeTagsHtml } from "#/lib/gamedata/richtext";
@@ -63,14 +64,10 @@ export function EnemyHero({ enemy }: { enemy: IEnemyView }) {
     );
 }
 
-function Kicker({ children }: { children: React.ReactNode }) {
-    return <span className="font-medium font-mono text-[10.5px] text-muted-foreground uppercase leading-none tracking-[0.14em]">{children}</span>;
-}
-
 export function SectionHead({ children }: { children: React.ReactNode }) {
     return (
         <div className="mb-3 flex items-center gap-2.5">
-            <Kicker>{children}</Kicker>
+            <Kicker className="mb-0 leading-none">{children}</Kicker>
             <span className="h-px flex-1 bg-border" />
         </div>
     );
@@ -79,7 +76,7 @@ export function SectionHead({ children }: { children: React.ReactNode }) {
 function Meta({ label, value }: { label: string; value: string }) {
     return (
         <div className="rounded-md bg-[color-mix(in_oklch,var(--muted)_50%,transparent)] px-2.5 py-2">
-            <div className="mb-1.25 font-medium font-mono text-[10px] text-muted-foreground uppercase leading-none tracking-[0.12em]">{label}</div>
+            <Kicker className="mb-1.25 block leading-none">{label}</Kicker>
             <div className="break-all font-medium font-sans text-[12.5px] text-foreground leading-[1.2]">{value}</div>
         </div>
     );

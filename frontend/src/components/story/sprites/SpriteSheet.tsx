@@ -158,7 +158,7 @@ function SpriteSheetBody({ detail }: { detail: StorySpriteDetail }): React.React
                                             tabIndex={on ? 0 : -1}
                                             aria-label={t("sprites.sheet.variantAria", { key: v.key })}
                                             onClick={() => setSelected(i)}
-                                            className={cn("flex min-h-11 cursor-pointer flex-col overflow-hidden rounded-[9px] border bg-secondary/40 p-0 text-left ring-inset transition-colors focus-visible:ring-2 focus-visible:ring-ring/60", on ? "border-primary" : "border-border hover:border-primary/45")}
+                                            className={cn("flex min-h-11 cursor-pointer flex-col overflow-hidden rounded-[9px] border bg-secondary/40 p-0 text-left ring-inset transition-colors focus-visible:ring-2 focus-visible:ring-ring", on ? "border-primary" : "border-border hover:border-primary/45")}
                                         >
                                             <SpriteFigure variant={v} name={entry.base} crop={CELL_CROP} lazy thumb={spriteThumbUrl(entry.base, v.key, server)} className="aspect-square w-full" />
                                             <span className={cn("truncate px-1 py-0.5 font-mono text-[10px] tabular-nums", on ? "text-primary" : "text-muted-foreground", v.uses === 0 && !on ? "opacity-60" : undefined)}>{v.key}</span>

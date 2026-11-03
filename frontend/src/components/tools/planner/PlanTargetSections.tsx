@@ -164,7 +164,7 @@ function TargetStepButton({ isActive, lockedReason, title, sizeClassName, onSele
 
 function MetaSeparator(): React.ReactElement {
     return (
-        <span className="text-muted-foreground/30" aria-hidden="true">
+        <span className="text-subtle-foreground" aria-hidden="true">
             •
         </span>
     );

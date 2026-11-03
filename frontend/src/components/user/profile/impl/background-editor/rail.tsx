@@ -22,5 +22,5 @@ export function RailRow({ active, onClick, name, count, title, icon }: { active:
 }
 
 export function RailLabel({ children }: { children: ReactNode }) {
-    return <p className="m-0 mb-1.5 px-2 font-medium font-sans text-[11px] text-muted-foreground/80">{children}</p>;
+    return <p className="m-0 mb-1.5 px-2 font-medium font-sans text-[11px] text-subtle-foreground">{children}</p>;
 }
