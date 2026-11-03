@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
-import { CornerDownRightIcon, SearchIcon } from "lucide-react";
+import { CornerDownRightIcon } from "lucide-react";
 import type * as React from "react";
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
+import { SearchField } from "#/components/SearchField";
 import { Button } from "#/components/ui/button";
-import { Input } from "#/components/ui/input";
 import { Kicker } from "#/components/ui/kicker";
 import { Toggle } from "#/components/ui/toggle";
 import { archiveHiddenFactionsQueryOptions } from "#/lib/api/archives";
@@ -86,10 +86,9 @@ function Hidden({ data, onOpenFile, server }: { data: ArchiveHiddenFactions; onO
             <section className="flex flex-col gap-3">
                 <SectionHead index="01" title={t("hidden.s1.title")} blurb={t("hidden.s1.blurb")} />
                 <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-border bg-card p-2">
-                    <div className="relative min-w-0 flex-1 basis-56">
-                        <SearchIcon aria-hidden className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
-                        <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t("hidden.search")} aria-label={t("hidden.search")} className="pl-8" />
-                    </div>
+                    {/* SearchField, not an icon absolutely placed behind an Input: the Input paints its own
+                        background over the icon, so the magnifier vanished on the light page. */}
+                    <SearchField value={query} onChange={setQuery} placeholder={t("hidden.search")} label={t("hidden.search")} className="min-w-0 flex-1 basis-56" />
                     {deferred ? <span className="font-mono text-[11px] text-muted-foreground tabular-nums">{t("hidden.searchCount", { shown: f.number(matches.length), total: f.number(data.secret.length) })}</span> : null}
                 </div>
                 <Panel>
