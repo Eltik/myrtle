@@ -233,7 +233,7 @@ function LevelProgressBar({ progress, marked }: { progress: ILevelProgress; mark
                 <span className="tabular-nums">{isMax ? t("profile.hero.level.max", { max: MAX_PLAYER_LEVEL }) : t("profile.hero.level.exp", { current: f.number(currentExp), required: f.number(requiredExp) })}</span>
             </div>
             <div role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={percent} aria-label={ariaLabel} className="h-1.5 overflow-hidden rounded-full bg-muted">
-                <div className="h-full rounded-full bg-linear-to-r from-primary/70 to-primary transition-[width] duration-500 ease-out" style={{ width: `${percent}%` }} />
+                <div className="h-full rounded-full bg-muted-foreground transition-[width] duration-500 ease-out" style={{ width: `${percent}%` }} />
             </div>
         </div>
     );
