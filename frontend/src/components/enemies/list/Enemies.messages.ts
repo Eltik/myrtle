@@ -143,10 +143,6 @@ export const messages = {
         text: "Couldn't load where enemies appear, so the Appears In filter is unavailable.",
         description: "Error line on the enemy list when the enemy-to-stage table fails to load. The Appears In filter (pick stages or zones an enemy shows up in) needs that table.",
     },
-    "list.locations.retry": {
-        text: "Try again",
-        description: "Button beside the load error on the enemy list; refetches the enemy-to-stage table.",
-    },
 } satisfies MessageMap;
 
 export const { keys } = defineMessages({ namespace, messages });

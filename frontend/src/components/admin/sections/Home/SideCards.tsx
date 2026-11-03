@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
-import { PanelRetry, skeletons } from "#/components/admin/Primitives";
+import { skeletons } from "#/components/admin/Primitives";
 import { roleVariant, useLevelLabel } from "#/components/admin/sections/Users/labels";
 import type { IAdminAccess } from "#/components/admin/shell/access";
 import { useAdminLocales } from "#/components/admin/shell/locales";
@@ -8,6 +8,7 @@ import { levelVariant } from "#/components/admin/shell/model";
 import { useRoleLabel } from "#/components/admin/shell/nav";
 import { Badge, type IBadgeProps } from "#/components/ui/badge";
 import { Card, CardDescription, CardHeader, CardPanel, CardTitle } from "#/components/ui/card";
+import { LoadFailed } from "#/components/ui/load-failed";
 import { useAuth } from "#/hooks/use-auth";
 import { globalAuditLogQueryOptions, translationAuditLogQueryOptions } from "#/lib/api/admin";
 import { operatorsIndexQueryOptions } from "#/lib/api/operators";
@@ -118,7 +119,7 @@ export function RecentCard({ access }: { access: IAdminAccess }): React.ReactEle
             </CardHeader>
             <CardPanel>
                 {failed ? (
-                    <PanelRetry className="" message={t("home.recent.loadFailed")} retryLabel={t("home.loadFailed.retry")} onRetry={retry} />
+                    <LoadFailed layout="inline" message={t("home.recent.loadFailed")} onRetry={retry} />
                 ) : pending ? (
                     <div className="flex flex-col gap-2">{skeletons(3, "h-6")}</div>
                 ) : (

@@ -6,7 +6,7 @@ import { countGameDays, gameDate } from "#/lib/registry/server-time";
 import { cn } from "#/lib/utils";
 import type { IUserCheckin } from "#/types/user";
 import { PALETTE } from "../palette";
-import { CARD_PADDING, KICKER_TEXT, Kicker, MetricRow, StatCard, Tile } from "../primitives";
+import { CARD_PADDING, CardKicker, KICKER_TEXT, MetricRow, StatCard, Tile } from "../primitives";
 import type { messages } from "./SignInCard.messages";
 
 type CardT = TypedT<typeof messages>;
@@ -99,7 +99,7 @@ export function SignInOverviewCard({ checkin, server }: ICardProps) {
     return (
         <StatCard color={SIGNIN}>
             <div className={cn("flex h-full flex-col gap-5", CARD_PADDING)}>
-                <Kicker icon={CalendarDays} label={t("profile.stats.signin.record.title")} />
+                <CardKicker icon={CalendarDays} label={t("profile.stats.signin.record.title")} />
 
                 <div className="grid grid-cols-2 gap-3">
                     {cumulative_signin !== null && <Tile color={SIGNIN} sub={t("profile.stats.signin.total")} tooltip={t("profile.stats.signin.total.tooltip")} value={f.number(cumulative_signin)} />}
@@ -168,7 +168,7 @@ export function SignInCalendarCard({ checkin, server }: ICardProps) {
         <StatCard color={SIGNIN}>
             <div className={cn("flex h-full flex-col gap-4", CARD_PADDING)}>
                 <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-                    <Kicker icon={CalendarCheck} label={t("profile.stats.signin.calendar.title")} />
+                    <CardKicker icon={CalendarCheck} label={t("profile.stats.signin.calendar.title")} />
                     <Tooltip>
                         <TooltipTrigger render={<button type="button" className="inline-flex cursor-default items-center gap-1.5 rounded-sm text-left font-medium text-[11px] text-muted-foreground focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2" />}>
                             <Clock aria-hidden className="size-3" />

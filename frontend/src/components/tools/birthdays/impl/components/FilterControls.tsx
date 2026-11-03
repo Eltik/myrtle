@@ -5,7 +5,6 @@ import { ClassIcon, TeamIcon } from "#/components/operators/list/impl/components
 import { FilterChip } from "#/components/ui/filter-chip";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "#/components/ui/input-group";
 import { Kicker } from "#/components/ui/kicker";
-import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -34,6 +33,12 @@ export function FilterControls({ filters, onChange, nations, classNames }: IFilt
         onChange({ ...filters, rarities });
     };
 
+    const toggleProfession = (p: OperatorProfession) => {
+        const professions = new Set(filters.professions);
+        professions.has(p) ? professions.delete(p) : professions.add(p);
+        onChange({ ...filters, professions });
+    };
+
     return (
         <div className="flex flex-col">
             <Section label={t("birthdays.filters.search")} t={t}>
@@ -46,19 +51,17 @@ export function FilterControls({ filters, onChange, nations, classNames }: IFilt
             </Section>
 
             <Section label={t("birthdays.filters.class")} t={t} onClear={filters.professions.size > 0 ? () => onChange({ ...filters, professions: new Set() }) : undefined}>
-                <ToggleGroup aria-label={t("birthdays.filters.class")} multiple className="grid w-full grid-cols-4 gap-1.5" value={[...filters.professions]} onValueChange={(next) => onChange({ ...filters, professions: new Set(next as OperatorProfession[]) })}>
+                <fieldset aria-label={t("birthdays.filters.class")} className="m-0 grid w-full min-w-0 grid-cols-4 gap-1.5 border-0 p-0">
                     {PROFESSIONS.map((p) => {
                         const label = professionLabel({ profession: p, professionName: classNames.get(p) });
                         return (
                             <Tooltip key={p}>
-                                <TooltipTrigger render={<ToggleGroupItem value={p} aria-label={label} className="aspect-square h-auto pointer-coarse:min-h-11 min-w-0 border-border bg-secondary/50 p-0 sm:h-auto sm:min-w-0" />}>
-                                    <ClassIcon profession={p} size={20} />
-                                </TooltipTrigger>
+                                <TooltipTrigger render={<FilterChip active={filters.professions.has(p)} aria-label={label} className="h-9 w-full min-w-0 px-0" label={<ClassIcon profession={p} size={20} />} onSelect={() => toggleProfession(p)} />} />
                                 <TooltipPopup>{label}</TooltipPopup>
                             </Tooltip>
                         );
                     })}
-                </ToggleGroup>
+                </fieldset>
             </Section>
 
             <Section label={t("birthdays.filters.rarity")} t={t} onClear={filters.rarities.size > 0 ? () => onChange({ ...filters, rarities: new Set() }) : undefined}>
@@ -94,7 +97,7 @@ function Section({ label, onClear, children, t }: ISectionProps): React.ReactEle
     return (
         <div className="border-border border-t py-3.5 first:border-t-0 first:pt-0">
             <div className="mb-2.5 flex items-center justify-between">
-                <Kicker className="mb-0">{label}</Kicker>
+                <Kicker>{label}</Kicker>
                 {onClear && (
                     <button
                         type="button"

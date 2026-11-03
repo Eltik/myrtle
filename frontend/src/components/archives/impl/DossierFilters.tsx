@@ -85,7 +85,7 @@ function factionIcon(id: string): React.ReactElement {
 function SectionHead({ label }: { label: string }): React.ReactElement {
     return (
         <div className={styles.sectionHead}>
-            <Kicker className="mb-0">{label}</Kicker>
+            <Kicker>{label}</Kicker>
             <span className={styles.line} />
         </div>
     );

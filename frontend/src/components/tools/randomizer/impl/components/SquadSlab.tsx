@@ -25,7 +25,7 @@ export function SquadSlab({ operators, squadSize, onReroll }: ISquadSlabProps): 
     return (
         <SlabFrame index="02" kicker={t("randomizer.squad.kicker")} accent="lagoon">
             <div className="flex items-start justify-between gap-3">
-                <Kicker className="mb-0 flex min-w-0 flex-1 items-center gap-2">
+                <Kicker className="flex min-w-0 flex-1 items-center gap-2">
                     <Users aria-hidden="true" className="h-3.5 w-3.5" />
                     <span>
                         {t("randomizer.squad.deployment")} <span className="font-mono text-foreground normal-case tracking-normal">{t("randomizer.squad.count", { filled, size: squadSize })}</span>

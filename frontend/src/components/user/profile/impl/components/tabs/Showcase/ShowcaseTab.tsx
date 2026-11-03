@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { ArrowUpRightIcon, EyeOffIcon, HeartIcon, LayoutGridIcon, ListOrderedIcon, PencilIcon, RotateCwIcon, SparklesIcon, TargetIcon } from "lucide-react";
+import { ArrowUpRightIcon, EyeOffIcon, HeartIcon, LayoutGridIcon, ListOrderedIcon, PencilIcon, SparklesIcon, TargetIcon } from "lucide-react";
 import { type CSSProperties, lazy, type ReactNode, Suspense, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { compactGridSize } from "#/components/grids/compact";
 import { GridBoard } from "#/components/grids/GridBoard";
@@ -9,6 +9,7 @@ import { TierListBoard } from "#/components/tier-lists/detail/TierListBoard";
 import { EntityAvatar, entityAccent, entityShape } from "#/components/tier-lists/entities";
 import { entityPage, useEntityLabels } from "#/components/tier-lists/kinds";
 import { Button } from "#/components/ui/button";
+import { LoadFailed } from "#/components/ui/load-failed";
 import { Skeleton } from "#/components/ui/skeleton";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useAuth } from "#/hooks/use-auth";
@@ -24,9 +25,8 @@ import { cn } from "#/lib/utils";
 import type { ShowcaseBlockView } from "#/types/generated/ShowcaseBlockView";
 import type { IUserProfile } from "#/types/user";
 import { draftFromView, type IShowcaseEntity, type ShowcaseDraftBlock, shownBlocks } from "../../../showcase";
-import { LoadFailed } from "../LoadFailed";
 import { PlanCard } from "../Plans/PlansTab";
-import { CARD_PADDING, KICKER_TEXT, Kicker, StatCard } from "../Stats/primitives";
+import { CARD_PADDING, CardKicker, KICKER_TEXT, StatCard } from "../Stats/primitives";
 import { FactionFavouriteDialog, type IShowcasePlayer, OperatorFavouriteDialog, operatorTarget, ShowcasePlayerContext, useShowcasePlayer } from "./FavouriteDialogs";
 import type { messages as favMessages } from "./FavouriteDialogs.messages";
 import type { RosterAccess } from "./favourites";
@@ -74,15 +74,7 @@ export function ShowcaseTab({ uid, profile, isOwner, roster, rosterAccess }: ISh
 
     if (query.isPending) return <ShowcaseSkeleton />;
     if (query.isError) {
-        return (
-            <div role="alert" className="flex flex-col items-center gap-3 rounded-2xl border border-border bg-card px-8 py-12 text-center">
-                <p className="text-muted-foreground text-sm">{t("profile.showcase.error")}</p>
-                <Button type="button" variant="outline" size="sm" onClick={() => void query.refetch()}>
-                    <RotateCwIcon />
-                    {t("profile.showcase.retry")}
-                </Button>
-            </div>
-        );
+        return <LoadFailed message={t("profile.showcase.error")} onRetry={() => void query.refetch()} />;
     }
 
     const view = query.data;
@@ -244,7 +236,7 @@ function BlockHeader({ icon, kicker, title, end }: { icon: typeof HeartIcon; kic
     return (
         <div className="flex items-start justify-between gap-3">
             <div className="flex min-w-0 flex-col gap-1">
-                <Kicker icon={icon} label={kicker} />
+                <CardKicker icon={icon} label={kicker} />
                 {title && <h3 className="truncate font-semibold text-base text-foreground leading-tight tracking-tight">{title}</h3>}
             </div>
             {end}

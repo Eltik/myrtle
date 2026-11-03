@@ -5,7 +5,7 @@ export const namespace = "gacha";
 export const messages = {
     "community.leaderboard.kicker": {
         text: "Most pulled · per rarity",
-        description: "Small uppercase label above the most-pulled operators panel. Keep the middle dot.",
+        description: "Heading of the most-pulled operators panel. Keep the middle dot.",
     },
     "community.leaderboard.empty": {
         text: "No data for this rarity yet.",

@@ -5,11 +5,11 @@ export const namespace = "gacha";
 export const messages = {
     "community.rarity.kicker": {
         text: "Outcome mix",
-        description: "Small uppercase label above the rarity-distribution panel, used while the pull total is still loading.",
+        description: "Heading of the rarity-distribution panel.",
     },
-    "community.rarity.kicker.withTotal": {
-        text: "Outcome mix · {count} pulls",
-        description: "Small uppercase label above the rarity-distribution panel once the total is known. Keep the middle dot.",
+    "community.rarity.total": {
+        text: "{count} pulls",
+        description: "Meta text beside the rarity-distribution heading once the community pull total is known. {count} is a compact number, e.g. 1.2M.",
     },
     "community.rarity.you": {
         text: "you · {count} pulls",

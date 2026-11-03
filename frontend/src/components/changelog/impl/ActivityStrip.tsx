@@ -39,7 +39,7 @@ export function ActivityStrip({ commits, days }: { commits: IChangelogCommit[]; 
     return (
         <div>
             <div className="mb-2 flex items-baseline justify-between">
-                <Kicker className="mb-0">{t("activity.title")}</Kicker>
+                <Kicker>{t("activity.title")}</Kicker>
                 {busiest && busiest.count > 0 ? (
                     <span className="font-sans text-[12px] text-muted-foreground">
                         {t("activity.busiest")} <span className="font-medium text-foreground/80">{busiest.label}</span> · {busiest.count}

@@ -43,10 +43,6 @@ export const messages = {
         text: "Filter by story category",
         description: "Accessible label of the gallery's row of category toggles.",
     },
-    "profile.background.gallery.categoryOption": {
-        text: "{label}, {count, plural, one {# picture} other {# pictures}}",
-        description: "Accessible label of one category toggle in the gallery. {label} is the category, {count} how many pictures it holds under the other filters.",
-    },
     "profile.background.gallery.count": {
         text: "{count, plural, one {# picture} other {# pictures}}",
         description: "How many gallery pictures the current source, filters and search leave.",

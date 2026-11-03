@@ -53,7 +53,7 @@ export function PickTierDialog({ entity, currentTierId, description, tiers, onCl
 
                 <DialogPanel className="flex flex-col gap-4">
                     <div className="flex flex-col gap-1.5">
-                        <Kicker className="mb-0 block leading-none">{t("edit.pick.placement")}</Kicker>
+                        <Kicker className="block leading-none">{t("edit.pick.placement")}</Kicker>
                         {!hasTiers && <p className="m-0 rounded-lg border border-border border-dashed px-3 py-3 text-muted-foreground text-sm">{t("edit.pick.noTiers")}</p>}
                         {tiers.map((tier) => {
                             const isCurrent = tier.id === currentTierId;

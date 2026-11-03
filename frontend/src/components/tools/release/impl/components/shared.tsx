@@ -2,10 +2,10 @@ import { Link } from "@tanstack/react-router";
 import { SearchX } from "lucide-react";
 import * as React from "react";
 import { Badge } from "#/components/ui/badge";
-import { Button } from "#/components/ui/button";
 import { Card } from "#/components/ui/card";
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "#/components/ui/empty";
 import { Label } from "#/components/ui/label";
+import { LoadFailed } from "#/components/ui/load-failed";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { Skeleton } from "#/components/ui/skeleton";
 import { Switch } from "#/components/ui/switch";
@@ -174,17 +174,10 @@ export function ReleaseLoading(): React.ReactElement {
     );
 }
 
-export function ReleaseError({ error, onRetry }: { error: unknown; onRetry: () => void }): React.ReactElement {
+/** A release tab's failed fetch: the kit shape with the release copy, never the server's text. */
+export function ReleaseError({ onRetry }: { onRetry: () => void }): React.ReactElement {
     const t: SharedT = useT("tools");
-    const message = error instanceof Error ? error.message : String(error);
-    return (
-        <Card className="items-start gap-2 p-4">
-            <p className="m-0 font-sans text-[13px] text-destructive-foreground">{message || t("release.loadFailed")}</p>
-            <Button size="sm" variant="outline" onClick={onRetry}>
-                {t("release.retry")}
-            </Button>
-        </Card>
-    );
+    return <LoadFailed message={t("release.loadFailed")} onRetry={onRetry} />;
 }
 
 export type OperatorLookup = Map<string, IOperatorIndexEntry>;

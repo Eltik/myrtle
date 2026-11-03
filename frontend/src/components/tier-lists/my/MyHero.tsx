@@ -43,7 +43,7 @@ export function MyHero({ total, communityCount, communityQuota, officialCount, t
         <section className="page-gutter pt-10 pb-6 [--page-max:1080px] sm:pt-14 sm:pb-8">
             <div className="flex flex-wrap items-end justify-between gap-4">
                 <div className="min-w-0 flex-1">
-                    <Kicker>{t("my.hero.kicker")}</Kicker>
+                    <Kicker className="mb-2.5">{t("my.hero.kicker")}</Kicker>
                     <h1 className="m-0 font-bold font-sans text-3xl text-foreground leading-tight tracking-tight sm:text-4xl">{t("my.hero.title")}</h1>
                     <p className="mt-2 max-w-130 font-sans text-muted-foreground text-sm leading-relaxed">{total > 0 ? rt("my.hero.blurb", { total: <span className="font-mono text-foreground tabular-nums">{f.number(total)}</span>, count: total }) : t("my.hero.blurbEmpty")}</p>
                 </div>

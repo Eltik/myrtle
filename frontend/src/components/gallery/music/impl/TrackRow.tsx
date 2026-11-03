@@ -106,7 +106,7 @@ function TrackDetails({ id, trackId, track, name }: { id: string; trackId: strin
             {track.places.length > 0 ? (
                 <section aria-label={t("music.row.places")}>
                     <h3 className="m-0 mb-1.5 font-normal">
-                        <Kicker className="mb-0">{t("music.row.places")}</Kicker>
+                        <Kicker>{t("music.row.places")}</Kicker>
                     </h3>
                     <ul className="m-0 flex list-none flex-col gap-2 p-0">
                         {track.places.map((place, i) => (
@@ -122,7 +122,7 @@ function TrackDetails({ id, trackId, track, name }: { id: string; trackId: strin
             {track.banks.length > 0 ? (
                 <details className="mt-2.5">
                     <summary className="cursor-pointer">
-                        <Kicker className="mb-0">{t("music.row.banks")}</Kicker>
+                        <Kicker>{t("music.row.banks")}</Kicker>
                     </summary>
                     <p className="mt-1 mb-0 break-all font-mono text-[11px] text-muted-foreground">{track.banks.join(", ")}</p>
                 </details>

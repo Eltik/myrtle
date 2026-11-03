@@ -1,8 +1,8 @@
 import { useNavigate } from "@tanstack/react-router";
 import { ChevronRight } from "lucide-react";
 import { useEffect, useState } from "react";
-import { LoadFailed } from "#/components/gacha/LoadFailed";
 import { Pagination } from "#/components/operators/list/impl/components/Pagination";
+import { LoadFailed } from "#/components/ui/load-failed";
 import { useAuth } from "#/hooks/use-auth";
 import { useDebounce } from "#/hooks/use-debounce";
 import { useT } from "#/lib/i18n";
@@ -128,7 +128,7 @@ export function Leaderboard() {
                     <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-[0_1px_2px_rgb(0_0_0/0.04)]">
                         {data.isError ? (
                             <div className="p-3 sm:p-4">
-                                <LoadFailed message={t(byItem ? "leaderboard.loadFailed.holders" : "leaderboard.loadFailed.players")} onRetry={data.refetch} />
+                                <LoadFailed layout="inline" message={t(byItem ? "leaderboard.loadFailed.holders" : "leaderboard.loadFailed.players")} onRetry={data.refetch} />
                             </div>
                         ) : data.isLoading && data.rows.length === 0 ? (
                             <LeaderboardTableSkeleton />

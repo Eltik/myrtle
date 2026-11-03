@@ -38,7 +38,7 @@ export function StandingCard({ item, me, standing, isLoading }: IStandingCardPro
     return (
         <aside className="rounded-2xl border border-border bg-card p-4 shadow-[0_1px_2px_rgb(0_0_0/0.04)]">
             <div className="mb-3 flex items-center justify-between gap-2">
-                <Kicker className="mb-0 min-w-0 truncate">{t("leaderboard.itemYou.title")}</Kicker>
+                <Kicker className="min-w-0 truncate">{t("leaderboard.itemYou.title")}</Kicker>
                 <span className="shrink-0 rounded-full border border-border bg-card px-2 py-0.5 font-medium font-mono text-[11px] text-foreground tabular-nums leading-none">#{rank ?? "-"}</span>
             </div>
             <div className="flex items-center gap-3">
@@ -92,7 +92,7 @@ export function StandingCard({ item, me, standing, isLoading }: IStandingCardPro
 function Metric({ k, children }: { k: string; children: React.ReactNode }) {
     return (
         <div className="flex min-w-0 flex-col gap-1.5 rounded-lg border border-border bg-muted/60 p-2.5">
-            <Kicker className="mb-0 truncate">{k}</Kicker>
+            <Kicker className="truncate">{k}</Kicker>
             <span className="flex min-w-0 items-center font-bold font-sans text-base text-foreground tabular-nums leading-none tracking-tight">{children}</span>
         </div>
     );

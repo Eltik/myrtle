@@ -5,6 +5,7 @@ import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } f
 import { SearchField } from "#/components/SearchField";
 import { Button } from "#/components/ui/button";
 import { Kicker } from "#/components/ui/kicker";
+import { LoadFailed } from "#/components/ui/load-failed";
 import { Toggle } from "#/components/ui/toggle";
 import { archiveHiddenFactionsQueryOptions } from "#/lib/api/archives";
 import { useFormatters, useGamedataServer } from "#/lib/i18n";
@@ -14,7 +15,7 @@ import type { ArchiveHiddenFactions } from "#/types/generated/ArchiveHiddenFacti
 import type { ArchivePerson } from "#/types/generated/ArchivePerson";
 import type { ArchiveSecret } from "#/types/generated/ArchiveSecret";
 import { FLOW_GAP, type IFlowNode, layoutFlow } from "./flow";
-import { BigStat, FactionLogo, hoverProps, Panel, PersonChip, peopleById, SectionHead, StatStrip, TabFailed, TabMessage, useArchivesT } from "./shared";
+import { BigStat, FactionLogo, hoverProps, Panel, PersonChip, peopleById, SectionHead, StatStrip, TabMessage, useArchivesT } from "./shared";
 
 type Pick = { kind: "shown"; id: string } | { kind: "hidden"; id: string } | { kind: "band"; shown: string; hidden: string };
 
@@ -38,7 +39,7 @@ export function HiddenTab({ onOpenFile }: { onOpenFile: (id: string) => void }):
     const t = useArchivesT();
     const server = useGamedataServer();
     const { data, isLoading, isError, refetch } = useQuery(archiveHiddenFactionsQueryOptions(server));
-    if (isError) return <TabFailed onRetry={() => void refetch()} />;
+    if (isError) return <LoadFailed message={t("page.error")} onRetry={() => void refetch()} />;
     if (isLoading || !data) return <TabMessage>{t("page.loading")}</TabMessage>;
     return <Hidden data={data} onOpenFile={onOpenFile} server={server} />;
 }
@@ -73,7 +74,7 @@ function Hidden({ data, onOpenFile, server }: { data: ArchiveHiddenFactions; onO
     return (
         <div className="flex flex-col gap-6">
             <header className="flex flex-col gap-3">
-                <Kicker className="mb-0">{t("hidden.kicker")}</Kicker>
+                <Kicker>{t("hidden.kicker")}</Kicker>
                 <p className="m-0 max-w-3xl text-[13.5px] text-muted-foreground leading-normal">{t("hidden.lede")}</p>
                 <StatStrip>
                     <BigStat label={t("hidden.stat.factions")} value={f.number(hiddenFactions)} />
@@ -116,7 +117,7 @@ function Hidden({ data, onOpenFile, server }: { data: ArchiveHiddenFactions; onO
                                 </div>
                                 {[...groups.entries()].map(([gid, g]) => (
                                     <div key={gid} className="flex flex-col gap-1.5">
-                                        <Kicker className="mb-0">{t("hidden.cardShowsGroup", { name: g.name })}</Kicker>
+                                        <Kicker>{t("hidden.cardShowsGroup", { name: g.name })}</Kicker>
                                         <div className="flex flex-wrap gap-1.5">
                                             {g.ids.map((id) => (
                                                 <PersonChip key={id} person={people.get(id)} onOpen={onOpenFile} server={server} />
@@ -258,9 +259,9 @@ function FlowChart({ secret, shownName, hiddenName, pick, onPick, lit }: { secre
             {list}
             <div className="overflow-x-auto max-sm:hidden">
                 <div className="grid min-w-[520px] grid-cols-[max-content_minmax(120px,1fr)_max-content] gap-x-2">
-                    <Kicker className="mb-0 pb-2 text-right">{t("hidden.cardShows")}</Kicker>
+                    <Kicker className="pb-2 text-right">{t("hidden.cardShows")}</Kicker>
                     <span />
-                    <Kicker className="mb-0 pb-2">{t("hidden.secretlyAlso")}</Kicker>
+                    <Kicker className="pb-2">{t("hidden.secretlyAlso")}</Kicker>
 
                     <div style={{ paddingTop: layout.left[0]?.top ?? 0 }}>{layout.left.map((n) => label("shown", n))}</div>
                     <div ref={midRef} className="min-w-0">
@@ -372,7 +373,7 @@ function PickList({
     );
     const sub = (title: string, id: string, rows: readonly ArchiveSecret[]) => (
         <div key={id} className="flex flex-col gap-1.5">
-            <Kicker className="mb-0 inline-flex items-center gap-1.5">
+            <Kicker className="inline-flex items-center gap-1.5">
                 <FactionLogo id={id} className="size-3.5" />
                 {title}
                 <span className="tabular-nums">{f.number(rows.length)}</span>

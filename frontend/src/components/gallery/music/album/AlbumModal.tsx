@@ -111,7 +111,7 @@ function AlbumBody({ album, catalog }: { album: IAlbum; catalog: ICatalog }): Re
                     <div className="flex items-start gap-3">
                         <img referrerPolicy="no-referrer" src={sizedCover(album.coverUrl, 64)} alt="" className="size-16 shrink-0 rounded-md bg-muted object-cover sm:hidden" />
                         <div className="min-w-0 flex-1">
-                            <Kicker tone="accent" className="mb-0 block">
+                            <Kicker tone="accent" className="block">
                                 {t("music.album.kicker")}
                             </Kicker>
                             <DialogTitle className="mt-1 font-sans font-semibold text-[22px] leading-tight sm:text-[26px]">{album.name}</DialogTitle>

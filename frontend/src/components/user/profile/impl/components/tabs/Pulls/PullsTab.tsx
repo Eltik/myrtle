@@ -5,7 +5,7 @@ import { BannerFilter } from "#/components/gacha/history/impl/BannerFilter";
 import { bannerOptions } from "#/components/gacha/history/impl/banner-filter";
 import { HistoryBody, hasAnyPull, useBannersById } from "#/components/gacha/history/impl/HistoryBody";
 import { PublicHistorySwitch, ShareHistoryButton } from "#/components/gacha/history/impl/ShareHistory";
-import { useErrorMessage } from "#/components/ui/error-message";
+import { LoadFailed } from "#/components/ui/load-failed";
 import { userGachaRecordsQueryOptions } from "#/lib/api/gacha";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -32,7 +32,6 @@ function Note({ children }: { children: React.ReactNode }) {
  */
 export function PullsTab({ uid, profile, isOwner, pools, onPoolsChange }: IPullsTabProps) {
     const t: TypedT<typeof messages> = useT("user");
-    const describeError = useErrorMessage();
     const records = useQuery(userGachaRecordsQueryOptions(uid, pools));
     // A filtered read carries only the chosen banners, so the menu's full list is read
     // the first time it opens rather than on every shared link.
@@ -46,12 +45,7 @@ export function PullsTab({ uid, profile, isOwner, pools, onPoolsChange }: IPulls
     const options = useMemo(() => bannerOptions(optionSource, bannersById), [optionSource, bannersById]);
 
     if (records.isError) {
-        return (
-            <Note>
-                <span className="font-medium text-foreground">{t("profile.pulls.loadFailed")}</span>
-                <span>{describeError(records.error)}</span>
-            </Note>
-        );
+        return <LoadFailed message={t("profile.pulls.loadFailed")} onRetry={() => void records.refetch()} />;
     }
     // `null` is a refusal: the owner made the history private after this page loaded.
     if (!records.isLoading && records.data === null) return <Note>{t("profile.pulls.private")}</Note>;

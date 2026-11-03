@@ -3,7 +3,7 @@ import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import type { IUserScore } from "#/lib/api/user";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import { CARD_PADDING, Kicker, StatCard } from "../../Stats/primitives";
+import { CARD_PADDING, CardKicker, StatCard } from "../../Stats/primitives";
 import { SUBSCORES, toPct, weightShare } from "../helpers";
 import type { messages as helperMessages } from "../helpers.messages";
 import { gradeColor } from "../palette";
@@ -32,7 +32,7 @@ export function ContributionCard({ score }: IProps) {
     return (
         <StatCard className="sm:col-span-2" color={gradeColor(score.grade)}>
             <div className={`${CARD_PADDING} flex flex-col gap-4`}>
-                <Kicker icon={PieChart} label={t("score.contribution.title")} />
+                <CardKicker icon={PieChart} label={t("score.contribution.title")} />
                 <div aria-hidden className="flex h-3 w-full overflow-hidden rounded-full border border-border/40 bg-muted/25">
                     {rows.map(({ sub, share, earned }) => (
                         <Tooltip key={sub.key}>

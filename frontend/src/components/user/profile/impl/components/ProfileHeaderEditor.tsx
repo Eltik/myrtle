@@ -86,7 +86,9 @@ export function ProfileHeaderEditor({ profile, onDraft, onClose }: IProfileHeade
     return (
         <section className="flex flex-col gap-5 rounded-2xl border border-border/50 bg-card/40 p-4 sm:p-5" aria-labelledby="profile-header-kicker">
             <div>
-                <Kicker id="profile-header-kicker">{t("profile.headerEditor.kicker")}</Kicker>
+                <Kicker className="mb-2.5" id="profile-header-kicker">
+                    {t("profile.headerEditor.kicker")}
+                </Kicker>
                 <p className="max-w-prose text-muted-foreground text-sm">{t("profile.headerEditor.help")}</p>
             </div>
 

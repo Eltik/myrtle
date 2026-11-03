@@ -64,7 +64,7 @@ export function SkinDetailContent({ skin, opName, skinName, avatarURL, server, p
                                 <OperatorAvatar charId={skin.charId} name={opName} server={server} />
                             </span>
                             <div className="min-w-0 flex-1">
-                                <Kicker className="mb-0 block truncate">{opName}</Kicker>
+                                <p className="truncate text-muted-foreground text-sm">{opName}</p>
                                 <h3 className="wrap-break-word font-heading font-semibold text-lg leading-tight">{skinName}</h3>
                                 {groupName && groupName !== skinName && <p className="truncate text-muted-foreground text-xs">{groupName}</p>}
                             </div>
@@ -108,7 +108,7 @@ export function DetailRow({ label, children }: { label: string; children: React.
     return (
         <div className="space-y-1">
             <dt>
-                <Kicker className="mb-0">{label}</Kicker>
+                <Kicker>{label}</Kicker>
             </dt>
             <dd className="text-foreground/85 text-sm leading-relaxed">{children}</dd>
         </div>

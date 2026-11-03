@@ -124,7 +124,7 @@ function TierHoverCard({ tier, color, totalOps, hasDescription, onOpen }: IHover
                     {tier.name.length <= 2 ? tier.name : tier.name.charAt(0)}
                 </span>
                 <div className="min-w-0 flex-1">
-                    <Kicker className="mb-0 block leading-none">{t("detail.tier.kicker")}</Kicker>
+                    <Kicker className="block leading-none">{t("detail.tier.kicker")}</Kicker>
                     <h3 className="wrap-break-word m-0 mt-1.5 font-bold font-features-['ss01','cv11'] font-sans text-[16.5px] text-foreground leading-[1.15] tracking-[-0.01em]">{tier.name}</h3>
                 </div>
                 <span className="shrink-0 self-start rounded-full border border-border bg-card px-2 py-1 font-mono font-semibold text-[10.5px] text-muted-foreground tabular-nums leading-none">

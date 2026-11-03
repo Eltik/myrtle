@@ -1,10 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { ChevronDown, RotateCwIcon } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { useMemo, useState } from "react";
-import { Alert, AlertAction, AlertDescription } from "#/components/ui/alert";
-import { Button } from "#/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "#/components/ui/collapsible";
+import { LoadFailed } from "#/components/ui/load-failed";
 import { Skeleton } from "#/components/ui/skeleton";
 import { enemyAppearsInQueryOptions, type IEnemyStageRef } from "#/lib/api/enemies";
 import { zonesQueryOptions } from "#/lib/api/stages";
@@ -128,23 +127,13 @@ export function AppearsInTab({ enemyId }: { enemyId: string }) {
     // Before the empty state: a failed fetch is not "this enemy never appears".
     if (refsFailed || zonesFailed) {
         return (
-            <Alert variant="error">
-                <AlertDescription>{t("appears.failed")}</AlertDescription>
-                <AlertAction>
-                    <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                            if (refsFailed) void refetchRefs();
-                            if (zonesFailed) void refetchZones();
-                        }}
-                    >
-                        <RotateCwIcon aria-hidden="true" />
-                        {t("appears.retry")}
-                    </Button>
-                </AlertAction>
-            </Alert>
+            <LoadFailed
+                message={t("appears.failed")}
+                onRetry={() => {
+                    if (refsFailed) void refetchRefs();
+                    if (zonesFailed) void refetchZones();
+                }}
+            />
         );
     }
 

@@ -1,11 +1,13 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { ChevronDown, ChevronRight, Info, Lock, Maximize2, Skull } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { SearchField } from "#/components/SearchField";
+import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
-import { FilterChip } from "#/components/ui/filter-chip";
 import { PageHeader } from "#/components/ui/page-header";
+import { useTabStripScroll } from "#/components/ui/tabs";
+import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import { useWindowVirtualRows } from "#/hooks/use-window-virtual-rows";
 import { stageIndexQueryOptions } from "#/lib/api/stages";
 import { useFormatters, useGamedataServer, useT } from "#/lib/i18n";
@@ -27,6 +29,8 @@ export function StageList() {
 
     const [q, setQ] = useState("");
     const [filter, setFilter] = useState<StageGroupKey | "all">("all");
+    const chipStripRef = useRef<HTMLDivElement>(null);
+    const chipsOverflowing = useTabStripScroll(chipStripRef);
     const [open, setOpen] = useState<Record<string, boolean>>(() => (tree.featured ? { [tree.featured.zoneId]: true } : {}));
     const [detailEvent, setDetailEvent] = useState<IEventVM | null>(null);
 
@@ -96,12 +100,31 @@ export function StageList() {
                 </div>
             </div>
 
-            <div className="scroll-shadows-x mb-8 flex gap-1.5 overflow-x-auto pb-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                <FilterChip className="flex-none" label={t("list.filter.all")} count={tree.totalZones} active={filter === "all"} onSelect={() => setFilter("all")} />
+            <ToggleGroup
+                aria-label={t("list.filter.label")}
+                className={cn("mb-8 w-auto max-w-full flex-nowrap gap-1.5 overflow-x-auto overflow-y-hidden pb-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden", chipsOverflowing && "scroll-shadows-x")}
+                onValueChange={(next) => setFilter((next[0] as StageGroupKey | "all" | undefined) ?? "all")}
+                ref={chipStripRef}
+                size="sm"
+                value={[filter]}
+                variant="outline"
+            >
+                <ToggleGroupItem className="flex-none gap-1.5 px-3" value="all">
+                    {t("list.filter.all")}
+                    <Badge className="font-mono tabular-nums" size="sm" variant="secondary">
+                        {tree.totalZones}
+                    </Badge>
+                </ToggleGroupItem>
                 {tree.groups.map((g) => (
-                    <FilterChip className="flex-none" key={g.key} label={tNav(STAGE_GROUP_LABEL_KEY[g.key])} count={g.zoneCount} tone={g.tone} toneInk={STAGE_GROUP_INK[g.key]} active={filter === g.key} onSelect={() => setFilter((f) => (f === g.key ? "all" : g.key))} />
+                    <ToggleGroupItem className="flex-none gap-1.5 px-3" key={g.key} value={g.key}>
+                        <span aria-hidden className="size-2 shrink-0 rounded-full" style={{ background: g.tone }} />
+                        {tNav(STAGE_GROUP_LABEL_KEY[g.key])}
+                        <Badge className="font-mono tabular-nums" size="sm" variant="secondary">
+                            {g.zoneCount}
+                        </Badge>
+                    </ToggleGroupItem>
                 ))}
-            </div>
+            </ToggleGroup>
 
             {empty && <div className="rounded-2xl border border-border border-dashed p-14 text-center font-sans text-[14px] text-muted-foreground">{t("list.empty")}</div>}
 

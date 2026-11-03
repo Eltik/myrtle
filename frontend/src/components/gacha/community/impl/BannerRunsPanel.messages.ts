@@ -5,11 +5,11 @@ export const namespace = "gacha";
 export const messages = {
     "community.runs.kicker": {
         text: "Banner runs",
-        description: "Small uppercase label above the panel listing recent, running and announced banners.",
+        description: "Heading of the panel listing recent, running and announced banners.",
     },
-    "community.runs.kicker.withActive": {
-        text: "Banner runs · {count} active",
-        description: "Small uppercase label above the banner-runs panel when at least one banner is running. {count} is the number of running banners. Keep the middle dot.",
+    "community.runs.active": {
+        text: "{count} active",
+        description: "Meta text beside the banner-runs heading when at least one banner is running. {count} is the number of running banners.",
     },
     "community.runs.empty": {
         text: "No banners match this filter.",

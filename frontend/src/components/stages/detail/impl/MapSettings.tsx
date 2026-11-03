@@ -66,7 +66,7 @@ export function MapSettings({ settings, onChange }: { settings: IMapSettings; on
     return (
         <div className="flex flex-col rounded-2xl border border-border bg-card px-3.5 py-2.5">
             <div className="mb-1 flex items-center">
-                <Kicker className="mb-0 leading-none">{t("mapSettings.title")}</Kicker>
+                <Kicker className="leading-none">{t("mapSettings.title")}</Kicker>
             </div>
             <div className="grid gap-x-6 sm:grid-cols-2">
                 {SETTINGS.map((def) => (

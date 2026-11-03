@@ -1,12 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
+import { LoadFailed } from "#/components/ui/load-failed";
 import { useAuth } from "#/hooks/use-auth";
 import { bannersQueryOptions, gachaEnhancedStatsQueryOptions, type IBanner, type IBannerPullStat, myGachaStatsQueryOptions, PULLS_GAMEDATA_SERVER, perBannerStatsQueryOptions } from "#/lib/api/gacha";
 import { operatorsIndexQueryOptions } from "#/lib/api/operators";
 import { useGamedataServer, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import type { IOperatorIndexEntry } from "#/types/operators";
-import { LoadFailed } from "../LoadFailed";
 import type { messages } from "./CommunityPage.messages";
 import { BannerRunsPanel } from "./impl/BannerRunsPanel";
 import { KpiStrip } from "./impl/KpiStrip";

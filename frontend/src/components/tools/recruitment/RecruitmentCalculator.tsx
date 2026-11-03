@@ -1,8 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import * as React from "react";
-import { LoadError } from "#/components/operators/detail/impl/components/LoadError";
 import { Card, CardHeader, CardPanel, CardTitle } from "#/components/ui/card";
+import { LoadFailed } from "#/components/ui/load-failed";
 import { PageHeader } from "#/components/ui/page-header";
 import { recruitmentDataQueryOptions } from "#/lib/api/recruitment";
 import { useGamedataServer, useT } from "#/lib/i18n";
@@ -118,8 +118,8 @@ export function RecruitmentCalculator(): React.ReactElement {
         <div className="page-shell [--page-max:1400px]">
             <PageHeader breadcrumbLabel="breadcrumb" breadcrumb={[t("recruit.breadcrumb.tools"), t("recruit.title")]} title={t("recruit.title")} description={t("recruit.intro", { max: MAX_SELECTED_TAGS })} />
 
-            {isError && !data && <LoadError className="mt-5 sm:mt-6" message={t("recruit.loadFailed")} onRetry={() => void refetch()} />}
-            {roster.failed && <LoadError className="mt-5 sm:mt-6" message={t("recruit.rosterLoadFailed")} onRetry={roster.refetch} />}
+            {isError && !data && <LoadFailed className="mt-5 sm:mt-6" message={t("recruit.loadFailed")} onRetry={() => void refetch()} />}
+            {roster.failed && <LoadFailed className="mt-5 sm:mt-6" message={t("recruit.rosterLoadFailed")} onRetry={roster.refetch} />}
 
             <div className="mt-5 grid grid-cols-1 items-start gap-3 sm:mt-6 sm:gap-4 lg:grid-cols-[330px_1fr] xl:grid-cols-[400px_1fr]">
                 <aside className="flex min-w-0 flex-col gap-3 sm:gap-4">

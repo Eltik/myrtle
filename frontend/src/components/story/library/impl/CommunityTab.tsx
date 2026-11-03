@@ -1,10 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { RotateCwIcon } from "lucide-react";
 import type React from "react";
 import { useMemo, useState } from "react";
-import { Button } from "#/components/ui/button";
 import { Kicker } from "#/components/ui/kicker";
+import { LoadFailed } from "#/components/ui/load-failed";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
 import { Skeleton } from "#/components/ui/skeleton";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
@@ -58,15 +57,7 @@ export function CommunityTab({ index, onViewChapter }: ICommunityTabProps): Reac
 
     // A failed request is not "nothing computed yet": it gets its own line and a retry instead of the empty copy.
     if (isError && data === undefined) {
-        return (
-            <div role="alert" className="mt-4 flex flex-col items-center gap-3 rounded-2xl border border-border bg-card p-5 text-center">
-                <p className="m-0 font-sans text-[12.5px] text-muted-foreground">{t("community.error")}</p>
-                <Button type="button" variant="outline" size="sm" className="max-sm:min-h-11" onClick={() => void refetch()}>
-                    <RotateCwIcon aria-hidden="true" />
-                    {t("community.retry")}
-                </Button>
-            </div>
-        );
+        return <LoadFailed className="mt-4" message={t("community.error")} onRetry={() => void refetch()} />;
     }
 
     if (!ranked) {
@@ -136,7 +127,7 @@ function Rank({ rank }: { rank: number }): React.ReactElement {
 function Readers({ readers, readerShare, label, className, t, f }: { readers: number; readerShare: number; label: string; className?: string; t: CommunityT; f: ReturnType<typeof useFormatters> }): React.ReactElement {
     return (
         <span className={cn("flex shrink-0 flex-col items-end", className)}>
-            <Kicker className="mb-0">{label}</Kicker>
+            <Kicker>{label}</Kicker>
             <span className="font-mono text-[14px] text-foreground tabular-nums">{f.number(readers)}</span>
             <span className="font-mono text-[10px] text-muted-foreground tabular-nums">{t("community.ofPlayers", { share: f.percent(readerShare) })}</span>
         </span>
@@ -154,7 +145,7 @@ function GroupRankRow({ row, rank, onOpen, t, f }: { row: ICommunityGroupRow; ra
             <span className={cn("flex items-start gap-4 sm:gap-6", ROW_FIGURES)}>
                 <Readers readers={row.readers} readerShare={row.readerShare} label={t("community.readers")} t={t} f={f} />
                 <span className="flex w-24 shrink-0 flex-col items-end sm:w-28">
-                    <Kicker className="mb-0">{t("community.finished")}</Kicker>
+                    <Kicker>{t("community.finished")}</Kicker>
                     {row.finished === null || row.finishedShare === null ? (
                         <Tooltip>
                             <TooltipTrigger render={<span className="mt-0.5 text-right font-sans text-[11px] text-muted-foreground" />}>{t("community.notMeasurable")}</TooltipTrigger>

@@ -449,7 +449,7 @@ export function BannerBreakdown({ records, bannersById, operatorsById, isLoading
     if (banners.length === 0) {
         return (
             <section className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4.5 sm:p-[22px_24px]">
-                <Kicker>{t("history.breakdown.kicker")}</Kicker>
+                <Kicker className="mb-2.5">{t("history.breakdown.kicker")}</Kicker>
                 <div className="py-6 text-center font-sans text-muted-foreground text-sm">{t("history.breakdown.empty")}</div>
             </section>
         );

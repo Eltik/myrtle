@@ -67,7 +67,7 @@ export function EnemyHero({ enemy }: { enemy: IEnemyView }) {
 export function SectionHead({ children }: { children: React.ReactNode }) {
     return (
         <div className="mb-3 flex items-center gap-2.5">
-            <Kicker className="mb-0 leading-none">{children}</Kicker>
+            <Kicker className="leading-none">{children}</Kicker>
             <span className="h-px flex-1 bg-border" />
         </div>
     );
@@ -121,7 +121,7 @@ export function OverviewTab({ enemy }: { enemy: IEnemyView }) {
                             <div key={g.title ?? `g-${gi}`}>
                                 {g.title && (
                                     <h4 className="mb-1.5">
-                                        <Kicker className="mb-0 leading-none">{g.title}</Kicker>
+                                        <Kicker className="leading-none">{g.title}</Kicker>
                                     </h4>
                                 )}
                                 {g.items.length > 0 && (
@@ -169,9 +169,9 @@ export function OverviewTab({ enemy }: { enemy: IEnemyView }) {
 
 function PhaseHeader({ phase, label }: { phase: IEnemyLevelStats; label: string }) {
     return (
-        <div className="flex items-center gap-2 rounded-md border border-[color-mix(in_oklch,var(--primary)_45%,transparent)] bg-[color-mix(in_oklch,var(--primary)_14%,transparent)] px-2.5 py-1.5 font-medium font-mono text-[10.5px] text-foreground uppercase leading-none tracking-[0.14em]">
+        <div className="flex items-center gap-2 rounded-md border border-[color-mix(in_oklch,var(--primary)_45%,transparent)] bg-[color-mix(in_oklch,var(--primary)_14%,transparent)] px-2.5 py-1.5 leading-none">
             <span aria-hidden="true" className="inline-block h-1.25 w-1.25 rounded-full bg-primary" />
-            <span className="truncate">{label}</span>
+            <span className="kicker truncate text-foreground">{label}</span>
             <span className="ml-auto font-mono text-[10px] text-muted-foreground tracking-[0.12em]">L{phase.level}</span>
         </div>
     );

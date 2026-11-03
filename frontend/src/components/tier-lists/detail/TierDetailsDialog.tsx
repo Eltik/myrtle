@@ -71,7 +71,7 @@ export function TierDetailsDialog({ tier, color }: ITierDetailsDialogProps) {
                     {tier.name.length <= 2 ? tier.name : tier.name.charAt(0)}
                 </span>
                 <div className="min-w-0 flex-1 pt-0.5 pr-10 sm:pr-0">
-                    <Kicker className="mb-0 block leading-none">{t("detail.tierDialog.kicker")}</Kicker>
+                    <Kicker className="block leading-none">{t("detail.tierDialog.kicker")}</Kicker>
                     <h2 className="wrap-break-word m-0 mt-1.5 font-bold font-features-['ss01','cv11'] font-sans text-[22px] text-foreground leading-[1.1] tracking-[-0.015em] sm:mt-2 sm:text-[28px]">{tier.name}</h2>
                     <p className="m-0 mt-1.5 font-mono font-semibold text-[10.5px] text-muted-foreground tabular-nums leading-none sm:mt-2 sm:text-[11px]">
                         <span className="text-foreground/90">{total}</span> {t("detail.tierDialog.opCount", { count: total })}
@@ -208,7 +208,7 @@ export function TierDetailsDialog({ tier, color }: ITierDetailsDialogProps) {
 function SectionHeading({ children }: { children: React.ReactNode }) {
     return (
         <h3 className="m-0 leading-none">
-            <Kicker className="mb-0">{children}</Kicker>
+            <Kicker>{children}</Kicker>
         </h3>
     );
 }
@@ -222,7 +222,7 @@ interface IStatProps {
 function Stat({ label, value, muted = false }: IStatProps) {
     return (
         <div className="rounded-lg border border-border bg-card/60 px-3 py-2.5">
-            <Kicker className="mb-0 block leading-none">{label}</Kicker>
+            <Kicker className="block leading-none">{label}</Kicker>
             <p className={`m-0 mt-2 font-extrabold font-features-['ss01','cv11'] font-sans text-[20px] tabular-nums leading-none tracking-[-0.015em] ${muted ? "text-subtle-foreground" : "text-foreground"}`}>{value}</p>
         </div>
     );

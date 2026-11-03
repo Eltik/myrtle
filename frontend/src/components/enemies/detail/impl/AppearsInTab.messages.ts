@@ -91,10 +91,6 @@ export const messages = {
         text: "Couldn't load where this enemy appears.",
         description: "Error line in an enemy's Appears In tab when the stage list for that enemy fails to load.",
     },
-    "appears.retry": {
-        text: "Try again",
-        description: "Button beside the load error in the Appears In tab; refetches the stage list.",
-    },
 } satisfies MessageMap;
 
 // `dynamic`: the category, sub-section and zone-type keys live on module-level

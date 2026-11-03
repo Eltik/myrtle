@@ -1,5 +1,4 @@
 import { useMemo, useState } from "react";
-import { Kicker } from "#/components/ui/kicker";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { Skeleton } from "#/components/ui/skeleton";
 import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
@@ -29,9 +28,7 @@ export function Leaderboard({ ops, operatorsById, isLoading }: ILeaderboardProps
         <section className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-[18px_18px] sm:p-[22px_24px] lg:absolute lg:inset-0">
             <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                 <div>
-                    <h2 className="m-0">
-                        <Kicker className="mb-0">{t("community.leaderboard.kicker")}</Kicker>
-                    </h2>
+                    <h2 className="m-0 font-sans font-semibold text-[15px] text-foreground leading-tight">{t("community.leaderboard.kicker")}</h2>
                 </div>
                 <ToggleGroup
                     aria-label={t("community.leaderboard.rarityFilter")}

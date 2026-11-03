@@ -4,6 +4,7 @@ import type * as React from "react";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { SearchField } from "#/components/SearchField";
 import { Button } from "#/components/ui/button";
+import { LoadFailed } from "#/components/ui/load-failed";
 import { Sheet, SheetHeader, SheetPanel, SheetPopup, SheetTitle } from "#/components/ui/sheet";
 import { Skeleton } from "#/components/ui/skeleton";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
@@ -17,7 +18,7 @@ import type { ArchivePerson } from "#/types/generated/ArchivePerson";
 import { bounds, CELL_R, centroid, directionVector, hexColor, hexPoints, type IPoint, NEUTRAL_HEX, outlineSegments, svgNum, TERRITORY_R, toSvg } from "./geometry";
 import { declutter, type ILabelBox, type IView, placeLabel, project } from "./labels";
 import { type IInsets, type IPanZoomHandle, PanZoom } from "./PanZoom";
-import { type ArchivesT, FactionLogo, FactionLogoSvg, hoverProps, PersonChip, peopleById, rarityColor, TabFailed, useArchivesT } from "./shared";
+import { type ArchivesT, FactionLogo, FactionLogoSvg, hoverProps, PersonChip, peopleById, rarityColor, useArchivesT } from "./shared";
 
 /** Space kept between the overlaid controls and the fitted content, in screen pixels. */
 const CONTROL_GAP = 8;
@@ -48,7 +49,7 @@ export function NetworkTab({ chart, onChart, onOpenFile }: INetworkTabProps): Re
     const t = useArchivesT();
     const server = useGamedataServer();
     const { data, isLoading, isError, refetch } = useQuery(archiveNetworkQueryOptions(server));
-    if (isError) return <TabFailed onRetry={() => void refetch()} />;
+    if (isError) return <LoadFailed message={t("page.error")} onRetry={() => void refetch()} />;
     if (isLoading || !data) return <Skeleton className="h-[min(70vh,560px)] rounded-2xl border border-border" />;
     if (!data.imported) return <p className="rounded-2xl border border-border bg-card p-5 text-muted-foreground text-sm">{t("network.notImported")}</p>;
     return <Network data={data} chart={chart} onChart={onChart} onOpenFile={onOpenFile} server={server} t={t} />;

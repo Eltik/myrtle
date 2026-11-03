@@ -36,7 +36,7 @@ export function ModifierSlab({ challenge, onReroll }: IModifierSlabProps): React
     return (
         <SlabFrame index="03" kicker={t("randomizer.modifier.kicker")} accent="palm">
             <div className="flex items-start justify-between gap-3">
-                <Kicker className="mb-0 flex min-w-0 flex-1 items-center gap-2">
+                <Kicker className="flex min-w-0 flex-1 items-center gap-2">
                     <Icon aria-hidden="true" className="h-3.5 w-3.5" />
                     <span>{t(KIND_LABEL_KEY[challenge.kind])}</span>
                 </Kicker>

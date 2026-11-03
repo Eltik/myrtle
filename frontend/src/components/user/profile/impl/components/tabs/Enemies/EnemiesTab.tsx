@@ -7,6 +7,7 @@ import { EnemyPlaceholder } from "#/components/enemies/list/impl/components/Enem
 import { LEVEL_TOKENS } from "#/components/enemies/list/impl/tokens";
 import { FilterChip } from "#/components/ui/filter-chip";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "#/components/ui/input-group";
+import { LoadFailed } from "#/components/ui/load-failed";
 import { Skeleton } from "#/components/ui/skeleton";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { enemiesListQueryOptions, enemyCommunityAverageQueryOptions, type IEnemy, type IEnemyLevel } from "#/lib/api/enemies";
@@ -16,7 +17,6 @@ import { type TypedRichT, useFormatters, useGamedataServer, useRichT, useT } fro
 import type { TypedT } from "#/lib/i18n/messages";
 import { compactForSearch } from "#/lib/search/fuzzy";
 import { cn } from "#/lib/utils";
-import { LoadFailed } from "../LoadFailed";
 import type { messages } from "./EnemiesTab.messages";
 
 type EnemiesT = TypedT<typeof messages>;

@@ -102,7 +102,7 @@ function Side({ heading, side, newer, names, t, f }: { heading: string; side: Sy
     return (
         <div className="min-w-0 rounded-2xl border border-border bg-background p-3">
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                <Kicker className="mb-0">{heading}</Kicker>
+                <Kicker>{heading}</Kicker>
                 {newer ? <span className="rounded-full bg-primary/12 px-1.5 py-0.5 font-medium font-sans text-[10px] text-foreground">{t("progress.sync.conflict.newer")}</span> : null}
             </div>
             <dl className="m-0 mt-2 flex flex-col gap-1.5">

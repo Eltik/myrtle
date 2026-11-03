@@ -63,6 +63,10 @@ export const messages = {
         text: "Masteries",
         description: "Label over the per-skill mastery rows. 'Mastery' is the game's skill upgrade past level 7.",
     },
+    "planner.bulk.masteryGroup": {
+        text: "Skill {index} mastery",
+        description: "Accessible name of one skill slot's row of mastery buttons in the bulk plan target, e.g. 'Skill 2 mastery'.",
+    },
     "planner.bulk.skillSlot": {
         text: "S{index}",
         description: "Short name of a skill slot, e.g. 'S1' for the first skill. Game shorthand.",

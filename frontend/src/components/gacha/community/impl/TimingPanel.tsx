@@ -1,5 +1,4 @@
 import { useMemo, useRef, useState } from "react";
-import { Kicker } from "#/components/ui/kicker";
 import { useMediaQuery } from "#/hooks/use-media-query";
 import { type ClientGachaGroup, classifyBannerGroup, type IBanner, type IDatePullData, type IDayOfWeekPullData, type IHourlyPullData, type IPullTimingData } from "#/lib/api/gacha";
 import { useFormatters, useT } from "#/lib/i18n";
@@ -34,9 +33,7 @@ export function TimingPanel({ timing, firstPullAt, banners }: ITimingPanelProps)
         <section className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-[18px_18px] sm:p-[22px_24px]">
             <header className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                 <div>
-                    <h2 className="m-0">
-                        <Kicker className="mb-0">{t("community.timing.kicker")}</Kicker>
-                    </h2>
+                    <h2 className="m-0 font-sans font-semibold text-[15px] text-foreground leading-tight">{t("community.timing.kicker")}</h2>
                 </div>
                 <div className="inline-flex flex-wrap items-center gap-x-3.5 gap-y-1 font-mono text-[11px] text-muted-foreground">
                     <span className="inline-flex items-center">

@@ -69,7 +69,7 @@ export function PlayerBar({ offPage = false }: { offPage?: boolean }): React.Rea
                                 </div>
                             )}
                             <div className="flex min-w-0 flex-col leading-tight">
-                                <Kicker className="mb-0 block truncate" tone="accent">
+                                <Kicker className="block truncate" tone="accent">
                                     {kicker}
                                 </Kicker>
                                 <ClippedText className="font-sans font-semibold text-[13.5px] text-foreground" text={title} />

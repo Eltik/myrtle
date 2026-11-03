@@ -96,7 +96,7 @@ export function DropsSection({ groups }: { groups: IDropGroup[] }) {
             </SectionHead>
             {groups.map((group) => (
                 <div key={group.type} className="flex flex-col gap-2">
-                    <Kicker className="mb-0 leading-none">{group.labelKey ? tConst(group.labelKey) : group.type}</Kicker>
+                    <Kicker className="leading-none">{group.labelKey ? tConst(group.labelKey) : group.type}</Kicker>
                     <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
                         {group.drops.map((drop) => (
                             <DropCard key={`${group.type}-${drop.reward.id}`} drop={drop} />

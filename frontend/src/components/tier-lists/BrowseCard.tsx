@@ -1,5 +1,4 @@
 import { Link } from "@tanstack/react-router";
-import type * as React from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "#/components/ui/avatar";
 import { Badge } from "#/components/ui/badge";
 import type { ITierListBrowseItem } from "#/lib/api/tier-lists";
@@ -69,7 +68,7 @@ export default function BrowseCard({ tl, size = "default", rank, onOpen, onAutho
                         </Link>
                     </h3>
                     {isOfficial && (
-                        <Badge variant="tint" className="mt-0.5" style={{ "--tone": "var(--warning)" } as React.CSSProperties}>
+                        <Badge variant="tint" className="mt-0.5">
                             <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                                 <path d="M12 2 9.6 4.4 6.3 4l-.6 3.3L2.5 9 4 12l-1.5 3 3.2 1.7.6 3.3 3.3-.4L12 22l2.4-2.4 3.3.4.6-3.3L21.5 15 20 12l1.5-3-3.2-1.7-.6-3.3L14.4 4.4Zm-1.2 13.4-3.4-3.4 1.4-1.4 2 2 4.4-4.4 1.4 1.4Z" />
                             </svg>

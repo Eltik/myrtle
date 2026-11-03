@@ -15,10 +15,6 @@ export const messages = {
         text: "Couldn't load some of the game data, so the operator and stage pools may be incomplete.",
         description: "Shown in place of the empty result when a list the randomizer draws from (operators, stages, the player's roster or clears) fails to load.",
     },
-    "randomizer.retry": {
-        text: "Try again",
-        description: "Button that reloads the lists that failed to load.",
-    },
 } satisfies MessageMap;
 
 export const { keys } = defineMessages({ namespace, messages });

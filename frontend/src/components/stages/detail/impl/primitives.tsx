@@ -14,7 +14,7 @@ export function InfoHint({ children, label }: { children: React.ReactNode; label
 export function SectionHead({ children, aside }: { children: React.ReactNode; aside?: React.ReactNode }) {
     return (
         <div className="mb-3 flex items-center gap-2.5">
-            <Kicker className="mb-0 leading-none">{children}</Kicker>
+            <Kicker className="leading-none">{children}</Kicker>
             <span className="h-px flex-1 bg-border" />
             {aside}
         </div>
@@ -40,7 +40,7 @@ export function StatCard({ icon, label, value, accent, info }: { icon: React.Rea
                 {icon}
             </span>
             <div className="flex min-w-0 flex-col gap-1">
-                <Kicker className="mb-0 flex items-center gap-1 leading-none">
+                <Kicker className="flex items-center gap-1 leading-none">
                     {label}
                     {info && <InfoHint label={label}>{info}</InfoHint>}
                 </Kicker>
@@ -102,7 +102,7 @@ export function TileLegend() {
     const t: TypedT<typeof messages> = useT("stages");
     return (
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-2xl border border-border bg-card px-3.5 py-2.5">
-            <Kicker className="mb-0 leading-none">{t("legend.title")}</Kicker>
+            <Kicker className="leading-none">{t("legend.title")}</Kicker>
             {LEGEND_SWATCHES.map((s) => (
                 <span key={s.labelKey} className="inline-flex items-center gap-1.5">
                     <span aria-hidden="true" className="h-3.5 w-3.5 rounded-xs border" style={s.style} />

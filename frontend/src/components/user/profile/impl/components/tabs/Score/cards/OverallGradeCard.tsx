@@ -3,7 +3,7 @@ import type { IPlayerStanding, IUserScore } from "#/lib/api/user";
 import { type TypedRichT, useFormatters, useRichT, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
-import { CARD_PADDING, KICKER_TEXT, Kicker, StatCard } from "../../Stats/primitives";
+import { CARD_PADDING, CardKicker, KICKER_TEXT, StatCard } from "../../Stats/primitives";
 import { fastestSection, formatCalculatedAt, GRADE_LADDER, nextGradeStep, weightShare } from "../helpers";
 import type { messages as helperMessages } from "../helpers.messages";
 import { gradeColor } from "../palette";
@@ -29,7 +29,7 @@ export function OverallGradeCard({ score, standing }: IOverallGradeCardProps) {
         <StatCard className="sm:col-span-2" color={color}>
             <div className={cn("grid gap-6 sm:grid-cols-[auto_1fr] sm:gap-8", CARD_PADDING)}>
                 <div className="flex flex-col items-start gap-3 sm:gap-4">
-                    <Kicker icon={Trophy} label={t("score.overall.title")} />
+                    <CardKicker icon={Trophy} label={t("score.overall.title")} />
                     <div className="flex items-baseline gap-3">
                         <span
                             className="font-bold tabular-nums leading-none"

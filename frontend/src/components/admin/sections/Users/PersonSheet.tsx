@@ -176,7 +176,7 @@ function PersonBody({ person, meId, canAssign, grants, locales, localeName }: Om
                     {warning ? <div className="rounded-2xl border border-[color-mix(in_oklch,var(--warning)_45%,transparent)] bg-[color-mix(in_oklch,var(--warning)_10%,transparent)] px-3 py-2.5 text-[13px] text-warning-foreground leading-[1.45]">{warningText(t, warning, name)}</div> : null}
 
                     <div className="flex flex-col gap-2">
-                        <Kicker className="mb-0">{t("users.sheet.section.role")}</Kicker>
+                        <Kicker>{t("users.sheet.section.role")}</Kicker>
                         {canAssign ? (
                             <div className="flex flex-wrap gap-1.5">
                                 {ROLE_ORDER.map((role) => (
@@ -192,7 +192,7 @@ function PersonBody({ person, meId, canAssign, grants, locales, localeName }: Om
 
                     <div className="flex flex-col gap-2">
                         <div className="flex items-center justify-between">
-                            <Kicker className="mb-0">{t("users.sheet.section.tierLists")}</Kicker>
+                            <Kicker>{t("users.sheet.section.tierLists")}</Kicker>
                             {canAssign ? (
                                 <Button size="xs" variant="ghost" aria-expanded={picker === "tierLists"} onClick={() => togglePicker("tierLists")}>
                                     {t("users.sheet.grant")}
@@ -230,7 +230,7 @@ function PersonBody({ person, meId, canAssign, grants, locales, localeName }: Om
 
                     <div className="flex flex-col gap-2">
                         <div className="flex items-center justify-between">
-                            <Kicker className="mb-0">{t("users.sheet.section.locales")}</Kicker>
+                            <Kicker>{t("users.sheet.section.locales")}</Kicker>
                             {canAssign ? (
                                 <Button size="xs" variant="ghost" aria-expanded={picker === "locales"} onClick={() => togglePicker("locales")}>
                                     {t("users.sheet.grant")}

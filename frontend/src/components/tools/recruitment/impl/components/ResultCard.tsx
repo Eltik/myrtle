@@ -317,7 +317,7 @@ function OperatorTile({ operator, roster }: { operator: IRecruitableOperator; ro
                             )}
                         </div>
                         <div className="flex flex-col gap-1.5 border-border/60 border-t pt-2">
-                            <Kicker className="mb-0">{t("recruit.result.tags")}</Kicker>
+                            <Kicker>{t("recruit.result.tags")}</Kicker>
                             <OperatorTagList tags={operator.tagList} />
                         </div>
                     </div>

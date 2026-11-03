@@ -1,11 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
+import { LoadFailed } from "#/components/ui/load-failed";
 import { bannersQueryOptions, deriveClientGachaRecords, type IBanner, type IGachaRecords, pullsGamedataServer } from "#/lib/api/gacha";
 import { operatorsIndexQueryOptions } from "#/lib/api/operators";
 import { useGamedataServer, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import type { IOperatorIndexEntry } from "#/types/operators";
-import { LoadFailed } from "../../LoadFailed";
 import { BannerBreakdown } from "./BannerBreakdown";
 import { BannerHistory } from "./BannerHistory";
 import type { messages } from "./HistoryBody.messages";

@@ -100,7 +100,7 @@ function OperatorRow({ operator, roster }: { operator: IRecruitableOperator; ros
             </HoverCard>
             {mobileExpanded && (
                 <div id={`op-tags-${operator.id}`} className="flex flex-col gap-1.5 border-border/40 border-t px-2 py-2 sm:hidden">
-                    <Kicker className="mb-0">{t("recruit.result.tags")}</Kicker>
+                    <Kicker>{t("recruit.result.tags")}</Kicker>
                     <OperatorTagList tags={operator.tagList} />
                 </div>
             )}

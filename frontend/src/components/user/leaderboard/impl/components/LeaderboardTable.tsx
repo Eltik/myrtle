@@ -113,7 +113,7 @@ function RankMovement({ delta, intervalKey = "leaderboard.interval.day.since" }:
 }
 
 function Th({ children, align }: { children: React.ReactNode; align?: "right" }) {
-    return <Kicker className={cn("mb-0 whitespace-nowrap", align === "right" ? "text-right" : "text-left")}>{children}</Kicker>;
+    return <Kicker className={cn("whitespace-nowrap", align === "right" ? "text-right" : "text-left")}>{children}</Kicker>;
 }
 
 /** The ranked value with its bar: a percentage for a score, a count for an item. */

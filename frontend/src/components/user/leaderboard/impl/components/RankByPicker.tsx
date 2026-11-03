@@ -1,10 +1,10 @@
 import { Check, ChevronDown, Search, X } from "lucide-react";
 import { useDeferredValue, useMemo, useState } from "react";
-import { LoadError } from "#/components/operators/detail/impl/components/LoadError";
 import { Button } from "#/components/ui/button";
 import { FilterChip } from "#/components/ui/filter-chip";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "#/components/ui/input-group";
 import { Kicker } from "#/components/ui/kicker";
+import { LoadFailed } from "#/components/ui/load-failed";
 import { Popover, PopoverPopup, PopoverTrigger } from "#/components/ui/popover";
 import { ItemIcon } from "#/components/user/profile/impl/components/tabs/Items/ItemIcon";
 import type { IMaterials } from "#/lib/api/materials";
@@ -81,7 +81,7 @@ export function RankByPicker({ ranking, onRanking, catalog, materials, catalogEr
                 className={cn("inline-flex h-9 pointer-coarse:h-11 min-w-0 cursor-pointer items-center gap-2 rounded-lg border border-input bg-card pr-2.5 pl-2 font-medium font-sans text-foreground text-xs leading-none transition-colors hover:border-foreground/20 sm:h-8", className)}
             >
                 {activeItem ? <ItemIcon item={toIconEntry(activeItem)} size={20} className="rounded" /> : null}
-                <Kicker className="mb-0 shrink-0">{t("leaderboard.rankBy.label")}</Kicker>
+                <Kicker className="shrink-0">{t("leaderboard.rankBy.label")}</Kicker>
                 <span className="min-w-0 truncate font-semibold text-foreground">{label}</span>
                 <ChevronDown className="size-3 shrink-0 opacity-70" aria-hidden />
             </PopoverTrigger>
@@ -136,7 +136,7 @@ export function RankByPicker({ ranking, onRanking, catalog, materials, catalogEr
                     {catalogError ? (
                         <section aria-label={t("leaderboard.rankBy.group.items")} className={scoreOptions.length > 0 ? "mt-1 border-border/70 border-t pt-1" : undefined}>
                             <GroupHeading>{t("leaderboard.rankBy.group.items")}</GroupHeading>
-                            <LoadError className="m-1.5 rounded-lg" message={t("leaderboard.rankBy.loadFailed")} onRetry={() => onRetryCatalog?.()} />
+                            <LoadFailed layout="inline" className="px-2.5 py-2" message={t("leaderboard.rankBy.loadFailed")} onRetry={() => onRetryCatalog?.()} />
                         </section>
                     ) : itemOptions.length > 0 ? (
                         <section aria-label={t("leaderboard.rankBy.group.items")} className={scoreOptions.length > 0 ? "mt-1 border-border/70 border-t pt-1" : undefined}>
@@ -213,7 +213,7 @@ function Slash() {
 function GroupHeading({ children, hint }: { children: React.ReactNode; hint?: string }) {
     return (
         <div className="flex items-baseline justify-between gap-2 px-2 pt-1.5 pb-1">
-            <Kicker className="mb-0">{children}</Kicker>
+            <Kicker>{children}</Kicker>
             {hint ? <span className="min-w-0 truncate font-sans text-[11px] text-muted-foreground leading-none">{hint}</span> : null}
         </div>
     );

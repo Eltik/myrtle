@@ -11,7 +11,7 @@ export function EmptyState(): React.ReactElement {
         <section className="relative overflow-hidden rounded-2xl border border-border/70 border-dashed bg-card/60 px-6 py-10 shadow-xs/5 sm:py-14">
             <div className="mx-auto flex max-w-md flex-col items-center text-center">
                 <DiceStack />
-                <Kicker className="mt-5 mb-0">{t("randomizer.empty.kicker")}</Kicker>
+                <Kicker className="mt-5">{t("randomizer.empty.kicker")}</Kicker>
                 <h2 className="mt-2 font-display text-2xl text-foreground sm:text-3xl">{t("randomizer.empty.title")}</h2>
                 <p className="mt-3 max-w-prose text-pretty text-muted-foreground text-sm leading-relaxed">
                     {rt("randomizer.empty.hint", {

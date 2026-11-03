@@ -13,7 +13,7 @@ import { StagePreview } from "./StagePreview";
 function Stat({ label, value, tone }: { label: string; value: string; tone?: string }) {
     return (
         <div className="rounded-2xl border border-border bg-secondary/40 px-3 py-2.5">
-            <Kicker className="mb-0 block">{label}</Kicker>
+            <Kicker className="block">{label}</Kicker>
             <div className="mt-1 truncate font-mono font-semibold text-[13px]" style={{ color: tone ?? "var(--foreground)" }}>
                 {value}
             </div>

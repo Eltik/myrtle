@@ -72,7 +72,7 @@ export function CalendarTab({ today }: ICalendarTabProps): React.ReactElement {
     const selectedItem = selected ? shown.find((it) => it.key === selected) : undefined;
 
     if (schedule.isPending) return <ReleaseLoading />;
-    if (schedule.error) return <ReleaseError error={schedule.error} onRetry={schedule.refetch} />;
+    if (schedule.error) return <ReleaseError onRetry={schedule.refetch} />;
 
     const month = f.calendarDay(cursor, { month: "long" });
     return (

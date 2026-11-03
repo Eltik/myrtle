@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { type IPlanProgressLabels, PlanProgressRows } from "#/components/tools/planner/PlanProgressRows";
 import { planProgress } from "#/components/tools/planner/planProgress";
 import { MAX_SKILL_LEVEL, masteryOf } from "#/components/tools/planner/planTargets";
+import { LoadFailed } from "#/components/ui/load-failed";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { Skeleton } from "#/components/ui/skeleton";
 import { useOperatorName } from "#/hooks/use-operator-name";
@@ -10,7 +11,6 @@ import type { IRosterEntry } from "#/lib/api/user";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { rarityToNumber, subProfessionLabel } from "#/lib/utils";
-import { LoadFailed } from "../LoadFailed";
 import type { messages } from "./PlansTab.messages";
 
 interface IPlanCardProps {

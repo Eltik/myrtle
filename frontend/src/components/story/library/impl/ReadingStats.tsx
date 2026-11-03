@@ -148,7 +148,7 @@ function NumberSetting({ id, label, unit, value, min, max, step, onChange }: { i
     return (
         <div className="flex min-w-0 flex-col gap-1">
             <label htmlFor={id}>
-                <Kicker className="mb-0">{label}</Kicker>
+                <Kicker>{label}</Kicker>
             </label>
             <div className="flex items-center gap-2">
                 <Input
@@ -171,7 +171,7 @@ function NumberSetting({ id, label, unit, value, min, max, step, onChange }: { i
 function Stat({ label, value }: { label: string; value: string }): React.ReactElement {
     return (
         <div className="rounded-2xl border border-border bg-background/60 p-3">
-            <Kicker className="mb-0 block">{label}</Kicker>
+            <Kicker className="block">{label}</Kicker>
             <div className="mt-1 font-light font-mono text-[18px] text-foreground tabular-nums tracking-[-0.02em] sm:text-[22px]">{value}</div>
         </div>
     );

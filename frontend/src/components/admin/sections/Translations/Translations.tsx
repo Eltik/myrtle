@@ -1,12 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { Navigate, useNavigate } from "@tanstack/react-router";
 import { useCallback, useMemo } from "react";
-import { PanelRetry } from "#/components/admin/Primitives";
 import { useAdminAccess } from "#/components/admin/shell/access";
 import { atLeast } from "#/components/admin/shell/model";
 import { PageHead } from "#/components/admin/shell/PageHead";
 import type { IAdminTranslationsSearch } from "#/components/admin/shell/search";
 import { Card } from "#/components/ui/card";
+import { LoadFailed } from "#/components/ui/load-failed";
 import { Skeleton } from "#/components/ui/skeleton";
 import { useAuth } from "#/hooks/use-auth";
 import { useIsMac } from "#/hooks/use-is-mac";
@@ -94,11 +94,7 @@ function Workspace({ search, grants, grantsLoading, enabled: canOpen }: IWorkspa
     }
 
     if (localesQuery.isError) {
-        return (
-            <Card>
-                <PanelRetry className="items-center px-6 py-10" message={t("translations.locale.loadFailed")} retryLabel={t("translations.list.retry")} onRetry={() => void localesQuery.refetch()} />
-            </Card>
-        );
+        return <LoadFailed message={t("translations.locale.loadFailed")} onRetry={() => void localesQuery.refetch()} />;
     }
 
     if (!locale) {

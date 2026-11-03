@@ -37,7 +37,7 @@ function SpawnEnemyIdentity({ row, iconClass, onActivate }: { row: ISpawnRow; ic
 function SpawnStat({ label, value, strong }: { label: string; value: string; strong?: boolean }) {
     return (
         <div className="flex min-w-0 flex-col gap-1">
-            <dt className="font-medium font-mono text-[10px] text-muted-foreground uppercase leading-none tracking-widest">{label}</dt>
+            <dt className="kicker leading-none">{label}</dt>
             <dd className={cn("font-mono text-[12px] tabular-nums leading-none", strong ? "font-semibold text-foreground" : "text-muted-foreground")}>{value}</dd>
         </div>
     );
@@ -69,7 +69,7 @@ export function SpawnSchedule({ level, enemyData, onFocusEnemy }: { level: ILeve
     return (
         <section className="overflow-hidden rounded-2xl border border-border bg-card">
             <div className="flex flex-wrap items-center gap-2.5 border-border border-b px-4 py-3">
-                <Kicker className="mb-0 leading-none">{t("spawns.title")}</Kicker>
+                <Kicker className="leading-none">{t("spawns.title")}</Kicker>
                 <span className="font-mono text-[11px] text-muted-foreground tabular-nums">{t("spawns.groups", { count: rows.length })}</span>
                 <span className="h-px flex-1 bg-border" />
                 {hiddenGroups.length > 0 && (

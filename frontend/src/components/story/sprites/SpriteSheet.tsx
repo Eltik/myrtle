@@ -113,7 +113,7 @@ function SpriteSheetBody({ detail }: { detail: StorySpriteDetail }): React.React
                 </div>
                 <section>
                     <h3 className="mt-1 mb-1.5 font-normal">
-                        <Kicker className="mb-0">{t("sprites.sheet.names")}</Kicker>
+                        <Kicker>{t("sprites.sheet.names")}</Kicker>
                     </h3>
                     {entry.names.length === 0 ? (
                         <p className="m-0 font-sans text-[12.5px] text-muted-foreground">{t("sprites.sheet.noNames")}</p>
@@ -179,7 +179,7 @@ function SpriteSheetBody({ detail }: { detail: StorySpriteDetail }): React.React
 
                 <section>
                     <h3 className="mt-1 mb-1.5 font-normal">
-                        <Kicker className="mb-0">{t("sprites.sheet.stories")}</Kicker>
+                        <Kicker>{t("sprites.sheet.stories")}</Kicker>
                     </h3>
                     <ul className="m-0 flex max-h-72 list-none flex-col overflow-y-auto rounded-lg border border-border p-0">
                         {detail.stories.map((s) => (

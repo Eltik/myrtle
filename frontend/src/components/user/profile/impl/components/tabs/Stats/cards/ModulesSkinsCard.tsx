@@ -7,7 +7,7 @@ import { cn } from "#/lib/utils";
 import type { IOperatorIndexEntry } from "#/types/operators";
 import type { IModuleGapDetails } from "../helpers";
 import { PALETTE } from "../palette";
-import { CARD_PADDING, GapList, type IGapItem, Kicker, MetricRow, StatCard, Tile } from "../primitives";
+import { CARD_PADDING, CardKicker, GapList, type IGapItem, MetricRow, StatCard, Tile } from "../primitives";
 import type { messages } from "./ModulesSkinsCard.messages";
 import { SkinViewerDialog } from "./SkinViewerDialog";
 
@@ -66,7 +66,7 @@ export function ModulesSkinsCard({ modules, skins, charSkins, ownedSkinIds, oper
         <StatCard color={PALETTE.modules.accent}>
             <div className={cn("flex h-full flex-col gap-5", CARD_PADDING)}>
                 <div className="space-y-4">
-                    <Kicker icon={Layers} label={t("profile.stats.modules.title")} />
+                    <CardKicker icon={Layers} label={t("profile.stats.modules.title")} />
                     <div className="grid grid-cols-2 gap-2">
                         <Tile
                             color={PALETTE.modules.unlocked}
@@ -88,7 +88,7 @@ export function ModulesSkinsCard({ modules, skins, charSkins, ownedSkinIds, oper
                 <div className="border-border/60 border-t" />
 
                 <div className="space-y-4">
-                    <Kicker icon={Palette} label={t("profile.stats.skins.title")} />
+                    <CardKicker icon={Palette} label={t("profile.stats.skins.title")} />
                     <Tile
                         color={PALETTE.skins}
                         sub={t("profile.stats.skins.collected")}

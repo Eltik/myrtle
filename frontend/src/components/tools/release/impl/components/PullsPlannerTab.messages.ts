@@ -448,10 +448,6 @@ export const messages = {
         text: "Couldn't load event names and art, so some banners show without them.",
         description: "Notice above the banner plan when the events list fails to load; the banners still plan, but those that borrow their name and picture from an event show without them.",
     },
-    "release.pulls.plan.eventsRetry": {
-        text: "Try again",
-        description: "Button beside the events notice that reloads the events list.",
-    },
     "release.pulls.plan.untouched": {
         text: "Nothing committed yet. Use Max or Spark on a banner to start planning.",
         description: "Hint shown when the plan is empty.",

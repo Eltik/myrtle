@@ -1,7 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { X } from "lucide-react";
 import * as React from "react";
-import { LoadError } from "#/components/operators/detail/impl/components/LoadError";
 import { ClassIcon, SubProfessionIcon } from "#/components/operators/list/impl/components/Icons";
 import { PROFESSION_ORDER } from "#/components/operators/list/impl/constants";
 import { eliteIcon, potentialIcon, specializedIcon } from "#/components/tools/shared/icons";
@@ -10,6 +9,7 @@ import { Button } from "#/components/ui/button";
 import { Input } from "#/components/ui/input";
 import { Kbd } from "#/components/ui/kbd";
 import { Label } from "#/components/ui/label";
+import { LoadFailed } from "#/components/ui/load-failed";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
 import { Switch } from "#/components/ui/switch";
 import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
@@ -355,9 +355,9 @@ export function OperatorPicker({ seat, operators, operatorsFailed, onRetryOperat
             </div>
 
             <div className="p-3 sm:p-4">
-                {recruitFailed && <LoadError className="mb-3" message={t("squad.picker.recruitFailed")} onRetry={() => void refetchRecruitment()} />}
+                {recruitFailed && <LoadFailed layout="inline" className="mb-3" message={t("squad.picker.recruitFailed")} onRetry={() => void refetchRecruitment()} />}
                 {operators.length === 0 && operatorsFailed ? (
-                    <LoadError message={t("squad.picker.loadFailed")} onRetry={onRetryOperators} />
+                    <LoadFailed layout="inline" message={t("squad.picker.loadFailed")} onRetry={onRetryOperators} />
                 ) : operators.length === 0 ? (
                     <p className="py-8 text-center text-[13px] text-muted-foreground">{t("squad.picker.loading")}</p>
                 ) : shown.length === 0 ? (
@@ -446,7 +446,7 @@ const PickerTile = React.memo(function PickerTile({ op, build, showOwnership, se
                 <span className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
                     <span className="break-words font-semibold text-[14px] text-foreground leading-snug">{op.name}</span>
                     {current && (
-                        <Badge variant="tint" size="sm">
+                        <Badge variant="outline" size="sm">
                             {t("squad.picker.currentForm")}
                         </Badge>
                     )}

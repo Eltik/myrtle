@@ -85,7 +85,7 @@ export function Toolbar({ ranking, onRanking, catalog, materials, catalogError, 
                 />
                 <DropdownMenu>
                     <DropdownMenuTrigger className={FILTER} aria-label={t("leaderboard.toolbar.serverLabel")}>
-                        <Kicker className="mb-0">{t("leaderboard.toolbar.server")}</Kicker>
+                        <Kicker>{t("leaderboard.toolbar.server")}</Kicker>
                         <span className="font-semibold text-foreground">{server === "All" ? t("leaderboard.toolbar.all") : server}</span>
                         <ChevronDown className="size-3 opacity-70" />
                     </DropdownMenuTrigger>
@@ -105,7 +105,7 @@ export function Toolbar({ ranking, onRanking, catalog, materials, catalogError, 
                 <DropdownMenu>
                     <HintWrap hint={movementHint} className="w-full sm:w-auto">
                         <DropdownMenuTrigger className={FILTER} aria-label={t("leaderboard.toolbar.intervalLabel")} disabled={!movementAvailable}>
-                            <Kicker className="mb-0">{t("leaderboard.toolbar.interval")}</Kicker>
+                            <Kicker>{t("leaderboard.toolbar.interval")}</Kicker>
                             <span className="font-semibold text-foreground tabular-nums">{t(intervalShortKey)}</span>
                             <ChevronDown className="size-3 opacity-70" />
                         </DropdownMenuTrigger>

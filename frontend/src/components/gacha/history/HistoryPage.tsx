@@ -157,7 +157,9 @@ function PageHeader({ children }: { children?: React.ReactNode }) {
         <div className="flex flex-col gap-3.5 pt-1.5">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between sm:gap-6">
                 <div className="flex max-w-180 flex-col items-start">
-                    <Kicker tone="accent">{t("history.header.kicker")}</Kicker>
+                    <Kicker className="mb-2.5" tone="accent">
+                        {t("history.header.kicker")}
+                    </Kicker>
                     <h1 className="m-0 mb-3 text-balance font-bold font-sans text-[32px] text-foreground leading-[1.05] tracking-[-0.03em] sm:text-[38px] sm:leading-[1.03] sm:tracking-[-0.035em] lg:text-[44px] lg:leading-[1.02]">
                         {rt("history.header.title", { emphasis: <em className="text-primary not-italic">{t("history.header.titleEmphasis")}</em> })}
                     </h1>

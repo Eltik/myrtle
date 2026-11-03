@@ -5,7 +5,7 @@ import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
 import { PALETTE } from "../palette";
-import { Bar, CARD_PADDING, Kicker, StatCard } from "../primitives";
+import { Bar, CARD_PADDING, CardKicker, StatCard } from "../primitives";
 import type { messages } from "./ClassBreakdownCard.messages";
 
 interface ISubProfession {
@@ -59,7 +59,7 @@ export function ClassBreakdownCard({ professions }: { professions: IProfession[]
     return (
         <StatCard className="sm:col-span-2" color={colors}>
             <div className={cn(CARD_PADDING, "pb-2")}>
-                <Kicker icon={BarChart3} label={t("profile.stats.classes.title")} />
+                <CardKicker icon={BarChart3} label={t("profile.stats.classes.title")} />
             </div>
             <div className="flex flex-col px-4 pb-4 sm:px-5 sm:pb-5">
                 {professions.map((prof) => (

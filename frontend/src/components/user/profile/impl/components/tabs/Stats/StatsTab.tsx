@@ -1,11 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
+import { LoadFailed } from "#/components/ui/load-failed";
 import { skinsIndexQueryOptions, userSkinsQueryOptions } from "#/lib/api/skins";
 import { type IRosterEntry, userCheckinQueryOptions } from "#/lib/api/user";
 import { useGamedataServer, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import type { IOperatorIndexEntry } from "#/types/operators";
-import { LoadFailed } from "../LoadFailed";
 import { ClassBreakdownCard } from "./cards/ClassBreakdownCard";
 import { CollectionCard } from "./cards/CollectionCard";
 import { ElitePromotionCard } from "./cards/ElitePromotionCard";

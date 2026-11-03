@@ -121,7 +121,7 @@ export function SettingRow({ title, description, control, layout = "auto" }: { t
 }
 
 export function SectionLabel({ children }: { children: ReactNode }) {
-    return <Kicker>{children}</Kicker>;
+    return <Kicker className="mb-2.5">{children}</Kicker>;
 }
 
 export function Mono({ children }: { children: ReactNode }) {

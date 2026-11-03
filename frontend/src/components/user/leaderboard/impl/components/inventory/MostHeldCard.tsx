@@ -25,7 +25,7 @@ export function MostHeldCard({ catalog, current, onItem, isLoading }: IMostHeldC
     return (
         <aside className="rounded-2xl border border-border bg-card p-4 shadow-[0_1px_2px_rgb(0_0_0/0.04)]">
             <div className="mb-3 flex flex-col gap-1">
-                <Kicker className="mb-0">{t("leaderboard.mostHeld.title")}</Kicker>
+                <Kicker>{t("leaderboard.mostHeld.title")}</Kicker>
                 <span className="font-sans text-[12px] text-muted-foreground leading-snug">{t("leaderboard.mostHeld.subtitle")}</span>
             </div>
             {isLoading && rows.length === 0 ? (

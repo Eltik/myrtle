@@ -2,6 +2,8 @@ import { useQuery } from "@tanstack/react-query";
 import { ChevronDown, Star } from "lucide-react";
 import { memo, useMemo, useState } from "react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "#/components/ui/collapsible";
+import { LoadFailed } from "#/components/ui/load-failed";
+import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useOperatorName } from "#/hooks/use-operator-name";
 import { operatorGamedataServer } from "#/lib/api/gamedata";
@@ -13,7 +15,6 @@ import type { ILevelUpCostItem, IOperatorListItem, IUnlockCondition } from "#/ty
 import { asset, itemIcon } from "../../assets";
 import { useCnUpdatesContext } from "../../cnUpdates";
 import { CnTag } from "../CnMarkers";
-import { LoadError } from "../LoadError";
 import type { messages } from "./LevelUpContent.messages";
 
 interface ILevelUpContentProps {
@@ -185,7 +186,7 @@ export const LevelUpContent = memo(function LevelUpContent({ operator }: ILevelU
             </div>
 
             <div className="flex flex-col gap-5">
-                {materialsFailed && !materials && <LoadError message={t("levelup.materialsFailed")} onRetry={() => void refetchMaterials()} />}
+                {materialsFailed && !materials && <LoadFailed message={t("levelup.materialsFailed")} onRetry={() => void refetchMaterials()} />}
                 {levelingRows.length > 0 && (
                     <Section subtitle={t("levelup.section.operatorLevel.desc")} title={t("levelup.section.operatorLevel")}>
                         {levelingRows.map((r) => (
@@ -220,24 +221,15 @@ export const LevelUpContent = memo(function LevelUpContent({ operator }: ILevelU
                 {activeMastery && (
                     <Section subtitle={t("levelup.section.mastery.desc")} title={t("levelup.section.mastery")}>
                         {masterySkills.length > 1 && (
-                            <div className="flex gap-1.5 overflow-x-auto border-border border-b bg-muted/30 px-5 py-2.5">
+                            <ToggleGroup aria-label={t("levelup.section.mastery")} className="w-full overflow-x-auto border-border border-b bg-muted/30 px-5 py-2.5" onValueChange={(next) => next[0] !== undefined && setActiveSkill(Number(next[0]))} size="sm" value={[String(activeSkill)]}>
                                 {masterySkills.map((s, i) => (
-                                    <button
-                                        aria-pressed={i === activeSkill}
-                                        className={cn(
-                                            "flex shrink-0 items-center gap-2 whitespace-nowrap rounded-md border px-3 py-1.5 font-medium text-xs transition-colors",
-                                            i === activeSkill ? "border-primary bg-primary/15 text-foreground" : "border-transparent text-muted-foreground hover:bg-accent hover:text-foreground",
-                                        )}
-                                        key={s.skillId}
-                                        onClick={() => setActiveSkill(i)}
-                                        type="button"
-                                    >
+                                    <ToggleGroupItem className="gap-2 text-xs sm:text-xs" key={s.skillId} value={String(i)}>
                                         <span className="grid h-5 w-5 shrink-0 place-items-center rounded bg-background/60 font-bold text-[10px]">{i + 1}</span>
                                         <span lang={cnUpdates?.skillIds.has(s.skillId) ? "zh-CN" : undefined}>{s.static?.levels?.[0]?.name ?? t("levelup.skillFallback", { index: i + 1 })}</span>
                                         {cnUpdates?.skillIds.has(s.skillId) && <CnTag />}
-                                    </button>
+                                    </ToggleGroupItem>
                                 ))}
-                            </div>
+                            </ToggleGroup>
                         )}
                         <div className="kicker px-5 pt-3 pb-1">{activeMasteryName}</div>
                         {activeMastery.levelUpCostCond.map((c, i) => (

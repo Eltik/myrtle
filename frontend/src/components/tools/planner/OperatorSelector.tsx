@@ -1,8 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import * as React from "react";
-
-import { LoadError } from "#/components/operators/detail/impl/components/LoadError";
 import { Combobox, ComboboxEmpty, ComboboxInput, ComboboxItem, ComboboxList, ComboboxPopup, ComboboxPrimitive } from "#/components/ui/combobox";
+import { LoadFailed } from "#/components/ui/load-failed";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { useOperatorName } from "#/hooks/use-operator-name";
 import { operatorsIndexQueryOptions } from "#/lib/api/operators";
@@ -134,7 +133,7 @@ export function OperatorSelector({ options, selectedOption, isLoading, failed, o
                     </ComboboxList>
                 </ComboboxPopup>
             </Combobox>
-            {failed && onRetry && <LoadError message={t("planner.dialog.operatorsFailed")} onRetry={onRetry} />}
+            {failed && onRetry && <LoadFailed layout="inline" message={t("planner.dialog.operatorsFailed")} onRetry={onRetry} />}
         </div>
     );
 }
@@ -205,7 +204,7 @@ export function OperatorMultiSelector({ options, selectedOptions, isLoading, fai
                     </ComboboxList>
                 </ComboboxPopup>
             </Combobox>
-            {failed && onRetry && <LoadError message={t("planner.dialog.operatorsFailed")} onRetry={onRetry} />}
+            {failed && onRetry && <LoadFailed layout="inline" message={t("planner.dialog.operatorsFailed")} onRetry={onRetry} />}
         </>
     );
 }

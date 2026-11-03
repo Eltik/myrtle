@@ -90,7 +90,7 @@ function Tile({ value, label }: { value: string; label: string }): React.ReactEl
     return (
         <div className="rounded-2xl border border-border bg-card/55 px-4 py-3.5">
             <div className="font-light font-sans text-[28px] text-primary tabular-nums leading-none tracking-[-0.02em]">{value}</div>
-            <Kicker className="mt-1.5 mb-0 block">{label}</Kicker>
+            <Kicker className="mt-1.5 block">{label}</Kicker>
         </div>
     );
 }
@@ -100,7 +100,7 @@ function Column({ title, empty, emptyText, children }: { title: string; empty: b
     return (
         <section aria-label={title}>
             <h3 className="m-0 mb-2 font-normal">
-                <Kicker className="mb-0">{title}</Kicker>
+                <Kicker>{title}</Kicker>
             </h3>
             {empty ? <p className="m-0 font-sans text-[12.5px] text-muted-foreground">{emptyText ?? t("music.stats.nothing")}</p> : <ol className="m-0 flex list-none flex-col p-0">{children}</ol>}
         </section>

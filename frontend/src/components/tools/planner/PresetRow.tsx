@@ -1,12 +1,11 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Trash } from "lucide-react";
 import * as React from "react";
-
-import { LoadError } from "#/components/operators/detail/impl/components/LoadError";
 import { Button } from "#/components/ui/button";
 import { useErrorMessage } from "#/components/ui/error-message";
 import { Input } from "#/components/ui/input";
 import { Kicker } from "#/components/ui/kicker";
+import { LoadFailed } from "#/components/ui/load-failed";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { deletePlanPresetFn, type IPresetTarget, PLAN_PRESETS_QUERY_KEY, planPresetsQueryOptions, upsertPlanPresetFn } from "#/lib/api/planner";
@@ -74,8 +73,8 @@ export function PresetRow({ target, onLoad }: IPresetRowProps): React.ReactEleme
 
     return (
         <div className="space-y-3 rounded-2xl border border-border bg-card/40 p-4">
-            <Kicker className="mb-0 block">{t("planner.bulk.preset")}</Kicker>
-            {presetsFailed && <LoadError message={t("planner.bulk.presetLoadFailed")} onRetry={() => void refetchPresets()} />}
+            <Kicker className="block">{t("planner.bulk.preset")}</Kicker>
+            {presetsFailed && <LoadFailed layout="inline" message={t("planner.bulk.presetLoadFailed")} onRetry={() => void refetchPresets()} />}
             <div className="flex items-center gap-2">
                 <Select value={chosen} onValueChange={(v: string | null) => handleChoose(v)}>
                     <SelectTrigger className="min-w-0 flex-1" aria-label={t("planner.bulk.preset")}>

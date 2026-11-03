@@ -3,10 +3,6 @@ import { defineMessages, type MessageMap } from "#/lib/i18n/messages";
 export const namespace = "changelog";
 
 export const messages = {
-    "error.unexpected": {
-        text: "No details were given.",
-        description: "Stand-in shown in the changelog error screen's detail box when the failure carried no message of its own.",
-    },
     "error.title": {
         text: "Couldn't load the changelog",
         description: "Heading of the changelog error screen. No full stop in the source.",

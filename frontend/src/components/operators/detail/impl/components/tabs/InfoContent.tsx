@@ -4,11 +4,13 @@ import { memo, type ReactNode, useEffect, useId, useMemo, useRef, useState } fro
 import { useOperatorFactLabel } from "#/components/operators/OperatorFacts";
 import { Badge } from "#/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "#/components/ui/collapsible";
+import { LoadFailed } from "#/components/ui/load-failed";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
 import { Separator } from "#/components/ui/separator";
 import { Skeleton } from "#/components/ui/skeleton";
 import { Slider } from "#/components/ui/slider";
 import { Switch } from "#/components/ui/switch";
+import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { operatorGamedataServer } from "#/lib/api/gamedata";
 import { rangesQueryOptions } from "#/lib/api/ranges";
@@ -30,7 +32,6 @@ import { BaseSkillsSection } from "../BaseSkillsSection";
 import { CnDescription, CnTag, CnValue } from "../CnMarkers";
 import { CommunitySharePill } from "../CommunitySharePill";
 import { LevelBreakdown } from "../LevelBreakdown";
-import { LoadError } from "../LoadError";
 import { OperatorNotes } from "../OperatorNotes";
 import { OperatorRange } from "../OperatorRange";
 import { SummonsSection } from "../SummonsSection";
@@ -269,6 +270,8 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
     const f = useFormatters();
     const levelLabelId = useId();
     const trustLabelId = useId();
+    const promotionLabelId = useId();
+    const potentialLabelId = useId();
     const [phaseIndex, setPhaseIndex] = useState(operator.phases.length - 1);
     const [level, setLevel] = useState(operator.phases[operator.phases.length - 1]?.maxLevel ?? 1);
     const [trustLevel, setTrustLevel] = useState(100);
@@ -422,22 +425,29 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
                     <p className="text-muted-foreground text-xs">{t("info.controls.desc")}</p>
 
                     <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-muted-foreground text-sm">{t("info.promotion")}</span>
-                        {operator.phases.map((_, idx) => (
-                            <button
-                                aria-pressed={phaseIndex === idx}
-                                className={cn("flex pointer-coarse:size-11 h-10 w-10 items-center justify-center rounded-lg transition-colors", phaseIndex === idx ? "border-2 border-primary bg-primary/10" : "border border-border bg-card hover:border-primary/50")}
+                        <span className="text-muted-foreground text-sm" id={promotionLabelId}>
+                            {t("info.promotion")}
+                        </span>
+                        <ToggleGroup
+                            aria-labelledby={promotionLabelId}
+                            className="flex-wrap gap-2"
+                            onValueChange={(next) => {
+                                if (next[0] === undefined) return;
+                                const idx = Number(next[0]);
+                                setPhaseIndex(idx);
+                                setLevel(operator.phases[idx].maxLevel);
+                            }}
+                            size="lg"
+                            value={[String(phaseIndex)]}
+                            variant="outline"
+                        >
+                            {operator.phases.map((_, idx) => (
                                 // biome-ignore lint/suspicious/noArrayIndexKey: phase ordering is fixed by elite tier
-                                key={`phase-${idx}`}
-                                onClick={() => {
-                                    setPhaseIndex(idx);
-                                    setLevel(operator.phases[idx].maxLevel);
-                                }}
-                                type="button"
-                            >
-                                <img alt={t("info.eliteAlt", { elite: idx })} className="icon-theme-aware h-6 w-6 object-contain" decoding="async" loading="lazy" src={eliteIcon(idx, operator.server)} />
-                            </button>
-                        ))}
+                                <ToggleGroupItem key={`phase-${idx}`} value={String(idx)}>
+                                    <img alt={t("info.eliteAlt", { elite: idx })} className="icon-theme-aware h-6 w-6 object-contain" decoding="async" loading="lazy" src={eliteIcon(idx, operator.server)} />
+                                </ToggleGroupItem>
+                            ))}
+                        </ToggleGroup>
                     </div>
 
                     <div className="grid gap-4 md:grid-cols-2">
@@ -465,7 +475,7 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
 
                     <div className="space-y-2">
                         <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                            {t("info.potential")}
+                            <span id={potentialLabelId}>{t("info.potential")}</span>
                             <Tooltip>
                                 <TooltipTrigger
                                     render={(props) => (
@@ -477,7 +487,7 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
                                 <TooltipPopup>{t("info.potential.tip")}</TooltipPopup>
                             </Tooltip>
                         </div>
-                        <div className="flex flex-wrap gap-1.5">
+                        <ToggleGroup aria-labelledby={potentialLabelId} className="flex-wrap gap-1.5" onValueChange={(next) => next[0] !== undefined && setPotentialRank(Number(next[0]))} size="sm" value={[String(potentialRank)]} variant="outline">
                             {Array.from({
                                 length: (operator.potentialRanks?.length ?? 0) + 1,
                             }).map((_, idx) => {
@@ -490,19 +500,10 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
                                     <Tooltip key={`pot-${idx}`}>
                                         <TooltipTrigger
                                             render={(props) => (
-                                                <button
-                                                    {...props}
-                                                    type="button"
-                                                    aria-pressed={potentialRank === idx}
-                                                    onClick={() => setPotentialRank(idx)}
-                                                    className={cn(
-                                                        "relative flex h-8 w-8 items-center justify-center rounded-md transition-colors pointer-coarse:after:absolute pointer-coarse:after:min-h-11 pointer-coarse:after:min-w-11",
-                                                        potentialRank === idx ? "border-2 border-primary bg-primary/10" : "border border-border bg-card hover:border-primary/50",
-                                                    )}
-                                                >
+                                                <ToggleGroupItem {...props} value={String(idx)}>
                                                     <img alt={t("info.potential.alt", { rank: idx })} className="icon-theme-aware h-5 w-5 object-contain" decoding="async" loading="lazy" src={potentialIcon(idx, operator.server)} />
                                                     {cnRankDiffers && <span aria-hidden="true" className="absolute -top-0.5 -right-0.5 h-1.5 w-1.5 rounded-full bg-primary" />}
-                                                </button>
+                                                </ToggleGroupItem>
                                             )}
                                         />
                                         <TooltipPopup>
@@ -521,7 +522,7 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
                                     </Tooltip>
                                 );
                             })}
-                        </div>
+                        </ToggleGroup>
                     </div>
 
                     {showModuleControls && availableModules.length > 0 && (
@@ -668,7 +669,7 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
                 ) : rangesLoading ? (
                     <Skeleton className="h-24 w-40 rounded-md" />
                 ) : rangesFailed ? (
-                    <LoadError message={t("info.attackRange.error")} onRetry={() => void refetchRanges()} />
+                    <LoadFailed message={t("info.attackRange.error")} onRetry={() => void refetchRanges()} />
                 ) : (
                     <p className="text-muted-foreground text-sm">{t("info.attackRange.empty")}</p>
                 )}

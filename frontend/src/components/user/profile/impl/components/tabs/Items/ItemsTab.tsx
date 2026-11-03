@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { ArrowDown, ArrowUp, Grid3x3, LayoutGrid, Search } from "lucide-react";
-import { LoadError } from "#/components/operators/detail/impl/components/LoadError";
 import { Button } from "#/components/ui/button";
 import { FilterChip } from "#/components/ui/filter-chip";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "#/components/ui/input-group";
+import { LoadFailed } from "#/components/ui/load-failed";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
 import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import { useWindowVirtualRows } from "#/hooks/use-window-virtual-rows";
@@ -69,7 +69,7 @@ export function ItemsTab({ inventory }: IItemsTabProps) {
 
     return (
         <section aria-label={t("profile.items.aria")} className="flex flex-col gap-4">
-            {materialsFailed && !materials && <LoadError message={t("profile.items.materialsFailed")} onRetry={() => void refetchMaterials()} />}
+            {materialsFailed && !materials && <LoadFailed message={t("profile.items.materialsFailed")} onRetry={() => void refetchMaterials()} />}
             <div className="flex flex-wrap items-center gap-2">
                 {visibleCategories.map((c) => (
                     <FilterChip key={c} label={t(CATEGORY_LABELS[c])} active={c === filters.category} count={categoryCounts.get(c) ?? 0} onSelect={() => set("category", c)} />

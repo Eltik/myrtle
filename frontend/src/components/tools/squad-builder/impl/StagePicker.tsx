@@ -1,11 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { MapIcon, RotateCwIcon } from "lucide-react";
+import { MapIcon } from "lucide-react";
 import * as React from "react";
 import { StagePreview } from "#/components/stages/list/impl/StagePreview";
-import { Button } from "#/components/ui/button";
 import { Dialog, DialogDescription, DialogHeader, DialogPanel, DialogPopup, DialogTitle } from "#/components/ui/dialog";
 import { Input } from "#/components/ui/input";
+import { LoadFailed } from "#/components/ui/load-failed";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
 import { useMediaQuery } from "#/hooks/use-media-query";
 import { type IStageIndexEntry, stageIndexQueryOptions, stagePreviewCandidates } from "#/lib/api/stages";
@@ -123,13 +123,7 @@ export function StagePicker({ open, onOpenChange, onPick }: IStagePickerProps): 
                         {isLoading ? (
                             <p className="py-8 text-center text-[13px] text-muted-foreground">{t("squad.stagePicker.loading")}</p>
                         ) : isError ? (
-                            <div role="alert" className="flex flex-col items-center gap-3 py-8 text-center">
-                                <p className="m-0 text-[13px] text-muted-foreground">{t("squad.stagePicker.error")}</p>
-                                <Button type="button" variant="outline" size="sm" onClick={() => void refetch()}>
-                                    <RotateCwIcon aria-hidden="true" />
-                                    {t("squad.stagePicker.retry")}
-                                </Button>
-                            </div>
+                            <LoadFailed layout="inline" className="justify-center py-8" message={t("squad.stagePicker.error")} onRetry={() => void refetch()} />
                         ) : shown.length === 0 ? (
                             <p className="py-8 text-center text-[13px] text-muted-foreground">{t("squad.stagePicker.empty")}</p>
                         ) : (

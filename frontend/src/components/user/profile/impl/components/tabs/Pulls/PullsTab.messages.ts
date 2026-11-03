@@ -29,7 +29,7 @@ export const messages = {
     },
     "profile.pulls.loadFailed": {
         text: "Couldn't load the pull history.",
-        description: "Shown on a Pulls tab when the pulls failed to load; followed by the reason.",
+        description: "Shown on a Pulls tab when the pulls failed to load. A Try again button follows.",
     },
 } satisfies MessageMap;
 

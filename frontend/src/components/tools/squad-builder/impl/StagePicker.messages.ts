@@ -39,10 +39,6 @@ export const messages = {
         text: "Couldn't load the stage list.",
         description: "Shown in place of the stage grid when the stage list fails to load.",
     },
-    "squad.stagePicker.retry": {
-        text: "Try again",
-        description: "Button that reloads the stage list after a failure.",
-    },
     "squad.stagePicker.loading": {
         text: "Loading stages…",
         description: "Shown while the stage list loads.",

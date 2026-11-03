@@ -1,12 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { ArrowDown, ArrowUp, Download, Filter, LayoutGrid, LayoutList, RotateCwIcon, Search } from "lucide-react";
+import { ArrowDown, ArrowUp, Download, Filter, LayoutGrid, LayoutList, Search } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DynamicExportDialog } from "#/components/export/ExportDialog.lazy";
 import { SearchField } from "#/components/SearchField";
-import { Alert, AlertAction, AlertDescription } from "#/components/ui/alert";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
+import { LoadFailed } from "#/components/ui/load-failed";
 import { PageHeader } from "#/components/ui/page-header";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
 import { Sheet, SheetHeader, SheetPanel, SheetPopup, SheetTitle } from "#/components/ui/sheet";
@@ -198,7 +198,7 @@ export function EnemiesList() {
                         <SheetPanel className="flex flex-col gap-5.5 px-5 pb-6">{filterControls}</SheetPanel>
                     </SheetPopup>
                 </Sheet>
-                {locationsFailed && filters.appearsIn.length === 0 && <LocationsFailed onRetry={() => void refetchStageTable()} />}
+                {locationsFailed && filters.appearsIn.length === 0 && <LoadFailed message={t("list.locations.failed")} onRetry={() => void refetchStageTable()} />}
 
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     <SearchField className="min-w-55 max-w-100 flex-1" value={filters.q} onChange={setSearchQuery} placeholder={t("list.search.placeholder")} label={t("list.search.aria")} />
@@ -331,7 +331,7 @@ export function EnemiesList() {
                 </div>
 
                 {locationsFailed && filters.appearsIn.length > 0 ? (
-                    <LocationsFailed onRetry={() => void refetchStageTable()} />
+                    <LoadFailed message={t("list.locations.failed")} onRetry={() => void refetchStageTable()} />
                 ) : locationsPending ? (
                     // Not the empty state: its clear button would wipe the restored filter.
                     <LocationsLoading />
@@ -374,21 +374,6 @@ function LocationsLoading() {
                 <Skeleton key={i} className="aspect-[3/4] rounded-lg" />
             ))}
         </div>
-    );
-}
-
-function LocationsFailed({ onRetry }: { onRetry: () => void }) {
-    const t: TypedT<typeof messages> = useT("enemies");
-    return (
-        <Alert variant="error">
-            <AlertDescription>{t("list.locations.failed")}</AlertDescription>
-            <AlertAction>
-                <Button type="button" variant="outline" size="sm" onClick={onRetry}>
-                    <RotateCwIcon aria-hidden="true" />
-                    {t("list.locations.retry")}
-                </Button>
-            </AlertAction>
-        </Alert>
     );
 }
 

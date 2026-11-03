@@ -273,14 +273,14 @@ function SeatCard(props: ISeatCardProps): React.ReactElement {
             >
                 {!compact && !isSupport && seat !== 0 && <span className="absolute top-1.5 left-2 font-mono text-[10px] text-subtle-foreground tabular-nums">{t("squad.grid.seatTag", { seat: seat + 1 })}</span>}
                 {!compact && seat === 0 && (
-                    <Kicker tone="accent" className="absolute top-1.5 left-2 mb-0 flex items-center gap-1">
+                    <Kicker tone="accent" className="absolute top-1.5 left-2 flex items-center gap-1">
                         <Crown aria-hidden="true" className="size-3" />
                         {t("squad.grid.leader")}
                     </Kicker>
                 )}
                 {!compact && isSupport && (
-                    <Kicker className="absolute top-1.5 left-2 mb-0 flex items-center gap-1 text-info-foreground">
-                        <Handshake aria-hidden="true" className="size-3" />
+                    <Kicker className="absolute top-1.5 left-2 flex items-center gap-1">
+                        <Handshake aria-hidden="true" className="size-3 text-info-foreground" />
                         {t("squad.grid.support")}
                     </Kicker>
                 )}

@@ -292,7 +292,7 @@ function HandbookText({ text }: { text: string }): React.ReactElement {
                     const value = line.slice(close + 1).trim();
                     return (
                         <div key={key} className="flex flex-col gap-0.5 sm:flex-row sm:items-baseline sm:gap-3">
-                            <Kicker className="mb-0 shrink-0 sm:w-36 sm:text-right">{header}</Kicker>
+                            <Kicker className="shrink-0 sm:w-36 sm:text-right">{header}</Kicker>
                             <span className="min-w-0 flex-1 font-sans text-[12.5px] text-foreground leading-relaxed">{value ? <GameText text={value} /> : "-"}</span>
                         </div>
                     );

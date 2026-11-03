@@ -70,7 +70,7 @@ export function VersionsBar({ slug, versions, selectedVersion, isLatestView }: I
     return (
         <section aria-label={t("detail.versions.sectionLabel")} className="page-gutter mt-4 [--page-max:1200px] sm:mt-6">
             <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-border bg-card px-3 py-2">
-                <Kicker className="mb-0 inline-flex items-center gap-1.5">
+                <Kicker className="inline-flex items-center gap-1.5">
                     <HistoryIcon className="h-3.5 w-3.5" aria-hidden="true" />
                     {t("detail.versions.heading")}
                 </Kicker>

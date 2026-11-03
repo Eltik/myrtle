@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-11-03T17:47:55.776Z",
+    "generatedAt": "2026-11-03T18:08:42.259Z",
     "entries": [
         {
             "key": "admin.home.access.everyList",
@@ -334,13 +334,6 @@
             "namespace": "admin",
             "source_text": "Inbox",
             "description": "Title of the admin landing page for staff: everything waiting on an admin. Same word as the 'Inbox' section tab.",
-            "placeholders": []
-        },
-        {
-            "key": "admin.home.loadFailed.retry",
-            "namespace": "admin",
-            "source_text": "Try again",
-            "description": "Button on the admin landing page that reloads a panel after it failed to load.",
             "placeholders": []
         },
         {
@@ -2944,13 +2937,6 @@
             "placeholders": []
         },
         {
-            "key": "admin.tierLists.access.retry",
-            "namespace": "admin",
-            "source_text": "Try again",
-            "description": "Button that reloads the grants table after it failed to load.",
-            "placeholders": []
-        },
-        {
             "key": "admin.tierLists.access.revoke",
             "namespace": "admin",
             "source_text": "Revoke",
@@ -3157,13 +3143,6 @@
             "namespace": "admin",
             "source_text": "No flair",
             "description": "Flair option that removes the list's flair.",
-            "placeholders": []
-        },
-        {
-            "key": "admin.tierLists.flair.retry",
-            "namespace": "admin",
-            "source_text": "Try again",
-            "description": "Button that reloads the flairs after they failed to load.",
             "placeholders": []
         },
         {
@@ -6600,13 +6579,6 @@
             "placeholders": []
         },
         {
-            "key": "archives.page.retry",
-            "namespace": "archives",
-            "source_text": "Try again",
-            "description": "Button beside the Archives load error: refetch the failed tab.",
-            "placeholders": []
-        },
-        {
             "key": "archives.page.title",
             "namespace": "archives",
             "source_text": "Archives",
@@ -6864,13 +6836,6 @@
             "namespace": "changelog",
             "source_text": "Couldn't load the changelog",
             "description": "Heading of the changelog error screen. No full stop in the source.",
-            "placeholders": []
-        },
-        {
-            "key": "changelog.error.unexpected",
-            "namespace": "changelog",
-            "source_text": "No details were given.",
-            "description": "Stand-in shown in the changelog error screen's detail box when the failure carried no message of its own.",
             "placeholders": []
         },
         {
@@ -9904,13 +9869,6 @@
             ]
         },
         {
-            "key": "enemies.appears.retry",
-            "namespace": "enemies",
-            "source_text": "Try again",
-            "description": "Button beside the load error in the Appears In tab; refetches the stage list.",
-            "placeholders": []
-        },
-        {
             "key": "enemies.appears.sub.ex",
             "namespace": "enemies",
             "source_text": "EX Stages",
@@ -10437,13 +10395,6 @@
             "namespace": "enemies",
             "source_text": "Couldn't load where enemies appear, so the Appears In filter is unavailable.",
             "description": "Error line on the enemy list when the enemy-to-stage table fails to load. The Appears In filter (pick stages or zones an enemy shows up in) needs that table.",
-            "placeholders": []
-        },
-        {
-            "key": "enemies.list.locations.retry",
-            "namespace": "enemies",
-            "source_text": "Try again",
-            "description": "Button beside the load error on the enemy list; refetches the enemy-to-stage table.",
             "placeholders": []
         },
         {
@@ -11625,7 +11576,7 @@
             "key": "gacha.community.leaderboard.kicker",
             "namespace": "gacha",
             "source_text": "Most pulled · per rarity",
-            "description": "Small uppercase label above the most-pulled operators panel. Keep the middle dot.",
+            "description": "Heading of the most-pulled operators panel. Keep the middle dot.",
             "placeholders": []
         },
         {
@@ -11702,17 +11653,8 @@
             "key": "gacha.community.rarity.kicker",
             "namespace": "gacha",
             "source_text": "Outcome mix",
-            "description": "Small uppercase label above the rarity-distribution panel, used while the pull total is still loading.",
+            "description": "Heading of the rarity-distribution panel.",
             "placeholders": []
-        },
-        {
-            "key": "gacha.community.rarity.kicker.withTotal",
-            "namespace": "gacha",
-            "source_text": "Outcome mix · {count} pulls",
-            "description": "Small uppercase label above the rarity-distribution panel once the total is known. Keep the middle dot.",
-            "placeholders": [
-                "count"
-            ]
         },
         {
             "key": "gacha.community.rarity.legend.expected",
@@ -11747,6 +11689,15 @@
             "namespace": "gacha",
             "source_text": "{count} pulls",
             "description": "How many pulls landed on this rarity, under its bar.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "gacha.community.rarity.total",
+            "namespace": "gacha",
+            "source_text": "{count} pulls",
+            "description": "Meta text beside the rarity-distribution heading once the community pull total is known. {count} is a compact number, e.g. 1.2M.",
             "placeholders": [
                 "count"
             ]
@@ -11793,6 +11744,15 @@
             "source_text": "moments ago",
             "description": "How long ago the community figures were recomputed, for anything under a minute. Lowercase; it follows the word 'updated'.",
             "placeholders": []
+        },
+        {
+            "key": "gacha.community.runs.active",
+            "namespace": "gacha",
+            "source_text": "{count} active",
+            "description": "Meta text beside the banner-runs heading when at least one banner is running. {count} is the number of running banners.",
+            "placeholders": [
+                "count"
+            ]
         },
         {
             "key": "gacha.community.runs.averagePulls",
@@ -11892,17 +11852,8 @@
             "key": "gacha.community.runs.kicker",
             "namespace": "gacha",
             "source_text": "Banner runs",
-            "description": "Small uppercase label above the panel listing recent, running and announced banners.",
+            "description": "Heading of the panel listing recent, running and announced banners.",
             "placeholders": []
-        },
-        {
-            "key": "gacha.community.runs.kicker.withActive",
-            "namespace": "gacha",
-            "source_text": "Banner runs · {count} active",
-            "description": "Small uppercase label above the banner-runs panel when at least one banner is running. {count} is the number of running banners. Keep the middle dot.",
-            "placeholders": [
-                "count"
-            ]
         },
         {
             "key": "gacha.community.runs.metric.popularity",
@@ -12050,7 +12001,7 @@
             "key": "gacha.community.timing.kicker",
             "namespace": "gacha",
             "source_text": "Pull timing",
-            "description": "Small uppercase label above the charts showing when the community pulls.",
+            "description": "Heading of the panel of charts showing when the community pulls.",
             "placeholders": []
         },
         {
@@ -13066,13 +13017,6 @@
             "namespace": "gacha",
             "source_text": "Your top operators.",
             "description": "Heading of the panel ranking the operators the player pulled most often.",
-            "placeholders": []
-        },
-        {
-            "key": "gacha.loadFailed.retry",
-            "namespace": "gacha",
-            "source_text": "Try again",
-            "description": "Button beside a failure line on the gacha history or community page that reloads what failed to load.",
             "placeholders": []
         },
         {
@@ -27410,6 +27354,13 @@
             "placeholders": []
         },
         {
+            "key": "stages.list.filter.label",
+            "namespace": "stages",
+            "source_text": "Stage category",
+            "description": "Accessible name of the row of category filter pills above the stage list; one category is shown at a time.",
+            "placeholders": []
+        },
+        {
             "key": "stages.list.group.counts",
             "namespace": "stages",
             "source_text": "{zones} zones · {stages} stages",
@@ -29721,13 +29672,6 @@
             "namespace": "story",
             "source_text": "READERS",
             "description": "Column label over the number of accounts that have read something.",
-            "placeholders": []
-        },
-        {
-            "key": "story.community.retry",
-            "namespace": "story",
-            "source_text": "Try again",
-            "description": "Button beside the Community tab's load error: refetch it.",
             "placeholders": []
         },
         {
@@ -43402,6 +43346,15 @@
             "placeholders": []
         },
         {
+            "key": "tools.planner.bulk.masteryGroup",
+            "namespace": "tools",
+            "source_text": "Skill {index} mastery",
+            "description": "Accessible name of one skill slot's row of mastery buttons in the bulk plan target, e.g. 'Skill 2 mastery'.",
+            "placeholders": [
+                "index"
+            ]
+        },
+        {
             "key": "tools.planner.bulk.moduleStage",
             "namespace": "tools",
             "source_text": "Module stage",
@@ -44065,6 +44018,13 @@
             "namespace": "tools",
             "source_text": "Loading operators…",
             "description": "Placeholder in the operator picker while the list loads. Ends in an ellipsis character.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.planner.dialog.lockedHint",
+            "namespace": "tools",
+            "source_text": "Why some steps are locked",
+            "description": "Accessible name of the info button beside a row of plan steps; it opens the reasons the greyed-out steps cannot be picked.",
             "placeholders": []
         },
         {
@@ -45659,13 +45619,6 @@
                 "code",
                 "name"
             ]
-        },
-        {
-            "key": "tools.randomizer.retry",
-            "namespace": "tools",
-            "source_text": "Try again",
-            "description": "Button that reloads the lists that failed to load.",
-            "placeholders": []
         },
         {
             "key": "tools.randomizer.roster.all",
@@ -47559,7 +47512,7 @@
             "key": "tools.release.loadFailed",
             "namespace": "tools",
             "source_text": "Couldn't load this tab.",
-            "description": "Fallback error line when the request failed with no message of its own.",
+            "description": "Error line in place of a release tab (or the overrides list) whose request failed. A Try again button follows.",
             "placeholders": []
         },
         {
@@ -49269,13 +49222,6 @@
             "placeholders": []
         },
         {
-            "key": "tools.release.pulls.plan.eventsRetry",
-            "namespace": "tools",
-            "source_text": "Try again",
-            "description": "Button beside the events notice that reloads the events list.",
-            "placeholders": []
-        },
-        {
             "key": "tools.release.pulls.plan.export",
             "namespace": "tools",
             "source_text": "Export CSV",
@@ -50052,13 +49998,6 @@
             "namespace": "tools",
             "source_text": "yesterday",
             "description": "Relative day for the previous day. Lowercase, because it follows a date on the same line.",
-            "placeholders": []
-        },
-        {
-            "key": "tools.release.retry",
-            "namespace": "tools",
-            "source_text": "Try again",
-            "description": "Button that tries the failed request again.",
             "placeholders": []
         },
         {
@@ -53868,13 +53807,6 @@
             "placeholders": []
         },
         {
-            "key": "tools.squad.stagePicker.retry",
-            "namespace": "tools",
-            "source_text": "Try again",
-            "description": "Button that reloads the stage list after a failure.",
-            "placeholders": []
-        },
-        {
             "key": "tools.squad.stagePicker.search",
             "namespace": "tools",
             "source_text": "Search by code or name",
@@ -55668,16 +55600,6 @@
             "source_text": "Vignettes",
             "description": "Category filter of the gallery's story sources: pictures from vignette (mini story) events.",
             "placeholders": []
-        },
-        {
-            "key": "user.profile.background.gallery.categoryOption",
-            "namespace": "user",
-            "source_text": "{label}, {count, plural, one {# picture} other {# pictures}}",
-            "description": "Accessible label of one category toggle in the gallery. {label} is the category, {count} how many pictures it holds under the other filters.",
-            "placeholders": [
-                "count",
-                "label"
-            ]
         },
         {
             "key": "user.profile.background.gallery.clearFilters",
@@ -58822,13 +58744,6 @@
             "placeholders": []
         },
         {
-            "key": "user.profile.loadFailed.retry",
-            "namespace": "user",
-            "source_text": "Try again",
-            "description": "Button under the failure line on a profile tab (Stats, Lookback, Plans) that reloads what failed to load.",
-            "placeholders": []
-        },
-        {
             "key": "user.profile.loadFailed.roster",
             "namespace": "user",
             "source_text": "Couldn't load this player's operators.",
@@ -59045,7 +58960,7 @@
             "key": "user.profile.pulls.loadFailed",
             "namespace": "user",
             "source_text": "Couldn't load the pull history.",
-            "description": "Shown on a Pulls tab when the pulls failed to load; followed by the reason.",
+            "description": "Shown on a Pulls tab when the pulls failed to load. A Try again button follows.",
             "placeholders": []
         },
         {
@@ -60523,13 +60438,6 @@
             "namespace": "user",
             "source_text": "This tier list was deleted. Visitors don't see this block; remove it in the editor.",
             "description": "Owner-only note on a showcase block whose tier list was deleted.",
-            "placeholders": []
-        },
-        {
-            "key": "user.profile.showcase.retry",
-            "namespace": "user",
-            "source_text": "Try again",
-            "description": "Button that reloads the showcase after a failure.",
             "placeholders": []
         },
         {

@@ -18,7 +18,8 @@ const SCROLL_STRIP_MARGIN_PX = 24;
  * A horizontal tab strip that scrolls: reports whether it overflows (for
  * `.scroll-shadows-x`) and keeps the selected tab in view whenever the selection
  * changes, without scrolling the page. Exported for strips that are not a kit
- * `TabsList` (the profile bar).
+ * `TabsList` (the profile bar, a single-select `ToggleGroup` chip strip, whose
+ * selection is `aria-pressed`).
  */
 export function useTabStripScroll(ref: RefObject<HTMLElement | null>): boolean {
     const [overflowing, setOverflowing] = useState(false);
@@ -27,7 +28,7 @@ export function useTabStripScroll(ref: RefObject<HTMLElement | null>): boolean {
         if (!el) return;
         const measure = () => setOverflowing(el.scrollWidth > el.clientWidth + 1);
         const reveal = (smooth: boolean) => {
-            const tab = el.querySelector<HTMLElement>('[role="tab"][aria-selected="true"]');
+            const tab = el.querySelector<HTMLElement>('[role="tab"][aria-selected="true"], [aria-pressed="true"]');
             if (!tab || el.scrollWidth <= el.clientWidth + 1) return;
             const box = el.getBoundingClientRect();
             const r = tab.getBoundingClientRect();
@@ -49,7 +50,7 @@ export function useTabStripScroll(ref: RefObject<HTMLElement | null>): boolean {
             measure();
             if (records.some((r) => r.type === "attributes")) reveal(true);
         });
-        selection.observe(el, { subtree: true, childList: true, attributes: true, attributeFilter: ["aria-selected"] });
+        selection.observe(el, { subtree: true, childList: true, attributes: true, attributeFilter: ["aria-selected", "aria-pressed"] });
         return () => {
             resize.disconnect();
             selection.disconnect();

@@ -150,7 +150,9 @@ is still defined and rewritten by the accent kit, but no stylesheet or component
 - `.kicker`: 10.5px Geist Mono, 600, uppercase, 0.12em tracking, muted-foreground. The
   small label over a card, and the only eyebrow voice: `<Kicker>` renders it, and the
   settings `SectionLabel` renders `<Kicker>`. `tone="accent"` keeps the primary red for the
-  rare label that has to pull the eye.
+  rare label that has to pull the eye. `<Kicker>` carries no margin: most callers sit it
+  in a flex row or a gap stack, so the caller that heads a block adds `mb-2.5`. It labels
+  a section; a name, a date or a live count is meta text, not a kicker.
 - Tracking is dropped under `:lang(ko|ja|zh|th)` by one unlayered rule (on `tracking-*`,
   `.uppercase` and `.kicker`), because the device breaks syllable-block scripts.
 
@@ -231,8 +233,11 @@ component, never inline.
 - Tabs: a horizontal kit `TabsList` scrolls with a hidden scrollbar, adds
   `scroll-shadows-x` only while it overflows (`data-overflow`), and scrolls the active tab
   into view. `useTabStripScroll` does the same for strips that are not a kit `TabsList`.
-- Error states read `isError` before the empty and skeleton branches and offer a retry;
-  reuse `LoadError`, `LoadFailed` or `PanelRetry` rather than a new shape.
+- Error states read `isError` before the empty and skeleton branches and use kit
+  `LoadFailed` (`ui/load-failed.tsx`): the caller's "Couldn't load <thing>." line, the
+  query's `refetch` behind a "Try again" button, never the server's text. `layout="inline"`
+  is one row with no chrome, for a failure inside a card, dialog or section;
+  `layout="block"` (default) is a centred bordered panel standing in for a whole tab or area.
 
 ## Do not touch from a design pass
 

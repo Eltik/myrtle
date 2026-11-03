@@ -4,10 +4,11 @@ import type * as React from "react";
 import { eliteIcon, moduleIconURL, skillIconURL, specializedIcon } from "#/components/operators/detail/impl/assets";
 import { getSkillTypeLabel, getSpTypeLabel, type HelperT } from "#/components/operators/detail/impl/helpers";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "#/components/ui/collapsible";
+import { InfoHint } from "#/components/ui/info-hint";
 import { Input } from "#/components/ui/input";
 import { Kicker } from "#/components/ui/kicker";
 import { Slider } from "#/components/ui/slider";
-import { Toggle } from "#/components/ui/toggle";
+import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -31,36 +32,40 @@ interface IPromotionLevelPanelProps {
 export function PromotionLevelPanel({ targets }: IPromotionLevelPanelProps): React.ReactElement {
     const t: DialogT = useT("tools");
     const { elite, level, maxElite, maxLevel, minLevel, floor, changeElite, changeLevel } = targets;
+    const phases = ELITE_PHASES.filter((e) => e <= maxElite);
 
     return (
         <div className="grid grid-cols-1 items-center gap-6 rounded-2xl border border-border bg-card/40 p-4 sm:grid-cols-[auto_1fr]">
             <div className="flex flex-col gap-2">
-                <Kicker className="mb-0">{t("planner.dialog.promotion")}</Kicker>
+                <Kicker>{t("planner.dialog.promotion")}</Kicker>
                 <div className="mt-1 flex items-center gap-2">
-                    {ELITE_PHASES.filter((e) => e <= maxElite).map((e) => {
-                        const isReached = isEliteBelowFloor(floor, e);
-                        const icon = <img src={eliteIcon(e)} alt={t("planner.dialog.elite", { elite: e })} className="icon-theme-aware size-7 object-contain" />;
-                        // A reached phase is a disabled button, which fires no pointer events, so its tooltip trigger is a wrapping span.
-                        return (
-                            <Tooltip key={e}>
-                                {isReached ? (
-                                    <TooltipTrigger render={<span className="inline-flex cursor-not-allowed" />}>
-                                        <Toggle variant="outline" disabled className={cn(STEP_TOGGLE, "size-12 disabled:opacity-20 sm:size-12")}>
-                                            {icon}
-                                        </Toggle>
-                                    </TooltipTrigger>
-                                ) : (
-                                    <TooltipTrigger render={<Toggle variant="outline" pressed={elite === e} onPressedChange={() => changeElite(e)} className={cn(STEP_TOGGLE, "size-12 sm:size-12")} />}>{icon}</TooltipTrigger>
-                                )}
-                                <TooltipPopup>{isReached ? t("planner.dialog.alreadyReached") : t("planner.dialog.elite", { elite: e })}</TooltipPopup>
-                            </Tooltip>
-                        );
-                    })}
+                    <ToggleGroup aria-label={t("planner.dialog.promotion")} className="gap-2" onValueChange={(next) => next[0] !== undefined && changeElite(Number(next[0]))} value={[String(elite)]} variant="outline">
+                        {phases.map((e) => {
+                            const isReached = isEliteBelowFloor(floor, e);
+                            const icon = <img src={eliteIcon(e)} alt={t("planner.dialog.elite", { elite: e })} className="icon-theme-aware size-7 object-contain" />;
+                            // A reached phase is a disabled button, which fires no pointer events, so its tooltip trigger is a wrapping span.
+                            return (
+                                <Tooltip key={e}>
+                                    {isReached ? (
+                                        <TooltipTrigger render={<span className="inline-flex" />}>
+                                            <ToggleGroupItem className={cn(STEP_TOGGLE, "size-12 disabled:opacity-20 sm:size-12")} disabled value={String(e)}>
+                                                {icon}
+                                            </ToggleGroupItem>
+                                        </TooltipTrigger>
+                                    ) : (
+                                        <TooltipTrigger render={<ToggleGroupItem className={cn(STEP_TOGGLE, "size-12 sm:size-12")} value={String(e)} />}>{icon}</TooltipTrigger>
+                                    )}
+                                    <TooltipPopup>{isReached ? t("planner.dialog.alreadyReached") : t("planner.dialog.elite", { elite: e })}</TooltipPopup>
+                                </Tooltip>
+                            );
+                        })}
+                    </ToggleGroup>
+                    <LockedHint reasons={phases.filter((e) => isEliteBelowFloor(floor, e)).map((e) => `${t("planner.dialog.elite", { elite: e })}: ${t("planner.dialog.alreadyReached")}`)} />
                 </div>
             </div>
 
             <div className="flex w-full flex-col gap-2">
-                <Kicker className="mb-0">{t("planner.dialog.level", { max: maxLevel })}</Kicker>
+                <Kicker>{t("planner.dialog.level", { max: maxLevel })}</Kicker>
                 <div className="mt-2 flex items-center gap-4">
                     <Slider value={[level]} onValueChange={(vals) => changeLevel(Array.isArray(vals) ? (vals[0] ?? 1) : vals)} min={minLevel} max={maxLevel} className="flex-1" />
                     <Input type="number" min={minLevel} max={maxLevel} value={level} onChange={(e) => changeLevel(Number.parseInt(e.target.value, 10))} className="w-16 text-center font-mono" />
@@ -101,11 +106,16 @@ interface ITargetRowProps {
     meta: React.ReactNode;
     metaClassName?: string;
     stepsClassName: string;
+    /** The selected step's value; the steps are one single-select group named after the row. */
+    value: number;
+    onValueChange: (value: number) => void;
+    /** Each locked step's reason, offered beside the group so a keyboard reaches it too. */
+    lockedReasons: string[];
     children: React.ReactNode;
 }
 
 /** One skill or module: icon, name and subtitle on the left, its step buttons on the right (below on mobile). */
-function TargetRow({ iconSrc, name, meta, metaClassName, stepsClassName, children }: ITargetRowProps): React.ReactElement {
+function TargetRow({ iconSrc, name, meta, metaClassName, stepsClassName, value, onValueChange, lockedReasons, children }: ITargetRowProps): React.ReactElement {
     return (
         <div className="grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-1.5 rounded-2xl border border-border bg-card p-4 sm:grid-cols-[auto_1fr_auto]">
             <img src={iconSrc} alt={name} className="col-start-1 row-span-2 row-start-1 size-12 rounded-lg border border-border bg-muted/30 object-contain p-0.5" />
@@ -116,19 +126,23 @@ function TargetRow({ iconSrc, name, meta, metaClassName, stepsClassName, childre
 
             <div className={cn("col-start-2 row-start-2 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-muted-foreground text-xs leading-none", metaClassName)}>{meta}</div>
 
-            <div className={cn("col-span-2 col-start-1 row-start-3 mt-2 sm:col-span-1 sm:col-start-3 sm:row-span-2 sm:row-start-1 sm:mt-0 sm:justify-end", stepsClassName)}>{children}</div>
+            <div className="col-span-2 col-start-1 row-start-3 mt-2 flex items-center gap-2 sm:col-span-1 sm:col-start-3 sm:row-span-2 sm:row-start-1 sm:mt-0 sm:justify-end">
+                <ToggleGroup aria-label={name} className={stepsClassName} onValueChange={(next) => next[0] !== undefined && onValueChange(Number(next[0]))} value={[String(value)]} variant="outline">
+                    {children}
+                </ToggleGroup>
+                <LockedHint reasons={lockedReasons} />
+            </div>
         </div>
     );
 }
 
 interface ITargetStepButtonProps {
-    isActive: boolean;
+    value: number;
     /** Why the step is out of reach; when set, the step renders disabled with this as its tooltip. */
     lockedReason: string;
     title: string;
     /** Size classes, which differ between the skill and module grids. */
     sizeClassName: string;
-    onSelect: () => void;
     children: React.ReactNode;
 }
 
@@ -137,16 +151,16 @@ interface ITargetStepButtonProps {
  * span, because a disabled button fires no pointer events and the tooltip
  * trigger needs them.
  */
-function TargetStepButton({ isActive, lockedReason, title, sizeClassName, onSelect, children }: ITargetStepButtonProps): React.ReactElement {
+function TargetStepButton({ value, lockedReason, title, sizeClassName, children }: ITargetStepButtonProps): React.ReactElement {
     if (lockedReason) {
         return (
             <Tooltip>
                 <TooltipTrigger
                     render={(props) => (
-                        <span {...props} className={cn("flex shrink-0 cursor-help", sizeClassName)}>
-                            <Toggle variant="outline" disabled className={cn(STEP_TOGGLE, "h-full w-full cursor-help disabled:cursor-help disabled:opacity-20 sm:h-full")} aria-label={title}>
+                        <span {...props} className={cn("flex shrink-0", sizeClassName)}>
+                            <ToggleGroupItem aria-label={title} className={cn(STEP_TOGGLE, "h-full w-full disabled:opacity-20 sm:h-full")} disabled value={String(value)}>
                                 {children}
-                            </Toggle>
+                            </ToggleGroupItem>
                         </span>
                     )}
                 />
@@ -157,9 +171,25 @@ function TargetStepButton({ isActive, lockedReason, title, sizeClassName, onSele
 
     return (
         <Tooltip>
-            <TooltipTrigger render={<Toggle variant="outline" pressed={isActive} onPressedChange={() => onSelect()} aria-label={title} className={cn(STEP_TOGGLE, sizeClassName)} />}>{children}</TooltipTrigger>
+            <TooltipTrigger render={<ToggleGroupItem aria-label={title} className={cn(STEP_TOGGLE, sizeClassName)} value={String(value)} />}>{children}</TooltipTrigger>
             <TooltipPopup>{title}</TooltipPopup>
         </Tooltip>
+    );
+}
+
+/** The locked steps' reasons in one focusable hint: a disabled step takes no focus, so its own tooltip never reaches a keyboard. */
+function LockedHint({ reasons }: { reasons: string[] }): React.ReactElement | null {
+    const t: DialogT = useT("tools");
+    const unique = [...new Set(reasons)];
+    if (unique.length === 0) return null;
+    return (
+        <InfoHint label={t("planner.dialog.lockedHint")}>
+            {unique.map((reason) => (
+                <span className="block" key={reason}>
+                    {reason}
+                </span>
+            ))}
+        </InfoHint>
     );
 }
 
@@ -222,13 +252,20 @@ function SkillTargetRow({ operator, skill, skillIdx, targets }: ISkillTargetRowP
     };
 
     const steps = Array.from({ length: skillStepCount(operator, skill) }, (_, i) => i + 1);
+    const stepTitle = (value: number): string => (value > MAX_SKILL_LEVEL ? t("planner.dialog.mastery", { mastery: masteryOf(value) }) : t("planner.dialog.skillLevel", { level: value }));
 
     return (
         <TargetRow
             iconSrc={skillIconURL(skill, operator.server)}
             name={name}
             metaClassName="sm:hidden md:flex"
-            stepsClassName="grid grid-cols-10 gap-1 sm:flex sm:w-auto sm:gap-1.5"
+            stepsClassName="grid min-w-0 flex-1 grid-cols-10 gap-1 sm:flex sm:w-auto sm:flex-none sm:gap-1.5"
+            value={currentTarget}
+            onValueChange={(value) => changeSkillTarget(skillIdx, value)}
+            lockedReasons={steps.flatMap((value) => {
+                const reason = lockedReason(value);
+                return reason ? [`${stepTitle(value)}: ${reason}`] : [];
+            })}
             meta={
                 <>
                     {recoveryType && (
@@ -250,14 +287,7 @@ function SkillTargetRow({ operator, skill, skillIdx, targets }: ISkillTargetRowP
             {steps.map((value) => {
                 const isMastery = value > MAX_SKILL_LEVEL;
                 return (
-                    <TargetStepButton
-                        key={value}
-                        isActive={currentTarget === value}
-                        lockedReason={lockedReason(value)}
-                        title={isMastery ? t("planner.dialog.mastery", { mastery: masteryOf(value) }) : t("planner.dialog.skillLevel", { level: value })}
-                        sizeClassName="aspect-square h-auto w-full sm:size-9"
-                        onSelect={() => changeSkillTarget(skillIdx, value)}
-                    >
+                    <TargetStepButton key={value} value={value} lockedReason={lockedReason(value)} title={stepTitle(value)} sizeClassName="aspect-square h-auto w-full sm:size-9">
                         {isMastery ? <img src={specializedIcon(masteryOf(value))} alt={t("planner.dialog.mastery", { mastery: masteryOf(value) })} className="icon-theme-aware size-5 object-contain sm:size-6" /> : <span className="font-semibold text-xs sm:text-[13px]">{value}</span>}
                     </TargetStepButton>
                 );
@@ -299,21 +329,25 @@ function ModuleTargetRow({ operator, mod, targets }: IModuleTargetRowProps): Rea
     // Every stage shares the module's one unlock requirement; stage 0 (not planned) is always reachable.
     const isUnlocked = isModuleAllowed(mod, elite, level);
     const lockedText = t("planner.dialog.moduleLocked", { elite: phaseLabel(mod.unlockEvolvePhase), level: mod.unlockLevel });
+    const stageLockedReason = (stage: number): string => (isModuleBelowFloor(floor, mod.uniEquipId, stage) ? t("planner.dialog.alreadyReached") : stage !== 0 && !isUnlocked ? lockedText : "");
+    const stageTitle = (stage: number): string => (stage === 0 ? t("planner.dialog.notPlanned") : t("planner.dialog.stage", { stage }));
 
     return (
-        <TargetRow iconSrc={moduleIconURL(mod, operator.server)} name={mod.uniEquipName} stepsClassName="flex gap-1.5" meta={<span>{moduleTag}</span>}>
+        <TargetRow
+            iconSrc={moduleIconURL(mod, operator.server)}
+            name={mod.uniEquipName}
+            stepsClassName="gap-1.5"
+            meta={<span>{moduleTag}</span>}
+            value={currentTarget}
+            onValueChange={(stage) => changeModuleTarget(mod.uniEquipId, stage)}
+            lockedReasons={MODULE_STAGES.flatMap((stage) => {
+                const reason = stageLockedReason(stage);
+                return reason ? [`${stageTitle(stage)}: ${reason}`] : [];
+            })}
+        >
             {MODULE_STAGES.map((stage) => {
-                const isLocked = stage !== 0 && !isUnlocked;
-                const isReached = isModuleBelowFloor(floor, mod.uniEquipId, stage);
                 return (
-                    <TargetStepButton
-                        key={stage}
-                        isActive={currentTarget === stage}
-                        lockedReason={isReached ? t("planner.dialog.alreadyReached") : isLocked ? lockedText : ""}
-                        title={stage === 0 ? t("planner.dialog.notPlanned") : t("planner.dialog.stage", { stage })}
-                        sizeClassName="size-9 sm:size-9"
-                        onSelect={() => changeModuleTarget(mod.uniEquipId, stage)}
-                    >
+                    <TargetStepButton key={stage} value={stage} lockedReason={stageLockedReason(stage)} title={stageTitle(stage)} sizeClassName="size-9 sm:size-9">
                         <span className="font-semibold text-xs sm:text-[13px]">{stage === 0 ? "-" : stage}</span>
                     </TargetStepButton>
                 );

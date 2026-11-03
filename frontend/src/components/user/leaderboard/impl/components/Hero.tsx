@@ -55,7 +55,7 @@ export function Hero({ item, rankedPlayers, topValue, updatedAt, isLoading, stat
 
             <div className="relative grid gap-x-7 gap-y-4 px-4 py-4 sm:grid-cols-[1fr_auto] sm:gap-y-5 sm:px-6 sm:py-6">
                 <div className="flex min-w-0 flex-col gap-1.5">
-                    <Kicker className="mb-0">{t("leaderboard.hero.eyebrow")}</Kicker>
+                    <Kicker>{t("leaderboard.hero.eyebrow")}</Kicker>
                     <h1 className="m-0 flex flex-wrap items-center gap-2.5 font-bold font-sans text-[22px] text-foreground leading-[1.1] tracking-tight sm:text-[28px]">
                         {t("leaderboard.hero.title")}
                         {item ? (
@@ -91,7 +91,7 @@ function HeroStat({ label, value, small, loading, title, failure }: { label: str
     const body = (
         <>
             <span className={`font-bold font-sans text-foreground tabular-nums tracking-tight ${small ? "font-semibold text-sm" : "text-[22px] leading-none"}`}>{loading ? "…" : failure ? "–" : value}</span>
-            <Kicker className="mb-0">{label}</Kicker>
+            <Kicker>{label}</Kicker>
         </>
     );
     if (failure)

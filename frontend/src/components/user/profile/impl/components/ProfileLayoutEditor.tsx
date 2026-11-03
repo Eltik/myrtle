@@ -75,7 +75,9 @@ export function ProfileLayoutEditor({ profile, labels, onClose }: IProfileLayout
     return (
         <section className="flex flex-col gap-4 rounded-2xl border border-border/50 bg-card/40 p-4 sm:p-5" aria-labelledby="profile-layout-kicker">
             <div>
-                <Kicker id="profile-layout-kicker">{t("profile.layout.kicker")}</Kicker>
+                <Kicker className="mb-2.5" id="profile-layout-kicker">
+                    {t("profile.layout.kicker")}
+                </Kicker>
                 <p className="max-w-prose text-muted-foreground text-sm">{t("profile.layout.help")}</p>
             </div>
 

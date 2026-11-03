@@ -7,5 +7,5 @@ import { cn } from "#/lib/utils";
  * spent on every eyebrow, the red stopped marking anything.
  */
 export function Kicker({ className, tone = "muted", ...props }: React.ComponentProps<"span"> & { tone?: "muted" | "accent" }): React.ReactElement {
-    return <span className={cn("kicker mb-2.5 inline-block", tone === "accent" && "text-primary", className)} data-slot="kicker" {...props} />;
+    return <span className={cn("kicker inline-block", tone === "accent" && "text-primary", className)} data-slot="kicker" {...props} />;
 }

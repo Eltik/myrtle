@@ -5,6 +5,7 @@ import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react
 import { parseBannerParam } from "#/components/gacha/history/impl/banner-filter";
 import { Button } from "#/components/ui/button";
 import { Kicker } from "#/components/ui/kicker";
+import { LoadFailed } from "#/components/ui/load-failed";
 import { Skeleton } from "#/components/ui/skeleton";
 import { useAuth } from "#/hooks/use-auth";
 import { useLocalStorageState } from "#/hooks/use-local-storage-state";
@@ -19,7 +20,6 @@ import { ProfileLayoutEditor } from "./impl/components/ProfileLayoutEditor";
 import type { messages as layoutMessages } from "./impl/components/ProfileLayoutEditor.messages";
 import { ProfileTabs } from "./impl/components/ProfileTabs";
 import { StatStrip } from "./impl/components/StatStrip";
-import { LoadFailed } from "./impl/components/tabs/LoadFailed";
 import { ScoreTabSkeleton } from "./impl/components/tabs/Score/ScoreTabSkeleton";
 import { rosterAccess } from "./impl/components/tabs/Showcase/favourites";
 import { StatsTab } from "./impl/components/tabs/Stats/StatsTab";
@@ -177,7 +177,7 @@ function ProfileNotFound({ id }: { id: string }) {
     return (
         <div className="page-shell flex flex-1 flex-col gap-7 [--page-max:1440px]">
             <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-border bg-card px-8 py-16 text-center">
-                <Kicker className="mb-0">{t("profile.notFound.eyebrow")}</Kicker>
+                <Kicker>{t("profile.notFound.eyebrow")}</Kicker>
                 <h1 className="font-bold text-2xl tracking-tight">{t("profile.notFound.title")}</h1>
                 <p className="max-w-sm text-muted-foreground text-sm">{rt("profile.notFound.desc", { id: <code className="font-mono">{id}</code> })}</p>
             </div>
@@ -363,7 +363,7 @@ export function UserProfile() {
                 )}
                 {shown.length === 0 && (
                     <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-border bg-card px-8 py-12 text-center">
-                        <Kicker className="mb-0">{t("profile.noTabs.eyebrow")}</Kicker>
+                        <Kicker>{t("profile.noTabs.eyebrow")}</Kicker>
                         <p className="max-w-sm text-muted-foreground text-sm">{t("profile.noTabs.desc")}</p>
                     </div>
                 )}

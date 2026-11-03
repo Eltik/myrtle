@@ -2,11 +2,11 @@ import { useQuery } from "@tanstack/react-query";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { Check, Search, X } from "lucide-react";
 import { memo, useCallback, useDeferredValue, useEffect, useId, useMemo, useRef, useState, useTransition } from "react";
-import { LoadError } from "#/components/operators/detail/impl/components/LoadError";
 import { DetailRow, type ISkinPrice, SkinDetailContent } from "#/components/skins/SkinDetailDialog";
 import { Button } from "#/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "#/components/ui/dialog";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "#/components/ui/input-group";
+import { LoadFailed } from "#/components/ui/load-failed";
 import { ScrollArea } from "#/components/ui/scroll-area";
 import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
@@ -252,7 +252,7 @@ function SkinViewerBody({ skins, ownedIds, profileOwnedCount, operatorsMap, colo
                 </div>
             </header>
 
-            {sort === "popularity" && popularityFailed && !popularity && <LoadError className="mx-3 mt-3 sm:mx-4" message={t("profile.skins.popularityFailed")} onRetry={() => void refetchPopularity()} />}
+            {sort === "popularity" && popularityFailed && !popularity && <LoadFailed layout="inline" className="mx-3 mt-3 sm:mx-4" message={t("profile.skins.popularityFailed")} onRetry={() => void refetchPopularity()} />}
 
             {totalFiltered === 0 ? (
                 <div className="flex flex-1 flex-col items-center justify-center gap-2 p-8 text-center">

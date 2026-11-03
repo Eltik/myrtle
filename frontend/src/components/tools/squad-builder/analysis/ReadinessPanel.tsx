@@ -1,7 +1,7 @@
 import { useQueries } from "@tanstack/react-query";
 import type * as React from "react";
-import { LoadError } from "#/components/operators/detail/impl/components/LoadError";
 import { eliteIcon, moduleIconURL, potentialIcon, skillIconURL, specializedIcon } from "#/components/tools/shared/icons";
+import { LoadFailed } from "#/components/ui/load-failed";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { operatorQueryOptions } from "#/lib/api/operators";
 import { useFormatters, useGamedataServer, useT } from "#/lib/i18n";
@@ -51,7 +51,8 @@ function ReadinessBody({ readiness, ctx, t }: { readiness: Readiness; ctx: IChip
                 <StatCell label={t("squad.analysis.readiness.modules")} value={f.number(s.modules_on)} caption={t("squad.analysis.readiness.modules.caption", { count: s.modules_possible })} />
             </StatStrip>
             {failed.length > 0 && (
-                <LoadError
+                <LoadFailed
+                    layout="inline"
                     message={t("squad.analysis.readiness.detailFailed")}
                     onRetry={() => {
                         for (const q of failed) void q.refetch();

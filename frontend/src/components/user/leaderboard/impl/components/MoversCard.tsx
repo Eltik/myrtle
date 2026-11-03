@@ -18,7 +18,7 @@ export function MoversCard({ movers, isLoading, intervalKey = "leaderboard.inter
             {/* min-w-0 lets a long heading wrap (Russian "Наибольшие изменения · сегодня" ran into "ПОЗИЦИЯ"), shrink-0 keeps the label whole, the gap stops them touching. */}
             <div className="mb-2.5 flex items-baseline justify-between gap-2">
                 <span className="min-w-0 font-sans font-semibold text-[13.5px] text-foreground leading-tight tracking-tight">{t("leaderboard.movers.title", { interval: t(intervalKey) })}</span>
-                <Kicker className="mb-0 shrink-0">{t("leaderboard.deltaRank")}</Kicker>
+                <Kicker className="shrink-0">{t("leaderboard.deltaRank")}</Kicker>
             </div>
             <div className="flex flex-col gap-2.5">
                 {isLoading && movers.length === 0 ? (

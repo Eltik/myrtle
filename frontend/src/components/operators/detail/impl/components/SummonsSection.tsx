@@ -3,6 +3,8 @@ import { ChevronDown, Sparkles } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Badge } from "#/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "#/components/ui/collapsible";
+import { LoadFailed } from "#/components/ui/load-failed";
+import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import { operatorGamedataServer } from "#/lib/api/gamedata";
 import { rangesQueryOptions } from "#/lib/api/ranges";
 import { useFormatters, useGamedataServer, useT } from "#/lib/i18n";
@@ -12,7 +14,6 @@ import type { IDrone } from "#/types/operators";
 import type { messages as detailConstantsMessages } from "../constants.messages";
 import { descriptionToHtml } from "../description";
 import { clampDronePhase, droneTalentBlackboard, getDroneAttributeStats } from "../helpers";
-import { LoadError } from "./LoadError";
 import { OperatorRange } from "./OperatorRange";
 import type { messages } from "./SummonsSection.messages";
 
@@ -58,27 +59,20 @@ export function SummonsSection({ drones, parentPhaseIndex, parentLevel, server }
             <CollapsibleContent>
                 <div className="mt-3 space-y-3">
                     {drones.length > 1 && (
-                        <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1">
-                            {drones.map((d) => {
-                                const isActive = d.id === active.id;
-                                return (
-                                    <button
-                                        key={d.id ?? d.name}
-                                        type="button"
-                                        aria-pressed={isActive}
-                                        onClick={() => d.id && setActiveId(d.id)}
-                                        // Grown on touch with min-height, not a pseudo-element: this strip scrolls
-                                        // sideways, so a box past its edge would be clipped.
-                                        className={cn(
-                                            "pointer-coarse:min-h-11 shrink-0 rounded-full font-medium text-xs transition-colors",
-                                            isActive ? "border-2 border-primary bg-primary/15 px-[11px] py-[3px] text-foreground" : "border border-border bg-card px-3 py-1 text-muted-foreground hover:border-primary/40 hover:text-foreground",
-                                        )}
-                                    >
-                                        {d.name}
-                                    </button>
-                                );
-                            })}
-                        </div>
+                        <ToggleGroup aria-label={t("summons.title")} className="-mx-1 w-auto gap-1.5 overflow-x-auto px-1 pb-1" onValueChange={(next) => next[0] && setActiveId(next[0])} size="sm" value={active.id ? [active.id] : []} variant="outline">
+                            {drones.map((d) => (
+                                <ToggleGroupItem
+                                    // Grown on touch with min-height, not a pseudo-element: this strip scrolls
+                                    // sideways, so a box past its edge would be clipped.
+                                    className="pointer-coarse:min-h-11 text-xs sm:text-xs"
+                                    disabled={!d.id}
+                                    key={d.id ?? d.name}
+                                    value={d.id ?? d.name}
+                                >
+                                    {d.name}
+                                </ToggleGroupItem>
+                            ))}
+                        </ToggleGroup>
                     )}
 
                     <SummonCard drone={active} parentPhaseIndex={parentPhaseIndex} parentLevel={parentLevel} server={server} />
@@ -178,7 +172,7 @@ function SummonCard({ drone, parentPhaseIndex, parentLevel, server }: ISummonCar
                     <OperatorRange range={range} />
                 </div>
             ) : phase?.rangeId && rangesFailed && !ranges ? (
-                <LoadError className="mt-4" message={t("summons.attackRange.error")} onRetry={() => void refetchRanges()} />
+                <LoadFailed className="mt-4" message={t("summons.attackRange.error")} onRetry={() => void refetchRanges()} />
             ) : null}
 
             {visibleTalents.length > 0 && (

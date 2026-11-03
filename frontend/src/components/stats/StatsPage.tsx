@@ -61,7 +61,7 @@ export function StatsPage() {
 
             <section className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 sm:p-6">
                 <header className="flex flex-col gap-1">
-                    <Kicker>{t("page.catalog.kicker")}</Kicker>
+                    <Kicker className="mb-2.5">{t("page.catalog.kicker")}</Kicker>
                     <h2 className="m-0 text-balance font-sans font-semibold text-[22px] text-foreground leading-[1.15] tracking-[-0.02em]">{t("page.catalog.title")}</h2>
                     <p className="m-0 font-sans text-[13px] text-muted-foreground leading-normal">{t("page.catalog.blurb")}</p>
                 </header>
@@ -71,7 +71,7 @@ export function StatsPage() {
 
             <section className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 sm:p-6">
                 <header className="flex flex-col gap-1">
-                    <Kicker>{t("page.community.kicker")}</Kicker>
+                    <Kicker className="mb-2.5">{t("page.community.kicker")}</Kicker>
                     <h2 className="m-0 text-balance font-sans font-semibold text-[22px] text-foreground leading-[1.15] tracking-[-0.02em]">{t("page.community.title")}</h2>
                     <p className="m-0 font-sans text-[13px] text-muted-foreground leading-normal">
                         {rt("page.community.blurb", {

@@ -3,7 +3,7 @@ import type * as React from "react";
 import { eliteIcon, specializedIcon } from "#/components/operators/detail/impl/assets";
 import { Input } from "#/components/ui/input";
 import { Kicker } from "#/components/ui/kicker";
-import { Toggle } from "#/components/ui/toggle";
+import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import type { IPresetTarget } from "#/lib/api/planner";
 import { useT } from "#/lib/i18n";
@@ -35,20 +35,20 @@ export function BulkTargetForm({ target, onChange }: IBulkTargetFormProps): Reac
 
     return (
         <div className="space-y-5 rounded-2xl border border-border bg-card/40 p-4">
-            <Kicker className="mb-0 block">{t("planner.bulk.target")}</Kicker>
+            <Kicker className="block">{t("planner.bulk.target")}</Kicker>
 
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-[auto_1fr]">
                 <FieldBlock label={t("planner.dialog.promotion")}>
-                    <div className="flex items-center gap-2">
+                    <ToggleGroup aria-label={t("planner.dialog.promotion")} className="gap-2" onValueChange={(next) => next[0] !== undefined && onChange(withPresetChange(target, { field: "elite", value: Number(next[0]) }))} value={[String(target.elite)]} variant="outline">
                         {ELITE_PHASES.map((e) => (
                             <Tooltip key={e}>
-                                <TooltipTrigger render={<Toggle variant="outline" pressed={target.elite === e} onPressedChange={() => onChange(withPresetChange(target, { field: "elite", value: e }))} className={cn(STEP_TOGGLE, "size-12 sm:size-12")} />}>
+                                <TooltipTrigger render={<ToggleGroupItem className={cn(STEP_TOGGLE, "size-12 sm:size-12")} value={String(e)} />}>
                                     <img src={eliteIcon(e)} alt={t("planner.dialog.elite", { elite: e })} className="icon-theme-aware size-7 object-contain" />
                                 </TooltipTrigger>
                                 <TooltipPopup>{t("planner.dialog.elite", { elite: e })}</TooltipPopup>
                             </Tooltip>
                         ))}
-                    </div>
+                    </ToggleGroup>
                 </FieldBlock>
 
                 <FieldBlock label={t("planner.bulk.level")}>
@@ -58,13 +58,13 @@ export function BulkTargetForm({ target, onChange }: IBulkTargetFormProps): Reac
             </div>
 
             <FieldBlock label={t("planner.bulk.skillLevel")}>
-                <div className="flex flex-wrap gap-1.5">
+                <ToggleGroup aria-label={t("planner.bulk.skillLevel")} className="flex-wrap gap-1.5" onValueChange={(next) => next[0] !== undefined && onChange(withPresetChange(target, { field: "skill_level", value: Number(next[0]) }))} value={[String(target.skill_level)]} variant="outline">
                     {SKILL_LEVELS.map((value) => (
-                        <StepButton key={value} isActive={target.skill_level === value} title={t("planner.dialog.skillLevel", { level: value })} onSelect={() => onChange(withPresetChange(target, { field: "skill_level", value }))}>
+                        <StepButton key={value} title={t("planner.dialog.skillLevel", { level: value })} value={value}>
                             <span className="font-semibold text-[13px]">{value}</span>
                         </StepButton>
                     ))}
-                </div>
+                </ToggleGroup>
             </FieldBlock>
 
             <FieldBlock label={t("planner.bulk.masteries")}>
@@ -72,26 +72,32 @@ export function BulkTargetForm({ target, onChange }: IBulkTargetFormProps): Reac
                     {SKILL_SLOTS.map((slot) => (
                         <div key={slot} className="flex items-center gap-3">
                             <span className="w-6 font-semibold text-muted-foreground text-xs">{t("planner.bulk.skillSlot", { index: slot + 1 })}</span>
-                            <div className="flex gap-1.5">
+                            <ToggleGroup
+                                aria-label={t("planner.bulk.masteryGroup", { index: slot + 1 })}
+                                className="gap-1.5"
+                                onValueChange={(next) => next[0] !== undefined && onChange(withPresetChange(target, { field: "mastery", index: slot, value: Number(next[0]) }))}
+                                value={[String(target.masteries[slot])]}
+                                variant="outline"
+                            >
                                 {MASTERY_RANKS.map((rank) => (
-                                    <StepButton key={rank} isActive={target.masteries[slot] === rank} title={rank === 0 ? t("planner.dialog.notPlanned") : t("planner.dialog.mastery", { mastery: rank })} onSelect={() => onChange(withPresetChange(target, { field: "mastery", index: slot, value: rank }))}>
+                                    <StepButton key={rank} title={rank === 0 ? t("planner.dialog.notPlanned") : t("planner.dialog.mastery", { mastery: rank })} value={rank}>
                                         {rank === 0 ? <span className="font-semibold text-[13px]">-</span> : <img src={specializedIcon(rank)} alt={t("planner.dialog.mastery", { mastery: rank })} className="icon-theme-aware size-6 object-contain" />}
                                     </StepButton>
                                 ))}
-                            </div>
+                            </ToggleGroup>
                         </div>
                     ))}
                 </div>
             </FieldBlock>
 
             <FieldBlock label={t("planner.bulk.moduleStage")}>
-                <div className="flex gap-1.5">
+                <ToggleGroup aria-label={t("planner.bulk.moduleStage")} className="gap-1.5" onValueChange={(next) => next[0] !== undefined && onChange(withPresetChange(target, { field: "module_stage", value: Number(next[0]) }))} value={[String(target.module_stage)]} variant="outline">
                     {MODULE_STAGES.map((stage) => (
-                        <StepButton key={stage} isActive={target.module_stage === stage} title={stage === 0 ? t("planner.dialog.notPlanned") : t("planner.dialog.stage", { stage })} onSelect={() => onChange(withPresetChange(target, { field: "module_stage", value: stage }))}>
+                        <StepButton key={stage} title={stage === 0 ? t("planner.dialog.notPlanned") : t("planner.dialog.stage", { stage })} value={stage}>
                             <span className="font-semibold text-[13px]">{stage === 0 ? "-" : stage}</span>
                         </StepButton>
                     ))}
-                </div>
+                </ToggleGroup>
             </FieldBlock>
 
             <p className="text-muted-foreground text-xs">{t("planner.bulk.targetNote")}</p>
@@ -109,16 +115,16 @@ function FieldBlock({ label, children }: { label: string; children: React.ReactN
 }
 
 interface IStepButtonProps {
-    isActive: boolean;
     title: string;
-    onSelect: () => void;
+    /** The step's number; its group holds the selection. */
+    value: number;
     children: React.ReactNode;
 }
 
-function StepButton({ isActive, title, onSelect, children }: IStepButtonProps): React.ReactElement {
+function StepButton({ title, value, children }: IStepButtonProps): React.ReactElement {
     return (
         <Tooltip>
-            <TooltipTrigger render={<Toggle variant="outline" pressed={isActive} onPressedChange={() => onSelect()} aria-label={title} className={cn(STEP_TOGGLE, "size-9 sm:size-9")} />}>{children}</TooltipTrigger>
+            <TooltipTrigger render={<ToggleGroupItem aria-label={title} className={cn(STEP_TOGGLE, "size-9 sm:size-9")} value={String(value)} />}>{children}</TooltipTrigger>
             <TooltipPopup>{title}</TooltipPopup>
         </Tooltip>
     );

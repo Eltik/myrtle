@@ -66,9 +66,7 @@ function Fact({ label, value, children }: { label: string; value?: React.ReactNo
 function SectionTitle({ children }: { children: React.ReactNode }): React.ReactElement {
     return (
         <h3 className="m-0 mt-6 mb-2 leading-none">
-            <Kicker tone="accent" className="mb-0">
-                {children}
-            </Kicker>
+            <Kicker>{children}</Kicker>
         </h3>
     );
 }
@@ -98,7 +96,7 @@ function FileBody({ op, t, server, onOpenFile, onOpenChart, fromDossiers }: { op
         <>
             <SheetHeader className="relative overflow-hidden">
                 {home ? <FactionLogo id={home.id} className="pointer-events-none absolute -top-2 right-10 size-28 text-foreground opacity-[0.08]" /> : null}
-                <Kicker tone="accent" className="mb-0 block">
+                <Kicker tone="accent" className="block">
                     {op.number ? `${op.number.display} · ` : ""}
                     {t("file.kicker")}
                 </Kicker>
@@ -135,7 +133,7 @@ function FileBody({ op, t, server, onOpenFile, onOpenChart, fromDossiers }: { op
 
                 {homeChart ? (
                     <div className="mt-4 flex flex-col gap-2">
-                        <Kicker className="mb-0">{fromDossiers || otherCharts.length === 0 ? t("file.showOnNetwork") : t("file.alsoOn")}</Kicker>
+                        <Kicker>{fromDossiers || otherCharts.length === 0 ? t("file.showOnNetwork") : t("file.alsoOn")}</Kicker>
                         <div className="flex flex-wrap gap-1.5">
                             {(fromDossiers || otherCharts.length === 0 ? [homeChart] : otherCharts).map((c) => (
                                 <Button key={c.groupId} size="sm" variant="outline" onClick={() => onOpenChart(c.groupId)}>

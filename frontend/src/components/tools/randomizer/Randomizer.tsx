@@ -1,7 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { RotateCwIcon } from "lucide-react";
 import * as React from "react";
-import { Button } from "#/components/ui/button";
+import { LoadFailed } from "#/components/ui/load-failed";
 import { useAuth } from "#/hooks/use-auth";
 import { useLocalStorageState } from "#/hooks/use-local-storage-state";
 import { operatorsIndexQueryOptions } from "#/lib/api/operators";
@@ -206,17 +205,7 @@ export function Randomizer(): React.ReactElement {
             />
 
             <div className="mt-6 flex flex-col gap-3 sm:gap-4" key={rollSeq}>
-                {failedPoolQueries.length > 0 ? (
-                    <div role="alert" className="flex flex-col items-center gap-3 rounded-2xl border border-border/70 bg-card/60 px-6 py-10 text-center">
-                        <p className="m-0 text-muted-foreground text-sm">{t("randomizer.loadError")}</p>
-                        <Button type="button" variant="outline" size="sm" onClick={retryPool}>
-                            <RotateCwIcon aria-hidden="true" />
-                            {t("randomizer.retry")}
-                        </Button>
-                    </div>
-                ) : (
-                    !hasResult && <EmptyState />
-                )}
+                {failedPoolQueries.length > 0 ? <LoadFailed message={t("randomizer.loadError")} onRetry={retryPool} /> : !hasResult && <EmptyState />}
                 {rolledStage && <StageSlab stage={rolledStage} zone={zoneById.get(rolledStage.zoneId)} lookup={activityLookup} onReroll={rollStage} />}
                 {rolledSquad.length > 0 && <SquadSlab operators={rolledSquad} squadSize={settings.squadSize} onReroll={rollSquad} />}
                 {rolledChallenge && <ModifierSlab challenge={rolledChallenge} onReroll={rollChallenge} />}

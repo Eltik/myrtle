@@ -1,11 +1,11 @@
 import { TrendingUp } from "lucide-react";
 import { useMemo } from "react";
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { LoadError } from "#/components/operators/detail/impl/components/LoadError";
+import { LoadFailed } from "#/components/ui/load-failed";
 import type { IScoreHistoryPoint, IUserScore } from "#/lib/api/user";
 import { useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import { CARD_PADDING, KICKER_TEXT, Kicker, StatCard } from "../../Stats/primitives";
+import { CARD_PADDING, CardKicker, StatCard } from "../../Stats/primitives";
 import { toPct } from "../helpers";
 import { gradeColor } from "../palette";
 import type { messages as overallMessages } from "./OverallGradeCard.messages";
@@ -54,11 +54,11 @@ export function ScoreHistoryCard({ score, history, isLoading, onRetry }: IProps)
         <StatCard className="sm:col-span-2" color={color}>
             <div className={`${CARD_PADDING} flex flex-col gap-4`}>
                 <div className="flex items-center justify-between">
-                    <Kicker icon={TrendingUp} label={t("score.history.title")} />
+                    <CardKicker icon={TrendingUp} label={t("score.history.title")} />
                     {points.length > 1 && <TrendChip points={points} />}
                 </div>
                 {points.length < 2 && onRetry ? (
-                    <LoadError message={t("score.history.loadFailed")} onRetry={onRetry} />
+                    <LoadFailed layout="inline" message={t("score.history.loadFailed")} onRetry={onRetry} />
                 ) : points.length < 2 ? (
                     <p className="rounded-md border border-border/40 border-dashed bg-muted/15 px-3 py-2 text-[11px] text-muted-foreground">{isLoading ? t("score.history.loading") : t("score.history.empty")}</p>
                 ) : (
@@ -102,7 +102,7 @@ function TrendChip({ points }: { points: IChartPoint[] }) {
     const delta = points[points.length - 1].pct - points[0].pct;
     const up = delta >= 0;
     return (
-        <span className={`${KICKER_TEXT} font-mono tabular-nums ${up ? "text-success-foreground" : "text-destructive-foreground"}`}>
+        <span className={`font-mono text-[11px] tabular-nums ${up ? "text-success-foreground" : "text-destructive-foreground"}`}>
             {up ? "▲" : "▼"} {t("score.history.trend", { delta: Math.abs(delta).toFixed(2), count: points.length })}
         </span>
     );

@@ -8,7 +8,7 @@ import { cn } from "#/lib/utils";
 export function FieldGroup({ label, children }: { label: string; children: React.ReactNode }): React.ReactElement {
     return (
         <div className="flex flex-col gap-2.5">
-            <Kicker className="mb-0">{label}</Kicker>
+            <Kicker>{label}</Kicker>
             {children}
         </div>
     );

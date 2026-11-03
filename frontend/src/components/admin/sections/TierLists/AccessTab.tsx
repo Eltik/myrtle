@@ -2,7 +2,7 @@ import { type UseQueryResult, useMutation, useQuery, useQueryClient } from "@tan
 import { Link } from "@tanstack/react-router";
 import { ChevronDownIcon } from "lucide-react";
 import { useMemo, useState } from "react";
-import { PanelMessage, PanelRetry, stackedCardAction, stackedCardHeader, stickyActionsCell } from "#/components/admin/Primitives";
+import { PanelMessage, stackedCardAction, stackedCardHeader, stickyActionsCell } from "#/components/admin/Primitives";
 import { invalidateTierListGrants } from "#/components/admin/shell/invalidate";
 import { GRANT_LEVELS, levelVariant } from "#/components/admin/shell/model";
 import { toastError, toastSuccess } from "#/components/admin/shell/toast";
@@ -10,6 +10,7 @@ import { Badge, badgeVariants } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import { Card, CardAction, CardDescription, CardHeader, CardTitle } from "#/components/ui/card";
 import { useErrorMessage } from "#/components/ui/error-message";
+import { LoadFailed } from "#/components/ui/load-failed";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from "#/components/ui/menu";
 import { Skeleton } from "#/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "#/components/ui/table";
@@ -51,7 +52,7 @@ export function AccessTab({ query }: { query: UseQueryResult<ITierListGrant[]> }
                 </CardAction>
             </CardHeader>
             {query.isError ? (
-                <PanelRetry className="p-8" message={t("tierLists.access.loadError")} retryLabel={t("tierLists.access.retry")} onRetry={() => void query.refetch()} />
+                <LoadFailed layout="inline" className="px-6 pb-6" message={t("tierLists.access.loadError")} onRetry={() => void query.refetch()} />
             ) : (
                 <Table>
                     <TableHeader>

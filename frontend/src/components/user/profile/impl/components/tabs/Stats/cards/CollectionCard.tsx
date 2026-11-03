@@ -3,7 +3,7 @@ import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
 import { PALETTE } from "../palette";
-import { CARD_PADDING, KICKER_TEXT, Kicker, MetricRow, StatCard } from "../primitives";
+import { CARD_PADDING, CardKicker, KICKER_TEXT, MetricRow, StatCard } from "../primitives";
 import type { messages } from "./CollectionCard.messages";
 
 interface ICollectionCardProps {
@@ -19,7 +19,7 @@ export function CollectionCard({ totalOwned, totalAvailable, collectionPercentag
     return (
         <StatCard color={PALETTE.collection}>
             <div className={cn("flex h-full flex-col gap-5", CARD_PADDING)}>
-                <Kicker icon={Users} label={t("profile.stats.collection.title")} />
+                <CardKicker icon={Users} label={t("profile.stats.collection.title")} />
                 <div className="flex flex-1 flex-col justify-between gap-5">
                     <div className="flex flex-col items-center gap-1.5 py-1">
                         <div className="flex items-baseline gap-1.5">

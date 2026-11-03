@@ -224,7 +224,7 @@ function EventRow({ group, isOpen, onToggleExpand, onToggleGroup, deselected, on
                                     <span className="inline-flex min-w-13 shrink-0 justify-start font-medium font-mono text-[11.5px] text-foreground">{stage.code}</span>
                                     <span className="min-w-0 flex-1 truncate text-[11.5px] text-muted-foreground">{stage.name ?? ""}</span>
                                     {isChallengeModeStage(stage) && (
-                                        <Badge variant="tint" size="sm" className="font-mono" style={{ "--tone": "var(--color-amber-500)" } as React.CSSProperties}>
+                                        <Badge variant="tint" size="sm" className="font-mono" style={{ "--tone": "var(--warning)" } as React.CSSProperties}>
                                             {t("randomizer.stages.badge.cm")}
                                         </Badge>
                                     )}
@@ -258,7 +258,7 @@ function StageModeBadge({ stage, t }: { stage: IStage; t: StageFiltersT }): Reac
     const mode = getStageMode(stage);
     if (mode === "ADVERSE")
         return (
-            <Badge variant="tint" size="sm" className="font-mono" style={{ "--tone": "var(--color-rose-500)" } as React.CSSProperties}>
+            <Badge variant="tint" size="sm" className="font-mono" style={{ "--tone": "var(--destructive)" } as React.CSSProperties}>
                 {t("randomizer.stages.badge.adverse")}
             </Badge>
         );

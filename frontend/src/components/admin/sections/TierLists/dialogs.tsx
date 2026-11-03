@@ -1,7 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { PanelRetry } from "#/components/admin/Primitives";
 import { invalidateTierListGrants } from "#/components/admin/shell/invalidate";
 import { toastError, toastSuccess } from "#/components/admin/shell/toast";
 import { AlertDialog, AlertDialogClose, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogPopup, AlertDialogTitle } from "#/components/ui/alert-dialog";
@@ -10,6 +9,7 @@ import { Dialog, DialogClose, DialogDescription, DialogFooter, DialogHeader, Dia
 import { useErrorMessage } from "#/components/ui/error-message";
 import { Field, FieldLabel } from "#/components/ui/field";
 import { Input } from "#/components/ui/input";
+import { LoadFailed } from "#/components/ui/load-failed";
 import { Skeleton } from "#/components/ui/skeleton";
 import { Textarea } from "#/components/ui/textarea";
 import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
@@ -112,7 +112,7 @@ export function FlairDialog({ list, onClose }: { list: ITierListRow | null; onCl
                 </DialogHeader>
                 <DialogPanel>
                     {flairsQuery.isError ? (
-                        <PanelRetry className="" message={t("tierLists.flair.loadError")} retryLabel={t("tierLists.flair.retry")} onRetry={() => void flairsQuery.refetch()} />
+                        <LoadFailed layout="inline" message={t("tierLists.flair.loadError")} onRetry={() => void flairsQuery.refetch()} />
                     ) : flairsQuery.isPending ? (
                         <Skeleton className="h-8" />
                     ) : (

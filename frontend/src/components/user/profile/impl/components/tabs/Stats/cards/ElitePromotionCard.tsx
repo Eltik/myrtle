@@ -3,7 +3,7 @@ import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
 import { PALETTE } from "../palette";
-import { Bar, CARD_PADDING, KICKER_TEXT, Kicker, StatCard } from "../primitives";
+import { Bar, CARD_PADDING, CardKicker, KICKER_TEXT, StatCard } from "../primitives";
 import type { messages } from "./ElitePromotionCard.messages";
 
 interface IElitePromotionCardProps {
@@ -24,7 +24,7 @@ export function ElitePromotionCard({ eliteBreakdown }: IElitePromotionCardProps)
     return (
         <StatCard color={PALETTE.elite}>
             <div className={cn("flex h-full flex-col gap-5", CARD_PADDING)}>
-                <Kicker icon={BarChart3} label={t("profile.stats.elite.title")} />
+                <CardKicker icon={BarChart3} label={t("profile.stats.elite.title")} />
                 <div className="flex flex-1 flex-col justify-center gap-4">
                     {ELITE_ROWS.map(({ key, labelKey }, i) => {
                         const count = eliteBreakdown[key];

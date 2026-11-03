@@ -3,12 +3,12 @@ import { ChevronDown, Loader2, ThumbsDown, ThumbsUp } from "lucide-react";
 import { useLayoutEffect, useRef, useState } from "react";
 import { Badge } from "#/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "#/components/ui/collapsible";
+import { LoadFailed } from "#/components/ui/load-failed";
 import { operatorNoteQueryOptions } from "#/lib/api/operator-notes";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { Markdown } from "#/lib/markdown";
 import { cn } from "#/lib/utils";
-import { LoadError } from "./LoadError";
 import type { messages } from "./OperatorNotes.messages";
 
 interface IOperatorNotesProps {
@@ -73,7 +73,7 @@ export function OperatorNotes({ operatorId }: IOperatorNotesProps) {
         );
     }
 
-    if (isError) return <LoadError message={t("notes.error")} onRetry={() => void refetch()} />;
+    if (isError) return <LoadFailed layout="inline" message={t("notes.error")} onRetry={() => void refetch()} />;
 
     if (!note) return null;
 

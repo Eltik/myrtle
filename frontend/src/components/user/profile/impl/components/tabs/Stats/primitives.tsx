@@ -2,6 +2,7 @@ import { ArrowUpRight, ChevronDown } from "lucide-react";
 import { type ElementType, type ReactNode, useState } from "react";
 import { Collapsible, CollapsibleContent } from "#/components/ui/collapsible";
 import { Dialog, DialogTrigger } from "#/components/ui/dialog";
+import { Kicker } from "#/components/ui/kicker";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "#/components/ui/tooltip";
 import { useFormatters, useT } from "#/lib/i18n";
@@ -42,11 +43,12 @@ export function StatCard({ children, color, className }: IStatCardProps) {
     );
 }
 
-export function Kicker({ icon: Icon, label }: { icon: ElementType; label: string }) {
+/** A card's kicker with its icon: the kit `Kicker` voice, the icon beside it. */
+export function CardKicker({ icon: Icon, label }: { icon: ElementType; label: string }) {
     return (
         <div className="flex items-center gap-2">
             <Icon className="h-3.5 w-3.5 shrink-0 text-subtle-foreground" />
-            <span className={KICKER_TEXT}>{label}</span>
+            <Kicker>{label}</Kicker>
         </div>
     );
 }
@@ -146,7 +148,7 @@ export function GapList({ items, label }: IGapListProps) {
         return (
             <div className="flex items-center gap-1.5">
                 <span aria-hidden className="h-1 w-1 rounded-full bg-emerald-500/70" />
-                <span className={cn(KICKER_TEXT, "text-success-foreground")}>{t("profile.stats.gaps.allComplete")}</span>
+                <span className="font-sans text-[12px] text-success-foreground">{t("profile.stats.gaps.allComplete")}</span>
             </div>
         );
     }

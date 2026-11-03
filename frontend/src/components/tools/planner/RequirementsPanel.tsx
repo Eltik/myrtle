@@ -4,8 +4,8 @@ import { ChevronDown, ChevronRight, Info, LayoutList, List, Users } from "lucide
 import * as React from "react";
 
 import { itemIcon } from "#/components/operators/detail/impl/assets";
-import { LoadError } from "#/components/operators/detail/impl/components/LoadError";
 import { Input } from "#/components/ui/input";
+import { LoadFailed } from "#/components/ui/load-failed";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { Popover, PopoverPopup, PopoverTrigger } from "#/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
@@ -340,7 +340,7 @@ function ByOperatorView({ plans, maxTier, predicate, collapsedSections, onToggle
 
     // Without this every section read "No matching requirements." when the request failed.
     if (isError && !data) {
-        return <LoadError className="mt-3" message={t("planner.req.loadFailed")} onRetry={() => void refetch()} />;
+        return <LoadFailed layout="inline" className="mt-3" message={t("planner.req.loadFailed")} onRetry={() => void refetch()} />;
     }
 
     return (

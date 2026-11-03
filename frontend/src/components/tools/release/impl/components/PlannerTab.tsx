@@ -114,7 +114,7 @@ export function PlannerTab({ today }: IPlannerTabProps): React.ReactElement {
     }, []);
 
     if (data.isPending) return <ReleaseLoading />;
-    if (data.error) return <ReleaseError error={data.error} onRetry={() => window.location.reload()} />;
+    if (data.error) return <ReleaseError onRetry={() => window.location.reload()} />;
 
     return (
         <div ref={plannerRef} className="flex flex-col gap-3">

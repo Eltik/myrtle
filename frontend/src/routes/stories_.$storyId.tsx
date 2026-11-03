@@ -1,10 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { LoadFailed } from "#/components/gacha/LoadFailed";
 import { BookView } from "#/components/story/export/BookView";
 import type { messages as libraryMessages } from "#/components/story/library/StoryLibrary.messages";
 import type { messages as readerMessages } from "#/components/story/reader/reader.messages";
 import { StoryReader } from "#/components/story/reader/StoryReader";
+import { LoadFailed } from "#/components/ui/load-failed";
 import { RouteError } from "#/components/ui/route-error";
 import { storyIndexQueryOptions, storyQueryOptions } from "#/lib/api/story";
 import { useGamedataServer, useT } from "#/lib/i18n";

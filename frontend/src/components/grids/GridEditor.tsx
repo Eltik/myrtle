@@ -244,7 +244,7 @@ function EditorHeader({ slug, state, dirty, titleValid, saving, saveError, onTit
 
                 <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
                     <div className="flex min-w-0 flex-1 flex-col gap-3">
-                        <Kicker>{t("edit.kicker")}</Kicker>
+                        <Kicker className="mb-2.5">{t("edit.kicker")}</Kicker>
                         <Field>
                             <FieldLabel htmlFor={titleId} className="sr-only">
                                 {t("edit.titleLabel")}
@@ -284,7 +284,7 @@ function EditorHeader({ slug, state, dirty, titleValid, saving, saveError, onTit
                         </div>
 
                         <div className="flex flex-col gap-1.5">
-                            <Kicker className="mb-0">{tk("kinds.label")}</Kicker>
+                            <Kicker>{tk("kinds.label")}</Kicker>
                             <div className="flex flex-wrap items-center gap-2">
                                 <KindChips kinds={state.entityKinds} />
                                 {kindsLocked ? (
@@ -399,7 +399,7 @@ function DiscardButton({ onDiscard, disabled }: { onDiscard: () => void; disable
 function SizeStepper({ label, value, onChange }: { label: string; value: number; onChange: (value: number) => void }) {
     return (
         <NumberField value={value} min={GRID_MIN_SIZE} max={GRID_MAX_SIZE} step={1} onValueChange={(v) => v !== null && onChange(v)} size="sm" className="w-32 gap-1">
-            <Kicker className="mb-0">{label}</Kicker>
+            <Kicker>{label}</Kicker>
             <NumberFieldGroup>
                 <NumberFieldDecrement />
                 <NumberFieldInput aria-label={label} />

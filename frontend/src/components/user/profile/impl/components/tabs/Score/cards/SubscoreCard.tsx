@@ -6,7 +6,7 @@ import type { IImprovementsResponse, IUserScore } from "#/lib/api/user";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
-import { Bar, CARD_PADDING, KICKER_TEXT, Kicker, StatCard } from "../../Stats/primitives";
+import { Bar, CARD_PADDING, CardKicker, KICKER_TEXT, StatCard } from "../../Stats/primitives";
 import { formatPct, type ISubscore, toPct, weightShare } from "../helpers";
 import type { messages as helperMessages } from "../helpers.messages";
 import { ImprovementsPanel } from "../improvements/ImprovementsPanel";
@@ -34,7 +34,7 @@ export function SubscoreCard({ sub, score, improvements, isImprovementsLoading, 
             <StatCard color={sub.color} className={open ? "ring-1 ring-border/40" : undefined}>
                 <CollapsibleTrigger render={<button type="button" className={cn("group flex w-full flex-col gap-5 text-left", CARD_PADDING)} aria-expanded={open} aria-label={t(open ? "score.sub.details.collapse" : "score.sub.details.expand", { label: t(sub.labelKey) })} />}>
                     <div className="flex items-center justify-between">
-                        <Kicker icon={sub.icon} label={t(sub.labelKey)} />
+                        <CardKicker icon={sub.icon} label={t(sub.labelKey)} />
                         <Tooltip>
                             <TooltipTrigger
                                 render={

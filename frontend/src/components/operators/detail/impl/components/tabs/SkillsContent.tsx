@@ -2,9 +2,11 @@ import { useQuery } from "@tanstack/react-query";
 import { Columns, GitCompareArrows, Rows } from "lucide-react";
 import { memo, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { Badge } from "#/components/ui/badge";
+import { LoadFailed } from "#/components/ui/load-failed";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
 import { Slider } from "#/components/ui/slider";
 import { Switch } from "#/components/ui/switch";
+import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import { operatorGamedataServer } from "#/lib/api/gamedata";
 import { type IRange, rangesQueryOptions } from "#/lib/api/ranges";
 import { useGamedataServer, useT } from "#/lib/i18n";
@@ -22,7 +24,6 @@ import { useCommunityDefaults } from "../../useCommunityDefaults";
 import { CnDescription, CnTag, CnValue } from "../CnMarkers";
 import { CommunitySharePill } from "../CommunitySharePill";
 import { LevelBreakdown } from "../LevelBreakdown";
-import { LoadError } from "../LoadError";
 import { OperatorRange } from "../OperatorRange";
 import type { messages } from "./SkillsContent.messages";
 
@@ -159,25 +160,13 @@ export const SkillsContent = memo(function SkillsContent({ operator }: ISkillsCo
                 <p className="text-muted-foreground text-sm">{t("skills.subtitle")}</p>
             </div>
 
-            <div className="mb-6 flex flex-wrap gap-2">
+            <ToggleGroup aria-label={t("skills.title")} className="mb-6 w-full flex-wrap gap-2" onValueChange={(next) => next[0] !== undefined && handleSkillChange(Number(next[0]))} value={[String(selectedSkillIndex)]} variant="outline">
                 {operator.skills.map((skill, idx) => {
                     const name = skill.static?.levels?.[0]?.name ?? t("skills.fallbackName", { index: idx + 1 });
                     const image = skill.static?.image;
-                    const isSelected = selectedSkillIndex === idx;
                     const isCn = cnUpdates?.skillIds.has(skill.skillId) ?? false;
                     return (
-                        <button
-                            key={skill.skillId ?? idx}
-                            type="button"
-                            aria-pressed={isSelected}
-                            onClick={() => handleSkillChange(idx)}
-                            // Selected is a 2px border as well as the tint, so it does not rest on hue alone;
-                            // the padding gives back the extra pixel so the button keeps its size.
-                            className={cn(
-                                "flex w-full items-center gap-2 rounded-lg font-medium text-sm transition-colors sm:w-auto",
-                                isSelected ? "border-2 border-primary bg-primary/10 px-[15px] py-[7px] text-foreground" : "border border-border bg-secondary/30 px-4 py-2 text-muted-foreground hover:border-primary/50 hover:text-foreground",
-                            )}
-                        >
+                        <ToggleGroupItem className="w-full justify-start px-4 sm:w-auto" key={skill.skillId ?? idx} value={String(idx)}>
                             {image && <img alt="" className="h-5 w-5 shrink-0 object-contain" decoding="async" loading="lazy" src={asset(image, isCn ? "cn" : operator.server)} />}
                             {isCn ? <span lang="zh-CN">{name}</span> : name}
                             {isCn && <CnTag />}
@@ -185,10 +174,10 @@ export const SkillsContent = memo(function SkillsContent({ operator }: ISkillsCo
                                 own default index is positional, but matching on
                                 it here would repeat the module-order bug. */}
                             <CommunitySharePill className="ms-auto sm:ms-0" share={skill.skillId ? skillShares.get(skill.skillId) : undefined} total={skillTotal} cohort={t("skills.cohort")} />
-                        </button>
+                        </ToggleGroupItem>
                     );
                 })}
-            </div>
+            </ToggleGroup>
 
             {/* Where E2 owners stop on THIS skill. Sits under the selector so it
                 tracks whichever skill is open, rather than repeating four
@@ -379,7 +368,7 @@ export const SkillsContent = memo(function SkillsContent({ operator }: ISkillsCo
                         </div>
                     )}
                     {/* A skill that changes the range showed no range at all when the request failed. */}
-                    {rangeChanges && rangesFailed && !ranges && <LoadError className="mt-5" message={t("skills.range.error")} onRetry={() => void refetchRanges()} />}
+                    {rangeChanges && rangesFailed && !ranges && <LoadFailed className="mt-5" message={t("skills.range.error")} onRetry={() => void refetchRanges()} />}
                 </div>
             )}
             {comparisonMode && (

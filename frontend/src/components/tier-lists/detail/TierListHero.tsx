@@ -86,7 +86,7 @@ export function TierListHero({ detail }: ITierListHeroProps) {
                             )}
                         </div>
 
-                        <Kicker>{t("detail.hero.kicker")}</Kicker>
+                        <Kicker className="mb-2.5">{t("detail.hero.kicker")}</Kicker>
                         <h1 className="m-0 font-bold font-sans text-2xl text-foreground leading-tight tracking-tight sm:text-3xl md:text-4xl">{detail.title}</h1>
 
                         {detail.description && <ExpandableDescription text={detail.description} markdown className="mt-3 max-w-160 font-sans text-muted-foreground text-sm leading-relaxed sm:text-[15px]" />}

@@ -28,7 +28,7 @@ export function TagSelector({ groups, selectedTagIds, onToggle, maxReached }: IT
                 return (
                     <section key={type}>
                         <h3 className="mb-2">
-                            <Kicker className="mb-0">{t(TAG_GROUP_LABEL_KEYS[type])}</Kicker>
+                            <Kicker>{t(TAG_GROUP_LABEL_KEYS[type])}</Kicker>
                         </h3>
                         <div className="flex flex-wrap gap-1.5">
                             {tagsForGroup.map((tag) => {

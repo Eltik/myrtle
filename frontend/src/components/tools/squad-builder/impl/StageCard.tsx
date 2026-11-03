@@ -1,9 +1,9 @@
 import { Link } from "@tanstack/react-router";
 import { ExternalLink, Map as MapIcon, RefreshCw, X } from "lucide-react";
 import * as React from "react";
-import { LoadError } from "#/components/operators/detail/impl/components/LoadError";
 import { tallyEnemies } from "#/components/stages/detail/impl/helpers";
 import { Button } from "#/components/ui/button";
+import { LoadFailed } from "#/components/ui/load-failed";
 import { Skeleton } from "#/components/ui/skeleton";
 import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
@@ -77,7 +77,7 @@ export function StageCard({ stageId, detail, context, isLoading, isError, onRetr
     if (isLoading || !context) {
         return (
             <section className="rounded-2xl border border-border bg-card p-4">
-                {isLoading ? <Skeleton className="h-16 w-full" /> : isError ? <LoadError message={t("squad.stage.loadFailed")} onRetry={onRetry} /> : <p className="text-[13px] text-muted-foreground">{t("squad.stage.missing")}</p>}
+                {isLoading ? <Skeleton className="h-16 w-full" /> : isError ? <LoadFailed layout="inline" message={t("squad.stage.loadFailed")} onRetry={onRetry} /> : <p className="text-[13px] text-muted-foreground">{t("squad.stage.missing")}</p>}
                 {!isLoading && !readOnly && (
                     <div className="mt-3 flex gap-2">
                         <Button variant="outline" size="sm" onClick={onPick}>

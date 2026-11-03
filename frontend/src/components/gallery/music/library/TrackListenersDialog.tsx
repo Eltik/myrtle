@@ -61,9 +61,7 @@ function Body({ track, houseArtist }: { track: ITrack; houseArtist: string | nul
                         {track.coverUrl ? <img referrerPolicy="no-referrer" src={sizedCover(track.coverUrl, 48)} alt="" decoding="async" className="size-full object-cover" /> : <Disc3Icon aria-hidden="true" className="absolute inset-0 m-auto size-5 text-muted-foreground" />}
                     </span>
                     <span className="flex min-w-0 flex-col gap-0.5">
-                        <Kicker className="mb-0" tone="accent">
-                            {t("music.charts.trackKicker")}
-                        </Kicker>
+                        <Kicker tone="accent">{t("music.charts.trackKicker")}</Kicker>
                         <DialogTitle className="truncate text-base" title={track.title}>
                             {track.title}
                         </DialogTitle>

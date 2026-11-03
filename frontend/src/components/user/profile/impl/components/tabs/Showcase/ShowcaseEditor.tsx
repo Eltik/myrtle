@@ -111,7 +111,9 @@ export function ShowcaseEditor({ uid, view, plansHidden, onClose }: IShowcaseEdi
         <section className="flex flex-col gap-4 rounded-2xl border border-border/50 bg-card/40 p-4 sm:p-5" aria-labelledby="showcase-editor-kicker">
             <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                 <div>
-                    <Kicker id="showcase-editor-kicker">{t("profile.showcase.editor.kicker")}</Kicker>
+                    <Kicker className="mb-2.5" id="showcase-editor-kicker">
+                        {t("profile.showcase.editor.kicker")}
+                    </Kicker>
                     <p className="max-w-prose text-muted-foreground text-sm">{t("profile.showcase.editor.help")}</p>
                 </div>
                 <span className="shrink-0 font-mono text-[11px] text-muted-foreground tabular-nums">{t("profile.showcase.editor.count", { count: draft.length, max: SHOWCASE_MAX_BLOCKS })}</span>

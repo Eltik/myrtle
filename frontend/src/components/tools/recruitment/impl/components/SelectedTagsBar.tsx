@@ -20,7 +20,7 @@ export function SelectedTagsBar({ selectedTags, resultCount, onRemove, onReset }
 
     return (
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 rounded-lg border bg-card px-3 py-2">
-            <Kicker className="mb-0">{t("recruit.selected")}</Kicker>
+            <Kicker>{t("recruit.selected")}</Kicker>
             <div className="flex flex-1 basis-full flex-wrap items-center gap-1.5 sm:basis-auto">
                 {selectedTags.map((tag) => (
                     <Button key={tag.id} size="xs" variant="secondary" onClick={() => onRemove(tag.id)} aria-label={t("recruit.selected.remove", { tag: tag.name })}>

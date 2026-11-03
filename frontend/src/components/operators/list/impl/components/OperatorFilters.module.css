@@ -108,8 +108,6 @@
     cursor: pointer;
     user-select: none;
 }
-/* The one uppercase tier on the list: it heads a block of filters, so it takes the `.kicker` voice.
-   Every caption, button and chip below it is sentence-case sans. */
 .sectionHead .line {
     flex: 1;
     height: 1px;

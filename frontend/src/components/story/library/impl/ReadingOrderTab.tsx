@@ -78,7 +78,7 @@ export function ReadingOrderTab({ groups, progress, gameRead }: IReadingOrderTab
                     <div className="mb-4 rounded-2xl border border-primary/35 bg-primary/5 px-3 py-2.5">
                         {next ? (
                             <p className="m-0 flex flex-wrap items-baseline gap-x-2 gap-y-0.5 font-sans text-[12.5px]">
-                                <Kicker className="mb-0">{t("reading.next")}</Kicker>
+                                <Kicker>{t("reading.next")}</Kicker>
                                 <Link to="/stories/$storyId" params={{ storyId: next.entry.id }} className="min-w-0 font-semibold text-foreground underline-offset-4 hover:underline">
                                     {next.group.name}
                                 </Link>
@@ -129,7 +129,7 @@ function OrderSection({ section, dates, progress, gameRead, expanded, onExpand }
     return (
         <section>
             <h3 className="m-0 font-normal">
-                <Kicker className="mb-0">{heading}</Kicker>
+                <Kicker>{heading}</Kicker>
             </h3>
             <p className="mt-1 mb-0 font-mono text-[10.5px] text-muted-foreground tabular-nums">
                 {totals.total === null ? t("reading.section.totalsUncounted", { done: totals.done, groups: totals.groups }) : t("reading.section.totals", { words: f.number(totals.total), time: humanTime(minutesFor(totals.total, wpm)), done: totals.done, groups: totals.groups })}

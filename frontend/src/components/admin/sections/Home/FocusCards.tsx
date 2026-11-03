@@ -1,13 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useMemo } from "react";
-import { PanelRetry } from "#/components/admin/Primitives";
 import { useLevelLabel } from "#/components/admin/sections/Users/labels";
 import type { IAdminAccess } from "#/components/admin/shell/access";
 import { useAdminLocales } from "#/components/admin/shell/locales";
 import { useEmptyOperatorsQuery } from "#/components/admin/shell/useInboxQueue";
 import { Button } from "#/components/ui/button";
 import { Card, CardDescription, CardHeader, CardPanel, CardTitle } from "#/components/ui/card";
+import { LoadFailed } from "#/components/ui/load-failed";
 import { Progress } from "#/components/ui/progress";
 import { useAuth } from "#/hooks/use-auth";
 import { translationProgressQueryOptions } from "#/lib/api/admin";
@@ -74,7 +74,7 @@ export function FocusCards({ access }: { access: IAdminAccess }): React.ReactEle
     };
     const loading = access.grantsLoading || (translates && (!progressQuery.data || !locales.loaded)) || (isEditor && (!empty || !grantedQuery.data));
 
-    if (failed) return <PanelRetry className="rounded-2xl border border-border border-dashed p-7" message={t("home.focus.loadFailed")} retryLabel={t("home.loadFailed.retry")} onRetry={retry} />;
+    if (failed) return <LoadFailed message={t("home.focus.loadFailed")} onRetry={retry} />;
     if (loading) return <div className="rounded-2xl border border-border border-dashed p-7 text-[14px] text-muted-foreground">{t("home.focus.loading")}</div>;
 
     const cards = buildFocusCards({ role: access.role, localeGrants, progress: progressQuery.data ?? [], emptyOps: empty?.empty ?? [], totalOps: empty?.total ?? 0, tierLists });

@@ -1,5 +1,4 @@
 import { ArrowDown, ArrowUp } from "lucide-react";
-import { Kicker } from "#/components/ui/kicker";
 import type { IGachaEnhancedStats } from "#/lib/api/gacha";
 import { useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -55,10 +54,9 @@ export function RarityPanel({ data, personal }: IRarityPanelProps) {
     return (
         <section className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-[18px_18px] sm:p-[22px_24px]">
             <header className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
-                <div>
-                    <h2 className="m-0">
-                        <Kicker className="mb-0">{cs ? t("community.rarity.kicker.withTotal", { count: f.compact(total) }) : t("community.rarity.kicker")}</Kicker>
-                    </h2>
+                <div className="flex items-baseline gap-2">
+                    <h2 className="m-0 font-sans font-semibold text-[15px] text-foreground leading-tight">{t("community.rarity.kicker")}</h2>
+                    {cs ? <span className="font-sans text-[12.5px] text-muted-foreground tabular-nums">{t("community.rarity.total", { count: f.compact(total) })}</span> : null}
                 </div>
                 {showPersonal ? (
                     <div className="inline-flex shrink-0 items-center gap-1.5 self-start rounded-md border border-primary/30 bg-primary/8 px-2.5 py-1 font-mono text-[11px] text-foreground sm:self-auto">

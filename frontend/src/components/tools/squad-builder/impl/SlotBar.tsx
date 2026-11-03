@@ -1,8 +1,8 @@
 import { Link } from "@tanstack/react-router";
 import type * as React from "react";
-import { LoadError } from "#/components/operators/detail/impl/components/LoadError";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
+import { LoadFailed } from "#/components/ui/load-failed";
 import { Skeleton } from "#/components/ui/skeleton";
 import { useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -48,7 +48,7 @@ export function SlotBar({ signedIn, isLoading, isError, onRetry, saved, synced, 
                         </Button>
                     </div>
                 ) : isError ? (
-                    <LoadError message={t("squad.slots.loadFailed")} onRetry={onRetry} />
+                    <LoadFailed layout="inline" message={t("squad.slots.loadFailed")} onRetry={onRetry} />
                 ) : isLoading ? (
                     <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                         {SLOT_NUMBERS.map((slot) => (

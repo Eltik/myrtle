@@ -140,7 +140,7 @@ function Stat({ label, value, highlight, loading, hint, locale, moreInfoLabel }:
     const display = loading && value === undefined ? <Spinner className="size-3 text-muted-foreground" /> : formatLargeNumber(value, locale);
     return (
         <div className="min-w-14">
-            <Kicker className="mb-0 block">{label}</Kicker>
+            <Kicker className="block">{label}</Kicker>
             {hint && !loading ? (
                 <Tooltip>
                     <TooltipTrigger

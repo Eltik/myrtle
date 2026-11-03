@@ -1,11 +1,11 @@
 import { ArrowDown, ArrowUp, ChevronDown, ChevronUp, Copy, Eye, EyeOff, X } from "lucide-react";
 import * as React from "react";
-import { LoadError } from "#/components/operators/detail/impl/components/LoadError";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import { Card, CardHeader, CardPanel } from "#/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "#/components/ui/collapsible";
 import { Label } from "#/components/ui/label";
+import { LoadFailed } from "#/components/ui/load-failed";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { Slider } from "#/components/ui/slider";
 import { Switch } from "#/components/ui/switch";
@@ -120,7 +120,7 @@ export function InstanceCard({ inst, index, isFirst, isLast, onUpdate, onToggleC
             </CardHeader>
             {!collapsed && (
                 <CardPanel className="space-y-3.5 px-4 pt-0 pb-3">
-                    {detail.failed && <LoadError message={t("calc.instance.detailFailed")} onRetry={detail.retry} />}
+                    {detail.failed && <LoadFailed layout="inline" message={t("calc.instance.detailFailed")} onRetry={detail.retry} />}
                     <FieldRow label={t("calc.instance.promotion")}>
                         <ToggleGroup
                             aria-label={t("calc.instance.promotion")}
@@ -288,7 +288,7 @@ export function InstanceCard({ inst, index, isFirst, isLast, onUpdate, onToggleC
                                 <span className="flex items-center gap-1.5">
                                     {t("calc.instance.externalBuffs")}
                                     {buffsSetCount > 0 && (
-                                        <Badge variant="tint" size="sm" className="font-mono">
+                                        <Badge variant="outline" size="sm" className="font-mono">
                                             {t("calc.instance.externalBuffs.count", { count: buffsSetCount })}
                                         </Badge>
                                     )}

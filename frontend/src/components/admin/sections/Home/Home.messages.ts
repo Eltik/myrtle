@@ -262,10 +262,6 @@ export const messages = {
         text: "Couldn't load your work.",
         description: "Shown on a translator's or editor's landing page when their languages, progress or lists failed to load.",
     },
-    "home.loadFailed.retry": {
-        text: "Try again",
-        description: "Button on the admin landing page that reloads a panel after it failed to load.",
-    },
     "home.tile.loadFailed": {
         text: "Couldn't load the site totals.",
         description: "Shown in place of the four staff total tiles (players, rosters, tier lists, placements) when they failed to load.",

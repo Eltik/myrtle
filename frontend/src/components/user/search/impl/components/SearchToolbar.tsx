@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { ArrowDownWideNarrow, ArrowUpNarrowWide, ChevronDown, X } from "lucide-react";
 import { useMemo, useState } from "react";
-import { LoadError } from "#/components/operators/detail/impl/components/LoadError";
 import { Button } from "#/components/ui/button";
 import { FilterChip } from "#/components/ui/filter-chip";
+import { LoadFailed } from "#/components/ui/load-failed";
 import { Popover, PopoverPopup, PopoverTrigger } from "#/components/ui/popover";
 import { operatorsIndexQueryOptions } from "#/lib/api/operators";
 import { useGamedataServer, useT } from "#/lib/i18n";
@@ -101,7 +101,7 @@ export function SearchToolbar({ controls }: { controls: ISearchControls }) {
                 </div>
             </div>
             {/* Without this the pickers sat on their loading state for good. */}
-            {operatorsFailed && <LoadError message={t("search.toolbar.operatorsFailed")} onRetry={retryOperators} />}
+            {operatorsFailed && <LoadFailed layout="inline" message={t("search.toolbar.operatorsFailed")} onRetry={retryOperators} />}
         </div>
     );
 }

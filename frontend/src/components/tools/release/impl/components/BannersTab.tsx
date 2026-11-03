@@ -82,7 +82,7 @@ export function BannersTab({ today }: IBannersTabProps): React.ReactElement {
     const rows = React.useMemo(() => all.filter((b) => showPast || !isPast(sortKey(b.resolution, b.cnOpen, model), today)), [all, showPast, model, today]);
 
     if (banners.isPending) return <ReleaseLoading />;
-    if (banners.isError) return <ReleaseError error={banners.error} onRetry={() => banners.refetch()} />;
+    if (banners.isError) return <ReleaseError onRetry={() => banners.refetch()} />;
 
     return (
         <div className="flex flex-col gap-3">

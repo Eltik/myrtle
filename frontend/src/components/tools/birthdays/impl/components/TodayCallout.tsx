@@ -24,7 +24,7 @@ export function TodayCallout({ ops, today }: ITodayCalloutProps): React.ReactEle
     return (
         <div className="relative mt-5.5 overflow-hidden rounded-2xl border border-primary/20 bg-card p-5 shadow-xs/5">
             <div className="relative mb-3 flex items-center gap-2.5">
-                <Kicker className="mb-0">{t("birthdays.today.kicker")}</Kicker>
+                <Kicker>{t("birthdays.today.kicker")}</Kicker>
                 <span className="text-[12px] text-muted-foreground">{dateLabel}</span>
             </div>
             <div className="relative flex flex-wrap gap-3.5">

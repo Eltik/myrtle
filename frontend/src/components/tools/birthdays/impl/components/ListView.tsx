@@ -1,7 +1,6 @@
 import { SearchX } from "lucide-react";
 import * as React from "react";
 import { Card } from "#/components/ui/card";
-import { Kicker } from "#/components/ui/kicker";
 import { useFormatters, useLocale, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { cn, parseOperatorName, professionLabel } from "#/lib/utils";
@@ -73,7 +72,7 @@ export function ListView({ items, today }: IListViewProps): React.ReactElement {
                                 <div key={day} className="grid grid-cols-[64px_1fr] gap-4 border-border border-t py-2 first-of-type:border-t-0">
                                     <div className="flex flex-col items-start">
                                         <span className={cn("font-bold font-sans text-[20px] leading-none tracking-tight", dayIsToday ? "text-primary" : "text-foreground")}>{day}</span>
-                                        <Kicker className="mt-1 mb-0">{dayIsToday ? t("birthdays.list.weekdayToday", { weekday }) : weekday}</Kicker>
+                                        <span className="mt-1 font-sans text-[12px] text-muted-foreground">{dayIsToday ? t("birthdays.list.weekdayToday", { weekday }) : weekday}</span>
                                     </div>
                                     <div className="flex flex-col gap-0.5">
                                         {ops.map((b) => {

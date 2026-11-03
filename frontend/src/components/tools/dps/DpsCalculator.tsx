@@ -1,7 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { ChevronsDownUp, ChevronsUpDown, Diamond, Download, HelpCircle, RefreshCw } from "lucide-react";
 import * as React from "react";
-import { LoadError } from "#/components/operators/detail/impl/components/LoadError";
 import { AxisControls } from "#/components/tools/shared/AxisControls";
 import { CalcChart } from "#/components/tools/shared/CalcChart";
 import { buildSweepPoints, formatLargeNumber } from "#/components/tools/shared/constants";
@@ -15,6 +14,7 @@ import type { messages as detailMessages } from "#/components/tools/shared/useOp
 import { AlertDialog, AlertDialogClose, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogPopup, AlertDialogTitle, AlertDialogTrigger } from "#/components/ui/alert-dialog";
 import { Button } from "#/components/ui/button";
 import { Card, CardHeader, CardPanel, CardTitle } from "#/components/ui/card";
+import { LoadFailed } from "#/components/ui/load-failed";
 import { PageHeader } from "#/components/ui/page-header";
 import { Popover, PopoverPopup, PopoverTrigger } from "#/components/ui/popover";
 import { Tabs, TabsList, TabsTab } from "#/components/ui/tabs";
@@ -332,7 +332,7 @@ export function DpsCalculator({ importParam, onImportConsumed, shareParam, onSha
                                 />
                             </CardHeader>
                             <CardPanel className="pt-0">
-                                {curves.isError && <LoadError className="mb-3" message={t("dps.chart.loadFailed")} onRetry={curves.refetch} />}
+                                {curves.isError && <LoadFailed layout="inline" className="mb-3" message={t("dps.chart.loadFailed")} onRetry={curves.refetch} />}
                                 <CalcChart
                                     instances={state.instances}
                                     rows={curves.rows}

@@ -1,8 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import * as React from "react";
-import { LoadError } from "#/components/operators/detail/impl/components/LoadError";
 import { SkinDetailContent } from "#/components/skins/SkinDetailDialog";
 import { Dialog, DialogContent, DialogTitle } from "#/components/ui/dialog";
+import { LoadFailed } from "#/components/ui/load-failed";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { DynamicArtProvider } from "#/components/user/profile/impl/dynamic-art";
 import { operatorsIndexQueryOptions } from "#/lib/api/operators";
@@ -71,7 +71,7 @@ function SkinPopup({ selection, lookup }: { selection: ISkinSelection; lookup: O
         return (
             <DialogContent bottomStickOnMobile={false} className="w-full max-w-120 p-6" showCloseButton>
                 <DialogTitle className="font-heading font-semibold text-base">{selection.skinName}</DialogTitle>
-                {pending ? <p className="font-sans text-[13px] text-muted-foreground">{t("release.popup.loading")}</p> : failed ? <LoadError message={t("release.popup.loadFailed")} onRetry={retry} /> : <p className="font-sans text-[13px] text-muted-foreground">{t("release.popup.missing")}</p>}
+                {pending ? <p className="font-sans text-[13px] text-muted-foreground">{t("release.popup.loading")}</p> : failed ? <LoadFailed layout="inline" message={t("release.popup.loadFailed")} onRetry={retry} /> : <p className="font-sans text-[13px] text-muted-foreground">{t("release.popup.missing")}</p>}
             </DialogContent>
         );
     }

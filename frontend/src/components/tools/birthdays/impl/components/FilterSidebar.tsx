@@ -36,7 +36,7 @@ export function FilterSidebar({ filters, onChange, nations, classNames, matched,
                 <div className="flex items-baseline justify-between border-border border-t px-6 py-3.5">
                     <div>
                         <div className="font-bold font-sans text-[22px] text-foreground tabular-nums leading-none tracking-tight">{matched}</div>
-                        <Kicker className="mt-1 mb-0 block">{t("birthdays.sidebar.matched")}</Kicker>
+                        <Kicker className="mt-1 block">{t("birthdays.sidebar.matched")}</Kicker>
                     </div>
                     <button
                         type="button"

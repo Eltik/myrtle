@@ -16,7 +16,7 @@ type TopT = TypedT<typeof messages & typeof cardMessages>;
 import { operatorCompleteness, operatorMissing, ownedAvatar, parseOperatorName, RARITY_WEIGHT, specializedIcon } from "../../Roster/helpers.card";
 import type { messages as cardMessages } from "../../Roster/helpers.card.messages";
 import { PALETTE } from "../palette";
-import { Kicker, StatCard } from "../primitives";
+import { CardKicker, StatCard } from "../primitives";
 
 const TOP_OPERATOR_LIMIT = 8;
 
@@ -56,7 +56,7 @@ export function TopOperatorsCard({ roster, operatorsIndex }: ITopOperatorsCardPr
     return (
         <StatCard className="sm:col-span-2" color={PALETTE.top}>
             <div className="p-4 pb-3 sm:p-5 sm:pb-3">
-                <Kicker icon={Medal} label={t("profile.stats.top.title")} />
+                <CardKicker icon={Medal} label={t("profile.stats.top.title")} />
             </div>
             <div className="grid grid-cols-2 gap-px bg-border sm:grid-cols-4">
                 {top.map((ranked, i) => (

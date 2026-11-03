@@ -9,7 +9,7 @@ import type { IStageEnemyStats } from "./types";
 function StatCell({ label, value }: { label: string; value: string }) {
     return (
         <div className="flex flex-col gap-1 rounded-md border border-border bg-[color-mix(in_oklch,var(--muted)_30%,transparent)] px-2 py-1.5">
-            <span className="font-medium font-mono text-[10px] text-muted-foreground uppercase leading-none tracking-[0.12em]">{label}</span>
+            <span className="kicker leading-none">{label}</span>
             <span className="font-mono font-semibold text-[12.5px] text-foreground tabular-nums leading-none">{value}</span>
         </div>
     );

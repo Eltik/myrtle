@@ -42,11 +42,7 @@ export const messages = {
     },
     "release.loadFailed": {
         text: "Couldn't load this tab.",
-        description: "Fallback error line when the request failed with no message of its own.",
-    },
-    "release.retry": {
-        text: "Try again",
-        description: "Button that tries the failed request again.",
+        description: "Error line in place of a release tab (or the overrides list) whose request failed. A Try again button follows.",
     },
 } satisfies MessageMap;
 

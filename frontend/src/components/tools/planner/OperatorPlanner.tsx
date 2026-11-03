@@ -1,9 +1,8 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CircleCheck, Lock, Plus } from "lucide-react";
 import * as React from "react";
-
-import { LoadError } from "#/components/operators/detail/impl/components/LoadError";
 import { Button } from "#/components/ui/button";
+import { LoadFailed } from "#/components/ui/load-failed";
 import { PageHeader } from "#/components/ui/page-header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "#/components/ui/tabs";
 import { useAuth } from "#/hooks/use-auth";
@@ -229,7 +228,7 @@ export function OperatorPlanner(): React.ReactElement {
             {!isAuthenticated ? (
                 <UnauthenticatedState />
             ) : plansFailed && !initialPlannerData ? (
-                <LoadError className="mt-8" message={t("planner.plansLoadFailed")} onRetry={() => void refetchPlans()} />
+                <LoadFailed className="mt-8" message={t("planner.plansLoadFailed")} onRetry={() => void refetchPlans()} />
             ) : !isPlansListLoading && plans.length === 0 ? (
                 <div className="mt-16 flex flex-col items-center justify-center gap-4 py-20 text-center sm:mt-24 sm:py-28">
                     <Button size="xl" className="shadow-lg" onClick={() => setOpen(true)}>
@@ -241,7 +240,7 @@ export function OperatorPlanner(): React.ReactElement {
             ) : (
                 <div className="mt-8 flex flex-col gap-6 min-[720px]:flex-row">
                     <div className="w-full shrink-0 min-[720px]:w-90">
-                        {rosterFailed && <LoadError className="mb-4" message={t("planner.rosterLoadFailed")} onRetry={() => void refetchRoster()} />}
+                        {rosterFailed && <LoadFailed className="mb-4" message={t("planner.rosterLoadFailed")} onRetry={() => void refetchRoster()} />}
                         <div className="rounded-2xl border border-border bg-card p-4">
                             <Tabs defaultValue="plans">
                                 <TabsList className="w-full">
@@ -277,7 +276,7 @@ export function OperatorPlanner(): React.ReactElement {
                     </div>
                     <div className="flex-1">
                         {requirementsFailed && !plannerData ? (
-                            <LoadError message={t("planner.requirementsLoadFailed")} onRetry={() => void refetchRequirements()} />
+                            <LoadFailed message={t("planner.requirementsLoadFailed")} onRetry={() => void refetchRequirements()} />
                         ) : (
                             <RequirementsPanel aggregatedRequirements={plannerData?.aggregatedRequirements ?? []} isLoading={isRequirementsLoading} activePlans={activePlansList} maxTier={maxTier} onMaxTierChange={setMaxTier} lastSyncedAt={plannerData?.lastSyncedAt ?? initialPlannerData?.lastSyncedAt ?? null} />
                         )}

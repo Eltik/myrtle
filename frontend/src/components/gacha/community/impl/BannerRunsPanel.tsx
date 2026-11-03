@@ -1,6 +1,5 @@
 import { Fragment, useMemo, useState } from "react";
 import { Button } from "#/components/ui/button";
-import { Kicker } from "#/components/ui/kicker";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "#/components/ui/preview-card";
 import { Skeleton } from "#/components/ui/skeleton";
@@ -331,10 +330,9 @@ export function BannerRunsPanel({ banners, operatorsById, statsById, isLoading }
     return (
         <section id="banner-runs" className="flex scroll-mt-24 flex-col gap-4 rounded-2xl border border-border bg-card p-[18px_18px] sm:p-[22px_24px]">
             <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
-                <div>
-                    <h2 className="m-0">
-                        <Kicker className="mb-0">{activeCount > 0 ? t("community.runs.kicker.withActive", { count: f.number(activeCount) }) : t("community.runs.kicker")}</Kicker>
-                    </h2>
+                <div className="flex items-baseline gap-2">
+                    <h2 className="m-0 font-sans font-semibold text-[15px] text-foreground leading-tight">{t("community.runs.kicker")}</h2>
+                    {activeCount > 0 ? <span className="font-sans text-[12.5px] text-muted-foreground tabular-nums">{t("community.runs.active", { count: f.number(activeCount) })}</span> : null}
                 </div>
 
                 <div className="flex flex-col gap-3 sm:items-end sm:gap-2">

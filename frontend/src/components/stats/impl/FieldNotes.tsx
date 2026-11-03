@@ -30,7 +30,7 @@ function FactTile({ label, fraction, sentence, meta, className }: IFactTileProps
     const loading = fraction === undefined;
     return (
         <div className={cn("flex min-w-0 flex-col gap-2 bg-card px-4 py-3.5", className)} aria-busy={loading || undefined}>
-            <Kicker className="mb-0">{label}</Kicker>
+            <Kicker>{label}</Kicker>
             {loading ? (
                 <>
                     <Skeleton className="h-6 w-16 rounded-md" />
@@ -111,7 +111,7 @@ export function FieldNotes() {
     return (
         <div className="flex flex-col gap-3 border-border border-t pt-4">
             <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-                <Kicker className="mb-0">{t("fieldNotes.kicker")}</Kicker>
+                <Kicker>{t("fieldNotes.kicker")}</Kicker>
                 <StatusPicker value={status} onChange={setStatus} t={t} />
             </div>
             <div className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-border bg-border max-sm:-mx-4 max-sm:rounded-none max-sm:border-x-0 lg:grid-cols-5">

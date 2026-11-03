@@ -35,10 +35,6 @@ export const messages = {
         text: "Couldn't load the showcase.",
         description: "Shown in place of the showcase when it fails to load.",
     },
-    "profile.showcase.retry": {
-        text: "Try again",
-        description: "Button that reloads the showcase after a failure.",
-    },
     "profile.showcase.block.favourites.count": {
         text: "{count, plural, one {# pick} other {# picks}}",
         description: "Count of entities in a favourites block of the showcase.",

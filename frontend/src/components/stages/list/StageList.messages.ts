@@ -51,6 +51,10 @@ export const messages = {
         text: "Expand all",
         description: "Button that opens every zone row in the list.",
     },
+    "list.filter.label": {
+        text: "Stage category",
+        description: "Accessible name of the row of category filter pills above the stage list; one category is shown at a time.",
+    },
     "list.filter.all": {
         text: "All",
         description: "First category filter pill: no category filter. The other pills are named after the game's own modes and come from the registry.",

@@ -121,7 +121,7 @@ export function Rail({ selection }: { selection: LibrarySelection }): React.Reac
                     })}
                 </ul>
                 <div className="mt-3 flex items-center justify-between border-border border-t px-1.5 pt-2.5">
-                    <Kicker className="mb-0 flex items-center gap-1.5">
+                    <Kicker className="flex items-center gap-1.5">
                         <ListMusicIcon className="size-3.5" aria-hidden="true" />
                         {t("music.rail.playlists")}
                     </Kicker>

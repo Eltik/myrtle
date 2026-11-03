@@ -39,7 +39,7 @@ export function StageSlab({ stage, zone, lookup, onReroll }: IStageSlabProps): R
     return (
         <SlabFrame index="01" kicker={t("randomizer.stage.kicker")} accent="primary">
             <div className="flex items-start justify-between gap-2 sm:gap-3">
-                <Kicker className="mb-0 flex min-w-0 flex-1 items-center gap-1.5 sm:gap-2">
+                <Kicker className="flex min-w-0 flex-1 items-center gap-1.5 sm:gap-2">
                     <MapPinned aria-hidden="true" className="size-3.5 shrink-0" />
                     <span className="truncate">{t("randomizer.stage.target")}</span>
                 </Kicker>

@@ -5,7 +5,7 @@ export const namespace = "gacha";
 export const messages = {
     "community.timing.kicker": {
         text: "Pull timing",
-        description: "Small uppercase label above the charts showing when the community pulls.",
+        description: "Heading of the panel of charts showing when the community pulls.",
     },
     "community.timing.legend.totalPulls": {
         text: "Total pulls",

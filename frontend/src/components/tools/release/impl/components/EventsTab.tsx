@@ -49,7 +49,7 @@ export function EventsTab({ today }: IEventsTabProps): React.ReactElement {
     }, [all, stageOnly, showPast, model, today]);
 
     if (events.isPending) return <ReleaseLoading />;
-    if (events.isError) return <ReleaseError error={events.error} onRetry={() => events.refetch()} />;
+    if (events.isError) return <ReleaseError onRetry={() => events.refetch()} />;
 
     return (
         <div className="flex flex-col gap-3">

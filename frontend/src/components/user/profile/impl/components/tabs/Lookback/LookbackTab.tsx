@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { GitCompareArrows, History } from "lucide-react";
 import { type ReactNode, useMemo, useState } from "react";
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { LoadFailed } from "#/components/ui/load-failed";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
 import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
@@ -11,8 +12,7 @@ import type { TypedT } from "#/lib/i18n/messages";
 import { cn, RARITY_HEX, rarityToNumber } from "#/lib/utils";
 import type { LookbackSnapshot } from "#/types/generated/LookbackSnapshot";
 import type { IOperatorIndexEntry } from "#/types/operators";
-import { LoadFailed } from "../LoadFailed";
-import { CARD_PADDING, KICKER_TEXT, Kicker, StatCard } from "../Stats/primitives";
+import { CARD_PADDING, CardKicker, KICKER_TEXT, StatCard } from "../Stats/primitives";
 import { diffBuilds, type IBuildDiff, type ISeriesPoint, METRICS, type Metric, metricSeries, ownershipSeries, summaryDelta } from "./helpers";
 import type { messages } from "./LookbackTab.messages";
 
@@ -94,7 +94,7 @@ function TimelineCard({ snapshots, ownership, live }: ITimelineProps) {
         <StatCard color={ACCENT}>
             <div className={`${CARD_PADDING} flex flex-col gap-4`}>
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                    <Kicker icon={History} label={t("lookback.timeline.title")} />
+                    <CardKicker icon={History} label={t("lookback.timeline.title")} />
                     <ToggleGroup aria-label={t("lookback.timeline.title")} variant="outline" size="sm" className="flex-wrap" value={[metric]} onValueChange={(next) => next[0] && setMetric(next[0] as Metric)}>
                         {METRICS.map((m) => (
                             <ToggleGroupItem key={m} value={m} className="px-2 text-[12px]">
@@ -197,7 +197,7 @@ function CompareCard({ uid, server, snapshots, operatorsIndex }: ICompareProps) 
     return (
         <StatCard color={ACCENT}>
             <div className={`${CARD_PADDING} flex flex-col gap-4`}>
-                <Kicker icon={GitCompareArrows} label={t("lookback.compare.title")} />
+                <CardKicker icon={GitCompareArrows} label={t("lookback.compare.title")} />
                 {from === null ? (
                     <p className="rounded-md border border-border/40 border-dashed bg-muted/15 px-3 py-2 text-[11px] text-muted-foreground">{t("lookback.empty")}</p>
                 ) : (

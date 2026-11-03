@@ -30,7 +30,7 @@ export function MonthGrid({ anchor, byDay, onSelect, today }: IMonthGridProps): 
         <>
             <div className="grid grid-cols-7 px-2 pt-2">
                 {weekdays.map((w) => (
-                    <Kicker key={w} className="mb-0 block px-1.5 py-2 text-center">
+                    <Kicker key={w} className="block px-1.5 py-2 text-center">
                         {w}
                     </Kicker>
                 ))}

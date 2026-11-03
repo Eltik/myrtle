@@ -7,6 +7,7 @@ import { FilterPanel } from "#/components/operators/list/impl/components/FilterP
 import { FilterToggleButton } from "#/components/operators/list/impl/components/FilterToggleButton";
 import { SearchField } from "#/components/SearchField";
 import { Button } from "#/components/ui/button";
+import { LoadFailed } from "#/components/ui/load-failed";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "#/components/ui/table";
 import { useLocalStorageState } from "#/hooks/use-local-storage-state";
@@ -17,7 +18,7 @@ import { cn, professionLabel } from "#/lib/utils";
 import type { ArchiveDossier } from "#/types/generated/ArchiveDossier";
 import { DossierFilterFields } from "./DossierFilters";
 import { buildDossierOptions, countDossierFilters, type DossierListKey, EMPTY_DOSSIER_FILTERS, type IDossierFilters, INFECTION_ORDER, matchesDossier, optionLabel } from "./dossierMatch";
-import { type ArchivesT, INFECTION_KEY, rarityColor, TabFailed, TabMessage, useArchivesT } from "./shared";
+import { type ArchivesT, INFECTION_KEY, rarityColor, TabMessage, useArchivesT } from "./shared";
 
 type SortKey = "name" | "race" | "birthplace" | "height" | "experience" | "infection" | "assimilation" | "stories" | "records" | "links";
 
@@ -102,7 +103,7 @@ export function DossiersTab({ onOpenFile }: { onOpenFile: (id: string) => void }
         return [...list].sort((a, b) => compare(a, b, sort.key, sort.desc) || a.name.localeCompare(b.name));
     }, [all, filters, deferred, sort]);
 
-    if (isError) return <TabFailed onRetry={() => void refetch()} />;
+    if (isError) return <LoadFailed message={t("page.error")} onRetry={() => void refetch()} />;
 
     const header = (key: SortKey, label: string, className?: string) => {
         const active = sort.key === key;
@@ -112,7 +113,7 @@ export function DossiersTab({ onOpenFile }: { onOpenFile: (id: string) => void }
                     variant="ghost"
                     size="xs"
                     aria-label={t("dossiers.sortBy", { column: label })}
-                    className={cn("-mx-2 font-mono text-[10.5px] uppercase tracking-[0.12em] sm:text-[10.5px]", active ? "text-primary" : "text-muted-foreground hover:text-foreground")}
+                    className={cn("-mx-2 font-mono font-semibold text-[10.5px] uppercase tracking-[0.12em] sm:text-[10.5px]", active ? "text-primary" : "text-muted-foreground hover:text-foreground")}
                     onClick={() => setSort((s) => ({ key, desc: s.key === key ? !s.desc : false }))}
                 >
                     {label}

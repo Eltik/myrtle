@@ -118,6 +118,10 @@ export const messages = {
         text: "Stage {stage}",
         description: "Native tooltip of a module-stage button. 'Stage' is the game's own name for a module's upgrade step.",
     },
+    "planner.dialog.lockedHint": {
+        text: "Why some steps are locked",
+        description: "Accessible name of the info button beside a row of plan steps; it opens the reasons the greyed-out steps cannot be picked.",
+    },
     "planner.dialog.alreadyReached": {
         text: "Already reached",
         description: "Tooltip on a promotion, skill or module step below where the player's operator already is. Plans only go up, so these steps cannot be picked.",

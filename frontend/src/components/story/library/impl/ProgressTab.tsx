@@ -263,7 +263,7 @@ function SyncRow({ state, signedIn, gameImport, onSyncNow, t, f }: { state: Excl
 function Stat({ label, value, muted }: { label: string; value: string; muted?: boolean }): React.ReactElement {
     return (
         <div className="rounded-2xl border border-border bg-card p-3 sm:p-3.5">
-            <Kicker className="mb-0 block">{label}</Kicker>
+            <Kicker className="block">{label}</Kicker>
             <div className={muted ? "mt-1 font-sans text-[14px] text-muted-foreground" : "mt-1 font-light font-mono text-[20px] text-foreground tabular-nums tracking-[-0.02em] sm:text-[24px]"}>{value}</div>
         </div>
     );

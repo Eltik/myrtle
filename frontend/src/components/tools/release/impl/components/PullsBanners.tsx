@@ -1,11 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
-import { ChevronDown, Minus, Plus, RotateCcw, RotateCwIcon } from "lucide-react";
+import { ChevronDown, Minus, Plus, RotateCcw } from "lucide-react";
 import * as React from "react";
 import { Button } from "#/components/ui/button";
 import { Card } from "#/components/ui/card";
 import { Collapsible, CollapsiblePanel, CollapsibleTrigger } from "#/components/ui/collapsible";
 import { Input } from "#/components/ui/input";
 import { Kicker } from "#/components/ui/kicker";
+import { LoadFailed } from "#/components/ui/load-failed";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { releaseEventsQueryOptions } from "#/lib/api/release";
@@ -86,15 +87,7 @@ export function PullsBanners({ rows, totals, lookup, charNames, today, onAllocat
 
             {/* The rows still plan without the events list; only the borrowed names and art are lost,
                 so the failure is a notice above them rather than a replacement for them. */}
-            {events.isError && (
-                <div role="alert" className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border border-border bg-muted/30 px-3 py-2">
-                    <p className="m-0 font-sans text-[12px] text-muted-foreground">{t("release.pulls.plan.eventsError")}</p>
-                    <Button type="button" size="sm" variant="outline" onClick={() => void events.refetch()}>
-                        <RotateCwIcon aria-hidden="true" />
-                        {t("release.pulls.plan.eventsRetry")}
-                    </Button>
-                </div>
-            )}
+            {events.isError && <LoadFailed layout="inline" message={t("release.pulls.plan.eventsError")} onRetry={() => void events.refetch()} />}
 
             {rows.length === 0 ? (
                 <ReleaseEmpty title={t("release.pulls.plan.title")} description={t("release.pulls.banners.empty")} />
@@ -178,7 +171,7 @@ function Estimated({ row, t, onPreset, onAllocate }: { row: IPlanRow; t: PullsT;
     return (
         <Collapsible defaultOpen className="flex w-full min-w-0 flex-col gap-1 rounded-lg border border-border bg-muted/20 px-2.5 py-2">
             <CollapsibleTrigger className="group flex w-full items-baseline justify-between gap-3 text-left">
-                <Kicker className="mb-0">{t("release.pulls.plan.estimated")}</Kicker>
+                <Kicker>{t("release.pulls.plan.estimated")}</Kicker>
                 <span className="flex min-w-0 items-baseline gap-1.5">
                     {activeLabel ? <span className="min-w-0 truncate font-sans text-[11.5px] text-muted-foreground group-data-[panel-open]:hidden">{activeLabel}</span> : null}
                     <ChevronDown className="size-3.5 shrink-0 text-muted-foreground transition-transform group-data-[panel-open]:rotate-180" aria-hidden="true" />
@@ -415,7 +408,7 @@ function PlanRow({ row, lookup, charNames, today, t, onAllocate, onPreset, onSet
                         {/* Label and first preset wrap together, and each preset names what it
                             is (bank, bonus copy, guarantee): bare numbers read as random stats. */}
                         <span className="inline-flex items-center gap-1">
-                            <Kicker className="mb-0">{t("release.pulls.plan.setTo")}</Kicker>
+                            <Kicker>{t("release.pulls.plan.setTo")}</Kicker>
                             <Tooltip>
                                 <TooltipTrigger render={<Button size="sm" variant="outline" className="h-7 px-2 font-mono text-[12px]" onClick={() => onPreset(row.key, targets.max)} disabled={targets.max === 0} aria-label={t("release.pulls.plan.max")} />}>
                                     {t("release.pulls.plan.maxLabel", { count: f.number(targets.max) })}

@@ -1,13 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { ChevronDown, FlaskConical, Trash2, Undo2, X } from "lucide-react";
 import * as React from "react";
-import { LoadError } from "#/components/operators/detail/impl/components/LoadError";
 import { ClassIcon } from "#/components/operators/list/impl/components/Icons";
 import { eliteIcon, moduleIconURL, potentialIcon, skillIconURL } from "#/components/tools/shared/icons";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import { Checkbox } from "#/components/ui/checkbox";
 import { Label } from "#/components/ui/label";
+import { LoadFailed } from "#/components/ui/load-failed";
 import { Popover, PopoverPopup, PopoverTrigger } from "#/components/ui/popover";
 import { Slider } from "#/components/ui/slider";
 import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
@@ -126,7 +126,7 @@ export function SeatEditor({ seat, resolved, op, roster, readOnly, squadmates, l
                 </Button>
             </div>
 
-            {detailFailed && <LoadError className="mt-3" message={t("squad.editor.detailFailed")} onRetry={() => void refetchDetail()} />}
+            {detailFailed && <LoadFailed layout="inline" className="mt-3" message={t("squad.editor.detailFailed")} onRetry={() => void refetchDetail()} />}
             {readOnly && <p className="mt-3 rounded-lg border border-border bg-muted/40 px-3 py-2 text-[12.5px] text-muted-foreground">{t("squad.editor.readOnly")}</p>}
 
             <fieldset disabled={readOnly} className="mt-4 grid gap-x-6 gap-y-4 disabled:opacity-80 md:grid-cols-2">

@@ -3,11 +3,11 @@ import { useNavigate } from "@tanstack/react-router";
 import { ArrowDown, ArrowUp, Download, LayoutGrid, LayoutList, Rows3 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DynamicExportDialog } from "#/components/export/ExportDialog.lazy";
-import { LoadError } from "#/components/operators/detail/impl/components/LoadError";
 import { useOperatorFactLabel } from "#/components/operators/OperatorFacts";
 import { SearchField } from "#/components/SearchField";
 import { Button } from "#/components/ui/button";
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader } from "#/components/ui/empty";
+import { LoadFailed } from "#/components/ui/load-failed";
 import { PageHeader } from "#/components/ui/page-header";
 import { useCnUpdates } from "#/hooks/use-cn-updates";
 import { useLocalStorageState } from "#/hooks/use-local-storage-state";
@@ -418,7 +418,7 @@ export function OperatorsList() {
                         </div>
                     </div>
 
-                    {isUpcoming && upcomingFailed && <LoadError message={t("list.error.upcoming")} onRetry={() => void refetchUpcoming()} />}
+                    {isUpcoming && upcomingFailed && <LoadFailed message={t("list.error.upcoming")} onRetry={() => void refetchUpcoming()} />}
 
                     {isUpcoming && upcomingLoading ? (
                         <div className="grid grid-cols-3 gap-2.5 min-[1080px]:grid-cols-6 min-[520px]:grid-cols-4 min-[780px]:grid-cols-5 min-[1280px]:gap-4 min-[780px]:gap-3">

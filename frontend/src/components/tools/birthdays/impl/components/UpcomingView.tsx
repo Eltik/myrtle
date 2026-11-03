@@ -1,7 +1,6 @@
 import { SearchX } from "lucide-react";
 import * as React from "react";
 import { Card } from "#/components/ui/card";
-import { Kicker } from "#/components/ui/kicker";
 import { useFormatters, useLocale, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { cn, parseOperatorName } from "#/lib/utils";
@@ -60,10 +59,10 @@ export function UpcomingView({ items, today }: IUpcomingViewProps): React.ReactE
                     <div key={dayKey(month, day)} className={cn("flex flex-col gap-2.5 rounded-2xl border bg-card p-4 shadow-xs/5", isToday ? "border-primary/50 bg-primary/6" : "border-border")}>
                         <div className="flex items-baseline justify-between">
                             <div>
-                                <Kicker className={cn("mb-0 block", isToday && "text-foreground")}>{when}</Kicker>
+                                <div className="font-sans text-[12.5px] text-muted-foreground">{when}</div>
                                 <div className="font-bold font-sans text-[18px] text-foreground tracking-tight">{t("birthdays.upcoming.date", { month: monthLabels[month - 1], day })}</div>
                             </div>
-                            <Kicker className="mb-0">{weekday}</Kicker>
+                            <span className="font-sans text-[12.5px] text-muted-foreground">{weekday}</span>
                         </div>
                         <div className="flex flex-col gap-1.5">
                             {ops.map((b) => {

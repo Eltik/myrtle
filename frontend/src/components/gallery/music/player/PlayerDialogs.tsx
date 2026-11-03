@@ -20,9 +20,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
     return (
         <section className="flex flex-col gap-3 border-border border-t py-4 first:border-t-0 first:pt-0">
             <h3 className="leading-none">
-                <Kicker tone="accent" className="mb-0">
-                    {title}
-                </Kicker>
+                <Kicker>{title}</Kicker>
             </h3>
             {children}
         </section>

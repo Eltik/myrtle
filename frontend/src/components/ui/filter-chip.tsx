@@ -23,6 +23,8 @@ interface IFilterChipProps {
     className?: string;
 }
 
+type FilterChipProps = IFilterChipProps & Omit<React.ComponentProps<typeof Toggle>, keyof IFilterChipProps | "pressed" | "onPressedChange" | "children" | "size" | "variant">;
+
 /**
  * Toggle chip with an optional count badge, for list filter rows. It keeps the Toggle's
  * radius, type scale, `aria-pressed` and coarse-pointer 44px hit area. The active tint goes
@@ -31,11 +33,13 @@ interface IFilterChipProps {
  * primary tint and its 1px ring never painted. The pressed border is solid: `--tone` at /50
  * measured 2.28 light / 2.79 dark on the page, under the 3:1 an edge needs. Text stays foreground, since tone text on
  * its own tint fails AA (1.66 to 3.96 in audit-002), and a check mark carries the pressed
- * state without relying on colour.
+ * state without relying on colour. Other Toggle props pass through, so a chip can be a
+ * `TooltipTrigger` render target (an icon-only chip names itself in a tooltip).
  */
-export function FilterChip({ label, active, count, onSelect, tone, toneInk, disabled, "aria-label": ariaLabel, className }: IFilterChipProps) {
+export function FilterChip({ label, active, count, onSelect, tone, toneInk, disabled, "aria-label": ariaLabel, className, ...rest }: FilterChipProps) {
     return (
         <Toggle
+            {...rest}
             aria-label={ariaLabel}
             className={cn(
                 "h-8 gap-1.5 px-3 [--tone-edge:var(--ring)] [--tone:var(--primary)] data-pressed:inset-ring-0 data-pressed:border-(--tone-edge) data-pressed:bg-(--tone)/10 data-pressed:text-foreground data-pressed:hover:bg-(--tone)/15 dark:data-pressed:bg-(--tone)/10 dark:data-pressed:hover:bg-(--tone)/15",

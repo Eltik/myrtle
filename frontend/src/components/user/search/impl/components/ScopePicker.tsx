@@ -1,7 +1,6 @@
 import { useMemo } from "react";
 import { ClassIcon } from "#/components/operators/list/impl/components/Icons";
 import { CLASSES } from "#/components/operators/list/impl/constants";
-import { FilterChip } from "#/components/ui/filter-chip";
 import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useT } from "#/lib/i18n";
@@ -98,25 +97,36 @@ export function ScopePicker({ scope, onChange, operators }: IScopePickerProps) {
                     {operators === undefined ? (
                         <p className="m-0 font-sans text-[11.5px] text-muted-foreground leading-none">{t("search.scope.loading")}</p>
                     ) : (
-                        <ul className="m-0 flex list-none flex-wrap gap-1.5 p-0">
-                            <li>
-                                <FilterChip label={t("search.scope.anyArchetype")} active={scope?.kind === "class"} onSelect={() => onChange({ kind: "class", profession })} />
-                            </li>
-                            {subs.map((id) => {
-                                const on = scope?.kind === "sub" && scope.subProfessionId === id;
-                                return (
-                                    <li key={id}>
-                                        <FilterChip label={archetypeName(id)} active={on} onSelect={() => onChange({ kind: "sub", subProfessionId: id })} />
-                                    </li>
-                                );
-                            })}
-                        </ul>
+                        <ToggleGroup
+                            aria-label={t("search.scope.archetype")}
+                            className="flex-wrap gap-1.5"
+                            onValueChange={(next) => {
+                                const id = next[0];
+                                if (id === undefined) return;
+                                onChange(id === ANY_ARCHETYPE ? { kind: "class", profession } : { kind: "sub", subProfessionId: id });
+                            }}
+                            size="sm"
+                            value={scope?.kind === "class" ? [ANY_ARCHETYPE] : scope?.kind === "sub" ? [scope.subProfessionId] : []}
+                            variant="outline"
+                        >
+                            <ToggleGroupItem className="px-3" value={ANY_ARCHETYPE}>
+                                {t("search.scope.anyArchetype")}
+                            </ToggleGroupItem>
+                            {subs.map((id) => (
+                                <ToggleGroupItem className="px-3" key={id} value={id}>
+                                    {archetypeName(id)}
+                                </ToggleGroupItem>
+                            ))}
+                        </ToggleGroup>
                     )}
                 </fieldset>
             ) : null}
         </div>
     );
 }
+
+/** The archetype group's "any" item; sub-profession ids never collide with it. */
+const ANY_ARCHETYPE = "__any";
 
 /** The fieldset's own name, styled as the popup's other group headings. */
 function Legend({ children }: { children: React.ReactNode }) {

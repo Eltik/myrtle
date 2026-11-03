@@ -217,7 +217,7 @@ export function BulkPlanDialog({ open, onOpenChange }: IBulkPlanDialogProps): Re
                                 </div>
                             )}
 
-                            <Kicker className="mt-2 mb-0 block">{t("planner.bulk.preview")}</Kicker>
+                            <Kicker className="mt-2 block">{t("planner.bulk.preview")}</Kicker>
                             {rows.length === 0 ? (
                                 <p className="text-muted-foreground text-sm italic">{t("planner.bulk.previewEmpty")}</p>
                             ) : (

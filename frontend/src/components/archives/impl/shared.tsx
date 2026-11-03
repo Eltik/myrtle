@@ -1,9 +1,8 @@
 import { Link } from "@tanstack/react-router";
-import { EyeOffIcon, RotateCwIcon } from "lucide-react";
+import { EyeOffIcon } from "lucide-react";
 import type * as React from "react";
 import { useEffect, useId, useState } from "react";
 import { campLogo } from "#/components/operators/detail/impl/assets";
-import { Button } from "#/components/ui/button";
 import { Kicker } from "#/components/ui/kicker";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { type TypedRichT, useRichT, useT } from "#/lib/i18n";
@@ -148,15 +147,13 @@ export function SpoilerNote({ className }: { className?: string }): React.ReactE
     );
 }
 
-/** Dark card with a primary kicker title, the panel every Archives card sits in. */
+/** Dark card with a kicker title, the panel every Archives card sits in. */
 export function Panel({ title, children, className, footer }: { title?: React.ReactNode; children: React.ReactNode; className?: string; footer?: React.ReactNode }): React.ReactElement {
     return (
         <section className={cn("flex min-w-0 flex-col gap-3 rounded-2xl border border-border bg-card p-4 sm:p-5", className)}>
             {title ? (
                 <h3 className="m-0 leading-none">
-                    <Kicker tone="accent" className="mb-0">
-                        {title}
-                    </Kicker>
+                    <Kicker>{title}</Kicker>
                 </h3>
             ) : null}
             {children}
@@ -174,20 +171,6 @@ export function TabMessage({ children }: { children: React.ReactNode }): React.R
     return <p className="text-muted-foreground text-sm">{children}</p>;
 }
 
-/** A tab's failure line with a retry, in place of its body (same shape as gacha `LoadFailed`). */
-export function TabFailed({ onRetry }: { onRetry: () => void }): React.ReactElement {
-    const t = useArchivesT();
-    return (
-        <div role="alert" className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-2xl border border-border bg-card px-5 py-4">
-            <p className="m-0 text-muted-foreground text-sm">{t("page.error")}</p>
-            <Button type="button" variant="outline" size="sm" onClick={onRetry}>
-                <RotateCwIcon aria-hidden="true" />
-                {t("page.retry")}
-            </Button>
-        </div>
-    );
-}
-
 /** The headline figures under a tab's lede: four cells, two per row on a phone. */
 export function StatStrip({ children }: { children: React.ReactNode }): React.ReactElement {
     return <div className="grid grid-cols-4 overflow-hidden rounded-2xl border border-border bg-card max-[760px]:grid-cols-2">{children}</div>;
@@ -198,7 +181,7 @@ export function BigStat({ label, value, grow }: { label: string; value: string; 
     return (
         <div className="flex flex-col gap-1.5 border-border not-last:border-r px-4 py-3.5 max-[760px]:nth-[2n]:border-r-0">
             <span className={cn("font-bold text-[28px] text-foreground tabular-nums leading-none tracking-tight", grow && "sm:text-[34px]")}>{value}</span>
-            <Kicker className="mb-0">{label}</Kicker>
+            <Kicker>{label}</Kicker>
         </div>
     );
 }

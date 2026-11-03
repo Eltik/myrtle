@@ -1,9 +1,10 @@
 import { ChevronDown } from "lucide-react";
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useId, useState } from "react";
 import { useOperatorFactLabel } from "#/components/operators/OperatorFacts";
 import { Badge } from "#/components/ui/badge";
 import { FilterChip } from "#/components/ui/filter-chip";
 import { Kicker } from "#/components/ui/kicker";
+import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { cn, formatNationId, nationLabel, professionLabel, rarityInk, rarityToNumber, subProfessionLabel, subProfessionToProfession } from "#/lib/utils";
@@ -15,15 +16,21 @@ import { CampIcon, SubProfessionIcon, TeamIcon } from "./Icons";
 import type { messages } from "./OperatorFilterFields.messages";
 import styles from "./OperatorFilters.module.css";
 
+/** One of several, so a ToggleGroup (grey pressed, no check), not the multi-select FilterChip. */
 export function TagRow<T extends string>({ label, options, value, onChange }: { label: string; options: readonly { value: T; label: string }[]; value: T; onChange: (v: T) => void }) {
+    const labelId = useId();
     return (
         <div className={styles.field}>
-            <div className={styles.fieldLabel}>{label}</div>
-            <div className={styles.tagRow}>
-                {options.map((opt) => (
-                    <FilterChip key={opt.value} active={value === opt.value} label={opt.label} onSelect={() => onChange(opt.value)} />
-                ))}
+            <div className={styles.fieldLabel} id={labelId}>
+                {label}
             </div>
+            <ToggleGroup aria-labelledby={labelId} className={cn(styles.tagRow, "w-auto")} onValueChange={(next) => next[0] !== undefined && onChange(next[0] as T)} size="sm" value={[value]} variant="outline">
+                {options.map((opt) => (
+                    <ToggleGroupItem className="px-3" key={opt.value} value={opt.value}>
+                        {opt.label}
+                    </ToggleGroupItem>
+                ))}
+            </ToggleGroup>
         </div>
     );
 }
@@ -53,7 +60,7 @@ export function OperatorFilterFields({
         <div className="flex flex-col gap-4.5">
             <div className="flex flex-col gap-4">
                 <div className={styles.sectionHead}>
-                    <Kicker className="mb-0">{t("filters.section.basic")}</Kicker>
+                    <Kicker>{t("filters.section.basic")}</Kicker>
                     <span className={styles.line} />
                 </div>
 
@@ -87,7 +94,7 @@ export function OperatorFilterFields({
 
             <div className="flex flex-col gap-4">
                 <button type="button" className={cn(styles.sectionHead, styles.expandable, advancedOpen && styles.open)} onClick={() => setAdvancedOpen((v) => !v)} aria-expanded={advancedOpen}>
-                    <Kicker className="mb-0">{t("filters.section.advanced")}</Kicker>
+                    <Kicker>{t("filters.section.advanced")}</Kicker>
                     {advancedCount > 0 && (
                         <Badge className="font-mono tabular-nums" size="sm">
                             {advancedCount}

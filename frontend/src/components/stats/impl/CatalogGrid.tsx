@@ -15,7 +15,7 @@ function CatalogCell({ label, value, meta }: ICatalogTile) {
     return (
         <div className="flex flex-col gap-2 bg-card px-4 py-3.5">
             <dt>
-                <Kicker className="mb-0">{label}</Kicker>
+                <Kicker>{label}</Kicker>
             </dt>
             <dd className="m-0 font-bold font-sans text-[24px] text-foreground tabular-nums leading-none tracking-tight">{value}</dd>
             {meta ? <dd className="m-0 font-medium font-mono text-[11px] text-muted-foreground leading-[1.2]">{meta}</dd> : null}

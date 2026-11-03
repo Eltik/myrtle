@@ -4,7 +4,7 @@ import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
 import type { IMasteryGapDetails } from "../helpers";
 import { PALETTE } from "../palette";
-import { Bar, CARD_PADDING, GapList, type IGapItem, KICKER_TEXT, Kicker, StatCard, Tile } from "../primitives";
+import { Bar, CARD_PADDING, CardKicker, GapList, type IGapItem, KICKER_TEXT, StatCard, Tile } from "../primitives";
 import type { messages } from "./MasteryCard.messages";
 
 interface IMasteryCardProps {
@@ -61,7 +61,7 @@ export function MasteryCard({ masteries }: IMasteryCardProps) {
     return (
         <StatCard color={PALETTE.mastery.accent}>
             <div className={cn("flex h-full flex-col gap-5", CARD_PADDING)}>
-                <Kicker icon={Sparkles} label={t("profile.stats.mastery.title")} />
+                <CardKicker icon={Sparkles} label={t("profile.stats.mastery.title")} />
                 <div className="flex flex-1 flex-col justify-center gap-5">
                     {/* M3/M6/M9 are rank symbols, like the grade letters in `helpers.messages.ts` - not words to translate. */}
                     <div className="grid grid-cols-3 gap-2">

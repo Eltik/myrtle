@@ -53,7 +53,7 @@ function SectionTitle({ children, aside }: { children: React.ReactNode; aside?: 
     return (
         <div className="mb-2 flex min-h-8 flex-wrap items-center justify-between gap-2">
             <h3 className="m-0 font-normal">
-                <Kicker className="mb-0">{children}</Kicker>
+                <Kicker>{children}</Kicker>
             </h3>
             {aside}
         </div>

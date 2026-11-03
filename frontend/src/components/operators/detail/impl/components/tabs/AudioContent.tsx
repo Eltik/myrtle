@@ -3,6 +3,7 @@ import { AudioLines, ChevronDown, ChevronUp, Download, Layers, Loader2, Pause, P
 import { memo, type ReactNode, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { SearchField } from "#/components/SearchField";
 import { Button } from "#/components/ui/button";
+import { LoadFailed } from "#/components/ui/load-failed";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
 import { Skeleton } from "#/components/ui/skeleton";
 import { Slider } from "#/components/ui/slider";
@@ -22,7 +23,6 @@ import { audioURL } from "../../assets";
 import { SFX_CATEGORY_LABEL_KEY, SFX_CATEGORY_ORDER, SFX_EVENT_LABEL_KEY, VOICE_CATEGORY_LABEL_KEY, VOICE_CATEGORY_MAP, VOICE_CATEGORY_ORDER, VOICE_LANGUAGE_LABEL_KEY, VOICE_LANGUAGE_ORDER, VOICE_LANGUAGE_SHORT_KEY } from "../../constants";
 import type { messages as detailConstantsMessages } from "../../constants.messages";
 import { sanitizeFilename } from "../../helpers";
-import { LoadError } from "../LoadError";
 import type { messages } from "./AudioContent.messages";
 
 const ALL_CATEGORY_ID = "all";
@@ -438,7 +438,7 @@ function VoiceLinesPanel({ operator, player }: { operator: IOperatorListItem; pl
     };
 
     if (isLoading) return <AudioSkeleton />;
-    if (isError) return <LoadError message={t("audio.error.voice")} onRetry={() => void refetch()} />;
+    if (isError) return <LoadFailed message={t("audio.error.voice")} onRetry={() => void refetch()} />;
 
     return (
         <div>
