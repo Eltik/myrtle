@@ -158,7 +158,7 @@ function buildFlatRows(groups: IGroupVM[], searching: boolean, open: Record<stri
 
 /** Rebuilds the group's `overflow-hidden rounded-2xl border` card across the flattened rows it spans. */
 function containerBorder(row: { containerFirst?: boolean; blockLast: boolean; containerLast: boolean }): string {
-    return cn("border-border border-r border-l bg-card/40", row.containerFirst && "overflow-hidden rounded-t-2xl border-t", row.blockLast && "border-b", row.containerLast && "overflow-hidden rounded-b-2xl");
+    return cn("border-border border-r border-l bg-card", row.containerFirst && "overflow-hidden rounded-t-2xl border-t", row.blockLast && "border-b", row.containerLast && "overflow-hidden rounded-b-2xl");
 }
 
 interface IVirtualStageTreeProps {
@@ -278,7 +278,6 @@ function GroupHeaderRow({ row, open, onToggle }: { row: Extract<FlatRow, { kind:
 
 function EventHeaderRow({ row, onToggle, onDetails }: { row: Extract<FlatRow, { kind: "event" }>; onToggle: () => void; onDetails: () => void }) {
     const t: TypedT<typeof messages> = useT("stages");
-    const tNav = useT("nav");
     const { event, open, group } = row;
     const cover = coverImage(event);
     return (
@@ -314,12 +313,6 @@ function EventHeaderRow({ row, onToggle, onDetails }: { row: Extract<FlatRow, { 
                     {t("list.zone.ops", { count: event.stageCount })}
                     {event.originitePrime > 0 ? ` · ${t("list.zone.originitePrime", { count: event.originitePrime })}` : ""}
                     {event.bossCount > 0 ? ` · ${t("list.zone.boss", { count: event.bossCount })}` : ""}
-                </span>
-                <span
-                    className="pointer-events-none relative z-1 hidden h-5.25 flex-none items-center whitespace-nowrap rounded-full border px-2.5 font-mono font-semibold text-[10px] sm:inline-flex"
-                    style={{ borderColor: `color-mix(in oklch, ${event.tone} 45%, transparent)`, background: `color-mix(in oklch, ${event.tone} 11%, transparent)`, color: "var(--foreground)" }}
-                >
-                    {tNav(STAGE_GROUP_LABEL_KEY[event.group])}
                 </span>
                 <ChevronDown className="pointer-events-none relative z-1 h-3.75 w-3.75 flex-none text-muted-foreground transition-transform duration-200" style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)" }} aria-hidden="true" />
             </div>

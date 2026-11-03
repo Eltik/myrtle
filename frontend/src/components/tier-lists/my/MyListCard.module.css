@@ -98,9 +98,9 @@
 
 .tierPill {
     flex: 0 0 auto;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
+    /* Block, not a centred flex box: a long label overflowed both edges and clipped its start, with no ellipsis. */
+    display: inline-block;
+    text-align: center;
     height: var(--pill-size);
     padding: 0 calc(var(--pill-size) * 0.32);
     border-radius: 4px;
@@ -110,7 +110,7 @@
     font-family: var(--font-mono);
     font-size: var(--pill-text);
     font-weight: 700;
-    line-height: 1;
+    line-height: var(--pill-size);
     letter-spacing: 0.02em;
     text-shadow: var(--tier-shadow, 0 1px 0 oklch(0 0 0 / 0.25));
     max-width: 55%;

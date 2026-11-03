@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { ChevronsDownUp, ChevronsUpDown, Download, HeartPulse, HelpCircle, RefreshCw } from "lucide-react";
+import { ChevronsDownUp, ChevronsUpDown, Download, HelpCircle, RefreshCw } from "lucide-react";
 import * as React from "react";
 import { LoadError } from "#/components/operators/detail/impl/components/LoadError";
 import { AxisControls } from "#/components/tools/shared/AxisControls";
@@ -299,7 +299,6 @@ export function HpsCalculator({ shareParam, onShareParamChange }: IHpsCalculator
                                 isLoading={curves.isPending}
                                 onLegendClick={(uid) => dispatch({ type: "TOGGLE_VISIBILITY", uid })}
                                 containerRef={chartContainerRef}
-                                emptyIcon={<HeartPulse />}
                                 emptyTitle={t("hps.empty.title")}
                                 emptyDescription={rt("hps.empty.desc", { axis: <span className="font-medium text-foreground">{t(X_AXIS_LABEL_KEYS[state.xAxis])}</span> })}
                             />

@@ -79,7 +79,7 @@ function ZoneInput({ field, value, onChange, compact, label, stackingLabel }: IZ
             className="gap-1"
         >
             <Tooltip>
-                <TooltipTrigger render={<Label className={`block cursor-help truncate font-medium text-muted-foreground leading-none ${compact ? "text-[10.5px]" : "text-[11px]"}`} />}>{label}</TooltipTrigger>
+                <TooltipTrigger render={<Label className={`block cursor-help truncate text-subtle-foreground leading-none ${compact ? "text-[11px]" : "text-xs"}`} />}>{label}</TooltipTrigger>
                 <TooltipPopup>{stackingLabel}</TooltipPopup>
             </Tooltip>
             <NumberFieldGroup>

@@ -6,7 +6,7 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from "#/components/ui/p
 import { Skeleton } from "#/components/ui/skeleton";
 import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import { type ClientGachaGroup, classifyBannerGroup, type IBanner, type IBannerPullStat } from "#/lib/api/gacha";
-import { type IFormatters, type TypedRichT, useFormatters, useRichT, useT } from "#/lib/i18n";
+import { type IFormatters, useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import type { IOperatorIndexEntry } from "#/types/operators";
 import { BANNER_GROUP_COLOR, BANNER_GROUP_LABEL_KEYS, BANNER_STATUS_INK, BANNER_STATUS_LABEL_KEYS, type BannerStatus, bannerStatus } from "../../constants";
@@ -15,7 +15,6 @@ import type { messages } from "./BannerRunsPanel.messages";
 
 /** This panel renders its own chrome plus the shared banner bucket and status labels. */
 type RunsT = TypedT<typeof messages & typeof gachaConstantsMessages>;
-type RunsRichT = TypedRichT<typeof messages>;
 type RunsMessageKey = (keyof typeof messages | keyof typeof gachaConstantsMessages) & string;
 
 interface IBannerRunsPanelProps {
@@ -252,7 +251,7 @@ const PAST_WINDOW_SECS = 180 * 86_400;
 
 export function BannerRunsPanel({ banners, operatorsById, statsById, isLoading }: IBannerRunsPanelProps) {
     const t: RunsT = useT("gacha");
-    const rt: RunsRichT = useRichT("gacha");
+    const f = useFormatters();
     const [filter, setFilter] = useState<Filter>("active");
     const [sort, setSort] = useState<Sort>("timeline");
     const [showAll, setShowAll] = useState(false);
@@ -332,8 +331,9 @@ export function BannerRunsPanel({ banners, operatorsById, statsById, isLoading }
         <section id="banner-runs" className="flex scroll-mt-24 flex-col gap-4 rounded-2xl border border-border bg-card p-[18px_18px] sm:p-[22px_24px]">
             <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
                 <div>
-                    <Kicker className="mb-1.5">{t("community.runs.kicker")}</Kicker>
-                    <h2 className="m-0 text-balance font-sans font-semibold text-[20px] text-foreground leading-[1.15] tracking-[-0.02em] sm:text-[22px]">{activeCount > 0 ? rt("community.runs.titleActive", { count: <em className="text-primary not-italic">{activeCount}</em> }) : t("community.runs.titleNone")}</h2>
+                    <h2 className="m-0">
+                        <Kicker className="mb-0">{activeCount > 0 ? t("community.runs.kicker.withActive", { count: f.number(activeCount) }) : t("community.runs.kicker")}</Kicker>
+                    </h2>
                 </div>
 
                 <div className="flex flex-col gap-3 sm:items-end sm:gap-2">

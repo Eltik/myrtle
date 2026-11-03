@@ -1,7 +1,5 @@
-import { Search, SearchX } from "lucide-react";
 import type * as React from "react";
 import { Card } from "#/components/ui/card";
-import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "#/components/ui/empty";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import type { IRosterOverlay, ITagCombinationResult, ResultLayout } from "../types";
@@ -18,33 +16,9 @@ interface IResultsListProps {
 
 export function ResultsList({ results, hasSelection, roster, layout }: IResultsListProps): React.ReactElement {
     const t: TypedT<typeof messages> = useT("tools");
-    if (!hasSelection) {
-        return (
-            <Empty>
-                <EmptyHeader>
-                    <EmptyMedia variant="icon">
-                        <Search />
-                    </EmptyMedia>
-                    <EmptyTitle>{t("recruit.empty.noSelection.title")}</EmptyTitle>
-                    <EmptyDescription>{t("recruit.empty.noSelection.desc")}</EmptyDescription>
-                </EmptyHeader>
-            </Empty>
-        );
-    }
-
-    if (results.length === 0) {
-        return (
-            <Empty>
-                <EmptyHeader>
-                    <EmptyMedia variant="icon">
-                        <SearchX />
-                    </EmptyMedia>
-                    <EmptyTitle>{t("recruit.empty.noResults.title")}</EmptyTitle>
-                    <EmptyDescription>{t("recruit.empty.noResults.desc")}</EmptyDescription>
-                </EmptyHeader>
-            </Empty>
-        );
-    }
+    // A plain sentence, not the kit Empty: an icon in a tinted square read as decoration beside a column of chips.
+    if (!hasSelection) return <p className="px-1 py-2 text-muted-foreground text-sm">{t("recruit.empty.noSelection.desc")}</p>;
+    if (results.length === 0) return <p className="px-1 py-2 text-muted-foreground text-sm">{t("recruit.empty.noResults.desc")}</p>;
 
     if (layout === "detailed") {
         return (

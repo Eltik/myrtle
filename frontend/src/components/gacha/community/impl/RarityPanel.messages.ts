@@ -11,10 +11,6 @@ export const messages = {
         text: "Outcome mix · {count} pulls",
         description: "Small uppercase label above the rarity-distribution panel once the total is known. Keep the middle dot.",
     },
-    "community.rarity.title": {
-        text: "Where every pull lands.",
-        description: "Heading of the panel breaking all pulls down by rarity.",
-    },
     "community.rarity.you": {
         text: "you · {count} pulls",
         description: "Pill marking the viewer's own column in the rarity panel. Lowercase, rendered uppercase by the style; keep the middle dot.",

@@ -34,8 +34,9 @@ export function TimingPanel({ timing, firstPullAt, banners }: ITimingPanelProps)
         <section className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-[18px_18px] sm:p-[22px_24px]">
             <header className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                 <div>
-                    <Kicker className="mb-1.5">{t("community.timing.kicker")}</Kicker>
-                    <h2 className="m-0 text-balance font-sans font-semibold text-[20px] text-foreground leading-[1.15] tracking-[-0.02em] sm:text-[22px]">{t("community.timing.title")}</h2>
+                    <h2 className="m-0">
+                        <Kicker className="mb-0">{t("community.timing.kicker")}</Kicker>
+                    </h2>
                 </div>
                 <div className="inline-flex flex-wrap items-center gap-x-3.5 gap-y-1 font-mono text-[11px] text-muted-foreground">
                     <span className="inline-flex items-center">

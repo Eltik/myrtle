@@ -9,7 +9,7 @@ export const messages = {
     },
     "browse.card.official": {
         text: "Official",
-        description: "Corner badge marking a tier list maintained by the site's own team. Rendered uppercase.",
+        description: "Badge beside a tier-list card's title marking a list maintained by the site's own team.",
     },
     "browse.card.emptyDraft": {
         text: "Empty draft",

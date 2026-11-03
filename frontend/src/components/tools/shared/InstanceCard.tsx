@@ -131,7 +131,7 @@ export function InstanceCard({ inst, index, isFirst, isLast, onUpdate, onToggleC
 
                     <div>
                         <div className="mb-1.5 flex items-baseline justify-between">
-                            <Label className="font-medium text-[11px] text-muted-foreground leading-none">{t("calc.instance.level")}</Label>
+                            <Label className="text-subtle-foreground text-xs leading-none">{t("calc.instance.level")}</Label>
                             <span className="font-mono text-[10.5px] text-foreground tabular-nums">
                                 {level}
                                 <span className="text-muted-foreground"> / {maxLevel}</span>
@@ -154,7 +154,7 @@ export function InstanceCard({ inst, index, isFirst, isLast, onUpdate, onToggleC
                                                 aria-pressed={config.potential === p}
                                                 className={cn(
                                                     "flex pointer-coarse:size-11 size-8 shrink-0 cursor-pointer items-center justify-center rounded-md border bg-card outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
-                                                    config.potential === p ? "border-primary bg-primary/10 ring-1 ring-primary/30" : "border-border hover:border-primary/50",
+                                                    config.potential === p ? "inset-ring inset-ring-foreground/40 border-input bg-input dark:bg-foreground/12" : "border-border hover:bg-accent",
                                                 )}
                                             >
                                                 <img alt="" aria-hidden="true" className="icon-theme-aware size-5 object-contain" decoding="async" loading="lazy" src={potentialIcon(p - 1)} />
@@ -185,7 +185,7 @@ export function InstanceCard({ inst, index, isFirst, isLast, onUpdate, onToggleC
                                                         aria-pressed={config.skillIndex === s}
                                                         className={cn(
                                                             "flex pointer-coarse:min-h-11 min-w-0 cursor-pointer flex-col items-center gap-1 rounded-md border bg-card px-1 py-1.5 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
-                                                            config.skillIndex === s ? "border-primary bg-primary/10 ring-1 ring-primary/30" : "border-border hover:border-primary/50",
+                                                            config.skillIndex === s ? "inset-ring inset-ring-foreground/40 border-input bg-input dark:bg-foreground/12" : "border-border hover:bg-accent",
                                                         )}
                                                     >
                                                         {skill ? (
@@ -227,7 +227,7 @@ export function InstanceCard({ inst, index, isFirst, isLast, onUpdate, onToggleC
                                     aria-pressed={config.moduleIndex === 0}
                                     className={cn(
                                         "flex pointer-coarse:min-h-11 min-w-16 cursor-pointer items-center justify-center rounded-md border bg-card px-2 py-1.5 font-medium text-[11px] outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
-                                        config.moduleIndex === 0 ? "border-primary bg-primary/10 ring-1 ring-primary/30" : "border-border hover:border-primary/50",
+                                        config.moduleIndex === 0 ? "inset-ring inset-ring-foreground/40 border-input bg-input dark:bg-foreground/12" : "border-border hover:bg-accent",
                                     )}
                                 >
                                     {t("calc.detail.noModule")}
@@ -246,7 +246,7 @@ export function InstanceCard({ inst, index, isFirst, isLast, onUpdate, onToggleC
                                                         aria-pressed={config.moduleIndex === m}
                                                         className={cn(
                                                             "flex pointer-coarse:min-h-11 cursor-pointer items-center gap-1.5 rounded-md border bg-card px-1.5 py-1 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
-                                                            config.moduleIndex === m ? "border-primary bg-primary/10 ring-1 ring-primary/30" : "border-border hover:border-primary/50",
+                                                            config.moduleIndex === m ? "inset-ring inset-ring-foreground/40 border-input bg-input dark:bg-foreground/12" : "border-border hover:bg-accent",
                                                         )}
                                                     >
                                                         {mod ? (
@@ -277,7 +277,7 @@ export function InstanceCard({ inst, index, isFirst, isLast, onUpdate, onToggleC
                                         aria-pressed={config.moduleLevel === l}
                                         className={cn(
                                             "flex h-8 pointer-coarse:h-11 min-w-10 pointer-coarse:min-w-11 cursor-pointer items-center justify-center rounded-md border bg-card px-2 font-medium font-mono text-[11px] outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
-                                            config.moduleLevel === l ? "border-primary bg-primary/10 ring-1 ring-primary/30" : "border-border hover:border-primary/50",
+                                            config.moduleLevel === l ? "inset-ring inset-ring-foreground/40 border-input bg-input dark:bg-foreground/12" : "border-border hover:bg-accent",
                                         )}
                                     >
                                         L{l}
@@ -289,7 +289,7 @@ export function InstanceCard({ inst, index, isFirst, isLast, onUpdate, onToggleC
 
                     <div>
                         <div className="mb-1.5 flex items-baseline justify-between">
-                            <Label className="font-medium text-[11px] text-muted-foreground leading-none">{t("calc.instance.trust")}</Label>
+                            <Label className="text-subtle-foreground text-xs leading-none">{t("calc.instance.trust")}</Label>
                             <span className="font-mono text-[10.5px] text-foreground tabular-nums">{config.trust}%</span>
                         </div>
                         <Slider min={0} max={100} step={5} value={[config.trust]} onValueChange={(v) => onUpdate({ trust: Array.isArray(v) ? (v[0] ?? 0) : v })} />
@@ -297,7 +297,7 @@ export function InstanceCard({ inst, index, isFirst, isLast, onUpdate, onToggleC
 
                     {op.conditionals.length > 0 && (
                         <div>
-                            <Label className="mb-1.5 block font-medium text-[11px] text-muted-foreground leading-none">{t("calc.instance.conditionals")}</Label>
+                            <h4 className="mb-2 font-semibold text-foreground text-sm leading-none">{t("calc.instance.conditionals")}</h4>
                             <div className="space-y-1">
                                 {op.conditionals.map((cond) => {
                                     const key = conditionalKey(cond);
@@ -378,7 +378,7 @@ function RankChip({ rank, selected, lockReason, onSelect, t }: IRankChipProps): 
                         className={cn(
                             "flex h-8 pointer-coarse:h-11 min-w-8 pointer-coarse:min-w-11 shrink-0 items-center justify-center rounded-md border bg-card px-1.5 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
                             locked ? "cursor-not-allowed border-border/60 opacity-40" : "cursor-pointer",
-                            selected ? "border-primary bg-primary/10 ring-1 ring-primary/30" : !locked && "border-border hover:border-primary/50",
+                            selected ? "inset-ring inset-ring-foreground/40 border-input bg-input dark:bg-foreground/12" : !locked && "border-border hover:bg-accent",
                         )}
                     >
                         {mastery ? <img alt="" aria-hidden="true" className="icon-theme-aware size-5 object-contain" decoding="async" loading="lazy" src={specializedIcon(rank - 7)} /> : <span className="font-medium font-mono text-[12px]">{rank}</span>}
@@ -393,7 +393,7 @@ function RankChip({ rank, selected, lockReason, onSelect, t }: IRankChipProps): 
 function FieldRow({ label, children }: { label: string; children: React.ReactNode }): React.ReactElement {
     return (
         <div>
-            <Label className="mb-1.5 block font-medium text-[11px] text-muted-foreground leading-none">{label}</Label>
+            <Label className="mb-1.5 block text-subtle-foreground text-xs leading-none">{label}</Label>
             {children}
         </div>
     );
@@ -415,7 +415,7 @@ function IconChip({ selected, label, iconURL, onClick }: IIconChipProps): React.
             aria-pressed={selected}
             className={cn(
                 "flex pointer-coarse:size-11 h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-md border bg-card outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
-                selected ? "border-primary bg-primary/10 ring-1 ring-primary/30" : "border-border hover:border-primary/50",
+                selected ? "inset-ring inset-ring-foreground/40 border-input bg-input dark:bg-foreground/12" : "border-border hover:bg-accent",
             )}
         >
             <img alt="" aria-hidden="true" className="icon-theme-aware size-6 object-contain" decoding="async" loading="lazy" src={iconURL} />

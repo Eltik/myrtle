@@ -3,7 +3,6 @@ import { Link } from "@tanstack/react-router";
 import { CalendarClock, ExternalLink, GitBranch, ScrollText, Users } from "lucide-react";
 import { useMemo, useState } from "react";
 import { ReleaseNotesList } from "#/components/changelog/ReleaseNotesList";
-import { Kicker } from "#/components/ui/kicker";
 import { Skeleton } from "#/components/ui/skeleton";
 import { Tabs, TabsList, TabsTab } from "#/components/ui/tabs";
 import { CHANGELOG_RANGES, type ChangelogRangeId, changelogQueryOptions, commitsWithinDays, type IChangelogCommit } from "#/lib/api/changelog";
@@ -116,9 +115,6 @@ export function ChangelogPage() {
                 <header className="relative mb-8">
                     <div className="relative flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                         <div className="min-w-0">
-                            <Kicker className="mb-2 flex items-center gap-1.5">
-                                <ScrollText className="size-3.5" strokeWidth={2.2} /> {t("page.kicker")}
-                            </Kicker>
                             <h1 className="m-0 text-balance font-extrabold text-[clamp(30px,5vw,42px)] text-foreground leading-[1.05] tracking-[-0.02em]">{t("page.title")}</h1>
                             <p className="m-0 mt-2.5 max-w-[52ch] font-sans text-[15.5px] text-muted-foreground leading-[1.55]">{t("page.blurb")}</p>
                         </div>

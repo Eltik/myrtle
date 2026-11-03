@@ -4,7 +4,6 @@ import { ChevronLeftIcon, ChevronRightIcon, SearchIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "#/components/ui/button";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "#/components/ui/input-group";
-import { Kicker } from "#/components/ui/kicker";
 import { Skeleton } from "#/components/ui/skeleton";
 import { useAuth } from "#/hooks/use-auth";
 import { useDebounce } from "#/hooks/use-debounce";
@@ -44,7 +43,6 @@ export function GridsBrowse({ search }: { search: IGridsSearch }) {
             <section className="page-gutter pt-10 pb-6 [--page-max:1080px] sm:pt-14 sm:pb-8">
                 <div className="flex flex-wrap items-end justify-between gap-4">
                     <div className="min-w-0">
-                        <Kicker>{t("browse.kicker")}</Kicker>
                         <h1 className="m-0 font-bold font-sans text-3xl text-foreground leading-tight tracking-tight sm:text-4xl">{t("browse.title")}</h1>
                         <p className="mt-2 max-w-130 font-sans text-muted-foreground text-sm leading-relaxed">{t("browse.blurb")}</p>
                     </div>

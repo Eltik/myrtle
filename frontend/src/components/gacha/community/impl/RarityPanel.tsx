@@ -56,8 +56,9 @@ export function RarityPanel({ data, personal }: IRarityPanelProps) {
         <section className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-[18px_18px] sm:p-[22px_24px]">
             <header className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                 <div>
-                    <Kicker className="mb-1.5">{cs ? t("community.rarity.kicker.withTotal", { count: f.compact(total) }) : t("community.rarity.kicker")}</Kicker>
-                    <h2 className="m-0 text-balance font-sans font-semibold text-[20px] text-foreground leading-[1.15] tracking-[-0.02em] sm:text-[22px]">{t("community.rarity.title")}</h2>
+                    <h2 className="m-0">
+                        <Kicker className="mb-0">{cs ? t("community.rarity.kicker.withTotal", { count: f.compact(total) }) : t("community.rarity.kicker")}</Kicker>
+                    </h2>
                 </div>
                 {showPersonal ? (
                     <div className="inline-flex shrink-0 items-center gap-1.5 self-start rounded-md border border-primary/30 bg-primary/8 px-2.5 py-1 font-mono text-[11px] text-foreground sm:self-auto">
@@ -200,7 +201,7 @@ function Legend({ showPersonal }: { showPersonal: boolean }) {
     const t: RarityT = useT("gacha");
 
     return (
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 border-border/60 border-t pt-3 font-mono text-[11px] text-muted-foreground">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 border-border/60 border-t pt-3 font-sans text-muted-foreground text-xs">
             <span className="inline-flex items-center gap-1.5">
                 <span className="block h-2 w-2 rounded-full bg-foreground/60" aria-hidden /> {t("community.rarity.legend.expected")}
             </span>
@@ -209,8 +210,8 @@ function Legend({ showPersonal }: { showPersonal: boolean }) {
                     <span className="block h-2 w-2 rounded-full bg-primary" aria-hidden /> {t("community.rarity.legend.you")}
                 </span>
             ) : null}
-            <span className="text-subtle-foreground">{t("community.rarity.legend.note")}</span>
-            <span className="text-subtle-foreground">{t("community.rarity.legend.scaleNote")}</span>
+            <span>{t("community.rarity.legend.note")}</span>
+            <span>{t("community.rarity.legend.scaleNote")}</span>
         </div>
     );
 }

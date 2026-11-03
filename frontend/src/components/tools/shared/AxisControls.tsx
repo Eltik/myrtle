@@ -2,7 +2,7 @@ import type * as React from "react";
 import { Label } from "#/components/ui/label";
 import { NumberField, NumberFieldDecrement, NumberFieldGroup, NumberFieldIncrement, NumberFieldInput } from "#/components/ui/number-field";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
-import { Tabs, TabsList, TabsTrigger } from "#/components/ui/tabs";
+import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import type { messages } from "./AxisControls.messages";
@@ -44,19 +44,17 @@ export function AxisControls({ axes, xAxis, onChangeAxis, metrics, yMetric, onCh
         <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
             <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
                 <div className="w-full space-y-1.5 sm:w-auto">
-                    <Label className="block font-medium text-[12px] text-muted-foreground leading-none">{t("calc.axis.xAxis")}</Label>
-                    <Tabs value={xAxis} onValueChange={onChangeAxis}>
-                        <TabsList className="w-full sm:w-fit">
-                            {axes.map((a) => (
-                                <TabsTrigger key={a.value} value={a.value} className="min-w-0">
-                                    {a.short ?? a.label}
-                                </TabsTrigger>
-                            ))}
-                        </TabsList>
-                    </Tabs>
+                    <Label className="block text-subtle-foreground text-xs leading-none">{t("calc.axis.xAxis")}</Label>
+                    <ToggleGroup aria-label={t("calc.axis.xAxis")} variant="outline" size="sm" value={[xAxis]} onValueChange={(v) => v[0] && onChangeAxis(v[0])} className="w-full sm:w-fit">
+                        {axes.map((a) => (
+                            <ToggleGroupItem key={a.value} value={a.value} className="min-w-0 flex-1 text-[12px] sm:flex-none">
+                                {a.short ?? a.label}
+                            </ToggleGroupItem>
+                        ))}
+                    </ToggleGroup>
                 </div>
                 <div className="w-full space-y-1.5 sm:w-auto sm:flex-none">
-                    <Label className="block font-medium text-[12px] text-muted-foreground leading-none">{t("calc.axis.yMetric")}</Label>
+                    <Label className="block text-subtle-foreground text-xs leading-none">{t("calc.axis.yMetric")}</Label>
                     <Select value={yMetric} onValueChange={(v) => v != null && onChangeMetric(v)}>
                         <SelectTrigger size="sm">
                             <SelectValue placeholder={t("calc.axis.metricPlaceholder")}>{() => metricLabel}</SelectValue>
@@ -74,7 +72,7 @@ export function AxisControls({ axes, xAxis, onChangeAxis, metrics, yMetric, onCh
             <div className="flex w-full flex-col items-stretch gap-1 sm:ml-auto sm:w-auto">
                 <div className="grid grid-cols-2 items-end gap-2 sm:flex sm:items-end sm:gap-2">
                     <NumberField key={`${xAxis}-min-${hydrationToken}`} defaultValue={sweep.min} min={0} max={sweep.max - 1} step={axisInput.step} onValueChange={(v) => onChangeSweep({ min: v ?? 0 })} size="sm" className="w-full sm:w-24">
-                        <Label className="block text-[10.5px] text-subtle-foreground leading-none">{t("calc.axis.from")}</Label>
+                        <Label className="block text-subtle-foreground text-xs leading-none">{t("calc.axis.from")}</Label>
                         <NumberFieldGroup>
                             <NumberFieldDecrement />
                             <NumberFieldInput />
@@ -82,7 +80,7 @@ export function AxisControls({ axes, xAxis, onChangeAxis, metrics, yMetric, onCh
                         </NumberFieldGroup>
                     </NumberField>
                     <NumberField key={`${xAxis}-max-${hydrationToken}`} defaultValue={sweep.max} min={sweep.min + 1} max={axisInput.maxBound} step={axisInput.step} onValueChange={(v) => onChangeSweep({ max: v ?? 0 })} size="sm" className="w-full sm:w-24">
-                        <Label className="block text-[10.5px] text-subtle-foreground leading-none">{t("calc.axis.to")}</Label>
+                        <Label className="block text-subtle-foreground text-xs leading-none">{t("calc.axis.to")}</Label>
                         <NumberFieldGroup>
                             <NumberFieldDecrement />
                             <NumberFieldInput />
@@ -91,7 +89,7 @@ export function AxisControls({ axes, xAxis, onChangeAxis, metrics, yMetric, onCh
                     </NumberField>
                     {showPoints && (
                         <div className="space-y-1">
-                            <Label className="block text-[10.5px] text-subtle-foreground leading-none">{t("calc.axis.points")}</Label>
+                            <Label className="block text-subtle-foreground text-xs leading-none">{t("calc.axis.points")}</Label>
                             <Select value={String(sweep.steps)} onValueChange={(v) => onChangeSweep({ steps: Number(v) })}>
                                 <SelectTrigger size="sm" className="w-full sm:min-w-16">
                                     <SelectValue placeholder={t("calc.axis.pointsPlaceholder")}>{(v: string) => v}</SelectValue>

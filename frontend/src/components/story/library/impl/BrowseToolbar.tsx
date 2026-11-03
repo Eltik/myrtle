@@ -26,10 +26,12 @@
  */
 import { LayoutGridIcon, ListIcon, SearchIcon, SlidersHorizontalIcon } from "lucide-react";
 import type React from "react";
-import { memo, useRef } from "react";
+import { memo, useId, useRef } from "react";
 import { Button } from "#/components/ui/button";
 import { Popover, PopoverPopup, PopoverTrigger } from "#/components/ui/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
 import { Sheet, SheetClose, SheetFooter, SheetHeader, SheetPanel, SheetPopup, SheetTitle, SheetTrigger } from "#/components/ui/sheet";
+import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import { Tooltip, TooltipContent, TooltipTrigger } from "#/components/ui/tooltip";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -63,10 +65,11 @@ export interface IBrowseToolbarState {
  */
 type Density = "inline" | "sheet" | "popover";
 
-const TALL: Record<Density, string> = {
-    inline: "h-11 pointer-coarse:h-11 sm:h-8",
+/** Toggle item height per density over the kit's own: the sheet is 44 px everywhere; inline and popover keep the kit size and its coarse-pointer hit area. */
+const ITEM_TALL: Record<Density, string> = {
+    inline: "",
     sheet: "h-11",
-    popover: "h-8 pointer-coarse:h-11",
+    popover: "",
 };
 
 const LABEL = "font-medium font-sans text-[12px] text-muted-foreground";
@@ -94,50 +97,28 @@ function SearchBox({ state, t, className, inputRef, density }: { state: IBrowseT
 function ViewToggle({ state, t, className, density }: { state: IBrowseToolbarState; t: BrowseT; className?: string; density: Density }): React.ReactElement {
     const inline = density === "inline";
     return (
-        <fieldset className={cn("flex shrink-0 gap-0.5 rounded-[9px] border border-border bg-secondary/45 p-0.75", inline ? "" : "grid grid-cols-2", className)} aria-label={t("browse.view.aria")}>
+        <ToggleGroup aria-label={t("browse.view.aria")} value={[state.view]} onValueChange={(next) => next[0] && state.setView(next[0] as ViewMode)} variant="outline" className={cn(inline ? "" : "grid w-full grid-cols-2", className)}>
             {(["grid", "list"] as const).map((mode) => (
-                <button
-                    key={mode}
-                    type="button"
-                    onClick={() => state.setView(mode)}
-                    aria-pressed={state.view === mode}
-                    aria-label={inline ? t(`browse.view.${mode}`) : undefined}
-                    className={cn(
-                        "flex cursor-pointer items-center justify-center gap-1.5 rounded-md font-sans font-semibold text-[12px] transition-colors focus-visible:ring-2 focus-visible:ring-ring",
-                        inline ? "h-11 pointer-coarse:h-11 pointer-coarse:w-11 w-11 sm:h-7.5 sm:w-9" : density === "sheet" ? "h-10" : "h-7 pointer-coarse:h-10",
-                        state.view === mode ? "bg-background text-foreground shadow-sm/5" : "text-muted-foreground hover:text-foreground",
-                    )}
-                >
+                <ToggleGroupItem key={mode} value={mode} aria-label={inline ? t(`browse.view.${mode}`) : undefined} className={cn("font-semibold text-[12px] sm:text-[12px]", ITEM_TALL[density])}>
                     {mode === "grid" ? <LayoutGridIcon className="size-3.5" aria-hidden="true" /> : <ListIcon className="size-3.5" aria-hidden="true" />}
                     {inline ? null : t(`browse.view.${mode}`)}
-                </button>
+                </ToggleGroupItem>
             ))}
-        </fieldset>
+        </ToggleGroup>
     );
 }
 
-/** The category pills. Inline they are a scroller of one line; in a panel they wrap, because a scroller inside a 320 px popover hides the last two. */
+/** The category, single-select. Inline it is one scrolling segmented line; in a panel the options wrap, because a scroller inside a 320 px popover hides the last two. */
 function CategoryPills({ state, t, className, density }: { state: IBrowseToolbarState; t: BrowseT; className?: string; density: Density }): React.ReactElement {
     const inline = density === "inline";
     return (
-        <fieldset aria-label={t("browse.toolbar.category")} className={cn("min-w-0", inline ? "msv-scroll -my-1 flex max-w-full items-center gap-1.5 overflow-x-auto py-1" : "flex flex-wrap gap-1.5", className)}>
+        <ToggleGroup aria-label={t("browse.toolbar.category")} value={[state.filter]} onValueChange={(next) => next[0] && state.setFilter(next[0] as FilterKey)} variant={inline ? "outline" : "default"} className={cn("min-w-0", inline ? "msv-scroll max-w-full overflow-x-auto" : "w-full flex-wrap gap-1.5", className)}>
             {FILTER_ORDER.map((key) => (
-                <button
-                    key={key}
-                    type="button"
-                    onClick={() => state.setFilter(key)}
-                    aria-pressed={state.filter === key}
-                    className={cn(
-                        "min-w-11 pointer-coarse:min-w-11 shrink-0 cursor-pointer rounded-full border px-3 font-sans font-semibold text-[12px] transition-colors focus-visible:ring-2 focus-visible:ring-ring",
-                        TALL[density],
-                        inline ? "sm:min-w-0" : "",
-                        state.filter === key ? "border-primary/55 bg-primary/12 text-foreground" : "border-border bg-secondary/40 text-muted-foreground hover:text-foreground",
-                    )}
-                >
+                <ToggleGroupItem key={key} value={key} className={cn("px-3 font-semibold text-[12px] sm:text-[12px]", inline ? "" : "border-input", ITEM_TALL[density])}>
                     {t(`browse.filter.${key}`)}
-                </button>
+                </ToggleGroupItem>
             ))}
-        </fieldset>
+        </ToggleGroup>
     );
 }
 
@@ -151,45 +132,45 @@ function CategoryPills({ state, t, className, density }: { state: IBrowseToolbar
 function ReadSegmented({ state, t, className, density }: { state: IBrowseToolbarState; t: BrowseT; className?: string; density: Density }): React.ReactElement {
     const inline = density === "inline";
     return (
-        <fieldset className={cn("gap-0.5 rounded-[9px] border border-border bg-secondary/45 p-0.75", inline ? "msv-scroll flex min-w-0 max-w-full overflow-x-auto" : "grid grid-cols-2", className)} aria-label={t("browse.read.aria")}>
+        <ToggleGroup
+            aria-label={t("browse.read.aria")}
+            value={[state.readFilter]}
+            onValueChange={(next) => next[0] && state.setReadFilter(next[0] as ReadFilter)}
+            variant={inline ? "outline" : "default"}
+            className={cn(inline ? "msv-scroll min-w-0 max-w-full overflow-x-auto" : "grid w-full grid-cols-2 gap-1.5", className)}
+        >
             {READ_FILTERS.map((key) => (
-                <button
-                    key={key}
-                    type="button"
-                    onClick={() => state.setReadFilter(key)}
-                    aria-pressed={state.readFilter === key}
-                    className={cn(
-                        "flex min-w-11 pointer-coarse:min-w-11 shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-md px-2.5 font-sans font-semibold text-[11.5px] transition-colors focus-visible:ring-2 focus-visible:ring-ring",
-                        inline ? "h-11 pointer-coarse:h-11 sm:h-7 sm:min-w-0" : density === "sheet" ? "h-10" : "h-7 pointer-coarse:h-10",
-                        state.readFilter === key ? "bg-background text-foreground shadow-sm/5" : "text-muted-foreground hover:text-foreground",
-                    )}
-                >
+                <ToggleGroupItem key={key} value={key} className={cn("gap-1.5 px-2.5 font-semibold text-[11.5px] sm:text-[11.5px]", inline ? "" : "border-input", ITEM_TALL[density])}>
                     <ReadMark state={key} />
                     {t(`browse.read.${key}`)}
-                </button>
+                </ToggleGroupItem>
             ))}
-        </fieldset>
+        </ToggleGroup>
     );
 }
 
-/** The order, a native select: six orders in a row are a scroller nobody reads. */
+/** The order, a select: six orders in a row are a scroller nobody reads. */
 function SortSelect({ state, t, className, density }: { state: IBrowseToolbarState; t: BrowseT; className?: string; density: Density }): React.ReactElement {
     const inline = density === "inline";
+    const labelId = useId();
     return (
-        <label className={cn("flex min-w-0 gap-2", inline ? "items-center" : "flex-col items-stretch", className)}>
-            <span className={cn("shrink-0", LABEL)}>{t("browse.sort.label")}</span>
-            <select
-                value={state.sort}
-                onChange={(e) => state.setSort(e.target.value as LibrarySort)}
-                className={cn("min-w-0 rounded-[9px] border border-border bg-secondary/50 px-2.5 font-sans text-[12.5px] text-foreground outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring", TALL[density])}
-            >
-                {LIBRARY_SORTS.map((key) => (
-                    <option key={key} value={key}>
-                        {t(`browse.sort.${key}`)}
-                    </option>
-                ))}
-            </select>
-        </label>
+        <div className={cn("flex min-w-0 gap-2", inline ? "items-center" : "flex-col items-stretch", className)}>
+            <span id={labelId} className={cn("shrink-0", LABEL)}>
+                {t("browse.sort.label")}
+            </span>
+            <Select value={state.sort} onValueChange={(next) => next && state.setSort(next as LibrarySort)}>
+                <SelectTrigger aria-labelledby={labelId} className={cn(inline ? "w-auto" : "", density === "sheet" ? "min-h-11" : "")}>
+                    <SelectValue>{(value: LibrarySort) => t(`browse.sort.${value}`)}</SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                    {LIBRARY_SORTS.map((key) => (
+                        <SelectItem key={key} value={key}>
+                            {t(`browse.sort.${key}`)}
+                        </SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+        </div>
     );
 }
 
@@ -219,7 +200,7 @@ export function ToolbarPanel({ state, density, withSearch, searchRef }: { state:
             <PanelField label={t("browse.read.aria")}>
                 <ReadSegmented state={state} t={t} density={density} />
             </PanelField>
-            {/* The select's own label is its visible one, so the field prints no second. */}
+            {/* The select prints its own visible label, so the field prints no second. */}
             <SortSelect state={state} t={t} density={density} />
             <PanelField label={t("browse.view.aria")}>
                 <ViewToggle state={state} t={t} density={density} />

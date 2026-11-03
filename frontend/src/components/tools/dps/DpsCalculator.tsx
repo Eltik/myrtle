@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Calculator, ChevronsDownUp, ChevronsUpDown, Diamond, Download, HelpCircle, RefreshCw } from "lucide-react";
+import { ChevronsDownUp, ChevronsUpDown, Diamond, Download, HelpCircle, RefreshCw } from "lucide-react";
 import * as React from "react";
 import { LoadError } from "#/components/operators/detail/impl/components/LoadError";
 import { AxisControls } from "#/components/tools/shared/AxisControls";
@@ -345,7 +345,6 @@ export function DpsCalculator({ importParam, onImportConsumed, shareParam, onSha
                                     showMarkers={state.markers}
                                     onLegendClick={(uid) => dispatch({ type: "TOGGLE_VISIBILITY", uid })}
                                     containerRef={chartContainerRef}
-                                    emptyIcon={<Calculator />}
                                     emptyTitle={t("dps.empty.title")}
                                     emptyDescription={rt("dps.empty.desc", { axis: <span className="font-medium text-foreground">{t(X_AXIS_LABEL_KEYS[state.xAxis])}</span> })}
                                 />

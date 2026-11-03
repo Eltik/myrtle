@@ -145,7 +145,8 @@ export function RecruitmentCalculator(): React.ReactElement {
                     </Card>
                 </aside>
 
-                <div className="flex min-w-0 flex-col gap-3 sm:gap-4">
+                {/* Sticky on lg+ so the results stay beside the tag column while it scrolls; a list taller than the aside makes the grid that tall and it simply scrolls. */}
+                <div className="flex min-w-0 flex-col gap-3 sm:gap-4 lg:sticky lg:top-[calc(var(--site-header-height)+1rem)]">
                     <SelectedTagsBar selectedTags={selectedTags} resultCount={results.length} onRemove={onRemove} onReset={onReset} />
                     <ResultsList results={results} hasSelection={selectedTags.length > 0} roster={rosterOverlay} layout={layout} />
                 </div>

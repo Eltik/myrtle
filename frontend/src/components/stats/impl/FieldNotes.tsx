@@ -29,8 +29,8 @@ function FactTile({ label, fraction, sentence, meta, className }: IFactTileProps
     const f = useFormatters();
     const loading = fraction === undefined;
     return (
-        <div className={cn("flex min-w-0 flex-col gap-2 rounded-2xl border border-border bg-card px-4 py-3.5", className)} aria-busy={loading || undefined}>
-            <span className="font-medium font-mono text-[10.5px] text-muted-foreground uppercase leading-none tracking-[0.14em]">{label}</span>
+        <div className={cn("flex min-w-0 flex-col gap-2 bg-card px-4 py-3.5", className)} aria-busy={loading || undefined}>
+            <Kicker className="mb-0">{label}</Kicker>
             {loading ? (
                 <>
                     <Skeleton className="h-6 w-16 rounded-md" />
@@ -110,7 +110,7 @@ export function FieldNotes() {
                 <Kicker className="mb-0">{t("fieldNotes.kicker")}</Kicker>
                 <StatusPicker value={status} onChange={setStatus} t={t} />
             </div>
-            <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+            <div className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-border bg-border lg:grid-cols-5">
                 <FactTile
                     label={t("fieldNotes.immune.label")}
                     fraction={shareOf(enemies, () => immunity ?? null)}

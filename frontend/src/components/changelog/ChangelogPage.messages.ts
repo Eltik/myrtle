@@ -3,10 +3,6 @@ import { defineMessages, type MessageMap } from "#/lib/i18n/messages";
 export const namespace = "changelog";
 
 export const messages = {
-    "page.kicker": {
-        text: "Changelog",
-        description: "Eyebrow label above the changelog page heading. Rendered uppercase.",
-    },
     "page.title": {
         text: "What's shipped",
         description: "Heading of the changelog page. 'Shipped' means released to users. No full stop in the source.",

@@ -48,11 +48,6 @@ const BASE_TYPE_TABS: Array<{ value: TierListType; labelKey: FilterToolbarMessag
     { value: "community", labelKey: "browse.type.community" },
 ];
 
-// Full-viewport bar, opaque across the centered 1080px content and fading only into the gutters.
-// On mobile the content fills the width, so `max(0px, …)` clamps the fade to zero: no gradient.
-const CONTENT_WIDTH = "1080px";
-const FADE_MASK = `linear-gradient(to right, transparent, #000 max(0px, (100vw - ${CONTENT_WIDTH}) / 2), #000 min(100vw, (100vw + ${CONTENT_WIDTH}) / 2), transparent)`;
-
 // R-03: the 32px desktop controls keep their size and gain a centred 44px hit area on touch.
 const COARSE_HIT = "pointer-coarse:after:absolute pointer-coarse:after:top-1/2 pointer-coarse:after:left-1/2 pointer-coarse:after:size-11 pointer-coarse:after:-translate-1/2";
 
@@ -67,8 +62,8 @@ export function FilterToolbar({ type, sort, query, selectedFlairs, flairOptions,
     const flairsOpen = flairsOpenOverride ?? isDesktop;
 
     return (
-        <div className="sticky top-14 z-30 mx-[calc(50%-50vw)] w-screen border-border border-y bg-background/95 sm:top-16" style={{ maskImage: FADE_MASK, WebkitMaskImage: FADE_MASK }}>
-            <div className="page-gutter py-3 [--page-max:1080px]">
+        <div className="page-bleed sticky top-14 z-30 border-border border-y bg-background/95 px-(--page-gutter) sm:top-16">
+            <div className="py-3">
                 <div className="flex flex-wrap items-center gap-2.5">
                     <ToggleGroup aria-label={t("browse.type.label")} value={[type]} onValueChange={(next) => next[0] && onTypeChange(next[0] as TierListType)} variant="outline" size="sm" className="shrink-0">
                         {typeTabs.map((tab) => (

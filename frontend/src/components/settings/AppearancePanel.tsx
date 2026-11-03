@@ -1,4 +1,4 @@
-import { BookTextIcon, LanguagesIcon, MonitorIcon, MoonIcon, PaletteIcon, RotateCcwIcon, SunIcon } from "lucide-react";
+import { MonitorIcon, MoonIcon, RotateCcwIcon, SunIcon } from "lucide-react";
 import { useId } from "react";
 import { GamedataServerSelect, useGamedataServerOptions } from "#/components/GamedataServerSwitcher";
 import type { messages as gamedataServerMessages } from "#/components/GamedataServerSwitcher.messages";
@@ -61,7 +61,7 @@ export function AppearancePanel() {
                     <CardDescription>{t("appearance.accent.desc")} </CardDescription>
                 </CardHeader>
                 <CardContent className="pt-0">
-                    <SectionLabel icon={<PaletteIcon />}>{t("appearance.accent.presetHue")}</SectionLabel>
+                    <SectionLabel>{t("appearance.accent.presetHue")}</SectionLabel>
                     <div className="mb-5 grid max-w-110 grid-cols-6 gap-2.5 sm:grid-cols-12">
                         {COLOR_PRESETS.map((preset) => {
                             const selected = accent?.type === "preset" && Math.abs(accent.hue - preset.hue) < PRESET_MATCH_TOLERANCE;
@@ -88,7 +88,7 @@ export function AppearancePanel() {
                         })}
                     </div>
 
-                    <SectionLabel icon={<PaletteIcon />}>{t("appearance.accent.customColor")}</SectionLabel>
+                    <SectionLabel>{t("appearance.accent.customColor")}</SectionLabel>
                     <div className="flex flex-wrap items-center gap-3">
                         {/* The colour input is `sr-only`, so keyboard focus lands on something
                             invisible; the ring goes on the label that wraps it. */}
@@ -191,7 +191,7 @@ function LanguageCard(): React.ReactElement | null {
                 <CardDescription>{t("appearance.language.desc")}</CardDescription>
             </CardHeader>
             <CardContent className="pt-0">
-                <SectionLabel icon={<LanguagesIcon />}>{t("appearance.language.displayLanguage")}</SectionLabel>
+                <SectionLabel>{t("appearance.language.displayLanguage")}</SectionLabel>
                 {available.length < 2 ? (
                     <p className="m-0 font-sans text-[13px] text-muted-foreground leading-normal" lang={locale}>
                         {t("appearance.language.onlyOne", { language: currentName })}
@@ -234,7 +234,7 @@ function GameTextSection(): React.ReactElement | null {
 
     return (
         <div className="mt-5">
-            <SectionLabel icon={<BookTextIcon />}>{tCommon("gamedataServer.label")}</SectionLabel>
+            <SectionLabel>{tCommon("gamedataServer.label")}</SectionLabel>
             <p className="mt-0 mb-2 font-sans text-[13px] text-muted-foreground leading-normal">{t("appearance.language.gameTextDesc")}</p>
             <GamedataServerSelect className="max-w-60" />
         </div>

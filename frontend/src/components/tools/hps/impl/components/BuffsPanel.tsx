@@ -2,11 +2,11 @@ import * as React from "react";
 import { Card, CardHeader, CardPanel, CardTitle } from "#/components/ui/card";
 import { Label } from "#/components/ui/label";
 import { NumberField, NumberFieldDecrement, NumberFieldGroup, NumberFieldIncrement, NumberFieldInput } from "#/components/ui/number-field";
+import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import type { IHpsCalculateBuffs } from "#/lib/api/hps";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import { cn } from "#/lib/utils";
 import { BUFF_PRESETS } from "../constants";
 import type { messages as hpsConstantsMessages } from "../constants.messages";
 import type { IHpsBuffConfig } from "../types";
@@ -50,33 +50,30 @@ export function BuffsPanel({ buffs, hydrationToken, onChangeBuffs, onChangeBuffV
             </CardHeader>
             <CardPanel className="space-y-3 pt-0">
                 <div>
-                    <Label className="mb-1.5 block font-medium text-[11px] text-muted-foreground leading-none">{t("hps.buffs.presets")}</Label>
-                    <div className="flex flex-wrap gap-1">
-                        {BUFF_PRESETS.map((preset) => {
-                            const selected = activePreset?.id === preset.id;
-                            return (
-                                <Tooltip key={preset.id}>
-                                    <TooltipTrigger
-                                        render={(triggerProps) => (
-                                            <button
-                                                {...triggerProps}
-                                                type="button"
-                                                onClick={() => onApplyPreset(preset)}
-                                                aria-pressed={selected}
-                                                className={cn(
-                                                    "flex h-7 pointer-coarse:h-11 cursor-pointer items-center justify-center rounded-md border bg-card px-2 font-medium text-[11px] transition-colors",
-                                                    selected ? "border-primary bg-primary/10 text-foreground ring-1 ring-primary/30" : "border-border text-muted-foreground hover:border-primary/50 hover:text-foreground",
-                                                )}
-                                            >
-                                                {t(preset.labelKey)}
-                                            </button>
-                                        )}
-                                    />
-                                    <TooltipPopup>{t(preset.summaryKey)}</TooltipPopup>
-                                </Tooltip>
-                            );
-                        })}
-                    </div>
+                    <h3 className="mb-2 font-semibold text-foreground text-sm leading-none">{t("hps.buffs.presets")}</h3>
+                    <ToggleGroup
+                        aria-label={t("hps.buffs.presets")}
+                        size="sm"
+                        value={activePreset ? [activePreset.id] : []}
+                        onValueChange={(v) => {
+                            const preset = BUFF_PRESETS.find((p) => p.id === v[0]);
+                            if (preset) onApplyPreset(preset);
+                        }}
+                        className="flex-wrap gap-1"
+                    >
+                        {BUFF_PRESETS.map((preset) => (
+                            <Tooltip key={preset.id}>
+                                <TooltipTrigger
+                                    render={(triggerProps) => (
+                                        <ToggleGroupItem {...triggerProps} value={preset.id} className="border-input text-[12px]">
+                                            {t(preset.labelKey)}
+                                        </ToggleGroupItem>
+                                    )}
+                                />
+                                <TooltipPopup>{t(preset.summaryKey)}</TooltipPopup>
+                            </Tooltip>
+                        ))}
+                    </ToggleGroup>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
@@ -104,7 +101,7 @@ interface INumFieldProps {
 function NumField({ label, value, min, max, step = 1, onChange }: INumFieldProps): React.ReactElement {
     return (
         <NumberField defaultValue={value} min={min} max={max} step={step} onValueChange={(v) => onChange(v ?? 0)} size="default">
-            <Label className="block font-medium text-[12px] text-muted-foreground leading-none">{label}</Label>
+            <Label className="block text-subtle-foreground text-xs leading-none">{label}</Label>
             <NumberFieldGroup>
                 <NumberFieldDecrement />
                 <NumberFieldInput />

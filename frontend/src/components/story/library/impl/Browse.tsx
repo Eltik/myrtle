@@ -13,7 +13,7 @@ import { glyphIndexFor, type IChipModel, sectionChapters } from "./chapters";
 import { groupSearchTarget, type IReadFraction, keepEqualFractions, LIBRARY_SORTS, type LibGroup, type LibIndex, type LibRecord, type LibrarySort, matchesReadState, prepareSearch, READ_FILTERS, type ReadFilter, readFraction, readsFractions, recordSearchTarget, searchList, sortLibrary } from "./derive";
 import { GroupCard, GroupGrid, GroupRow, GroupRowList } from "./GroupCard";
 import { OperatorsTab } from "./OperatorsTab";
-import { browseOrder, chapterNeighbours, type FilterKey, RECORDS_ID, sectionFilterKey, sectionGroups, sectionLibrary, type ViewMode } from "./sections";
+import { browseOrder, chapterNeighbours, type FilterKey, kindOf, RECORDS_ID, sectionFilterKey, sectionGroups, sectionLibrary, type ViewMode } from "./sections";
 import { TOOLBAR_DEFAULTS } from "./toolbar";
 
 type BrowseT = TypedT<typeof messages>;
@@ -233,7 +233,7 @@ export function Browse({ index, progress, gameRead, openGroup, onOpenHandled }: 
                 library.sections.map((section) => (
                     <section key={section.id} id={section.id} className="mt-7 scroll-mt-32 sm:scroll-mt-36">
                         <SectionHead chip={chipById.get(section.id)} count={t("browse.section.count", { count: section.groups.length })} />
-                        <Cards groups={section.groups} view={shownView} fractionOf={fractionOf} onOpen={setOpenId} />
+                        <Cards groups={section.groups} view={shownView} fractionOf={fractionOf} onOpen={setOpenId} inSection />
                     </section>
                 ))
             )}
@@ -255,6 +255,8 @@ interface ICardsProps {
     view: ViewMode;
     fractionOf: (group: LibGroup) => IReadFraction;
     onOpen: (id: string) => void;
+    /** A library section, whose heading already names its kind: when every card shares that kind, the cards drop their kind badge. */
+    inSection?: boolean;
 }
 
 /**
@@ -270,19 +272,20 @@ interface ICardsProps {
  * hands every grid a new `fractionOf`, so the comparison asks it for this
  * section's own fractions and the grid renders only when one of them moved.
  */
-const Cards = memo(function Cards({ groups, view, fractionOf, onOpen }: ICardsProps): React.ReactElement {
+const Cards = memo(function Cards({ groups, view, fractionOf, onOpen, inSection = false }: ICardsProps): React.ReactElement {
+    const hideKind = inSection && groups.length > 0 && groups.every((group) => kindOf(group) === kindOf(groups[0]));
     if (view === "grid")
         return (
             <GroupGrid>
                 {groups.map((group) => (
-                    <GroupCard key={group.id} group={group} fraction={fractionOf(group)} onOpen={onOpen} />
+                    <GroupCard key={group.id} group={group} fraction={fractionOf(group)} onOpen={onOpen} hideKind={hideKind} />
                 ))}
             </GroupGrid>
         );
     return (
         <GroupRowList>
             {groups.map((group) => (
-                <GroupRow key={group.id} group={group} fraction={fractionOf(group)} onOpen={onOpen} />
+                <GroupRow key={group.id} group={group} fraction={fractionOf(group)} onOpen={onOpen} hideKind={hideKind} />
             ))}
         </GroupRowList>
     );
@@ -290,7 +293,7 @@ const Cards = memo(function Cards({ groups, view, fractionOf, onOpen }: ICardsPr
 
 /** Equal when the grid would draw the same cards: same list, layout and handler, and the same fraction object for each of its groups (`keepEqualFractions` keeps the object of a group whose numbers did not move). */
 function sameCards(a: ICardsProps, b: ICardsProps): boolean {
-    if (a.groups !== b.groups || a.view !== b.view || a.onOpen !== b.onOpen) return false;
+    if (a.groups !== b.groups || a.view !== b.view || a.onOpen !== b.onOpen || a.inSection !== b.inSection) return false;
     if (a.fractionOf === b.fractionOf) return true;
     return a.groups.every((group) => a.fractionOf(group) === b.fractionOf(group));
 }

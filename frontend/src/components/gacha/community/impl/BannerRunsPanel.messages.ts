@@ -7,13 +7,9 @@ export const messages = {
         text: "Banner runs",
         description: "Small uppercase label above the panel listing recent, running and announced banners.",
     },
-    "community.runs.titleActive": {
-        text: "{count} active right now.",
-        description: "Banner-runs heading when at least one banner is running. {count} is the accent-coloured number of running banners and may sit anywhere the sentence needs it.",
-    },
-    "community.runs.titleNone": {
-        text: "Recent and upcoming banners.",
-        description: "Banner-runs heading used when no banner is running at the moment.",
+    "community.runs.kicker.withActive": {
+        text: "Banner runs · {count} active",
+        description: "Small uppercase label above the banner-runs panel when at least one banner is running. {count} is the number of running banners. Keep the middle dot.",
     },
     "community.runs.empty": {
         text: "No banners match this filter.",

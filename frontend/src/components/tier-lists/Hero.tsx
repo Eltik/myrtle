@@ -1,6 +1,5 @@
 import { Link } from "@tanstack/react-router";
 import { Button } from "#/components/ui/button";
-import { Kicker } from "#/components/ui/kicker";
 import { authActions } from "#/lib/auth/store";
 import { useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -19,7 +18,6 @@ export function Hero({ total, canCreate }: IHeroProps) {
         <section className="page-gutter pt-10 pb-6 [--page-max:1080px] sm:pt-14 sm:pb-8">
             <div className="flex flex-wrap items-end justify-between gap-4">
                 <div className="min-w-0">
-                    <Kicker>{t("browse.hero.kicker")}</Kicker>
                     <h1 className="m-0 font-bold font-sans text-3xl text-foreground leading-tight tracking-tight sm:text-4xl">{t("browse.hero.title")}</h1>
                     <p className="mt-2 max-w-130 font-sans text-muted-foreground text-sm leading-relaxed">
                         {total > 0 ? (

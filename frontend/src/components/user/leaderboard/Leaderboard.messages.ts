@@ -31,10 +31,6 @@ export const messages = {
         text: "The holders of this item did not load.",
         description: "Failure line in place of the inventory-ranked table when the page of item holders could not be fetched, above a Try again button.",
     },
-    "leaderboard.loadFailed.hero": {
-        text: "The ranked-player count and top value did not load.",
-        description: "Failure line under the leaderboard header when the query behind its player count and top score or top holding failed, beside a Try again button.",
-    },
     "leaderboard.loadFailed.movers": {
         text: "The biggest movers did not load.",
         description: "Failure line in place of the sidebar card listing the players whose rank rose most, beside a Try again button.",

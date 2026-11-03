@@ -2,7 +2,6 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { EyeOffIcon, PencilIcon } from "lucide-react";
 import { Button } from "#/components/ui/button";
-import { Kicker } from "#/components/ui/kicker";
 import { Skeleton } from "#/components/ui/skeleton";
 import { useAuth } from "#/hooks/use-auth";
 import { myGridsQueryOptions } from "#/lib/api/grids";
@@ -27,7 +26,6 @@ export function MyGrids() {
             <section className="page-gutter pt-10 pb-6 [--page-max:1080px] sm:pt-14 sm:pb-8">
                 <div className="flex flex-wrap items-end justify-between gap-4">
                     <div className="min-w-0">
-                        <Kicker>{t("my.kicker")}</Kicker>
                         <h1 className="m-0 font-bold font-sans text-3xl text-foreground leading-tight tracking-tight sm:text-4xl">{t("my.title")}</h1>
                         <p className="mt-2 font-sans text-muted-foreground text-sm">{t("my.count", { count: grids.length, max: GRIDS_PER_USER_MAX })}</p>
                     </div>

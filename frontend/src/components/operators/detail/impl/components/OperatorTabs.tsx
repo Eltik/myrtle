@@ -2,7 +2,6 @@ import { Card, CardPanel } from "#/components/ui/card";
 import { ScrollArea } from "#/components/ui/scroll-area";
 import { Tabs, TabsList, TabsTab } from "#/components/ui/tabs";
 import { Tooltip, TooltipPopup, TooltipProvider, TooltipTrigger } from "#/components/ui/tooltip";
-import { useOperatorName } from "#/hooks/use-operator-name";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
@@ -38,7 +37,6 @@ const CONTENT_MAP = {
 
 export function OperatorTabs({ operator, activeTab, onTabChange }: IOperatorTabsProps) {
     const t: TypedT<typeof messages & typeof detailConstantsMessages> = useT("operators");
-    const operatorName = useOperatorName();
     const ActiveContent = CONTENT_MAP[activeTab];
     const handleValueChange = (value: unknown) => {
         if (typeof value === "string") onTabChange(value as TabType);
@@ -102,10 +100,6 @@ export function OperatorTabs({ operator, activeTab, onTabChange }: IOperatorTabs
                                 );
                             })}
                         </TabsList>
-
-                        <div className="mt-3 px-3">
-                            <p className="truncate text-muted-foreground text-xs">{operatorName(operator) ?? t("tabs.fallbackName")}</p>
-                        </div>
                     </Tabs>
                 </nav>
 

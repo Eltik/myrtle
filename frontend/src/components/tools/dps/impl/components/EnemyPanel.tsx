@@ -7,7 +7,6 @@ import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import { cn } from "#/lib/utils";
 import { ENEMY_PRESETS } from "../constants";
 import type { messages as dpsConstantsMessages } from "../constants.messages";
 import type { IEnemyConfig, ISecondaryConfig } from "../types";
@@ -50,33 +49,30 @@ export function EnemyPanel({ enemy, hydrationToken, onChangeEnemy, onChangeSecon
             </CardHeader>
             <CardPanel className="space-y-3 pt-0">
                 <div>
-                    <Label className="mb-1.5 block font-medium text-[11px] text-muted-foreground leading-none">{t("dps.enemy.presets")}</Label>
-                    <div className="flex flex-wrap gap-1">
-                        {ENEMY_PRESETS.map((preset) => {
-                            const selected = activePreset?.id === preset.id;
-                            return (
-                                <Tooltip key={preset.id}>
-                                    <TooltipTrigger
-                                        render={(triggerProps) => (
-                                            <button
-                                                {...triggerProps}
-                                                type="button"
-                                                onClick={() => onApplyPreset(preset)}
-                                                aria-pressed={selected}
-                                                className={cn(
-                                                    "flex h-7 pointer-coarse:h-11 cursor-pointer items-center justify-center rounded-md border bg-card px-2 font-medium text-[11px] transition-colors",
-                                                    selected ? "border-primary bg-primary/10 text-foreground ring-1 ring-primary/30" : "border-border text-muted-foreground hover:border-primary/50 hover:text-foreground",
-                                                )}
-                                            >
-                                                {t(preset.labelKey)}
-                                            </button>
-                                        )}
-                                    />
-                                    <TooltipPopup>{t(preset.summaryKey)}</TooltipPopup>
-                                </Tooltip>
-                            );
-                        })}
-                    </div>
+                    <h3 className="mb-2 font-semibold text-foreground text-sm leading-none">{t("dps.enemy.presets")}</h3>
+                    <ToggleGroup
+                        aria-label={t("dps.enemy.presets")}
+                        size="sm"
+                        value={activePreset ? [activePreset.id] : []}
+                        onValueChange={(v) => {
+                            const preset = ENEMY_PRESETS.find((p) => p.id === v[0]);
+                            if (preset) onApplyPreset(preset);
+                        }}
+                        className="flex-wrap gap-1"
+                    >
+                        {ENEMY_PRESETS.map((preset) => (
+                            <Tooltip key={preset.id}>
+                                <TooltipTrigger
+                                    render={(triggerProps) => (
+                                        <ToggleGroupItem {...triggerProps} value={preset.id} className="border-input text-[12px]">
+                                            {t(preset.labelKey)}
+                                        </ToggleGroupItem>
+                                    )}
+                                />
+                                <TooltipPopup>{t(preset.summaryKey)}</TooltipPopup>
+                            </Tooltip>
+                        ))}
+                    </ToggleGroup>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
@@ -87,7 +83,7 @@ export function EnemyPanel({ enemy, hydrationToken, onChangeEnemy, onChangeSecon
 
                 <div className="space-y-2 rounded-md border border-border bg-muted/30 px-2.5 py-2">
                     <div className="flex items-center justify-between gap-2">
-                        <span id="dps-secondary-label" className="font-medium text-[12px]">
+                        <span id="dps-secondary-label" className="font-semibold text-foreground text-sm">
                             {t("dps.enemy.secondary")}
                         </span>
                         <Switch aria-labelledby="dps-secondary-label" checked={sec.enabled} onCheckedChange={(enabled) => onChangeSecondary({ enabled })} />
@@ -103,7 +99,7 @@ export function EnemyPanel({ enemy, hydrationToken, onChangeEnemy, onChangeSecon
                 </div>
 
                 <div className="space-y-1.5">
-                    <Label className="block font-medium text-[11px] text-muted-foreground leading-none">{t("dps.enemy.cycle")}</Label>
+                    <h3 className="font-semibold text-foreground text-sm leading-none">{t("dps.enemy.cycle")}</h3>
                     <ToggleGroup aria-label={t("dps.enemy.cycle")} variant="outline" size="sm" value={[enemy.cycleModel]} onValueChange={(v) => v[0] && onChangeEnemy({ cycleModel: v[0] === "v2" ? "v2" : "legacy" })}>
                         <ToggleGroupItem value="legacy" className="text-[12px]">
                             {t("dps.enemy.cycle.legacy")}
@@ -133,7 +129,7 @@ interface INumFieldProps {
 function NumField({ label, value, min, max, step = 1, onChange, compact = false, disabled = false }: INumFieldProps): React.ReactElement {
     return (
         <NumberField defaultValue={value} min={min} max={max} step={step} onValueChange={(v) => onChange(v ?? 0)} size={compact ? "sm" : "default"} disabled={disabled}>
-            <Label className="block font-medium text-[12px] text-muted-foreground leading-none">{label}</Label>
+            <Label className="block text-subtle-foreground text-xs leading-none">{label}</Label>
             <NumberFieldGroup>
                 <NumberFieldDecrement />
                 <NumberFieldInput />

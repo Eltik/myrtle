@@ -1,9 +1,10 @@
 import type * as React from "react";
-import { Button } from "#/components/ui/button";
+import { FilterChip } from "#/components/ui/filter-chip";
 import { Kicker } from "#/components/ui/kicker";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import { TAG_GROUP_LABEL_KEYS, TAG_GROUP_ORDER } from "../constants";
+import { rarityInk } from "#/lib/utils";
+import { SENIOR_OPERATOR_TAG_ID, TAG_GROUP_LABEL_KEYS, TAG_GROUP_ORDER, TOP_OPERATOR_TAG_ID } from "../constants";
 import type { messages as recruitConstantsMessages } from "../constants.messages";
 import type { IRecruitmentTag, TagType } from "../types";
 
@@ -13,6 +14,9 @@ interface ITagSelectorProps {
     onToggle: (id: number) => void;
     maxReached: boolean;
 }
+
+/** The two qualification tags that guarantee a rarity carry that rarity's tone; every other tag is untoned. */
+const TAG_RARITY: Partial<Record<number, number>> = { [TOP_OPERATOR_TAG_ID]: 6, [SENIOR_OPERATOR_TAG_ID]: 5 };
 
 export function TagSelector({ groups, selectedTagIds, onToggle, maxReached }: ITagSelectorProps): React.ReactElement {
     const t: TypedT<typeof recruitConstantsMessages> = useT("tools");
@@ -26,15 +30,11 @@ export function TagSelector({ groups, selectedTagIds, onToggle, maxReached }: IT
                         <h3 className="mb-2">
                             <Kicker className="mb-0">{t(TAG_GROUP_LABEL_KEYS[type])}</Kicker>
                         </h3>
-                        <div className="grid grid-cols-[repeat(auto-fill,minmax(8rem,1fr))] gap-2">
+                        <div className="flex flex-wrap gap-1.5">
                             {tagsForGroup.map((tag) => {
                                 const selected = selectedTagIds.has(tag.id);
-                                const disabled = !selected && maxReached;
-                                return (
-                                    <Button key={tag.id} className="h-11 w-full px-2 md:h-10" variant={selected ? "default" : "outline"} disabled={disabled} aria-pressed={selected} onClick={() => onToggle(tag.id)}>
-                                        {tag.name}
-                                    </Button>
-                                );
+                                const rarity = TAG_RARITY[tag.id];
+                                return <FilterChip key={tag.id} active={selected} className="shadow-none before:hidden" disabled={!selected && maxReached} label={tag.name} onSelect={() => onToggle(tag.id)} tone={rarity ? `var(--rarity-${rarity})` : undefined} toneInk={rarity ? rarityInk(rarity) : undefined} />;
                             })}
                         </div>
                     </section>

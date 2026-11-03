@@ -1,5 +1,7 @@
 import { Link } from "@tanstack/react-router";
+import type * as React from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "#/components/ui/avatar";
+import { Badge } from "#/components/ui/badge";
 import type { ITierListBrowseItem } from "#/lib/api/tier-lists";
 import { useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -47,15 +49,6 @@ export default function BrowseCard({ tl, size = "default", rank, onOpen, onAutho
                     </span>
                 )}
 
-                {isOfficial && (
-                    <span className={`${styles.cornerBadge} ${styles.cornerBadgeOfficial}`}>
-                        <svg viewBox="0 0 24 24" aria-hidden="true">
-                            <path d="M12 2 9.6 4.4 6.3 4l-.6 3.3L2.5 9 4 12l-1.5 3 3.2 1.7.6 3.3 3.3-.4L12 22l2.4-2.4 3.3.4.6-3.3L21.5 15 20 12l1.5-3-3.2-1.7-.6-3.3L14.4 4.4Zm-1.2 13.4-3.4-3.4 1.4-1.4 2 2 4.4-4.4 1.4 1.4Z" />
-                        </svg>
-                        {t("browse.card.official")}
-                    </span>
-                )}
-
                 {!hasOps ? (
                     <div className={styles.emptyThumb}>{t("browse.card.emptyDraft")}</div>
                 ) : (
@@ -69,11 +62,21 @@ export default function BrowseCard({ tl, size = "default", rank, onOpen, onAutho
             </div>
 
             <div className="flex flex-1 flex-col gap-2 px-3.5 pt-3 pb-3">
-                <h3 id={`tl-${tl.id}-title`} className={`m-0 font-sans font-semibold text-foreground leading-snug tracking-tight transition-colors group-hover:text-primary ${trending ? "line-clamp-2 text-[16px]" : "line-clamp-1 text-[15px]"}`} title={tl.title}>
-                    <Link to="/tier-lists/$id" params={{ id: tl.slug }} className={styles.cardLink} onClick={() => onOpen?.(tl.slug)}>
-                        {tl.title}
-                    </Link>
-                </h3>
+                <div className="flex min-w-0 items-start gap-2">
+                    <h3 id={`tl-${tl.id}-title`} className={`m-0 min-w-0 flex-1 font-sans font-semibold text-foreground leading-snug tracking-tight transition-colors group-hover:text-primary ${trending ? "line-clamp-2 text-[16px]" : "line-clamp-1 text-[15px]"}`} title={tl.title}>
+                        <Link to="/tier-lists/$id" params={{ id: tl.slug }} className={styles.cardLink} onClick={() => onOpen?.(tl.slug)}>
+                            {tl.title}
+                        </Link>
+                    </h3>
+                    {isOfficial && (
+                        <Badge variant="tint" className="mt-0.5" style={{ "--tone": "var(--warning)" } as React.CSSProperties}>
+                            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                                <path d="M12 2 9.6 4.4 6.3 4l-.6 3.3L2.5 9 4 12l-1.5 3 3.2 1.7.6 3.3 3.3-.4L12 22l2.4-2.4 3.3.4.6-3.3L21.5 15 20 12l1.5-3-3.2-1.7-.6-3.3L14.4 4.4Zm-1.2 13.4-3.4-3.4 1.4-1.4 2 2 4.4-4.4 1.4 1.4Z" />
+                            </svg>
+                            {t("browse.card.official")}
+                        </Badge>
+                    )}
+                </div>
 
                 <div className="flex min-w-0 items-center gap-2 font-sans text-[11px] text-muted-foreground tabular-nums leading-none">
                     <span className="flex min-w-0 items-center gap-1.5">

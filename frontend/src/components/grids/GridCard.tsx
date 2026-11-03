@@ -57,7 +57,7 @@ export function GridCard({ grid, badge, actions }: IGridCardProps) {
     );
 }
 
-/** The board in miniature: every cell in the grid's shape, each pick's art where it has some, the board's empty grey elsewhere. No labels: at this size they would not read. */
+/** The board in miniature: every cell in the grid's shape, each pick's art where it has some, an empty slot elsewhere. No labels: at this size they would not read. */
 function GridThumb({ grid }: { grid: IGridSummary }) {
     const server = useGamedataServer();
     const base = env.VITE_BACKEND_URL ?? "";
@@ -65,12 +65,12 @@ function GridThumb({ grid }: { grid: IGridSummary }) {
     const { gap, radius } = thumbSpacing(grid.rows, grid.cols);
 
     return (
-        <div className="flex h-36 items-center justify-center bg-[oklch(0.13_0.004_285)] p-3 [container-type:size]">
+        <div className="flex h-36 items-center justify-center border-border border-b bg-muted p-3 [container-type:size] dark:bg-[oklch(0.13_0.004_285)]">
             <div className="grid" style={{ gridTemplateColumns: `repeat(${grid.cols}, minmax(0, 1fr))`, gap, width: thumbWidth(grid.rows, grid.cols, gap) }} aria-hidden="true">
                 {cells.map((cell, i) =>
                     cell ? (
                         // biome-ignore lint/suspicious/noArrayIndexKey: a cell IS its position
-                        <span key={i} className="relative block aspect-square overflow-hidden bg-[oklch(0.24_0.005_285)]" style={{ borderRadius: radius }}>
+                        <span key={i} className="relative block aspect-square overflow-hidden bg-border dark:bg-[oklch(0.24_0.005_285)]" style={{ borderRadius: radius }}>
                             <img
                                 src={entityIconURL(cell.icon, base, cell.server ?? server)}
                                 alt=""
@@ -85,7 +85,7 @@ function GridThumb({ grid }: { grid: IGridSummary }) {
                         </span>
                     ) : (
                         // biome-ignore lint/suspicious/noArrayIndexKey: a cell IS its position
-                        <span key={i} className="block aspect-square bg-[oklch(0.32_0.006_285)]" style={{ borderRadius: radius }} />
+                        <span key={i} className="block aspect-square border border-border bg-card dark:border-transparent dark:bg-[oklch(0.32_0.006_285)]" style={{ borderRadius: radius }} />
                     ),
                 )}
             </div>

@@ -7,10 +7,6 @@ export const messages = {
         text: "Most pulled · per rarity",
         description: "Small uppercase label above the most-pulled operators panel. Keep the middle dot.",
     },
-    "community.leaderboard.title": {
-        text: "The top of the pile.",
-        description: "Heading of the panel ranking the operators the community pulled most often.",
-    },
     "community.leaderboard.empty": {
         text: "No data for this rarity yet.",
         description: "Empty state when nobody has shared a pull of the selected rarity.",

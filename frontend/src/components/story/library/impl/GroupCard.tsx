@@ -69,6 +69,8 @@ export interface IGroupCardProps {
     fraction: IReadFraction;
     /** Must be stable (a state setter or a `useCallback`), or `memo` never skips. */
     onOpen: (groupId: string) => void;
+    /** Drop the kind badge: the section heading over a single-kind section already names it. */
+    hideKind?: boolean;
 }
 
 /** Row inks go on the button because the row's left rule reads `--ticket-c1`; the ticket's live on `InkDot` / `InkFill`. */
@@ -152,7 +154,7 @@ function FittedTitle({ name }: { name: string }): React.ReactElement {
  * `stage_mix_story_overall_group_item_view` (`ui/[uc]mixstory.ab`): key visual
  * cover-fitted at 113%, 516x260 logotype on top. Dark in both themes.
  */
-export const GroupCard = memo(function GroupCard({ group, fraction, onOpen }: IGroupCardProps): React.ReactElement {
+export const GroupCard = memo(function GroupCard({ group, fraction, onOpen, hideKind = false }: IGroupCardProps): React.ReactElement {
     const t: BrowseT = useT("story");
     const { wpm } = useReadingSpeed();
     // Key visual first, cover as fallback, and the inks sample the same pick:
@@ -171,7 +173,7 @@ export const GroupCard = memo(function GroupCard({ group, fraction, onOpen }: IG
                         {art ? <img src={art} alt="" crossOrigin="anonymous" data-source={plate.kind} loading="lazy" decoding="async" className={styles.kv} style={{ objectPosition: plateCrop(group) }} /> : null}
                         <span aria-hidden="true" className={styles.scrim} />
                         <span className={styles.content}>
-                            <span className={styles.badge}>{t(`browse.badge.${kindOf(group)}`)}</span>
+                            {hideKind ? null : <span className={styles.badge}>{t(`browse.badge.${kindOf(group)}`)}</span>}
                             {title.kind === "logotype" ? <Logotype url={asset(title.url)} name={group.name} /> : <FittedTitle name={group.name} />}
                         </span>
                         <span aria-hidden="true" className={styles.progress}>
@@ -221,7 +223,7 @@ function specParts(group: LibGroup, t: BrowseT, wpm: number): string[] {
 }
 
 /** One chapter as a list row. Title is the name, never the logotype: a 516x260 plate in an 18.9 px line is unreadable. */
-export const GroupRow = memo(function GroupRow({ group, fraction, onOpen }: IGroupCardProps): React.ReactElement {
+export const GroupRow = memo(function GroupRow({ group, fraction, onOpen, hideKind = false }: IGroupCardProps): React.ReactElement {
     const t: BrowseT = useT("story");
     const { wpm } = useReadingSpeed();
     const art = plateSource(group);
@@ -245,7 +247,7 @@ export const GroupRow = memo(function GroupRow({ group, fraction, onOpen }: IGro
                     ) : null}
                 </span>
                 <span className={styles.rowText}>
-                    <span className={styles.rowBadge}>{t(`browse.badge.${kindOf(group)}`)}</span>
+                    {hideKind ? null : <span className={styles.rowBadge}>{t(`browse.badge.${kindOf(group)}`)}</span>}
                     <span className={styles.rowTitle}>{group.name}</span>
                     <span className={styles.rowSpec}>
                         <span aria-hidden="true" className={styles.dot} />

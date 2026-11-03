@@ -102,7 +102,7 @@ export function RankingView({ state, dispatch, ctx }: IRankingViewProps): React.
                 <div className="flex flex-wrap items-end gap-3">
                     <div className="space-y-1">
                         <Tooltip>
-                            <TooltipTrigger render={<Label className="block cursor-help font-medium text-[11px] text-muted-foreground leading-none" />}>{t("dps.rank.preset")}</TooltipTrigger>
+                            <TooltipTrigger render={<Label className="block cursor-help text-subtle-foreground text-xs leading-none" />}>{t("dps.rank.preset")}</TooltipTrigger>
                             <TooltipPopup className="max-w-64">{t("dps.rank.preset.hint")}</TooltipPopup>
                         </Tooltip>
                         <ToggleGroup aria-label={t("dps.rank.preset")} variant="outline" size="sm" value={[rank.preset]} onValueChange={(v) => v[0] && dispatch({ type: "SET_RANK", patch: { preset: v[0] as RankPreset } })}>
@@ -114,7 +114,7 @@ export function RankingView({ state, dispatch, ctx }: IRankingViewProps): React.
                         </ToggleGroup>
                     </div>
                     <div className="space-y-1">
-                        <Label className="block font-medium text-[11px] text-muted-foreground leading-none">{t("dps.rank.sort")}</Label>
+                        <Label className="block text-subtle-foreground text-xs leading-none">{t("dps.rank.sort")}</Label>
                         <Select value={sortBy} onValueChange={(v) => v !== null && dispatch({ type: "SET_RANK", patch: { sortBy: v as RankSortKey } })}>
                             <SelectTrigger size="sm" className="w-40" aria-label={t("dps.rank.sort")}>
                                 <SelectValue>{() => sortOptions.find((o) => o.value === sortBy)?.label}</SelectValue>

@@ -7,10 +7,6 @@ export const messages = {
         text: "Pull timing",
         description: "Small uppercase label above the charts showing when the community pulls.",
     },
-    "community.timing.title": {
-        text: "When the community pulls.",
-        description: "Heading of the panel charting pull activity over time.",
-    },
     "community.timing.legend.totalPulls": {
         text: "Total pulls",
         description: "Chart legend entry for the line showing all pulls, whatever the banner. Rendered uppercase.",

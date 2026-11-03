@@ -4,6 +4,10 @@ import type { TypedT } from "#/lib/i18n/messages";
 import BrowseCard from "./BrowseCard";
 import type { messages } from "./OfficialRail.messages";
 
+// Up to three lists fit the row, so they share its width instead of sitting in a scroll
+// shelf: one 280px card left two thirds of the row empty.
+const FIT_COLUMNS: Record<number, string> = { 1: "", 2: "md:grid-cols-2", 3: "md:grid-cols-2 lg:grid-cols-3" };
+
 interface IOfficialRailProps {
     lists: ITierListBrowseItem[];
     onOpen: (slug: string) => void;
@@ -28,15 +32,23 @@ export function OfficialRail({ lists, onOpen, onViewAll, onAuthorClick }: IOffic
                 </button>
             </header>
 
-            <div className="page-bleed px-[var(--page-gutter)] sm:mx-0 sm:px-0">
-                <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-3 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {lists.length <= 3 ? (
+                <div className={`grid grid-cols-1 gap-3 ${FIT_COLUMNS[lists.length]}`}>
                     {lists.map((tl) => (
-                        <div key={tl.id} className="w-70 shrink-0 snap-start">
-                            <BrowseCard tl={tl} onOpen={onOpen} onAuthorClick={onAuthorClick} />
-                        </div>
+                        <BrowseCard key={tl.id} tl={tl} onOpen={onOpen} onAuthorClick={onAuthorClick} />
                     ))}
                 </div>
-            </div>
+            ) : (
+                <div className="page-bleed px-[var(--page-gutter)] sm:mx-0 sm:px-0">
+                    <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-3 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                        {lists.map((tl) => (
+                            <div key={tl.id} className="w-70 shrink-0 snap-start">
+                                <BrowseCard tl={tl} onOpen={onOpen} onAuthorClick={onAuthorClick} />
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
         </section>
     );
 }

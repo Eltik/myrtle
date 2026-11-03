@@ -29,8 +29,9 @@ export function Leaderboard({ ops, operatorsById, isLoading }: ILeaderboardProps
         <section className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-[18px_18px] sm:p-[22px_24px] lg:absolute lg:inset-0">
             <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                 <div>
-                    <Kicker className="mb-1.5">{t("community.leaderboard.kicker")}</Kicker>
-                    <h2 className="m-0 text-balance font-sans font-semibold text-[20px] text-foreground leading-[1.15] tracking-[-0.02em] sm:text-[22px]">{t("community.leaderboard.title")}</h2>
+                    <h2 className="m-0">
+                        <Kicker className="mb-0">{t("community.leaderboard.kicker")}</Kicker>
+                    </h2>
                 </div>
                 <ToggleGroup
                     aria-label={t("community.leaderboard.rarityFilter")}
@@ -119,7 +120,6 @@ function LeaderTable({ ops, operatorsById, isLoading }: { ops: IOperatorPopulari
                                                     {"★".repeat(op.rarity)}
                                                 </span>
                                                 {role ? <span className="hidden sm:inline">· {role}</span> : null}
-                                                <span className="hidden text-[10px] text-subtle-foreground sm:inline">{op.charId}</span>
                                                 <span className="font-mono text-[10px] text-muted-foreground tabular-nums sm:hidden">· {fmtPct(op.percentage, 2)}</span>
                                             </div>
                                         </div>

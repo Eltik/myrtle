@@ -3,10 +3,6 @@ import { defineMessages, type MessageMap } from "#/lib/i18n/messages";
 export const namespace = "tierLists";
 
 export const messages = {
-    "browse.hero.kicker": {
-        text: "Tier Lists",
-        description: "Small uppercase label above the tier-list browse heading.",
-    },
     "browse.hero.title": {
         text: "Tier lists",
         description: "Heading of the tier-list browse page. 'The meta' is the community's current consensus on what is strong.",

@@ -94,12 +94,7 @@ export function Leaderboard() {
                 </nav>
             </div>
 
-            <Hero item={data.currentItem} rankedPlayers={data.population} topValue={data.topValue} updatedAt={data.updatedAt} isLoading={data.heroLoading} />
-            {data.heroError ? (
-                <div className="mt-2.5">
-                    <LoadFailed message={t("leaderboard.loadFailed.hero")} onRetry={data.refetchHero} />
-                </div>
-            ) : null}
+            <Hero item={data.currentItem} rankedPlayers={data.population} topValue={data.topValue} updatedAt={data.updatedAt} isLoading={data.heroLoading} statsError={data.heroError} onRetryStats={data.refetchHero} />
 
             {/*
               One column below lg, two above. The "You" card is placed first in

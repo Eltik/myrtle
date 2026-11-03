@@ -90,20 +90,13 @@ function SettingsNavButton({ item, isActive, activeRef, onSelect, tone = "defaul
             aria-current={isActive ? "page" : undefined}
             data-active={isActive ? "true" : undefined}
             className={cn(
-                "group relative inline-flex shrink-0 cursor-pointer items-center gap-2.5 whitespace-nowrap rounded-lg border border-transparent px-3 py-2 text-left font-sans text-[13.5px] outline-none transition-colors focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
+                "group inline-flex shrink-0 cursor-pointer items-center gap-2.5 whitespace-nowrap rounded-lg border border-transparent px-3 py-2 text-left font-sans text-[13.5px] outline-none transition-colors focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
                 // 44px on the phone strip, where these are the only way between sections.
                 "min-h-11 touch-manipulation sm:min-h-9",
                 "sm:w-full sm:px-2.5 sm:py-2 sm:text-[14px]",
-                tone === "danger"
-                    ? isActive
-                        ? "bg-destructive/12 font-semibold text-destructive"
-                        : "text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                    : isActive
-                      ? "bg-sidebar-accent font-semibold text-sidebar-accent-foreground"
-                      : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
+                tone === "danger" ? (isActive ? "bg-destructive/12 font-medium text-destructive" : "text-muted-foreground hover:bg-destructive/10 hover:text-destructive") : isActive ? "bg-accent font-medium text-foreground" : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
             )}
         >
-            <span aria-hidden className={cn("pointer-events-none absolute top-1.5 bottom-1.5 left-0 hidden w-0.75 rounded-r-full transition-opacity sm:block", isActive ? "opacity-100" : "opacity-0", tone === "danger" ? "bg-destructive" : "bg-primary")} />
             <Icon className={cn("size-4 shrink-0", isActive ? "opacity-100" : "opacity-80")} />
             <span className="min-w-0">{label}</span>
         </button>
@@ -123,13 +116,8 @@ export function SettingRow({ title, description, control, layout = "auto" }: { t
     );
 }
 
-export function SectionLabel({ icon, children }: { icon?: ReactNode; children: ReactNode }) {
-    return (
-        <Kicker className="flex items-center gap-2">
-            {icon ? <span className="inline-flex size-3.5 items-center justify-center [&_svg]:size-3.5">{icon}</span> : null}
-            {children}
-        </Kicker>
-    );
+export function SectionLabel({ children }: { children: ReactNode }) {
+    return <Kicker>{children}</Kicker>;
 }
 
 export function Mono({ children }: { children: ReactNode }) {

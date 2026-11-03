@@ -3,10 +3,6 @@ import { defineMessages, type MessageMap } from "#/lib/i18n/messages";
 export const namespace = "grids";
 
 export const messages = {
-    "browse.kicker": {
-        text: "Community",
-        description: "Small uppercase label above the grid browser's heading.",
-    },
     "browse.title": {
         text: "Grids",
         description: "Heading of the grid browser. A grid is a board of labelled cells ('Favorite Vanguard') each filled with an operator, skin or other pick.",
