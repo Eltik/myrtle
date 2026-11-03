@@ -62,7 +62,7 @@ export function FilterStrip(props: IFilterStripProps): React.ReactElement {
                 {mode === "game" ? <KindChips value={props.kind} onChange={props.onKind} /> : null}
                 <SearchField className="h-11 min-w-0 flex-1 basis-full sm:h-9 sm:basis-60" value={query} onChange={onQuery} placeholder={mode === "game" ? t("music.search.placeholder") : t("music.filter.searchPlaceholder")} label={t("music.search.aria")} />
                 {mode === "songs" ? (
-                    <Button variant={open ? "default" : "outline"} className="max-sm:min-h-11" onClick={() => setOpen((o) => !o)} aria-expanded={open} title={t("music.filter.filters")}>
+                    <Button variant="outline" data-pressed={open || undefined} className="data-pressed:inset-ring data-pressed:inset-ring-foreground/40 data-pressed:bg-input max-sm:min-h-11 dark:data-pressed:bg-foreground/12" onClick={() => setOpen((o) => !o)} aria-expanded={open} title={t("music.filter.filters")}>
                         <ListFilterIcon aria-hidden="true" />
                         {t("music.filter.filters")}
                     </Button>

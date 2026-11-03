@@ -9,7 +9,9 @@ import type { messages } from "./FilterToggleButton.messages";
 /**
  * Toolbar toggle for the filter panel. Below md it is the compact 24px chevron, with a 44px hit area on touch; from md up it is
  * the 36px "Filter" button with the funnel icon (desktop, since 2026-09-03). Both surfaces (the
- * /operators page and the profile roster) render this one element.
+ * /operators page and the profile roster) render this one element. Open draws the kit Toggle's
+ * pressed look through `data-pressed`, but it stays a Button: it is a disclosure (aria-expanded),
+ * and a Toggle would add aria-pressed on top.
  */
 export function FilterToggleButton({ visible, onToggle, activeCount }: { visible: boolean; onToggle: () => void; activeCount: number }) {
     const t: TypedT<typeof messages> = useT("operators");
@@ -23,7 +25,7 @@ export function FilterToggleButton({ visible, onToggle, activeCount }: { visible
                         variant="outline"
                         size="icon-xs"
                         data-pressed={visible || undefined}
-                        className="text-muted-foreground hover:text-foreground data-pressed:text-foreground md:h-9 md:w-auto md:min-w-20 md:gap-1 md:rounded-lg md:px-1.5 md:before:rounded-[calc(var(--radius-lg)-1px)]"
+                        className="text-muted-foreground hover:text-foreground data-pressed:inset-ring data-pressed:inset-ring-foreground/40 data-pressed:bg-input data-pressed:text-foreground md:h-9 md:w-auto md:min-w-20 md:gap-1 md:rounded-lg md:px-1.5 md:before:rounded-[calc(var(--radius-lg)-1px)] dark:data-pressed:bg-foreground/12"
                         onClick={onToggle}
                         aria-label={toggleLabel}
                         aria-expanded={visible}
