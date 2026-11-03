@@ -363,3 +363,67 @@ For the other locales to follow. Format: namespace file, key, old -> new. Keys w
 | lib/registry/stage-groups.messages.ts | stageGroup.cc.desc | Score-attack contracts - stack risk modifiers on a fixed map for higher rewards. | Score-attack contracts: stack risk modifiers on a fixed map for higher rewards. |
 | lib/registry/stage-groups.messages.ts | stageGroup.ra.desc | A survival sandbox - scout the wilds, gather resources, build defenses and endure each cycle. | A survival sandbox: scout the wilds, gather resources, build defenses and endure each cycle. |
 | lib/registry/stage-groups.messages.ts | stageGroup.story.desc | The mainline campaign - Rhodes Island's canonical operations, told episode by episode across Terra. | The mainline campaign: Rhodes Island's canonical operations, told episode by episode across Terra. |
+
+
+## Second round (fc081710): error-phrasing alignment
+
+| gacha/community/CommunityPage.messages.ts | community.error.load | The community stats couldn't be loaded. | Couldn't load the community stats. |
+| gacha/community/CommunityPage.messages.ts | community.error.banners | The banner list couldn't be loaded. | Couldn't load the banner list. |
+| gacha/community/CommunityPage.messages.ts | community.error.bannerStats | The per-banner pull counts couldn't be loaded, so the banners below show without them. | Couldn't load the per-banner pull counts, so the banners below show without them. |
+| gacha/history/impl/HistoryBody.messages.ts | history.error.names | Operator or banner names couldn't be loaded, so some pulls show without them. | Couldn't load some operator or banner names, so those pulls show without them. |
+| home/impl/HappeningNow.messages.ts | live.loading | Loading what's running on {server}. | Loading what's running on {server}… |
+| home/impl/TopPlayers.messages.ts | leaders.loading | Loading the leaderboard. | Loading the leaderboard… |
+| operators/detail/impl/components/OperatorNotes.messages.ts | notes.loading | Loading operator notes | Loading operator notes… |
+| operators/detail/impl/components/OperatorNotes.messages.ts | notes.error | The operator notes did not load. | Couldn't load the operator notes. |
+| operators/detail/impl/components/SummonsSection.messages.ts | summons.attackRange.error | The summon's attack range did not load. | Couldn't load the summon's attack range. |
+| operators/detail/impl/components/tabs/AudioContent.messages.ts | audio.error.voice | The voice lines did not load. | Couldn't load the voice lines. |
+| operators/detail/impl/components/tabs/InfoContent.messages.ts | info.attackRange.error | The attack range did not load. | Couldn't load the attack range. |
+| operators/detail/impl/components/tabs/LevelUpContent.messages.ts | levelup.materialsFailed | Item names did not load, so tiles show item ids. | Couldn't load item names, so tiles show item ids. |
+| operators/detail/impl/components/tabs/SkillsContent.messages.ts | skills.range.error | The skill's attack range did not load. | Couldn't load the skill's attack range. |
+| operators/list/Operators.messages.ts | list.error.upcoming | The upcoming CN operators did not load. | Couldn't load the upcoming CN operators. |
+| user/leaderboard/Leaderboard.messages.ts | leaderboard.loadFailed.players | The leaderboard did not load. | Couldn't load the leaderboard. |
+| user/leaderboard/Leaderboard.messages.ts | leaderboard.loadFailed.holders | The holders of this item did not load. | Couldn't load the holders of this item. |
+| user/leaderboard/Leaderboard.messages.ts | leaderboard.loadFailed.movers | The biggest movers did not load. | Couldn't load the biggest movers. |
+| user/leaderboard/Leaderboard.messages.ts | leaderboard.loadFailed.items | The item list did not load. | Couldn't load the item list. |
+| user/leaderboard/Leaderboard.messages.ts | leaderboard.loadFailed.standing | Your standing did not load. | Couldn't load your standing. |
+| user/leaderboard/impl/components/RankByPicker.messages.ts | leaderboard.rankBy.loadFailed | The item list did not load. | Couldn't load the item list. |
+| user/leaderboard/impl/components/Hero.messages.ts | leaderboard.hero.stat.failed | Did not load. Retry | Couldn't load. Try again |
+| user/search/UserSearch.messages.ts | search.error.title | The search couldn't be loaded. | Couldn't search players |
+| user/profile/UserProfile.messages.ts | profile.loadFailed.profile | This profile could not be loaded. The site may be having trouble; try again in a moment. | Couldn't load this profile. Try again in a moment. |
+| user/profile/UserProfile.messages.ts | profile.loadFailed.roster | This player's operators could not be loaded. | Couldn't load this player's operators. |
+| user/profile/UserProfile.messages.ts | profile.loadFailed.inventory | This player's items could not be loaded. | Couldn't load this player's items. |
+| user/profile/UserProfile.messages.ts | profile.loadFailed.score | This player's score could not be loaded. | Couldn't load this player's score. |
+| user/profile/UserProfile.messages.ts | profile.loadFailed.improvements | Upgrade suggestions could not be loaded, so the panels below show none. | Couldn't load upgrade suggestions, so the panels below show none. |
+| user/profile/UserProfile.messages.ts | profile.loadFailed.enemies | This player's encountered enemies could not be loaded. | Couldn't load this player's encountered enemies. |
+| user/profile/impl/components/tabs/Items/ItemsTab.messages.ts | profile.items.materialsFailed | Item names did not load, so items show their ids. | Couldn't load item names, so items show their ids. |
+| user/profile/impl/components/tabs/Lookback/LookbackTab.messages.ts | lookback.error | The snapshots couldn't be loaded. | Couldn't load the snapshots. |
+| user/profile/impl/components/tabs/Plans/PlansTab.messages.ts | profile.plans.loading | Loading plans | Loading plans… |
+| user/profile/impl/components/tabs/Plans/PlansTab.messages.ts | profile.plans.error | The plans couldn't be loaded. | Couldn't load the plans. |
+| user/profile/impl/components/tabs/Showcase/ShowcaseTab.messages.ts | profile.showcase.blockFailed.grid | This grid couldn't be loaded. | Couldn't load this grid. |
+| user/profile/impl/components/tabs/Showcase/ShowcaseTab.messages.ts | profile.showcase.blockFailed.tierList | This tier list couldn't be loaded. | Couldn't load this tier list. |
+| user/profile/impl/components/tabs/Showcase/ShowcaseTab.messages.ts | profile.showcase.blockFailed.plan | This plan couldn't be loaded. | Couldn't load this plan. |
+| user/profile/impl/components/tabs/Stats/StatsTab.messages.ts | profile.stats.error | The statistics couldn't be loaded. | Couldn't load the statistics. |
+| story/library/StoryLibrary.messages.ts | route.loadFailed | This story didn't load. Check your connection and try again. | Couldn't load this story. Check your connection and try again. |
+| tier-lists/detail/TierListDetail.messages.ts | detail.snapshot.failedTitle | Version {version} didn't load | Couldn't load version {version} |
+| tools/randomizer/Randomizer.messages.ts | randomizer.loadError | Some of the game data couldn't be loaded, so the operator and stage pools may be incomplete. | Couldn't load some of the game data, so the operator and stage pools may be incomplete. |
+| tools/release/impl/components/PullsPlannerTab.messages.ts | release.pulls.plan.eventsError | Event names and art couldn't be loaded, so some banners show without them. | Couldn't load event names and art, so some banners show without them. |
+| tools/squad-builder/impl/StagePicker.messages.ts | squad.stagePicker.error | The stage list couldn't be loaded. | Couldn't load the stage list. |
+| tools/squad-builder/impl/SeatGrid.messages.ts | squad.grid.detailsFailed | Details failed to load | Couldn't load this operator's details |
+| tools/dps/DpsCalculator.messages.ts | dps.import.failed | Couldn't load the operator list, so your squad wasn't added yet. | Couldn't load the operator list, so your squad wasn't added. |
+| ui/route-error.messages.ts | routeError.title | Something went wrong loading this page | Couldn't load this page |
+| header/impl/AuthDialog.messages.ts | authDialog.saveCredentials.hint | Keeps an encrypted game token on our server, so re-syncing works without signing in again. Untick it and nothing is saved, so a re-sync more than an hour later asks you to sign in again. Revoke it any time in Settings. | Keeps an encrypted game token on our server, so re-syncing works without signing in again. Uncheck it and nothing is saved, so a re-sync more than an hour later asks you to sign in again. Revoke it any time in Settings. |
+| settings/DataPanel.messages.ts | data.linked.desc | We never store your password or sign-in code. If you ticked Keep me synced when you signed in, we keep an encrypted game token that lets us re-sync on your behalf. Disconnect below to delete it. | We never store your password or sign-in code. If you checked Keep me synced when you signed in, we keep an encrypted game token that lets us re-sync on your behalf. Disconnect below to delete it. |
+
+
+Also changed in fc081710 (older keys):
+
+| file | key text | old -> new |
+|---|---|---|
+| tools/dps/impl/components/ZonePanel.messages.ts | supporters error | Supporters could not be loaded: {error} -> Couldn't load the supporters: {error} |
+| same | supporters paused | ...the supporter values could not be loaded ({error})... -> ...couldn't load the supporter values ({error})... |
+| tier-lists/edit/KindPool.messages.ts | list error | This list did not load. -> Couldn't load this list. |
+| story/library/impl/OperatorDialog.messages.ts | shelf error | This shelf did not load. ... -> Couldn't load this shelf. ... |
+| story/library/impl/IllustrationsTab.messages.ts | artwork error | The artwork could not be loaded. -> Couldn't load the artwork. |
+| story/sprites/CharactersTab.messages.ts | list error | The character list could not be loaded. -> Couldn't load the character list. |
+| user/profile/.../Showcase/ShowcaseTab.messages.ts | showcase error | The showcase couldn't be loaded. -> Couldn't load the showcase. |
+| story/export/export.messages.ts | pictures left out | {count} pictures could not be loaded and were left out. -> Couldn't load {count} pictures, so they were left out. |
