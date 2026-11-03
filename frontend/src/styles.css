@@ -489,7 +489,7 @@ pre code {
   }
   /* The keyboard focus mark for anything that does not draw its own. The ring
      at 50% alpha measured 2.29:1 on the light page and 2.80:1 on the dark one,
-     under the 3:1 a focus indicator needs; solid it measures 4.59 and 8.06.
+     under the 3:1 a focus indicator needs; solid it measures 4.59 (light page) and 8.49 / 8.07 (dark page / card).
      A kit control that draws a `focus-visible:ring-*` also sets
      `outline-none`, and a utility beats this base rule, so it never gets two
      marks. `:focus-visible` only, so a mouse click draws nothing. */
