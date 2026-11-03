@@ -1,7 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { ArrowUpRightIcon, ChevronLeftIcon, ChevronRightIcon, XIcon } from "lucide-react";
 import { type KeyboardEvent, type PointerEvent, useRef } from "react";
-import { entityAccent } from "#/components/tier-lists/entities";
 import { useEntityLabels } from "#/components/tier-lists/kinds";
 import { Dialog, DialogBackdrop, DialogDescription, DialogPortal, DialogPrimitive, DialogTitle } from "#/components/ui/dialog";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
@@ -114,7 +113,6 @@ function ViewerContent({ t, cell, index, cols, order, prev, next, onGo, onPointe
     const label = cell.label.trim();
     const link = entityLink(entity);
     const detail = entity ? labels.detail(entity) : [];
-    const accent = entity ? entityAccent(entity) : null;
     const place = order.indexOf(index);
 
     const prevButton = (
@@ -155,7 +153,6 @@ function ViewerContent({ t, cell, index, cols, order, prev, next, onGo, onPointe
 
             {/* The stage takes the swipes, so the browser must not pan it. */}
             <div className="relative flex min-h-0 flex-1 touch-none items-center justify-center px-4 sm:px-20" onPointerDown={onPointerDown} onPointerUp={onPointerUp} onPointerCancel={onPointerCancel}>
-                {accent && <div aria-hidden="true" className="pointer-events-none absolute inset-0 opacity-35" style={{ background: `radial-gradient(ellipse 55% 60% at 50% 55%, ${accent}, transparent 70%)` }} />}
                 {entity ? (
                     <div className="relative h-full w-full max-w-[1100px] py-2">
                         <CellHeroArt entity={entity} server={cell.server} size="viewer" />

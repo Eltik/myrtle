@@ -51,6 +51,10 @@ export const messages = {
         text: "Progress",
         description: "Top-level tab holding the reading summary and the backup controls.",
     },
+    "route.loadFailed": {
+        text: "This story didn't load. Check your connection and try again.",
+        description: "Shown on the story reader page when the story or the library index failed to load, beside a Retry button.",
+    },
 } satisfies MessageMap;
 
 export const { keys } = defineMessages({ namespace, messages });

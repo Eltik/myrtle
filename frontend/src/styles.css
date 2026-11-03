@@ -186,6 +186,13 @@ body:has([data-music-player-bar]) {
   --music-bar-reserve: calc(64px + env(safe-area-inset-bottom));
   padding-bottom: var(--music-bar-reserve);
 }
+/* Touch: the seek control is a 44 px hit area centred on the bar's top edge, so the
+   bar's top padding grows 10 -> 24 px to keep its lower half off the buttons. */
+@media (pointer: coarse) {
+  body:has([data-music-player-bar]) {
+    --music-bar-reserve: calc(78px + env(safe-area-inset-bottom));
+  }
+}
 body:has([data-music-player-bar]) [data-claims-bottom] {
   bottom: var(--music-bar-reserve);
 }

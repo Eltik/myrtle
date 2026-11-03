@@ -1,6 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
+import { LoadFailed } from "#/components/gacha/LoadFailed";
 import { BookView } from "#/components/story/export/BookView";
+import type { messages as libraryMessages } from "#/components/story/library/StoryLibrary.messages";
 import type { messages as readerMessages } from "#/components/story/reader/reader.messages";
 import { StoryReader } from "#/components/story/reader/StoryReader";
 import { RouteError } from "#/components/ui/route-error";
@@ -111,9 +113,30 @@ function RouteComponent() {
     // still a mount.
     useStoryProgressSync();
     const tr: TypedT<typeof readerMessages> = useT("story");
-    const { data: index } = useQuery(storyIndexQueryOptions(server));
-    const { data: script, isPending } = useQuery(storyQueryOptions(storyId, server));
-    if (isPending || !index) return <p className="p-8 text-center text-muted-foreground">{tr("reader.loading")}</p>;
+    const tl: TypedT<typeof libraryMessages> = useT("story");
+    const indexQuery = useQuery(storyIndexQueryOptions(server));
+    const scriptQuery = useQuery(storyQueryOptions(storyId, server));
+    const index = indexQuery.data;
+    const script = scriptQuery.data;
+    // The loader covers the first visit only. After a client-side server switch a failed
+    // index query held "Loading" forever and a failed script read as "not found", so the
+    // error is read before the pending and empty branches.
+    const indexFailed = indexQuery.isError && !index;
+    const scriptFailed = scriptQuery.isError && script === undefined;
+    if (indexFailed || scriptFailed) {
+        return (
+            <div className="mx-auto max-w-xl p-8">
+                <LoadFailed
+                    message={tl("route.loadFailed")}
+                    onRetry={() => {
+                        if (indexFailed) void indexQuery.refetch();
+                        if (scriptFailed) void scriptQuery.refetch();
+                    }}
+                />
+            </div>
+        );
+    }
+    if (scriptQuery.isPending || !index) return <p className="p-8 text-center text-muted-foreground">{tr("reader.loading")}</p>;
     const placement = placeStory(index, storyId);
     if (script === null || script === undefined) {
         return <p className="p-8 text-center text-muted-foreground">{placement.entry ? tr("reader.error.noScript") : tr("reader.error.notFound")}</p>;

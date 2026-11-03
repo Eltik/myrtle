@@ -4,6 +4,7 @@ import type React from "react";
 import { useState } from "react";
 import { renderStoryNodes } from "#/components/story/reader/TextBox";
 import { Button } from "#/components/ui/button";
+import { Kicker } from "#/components/ui/kicker";
 import { Popover, PopoverPopup, PopoverTrigger } from "#/components/ui/popover";
 import { Sheet, SheetClose, SheetFooter, SheetHeader, SheetPanel, SheetPopup, SheetTitle } from "#/components/ui/sheet";
 import { useMediaQuery } from "#/hooks/use-media-query";
@@ -47,7 +48,7 @@ function NameDetailBody({ name, detail, total, owner }: { name: string; detail: 
             </div>
             {detail && detail.stories.length > 0 ? (
                 <section className="flex flex-col gap-1">
-                    <span className="font-sans font-semibold text-[11px] text-muted-foreground uppercase tracking-[0.06em]">{t("sprites.name.stories")}</span>
+                    <Kicker className="mb-0">{t("sprites.name.stories")}</Kicker>
                     <ul className="m-0 flex list-none flex-col p-0">
                         {detail.stories.map((s) => (
                             <li key={s.id} className="flex items-baseline justify-between gap-3 py-0.5 font-sans text-[12px]">
@@ -63,7 +64,7 @@ function NameDetailBody({ name, detail, total, owner }: { name: string; detail: 
             ) : null}
             {detail && detail.examples.length > 0 ? (
                 <section className="flex flex-col gap-1.5">
-                    <span className="font-sans font-semibold text-[11px] text-muted-foreground uppercase tracking-[0.06em]">{t("sprites.name.examples")}</span>
+                    <Kicker className="mb-0">{t("sprites.name.examples")}</Kicker>
                     {detail.examples.map((e) => (
                         <Link key={`${e.storyId}:${e.line}`} to="/stories/$storyId" params={{ storyId: e.storyId }} search={{ line: e.line }} className="group flex flex-col gap-0.5 rounded-md border border-border px-2.5 py-2 no-underline transition-colors hover:border-primary/45 max-sm:min-h-11">
                             <span className="whitespace-pre-line font-sans text-[12.5px] text-foreground leading-snug">{renderStoryNodes(renderLine(e.text, NICKNAME))}</span>

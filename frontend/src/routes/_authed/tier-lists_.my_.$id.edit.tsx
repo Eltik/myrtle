@@ -53,10 +53,7 @@ function RouteComponent() {
 function EditorLoading() {
     return (
         <div className="grid min-h-dvh place-items-center">
-            <div className="flex items-center gap-2 font-sans text-muted-foreground text-sm">
-                <Spinner />
-                <span>Loading editor…</span>
-            </div>
+            <Spinner />
         </div>
     );
 }

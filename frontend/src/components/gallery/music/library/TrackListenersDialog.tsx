@@ -6,6 +6,7 @@ import type React from "react";
 import { useState } from "react";
 import { Button } from "#/components/ui/button";
 import { Dialog, DialogDescription, DialogHeader, DialogPanel, DialogPopup, DialogTitle } from "#/components/ui/dialog";
+import { Kicker } from "#/components/ui/kicker";
 import { musicListenersQueryOptions } from "#/lib/api/music";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -60,7 +61,9 @@ function Body({ track, houseArtist }: { track: ITrack; houseArtist: string | nul
                         {track.coverUrl ? <img referrerPolicy="no-referrer" src={sizedCover(track.coverUrl, 48)} alt="" decoding="async" className="size-full object-cover" /> : <Disc3Icon aria-hidden="true" className="absolute inset-0 m-auto size-5 text-muted-foreground" />}
                     </span>
                     <span className="flex min-w-0 flex-col gap-0.5">
-                        <span className="font-mono text-[10px] text-primary uppercase tracking-[0.14em]">{t("music.charts.trackKicker")}</span>
+                        <Kicker className="mb-0" tone="accent">
+                            {t("music.charts.trackKicker")}
+                        </Kicker>
                         <DialogTitle className="truncate text-base" title={track.title}>
                             {track.title}
                         </DialogTitle>

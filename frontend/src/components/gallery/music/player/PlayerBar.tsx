@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { Disc3Icon, HeartIcon, ListMusicIcon, MicVocalIcon, PauseIcon, PlayIcon, Settings2Icon, SkipBackIcon, SkipForwardIcon, SquareIcon, Volume1Icon, Volume2Icon, VolumeXIcon, XIcon } from "lucide-react";
 import type React from "react";
 import { useState } from "react";
+import { Kicker } from "#/components/ui/kicker";
 import { Slider, SliderPrimitive } from "#/components/ui/slider";
 import { Spinner } from "#/components/ui/spinner";
 import { useFormatters, useT } from "#/lib/i18n";
@@ -54,7 +55,7 @@ export function PlayerBar({ offPage = false }: { offPage?: boolean }): React.Rea
                     <span aria-live="polite" className="sr-only">
                         {status === "playing" ? t("music.player.nowPlaying", { title }) : ""}
                     </span>
-                    <div className="mx-auto grid max-w-350 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 px-3 pt-2.5 pb-[max(0.5rem,env(safe-area-inset-bottom))] sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:px-6 xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
+                    <div className="mx-auto grid max-w-350 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 px-3 pointer-coarse:pt-6 pt-2.5 pb-[max(0.5rem,env(safe-area-inset-bottom))] sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:px-6 xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
                         <div className="relative flex min-w-0 items-center gap-2.5">
                             <LikeButton t={t} trackId={current.id} />
                             {offPage ? (
@@ -68,7 +69,9 @@ export function PlayerBar({ offPage = false }: { offPage?: boolean }): React.Rea
                                 </div>
                             )}
                             <div className="flex min-w-0 flex-col leading-tight">
-                                <span className="truncate font-mono text-[9.5px] text-primary uppercase tracking-[0.14em]">{kicker}</span>
+                                <Kicker className="mb-0 block truncate" tone="accent">
+                                    {kicker}
+                                </Kicker>
                                 <ClippedText className="font-sans font-semibold text-[13.5px] text-foreground" text={title} />
                                 <ClippedText className="text-[11.5px] text-muted-foreground" text={subLine(current, houseArtist)} />
                             </div>
@@ -207,14 +210,14 @@ function SeekLine({ t }: { t: PlayerT }): React.ReactElement {
             value={[value]}
         >
             <SliderPrimitive.Label className="sr-only">{t("music.player.seek")}</SliderPrimitive.Label>
-            <SliderPrimitive.Control className="group flex h-4 w-full cursor-pointer touch-none select-none items-center data-disabled:cursor-default max-sm:h-6" onPointerLeave={() => setHover(null)} onPointerMove={onMove}>
-                {/* The bar thickens on hover by scaleY on its three layers, not by animating the track's height (a relayout per frame); the thumb is not scaled. */}
+            <SliderPrimitive.Control className="group flex h-4 pointer-coarse:h-11 w-full cursor-pointer touch-none select-none items-center data-disabled:cursor-default" onPointerLeave={() => setHover(null)} onPointerMove={onMove}>
+                {/* The bar thickens on hover by scaleY on its three layers, not by animating the track's height (a relayout per frame); the thumb is not scaled. On touch the control is 44 px tall and the thumb shows at rest: the old 24 px phone strip with a hidden thumb was the only drag target. */}
                 <SliderPrimitive.Track className="relative h-1.5 w-full grow select-none before:absolute before:inset-0 before:scale-y-[.667] before:bg-foreground/10 before:transition-transform before:duration-150 before:ease-out group-hover:before:scale-y-100">
                     <span aria-hidden="true" className="absolute inset-y-0 left-0 scale-y-[.667] bg-foreground/10 transition-transform duration-150 ease-out group-hover:scale-y-100" style={{ width: `${Math.round(p.buffered * 1000) / 10}%` }} />
-                    <SliderPrimitive.Indicator className="scale-y-[.667] bg-primary shadow-[0_0_8px_var(--color-primary)] transition-transform duration-150 ease-out group-hover:scale-y-100" />
+                    <SliderPrimitive.Indicator className="scale-y-[.667] bg-primary transition-transform duration-150 ease-out group-hover:scale-y-100" />
                     {loopPercent !== null && <span aria-hidden="true" className="absolute top-1/2 h-2.5 w-0.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-foreground/60" style={{ left: `${loopPercent}%` }} title={t("music.player.loopPoint")} />}
                     <SliderPrimitive.Thumb
-                        className="block size-3 rounded-full bg-primary opacity-0 shadow outline-none transition-opacity group-hover:opacity-100 has-focus-visible:opacity-100 has-focus-visible:ring-3 has-focus-visible:ring-ring data-dragging:opacity-100"
+                        className="block pointer-coarse:size-4 size-3 rounded-full bg-primary opacity-0 pointer-coarse:opacity-100 shadow outline-none transition-opacity group-hover:opacity-100 has-focus-visible:opacity-100 has-focus-visible:ring-3 has-focus-visible:ring-ring data-dragging:opacity-100"
                         getAriaValueText={() => t("music.player.seekValue", { elapsed, total })}
                         index={0}
                     />

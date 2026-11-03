@@ -128,12 +128,8 @@ export function NoteEditor({ row, enabled, saving, onSave }: INoteEditorProps): 
             <div className="flex flex-col gap-3.5 px-5 pt-4 pb-5">
                 <Tabs value={mode} onValueChange={(v) => setMode(v as "write" | "preview")} className="self-end">
                     <TabsList aria-label={t("notes.mode.label")}>
-                        <TabsTab value="write" className="h-6 pointer-coarse:h-9 pointer-coarse:px-3.5 px-2.5 text-[12.5px]">
-                            {t("notes.mode.write")}
-                        </TabsTab>
-                        <TabsTab value="preview" className="h-6 pointer-coarse:h-9 pointer-coarse:px-3.5 px-2.5 text-[12.5px]">
-                            {t("notes.mode.preview")}
-                        </TabsTab>
+                        <TabsTab value="write">{t("notes.mode.write")}</TabsTab>
+                        <TabsTab value="preview">{t("notes.mode.preview")}</TabsTab>
                     </TabsList>
                 </Tabs>
 
@@ -168,7 +164,7 @@ export function NoteEditor({ row, enabled, saving, onSave }: INoteEditorProps): 
                                                             draft.tags.filter((x) => x !== tag),
                                                         )
                                                     }
-                                                    className="pointer-coarse:after:-translate-1/2 relative flex h-[26px] cursor-pointer items-center gap-1.5 rounded-[13px] border border-border bg-card pr-2 pl-2.5 text-[12.5px] transition-colors pointer-coarse:after:absolute pointer-coarse:after:top-1/2 pointer-coarse:after:left-1/2 pointer-coarse:after:size-11 hover:border-destructive"
+                                                    className="pointer-coarse:after:-translate-1/2 relative flex h-[26px] cursor-pointer items-center gap-1.5 rounded-lg border border-border bg-card pr-2 pl-2.5 text-[12.5px] transition-colors pointer-coarse:after:absolute pointer-coarse:after:top-1/2 pointer-coarse:after:left-1/2 pointer-coarse:after:size-11 hover:border-destructive"
                                                 />
                                             }
                                         >

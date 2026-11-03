@@ -88,7 +88,7 @@ export function GridsBrowse({ search }: { search: IGridsSearch }) {
                     {isPending ? (
                         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                             {["s1", "s2", "s3", "s4", "s5", "s6"].map((k) => (
-                                <Skeleton key={k} className="h-56 rounded-xl" />
+                                <Skeleton key={k} className="h-56 rounded-2xl" />
                             ))}
                         </div>
                     ) : isError ? (

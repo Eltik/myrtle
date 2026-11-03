@@ -212,7 +212,7 @@ export function Browse({ index, progress, gameRead, openGroup, onOpenHandled }: 
             <div className="flex flex-col gap-3">
                 <BrowseToolbar state={toolbar} />
 
-                {library.fallback ? <p className="m-0 rounded-[10px] border border-warning/40 bg-warning/8 px-3 py-2 font-sans text-[12px] text-muted-foreground">{t("browse.fallback")}</p> : null}
+                {library.fallback ? <p className="m-0 rounded-2xl border border-warning/40 bg-warning/8 px-3 py-2 font-sans text-[12px] text-muted-foreground">{t("browse.fallback")}</p> : null}
             </div>
 
             {/* The bar is pinned under a sort too, with no chips in it: it is the only

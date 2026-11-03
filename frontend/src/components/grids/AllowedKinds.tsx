@@ -3,7 +3,6 @@ import { useEntityLabels } from "#/components/tier-lists/kinds";
 import { Button } from "#/components/ui/button";
 import { Checkbox } from "#/components/ui/checkbox";
 import { Dialog, DialogClose, DialogDescription, DialogFooter, DialogHeader, DialogPanel, DialogPopup, DialogTitle } from "#/components/ui/dialog";
-import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { ALL_ENTITY_KINDS, type TierEntityKind } from "#/lib/api/tier-entities";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -121,37 +120,26 @@ export function AllowedKindsDialog({ open, kinds, placedByKind, onClose, onApply
 
 interface IKindChipsProps {
     kinds: readonly TierEntityKind[];
-    /** Show at most this many chips, then `+N`. Unset shows every kind. */
-    max?: number;
     className?: string;
 }
 
-/** The allowed types as small chips, in tab order. */
-export function KindChips({ kinds, max, className }: IKindChipsProps) {
+/**
+ * The allowed types as small chips, in tab order, every one shown. A `+N` overflow
+ * chip used to hide the rest behind a hover tooltip on a plain `<li>`, which touch
+ * and keyboard could not reach (R-39); on a card it sits inside the card's link, so
+ * it could not become a button either.
+ */
+export function KindChips({ kinds, className }: IKindChipsProps) {
     const t: KindsT = useT("grids");
     const labels = useEntityLabels();
-    const ordered = orderKinds(kinds);
-    // `+1` would take the room of the chip it hides, so a list one over the cap shows whole.
-    const cut = max !== undefined && ordered.length > max + 1 ? max : ordered.length;
-    const shown = ordered.slice(0, cut);
-    const hidden = ordered.slice(cut);
 
     return (
         <ul className={cn("m-0 flex list-none flex-wrap items-center gap-1 p-0", className)} aria-label={t("kinds.label")}>
-            {shown.map((kind) => (
+            {orderKinds(kinds).map((kind) => (
                 <li key={kind} className="rounded-sm border border-border bg-muted/60 px-1.5 py-0.5 font-sans text-[10.5px] text-muted-foreground leading-none">
                     {labels.plural(kind)}
                 </li>
             ))}
-            {hidden.length > 0 && (
-                <Tooltip>
-                    <TooltipTrigger render={<li className="rounded-sm border border-border border-dashed px-1.5 py-0.5 font-mono text-[10.5px] text-muted-foreground tabular-nums leading-none" />}>
-                        <span aria-hidden="true">{t("kinds.more", { count: hidden.length })}</span>
-                        <span className="sr-only">{t("kinds.moreTitle", { kinds: hidden.map((k) => labels.plural(k)).join(", ") })}</span>
-                    </TooltipTrigger>
-                    <TooltipPopup>{t("kinds.moreTitle", { kinds: hidden.map((k) => labels.plural(k)).join(", ") })}</TooltipPopup>
-                </Tooltip>
-            )}
         </ul>
     );
 }

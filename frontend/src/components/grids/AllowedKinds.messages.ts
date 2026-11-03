@@ -19,14 +19,6 @@ export const messages = {
         text: "{count, plural, one {# pick} other {# picks}}",
         description: "Small count beside a type in the editor's types dialog: how many cells hold a pick of that type now.",
     },
-    "kinds.more": {
-        text: "+{count}",
-        description: "Last chip of a shortened list of allowed types on a grid card: how many more types are allowed. {count} is a number.",
-    },
-    "kinds.moreTitle": {
-        text: "Also allows: {kinds}",
-        description: "Tooltip on the '+N' chip of a grid card. {kinds} is a comma-separated list of type names.",
-    },
     "kinds.change": {
         text: "Change",
         description: "Button in the grid editor that opens the dialog for changing the allowed types.",

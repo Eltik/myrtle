@@ -1,5 +1,6 @@
 import type React from "react";
 import { useMemo } from "react";
+import { Kicker } from "#/components/ui/kicker";
 import { useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { sizedCover } from "../impl/cover";
@@ -89,7 +90,7 @@ function Tile({ value, label }: { value: string; label: string }): React.ReactEl
     return (
         <div className="rounded-2xl border border-border bg-card/55 px-4 py-3.5">
             <div className="font-light font-sans text-[28px] text-primary tabular-nums leading-none tracking-[-0.02em]">{value}</div>
-            <div className="mt-1.5 font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.12em]">{label}</div>
+            <Kicker className="mt-1.5 mb-0 block">{label}</Kicker>
         </div>
     );
 }
@@ -98,7 +99,9 @@ function Column({ title, empty, emptyText, children }: { title: string; empty: b
     const t: MusicT = useT("gallery");
     return (
         <section aria-label={title}>
-            <h3 className="m-0 mb-2 font-mono font-normal text-[10.5px] text-muted-foreground uppercase tracking-[0.12em]">{title}</h3>
+            <h3 className="m-0 mb-2 font-normal">
+                <Kicker className="mb-0">{title}</Kicker>
+            </h3>
             {empty ? <p className="m-0 font-sans text-[12.5px] text-muted-foreground">{emptyText ?? t("music.stats.nothing")}</p> : <ol className="m-0 flex list-none flex-col p-0">{children}</ol>}
         </section>
     );

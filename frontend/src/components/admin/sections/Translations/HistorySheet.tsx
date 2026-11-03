@@ -82,7 +82,7 @@ export function HistorySheet({ open, onOpenChange, locale, messageKey, currentVa
                                         </Tooltip>{" "}
                                         · {t("translations.history.by", { actor: rev.actor.nickname ?? t("translations.history.deletedAccount") })}
                                     </div>
-                                    <div className="flex flex-col gap-1 rounded-[10px] bg-muted px-3 py-2 text-[13px] leading-normal" lang={locale.code}>
+                                    <div className="flex flex-col gap-1 rounded-lg bg-muted px-3 py-2 text-[13px] leading-normal" lang={locale.code}>
                                         {rev.old_value !== null ? <div className="text-muted-foreground line-through">{rev.old_value}</div> : <div className="text-muted-foreground italic">{t("translations.history.wasEmpty")}</div>}
                                         {rev.new_value !== null ? <div>{rev.new_value}</div> : <div className="text-muted-foreground italic">{t("translations.history.cleared")}</div>}
                                     </div>

@@ -138,7 +138,7 @@ export function SongList({ tracks, source, houseArtist, playlist, pageKey }: ISo
 
     return (
         <div className="@container">
-            <div className={cn(GRID, "border-border border-b px-2 pb-1.5 font-mono text-[10px] text-muted-foreground uppercase tracking-[0.12em]")}>
+            <div className={cn(GRID, "border-border border-b px-2 pb-1.5 font-medium font-sans text-[11.5px] text-subtle-foreground")}>
                 <Checkbox checked={allShownSelected} indeterminate={!allShownSelected && selectedTracks.length > 0} onCheckedChange={(checked) => setSelected(checked ? new Set(shown.map((tr) => tr.id)) : new Set())} aria-label={t("music.list.selectAll")} className={cn("justify-self-center", CHECK_HIT)} />
                 <span className="flex items-center gap-2">
                     <span className="w-7 text-center">#</span>

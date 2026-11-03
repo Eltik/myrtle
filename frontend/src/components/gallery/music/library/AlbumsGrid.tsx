@@ -4,6 +4,7 @@ import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
 import { sizedCover } from "../impl/cover";
+import { Equalizer } from "../impl/Equalizer";
 import type { IAlbum } from "../impl/model";
 import { useMusicNav } from "../impl/nav";
 import type { messages } from "../MusicGallery.messages";
@@ -25,6 +26,7 @@ export function AlbumsGrid({ albums, pageKey }: { albums: readonly IAlbum[]; pag
     const t: MusicT = useT("gallery");
     const nav = useMusicNav();
     const playingAlbum = usePlayer((s) => s.current?.albumId ?? null);
+    const playing = usePlayer((s) => s.status === "playing" || s.status === "loading");
     const page = usePagedList(albums, pageKey);
 
     if (albums.length === 0) return <p className={NOTICE_CLASS}>{t("music.list.noAlbums")}</p>;
@@ -43,9 +45,17 @@ export function AlbumsGrid({ albums, pageKey }: { albums: readonly IAlbum[]; pag
                             <img referrerPolicy="no-referrer" src={sizedCover(album.coverUrl, 240)} alt="" loading="lazy" decoding="async" className="relative size-full object-cover transition-transform duration-200 ease-out group-hover/card:scale-104 motion-reduce:transition-none" />
                             <span aria-hidden="true" className="pointer-events-none absolute inset-0 bg-black/18 transition-opacity duration-200 ease-out group-hover/card:opacity-30" />
                             <span className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_top,rgb(0_0_0/.88),rgb(0_0_0/.15)_55%,transparent_75%)]" />
+                            {album.id === playingAlbum ? (
+                                // The ring alone matched the hover ring and told a screen reader nothing. Black/90 keeps
+                                // the primary bars at 3.65 (light) over white art; /75 measured 2.17.
+                                <span className="absolute top-2 left-2 inline-flex items-center gap-1.5 rounded-md bg-black/90 px-1.5 py-0.5 font-medium font-sans text-[11px] text-white">
+                                    {playing ? <Equalizer /> : null}
+                                    {playing ? t("music.list.albumPlaying") : t("music.list.albumPaused")}
+                                </span>
+                            ) : null}
                             <span className="absolute inset-x-0 bottom-0 flex flex-col gap-0.5 p-2.5">
                                 <span className="line-clamp-2 font-sans font-semibold text-[12.5px] text-white leading-tight [text-shadow:0_1px_2px_rgb(0_0_0/.6)]">{album.name}</span>
-                                <span className="font-mono text-[9.5px] text-white/70 uppercase tracking-[0.12em]">{t("music.list.trackCount", { count: album.trackCount })}</span>
+                                <span className="font-sans text-[11px] text-white/70 tabular-nums">{t("music.list.trackCount", { count: album.trackCount })}</span>
                             </span>
                             <span aria-hidden="true" className="pointer-events-none absolute inset-0 rounded-lg opacity-0 ring-2 ring-primary/60 ring-inset transition-opacity duration-150 ease-out group-hover/card:opacity-100" />
                         </button>

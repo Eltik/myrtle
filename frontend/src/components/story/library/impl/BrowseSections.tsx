@@ -39,7 +39,7 @@ export function FlatHead({ title, count }: { title: string; count: string }): Re
     return (
         <div className="mb-3 flex items-end justify-between gap-3 border-border border-b pb-2">
             <div className="flex min-w-0 flex-col gap-0.5">
-                <h2 className="m-0 font-bold font-heading text-[13px] text-foreground uppercase tracking-widest sm:truncate">{title}</h2>
+                <h2 className="m-0 font-bold font-heading text-[15px] text-foreground sm:truncate">{title}</h2>
                 <span className="font-sans text-[12px] text-muted-foreground tabular-nums sm:truncate">{count}</span>
             </div>
         </div>
@@ -171,7 +171,7 @@ export const SectionHead = memo(function SectionHead({ chip, count, action }: { 
                     "Main story · Chapt…" beside a wide banner, so every width wraps
                     to two lines and only a third is cut. */}
                 <div className="flex min-w-0 flex-col gap-0.5">
-                    <h2 className="m-0 line-clamp-2 font-bold font-heading text-[15px] text-foreground uppercase tracking-widest">{heading}</h2>
+                    <h2 className="m-0 line-clamp-2 font-bold font-heading text-[15px] text-foreground">{heading}</h2>
                     <span className="line-clamp-2 font-sans text-[12px] text-muted-foreground tabular-nums">{under}</span>
                 </div>
             </div>
@@ -285,12 +285,12 @@ export const JumpBar = memo(function JumpBar({ chips, tools }: { chips: readonly
     const pickerCurrent = phone ? current : (chips[0] ?? null);
 
     return (
-        <nav aria-label={t("browse.jump.aria")} className="page-bleed sticky top-14 z-20 mt-4 border-border/60 border-b bg-background/85 px-(--page-gutter) pt-1 pb-0.75 backdrop-blur-md sm:top-16 sm:py-2">
+        <nav aria-label={t("browse.jump.aria")} className="page-bleed sticky top-(--site-header-height) z-20 mt-4 border-border/60 border-b bg-background/95 px-(--page-gutter) pt-1 pb-0.75 sm:py-2">
             <div className="flex items-center gap-2 sm:gap-1.5">
                 {current === null ? (
                     // A sort flattens the shelves, so there is nothing to jump between;
                     // the bar stays for its search button and names the one list.
-                    <span className="min-w-0 flex-1 truncate font-bold font-heading text-[13px] text-foreground uppercase tracking-widest">{t("browse.section.sorted")}</span>
+                    <span className="min-w-0 flex-1 truncate font-bold font-heading text-[14px] text-foreground">{t("browse.section.sorted")}</span>
                 ) : (
                     <>
                         {pickerCurrent ? <SectionPicker chips={chips} current={pickerCurrent} t={t} /> : null}
@@ -440,11 +440,12 @@ const JumpChip = memo(function JumpChip({ chip, on, onJump, t }: { chip: IChipMo
             {bare ? null : (
                 <span className="flex min-w-0 flex-col items-start leading-none">
                     {lines.name ? <span className="whitespace-nowrap font-sans font-semibold text-[13px]">{lines.name}</span> : null}
-                    {lines.abbr ? <span className="whitespace-nowrap font-mono font-semibold text-[10px] uppercase tracking-[0.08em] opacity-75">{lines.abbr}</span> : null}
-                    {mono ? <span className={cn("whitespace-nowrap font-mono text-[10px] uppercase tabular-nums tracking-[0.08em]", lines.name ? "mt-1" : "", on ? "opacity-80" : "opacity-75")}>{mono}</span> : null}
+                    {/* No element opacity on the 10 px sublines: it took them to 3.88 at rest and 3.08 / 3.34 on the lit chip. Rest is subtle-foreground (5.29), lit is full primary-foreground (4.59). */}
+                    {lines.abbr ? <span className={cn("whitespace-nowrap font-mono font-semibold text-[10px] uppercase tracking-[0.08em]", !on && "text-subtle-foreground")}>{lines.abbr}</span> : null}
+                    {mono ? <span className={cn("whitespace-nowrap font-mono text-[10px] uppercase tabular-nums tracking-[0.08em]", lines.name ? "mt-1" : "", !on && "text-subtle-foreground")}>{mono}</span> : null}
                 </span>
             )}
-            {on ? <span className="shrink-0 font-mono text-[10px] tabular-nums opacity-80">{chip.count}</span> : null}
+            {on ? <span className="shrink-0 font-mono text-[10px] tabular-nums">{chip.count}</span> : null}
         </a>
     );
     // The tooltip is DISABLED on the active chip, never unwrapped: returning the

@@ -28,7 +28,7 @@ export function GridCard({ grid, badge, actions }: IGridCardProps) {
     const forks = Number(grid.fork_count);
 
     return (
-        <article className="group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-[0_1px_2px_oklch(0_0_0/0.04)] transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-foreground/20 hover:shadow-lg motion-reduce:transition-none motion-reduce:hover:translate-y-0">
+        <article className="group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-[0_1px_2px_oklch(0_0_0/0.04)] transition-[border-color] duration-200 hover:border-foreground/20 motion-reduce:transition-none">
             <Link to="/grids/$slug" params={{ slug: grid.slug }} className="flex flex-1 flex-col no-underline">
                 <GridThumb grid={grid} />
                 <div className="flex flex-col gap-1.5 px-3.5 pt-3 pb-3">
@@ -49,7 +49,7 @@ export function GridCard({ grid, badge, actions }: IGridCardProps) {
                             <TooltipPopup>{t("card.forks", { count: forks, formatted: f.number(forks) })}</TooltipPopup>
                         </Tooltip>
                     </div>
-                    <KindChips kinds={grid.entity_kinds} max={3} className="mt-0.5" />
+                    <KindChips kinds={grid.entity_kinds} className="mt-0.5" />
                 </div>
             </Link>
             {actions && <div className="flex items-center gap-1.5 border-border border-t px-3 py-2">{actions}</div>}

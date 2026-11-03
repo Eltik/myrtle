@@ -285,7 +285,7 @@ export const ToolbarButton = memo(function ToolbarButton({ state }: { state: IBr
         </>
     );
     const face =
-        "relative flex shrink-0 cursor-pointer items-center justify-center rounded-[10px] border border-border bg-secondary/50 text-foreground transition-colors hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring data-popup-open:border-primary/55 data-popup-open:bg-primary/12";
+        "relative flex shrink-0 cursor-pointer items-center justify-center rounded-lg border border-border bg-secondary/50 text-foreground transition-colors hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring data-popup-open:border-primary/55 data-popup-open:bg-primary/12";
 
     return (
         <>

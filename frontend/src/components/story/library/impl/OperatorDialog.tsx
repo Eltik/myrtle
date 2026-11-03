@@ -193,7 +193,7 @@ function Shelf<T>({ loading, failed, rows, count, words, empty, emptyNote, child
         return (
             <output className="flex flex-col gap-2" aria-label={t("operators.dialog.loading")}>
                 {[0, 1, 2].map((i) => (
-                    <Skeleton key={i} className="h-11 w-full rounded-[10px]" />
+                    <Skeleton key={i} className="h-11 w-full rounded-lg" />
                 ))}
             </output>
         );
@@ -225,19 +225,19 @@ function Section({ title, meta, badge, icon, words, children }: { title: string;
         <Collapsible open={open} onOpenChange={setOpen}>
             <CollapsibleTrigger
                 aria-label={open ? t("operators.dialog.section.collapse", { name: title }) : t("operators.dialog.section.expand", { name: title })}
-                className="flex w-full cursor-pointer items-center gap-2.5 rounded-[10px] border border-border bg-secondary/35 px-3 py-2 text-left transition-colors hover:border-primary/45 max-sm:min-h-11"
+                className="flex w-full cursor-pointer items-center gap-2.5 rounded-lg border border-border bg-secondary/35 px-3 py-2 text-left transition-colors hover:border-primary/45 max-sm:min-h-11"
             >
                 {icon}
                 <span className="flex min-w-0 flex-1 flex-col">
                     <span className="truncate font-sans font-semibold text-[12.5px] text-foreground">{title}</span>
-                    {meta ? <span className="truncate font-mono text-[10px] text-muted-foreground uppercase tracking-wide">{meta}</span> : null}
+                    {meta ? <span className="truncate font-sans text-[11px] text-muted-foreground">{meta}</span> : null}
                 </span>
                 {badge}
                 <span className="shrink-0 font-mono text-[10px] text-muted-foreground tabular-nums">{t("operators.dialog.words", { count: f.number(words) })}</span>
                 <ChevronDownIcon className={cn("size-3.5 shrink-0 text-muted-foreground transition-transform", open && "rotate-180")} aria-hidden="true" />
             </CollapsibleTrigger>
             <CollapsibleContent>
-                <div className="mt-1.5 rounded-[10px] border border-border/60 bg-card/40 p-3">{children}</div>
+                <div className="mt-1.5 rounded-2xl border border-border/60 bg-card/40 p-3">{children}</div>
             </CollapsibleContent>
         </Collapsible>
     );
@@ -362,7 +362,7 @@ function VoicesShelf({ loading, failed, lines, words }: { loading: boolean; fail
         return (
             <output className="flex flex-col gap-2" aria-label={t("operators.dialog.loading")}>
                 {[0, 1, 2].map((i) => (
-                    <Skeleton key={i} className="h-11 w-full rounded-[10px]" />
+                    <Skeleton key={i} className="h-11 w-full rounded-lg" />
                 ))}
             </output>
         );
@@ -403,7 +403,7 @@ function VoiceRow({ line, language, playing, onToggle }: { line: IVoiceLine; lan
     const clip = line.clips[language];
 
     return (
-        <li className={cn("flex items-start gap-2.5 rounded-[10px] border p-2.5", playing ? "border-primary bg-primary/10" : "border-border bg-card/40")}>
+        <li className={cn("flex items-start gap-2.5 rounded-2xl border p-2.5", playing ? "border-primary bg-primary/10" : "border-border bg-card/40")}>
             <button
                 type="button"
                 disabled={!clip}

@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-11-03T16:32:17.200Z",
+    "generatedAt": "2026-11-03T16:47:04.452Z",
     "entries": [
         {
             "key": "admin.home.access.everyList",
@@ -3146,10 +3146,24 @@
             "placeholders": []
         },
         {
+            "key": "admin.tierLists.flair.loadError",
+            "namespace": "admin",
+            "source_text": "Couldn't load the flairs.",
+            "description": "Shown in the flair dialog when the list of flairs failed to load. A retry button follows.",
+            "placeholders": []
+        },
+        {
             "key": "admin.tierLists.flair.none",
             "namespace": "admin",
             "source_text": "No flair",
             "description": "Flair option that removes the list's flair.",
+            "placeholders": []
+        },
+        {
+            "key": "admin.tierLists.flair.retry",
+            "namespace": "admin",
+            "source_text": "Try again",
+            "description": "Button that reloads the flairs after they failed to load.",
             "placeholders": []
         },
         {
@@ -3829,6 +3843,13 @@
             ]
         },
         {
+            "key": "admin.translations.editor.argMissing",
+            "namespace": "admin",
+            "source_text": "missing",
+            "description": "Screen-reader text after a placeholder chip whose placeholder the translation has dropped (read-only view).",
+            "placeholders": []
+        },
+        {
             "key": "admin.translations.editor.back",
             "namespace": "admin",
             "source_text": "All strings",
@@ -3889,6 +3910,15 @@
             "namespace": "admin",
             "source_text": "Insert {placeholder} at the cursor",
             "description": "Tooltip on a placeholder chip. {placeholder} is the placeholder itself in braces, for example {count}.",
+            "placeholders": [
+                "placeholder"
+            ]
+        },
+        {
+            "key": "admin.translations.editor.insertArgMissing",
+            "namespace": "admin",
+            "source_text": "Insert {placeholder} at the cursor. The translation is missing it.",
+            "description": "Tooltip and screen-reader name of a placeholder chip whose placeholder the translation has dropped. {placeholder} is the placeholder itself in braces, for example {count}.",
             "placeholders": [
                 "placeholder"
             ]
@@ -6689,7 +6719,7 @@
             "key": "changelog.commit.breaking",
             "namespace": "changelog",
             "source_text": "Breaking",
-            "description": "Badge on a commit that changes behaviour incompatibly. Short for 'breaking change'. Rendered uppercase in a small pill.",
+            "description": "Badge on a commit that changes behaviour incompatibly. Short for 'breaking change'.",
             "placeholders": []
         },
         {
@@ -6712,70 +6742,70 @@
             "key": "changelog.commitType.chore",
             "namespace": "changelog",
             "source_text": "Chore",
-            "description": "Badge on a commit in the changelog feed: routine maintenance. A noun. Rendered uppercase.",
+            "description": "Badge on a commit in the changelog feed: routine maintenance. A noun.",
             "placeholders": []
         },
         {
             "key": "changelog.commitType.docs",
             "namespace": "changelog",
             "source_text": "Docs",
-            "description": "Badge on a commit in the changelog feed: a documentation change. Short for 'documentation'. Rendered uppercase.",
+            "description": "Badge on a commit in the changelog feed: a documentation change. Short for 'documentation'.",
             "placeholders": []
         },
         {
             "key": "changelog.commitType.feature",
             "namespace": "changelog",
             "source_text": "Feature",
-            "description": "Badge on a commit in the changelog feed: the commit added something new. A noun. Rendered uppercase in a small pill.",
+            "description": "Badge on a commit in the changelog feed: the commit added something new. A noun.",
             "placeholders": []
         },
         {
             "key": "changelog.commitType.fix",
             "namespace": "changelog",
             "source_text": "Fix",
-            "description": "Badge on a commit in the changelog feed: the commit repaired a bug. A noun. Rendered uppercase in a small pill.",
+            "description": "Badge on a commit in the changelog feed: the commit repaired a bug. A noun.",
             "placeholders": []
         },
         {
             "key": "changelog.commitType.other",
             "namespace": "changelog",
             "source_text": "Update",
-            "description": "Badge on a commit in the changelog feed that fits none of the other categories. A noun. Rendered uppercase.",
+            "description": "Badge on a commit in the changelog feed that fits none of the other categories. A noun.",
             "placeholders": []
         },
         {
             "key": "changelog.commitType.perf",
             "namespace": "changelog",
             "source_text": "Perf",
-            "description": "Badge on a commit in the changelog feed: a performance improvement. Short for 'performance'; keep it short, the pill is narrow. Rendered uppercase.",
+            "description": "Badge on a commit in the changelog feed: a performance improvement. Short for 'performance'; keep it short, the pill is narrow.",
             "placeholders": []
         },
         {
             "key": "changelog.commitType.refactor",
             "namespace": "changelog",
             "source_text": "Refactor",
-            "description": "Badge on a commit in the changelog feed: internal restructuring with no behaviour change. A noun. Rendered uppercase.",
+            "description": "Badge on a commit in the changelog feed: internal restructuring with no behaviour change. A noun.",
             "placeholders": []
         },
         {
             "key": "changelog.commitType.revert",
             "namespace": "changelog",
             "source_text": "Revert",
-            "description": "Badge on a commit in the changelog feed: the commit undid an earlier one. A noun. Rendered uppercase.",
+            "description": "Badge on a commit in the changelog feed: the commit undid an earlier one. A noun.",
             "placeholders": []
         },
         {
             "key": "changelog.commitType.style",
             "namespace": "changelog",
             "source_text": "Style",
-            "description": "Badge on a commit in the changelog feed: formatting or whitespace only. A noun. Rendered uppercase.",
+            "description": "Badge on a commit in the changelog feed: formatting or whitespace only. A noun.",
             "placeholders": []
         },
         {
             "key": "changelog.commitType.test",
             "namespace": "changelog",
             "source_text": "Test",
-            "description": "Badge on a commit in the changelog feed: a change to the automated tests. A noun. Rendered uppercase.",
+            "description": "Badge on a commit in the changelog feed: a change to the automated tests. A noun.",
             "placeholders": []
         },
         {
@@ -13824,6 +13854,20 @@
             "placeholders": []
         },
         {
+            "key": "gallery.music.list.albumPaused",
+            "namespace": "gallery",
+            "source_text": "Paused",
+            "description": "Tag on the album cover whose track is loaded in the player but paused.",
+            "placeholders": []
+        },
+        {
+            "key": "gallery.music.list.albumPlaying",
+            "namespace": "gallery",
+            "source_text": "Playing",
+            "description": "Tag on the album cover whose track is playing in the player.",
+            "placeholders": []
+        },
+        {
             "key": "gallery.music.list.artist",
             "namespace": "gallery",
             "source_text": "Artist",
@@ -16323,24 +16367,6 @@
             "source_text": "Set by the template this grid was made from.",
             "description": "Note in the grid editor when the allowed types cannot be changed because the grid is a copy of a template.",
             "placeholders": []
-        },
-        {
-            "key": "grids.kinds.more",
-            "namespace": "grids",
-            "source_text": "+{count}",
-            "description": "Last chip of a shortened list of allowed types on a grid card: how many more types are allowed. {count} is a number.",
-            "placeholders": [
-                "count"
-            ]
-        },
-        {
-            "key": "grids.kinds.moreTitle",
-            "namespace": "grids",
-            "source_text": "Also allows: {kinds}",
-            "description": "Tooltip on the '+N' chip of a grid card. {kinds} is a comma-separated list of type names.",
-            "placeholders": [
-                "kinds"
-            ]
         },
         {
             "key": "grids.kinds.placed",
@@ -26396,6 +26422,20 @@
             "placeholders": []
         },
         {
+            "key": "skins.export.failed.body",
+            "namespace": "skins",
+            "source_text": "Download is off until it builds. Try another format, or change the fields or options.",
+            "description": "Body of the export build error, under export.failed.title.",
+            "placeholders": []
+        },
+        {
+            "key": "skins.export.failed.title",
+            "namespace": "skins",
+            "source_text": "Couldn't build the export",
+            "description": "Title of the error shown in place of the preview when building the export file failed. Download is disabled while it shows.",
+            "placeholders": []
+        },
+        {
             "key": "skins.export.fields.all",
             "namespace": "skins",
             "source_text": "All",
@@ -32036,6 +32076,13 @@
             "placeholders": [
                 "count"
             ]
+        },
+        {
+            "key": "story.route.loadFailed",
+            "namespace": "story",
+            "source_text": "This story didn't load. Check your connection and try again.",
+            "description": "Shown on the story reader page when the story or the library index failed to load, beside a Retry button.",
+            "placeholders": []
         },
         {
             "key": "story.settings.animateRatio",

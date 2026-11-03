@@ -2,6 +2,7 @@ import { GitMergeIcon } from "lucide-react";
 import type React from "react";
 import { useMemo } from "react";
 import { Button } from "#/components/ui/button";
+import { Kicker } from "#/components/ui/kicker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
 import { useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -101,7 +102,7 @@ function Side({ heading, side, newer, names, t, f }: { heading: string; side: Sy
     return (
         <div className="min-w-0 rounded-2xl border border-border bg-background p-3">
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                <span className="font-mono text-[10px] text-muted-foreground uppercase tracking-[0.12em]">{heading}</span>
+                <Kicker className="mb-0">{heading}</Kicker>
                 {newer ? <span className="rounded-full bg-primary/12 px-1.5 py-0.5 font-medium font-sans text-[10px] text-foreground">{t("progress.sync.conflict.newer")}</span> : null}
             </div>
             <dl className="m-0 mt-2 flex flex-col gap-1.5">

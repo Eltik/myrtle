@@ -1,6 +1,7 @@
 import type React from "react";
 import { useId, useMemo } from "react";
 import { Input } from "#/components/ui/input";
+import { Kicker } from "#/components/ui/kicker";
 import { useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import type { StoryProgress } from "#/lib/story/progress";
@@ -68,7 +69,7 @@ export function ReadingStats({ index, progress, gameRead }: IReadingStatsProps):
                     <div className="msv-scroll mt-4 max-w-full overflow-x-auto">
                         <table className="w-full min-w-95 border-collapse font-mono text-[11.5px] tabular-nums">
                             <thead>
-                                <tr className="border-border border-b text-left text-[10px] text-muted-foreground uppercase tracking-widest">
+                                <tr className="border-border border-b text-left text-[11px] text-subtle-foreground">
                                     <th scope="col" className="py-1.5 pe-3 font-normal">
                                         {t("stats.table.category")}
                                     </th>
@@ -146,8 +147,8 @@ export function ReadingStats({ index, progress, gameRead }: IReadingStatsProps):
 function NumberSetting({ id, label, unit, value, min, max, step, onChange }: { id: string; label: string; unit: string; value: number; min: number; max: number; step: number; onChange: (next: number) => void }): React.ReactElement {
     return (
         <div className="flex min-w-0 flex-col gap-1">
-            <label htmlFor={id} className="font-mono text-[10px] text-muted-foreground uppercase tracking-[0.12em]">
-                {label}
+            <label htmlFor={id}>
+                <Kicker className="mb-0">{label}</Kicker>
             </label>
             <div className="flex items-center gap-2">
                 <Input
@@ -170,7 +171,7 @@ function NumberSetting({ id, label, unit, value, min, max, step, onChange }: { i
 function Stat({ label, value }: { label: string; value: string }): React.ReactElement {
     return (
         <div className="rounded-2xl border border-border bg-background/60 p-3">
-            <div className="font-mono text-[10px] text-muted-foreground uppercase tracking-[0.12em]">{label}</div>
+            <Kicker className="mb-0 block">{label}</Kicker>
             <div className="mt-1 font-light font-mono text-[18px] text-foreground tabular-nums tracking-[-0.02em] sm:text-[22px]">{value}</div>
         </div>
     );

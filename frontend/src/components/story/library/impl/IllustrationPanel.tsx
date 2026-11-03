@@ -197,7 +197,7 @@ function Body({
         return (
             <output className="grid grid-cols-2 gap-2.5 sm:grid-cols-3" aria-label={t("illustrations.panel.loading")}>
                 {[0, 1, 2, 3, 4, 5].map((i) => (
-                    <Skeleton key={i} className="aspect-16/9 w-full rounded-[10px]" />
+                    <Skeleton key={i} className="aspect-16/9 w-full rounded-2xl" />
                 ))}
             </output>
         );
@@ -244,12 +244,12 @@ function Tile({ name, url, aspect, storyIds, extra, onView }: { name: string; ur
                     type="button"
                     onClick={() => onView({ name, url })}
                     aria-label={t("illustrations.item.view", { name })}
-                    className={cn(aspect, "block w-full cursor-pointer overflow-hidden rounded-[10px] border border-border bg-secondary/55 ring-inset transition-colors hover:border-primary/45 focus-visible:ring-2 focus-visible:ring-ring")}
+                    className={cn(aspect, "block w-full cursor-pointer overflow-hidden rounded-2xl border border-border bg-secondary/55 ring-inset transition-colors hover:border-primary/45 focus-visible:ring-2 focus-visible:ring-ring")}
                 >
                     <img src={url} alt="" aria-hidden="true" loading="lazy" decoding="async" className={cn("h-full w-full", aspect === "aspect-square" ? "object-contain" : "object-cover")} />
                 </button>
             ) : (
-                <div className={cn(aspect, "flex w-full items-center justify-center rounded-[10px] border border-border border-dashed bg-secondary/25 px-2 text-center font-sans text-[10.5px] text-subtle-foreground")}>{t("illustrations.item.notExtracted")}</div>
+                <div className={cn(aspect, "flex w-full items-center justify-center rounded-2xl border border-border border-dashed bg-secondary/25 px-2 text-center font-sans text-[10.5px] text-subtle-foreground")}>{t("illustrations.item.notExtracted")}</div>
             )}
             <span className="truncate font-mono text-[10.5px] text-foreground" title={name}>
                 {name}

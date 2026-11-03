@@ -6,6 +6,7 @@ import { toastError, toastSuccess } from "#/components/admin/shell/toast";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import { useErrorMessage } from "#/components/ui/error-message";
+import { Kicker } from "#/components/ui/kicker";
 import { Sheet, SheetDescription, SheetFooter, SheetHeader, SheetPanel, SheetPopup, SheetTitle } from "#/components/ui/sheet";
 import { useLastDefined } from "#/hooks/use-last-defined";
 import { type IAdminUser, setUserRoleFn, type TierListPermissionLevel, type UserRole } from "#/lib/api/admin";
@@ -42,7 +43,6 @@ export interface IPersonSheetProps {
     localeName: (code: string) => string;
 }
 
-const SECTION_LABEL = "font-semibold text-[11px] text-muted-foreground uppercase tracking-[0.06em]";
 const MUTED_LINE = "text-[13px] text-muted-foreground";
 
 function warningText(t: UsersT, warning: AccessWarning, name: string): string {
@@ -164,7 +164,7 @@ function PersonBody({ person, meId, canAssign, grants, locales, localeName }: Om
                         <Badge variant={person.publicProfile ? "success" : "warning"}>{person.publicProfile ? t("users.sheet.publicProfile") : t("users.sheet.privateProfile")}</Badge>
                     </div>
 
-                    <div className="grid @sm:grid-cols-4 grid-cols-2 gap-2 rounded-[10px] bg-muted p-3">
+                    <div className="grid @sm:grid-cols-4 grid-cols-2 gap-2 rounded-lg bg-muted p-3">
                         {scores.map(([label, value]) => (
                             <div key={label} className="flex flex-col gap-0.5">
                                 <span className="text-[11.5px] text-muted-foreground">{label}</span>
@@ -176,7 +176,7 @@ function PersonBody({ person, meId, canAssign, grants, locales, localeName }: Om
                     {warning ? <div className="rounded-2xl border border-[color-mix(in_oklch,var(--warning)_45%,transparent)] bg-[color-mix(in_oklch,var(--warning)_10%,transparent)] px-3 py-2.5 text-[13px] text-warning-foreground leading-[1.45]">{warningText(t, warning, name)}</div> : null}
 
                     <div className="flex flex-col gap-2">
-                        <span className={SECTION_LABEL}>{t("users.sheet.section.role")}</span>
+                        <Kicker className="mb-0">{t("users.sheet.section.role")}</Kicker>
                         {canAssign ? (
                             <div className="flex flex-wrap gap-1.5">
                                 {ROLE_ORDER.map((role) => (
@@ -192,7 +192,7 @@ function PersonBody({ person, meId, canAssign, grants, locales, localeName }: Om
 
                     <div className="flex flex-col gap-2">
                         <div className="flex items-center justify-between">
-                            <span className={SECTION_LABEL}>{t("users.sheet.section.tierLists")}</span>
+                            <Kicker className="mb-0">{t("users.sheet.section.tierLists")}</Kicker>
                             {canAssign ? (
                                 <Button size="xs" variant="ghost" aria-expanded={picker === "tierLists"} onClick={() => togglePicker("tierLists")}>
                                     {t("users.sheet.grant")}
@@ -230,7 +230,7 @@ function PersonBody({ person, meId, canAssign, grants, locales, localeName }: Om
 
                     <div className="flex flex-col gap-2">
                         <div className="flex items-center justify-between">
-                            <span className={SECTION_LABEL}>{t("users.sheet.section.locales")}</span>
+                            <Kicker className="mb-0">{t("users.sheet.section.locales")}</Kicker>
                             {canAssign ? (
                                 <Button size="xs" variant="ghost" aria-expanded={picker === "locales"} onClick={() => togglePicker("locales")}>
                                     {t("users.sheet.grant")}

@@ -4,6 +4,7 @@ import type React from "react";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { Button } from "#/components/ui/button";
 import { Dialog, DialogClose, DialogFooter, DialogHeader, DialogPanel, DialogPopup, DialogTitle } from "#/components/ui/dialog";
+import { Kicker } from "#/components/ui/kicker";
 import { Sheet, SheetClose, SheetFooter, SheetHeader, SheetPanel, SheetPopup, SheetTitle } from "#/components/ui/sheet";
 import { Skeleton } from "#/components/ui/skeleton";
 import { useMediaQuery } from "#/hooks/use-media-query";
@@ -111,7 +112,9 @@ function SpriteSheetBody({ detail }: { detail: StorySpriteDetail }): React.React
                     ) : null}
                 </div>
                 <section>
-                    <h3 className="mt-1 mb-1.5 font-sans font-semibold text-[12px] text-muted-foreground uppercase tracking-[0.06em]">{t("sprites.sheet.names")}</h3>
+                    <h3 className="mt-1 mb-1.5 font-normal">
+                        <Kicker className="mb-0">{t("sprites.sheet.names")}</Kicker>
+                    </h3>
                     {entry.names.length === 0 ? (
                         <p className="m-0 font-sans text-[12.5px] text-muted-foreground">{t("sprites.sheet.noNames")}</p>
                     ) : (
@@ -165,7 +168,7 @@ function SpriteSheetBody({ detail }: { detail: StorySpriteDetail }): React.React
                                             )}
                                         >
                                             <SpriteFigure variant={v} name={entry.base} crop={CELL_CROP} lazy thumb={spriteThumbUrl(entry.base, v.key, server)} className="aspect-square w-full" />
-                                            <span className={cn("truncate px-1 py-0.5 font-mono text-[10px] tabular-nums", on ? "text-primary" : "text-muted-foreground")}>{v.key}</span>
+                                            <span className={cn("truncate px-1 py-0.5 font-mono text-[10px] tabular-nums", on ? "font-semibold text-foreground" : "text-muted-foreground")}>{v.key}</span>
                                         </button>
                                     );
                                 })}
@@ -175,7 +178,9 @@ function SpriteSheetBody({ detail }: { detail: StorySpriteDetail }): React.React
                 </div>
 
                 <section>
-                    <h3 className="mt-1 mb-1.5 font-sans font-semibold text-[12px] text-muted-foreground uppercase tracking-[0.06em]">{t("sprites.sheet.stories")}</h3>
+                    <h3 className="mt-1 mb-1.5 font-normal">
+                        <Kicker className="mb-0">{t("sprites.sheet.stories")}</Kicker>
+                    </h3>
                     <ul className="m-0 flex max-h-72 list-none flex-col overflow-y-auto rounded-lg border border-border p-0">
                         {detail.stories.map((s) => (
                             <li key={s.id} className="border-border border-b last:border-b-0">

@@ -65,7 +65,7 @@ function Bar({ state }: { state: IPlayerBarState }): React.ReactElement {
                 where it sits inline; the difference is trailing whitespace at the end of the
                 page rather than a card clipped by a home indicator. */}
             <div aria-hidden="true" className="h-[calc(120px+env(safe-area-inset-bottom))] sm:h-[calc(64px+env(safe-area-inset-bottom))]" />
-            <div data-claims-bottom="" className="fixed inset-x-0 bottom-0 z-40 border-border border-t bg-card/95 shadow-[0_-8px_24px_-12px_rgba(0,0,0,0.45)] backdrop-blur-md">
+            <div data-claims-bottom="" className="fixed inset-x-0 bottom-0 z-40 border-border border-t bg-card shadow-[0_-8px_24px_-12px_rgba(0,0,0,0.45)]">
                 <section aria-label={t("nowPlaying.region")} className="mx-auto flex max-w-350 flex-wrap items-center gap-x-2 gap-y-1 px-3 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] sm:flex-nowrap sm:gap-x-4 sm:px-6">
                     <MusicIcon aria-hidden="true" className="hidden size-4 shrink-0 text-primary sm:block" />
 
@@ -73,7 +73,7 @@ function Bar({ state }: { state: IPlayerBarState }): React.ReactElement {
                         <span aria-hidden="true" className="truncate font-sans text-[12.5px] text-foreground">
                             {name}
                         </span>
-                        <span aria-hidden="true" className="truncate font-mono text-[10px] text-muted-foreground uppercase tracking-[0.08em]">
+                        <span aria-hidden="true" className="truncate font-sans text-[11.5px] text-muted-foreground">
                             {state.paused ? t("nowPlaying.paused") : chapter}
                         </span>
                         {/* The two visible lines TRUNCATE and read in the wrong order to a screen

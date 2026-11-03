@@ -176,6 +176,14 @@ export const messages = {
         text: "You have View access on this language, so this is read-only.",
         description: "Placeholder in the translation box when you may only read this language.",
     },
+    "translations.editor.insertArgMissing": {
+        text: "Insert {placeholder} at the cursor. The translation is missing it.",
+        description: "Tooltip and screen-reader name of a placeholder chip whose placeholder the translation has dropped. {placeholder} is the placeholder itself in braces, for example {count}.",
+    },
+    "translations.editor.argMissing": {
+        text: "missing",
+        description: "Screen-reader text after a placeholder chip whose placeholder the translation has dropped (read-only view).",
+    },
     "translations.editor.missing": {
         text: "{count, plural, one {Add {names}, including both braces, before saving. The site fills it in with a real value.} other {Add {names}, including the braces, before saving. The site fills them in with real values.}}",
         description: "Error under the translation box when it drops placeholders. {names} is a list such as '{title} and {when}'; {count} is how many.",

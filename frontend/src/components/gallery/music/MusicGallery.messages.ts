@@ -411,6 +411,14 @@ export const messages = {
         text: "Reset",
         description: "Button that clears the search, sort and filters.",
     },
+    "music.list.albumPlaying": {
+        text: "Playing",
+        description: "Tag on the album cover whose track is playing in the player.",
+    },
+    "music.list.albumPaused": {
+        text: "Paused",
+        description: "Tag on the album cover whose track is loaded in the player but paused.",
+    },
     "music.list.trackCount": {
         text: "{count, plural, one {# track} other {# tracks}}",
         description: "A track count under an album, artist or playlist.",

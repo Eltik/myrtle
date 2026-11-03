@@ -1,5 +1,6 @@
 import type * as React from "react";
 import { Button } from "#/components/ui/button";
+import { Kicker } from "#/components/ui/kicker";
 import { Skeleton } from "#/components/ui/skeleton";
 import { cn } from "#/lib/utils";
 
@@ -14,7 +15,7 @@ interface IStatTileProps {
 export function StatTile({ label, value, unit, color = "var(--primary)", spark }: IStatTileProps): React.ReactElement {
     return (
         <div className="relative min-w-0 rounded-2xl border border-border bg-card p-3.5 shadow-xs/5 before:pointer-events-none before:absolute before:inset-0 before:rounded-[calc(var(--radius-2xl)-1px)] before:shadow-[0_1px_--theme(--color-black/4%)] sm:p-4.5 dark:before:shadow-[0_-1px_--theme(--color-white/6%)]">
-            <div className="font-medium font-mono text-[10.5px] text-muted-foreground uppercase leading-tight tracking-[0.08em]">{label}</div>
+            <Kicker className="mb-0 block leading-tight">{label}</Kicker>
             <div className="mt-2 flex flex-wrap items-baseline gap-x-1 font-bold font-sans text-[22px] tabular-nums leading-none tracking-[-0.02em] sm:mt-2.5 sm:text-[26px]">
                 <span className="break-all">{value}</span>
                 {unit ? <span className="font-medium font-mono text-[11px] text-muted-foreground sm:text-[12px]">{unit}</span> : null}

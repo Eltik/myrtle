@@ -96,7 +96,7 @@ function SheetContent({ t, cell, index, cols, total, doneRef, onIndexChange, onP
             </div>
 
             <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-4 py-4">
-                <div className="relative flex h-[34dvh] min-h-44 items-center justify-center overflow-hidden rounded-xl bg-[oklch(0.13_0.004_285)] text-white">
+                <div className="relative flex h-[34dvh] min-h-44 items-center justify-center overflow-hidden rounded-2xl bg-[oklch(0.13_0.004_285)] text-white">
                     {entity ? (
                         <CellHeroArt entity={entity} server={cell.server} size="sheet" />
                     ) : (

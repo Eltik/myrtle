@@ -5,6 +5,7 @@ import { memo, useCallback, useId, useState } from "react";
 import { asset } from "#/components/operators/detail/impl/assets";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
+import { Kicker } from "#/components/ui/kicker";
 import { useAuth } from "#/hooks/use-auth";
 import { isGamedataServer } from "#/lib/api/gamedata";
 import { GameText } from "#/lib/gamedata/GameText";
@@ -96,7 +97,7 @@ function TrackDetails({ id, trackId, track, name }: { id: string; trackId: strin
                     <span className="font-sans text-[11.5px] text-muted-foreground">{t("music.download.label")}</span>
                     {track.introUrl ? <DownloadButton trackId={trackId} url={track.introUrl} server={track.server} label={t("music.download.intro")} aria={t("music.download.introAria", { name })} /> : null}
                     <DownloadButton trackId={trackId} url={track.loopUrl} server={track.server} label={t("music.download.loop")} aria={t("music.download.loopAria", { name })} />
-                    {track.server ? <span className="font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.06em]">{t("music.row.otherServer", { server: track.server.toUpperCase() })}</span> : null}
+                    {track.server ? <span className="font-mono text-[11px] text-muted-foreground">{t("music.row.otherServer", { server: track.server.toUpperCase() })}</span> : null}
                 </div>
             ) : (
                 <p className="mt-0 mb-3 font-sans text-[12.5px] text-muted-foreground">{t("music.row.unavailableNote")}</p>
@@ -104,7 +105,9 @@ function TrackDetails({ id, trackId, track, name }: { id: string; trackId: strin
 
             {track.places.length > 0 ? (
                 <section aria-label={t("music.row.places")}>
-                    <h3 className="m-0 mb-1.5 font-mono font-normal text-[10.5px] text-muted-foreground uppercase tracking-[0.08em]">{t("music.row.places")}</h3>
+                    <h3 className="m-0 mb-1.5 font-normal">
+                        <Kicker className="mb-0">{t("music.row.places")}</Kicker>
+                    </h3>
                     <ul className="m-0 flex list-none flex-col gap-2 p-0">
                         {track.places.map((place, i) => (
                             // biome-ignore lint/suspicious/noArrayIndexKey: places are a fixed list per track, never reordered
@@ -118,7 +121,9 @@ function TrackDetails({ id, trackId, track, name }: { id: string; trackId: strin
 
             {track.banks.length > 0 ? (
                 <details className="mt-2.5">
-                    <summary className="cursor-pointer font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.08em]">{t("music.row.banks")}</summary>
+                    <summary className="cursor-pointer">
+                        <Kicker className="mb-0">{t("music.row.banks")}</Kicker>
+                    </summary>
                     <p className="mt-1 mb-0 break-all font-mono text-[11px] text-muted-foreground">{track.banks.join(", ")}</p>
                 </details>
             ) : null}

@@ -252,6 +252,14 @@ export const messages = {
         text: "{count, plural, one {# field} other {# fields}}",
         description: "How many columns the export will contain, shown in the preview pane's summary line.",
     },
+    "export.failed.title": {
+        text: "Couldn't build the export",
+        description: "Title of the error shown in place of the preview when building the export file failed. Download is disabled while it shows.",
+    },
+    "export.failed.body": {
+        text: "Download is off until it builds. Try another format, or change the fields or options.",
+        description: "Body of the export build error, under export.failed.title.",
+    },
     "export.preview.empty": {
         text: "Select at least one field to preview the export.",
         description: "Shown in the preview pane when every field checkbox is unticked.",

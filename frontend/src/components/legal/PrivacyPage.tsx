@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { ChevronDown, Database, Eye, KeyRound, Lock, Mail, Settings as SettingsIcon, ShieldIcon, UserCog } from "lucide-react";
+import { ChevronDown, Eye, Lock, ShieldIcon, UserCog } from "lucide-react";
 import type { ReactNode } from "react";
 import { LegalContainer, LegalDivider, RelatedDocLink, RelatedLinksFooter, SectionHeading } from "#/components/legal/LegalShell";
 import { Alert, AlertDescription, AlertTitle } from "#/components/ui/alert";
@@ -121,7 +121,7 @@ export function PrivacyPage() {
     const rt: TypedRichT<typeof messages> = useRichT("legal");
 
     return (
-        <LegalContainer ambient>
+        <LegalContainer>
             <header className="relative z-1 mb-12 flex flex-col items-center text-center">
                 <div className="mb-5.5 inline-flex size-18 items-center justify-center rounded-full bg-primary/10 text-primary">
                     <ShieldIcon className="size-10" strokeWidth={1.8} />
@@ -156,8 +156,8 @@ export function PrivacyPage() {
             <LegalDivider />
 
             <Section id="yostar">
-                <SectionHeading icon={<KeyRound className="size-5" strokeWidth={1.8} />} title={t("privacy.yostar.heading")} subtitle={t("privacy.yostar.subheading")} />
-                <div className="pl-13 max-sm:pl-0">
+                <SectionHeading title={t("privacy.yostar.heading")} subtitle={t("privacy.yostar.subheading")} />
+                <div>
                     <P>{t("privacy.yostar.intro")}</P>
 
                     <Callout tone="primary">
@@ -188,8 +188,8 @@ export function PrivacyPage() {
             <LegalDivider />
 
             <Section id="information-we-collect">
-                <SectionHeading icon={<Database className="size-5" strokeWidth={1.8} />} title={t("privacy.collect.heading")} subtitle={t("privacy.collect.subheading")} />
-                <div className="pl-13 max-sm:pl-0">
+                <SectionHeading title={t("privacy.collect.heading")} subtitle={t("privacy.collect.subheading")} />
+                <div>
                     <H3>{t("privacy.collect.account.heading")}</H3>
                     <p className="m-0 mb-2 font-sans text-[15px] text-muted-foreground leading-[1.6]">{t("privacy.collect.account.intro")}</p>
                     <BulletList
@@ -232,8 +232,8 @@ export function PrivacyPage() {
             <LegalDivider />
 
             <Section id="how-we-use">
-                <SectionHeading icon={<Eye className="size-5" strokeWidth={1.8} />} title={t("privacy.use.heading")} subtitle={t("privacy.use.subheading")} />
-                <div className="pl-13 max-sm:pl-0">
+                <SectionHeading title={t("privacy.use.heading")} subtitle={t("privacy.use.subheading")} />
+                <div>
                     <Disclosure summary={t("privacy.use.service.summary")} defaultOpen>
                         {t("privacy.use.service.body")}
                     </Disclosure>
@@ -246,8 +246,8 @@ export function PrivacyPage() {
             <LegalDivider />
 
             <Section id="settings">
-                <SectionHeading icon={<SettingsIcon className="size-5" strokeWidth={1.8} />} title={t("privacy.settings.heading")} subtitle={t("privacy.settings.subheading")} />
-                <div className="pl-13 max-sm:pl-0">
+                <SectionHeading title={t("privacy.settings.heading")} subtitle={t("privacy.settings.subheading")} />
+                <div>
                     <P>{t("privacy.settings.intro")}</P>
                     <div className="my-4 grid grid-cols-1 gap-3.5 sm:grid-cols-2">
                         <Callout>
@@ -296,8 +296,8 @@ export function PrivacyPage() {
             <LegalDivider />
 
             <Section id="security">
-                <SectionHeading icon={<Lock className="size-5" strokeWidth={1.8} />} title={t("privacy.security.heading")} subtitle={t("privacy.security.subheading")} />
-                <div className="pl-13 max-sm:pl-0">
+                <SectionHeading title={t("privacy.security.heading")} subtitle={t("privacy.security.subheading")} />
+                <div>
                     <P>{t("privacy.security.intro")}</P>
                     <div className="my-4 grid grid-cols-1 gap-3.5 sm:grid-cols-2">
                         <Callout tone="primary">
@@ -336,8 +336,8 @@ export function PrivacyPage() {
             <LegalDivider />
 
             <Section id="rights">
-                <SectionHeading icon={<UserCog className="size-5" strokeWidth={1.8} />} title={t("privacy.rights.heading")} subtitle={t("privacy.rights.subheading")} />
-                <div className="pl-13 max-sm:pl-0">
+                <SectionHeading title={t("privacy.rights.heading")} subtitle={t("privacy.rights.subheading")} />
+                <div>
                     <P>{t("privacy.rights.intro")}</P>
                     <Disclosure summary={t("privacy.rights.access.summary")}>{t("privacy.rights.access.body")}</Disclosure>
                     <Disclosure summary={t("privacy.rights.correction.summary")}>{t("privacy.rights.correction.body")}</Disclosure>
@@ -383,8 +383,8 @@ export function PrivacyPage() {
             <LegalDivider />
 
             <Section id="contact">
-                <SectionHeading icon={<Mail className="size-5" strokeWidth={1.8} />} title={t("privacy.contact.heading")} subtitle={t("privacy.contact.subheading")} />
-                <div className="pl-13 max-sm:pl-0">
+                <SectionHeading title={t("privacy.contact.heading")} subtitle={t("privacy.contact.subheading")} />
+                <div>
                     <div className="rounded-2xl border border-border bg-card px-6 py-5">
                         <p className="m-0 font-sans font-semibold text-[15px] text-foreground">{t("privacy.contact.getInTouch")}</p>
                         <p className="m-0 mt-1.5 mb-4 font-sans text-[14px] text-muted-foreground leading-[1.55]">{t("privacy.contact.intro")}</p>
@@ -416,7 +416,7 @@ export function PrivacyPage() {
                 </div>
             </Section>
 
-            <div className="my-12 rounded-2xl border border-border bg-linear-to-b from-[color-mix(in_srgb,var(--muted)_50%,transparent)] to-transparent p-8 text-center">
+            <div className="my-12 rounded-2xl border border-border bg-card p-8 text-center">
                 <h3 className="m-0 mb-2 font-semibold text-[22px] text-foreground leading-[1.3] tracking-[-0.01em]">{t("privacy.cta.title")}</h3>
                 <p className="m-0 mx-auto max-w-[56ch] text-balance font-sans text-[15px] text-muted-foreground leading-[1.55]">{t("privacy.cta.body")}</p>
                 <div className="mt-5 flex flex-wrap items-center justify-center gap-2.5">

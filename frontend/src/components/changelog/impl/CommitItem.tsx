@@ -1,4 +1,5 @@
 import { ChevronDown, GitCommitHorizontal } from "lucide-react";
+import { Badge } from "#/components/ui/badge";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import type { IChangelogCommit } from "#/lib/api/changelog";
 import { type IFormatters, useFormatters, useT } from "#/lib/i18n";
@@ -38,12 +39,16 @@ export function CommitItem({ commit }: { commit: IChangelogCommit }) {
 
             <div className="min-w-0 rounded-2xl border border-border bg-card px-3.5 py-3 transition-colors hover:border-border/70 sm:px-4">
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
-                    <span className={cn("inline-flex shrink-0 items-center gap-1 rounded-md px-1.5 py-0.5 font-medium text-[11px] uppercase leading-none tracking-wide ring-1 ring-inset", style.pillClass)}>
-                        <Icon className="size-3" strokeWidth={2} aria-hidden="true" />
+                    <Badge variant="tint" style={{ "--tone": style.tone } as React.CSSProperties}>
+                        <Icon strokeWidth={2} aria-hidden="true" />
                         {t(style.labelKey)}
-                    </span>
+                    </Badge>
                     {commit.scope ? <span className="inline-flex shrink-0 items-center rounded-md bg-muted px-1.5 py-0.5 font-medium font-mono text-[11px] text-muted-foreground leading-none">{commit.scope}</span> : null}
-                    {commit.breaking ? <span className="inline-flex shrink-0 items-center rounded-md bg-destructive/12 px-1.5 py-0.5 font-semibold text-[11px] text-destructive-foreground uppercase leading-none tracking-wide ring-1 ring-destructive/25 ring-inset">{t("commit.breaking")}</span> : null}
+                    {commit.breaking ? (
+                        <Badge variant="tint" className="font-semibold" style={{ "--tone": "var(--destructive)" } as React.CSSProperties}>
+                            {t("commit.breaking")}
+                        </Badge>
+                    ) : null}
                 </div>
 
                 <p className="m-0 mt-2 font-sans font-semibold text-[15px] text-foreground leading-snug">{commit.title}</p>

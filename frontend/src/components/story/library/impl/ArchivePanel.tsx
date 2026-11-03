@@ -58,7 +58,7 @@ export function ArchivePanel({ sections, audio }: IArchivePanelProps): React.Rea
 
     return (
         <div className="flex flex-col gap-2 px-4 py-3 sm:px-5">
-            <p className="m-0 font-mono text-[10.5px] text-muted-foreground uppercase tabular-nums tracking-[0.07em]">{t("archive.total", { count: archiveTotal(sections) })}</p>
+            <p className="m-0 font-sans text-[12px] text-muted-foreground tabular-nums">{t("archive.total", { count: archiveTotal(sections) })}</p>
             {sections.map((section, at) => (
                 <Section key={section.kind} section={section} first={at === 0} audio={audio} onView={setView} />
             ))}
@@ -200,7 +200,7 @@ function LogChapter({ chapter }: { chapter: ArchiveLogChapter }): React.ReactEle
             <h4 className="m-0 flex flex-wrap items-center gap-2">
                 {chapter.displayId ? <span className="rounded-[5px] border border-border bg-secondary/55 px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground tabular-nums">{chapter.displayId}</span> : null}
                 <span className="font-sans font-semibold text-[13px] text-foreground">{chapter.name}</span>
-                {icon ? <span className="font-mono text-[10px] text-muted-foreground uppercase tracking-[0.08em]">{icon}</span> : null}
+                {icon ? <span className="font-sans text-[11.5px] text-muted-foreground">{icon}</span> : null}
             </h4>
             {chapter.unlockDesc ? (
                 <p className="m-0 font-sans text-[11.5px] text-subtle-foreground leading-relaxed">
@@ -221,11 +221,11 @@ function LogChapter({ chapter }: { chapter: ArchiveLogChapter }): React.ReactEle
 /** A place: its picture, the name the story uses, the name the setting writes on a map, and what it is. */
 function Landmark({ landmark }: { landmark: ArchiveLandmark }): React.ReactElement {
     return (
-        <article className="flex min-w-0 flex-col gap-1.5 overflow-hidden rounded-[10px] border border-border bg-secondary/25">
+        <article className="flex min-w-0 flex-col gap-1.5 overflow-hidden rounded-2xl border border-border bg-secondary/25">
             {landmark.pictureUrl ? <img src={asset(landmark.pictureUrl)} alt="" aria-hidden="true" loading="lazy" decoding="async" className="aspect-16/9 w-full object-cover" /> : null}
             <div className="flex flex-col gap-1 px-3 pt-1 pb-3">
                 <span className="font-sans font-semibold text-[13px] text-foreground">{landmark.name}</span>
-                {landmark.engName ? <span className="font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.06em]">{landmark.engName}</span> : null}
+                {landmark.engName ? <span className="font-sans text-[11.5px] text-muted-foreground">{landmark.engName}</span> : null}
                 <p className="m-0 font-sans text-[12px] text-muted-foreground leading-relaxed">
                     <GameText text={landmark.description} />
                 </p>
@@ -240,10 +240,10 @@ function NewsItem({ item }: { item: ArchiveNewsItem }): React.ReactElement {
     const masthead = item.format?.mainLogoUrl ?? item.format?.logoUrl;
 
     return (
-        <article className="flex flex-col gap-2 rounded-[10px] border border-border bg-secondary/25 px-3 py-3">
+        <article className="flex flex-col gap-2 rounded-2xl border border-border bg-secondary/25 px-3 py-3">
             <header className="flex flex-col gap-1">
                 {masthead ? <img src={asset(masthead)} alt={item.format?.typeName ?? ""} loading="lazy" decoding="async" className="h-7 w-auto max-w-full self-start object-contain" /> : null}
-                <span className="flex flex-wrap items-center gap-x-2 font-mono text-[10px] text-muted-foreground uppercase tracking-[0.08em]">
+                <span className="flex flex-wrap items-center gap-x-2 font-sans text-[11.5px] text-muted-foreground">
                     {item.format?.typeName && !masthead ? <span>{item.format.typeName}</span> : null}
                     {item.author ? <span>{t("archive.news.author", { author: item.author })}</span> : null}
                 </span>
@@ -271,7 +271,7 @@ function NewsItem({ item }: { item: ArchiveNewsItem }): React.ReactElement {
 /** One document: the drawn title where the event has one, the written one where it does not, and the date it is stamped with. */
 function FileCard({ file }: { file: ArchiveFile }): React.ReactElement {
     return (
-        <article className="flex flex-col gap-2 rounded-[10px] border border-border bg-secondary/25 px-3 py-3">
+        <article className="flex flex-col gap-2 rounded-2xl border border-border bg-secondary/25 px-3 py-3">
             {file.titlePictureUrl ? <img src={asset(file.titlePictureUrl)} alt={file.title} loading="lazy" decoding="async" className="h-9 w-auto max-w-full self-start object-contain" /> : <h4 className="m-0 font-sans font-semibold text-[13.5px] text-foreground leading-snug">{file.title}</h4>}
             {file.date ? <span className="font-mono text-[10.5px] text-muted-foreground tabular-nums">{file.date}</span> : null}
             {file.pictureUrl ? <img src={asset(file.pictureUrl)} alt="" aria-hidden="true" loading="lazy" decoding="async" className="aspect-video w-full rounded-[7px] object-contain" /> : null}
@@ -294,12 +294,12 @@ function GalleryTile({ picture, onView }: { picture: ArchivePicture; onView: (vi
                     type="button"
                     onClick={() => onView({ name: picture.title, url })}
                     aria-label={t("illustrations.item.view", { name: picture.title })}
-                    className="block aspect-16/9 w-full cursor-pointer overflow-hidden rounded-[10px] border border-border bg-secondary/55 ring-inset transition-colors hover:border-primary/45 focus-visible:ring-2 focus-visible:ring-ring"
+                    className="block aspect-16/9 w-full cursor-pointer overflow-hidden rounded-2xl border border-border bg-secondary/55 ring-inset transition-colors hover:border-primary/45 focus-visible:ring-2 focus-visible:ring-ring"
                 >
                     <img src={url} alt="" aria-hidden="true" loading="lazy" decoding="async" className="h-full w-full object-cover" />
                 </button>
             ) : (
-                <div className="flex aspect-16/9 w-full items-center justify-center rounded-[10px] border border-border border-dashed bg-secondary/25 px-2 text-center font-sans text-[10.5px] text-subtle-foreground">{t("illustrations.item.notExtracted")}</div>
+                <div className="flex aspect-16/9 w-full items-center justify-center rounded-2xl border border-border border-dashed bg-secondary/25 px-2 text-center font-sans text-[10.5px] text-subtle-foreground">{t("illustrations.item.notExtracted")}</div>
             )}
             <figcaption className="flex min-w-0 flex-col gap-0.5">
                 <span className="truncate font-sans text-[12px] text-foreground" title={picture.title}>

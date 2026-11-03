@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Calendar, FileText, ScaleIcon, ShieldIcon } from "lucide-react";
+import { Calendar, FileText, ShieldIcon } from "lucide-react";
 import { LegalContainer, LegalDivider, RelatedDocLink, RelatedLinksFooter } from "#/components/legal/LegalShell";
 import { Alert, AlertDescription } from "#/components/ui/alert";
 import { Badge } from "#/components/ui/badge";
@@ -118,13 +118,10 @@ export function TermsPage() {
             </nav>
 
             <Section id="acceptance">
-                <div className="mb-4 flex items-center gap-3">
-                    <div className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                        <ScaleIcon className="size-5" strokeWidth={1.8} />
-                    </div>
+                <div className="mb-4">
                     <H2>{t("terms.s1.heading")}</H2>
                 </div>
-                <div className="pl-13 max-sm:pl-0">
+                <div>
                     <P>{t("terms.s1.p1")}</P>
                     <P>{t("terms.s1.p2")}</P>
                     <P>{t("terms.s1.p3")}</P>

@@ -1,4 +1,4 @@
-import { WrenchIcon } from "lucide-react";
+import { TriangleAlertIcon, WrenchIcon } from "lucide-react";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { type IMaintenanceState, useMaintenance } from "#/hooks/use-maintenance";
 import { useTheme } from "#/hooks/use-theme";
@@ -27,9 +27,18 @@ function shortLabel(m: IMaintenanceState, t: T): string {
     }
 }
 
-/** A dot that says "down right now" without shouting: amber while down, muted before. */
+/**
+ * A dot that says "down right now" without shouting: warning ink while down, muted before.
+ * The old `amber-500` dot measured 1.90 on the pill's muted plate (light), so the glyph
+ * swaps too (wrench before, warning triangle while down) and the state never rides on hue alone.
+ */
 function StatusDot({ down, className }: { down: boolean; className?: string }) {
-    return <span aria-hidden="true" className={cn("size-1.5 shrink-0 rounded-full", down ? "bg-amber-500" : "bg-muted-foreground/60", className)} />;
+    return <span aria-hidden="true" className={cn("size-1.5 shrink-0 rounded-full", down ? "bg-warning-foreground" : "bg-muted-foreground/60", className)} />;
+}
+
+function StatusGlyph({ down, className }: { down: boolean; className: string }) {
+    const Glyph = down ? TriangleAlertIcon : WrenchIcon;
+    return <Glyph className={cn(className, "text-muted-foreground")} aria-hidden="true" />;
 }
 
 /**
@@ -57,7 +66,7 @@ export function MaintenancePill() {
                     />
                 }
             >
-                <WrenchIcon className="size-3.5 text-muted-foreground" aria-hidden="true" />
+                <StatusGlyph down={isGameDown(m.stage)} className="size-3.5" />
                 <StatusDot down={isGameDown(m.stage)} className="max-md:absolute max-md:top-1.5 max-md:right-1.5" />
                 <span className="hidden whitespace-nowrap md:inline">{label}</span>
             </TooltipTrigger>
@@ -96,11 +105,11 @@ export function MaintenanceBanner({ className }: { className?: string }) {
     }
     return (
         <div className={cn("flex flex-wrap items-center gap-x-3 gap-y-1 rounded-2xl border border-border bg-card px-4 py-3", className)}>
-            <WrenchIcon className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+            <StatusGlyph down={isGameDown(m.stage)} className="size-4 shrink-0" />
             <StatusDot down={isGameDown(m.stage)} />
             <span className="font-semibold text-[14px] text-foreground tabular-nums">{shortLabel(m, t)}</span>
             <span className="text-[13px] text-muted-foreground">{detail}</span>
-            <a href={m.window.notice_url} target="_blank" rel="noopener noreferrer" className="pointer-coarse:-my-3 ml-auto pointer-coarse:py-3 text-[13px] text-primary underline-offset-4 hover:underline">
+            <a href={m.window.notice_url} target="_blank" rel="noopener noreferrer" className="pointer-coarse:-my-3 ml-auto pointer-coarse:py-3 text-[13px] text-primary underline decoration-1 underline-offset-4 hover:decoration-2">
                 {t("maintenance.notice")}
             </a>
         </div>

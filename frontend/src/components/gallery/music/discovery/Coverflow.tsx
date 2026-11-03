@@ -471,7 +471,7 @@ export function Coverflow({ albums, onOpen }: { albums: readonly IAlbum[]; onOpe
             </div>
             <div className="mt-1 flex min-h-11 flex-col items-center px-4 text-center" aria-live="polite">
                 <span className="max-w-full truncate font-sans font-semibold text-[15px] text-foreground">{current?.name ?? ""}</span>
-                {current ? <span className="font-mono text-[10.5px] text-primary uppercase tracking-[0.14em]">{t("music.list.trackCount", { count: current.trackCount })}</span> : null}
+                {current ? <span className="font-sans text-[12px] text-muted-foreground tabular-nums">{t("music.list.trackCount", { count: current.trackCount })}</span> : null}
             </div>
             <p className="mt-2 mb-0 text-center font-sans text-[11.5px] text-muted-foreground">
                 {/* Each separator rides with the item after it, so a wrap never strands one at a

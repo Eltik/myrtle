@@ -3,6 +3,7 @@ import { Gamepad2Icon, PlayIcon, UsersIcon } from "lucide-react";
 import type React from "react";
 import { memo, useMemo, useState } from "react";
 import { Button } from "#/components/ui/button";
+import { Kicker } from "#/components/ui/kicker";
 import { Skeleton } from "#/components/ui/skeleton";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { musicListenersQueryOptions, musicTopTracksQueryOptions } from "#/lib/api/music";
@@ -51,7 +52,9 @@ export function ChartsView({ catalog, waiting }: { catalog: ICatalog; waiting: I
 function SectionTitle({ children, aside }: { children: React.ReactNode; aside?: React.ReactNode }): React.ReactElement {
     return (
         <div className="mb-2 flex min-h-8 flex-wrap items-center justify-between gap-2">
-            <h3 className="m-0 font-mono font-normal text-[10.5px] text-muted-foreground uppercase tracking-[0.12em]">{children}</h3>
+            <h3 className="m-0 font-normal">
+                <Kicker className="mb-0">{children}</Kicker>
+            </h3>
             {aside}
         </div>
     );

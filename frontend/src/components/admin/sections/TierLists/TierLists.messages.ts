@@ -404,6 +404,14 @@ export const messages = {
         text: "No flair",
         description: "Flair option that removes the list's flair.",
     },
+    "tierLists.flair.loadError": {
+        text: "Couldn't load the flairs.",
+        description: "Shown in the flair dialog when the list of flairs failed to load. A retry button follows.",
+    },
+    "tierLists.flair.retry": {
+        text: "Try again",
+        description: "Button that reloads the flairs after they failed to load.",
+    },
     "tierLists.flair.toast": {
         text: "Flair updated",
         description: "Title of the toast after a list's flair is changed.",

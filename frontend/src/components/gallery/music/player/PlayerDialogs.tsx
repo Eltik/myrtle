@@ -181,7 +181,7 @@ export function ShortcutsDialog(): React.ReactElement {
                 <DialogPanel>
                     <table className="w-full text-sm">
                         <thead>
-                            <tr className="text-left font-mono text-[10px] text-muted-foreground uppercase tracking-[0.14em]">
+                            <tr className="text-left text-[12px] text-subtle-foreground">
                                 <th className="pb-2 font-normal">{t("music.shortcut.action")}</th>
                                 <th className="pb-2 text-right font-normal">{t("music.shortcut.keys")}</th>
                             </tr>

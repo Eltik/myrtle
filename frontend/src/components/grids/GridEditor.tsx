@@ -224,7 +224,7 @@ function EditorHeader({ slug, state, dirty, titleValid, saving, saveError, onTit
     const actionsRef = useRef<HTMLDivElement>(null);
 
     return (
-        <header className="border-border/60 border-b bg-linear-to-b from-card/40 to-transparent">
+        <header className="border-border/60 border-b bg-card">
             <div className="page-gutter pt-5 pb-6 [--page-max:1180px] sm:pt-8 sm:pb-7">
                 <Breadcrumb className="mb-3">
                     <BreadcrumbList className="text-xs">
@@ -362,7 +362,7 @@ function MobileSaveBar({ actionsRef, dirty, titleValid, saving, onSave, onDiscar
     }, [actionsRef]);
     if (!dirty || rowVisible) return null;
     return (
-        <div data-claims-bottom="" className="fixed inset-x-0 bottom-0 z-40 border-border border-t bg-background/92 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] backdrop-blur-md lg:hidden">
+        <div data-claims-bottom="" className="fixed inset-x-0 bottom-0 z-40 border-border border-t bg-background px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] lg:hidden">
             <div className="mx-auto flex max-w-[1180px] items-center gap-2">
                 <span className="min-w-0 flex-1 truncate font-bold font-mono text-[10.5px] text-muted-foreground">{t("edit.unsaved")}</span>
                 <DiscardButton onDiscard={onDiscard} disabled={saving} />

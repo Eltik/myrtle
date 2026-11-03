@@ -30,7 +30,7 @@ export function StoryRow({ story, progress, gameRead, showCode = true }: { story
         <>
             {showCode ? <span className="w-10 shrink-0 font-mono text-[10.5px] text-muted-foreground tabular-nums sm:w-14">{story.code ?? ""}</span> : null}
             <span className={cn("min-w-0 flex-1 truncate font-sans text-[13px]", !story.hasScript && "text-muted-foreground")}>{story.name}</span>
-            {story.avgTag ? <span className="hidden shrink-0 font-mono text-[10px] text-muted-foreground uppercase tracking-wide sm:inline">{story.avgTag}</span> : null}
+            {story.avgTag ? <span className="hidden shrink-0 font-sans text-[11px] text-muted-foreground sm:inline">{story.avgTag}</span> : null}
             {typeof story.wordCount === "number" ? <span className="hidden shrink-0 font-mono text-[10px] text-muted-foreground tabular-nums md:inline">{t("stories.card.words", { count: f.compact(story.wordCount) })}</span> : null}
             {inProgress !== null ? <span className="shrink-0 font-mono text-[10px] text-primary tabular-nums">{t("stories.panel.progressAt", { line: inProgress + 1 })}</span> : null}
             {!story.hasScript ? (
