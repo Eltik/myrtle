@@ -190,7 +190,15 @@ const WHITE_INK = "brightness-0 invert";
  * white into the page); the dark page and the lit pill draw them as authored.
  */
 const BANNER_INK = "invert dark:invert-0";
-const BANNER_LIT_INK = "";
+/**
+ * On the lit pill the halo is the problem: drawn as authored it read as a dark blob on
+ * the red pill, and the white letters vanished into the dark theme's salmon pill (browser
+ * QA 2026-11-04). A blend drops the halo into the fill without editing the art: `screen`
+ * keeps the white letters and lets black through to the red (white on primary 4.59);
+ * in dark the banner is inverted first and `multiply` does the same for the white halo,
+ * leaving black letters on salmon.
+ */
+const BANNER_LIT_INK = "mix-blend-screen dark:invert dark:mix-blend-multiply";
 
 /** How much of the scroller is faded at each edge once there is something to scroll to. */
 const FADE = 28;
