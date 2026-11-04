@@ -191,7 +191,7 @@ const fn drift(
 
 /// What 15% hides: the cases between 0.15% and 15% off the reference,
 /// measured 2026-11-05 on the EN excel tables of 2026-10-19 (`VersionControl`
-/// 52.0.0), 528 of 85,056. Used only under `DPS_PARITY_STRICT=1`, where each
+/// 52.0.0): 528 of 85,056, then 384 once the generator passed `shreds`. Used only under `DPS_PARITY_STRICT=1`, where each
 /// entry must still match a case. The note is the worst case measured. An
 /// entry goes when its operator is fixed, or moves to a reference correction.
 const STRICT_DRIFT: &[KnownEngineDefect] = &[
@@ -227,15 +227,15 @@ const STRICT_DRIFT: &[KnownEngineDefect] = &[
         Some(3),
         "reference defect, worst 5.6%, Rust high",
     ),
-    // The rest: cause UNRESOLVED.
+    // Manticore and YahataUmiri: cause UNRESOLVED. They diverge in every
+    // debuff row, the plain one included, so it is not the shred.
     drift("YahataUmiri", Some(3), Some(2), "worst 7.0%"),
     drift("Manticore", Some(2), Some(1), "worst 6.9%"),
-    drift("TogawaSakiko", Some(3), Some(0), "worst 10.6%"),
-    drift("TogawaSakiko", Some(3), Some(2), "worst 5.0%"),
-    drift("Logos", None, None, "worst 3.5%"),
-    drift("ChenAlter", Some(3), None, "worst 3.9%"),
-    drift("Rosmontis", Some(3), None, "worst 7.9%"),
-    drift("Ifrit", Some(3), None, "worst 0.8%"),
+    // Gone 2026-11-05, 144 cases: ChenAlter S3, Ifrit S3, Logos S1 to S3,
+    // Rosmontis S3 and TogawaSakiko S3 read `self.shreds`, which the fixture
+    // generator never passed, so the reference applied a shred as if absent.
+    // generate_dps.rs now passes it per case, and those 144 fixture rows were
+    // rewritten by that same script; each now equals the Rust.
 ];
 
 fn known_divergence(
