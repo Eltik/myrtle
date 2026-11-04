@@ -208,6 +208,14 @@ const GUARDED: &[Guarded] = &[
     ),
     row(
         "GET",
+        "/api/admin/content-audit",
+        Gate::TierListAdmin,
+        Doc::Matches,
+        "/api/admin/content-audit",
+        None,
+    ),
+    row(
+        "GET",
         "/api/admin/tier-lists/permissions",
         Gate::TierListAdmin,
         Doc::Matches,
