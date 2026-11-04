@@ -191,10 +191,12 @@ const fn drift(
 
 /// What 15% hides: the cases between 0.15% and 15% off the reference,
 /// measured 2026-11-05 on the EN excel tables of 2026-10-19 (`VersionControl`
-/// 52.0.0): 528 of 85,056, then 384 once the generator passed `shreds`, then 320 once Manticore's
-/// hand formula stopped double-counting its module talent. Used only under `DPS_PARITY_STRICT=1`, where each
-/// entry must still match a case. The note is the worst case measured. An
-/// entry goes when its operator is fixed, or moves to a reference correction.
+/// 52.0.0). 528 of 85,056 at first; 384 once the generator passed `shreds`;
+/// 320 once Manticore's hand formula stopped double-counting its module
+/// talent; 256 once the suite stopped asking for skills an operator lacks.
+/// Used only under `DPS_PARITY_STRICT=1`, where each entry must still match a
+/// case. The note is the worst case measured. An entry goes when its operator
+/// is fixed, or moves to a reference correction.
 const STRICT_DRIFT: &[KnownEngineDefect] = &[
     // Ebenholz: a REFERENCE defect, the same one as Gnosis and Hoolheyak in
     // KNOWN_REFERENCE_DEFECTS, kept here only because it stays under 15%. The
@@ -228,14 +230,12 @@ const STRICT_DRIFT: &[KnownEngineDefect] = &[
         Some(3),
         "reference defect, worst 5.6%, Rust high",
     ),
-    // YahataUmiri: a HARNESS artifact, not a damage bug. She has two skills
-    // (EN character_table: skchr_tmoris_1, _2), but her formula lists S1 to S3,
-    // so the fixture asks for an S3 that does not exist. The reference clamps it
-    // to S2 (its name reads "P6 S2"), and the engine's S3 comes out equal to its
-    // S1: S3 m2 at def 0 is 1118.5245 in Rust, exactly the fixture's S1 m2,
-    // against the fixture's S2 m2 1045.35. At module 0 S1 and S2 agree (964.85),
-    // so only m2 shows it.
-    drift("YahataUmiri", Some(3), Some(2), "no S3 exists, worst 7.0%"),
+    // Gone 2026-11-05, 64 cases: YahataUmiri S3 module 2 was a HARNESS artifact.
+    // She has two skills (EN character_table: skchr_tmoris_1, _2), but her formula
+    // lists S1 to S3. The reference clamps a requested S3 to S2 ("P6 S2"), and the
+    // engine's S3 came out equal to its S1 (S3 m2 at def 0: 1118.5245, exactly
+    // the fixture's S1 m2, against its S2 m2 1045.35). The suite now skips a skill
+    // the operator lacks and prints the skip.
     // Gone 2026-11-05, 64 cases: Manticore S2 module 1 was the ENGINE. The
     // transpiled formula added the reference's hand-coded module step to a
     // talent the unit had already upgraded; custom/hand/manticore.rs drops it.
@@ -298,6 +298,8 @@ fn test_engine_vs_python_expected() {
     let mut passed = 0u64;
     let mut failed = 0u64;
     let mut skipped = 0u64;
+    let mut no_such_skill: std::collections::BTreeMap<String, u64> =
+        std::collections::BTreeMap::new();
     let mut failures: Vec<String> = Vec::new();
     let corrections = load_reference_corrections();
     let mut corrected = vec![0u64; corrections.len()];
@@ -334,6 +336,15 @@ fn test_engine_vs_python_expected() {
             // Skip operators with no skill data (CN-only) or clone-dependent (Muelsyse).
             if operator.skills.is_empty() || formula.class_name == "Muelsyse" {
                 skipped += 1;
+                continue;
+            }
+
+            // A skill the operator does not have (her formula lists more than her
+            // character_table entry holds): the reference and the engine each fall
+            // back to some other skill, and not the same one, so the case compares
+            // two stand-ins. Counted on its own so the drop is visible.
+            if usize::try_from(skill).is_ok_and(|s| s > operator.skills.len()) {
+                *no_such_skill.entry(formula.class_name.clone()).or_default() += 1;
                 continue;
             }
 
@@ -500,6 +511,9 @@ fn test_engine_vs_python_expected() {
     println!("  Passed:  {passed}");
     println!("  Failed:  {failed}");
     println!("  Skipped: {skipped}");
+    for (class, n) in &no_such_skill {
+        println!("  Skipped, formula lists a skill the operator lacks: {class}, {n} skill(s)");
+    }
     for (c, n) in corrections.iter().zip(&corrected) {
         println!(
             "  Reference corrected (custom/hand/reference_corrections.json): {} S{:?}: {n} \
