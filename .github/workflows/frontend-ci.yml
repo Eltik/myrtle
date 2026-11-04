@@ -167,7 +167,14 @@ jobs:
         with:
           bun-version: ${{ env.BUN_VERSION }}
 
-      - name: Audit dependencies
+      # Gates: a high or critical advisory in what the server and the browser
+      # actually run fails the job. Dev tooling (vitest, its pool) is reported
+      # below but cannot fail it, since a dev-only advisory is often fixed only
+      # across a major.
+      - name: Audit runtime dependencies (high and above)
+        run: bun audit --prod --audit-level=high
+
+      - name: Audit all dependencies (report only)
         run: bun audit || echo "::warning::Frontend audit found vulnerabilities"
 
   # ──────────────────────────────────────────────────────────────────────────────
