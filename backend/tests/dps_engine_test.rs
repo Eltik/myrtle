@@ -57,8 +57,27 @@ fn make_test_key(
     }
 }
 
-const TOLERANCE_PERCENT: f64 = 0.15;
+/// The parity bar as a FRACTION of the reference: 0.15 is 15%. It was named
+/// `TOLERANCE_PERCENT` and read as 0.15%, which it never was.
+const TOLERANCE_FRACTION: f64 = 0.15;
+/// The bar `DPS_PARITY_STRICT=1` runs at: 0.0015, the 0.15% the old name
+/// promised.
+const STRICT_TOLERANCE_FRACTION: f64 = 0.0015;
 const TOLERANCE_ABSOLUTE: f64 = 1.0;
+
+/// `DPS_PARITY_STRICT=1` runs the suite at 0.15% with [`STRICT_DRIFT`] counted
+/// instead of failed. Anything else, or unset, keeps 15%: the default is INERT.
+fn strict() -> bool {
+    std::env::var("DPS_PARITY_STRICT").is_ok_and(|v| v == "1")
+}
+
+fn tolerance_fraction() -> f64 {
+    if strict() {
+        STRICT_TOLERANCE_FRACTION
+    } else {
+        TOLERANCE_FRACTION
+    }
+}
 
 /// Declared corrections to the Python reference, read from the same file
 /// `generate-dps` applies them from (`src/dps/custom/hand/reference_corrections.json`):
@@ -156,6 +175,41 @@ const KNOWN_REFERENCE_DEFECTS: &[KnownEngineDefect] = &[
     },
 ];
 
+const fn drift(
+    class_name: &'static str,
+    skill: Option<i32>,
+    module: Option<i32>,
+    note: &'static str,
+) -> KnownEngineDefect {
+    KnownEngineDefect {
+        class_name,
+        skill,
+        module,
+        note,
+    }
+}
+
+/// What 15% hides: the cases between 0.15% and 15% off the reference,
+/// measured 2026-11-05 on the EN excel tables of 2026-10-19 (`VersionControl`
+/// 52.0.0), 528 of 85,056. Used only under `DPS_PARITY_STRICT=1`, where each
+/// entry must still match a case. The note is the worst case measured; the
+/// cause of each is UNRESOLVED (a formula, a module talent, or the reference),
+/// and an entry goes when its operator is fixed.
+const STRICT_DRIFT: &[KnownEngineDefect] = &[
+    drift("Ebenholz", Some(1), Some(2), "worst 10.3%, Rust low"),
+    drift("Ebenholz", Some(1), Some(3), "worst 14.4%"),
+    drift("Ebenholz", Some(3), Some(2), "worst 4.6%"),
+    drift("Ebenholz", Some(3), Some(3), "worst 5.6%"),
+    drift("YahataUmiri", Some(3), Some(2), "worst 7.0%"),
+    drift("Manticore", Some(2), Some(1), "worst 6.9%"),
+    drift("TogawaSakiko", Some(3), Some(0), "worst 10.6%"),
+    drift("TogawaSakiko", Some(3), Some(2), "worst 5.0%"),
+    drift("Logos", None, None, "worst 3.5%"),
+    drift("ChenAlter", Some(3), None, "worst 3.9%"),
+    drift("Rosmontis", Some(3), None, "worst 7.9%"),
+    drift("Ifrit", Some(3), None, "worst 0.8%"),
+];
+
 fn known_divergence(
     list: &[KnownEngineDefect],
     class_name: &str,
@@ -174,8 +228,8 @@ fn compare_dps(rust_dps: f64, python_dps: f64) -> bool {
     if python_dps.abs() < 0.01 {
         return diff <= TOLERANCE_ABSOLUTE;
     }
-    let percent_diff = diff / python_dps.abs();
-    diff <= TOLERANCE_ABSOLUTE || percent_diff <= TOLERANCE_PERCENT
+    let fraction = diff / python_dps.abs();
+    diff <= TOLERANCE_ABSOLUTE || fraction <= tolerance_fraction()
 }
 
 #[test]
@@ -213,6 +267,8 @@ fn test_engine_vs_python_expected() {
     let mut corrected = vec![0u64; corrections.len()];
     let mut known_defects = vec![0u64; KNOWN_ENGINE_DEFECTS.len()];
     let mut reference_defects = vec![0u64; KNOWN_REFERENCE_DEFECTS.len()];
+    let strict_drift: &[KnownEngineDefect] = if strict() { STRICT_DRIFT } else { &[] };
+    let mut drifted = vec![0u64; strict_drift.len()];
 
     let mut type_tested: HashMap<String, u64> = HashMap::new();
     // `DPS_DUMP=<path>` writes every computed case as `key\tskill\ttotal\taverage`
@@ -361,6 +417,13 @@ fn test_engine_vs_python_expected() {
                                     module,
                                 ) {
                                     reference_defects[i] += 1;
+                                } else if let Some(i) = known_divergence(
+                                    strict_drift,
+                                    &formula.class_name,
+                                    skill,
+                                    module,
+                                ) {
+                                    drifted[i] += 1;
                                 } else {
                                     failed += 1;
                                     if failures.len() < 30 {
@@ -477,6 +540,20 @@ fn test_engine_vs_python_expected() {
             "KNOWN_REFERENCE_DEFECTS entry {} no longer diverges: the reference is fixed, \
              delete the entry",
             defect.class_name
+        );
+    }
+    for (d, n) in strict_drift.iter().zip(&drifted) {
+        println!(
+            "  STRICT DRIFT: {} {}: {n} cases past 0.15% ({})",
+            d.class_name,
+            scope(d),
+            d.note
+        );
+        assert!(
+            *n > 0,
+            "STRICT_DRIFT entry {} {} no longer drifts past 0.15%: delete it",
+            d.class_name,
+            scope(d)
         );
     }
     for (c, n) in corrections.iter().zip(&corrected) {
