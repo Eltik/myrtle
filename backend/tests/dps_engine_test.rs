@@ -192,14 +192,42 @@ const fn drift(
 /// What 15% hides: the cases between 0.15% and 15% off the reference,
 /// measured 2026-11-05 on the EN excel tables of 2026-10-19 (`VersionControl`
 /// 52.0.0), 528 of 85,056. Used only under `DPS_PARITY_STRICT=1`, where each
-/// entry must still match a case. The note is the worst case measured; the
-/// cause of each is UNRESOLVED (a formula, a module talent, or the reference),
-/// and an entry goes when its operator is fixed.
+/// entry must still match a case. The note is the worst case measured. An
+/// entry goes when its operator is fixed, or moves to a reference correction.
 const STRICT_DRIFT: &[KnownEngineDefect] = &[
-    drift("Ebenholz", Some(1), Some(2), "worst 10.3%, Rust low"),
-    drift("Ebenholz", Some(1), Some(3), "worst 14.4%"),
-    drift("Ebenholz", Some(3), Some(2), "worst 4.6%"),
-    drift("Ebenholz", Some(3), Some(3), "worst 5.6%"),
+    // Ebenholz: a REFERENCE defect, the same one as Gnosis and Hoolheyak in
+    // KNOWN_REFERENCE_DEFECTS, kept here only because it stays under 15%. The
+    // reference gives module 2 (Y, uniequip_003) the L3 talent2 of module 3
+    // (Delta, uniequip_004) [0.30, 0, 1.1, 0.30] and leaves module 3 the base
+    // [0.15, 0, 1.1]. Setting each module's own L3 talent2 on the live Python
+    // object reproduces the Rust exactly at def 0 res 0: S1 m2 3758.21, S1 m3
+    // 3903.28, S3 m2 4067.51, S3 m3 4653.98 (fixture: 4187.72, 3410.93,
+    // 4262.12, 4405.40).
+    drift(
+        "Ebenholz",
+        Some(1),
+        Some(2),
+        "reference defect, worst 10.3%, Rust low",
+    ),
+    drift(
+        "Ebenholz",
+        Some(1),
+        Some(3),
+        "reference defect, worst 14.4%, Rust high",
+    ),
+    drift(
+        "Ebenholz",
+        Some(3),
+        Some(2),
+        "reference defect, worst 4.6%, Rust low",
+    ),
+    drift(
+        "Ebenholz",
+        Some(3),
+        Some(3),
+        "reference defect, worst 5.6%, Rust high",
+    ),
+    // The rest: cause UNRESOLVED.
     drift("YahataUmiri", Some(3), Some(2), "worst 7.0%"),
     drift("Manticore", Some(2), Some(1), "worst 6.9%"),
     drift("TogawaSakiko", Some(3), Some(0), "worst 10.6%"),
