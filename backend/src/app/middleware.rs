@@ -6,7 +6,7 @@
 
 use std::net::{IpAddr, SocketAddr};
 use std::sync::LazyLock;
-use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::time::{Duration, Instant};
 
 use axum::extract::{ConnectInfo, MatchedPath, Request, State};
@@ -268,6 +268,32 @@ static EXEMPT_ADDRESSES: LazyLock<Vec<Cidr>> = LazyLock::new(|| {
     parsed
 });
 
+/// Set once the misconfiguration below has been logged, so it is said once per
+/// process rather than once per request.
+static PROXY_HIDDEN_WARNED: AtomicBool = AtomicBool::new(false);
+
+/// A loopback peer that arrives with `X-Forwarded-For` is a reverse proxy on
+/// this host relaying someone else. With `TRUSTED_PROXY_HOPS` at 0 the limiter
+/// keys on the proxy's own address, which is loopback and so exempt: EVERY
+/// proxied visitor then skips rate limiting. This only logs; it changes no
+/// decision, because whether the proxy is trusted is a deployment fact the code
+/// cannot know.
+fn warn_if_proxy_hidden(ip: IpAddr, headers: &HeaderMap) {
+    if proxy_hides_clients(ip, *TRUSTED_PROXY_HOPS, headers)
+        && !PROXY_HIDDEN_WARNED.swap(true, Ordering::Relaxed)
+    {
+        tracing::warn!(
+            "a loopback peer sent X-Forwarded-For while TRUSTED_PROXY_HOPS=0: every request \
+             through that proxy is rate-limit exempt. Behind one reverse proxy, set \
+             TRUSTED_PROXY_HOPS=1"
+        );
+    }
+}
+
+fn proxy_hides_clients(ip: IpAddr, hops: usize, headers: &HeaderMap) -> bool {
+    hops == 0 && ip.is_loopback() && headers.contains_key("x-forwarded-for")
+}
+
 fn is_exempt(ip: IpAddr) -> bool {
     ip.is_loopback() || EXEMPT_ADDRESSES.iter().any(|cidr| cidr.contains(ip))
 }
@@ -433,6 +459,7 @@ pub async fn rate_limit(State(state): State<AppState>, req: Request, next: Next)
     // whose traffic is the sum of many real visitors, so a per-address
     // allowance would throttle all of them together.
     if is_exempt(ip) {
+        warn_if_proxy_hidden(ip, req.headers());
         return next.run(req).await;
     }
 
@@ -490,7 +517,7 @@ fn rate_limited_response() -> Response {
 
 #[cfg(test)]
 mod tests {
-    use super::{Bucket, Cidr, bucket_for, is_exempt};
+    use super::{Bucket, Cidr, bucket_for, is_exempt, proxy_hides_clients};
     use crate::core::auth::jwt::create_token;
     use axum::http::{HeaderMap, HeaderValue, header};
 
@@ -591,6 +618,19 @@ mod tests {
             Bucket::Default
         ));
         assert!(matches!(Bucket::of("/api/gacha/history"), Bucket::Default));
+    }
+
+    #[test]
+    fn proxied_loopback_without_hops_is_flagged() {
+        let mut fwd = axum::http::HeaderMap::new();
+        fwd.insert("x-forwarded-for", "203.0.113.7".parse().unwrap());
+        let none = axum::http::HeaderMap::new();
+        let lo: std::net::IpAddr = "127.0.0.1".parse().unwrap();
+        let public: std::net::IpAddr = "203.0.113.7".parse().unwrap();
+        assert!(proxy_hides_clients(lo, 0, &fwd));
+        assert!(!proxy_hides_clients(lo, 1, &fwd));
+        assert!(!proxy_hides_clients(lo, 0, &none));
+        assert!(!proxy_hides_clients(public, 0, &fwd));
     }
 
     #[test]
