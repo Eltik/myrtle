@@ -191,7 +191,8 @@ const fn drift(
 
 /// What 15% hides: the cases between 0.15% and 15% off the reference,
 /// measured 2026-11-05 on the EN excel tables of 2026-10-19 (`VersionControl`
-/// 52.0.0): 528 of 85,056, then 384 once the generator passed `shreds`. Used only under `DPS_PARITY_STRICT=1`, where each
+/// 52.0.0): 528 of 85,056, then 384 once the generator passed `shreds`, then 320 once Manticore's
+/// hand formula stopped double-counting its module talent. Used only under `DPS_PARITY_STRICT=1`, where each
 /// entry must still match a case. The note is the worst case measured. An
 /// entry goes when its operator is fixed, or moves to a reference correction.
 const STRICT_DRIFT: &[KnownEngineDefect] = &[
@@ -227,10 +228,12 @@ const STRICT_DRIFT: &[KnownEngineDefect] = &[
         Some(3),
         "reference defect, worst 5.6%, Rust high",
     ),
-    // Manticore and YahataUmiri: cause UNRESOLVED. They diverge in every
-    // debuff row, the plain one included, so it is not the shred.
+    // YahataUmiri: cause UNRESOLVED. It diverges in every debuff row, the plain
+    // one included, so it is not the shred.
     drift("YahataUmiri", Some(3), Some(2), "worst 7.0%"),
-    drift("Manticore", Some(2), Some(1), "worst 6.9%"),
+    // Gone 2026-11-05, 64 cases: Manticore S2 module 1 was the ENGINE. The
+    // transpiled formula added the reference's hand-coded module step to a
+    // talent the unit had already upgraded; custom/hand/manticore.rs drops it.
     // Gone 2026-11-05, 144 cases: ChenAlter S3, Ifrit S3, Logos S1 to S3,
     // Rosmontis S3 and TogawaSakiko S3 read `self.shreds`, which the fixture
     // generator never passed, so the reference applied a shred as if absent.

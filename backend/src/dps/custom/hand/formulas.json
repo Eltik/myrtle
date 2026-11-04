@@ -1,5 +1,19 @@
 {
   "dps": {
+    "char_215_mantic": {
+      "name": "Manticore",
+      "class_name": "Manticore",
+      "available_skills": [1, 2],
+      "available_modules": [1],
+      "default_skill": 2,
+      "default_potential": 1,
+      "default_module": 1,
+      "skills": {
+        "1": { "type": "custom" },
+        "2": { "type": "custom" }
+      },
+      "conditionals": []
+    },
     "char_4037_demetr": {
       "name": "Bellone",
       "class_name": "Bellone",
