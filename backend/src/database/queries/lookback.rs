@@ -18,7 +18,11 @@ fn at(secs: i64) -> DateTime<Utc> {
 /// Whether `user_id` already has the snapshot of the period opening at
 /// `period_start` (Unix seconds): the whole cost of a sync inside a period
 /// that has one, one primary-key probe.
-pub async fn period_taken(pool: &PgPool, user_id: Uuid, period_start: i64) -> Result<bool, sqlx::Error> {
+pub async fn period_taken(
+    pool: &PgPool,
+    user_id: Uuid,
+    period_start: i64,
+) -> Result<bool, sqlx::Error> {
     sqlx::query_scalar(
         "SELECT EXISTS (SELECT 1 FROM user_lookback_snapshots \
          WHERE user_id = $1 AND period_start = $2)",
@@ -179,10 +183,8 @@ pub async fn get(
 
 /// The obtain time of every owned operator, Unix seconds.
 pub async fn obtained_times(pool: &PgPool, user_id: Uuid) -> Result<Vec<i64>, sqlx::Error> {
-    sqlx::query_scalar(
-        "SELECT COALESCE(obtained_at, 0) FROM user_operators WHERE user_id = $1",
-    )
-    .bind(user_id)
-    .fetch_all(pool)
-    .await
+    sqlx::query_scalar("SELECT COALESCE(obtained_at, 0) FROM user_operators WHERE user_id = $1")
+        .bind(user_id)
+        .fetch_all(pool)
+        .await
 }

@@ -175,7 +175,7 @@ pub struct TalentText {
     /// "Scheduler, Max Settings!"): its `cost` lowers how far DP may drop
     /// below zero for the whole squad, and is no operator's DP Cost.
     pub lowers_dp_floor: bool,
-    /// The numbers printed in sentences that open with the holder ("SilverAsh
+    /// The numbers printed in sentences that open with the holder ("`SilverAsh`
     /// and other allies in the 8 surrounding tiles gain an additional -10%
     /// Redeployment Time") and speak of Redeployment Time: a hidden module
     /// part's `respawn_time` printed there is the holder's own.
@@ -587,7 +587,10 @@ fn read_operator(
                         out.insert(key(false), read(d, vocab, false, name));
                     }
                     if !c.additional_description.is_empty() {
-                        out.insert(key(true), read(&c.additional_description, vocab, false, name));
+                        out.insert(
+                            key(true),
+                            read(&c.additional_description, vocab, false, name),
+                        );
                     }
                 }
             }
