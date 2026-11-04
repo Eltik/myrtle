@@ -263,7 +263,7 @@ fn read_all_entries<R: Read + Seek>(mut ar: ZipArchive<R>) -> Result<ZipEntries>
         if !f.is_file() {
             continue;
         }
-        let name = f.name().to_string();
+        let name = f.name()?.into_owned();
         let mut buf = Vec::with_capacity(usize::try_from(f.size()).unwrap_or(0));
         f.read_to_end(&mut buf)?;
         out.push((name, buf));
