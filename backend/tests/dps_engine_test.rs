@@ -228,9 +228,14 @@ const STRICT_DRIFT: &[KnownEngineDefect] = &[
         Some(3),
         "reference defect, worst 5.6%, Rust high",
     ),
-    // YahataUmiri: cause UNRESOLVED. It diverges in every debuff row, the plain
-    // one included, so it is not the shred.
-    drift("YahataUmiri", Some(3), Some(2), "worst 7.0%"),
+    // YahataUmiri: a HARNESS artifact, not a damage bug. She has two skills
+    // (EN character_table: skchr_tmoris_1, _2), but her formula lists S1 to S3,
+    // so the fixture asks for an S3 that does not exist. The reference clamps it
+    // to S2 (its name reads "P6 S2"), and the engine's S3 comes out equal to its
+    // S1: S3 m2 at def 0 is 1118.5245 in Rust, exactly the fixture's S1 m2,
+    // against the fixture's S2 m2 1045.35. At module 0 S1 and S2 agree (964.85),
+    // so only m2 shows it.
+    drift("YahataUmiri", Some(3), Some(2), "no S3 exists, worst 7.0%"),
     // Gone 2026-11-05, 64 cases: Manticore S2 module 1 was the ENGINE. The
     // transpiled formula added the reference's hand-coded module step to a
     // talent the unit had already upgraded; custom/hand/manticore.rs drops it.
