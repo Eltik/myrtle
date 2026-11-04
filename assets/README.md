@@ -1530,6 +1530,8 @@ Docker, `ecosystem.config.cjs` runs the same watchers under PM2 as `myrtle-ws-en
 |----------|-----------|-------------|
 | `WS_SERVER` · `WS_SAVEDIR` · `WS_OUTPUT` · `WS_THREADS` · `WS_PROFILE` · `WS_PORT` · `WS_INTERVAL` | `run.mjs ws` | Non-interactive WebSocket-mode configuration |
 | `WS_S3_SYNC` · `WS_S3_ENV_FILE` | `run.mjs ws`, `run.mjs sync`, `run.mjs restore` (`WS_S3_ENV_FILE` only) | Object storage sync stage; see [Object Storage Sync](#object-storage-sync) |
+| `WS_HOST` | `run.mjs ws` | Interface the WebSocket server binds. Unset binds every interface (what Docker port publishing needs). On a bare host whose clients connect over localhost, `127.0.0.1` keeps the watcher off the network |
+| `WS_CONTROL_TOKEN` | `run.mjs ws` | When set, `force_update` is refused unless the message carries a matching `token` field (`{"type":"force_update","token":"..."}`). Unset leaves it open, as before. Status and `list_resources` stay open either way |
 | `DYNCHAR_CARDFIELDS` | unpacker | Override the path to `cardfields.json` |
 | `DYNCHAR_NO_CARDFIELDS` | unpacker | Skip the card-field merge pass |
 | `DYNCHAR_TEX_POOL` | unpacker | Content-addressed texture dedup pool. On by default; `=0` reverts to per-call PNGs |

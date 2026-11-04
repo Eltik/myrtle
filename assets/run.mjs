@@ -15,6 +15,7 @@ import {
 import { readdir, stat } from "node:fs/promises";
 import { dirname, join, resolve as resolvePath, sep } from "node:path";
 import { fileURLToPath } from "node:url";
+import crypto from "node:crypto";
 
 import boxen from "boxen";
 import chalk from "chalk";
@@ -1940,7 +1941,24 @@ async function runWebSocketServer({ nonInteractive = false, cliArgs = {} } = {})
 	}
 
 	// WebSocket server
-	const wss = new WebSocketServer({ port: config.port });
+	// WS_HOST picks the interface. Unset keeps the old bind (every interface),
+	// which Docker's port publishing needs; on a bare VPS where the backend and
+	// the bot reach the watcher over localhost, WS_HOST=127.0.0.1 closes it to
+	// the network.
+	const wsHost = process.env.WS_HOST?.trim() || undefined;
+	const wss = new WebSocketServer(wsHost ? { host: wsHost, port: config.port } : { port: config.port });
+	// WS_CONTROL_TOKEN gates the one command that does work on request,
+	// force_update. Unset leaves it open as before. No client in this repo sends
+	// force_update (the bot and the backend only read status and list_resources),
+	// so setting it breaks nothing that ships.
+	const controlToken = process.env.WS_CONTROL_TOKEN ?? "";
+	const controlAllowed = (msg) => {
+		if (controlToken === "") return true;
+		const given = typeof msg.token === "string" ? msg.token : "";
+		const a = Buffer.from(given);
+		const b = Buffer.from(controlToken);
+		return a.length === b.length && crypto.timingSafeEqual(a, b);
+	};
 
 	// Listen for CTRL+C directly on raw stdin. Libraries like signal-exit
 	// (used by inquirer/ora) patch process.emit and install their own SIGINT
@@ -2487,7 +2505,9 @@ async function runWebSocketServer({ nonInteractive = false, cliArgs = {} } = {})
 
 			switch (msg.type) {
 				case "force_update":
-					if (updating) {
+					if (!controlAllowed(msg)) {
+						sendTo(ws, { type: "error", message: "force_update needs a valid token" });
+					} else if (updating) {
 						sendTo(ws, {
 							type: "error",
 							message: "Update already in progress",
@@ -2526,7 +2546,7 @@ async function runWebSocketServer({ nonInteractive = false, cliArgs = {} } = {})
 			[
 				chalk.bold.green("WebSocket Server Running"),
 				"",
-				`${chalk.bold("Address:")}  ws://localhost:${config.port}`,
+				`${chalk.bold("Address:")}  ws://${wsHost ?? "localhost"}:${config.port}${wsHost ? "" : " (all interfaces)"}`,
 				`${chalk.bold("Server:")}   ${config.serverKey} — ${SERVERS[config.serverKey].label}`,
 				`${chalk.bold("Profile:")}  ${config.profile}`,
 				`${chalk.bold("Savedir:")}  ${config.savedir}`,
