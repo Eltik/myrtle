@@ -112,7 +112,7 @@ impl<'a> StageClassifier<'a> {
     fn resolve_zone_name(&self, zone_id: &str) -> Option<String> {
         let zone = self.zones.get(zone_id);
         if let Some(z) = zone
-            && let Some(n) = z.zone_name_second.as_deref().filter(|s| s.is_empty())
+            && let Some(n) = z.zone_name_second.as_deref().filter(|s| !s.is_empty())
         {
             return Some(n.to_owned());
         }
@@ -370,7 +370,7 @@ fn fb_list_names(list: &Value, field: &str) -> HashMap<String, String> {
                 item.get("key").and_then(Value::as_str),
                 item.pointer(&format!("/value/{field}"))
                     .and_then(Value::as_str),
-            ) && name.is_empty()
+            ) && !name.is_empty()
             {
                 out.insert(k.to_owned(), name.to_owned());
             }

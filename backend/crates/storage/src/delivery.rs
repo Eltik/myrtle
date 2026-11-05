@@ -297,6 +297,10 @@ impl DeliveryResolver {
     }
 
     /// Reloads `server`'s manifest when its file changed, at most once per recheck
+    #[allow(
+        clippy::significant_drop_tightening,
+        reason = "the guard spans the reload so concurrent first loads wait instead of parsing again"
+    )]
     fn snapshot(&self, server: &str, store: &Store) -> Arc<Snapshot> {
         let slot = self.slot(server);
         let mut checked_at = match slot.checked_at.try_lock() {

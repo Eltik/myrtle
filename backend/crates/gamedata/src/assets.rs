@@ -111,7 +111,14 @@ impl AssetIndex {
                     AssetKind::CampLogo => stem.to_ascii_lowercase(),
                     _ => stem.to_owned(),
                 };
-                idx.kind_mut(kind).insert(key, rel_path.clone());
+                let map = idx.kind_mut(kind);
+                let hub_icon = parent.starts_with("ui_item_icons_")
+                    && map
+                        .get(&key)
+                        .is_some_and(|p| p.contains("/item_icons_no_tiny_hub/"));
+                if !hub_icon {
+                    map.insert(key, rel_path.clone());
+                }
             } else if grandparent == Some("rglktopic") {
                 idx.kind_mut(AssetKind::RoguelikeItem)
                     .entry(stem.to_owned())
@@ -141,7 +148,7 @@ impl AssetIndex {
             ("gacha", AssetKind::GachaBanner),
             ("event", AssetKind::EventBanner),
         ] {
-            let prefix = format!("derived/release-art/{sub}");
+            let prefix = format!("derived/release-art/{sub}/");
             let map = idx.kind_mut(kind);
             for rel in paths {
                 let Some(stem) = flat_png_stem(rel, &prefix) else {

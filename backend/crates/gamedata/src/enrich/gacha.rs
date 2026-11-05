@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use myrtle_gamedata_raw::tables::{
     gacha::{GachaPoolClient, RarityRate},
-    gacha_detail::{GachaPoolDetail, PoolDetailFile, RARITY_RANK_6},
+    gacha_detail::{GachaPoolDetail, PoolDetailFile, RARITY_RANK_5, RARITY_RANK_6},
 };
 
 use base64::Engine;
@@ -105,7 +105,7 @@ fn overlay_pool_detail(pool: &mut GachaPoolClient, detail: &GachaPoolDetail) {
         for entry in &up.per_char_list {
             let target = match entry.rarity_rank {
                 RARITY_RANK_6 => &mut pool.featured6,
-                _RARITY_RANK_5 => &mut pool.featured5,
+                RARITY_RANK_5 => &mut pool.featured5,
                 _ => continue,
             };
             for char_id in &entry.char_id_list {

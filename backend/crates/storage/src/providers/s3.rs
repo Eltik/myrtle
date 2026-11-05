@@ -161,16 +161,16 @@ async fn file_body(path: &Path, offset: u64, len: u64) -> Result<Body, StorageEr
 
 /// The `PutBucketCors` body: browser GET and HEAD from `origins`
 fn cors_xml(origins: &[String]) -> String {
-    let origins: String = origins
-        .iter()
-        .map(|o| {
-            let o = o
-                .replace('&', "&amp;")
-                .replace('<', "&lt;")
-                .replace('>', "&gt;");
-            format!("<AllowedOrigin>{o}</AllowedOrigin>")
-        })
-        .collect();
+    let origins = origins.iter().fold(String::new(), |mut out, o| {
+        let o = o
+            .replace('&', "&amp;")
+            .replace('<', "&lt;")
+            .replace('>', "&gt;");
+        out.push_str("<AllowedOrigin>");
+        out.push_str(&o);
+        out.push_str("</AllowedOrigin>");
+        out
+    });
     format!(
         "<CORSConfiguration><CORSRule>{origins}\
          <AllowedMethod>GET</AllowedMethod><AllowedMethod>HEAD</AllowedMethod>\

@@ -293,9 +293,49 @@ pub struct StorylineStorySet {
     /// Title logotype (e.g. `title_evil_time_part1`), in `spritepack/mixstory_title_sprites_0`
     #[serde(default)]
     pub title_image_id: Option<String>,
+    /// `SS` (side story) set's background and rerun
+    #[serde(default)]
+    pub ss_data: Option<StorySetEventData>,
+    /// `COLLECT` (story collection) set's background
+    #[serde(default)]
+    pub collect_data: Option<StorySetEventData>,
+}
+
+/// Part of `SsData` / `CollectData` the event art reads, `MAINLINE` sets carry neither
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct StorySetEventData {
+    /// Full-width key visual (e.g. `storybg_break_the_ice`), in
+    /// `spritepack/mixstory_retro_bkg_sprites_{0..5}`
+    #[serde(default)]
+    pub background_id: Option<String>,
+    /// Rerun's activity id (e.g. `act14sre`), `SS` sets only
+    #[serde(default)]
+    pub reopen_activity_id: Option<String>,
 }
 
 impl StorylineStorySet {
+    /// Key visual id, from whichever event block the set carries
+    #[must_use]
+    pub fn background_id(&self) -> Option<&str> {
+        self.ss_data
+            .as_ref()
+            .or(self.collect_data.as_ref())
+            .and_then(|d| d.background_id.as_deref())
+            .filter(|b| !b.is_empty())
+    }
+
+    /// Whether `act_id` is this set's event or its rerun
+    #[must_use]
+    pub fn covers_activity(&self, act_id: &str) -> bool {
+        self.relevant_activity_id.as_deref() == Some(act_id)
+            || self
+                .ss_data
+                .as_ref()
+                .and_then(|d| d.reopen_activity_id.as_deref())
+                == Some(act_id)
+    }
+
     #[must_use]
     pub fn group_id(&self) -> Option<&str> {
         if let Some(zone) = self

@@ -45,6 +45,18 @@ pub struct RoguelikeThemeGameData {
     /// Max endbook CG items
     pub max_endbook_items: i32,
     pub max_buffs: i32,
+    /// Endings `Endings` lists outside the regular runs, `max_endings` still counts them
+    pub special_endings: Vec<SpecialEnding>,
+}
+
+/// Ending the game data lists that a regular run does not reach
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SpecialEnding {
+    pub id: String,
+    pub name: String,
+    /// Theme's challenge mode name (e.g. "Deep Investigation"), `None` when it lists no `CHALLENGE` difficulty
+    pub mode_name: Option<String>,
 }
 
 /// `roguelike_topic_table.json`
@@ -74,6 +86,7 @@ impl RoguelikeGameData {
                 .unwrap_or_else(|| theme_id.clone());
 
             let max_endings = get_kv_array_len(detail, &["Endings", "endings"]);
+            let special_endings = special_endings(detail);
             let max_challenges = get_kv_array_len(detail, &["Challenges", "challenges"]);
             let max_bp_levels = get_array_len(detail, &["Milestones", "milestones"]);
             let max_monthly_squads = get_kv_array_len(detail, &["MonthSquad", "monthSquad"]);
@@ -114,6 +127,7 @@ impl RoguelikeGameData {
                     relic_ids,
                     capsule_ids,
                     band_ids,
+                    special_endings,
                 },
             );
         }
@@ -196,6 +210,41 @@ fn count_in_buckets(ids: &[String], buckets: &[Option<&Value>]) -> usize {
             })
         })
         .count()
+}
+
+/// Endings whose `Priority` sits outside the 0..n-1 ranking regular endings share, the mode name
+/// is the theme's `CHALLENGE` difficulty
+fn special_endings(detail: &Value) -> Vec<SpecialEnding> {
+    let endings = detail
+        .get("Endings")
+        .or_else(|| detail.get("endings"))
+        .map(kv_to_map)
+        .unwrap_or_default();
+    let count = endings.len() as i64;
+    let mode_name = get_array(detail, &["Difficulties", "difficulties"])
+        .iter()
+        .find(|d| {
+            get_str(d, &["ModeDifficulty", "modeDifficulty", "mode"]).as_deref()
+                == Some("CHALLENGE")
+        })
+        .and_then(|d| get_str(d, &["Name", "name"]));
+
+    let mut special: Vec<SpecialEnding> = endings
+        .iter()
+        .filter(|(_, e)| {
+            e.get("Priority")
+                .or_else(|| e.get("priority"))
+                .and_then(Value::as_i64)
+                .is_some_and(|p| p >= count)
+        })
+        .map(|(id, e)| SpecialEnding {
+            id: id.clone(),
+            name: get_str(e, &["Name", "name"]).unwrap_or_else(|| id.clone()),
+            mode_name: mode_name.clone(),
+        })
+        .collect();
+    special.sort_by(|a, b| a.id.cmp(&b.id));
+    special
 }
 
 fn band_item_ids(detail: &Value) -> Vec<String> {

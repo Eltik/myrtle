@@ -1083,20 +1083,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "myrtle-gamedata-old"
-version = "0.1.0"
-dependencies = [
- "base64 0.22.1",
- "bson",
- "myrtle-gamedata-raw",
- "myrtle-types",
- "regex",
- "serde",
- "serde_json",
- "thiserror",
-]
-
-[[package]]
 name = "myrtle-gamedata-raw"
 version = "0.1.0"
 dependencies = [

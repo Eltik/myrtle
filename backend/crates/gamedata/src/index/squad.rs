@@ -72,7 +72,6 @@ pub struct TextFacts {
     pub arts_damage: bool,
     pub physical_damage: bool,
     pub true_damage: bool,
-    pub elemental_damage: bool,
     pub aerial_first: bool,
     pub all_targets: bool,
     pub all_enemies: bool,
@@ -96,7 +95,6 @@ impl TextFacts {
             out.arts_damage |= p.arts_damage;
             out.physical_damage |= p.physical_damage;
             out.true_damage |= p.true_damage;
-            out.elemental_damage |= p.elemental_damage;
             out.aerial_first |= p.aerial_first;
             out.all_targets |= p.all_targets;
             out.all_enemies |= p.all_enemies;
@@ -334,8 +332,7 @@ fn read(raw: &str, vocab: &Vocab, talent: bool, holder: &str) -> TextFacts {
     TextFacts {
         arts_damage: lower.contains("arts damage"),
         physical_damage: lower.contains("physical damage"),
-        true_damage: lower.contains("true damage"),
-        elemental_damage: elemental_damage_tag(raw),
+        true_damage: lower.contains("true damage") || elemental_damage_tag(raw),
         aerial_first: lower.contains("aerial enemies first"),
         all_targets: any_of(
             &lower,

@@ -52,6 +52,8 @@ pub enum ItemClass {
     Unknown,
 }
 
+/// `rename_all` puts no underscore before a digit (`TktGacha10` -> `TKT_GACHA10`), so a name ending
+/// in a number carries an explicit rename; one that misses falls to `Unknown`
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 #[derive(Default)]
@@ -68,8 +70,10 @@ pub enum ItemType {
     PlayerAvatar,
     TktTry,
     TktryRecruit,
+    TktRecruit,
     TktInstFin,
     TktGacha,
+    #[serde(rename = "TKT_GACHA_10")]
     TktGacha10,
     SocialPt,
     ApGameplay,
@@ -84,16 +88,34 @@ pub enum ItemType {
     RenamingCard,
     ApSupply,
     ExterminationAgent,
+    #[serde(rename = "LIMITED_TKT_GACHA_10")]
     LimitedTktGacha10,
+    LinkageTktGacha,
+    #[serde(rename = "LINKAGE_TKT_GACHA_10")]
     LinkageTktGacha10,
     VoucherPick,
+    #[serde(rename = "VOUCHER_LEVELMAX_6")]
     VoucherLevelmax6,
+    #[serde(rename = "VOUCHER_LEVELMAX_5")]
     VoucherLevelmax5,
+    #[serde(rename = "VOUCHER_LEVELMAX_4")]
+    VoucherLevelmax4,
     #[serde(rename = "VOUCHER_ELITE_II_6")]
     VoucherEliteIi6,
     #[serde(rename = "VOUCHER_ELITE_II_5")]
     VoucherEliteIi5,
+    #[serde(rename = "VOUCHER_ELITE_II_4")]
+    VoucherEliteIi4,
+    #[serde(rename = "VOUCHER_SKILL_SPECIALLEVELMAX_6")]
+    VoucherSkillSpeciallevelmax6,
+    #[serde(rename = "VOUCHER_SKILL_SPECIALLEVELMAX_5")]
+    VoucherSkillSpeciallevelmax5,
+    #[serde(rename = "VOUCHER_SKILL_SPECIALLEVELMAX_4")]
+    VoucherSkillSpeciallevelmax4,
     VoucherSkin,
+    #[serde(rename = "VOUCHER_SKIN_V2")]
+    VoucherSkinV2,
+    RandomVoucherSkin,
     VoucherCgacha,
     OptionalVoucherPick,
     ItemPack,
@@ -112,9 +134,12 @@ pub enum ItemType {
     FavorAddItem,
     ClassicShd,
     ClassicTktGacha,
+    #[serde(rename = "CLASSIC_TKT_GACHA_10")]
     ClassicTktGacha10,
     LimitedBuff,
+    #[serde(rename = "CLASSIC_FES_PICK_TIER_5")]
     ClassicFesPickTier5,
+    #[serde(rename = "CLASSIC_FES_PICK_TIER_6")]
     ClassicFesPickTier6,
     ReturnProgress,
     NewProgress,
@@ -122,7 +147,12 @@ pub enum ItemType {
     MaterialIssueVoucher,
     SandboxToken,
     ExclusiveTktGacha,
+    #[serde(rename = "EXCLUSIVE_TKT_GACHA_10")]
     ExclusiveTktGacha10,
+    GiftpackageTkt,
+    EmoticonSet,
+    SoCharExp,
+    PlotItem,
     #[serde(other)]
     Unknown,
 }
