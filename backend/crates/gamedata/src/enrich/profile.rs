@@ -1,4 +1,7 @@
-use myrtle_gamedata_raw::tables::handbook::{BasicInfo, HandbookStoryTextAudio, OperatorBirthPlace, OperatorGender, OperatorProfile, OperatorRace, PhysicalExam};
+use myrtle_gamedata_raw::tables::handbook::{
+    BasicInfo, HandbookStoryTextAudio, OperatorBirthPlace, OperatorGender, OperatorProfile,
+    OperatorRace, PhysicalExam,
+};
 
 use crate::{compile::CompileOptions, model::GameModel};
 

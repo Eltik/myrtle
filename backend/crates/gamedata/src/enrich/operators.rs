@@ -8,7 +8,10 @@ use myrtle_gamedata_raw::tables::handbook_team::{HandbookTeam, NO_FACTION};
 use myrtle_gamedata_raw::tables::material::{ItemType, Materials};
 use myrtle_gamedata_raw::tables::module::{BattleEquip, RawModules};
 use myrtle_gamedata_raw::tables::obtain::ObtainChannel;
-use myrtle_gamedata_raw::tables::operator::{AllSkillLevelUp, CharPatchInfo, Drone, EvolveCost, HiddenFaction, LevelUpCostItem, Operator, OperatorBaseSkill, Phase, PowerAffiliation, RawOperator};
+use myrtle_gamedata_raw::tables::operator::{
+    AllSkillLevelUp, CharPatchInfo, Drone, EvolveCost, HiddenFaction, LevelUpCostItem, Operator,
+    OperatorBaseSkill, Phase, PowerAffiliation, RawOperator,
+};
 use myrtle_gamedata_raw::tables::skill::Skill;
 
 use crate::assets::AssetIndex;
@@ -215,10 +218,10 @@ fn hidden_factions(
         raw.group_id.clone(),
         raw.team_id.clone(),
     ]
-        .into_iter()
-        .chain(raw.main_power.iter().flat_map(ids))
-        .flatten()
-        .collect();
+    .into_iter()
+    .chain(raw.main_power.iter().flat_map(ids))
+    .flatten()
+    .collect();
 
     let mut hidden = Vec::new();
     for id in raw.sub_power.iter().flatten().flat_map(ids).flatten() {

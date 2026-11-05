@@ -1,6 +1,12 @@
 use std::collections::HashMap;
 
-use myrtle_gamedata_raw::tables::{material::Materials, module::{BattleEquip, Module, ModuleItemCost, Modules, RawModule, RawModuleItemCost, RawModules}, operator::OperatorModule};
+use myrtle_gamedata_raw::tables::{
+    material::Materials,
+    module::{
+        BattleEquip, Module, ModuleItemCost, Modules, RawModule, RawModuleItemCost, RawModules,
+    },
+    operator::OperatorModule,
+};
 
 use crate::assets::AssetIndex;
 

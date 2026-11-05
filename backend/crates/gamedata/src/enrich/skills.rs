@@ -1,6 +1,10 @@
 use std::collections::HashMap;
 
-use myrtle_gamedata_raw::tables::{material::Materials, operator::{EnrichedSkill, LevelUpCostCond, LevelUpCostItem, OperatorSkillRef, SkillStatic}, skill::{RawSkill, Skill}};
+use myrtle_gamedata_raw::tables::{
+    material::Materials,
+    operator::{EnrichedSkill, LevelUpCostCond, LevelUpCostItem, OperatorSkillRef, SkillStatic},
+    skill::{RawSkill, Skill},
+};
 
 use super::resolve_item_icon;
 use crate::assets::AssetIndex;
@@ -29,10 +33,12 @@ pub fn enrich_all_skills(
 }
 
 #[must_use]
-pub fn enrich_operator_skills(skill_refs: &[OperatorSkillRef],
-skill_table: &HashMap<String, Skill>,
-materials: &Materials,
-assets: &AssetIndex) -> Vec<EnrichedSkill> {
+pub fn enrich_operator_skills(
+    skill_refs: &[OperatorSkillRef],
+    skill_table: &HashMap<String, Skill>,
+    materials: &Materials,
+    assets: &AssetIndex,
+) -> Vec<EnrichedSkill> {
     skill_refs
         .iter()
         .filter_map(|skill_ref| {

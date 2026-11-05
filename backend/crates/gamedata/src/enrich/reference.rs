@@ -11,7 +11,11 @@ pub struct ReferenceFacts {
     pub skin_channels: usize,
 }
 
-pub fn align(target: &mut GameModel, references: &[&GameModel], opts: &CompileOptions) -> ReferenceFacts {
+pub fn align(
+    target: &mut GameModel,
+    references: &[&GameModel],
+    opts: &CompileOptions,
+) -> ReferenceFacts {
     let profiles = align_profiles(target, references, opts);
     if !opts.obtain_channel_align {
         return ReferenceFacts {

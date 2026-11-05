@@ -1,4 +1,9 @@
-use myrtle_gamedata_raw::tables::{gacha::{GachaPoolClient, RarityRate}, gacha_detail::{GachaPoolDetail, PoolDetailFile, RARITY_RANK_6}};
+use std::collections::HashSet;
+
+use myrtle_gamedata_raw::tables::{
+    gacha::{GachaPoolClient, RarityRate},
+    gacha_detail::{GachaPoolDetail, PoolDetailFile, RARITY_RANK_6},
+};
 
 use base64::Engine;
 use bson::Bson;
@@ -100,7 +105,7 @@ fn overlay_pool_detail(pool: &mut GachaPoolClient, detail: &GachaPoolDetail) {
         for entry in &up.per_char_list {
             let target = match entry.rarity_rank {
                 RARITY_RANK_6 => &mut pool.featured6,
-                RARITY_RANK_5 => &mut pool.featured5,
+                _RARITY_RANK_5 => &mut pool.featured5,
                 _ => continue,
             };
             for char_id in &entry.char_id_list {
@@ -155,4 +160,10 @@ fn share_fraction(percent: f64) -> Option<f64> {
         percent
     };
     (share.is_finite() && share > 0.0 && share <= 1.0).then_some(share)
+}
+
+pub fn mark_returning_pools(pools: &mut [GachaPoolClient], returning: &HashSet<String>) {
+    for pool in pools {
+        pool.returning = returning.contains(&pool.gacha_pool_id);
+    }
 }
