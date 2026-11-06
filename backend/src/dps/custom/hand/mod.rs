@@ -32,6 +32,7 @@ mod bellone;
 mod chen_dawnstreak;
 mod closure;
 mod kaltsit_esperanta;
+mod manticore;
 mod mantra;
 mod nasti;
 mod silverash_alter;
@@ -58,6 +59,7 @@ pub const DPS: &[(&str, DpsFn)] = &[
     ("char_2027_wang", wang::dps),
     ("char_1047_halo2", astgenne_lightchaser::dps),
     ("char_4212_nasti", nasti::dps),
+    ("char_215_mantic", manticore::dps),
     ("char_1052_kalts2", kaltsit_esperanta::dps),
     ("char_4226_veen", viy::dps),
     ("char_4204_mantra", mantra::dps),

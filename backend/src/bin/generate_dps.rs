@@ -835,15 +835,20 @@ from collections import defaultdict
 
 cases = json.load(sys.stdin)
 
+# The bot builds every operator with `shreds` = [def mult, def flat, res mult,
+# res flat] (damagecalc/utils.py), and ChenAlter, Ifrit, Logos, Rosmontis and
+# TogawaSakiko read it to order a flat DEF/RES change against the shred. Built
+# without it, they apply the shred as if it were not there. Grouping by the
+# shred as well lets each case pass its own.
 grouped = defaultdict(list)
 for tc in cases:
-    grouped[(tc['operator'], tc['skill'], tc['module'])].append(tc)
+    grouped[(tc['operator'], tc['skill'], tc['module'], tc['def_shred_mult'], tc['def_shred_flat'], tc['res_shred_mult'], tc['res_shred_flat'])].append(tc)
 
 results = {{}}
-for (op_name, skill, module), tcs in grouped.items():
+for (op_name, skill, module, dm, df, rm, rf), tcs in grouped.items():
     try:
         pp = PlotParameters(skill=skill, module=module)
-        op = globals()[op_name](pp)
+        op = globals()[op_name](pp, shreds=[dm, df, rm, rf])
     except Exception:
         continue
     for tc in tcs:

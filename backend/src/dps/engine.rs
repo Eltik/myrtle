@@ -948,7 +948,12 @@ mod tests {
     /// Hand ids that are ALSO in a generated table: the hand formula shadows the
     /// transpiled one (`generate-dps` prints `HAND OVERRIDE` for each). An id lands here
     /// only after a review decided to keep the hand formula over upstream's.
-    const REVIEWED_HAND_OVERRIDES: &[&str] = &[];
+    const REVIEWED_HAND_OVERRIDES: &[&str] = &[
+        // Manticore: the transpiled formula re-adds the reference's hand-coded module
+        // step to a talent `OperatorUnit` already upgraded (custom/hand/manticore.rs).
+        // Listed in a draft PR, 2026-11-05: still needs the owner's review.
+        "char_215_mantic",
+    ];
 
     /// Operator ids of the arms of the generated `pub fn dispatch(` in a dispatch file.
     fn dispatch_arm_ids(source: &str) -> Vec<String> {
