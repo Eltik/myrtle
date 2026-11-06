@@ -274,7 +274,9 @@ mod tests {
         assert!(keep_for_story("hot_update_list.idx"));
         // not story content
         assert!(!keep_for_story("chararts/char_002_amiya.ab"));
-        assert!(!keep_for_story("audio/sound_beta_2/voice/char_002_amiya.ab"));
+        assert!(!keep_for_story(
+            "audio/sound_beta_2/voice/char_002_amiya.ab"
+        ));
         assert!(!keep_for_story("audio/sound_beta_2/btl_snd_0.ab"));
         assert!(!keep_for_story("scenes/obt/main/level_main_01-07.ab"));
     }

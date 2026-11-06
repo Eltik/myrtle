@@ -308,7 +308,7 @@ pub struct OtpChallenge {
 
 impl OtpChallenge {
     #[must_use]
-    pub fn is_expired(&self, now: u64) -> bool {
+    pub const fn is_expired(&self, now: u64) -> bool {
         now.saturating_sub(self.issued_at) > OTP_TTL_SECS
     }
 }

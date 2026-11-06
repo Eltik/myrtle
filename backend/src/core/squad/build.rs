@@ -134,7 +134,7 @@ pub struct Seat<'a> {
     /// The blackboards of the module's hidden talent parts (`talent_index` -1
     /// with no name, or `is_hide_talent`): engine numbers no talent shows,
     /// which a visible talent's text may still print (`SilverAsh`'s Snow
-    /// Realm Fowlcare Kit stage 3 `respawn_time` -0.1, "SilverAsh ... gain an
+    /// Realm Fowlcare Kit stage 3 `respawn_time` -0.1, "`SilverAsh` ... gain an
     /// additional -10% Redeployment Time").
     pub hidden_boards: Vec<Board>,
     /// The trait text (`description`, or a candidate's / module's override,
@@ -359,8 +359,7 @@ pub fn resolve<'a>(data: &'a GameData, seat: i32, b: &SquadMemberBuild) -> Optio
                     // `is_hide_talent`) carry engine numbers with no text; the
                     // visible part of the same talent is the one the player
                     // reads.
-                    if c.is_hide_talent == Some(true) || (c.talent_index < 0 && c.name.is_empty())
-                    {
+                    if c.is_hide_talent == Some(true) || (c.talent_index < 0 && c.name.is_empty()) {
                         hidden_boards.push(board(&c.blackboard));
                         continue;
                     }

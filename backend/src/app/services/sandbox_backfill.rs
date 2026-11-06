@@ -209,17 +209,16 @@ async fn run(
                 continue;
             }
         };
-        match blob_from_change(&response, m) {
-            Some(blob) => {
-                store_topic(state, user_id, m, blob).await?;
-                fetched += 1;
-                tracing::info!(uid, topic = %m.topic, "RA topic backfill: stored");
-            }
-            None => tracing::warn!(
+        if let Some(blob) = blob_from_change(&response, m) {
+            store_topic(state, user_id, m, blob).await?;
+            fetched += 1;
+            tracing::info!(uid, topic = %m.topic, "RA topic backfill: stored");
+        } else {
+            tracing::warn!(
                 uid,
                 topic = %m.topic,
                 "RA topic backfill: the switch answered without the topic"
-            ),
+            );
         }
         switch_back(state, uid, session, server, &loaded).await;
     }
@@ -282,10 +281,10 @@ async fn switch_back(
         match result {
             Ok(r) if r.get("result").and_then(Value::as_i64) == Some(0) => return,
             Ok(r) => {
-                tracing::warn!(uid, attempt, result = ?r.get("result"), "RA topic backfill: switch back answered non-zero")
+                tracing::warn!(uid, attempt, result = ?r.get("result"), "RA topic backfill: switch back answered non-zero");
             }
             Err(e) => {
-                tracing::warn!(uid, attempt, error = ?e, "RA topic backfill: switch back failed")
+                tracing::warn!(uid, attempt, error = ?e, "RA topic backfill: switch back failed");
             }
         }
     }

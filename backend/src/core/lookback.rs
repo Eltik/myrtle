@@ -45,7 +45,7 @@ pub fn is_launch(activity: &ActivityBasicInfo) -> bool {
 
 /// 00:00 UTC of the Monday of the week holding `now`. 1970-01-01 was a
 /// Thursday, three days after a Monday.
-pub fn week_start(now: i64) -> i64 {
+pub const fn week_start(now: i64) -> i64 {
     let day = now.div_euclid(DAY_SECS);
     (day - (day + 3).rem_euclid(7)) * DAY_SECS
 }
@@ -77,7 +77,11 @@ pub fn current_period<'a>(
 }
 
 /// The level cap of `operator_id` at promotion `elite`, from `operators`.
-pub fn level_cap(operators: &HashMap<String, Operator>, operator_id: &str, elite: i16) -> Option<i32> {
+pub fn level_cap(
+    operators: &HashMap<String, Operator>,
+    operator_id: &str,
+    elite: i16,
+) -> Option<i32> {
     let phase = usize::try_from(elite).ok()?;
     operators
         .get(operator_id)?
@@ -152,7 +156,15 @@ pub fn expand(build: StoredBuild) -> Vec<LookbackOperator> {
         .operators
         .into_iter()
         .map(
-            |StoredOperator(operator_id, elite, level, potential, skill_level, masteries, modules)| {
+            |StoredOperator(
+                operator_id,
+                elite,
+                level,
+                potential,
+                skill_level,
+                masteries,
+                modules,
+            )| {
                 LookbackOperator {
                     operator_id,
                     elite,
@@ -234,7 +246,10 @@ mod tests {
         assert_eq!(p.activity_name.as_deref(), Some("act51side name"));
         // The second it launches, it is the period.
         assert_eq!(current_period(&acts, SEP16).start, SEP16);
-        assert_eq!(current_period(&acts, SEP16 - 1).start, SEP16 - 20 * DAY_SECS);
+        assert_eq!(
+            current_period(&acts, SEP16 - 1).start,
+            SEP16 - 20 * DAY_SECS
+        );
     }
 
     #[test]
@@ -258,11 +273,25 @@ mod tests {
             act("act10", SEP16, true, "MINISTORY"),
         ];
         let rev = [acts[1].clone(), acts[0].clone()];
-        assert_eq!(current_period(&acts, SEP16).activity_id.as_deref(), Some("act10"));
-        assert_eq!(current_period(&rev, SEP16).activity_id.as_deref(), Some("act10"));
+        assert_eq!(
+            current_period(&acts, SEP16).activity_id.as_deref(),
+            Some("act10")
+        );
+        assert_eq!(
+            current_period(&rev, SEP16).activity_id.as_deref(),
+            Some("act10")
+        );
     }
 
-    fn row(id: &str, elite: i16, level: i16, pot: i16, sl: i16, m: &[i16], modules: &[(&str, i16)]) -> BuildRow {
+    fn row(
+        id: &str,
+        elite: i16,
+        level: i16,
+        pot: i16,
+        sl: i16,
+        m: &[i16],
+        modules: &[(&str, i16)],
+    ) -> BuildRow {
         BuildRow {
             operator_id: id.to_owned(),
             elite,
@@ -278,7 +307,15 @@ mod tests {
     #[test]
     fn compact_counts_and_strips_the_build() {
         let rows = [
-            row("char_a", 2, 90, 5, 7, &[3, 0, 3], &[("uniequip_002_a", 3), ("uniequip_003_a", 1)]),
+            row(
+                "char_a",
+                2,
+                90,
+                5,
+                7,
+                &[3, 0, 3],
+                &[("uniequip_002_a", 3), ("uniequip_003_a", 1)],
+            ),
             row("char_b", 2, 60, 0, 7, &[1, 2], &[]),
             row("char_c", 1, 55, 2, 4, &[0, 0], &[]),
             row("char_d", 0, 30, 5, 1, &[], &[]),
@@ -324,7 +361,13 @@ mod tests {
         // The stored form reads back to the same build, in the API's shape.
         let back: StoredBuild = serde_json::from_str(&json).expect("reads back");
         let ops = expand(back);
-        assert_eq!(ops[0].modules[0], LookbackModule { module_id: "uniequip_002_a".into(), stage: 3 });
+        assert_eq!(
+            ops[0].modules[0],
+            LookbackModule {
+                module_id: "uniequip_002_a".into(),
+                stage: 3
+            }
+        );
         assert_eq!(ops[3].operator_id, "char_d");
     }
 
@@ -342,7 +385,10 @@ mod tests {
         assert_eq!(
             pts,
             vec![
-                OwnershipPoint { ts: day - DAY_SECS, count: 1 },
+                OwnershipPoint {
+                    ts: day - DAY_SECS,
+                    count: 1
+                },
                 OwnershipPoint { ts: day, count: 3 },
             ]
         );

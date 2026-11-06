@@ -249,11 +249,13 @@ pub async fn send_bilibili_sms(state: &AppState, phone: &str) -> Result<(), ApiE
         }
     };
     let now = unix_now();
-    let mut pending = PENDING_BILIBILI_SMS
-        .lock()
-        .unwrap_or_else(PoisonError::into_inner);
-    pending.retain(|_, c| !c.is_expired(now));
-    pending.insert(phone.to_owned(), challenge);
+    {
+        let mut pending = PENDING_BILIBILI_SMS
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner);
+        pending.retain(|_, c| !c.is_expired(now));
+        pending.insert(phone.to_owned(), challenge);
+    }
     Ok(())
 }
 

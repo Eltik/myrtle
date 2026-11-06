@@ -161,16 +161,16 @@ fn parse<T: for<'de> Deserialize<'de>>(stored: &str) -> Option<T> {
     serde_json::from_value(serde_json::Value::String(stored.to_owned())).ok()
 }
 
-fn person(
-    id: Option<Uuid>,
+const fn person(
+    user_id: Uuid,
     uid: Option<String>,
     nickname: Option<String>,
-) -> Option<ContentAuditPerson> {
-    id.map(|user_id| ContentAuditPerson {
+) -> ContentAuditPerson {
+    ContentAuditPerson {
         user_id,
         uid,
         nickname,
-    })
+    }
 }
 
 fn to_entry(r: ContentAuditRowWithPeople) -> Option<ContentAuditEntry> {
@@ -189,8 +189,12 @@ fn to_entry(r: ContentAuditRowWithPeople) -> Option<ContentAuditEntry> {
             secretary: r.actor_secretary,
             secretary_skin_id: r.actor_secretary_skin_id,
         },
-        owner: person(row.owner_id, r.owner_uid, r.owner_nickname),
-        subject: person(row.subject_id, r.subject_uid, r.subject_nickname),
+        owner: row
+            .owner_id
+            .map(|id| person(id, r.owner_uid, r.owner_nickname)),
+        subject: row
+            .subject_id
+            .map(|id| person(id, r.subject_uid, r.subject_nickname)),
         details: row.details.0,
         event_count: row.event_count,
         first_at: row.first_at,

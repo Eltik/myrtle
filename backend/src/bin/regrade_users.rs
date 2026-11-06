@@ -52,6 +52,8 @@ use std::{
 use tokio::sync::Semaphore;
 use uuid::Uuid;
 
+// Command-line switches: each bool is an independent flag, not a state.
+#[allow(clippy::struct_excessive_bools)]
 struct Args {
     concurrency: usize,
     page_size: i64,

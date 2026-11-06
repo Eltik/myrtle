@@ -1013,6 +1013,7 @@ stage-index[*].levelId: null
 stage-index[*].levelId: string
 stage-index[*].name: null
 stage-index[*].name: string
+stage-index[*].originitePrime: number
 stage-index[*].preview: null
 stage-index[*].stageId: string
 stage-index[*].zoneId: string

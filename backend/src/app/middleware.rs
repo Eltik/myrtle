@@ -766,6 +766,9 @@ mod tests {
             ("story_gallery_variant", Paid::Cached),
             ("story_sprite_thumb", Paid::Cached),
             ("event_banner", Paid::Cached),
+            // Built once per pair of game-data loads (the viewer's and CN's) and
+            // served from `CN_CHANGES` until either reloads.
+            ("cn_changes", Paid::Cached),
             ("story_sprite_variant_thumb", Paid::Cached),
             ("dps_retention", Paid::Background),
             ("regrade", Paid::Background),

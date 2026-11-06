@@ -17,8 +17,8 @@ use super::build::Seat;
 use super::index::TalentText;
 use super::targets::{Target, fits};
 use super::types::{
-    Synergy, SynergyCond, SynergyCounts, SynergyGroup, SynergyItem, SynergyNeed, SynergyReason,
-    SourceRef, SynergyTarget, SynergyTargetKind,
+    SourceRef, Synergy, SynergyCond, SynergyCounts, SynergyGroup, SynergyItem, SynergyNeed,
+    SynergyReason, SynergyTarget, SynergyTargetKind,
 };
 
 /// The target in the reader's server's words where its tables name it.
@@ -79,13 +79,16 @@ fn reach(
         .collect();
     let everyone = target.kind == SynergyTargetKind::Everyone;
     let to_all = everyone && !to.is_empty();
-    let need = effect.talent.and_then(|tt| tt.need).map(|(count, counts_giver)| {
-        let giver = counts_giver && fits(target, g, cost(g), &g.tag_ids);
-        SynergyNeed {
-            count,
-            have: i32::try_from(to.len()).unwrap_or(0) + i32::from(giver),
-        }
-    });
+    let need = effect
+        .talent
+        .and_then(|tt| tt.need)
+        .map(|(count, counts_giver)| {
+            let giver = counts_giver && fits(target, g, cost(g), &g.tag_ids);
+            SynergyNeed {
+                count,
+                have: i32::try_from(to.len()).unwrap_or(0) + i32::from(giver),
+            }
+        });
 
     let (group, reason) = if to.is_empty() {
         let reason = match target.kind {

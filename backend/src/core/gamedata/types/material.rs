@@ -486,7 +486,11 @@ mod tests {
             let json = format!("\"{name}\"");
             let parsed: ItemType = serde_json::from_str(&json).unwrap();
             assert_ne!(parsed, ItemType::Unknown, "{name} fell to Unknown");
-            assert_eq!(serde_json::to_string(&parsed).unwrap(), json, "{name} does not round-trip");
+            assert_eq!(
+                serde_json::to_string(&parsed).unwrap(),
+                json,
+                "{name} does not round-trip"
+            );
         }
     }
 }

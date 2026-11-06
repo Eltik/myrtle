@@ -1440,7 +1440,17 @@ fn kazimierz_squad_reaches_each_other() {
     let a = analyze(
         data,
         &req(vec![
-            m("char_237_gravel", 2, 80, 0, 0, 7, 3, Some("uniequip_002_gravel"), 3),
+            m(
+                "char_237_gravel",
+                2,
+                80,
+                0,
+                0,
+                7,
+                3,
+                Some("uniequip_002_gravel"),
+                3,
+            ),
             m("char_4064_mlynar", 2, 90, 0, 0, 7, 3, None, 1),
             m("char_1014_nearl2", 2, 90, 0, 1, 7, 3, None, 1),
         ]),
