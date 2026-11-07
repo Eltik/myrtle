@@ -265,13 +265,13 @@ pub const ENUM_MIN_ENUM__TORAPPU_CHAR_WORD_SHOW_TYPE: i32 = 0;
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
-pub const ENUM_MAX_ENUM__TORAPPU_CHAR_WORD_SHOW_TYPE: i32 = 35;
+pub const ENUM_MAX_ENUM__TORAPPU_CHAR_WORD_SHOW_TYPE: i32 = 48;
 #[deprecated(
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_CHAR_WORD_SHOW_TYPE: [enum__Torappu_CharWordShowType; 36] = [
+pub const ENUM_VALUES_ENUM__TORAPPU_CHAR_WORD_SHOW_TYPE: [enum__Torappu_CharWordShowType; 49] = [
     enum__Torappu_CharWordShowType::HOME_SHOW,
     enum__Torappu_CharWordShowType::HOME_PLACE,
     enum__Torappu_CharWordShowType::HOME_WAIT,
@@ -307,6 +307,19 @@ pub const ENUM_VALUES_ENUM__TORAPPU_CHAR_WORD_SHOW_TYPE: [enum__Torappu_CharWord
     enum__Torappu_CharWordShowType::GREETING,
     enum__Torappu_CharWordShowType::ANNIVERSARY,
     enum__Torappu_CharWordShowType::UNUSED,
+    enum__Torappu_CharWordShowType::AUTOCHESS_GAME_START,
+    enum__Torappu_CharWordShowType::AUTOCHESS_REST_NO_HP_LOSS,
+    enum__Torappu_CharWordShowType::AUTOCHESS_REST_HP_LOSS,
+    enum__Torappu_CharWordShowType::AUTOCHESS_REST_BOSS,
+    enum__Torappu_CharWordShowType::AUTOCHESS_REST_HIDDEN_BOSS,
+    enum__Torappu_CharWordShowType::AUTOCHESS_SAME_OPERATOR,
+    enum__Torappu_CharWordShowType::AUTOCHESS_BUY_OPERATOR_LOW,
+    enum__Torappu_CharWordShowType::AUTOCHESS_BUY_OPERATOR_HIGH,
+    enum__Torappu_CharWordShowType::AUTOCHESS_SHOP_UPGRADE,
+    enum__Torappu_CharWordShowType::AUTOCHESS_COUNTDOWN,
+    enum__Torappu_CharWordShowType::AUTOCHESS_MERGE_TRIPLE,
+    enum__Torappu_CharWordShowType::AUTOCHESS_ALLIANCE_LEVEL,
+    enum__Torappu_CharWordShowType::AUTOCHESS_FREEZE,
     enum__Torappu_CharWordShowType::E_ALL,
 ];
 
@@ -350,10 +363,23 @@ impl enum__Torappu_CharWordShowType {
     pub const GREETING: Self = Self(32);
     pub const ANNIVERSARY: Self = Self(33);
     pub const UNUSED: Self = Self(34);
-    pub const E_ALL: Self = Self(35);
+    pub const AUTOCHESS_GAME_START: Self = Self(35);
+    pub const AUTOCHESS_REST_NO_HP_LOSS: Self = Self(36);
+    pub const AUTOCHESS_REST_HP_LOSS: Self = Self(37);
+    pub const AUTOCHESS_REST_BOSS: Self = Self(38);
+    pub const AUTOCHESS_REST_HIDDEN_BOSS: Self = Self(39);
+    pub const AUTOCHESS_SAME_OPERATOR: Self = Self(40);
+    pub const AUTOCHESS_BUY_OPERATOR_LOW: Self = Self(41);
+    pub const AUTOCHESS_BUY_OPERATOR_HIGH: Self = Self(42);
+    pub const AUTOCHESS_SHOP_UPGRADE: Self = Self(43);
+    pub const AUTOCHESS_COUNTDOWN: Self = Self(44);
+    pub const AUTOCHESS_MERGE_TRIPLE: Self = Self(45);
+    pub const AUTOCHESS_ALLIANCE_LEVEL: Self = Self(46);
+    pub const AUTOCHESS_FREEZE: Self = Self(47);
+    pub const E_ALL: Self = Self(48);
 
     pub const ENUM_MIN: i32 = 0;
-    pub const ENUM_MAX: i32 = 35;
+    pub const ENUM_MAX: i32 = 48;
     pub const ENUM_VALUES: &'static [Self] = &[
         Self::HOME_SHOW,
         Self::HOME_PLACE,
@@ -390,6 +416,19 @@ impl enum__Torappu_CharWordShowType {
         Self::GREETING,
         Self::ANNIVERSARY,
         Self::UNUSED,
+        Self::AUTOCHESS_GAME_START,
+        Self::AUTOCHESS_REST_NO_HP_LOSS,
+        Self::AUTOCHESS_REST_HP_LOSS,
+        Self::AUTOCHESS_REST_BOSS,
+        Self::AUTOCHESS_REST_HIDDEN_BOSS,
+        Self::AUTOCHESS_SAME_OPERATOR,
+        Self::AUTOCHESS_BUY_OPERATOR_LOW,
+        Self::AUTOCHESS_BUY_OPERATOR_HIGH,
+        Self::AUTOCHESS_SHOP_UPGRADE,
+        Self::AUTOCHESS_COUNTDOWN,
+        Self::AUTOCHESS_MERGE_TRIPLE,
+        Self::AUTOCHESS_ALLIANCE_LEVEL,
+        Self::AUTOCHESS_FREEZE,
         Self::E_ALL,
     ];
     /// Returns the variant's name or "" if unknown.
@@ -430,6 +469,19 @@ impl enum__Torappu_CharWordShowType {
             Self::GREETING => Some("GREETING"),
             Self::ANNIVERSARY => Some("ANNIVERSARY"),
             Self::UNUSED => Some("UNUSED"),
+            Self::AUTOCHESS_GAME_START => Some("AUTOCHESS_GAME_START"),
+            Self::AUTOCHESS_REST_NO_HP_LOSS => Some("AUTOCHESS_REST_NO_HP_LOSS"),
+            Self::AUTOCHESS_REST_HP_LOSS => Some("AUTOCHESS_REST_HP_LOSS"),
+            Self::AUTOCHESS_REST_BOSS => Some("AUTOCHESS_REST_BOSS"),
+            Self::AUTOCHESS_REST_HIDDEN_BOSS => Some("AUTOCHESS_REST_HIDDEN_BOSS"),
+            Self::AUTOCHESS_SAME_OPERATOR => Some("AUTOCHESS_SAME_OPERATOR"),
+            Self::AUTOCHESS_BUY_OPERATOR_LOW => Some("AUTOCHESS_BUY_OPERATOR_LOW"),
+            Self::AUTOCHESS_BUY_OPERATOR_HIGH => Some("AUTOCHESS_BUY_OPERATOR_HIGH"),
+            Self::AUTOCHESS_SHOP_UPGRADE => Some("AUTOCHESS_SHOP_UPGRADE"),
+            Self::AUTOCHESS_COUNTDOWN => Some("AUTOCHESS_COUNTDOWN"),
+            Self::AUTOCHESS_MERGE_TRIPLE => Some("AUTOCHESS_MERGE_TRIPLE"),
+            Self::AUTOCHESS_ALLIANCE_LEVEL => Some("AUTOCHESS_ALLIANCE_LEVEL"),
+            Self::AUTOCHESS_FREEZE => Some("AUTOCHESS_FREEZE"),
             Self::E_ALL => Some("E_ALL"),
             _ => None,
         }

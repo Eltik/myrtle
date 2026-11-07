@@ -207,6 +207,15 @@ impl EnumToJson for activity_table_generated::enum__Torappu_PlayerSideMask {
     }
 }
 
+impl EnumToJson for activity_table_generated::enum__Torappu_MapLayerMask {
+    fn to_json_value(&self) -> Value {
+        match self.variant_name() {
+            Some(name) => json!(name),
+            None => json!(format!("UNKNOWN_{}", self.0)),
+        }
+    }
+}
+
 impl EnumToJson for activity_table_generated::enum__Torappu_Battle_SideType {
     fn to_json_value(&self) -> Value {
         match self.variant_name() {
@@ -782,7 +791,7 @@ impl EnumToJson for activity_table_generated::enum__Torappu_ActAutoChessModeDiff
     }
 }
 
-impl EnumToJson for activity_table_generated::enum__Torappu_AutoChessChessType {
+impl EnumToJson for activity_table_generated::enum__Torappu_ActAutoChessModeGroupType {
     fn to_json_value(&self) -> Value {
         match self.variant_name() {
             Some(name) => json!(name),
@@ -791,7 +800,38 @@ impl EnumToJson for activity_table_generated::enum__Torappu_AutoChessChessType {
     }
 }
 
-impl EnumToJson for activity_table_generated::enum__Torappu_AutoChessItemType {
+impl EnumToJson for activity_table_generated::enum__Torappu_ActAutoChessMultiModeSubType {
+    fn to_json_value(&self) -> Value {
+        match self.variant_name() {
+            Some(name) => json!(name),
+            None => json!(format!("UNKNOWN_{}", self.0)),
+        }
+    }
+}
+
+impl EnumToJson
+    for activity_table_generated::enum__Torappu_UI_TemplateShop_TemplateShopData_TShopType
+{
+    fn to_json_value(&self) -> Value {
+        match self.variant_name() {
+            Some(name) => json!(name),
+            None => json!(format!("UNKNOWN_{}", self.0)),
+        }
+    }
+}
+
+impl EnumToJson
+    for activity_table_generated::enum__Torappu_UI_TemplateShop_TemplateShopData_GoodType
+{
+    fn to_json_value(&self) -> Value {
+        match self.variant_name() {
+            Some(name) => json!(name),
+            None => json!(format!("UNKNOWN_{}", self.0)),
+        }
+    }
+}
+
+impl EnumToJson for activity_table_generated::enum__Torappu_AutoChessBandType {
     fn to_json_value(&self) -> Value {
         match self.variant_name() {
             Some(name) => json!(name),
@@ -818,6 +858,15 @@ impl EnumToJson for activity_table_generated::enum__Torappu_ActAutoChessBondActi
     }
 }
 
+impl EnumToJson for activity_table_generated::enum__Torappu_ActAutoChessBondPhaseType {
+    fn to_json_value(&self) -> Value {
+        match self.variant_name() {
+            Some(name) => json!(name),
+            None => json!(format!("UNKNOWN_{}", self.0)),
+        }
+    }
+}
+
 impl EnumToJson for activity_table_generated::enum__Torappu_AutoChessEffectType {
     fn to_json_value(&self) -> Value {
         match self.variant_name() {
@@ -836,7 +885,34 @@ impl EnumToJson for activity_table_generated::enum__Torappu_AutoChessEffectCount
     }
 }
 
-impl EnumToJson for activity_table_generated::enum__Torappu_AutoChessCountType {
+impl EnumToJson for activity_table_generated::enum__Torappu_AutoChessSkillType {
+    fn to_json_value(&self) -> Value {
+        match self.variant_name() {
+            Some(name) => json!(name),
+            None => json!(format!("UNKNOWN_{}", self.0)),
+        }
+    }
+}
+
+impl EnumToJson for activity_table_generated::enum__Torappu_AutoChessSkillAvailType {
+    fn to_json_value(&self) -> Value {
+        match self.variant_name() {
+            Some(name) => json!(name),
+            None => json!(format!("UNKNOWN_{}", self.0)),
+        }
+    }
+}
+
+impl EnumToJson for activity_table_generated::enum__Torappu_AutoChessChessType {
+    fn to_json_value(&self) -> Value {
+        match self.variant_name() {
+            Some(name) => json!(name),
+            None => json!(format!("UNKNOWN_{}", self.0)),
+        }
+    }
+}
+
+impl EnumToJson for activity_table_generated::enum__Torappu_AutoChessItemType {
     fn to_json_value(&self) -> Value {
         match self.variant_name() {
             Some(name) => json!(name),
@@ -846,6 +922,24 @@ impl EnumToJson for activity_table_generated::enum__Torappu_AutoChessCountType {
 }
 
 impl EnumToJson for activity_table_generated::enum__Torappu_AutoChessEffectChoiceType {
+    fn to_json_value(&self) -> Value {
+        match self.variant_name() {
+            Some(name) => json!(name),
+            None => json!(format!("UNKNOWN_{}", self.0)),
+        }
+    }
+}
+
+impl EnumToJson for activity_table_generated::enum__Torappu_AutoChessSelectionType {
+    fn to_json_value(&self) -> Value {
+        match self.variant_name() {
+            Some(name) => json!(name),
+            None => json!(format!("UNKNOWN_{}", self.0)),
+        }
+    }
+}
+
+impl EnumToJson for activity_table_generated::enum__Torappu_AutoChessBondType {
     fn to_json_value(&self) -> Value {
         match self.variant_name() {
             Some(name) => json!(name),
@@ -1151,7 +1245,16 @@ impl EnumToJson for activity_table_generated::enum__Torappu_Anniv7thDisplayNodeT
     }
 }
 
-impl EnumToJson for activity_table_generated::enum__Torappu_AutoChessBondType {
+impl EnumToJson for activity_table_generated::enum__Torappu_AutoChessPeriodType {
+    fn to_json_value(&self) -> Value {
+        match self.variant_name() {
+            Some(name) => json!(name),
+            None => json!(format!("UNKNOWN_{}", self.0)),
+        }
+    }
+}
+
+impl EnumToJson for activity_table_generated::enum__Torappu_AutoChessContentType {
     fn to_json_value(&self) -> Value {
         match self.variant_name() {
             Some(name) => json!(name),
@@ -1196,7 +1299,34 @@ impl EnumToJson for activity_table_generated::enum__Torappu_AutoChessBroadcastTy
     }
 }
 
+impl EnumToJson for activity_table_generated::enum__Torappu_AutoChessSkinType {
+    fn to_json_value(&self) -> Value {
+        match self.variant_name() {
+            Some(name) => json!(name),
+            None => json!(format!("UNKNOWN_{}", self.0)),
+        }
+    }
+}
+
 impl EnumToJson for activity_table_generated::enum__Torappu_ItemRarity {
+    fn to_json_value(&self) -> Value {
+        match self.variant_name() {
+            Some(name) => json!(name),
+            None => json!(format!("UNKNOWN_{}", self.0)),
+        }
+    }
+}
+
+impl EnumToJson for activity_table_generated::enum__Torappu_AutoChessSkinVoicePackType {
+    fn to_json_value(&self) -> Value {
+        match self.variant_name() {
+            Some(name) => json!(name),
+            None => json!(format!("UNKNOWN_{}", self.0)),
+        }
+    }
+}
+
+impl EnumToJson for activity_table_generated::enum__Torappu_CharWordShowType {
     fn to_json_value(&self) -> Value {
         match self.variant_name() {
             Some(name) => json!(name),
@@ -1975,6 +2105,15 @@ impl EnumToJson for charm_table_generated::enum__Torappu_PlayerSideMask {
     }
 }
 
+impl EnumToJson for charm_table_generated::enum__Torappu_MapLayerMask {
+    fn to_json_value(&self) -> Value {
+        match self.variant_name() {
+            Some(name) => json!(name),
+            None => json!(format!("UNKNOWN_{}", self.0)),
+        }
+    }
+}
+
 impl EnumToJson for charm_table_generated::enum__Torappu_Battle_SideType {
     fn to_json_value(&self) -> Value {
         match self.variant_name() {
@@ -2149,6 +2288,15 @@ impl EnumToJson for climb_tower_table_generated::enum__Torappu_PlayerSideMask {
     }
 }
 
+impl EnumToJson for climb_tower_table_generated::enum__Torappu_MapLayerMask {
+    fn to_json_value(&self) -> Value {
+        match self.variant_name() {
+            Some(name) => json!(name),
+            None => json!(format!("UNKNOWN_{}", self.0)),
+        }
+    }
+}
+
 impl EnumToJson for climb_tower_table_generated::enum__Torappu_Battle_SideType {
     fn to_json_value(&self) -> Value {
         match self.variant_name() {
@@ -2245,6 +2393,15 @@ impl EnumToJson for crisis_v2_table_generated::enum__Torappu_BuildableType {
 }
 
 impl EnumToJson for crisis_v2_table_generated::enum__Torappu_PlayerSideMask {
+    fn to_json_value(&self) -> Value {
+        match self.variant_name() {
+            Some(name) => json!(name),
+            None => json!(format!("UNKNOWN_{}", self.0)),
+        }
+    }
+}
+
+impl EnumToJson for crisis_v2_table_generated::enum__Torappu_MapLayerMask {
     fn to_json_value(&self) -> Value {
         match self.variant_name() {
             Some(name) => json!(name),
@@ -2816,6 +2973,24 @@ impl EnumToJson for open_server_table_generated::enum__Torappu_ReturnNewsType {
     }
 }
 
+impl EnumToJson for open_server_table_generated::enum__Torappu_OpenServerMissionType {
+    fn to_json_value(&self) -> Value {
+        match self.variant_name() {
+            Some(name) => json!(name),
+            None => json!(format!("UNKNOWN_{}", self.0)),
+        }
+    }
+}
+
+impl EnumToJson for open_server_table_generated::enum__Torappu_OpenServerV3JumpType {
+    fn to_json_value(&self) -> Value {
+        match self.variant_name() {
+            Some(name) => json!(name),
+            None => json!(format!("UNKNOWN_{}", self.0)),
+        }
+    }
+}
+
 // From prts___levels_generated
 impl EnumToJson for prts___levels_generated::enum__Torappu_BattleFunctionDisableMask {
     fn to_json_value(&self) -> Value {
@@ -3166,6 +3341,15 @@ impl EnumToJson for retro_table_generated::enum__Torappu_BuildableType {
 }
 
 impl EnumToJson for retro_table_generated::enum__Torappu_PlayerSideMask {
+    fn to_json_value(&self) -> Value {
+        match self.variant_name() {
+            Some(name) => json!(name),
+            None => json!(format!("UNKNOWN_{}", self.0)),
+        }
+    }
+}
+
+impl EnumToJson for retro_table_generated::enum__Torappu_MapLayerMask {
     fn to_json_value(&self) -> Value {
         match self.variant_name() {
             Some(name) => json!(name),
@@ -3941,6 +4125,15 @@ impl EnumToJson for sandbox_perm_table_generated::enum__Torappu_BuildableType {
 }
 
 impl EnumToJson for sandbox_perm_table_generated::enum__Torappu_PlayerSideMask {
+    fn to_json_value(&self) -> Value {
+        match self.variant_name() {
+            Some(name) => json!(name),
+            None => json!(format!("UNKNOWN_{}", self.0)),
+        }
+    }
+}
+
+impl EnumToJson for sandbox_perm_table_generated::enum__Torappu_MapLayerMask {
     fn to_json_value(&self) -> Value {
         match self.variant_name() {
             Some(name) => json!(name),
@@ -9239,6 +9432,16 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_RuneData_Selecto
             return Some((
                 "PlayerSideMask".to_string(),
                 self.playerSideMask().to_json_value(),
+            ));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some((
+                "MapLayerMask".to_string(),
+                self.mapLayerMask().to_json_value(),
             ));
             #[allow(unreachable_code)]
             None
@@ -38135,12 +38338,25 @@ impl FlatBufferToJson
             map.insert(k, v);
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(vec) = self.effectDescList() {
-                assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len())
-                    .map(|i| crate::fb_json_macros::json_str(vec.get(i)))
-                    .collect();
-                return Some(("EffectDescList".to_string(), json!(arr)));
+            return Some(("Difficulty".to_string(), json!(self.difficulty())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("Factor".to_string(), json!(self.factor())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.difficultyDesc() {
+                return Some((
+                    "DifficultyDesc".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
             }
             #[allow(unreachable_code)]
             None
@@ -38148,11 +38364,21 @@ impl FlatBufferToJson
             map.insert(k, v);
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(v) = self.preposedMode() {
-                return Some((
-                    "PreposedMode".to_string(),
-                    crate::fb_json_macros::json_str(v),
-                ));
+            if let Some(v) = self.trophyDesc() {
+                return Some(("TrophyDesc".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.eventIds() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .map(|i| crate::fb_json_macros::json_str(vec.get(i)))
+                    .collect();
+                return Some(("EventIds".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
             None
@@ -38271,6 +38497,29 @@ impl FlatBufferToJson
         })) {
             map.insert(k, v);
         }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.unlockDiffierentModeId() {
+                return Some((
+                    "UnlockDiffierentModeId".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.groupList() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = vec.iter().map(|e| e.to_json_value()).collect();
+                return Some(("GroupList".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
         Value::Object(map)
     }
 }
@@ -38293,12 +38542,889 @@ impl FlatBufferToJson
 }
 
 impl FlatBufferToJson
-    for activity_table_generated::clz_Torappu_ActAutoChessData_ActAutoChessBaseRewardData<'_>
+    for activity_table_generated::clz_Torappu_ActAutoChessData_ActAutoChessModeGroupData<'_>
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some(("Round".to_string(), json!(self.round())));
+            return Some(("GroupType".to_string(), self.groupType().to_json_value()));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("ModeType".to_string(), self.modeType().to_json_value()));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("WillExpand".to_string(), json!(self.willExpand())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.modeIds() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .map(|i| crate::fb_json_macros::json_str(vec.get(i)))
+                    .collect();
+                return Some(("ModeIds".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_ActAutoChessData_ActAutoChessModeGroupData<'_> {
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), crate::fb_json_macros::json_str(k));
+        }
+        if let Some(v) = self.value() {
+            map.insert("value".to_string(), v.to_json());
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson for activity_table_generated::dict__string__enum__Torappu_RarityRank<'_> {
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), crate::fb_json_macros::json_str(k));
+        }
+        map.insert("value".to_string(), self.value().to_json_value());
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson
+    for activity_table_generated::clz_Torappu_ActAutoChessData_ActAutoChessShopLevelDisplayData<'_>
+{
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("ShopLevel".to_string(), json!(self.shopLevel())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.levelTagBgColor() {
+                return Some((
+                    "LevelTagBgColor".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some((
+                "IsLevelCharChessEmpty".to_string(),
+                json!(self.isLevelCharChessEmpty()),
+            ));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some((
+                "IsLevelTrapChessEmpty".to_string(),
+                json!(self.isLevelTrapChessEmpty()),
+            ));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.charChessDiySlotIdList() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .map(|i| crate::fb_json_macros::json_str(vec.get(i)))
+                    .collect();
+                return Some(("CharChessDiySlotIdList".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson for activity_table_generated::dict__int__clz_Torappu_ActAutoChessData_ActAutoChessShopLevelDisplayData<'_> {
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
+        if let Some(v) = self.value() {
+            map.insert("value".to_string(), v.to_json());
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson
+    for activity_table_generated::clz_Torappu_ActAutoChessData_ActAutoChessStageData<'_>
+{
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.stageId() {
+                return Some(("StageId".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.mode() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .map(|i| crate::fb_json_macros::json_str(vec.get(i)))
+                    .collect();
+                return Some(("Mode".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("Weight".to_string(), json!(self.weight())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson
+    for activity_table_generated::dict__string__clz_Torappu_ActAutoChessData_ActAutoChessStageData<
+        '_,
+    >
+{
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), crate::fb_json_macros::json_str(k));
+        }
+        if let Some(v) = self.value() {
+            map.insert("value".to_string(), v.to_json());
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson
+    for activity_table_generated::clz_Torappu_ActAutoChessData_ActAutochessSpecialEnemyTypeEntry<'_>
+{
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("Count".to_string(), json!(self.count())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("CountSingle".to_string(), json!(self.countSingle())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("Weight".to_string(), json!(self.weight())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.showEnemyId() {
+                return Some((
+                    "ShowEnemyId".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_ActAutoChessData_ActAutochessSpecialEnemyTypeEntry<'_> {
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), crate::fb_json_macros::json_str(k));
+        }
+        if let Some(v) = self.value() {
+            map.insert("value".to_string(), v.to_json());
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson for activity_table_generated::clz_Torappu_ActivityCommonMilestoneData<'_> {
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.milestoneId() {
+                return Some((
+                    "MilestoneId".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("MilestoneLvl".to_string(), json!(self.milestoneLvl())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("TokenNum".to_string(), json!(self.tokenNum())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(nested) = self.rewardItem() {
+                return Some(("RewardItem".to_string(), nested.to_json()));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("AvailableTime".to_string(), json!(self.availableTime())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson for activity_table_generated::clz_Torappu_ActivityPeriodicalRewardConf<'_> {
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.id() {
+                return Some(("Id".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some((
+                "PeriodicalPointCost".to_string(),
+                json!(self.periodicalPointCost()),
+            ));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("SortIndex".to_string(), json!(self.sortIndex())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.rewards() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("Rewards".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson
+    for activity_table_generated::dict__string__clz_Torappu_ActivityPeriodicalRewardConf<'_>
+{
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), crate::fb_json_macros::json_str(k));
+        }
+        if let Some(v) = self.value() {
+            map.insert("value".to_string(), v.to_json());
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson
+    for activity_table_generated::clz_Torappu_ActAutoChessData_ActAutoChessPlayerTitleData<'_>
+{
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.id() {
+                return Some(("Id".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.type_() {
+                return Some(("Type_".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("Point".to_string(), json!(self.point())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("Rank".to_string(), json!(self.rank())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.picId() {
+                return Some(("PicId".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.txt() {
+                return Some(("Txt".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_ActAutoChessData_ActAutoChessPlayerTitleData<'_> {
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), crate::fb_json_macros::json_str(k));
+        }
+        if let Some(v) = self.value() {
+            map.insert("value".to_string(), v.to_json());
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson
+    for activity_table_generated::clz_Torappu_ActAutoChessData_ActAutoChessShopCharChessInfoData<'_>
+{
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("ChessLevel".to_string(), json!(self.chessLevel())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("IsGolden".to_string(), json!(self.isGolden())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some((
+                "EvolvePhase".to_string(),
+                self.evolvePhase().to_json_value(),
+            ));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("CharLevel".to_string(), json!(self.charLevel())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("SkillLevel".to_string(), json!(self.skillLevel())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("FavorPoint".to_string(), json!(self.favorPoint())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("EquipLevel".to_string(), json!(self.equipLevel())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("PurchasePrice".to_string(), json!(self.purchasePrice())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("ChessSoldPrice".to_string(), json!(self.chessSoldPrice())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.eliteIconId() {
+                return Some((
+                    "EliteIconId".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson for activity_table_generated::dict__int__list_clz_Torappu_ActAutoChessData_ActAutoChessShopCharChessInfoData<'_> {
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
+        if let Some(vec) = self.value() {
+            assert!(vec.len() <= 10_000_000, "FB vector too large");
+            let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+            map.insert("value".to_string(), json!(arr));
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson for activity_table_generated::dict__int__int<'_> {
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
+        map.insert("value".to_string(), json!(self.value()));
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson
+    for activity_table_generated::clz_Torappu_ActAutoChessData_ActAutoChessConstData<'_>
+{
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some((
+                "ShopRefreshPrice".to_string(),
+                json!(self.shopRefreshPrice()),
+            ));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("MaxDeckChessCnt".to_string(), json!(self.maxDeckChessCnt())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some((
+                "MaxDeckEquipmentChessCnt".to_string(),
+                json!(self.maxDeckEquipmentChessCnt()),
+            ));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some((
+                "MaxBattleChessCnt".to_string(),
+                json!(self.maxBattleChessCnt()),
+            ));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.fallbackBondId() {
+                return Some((
+                    "FallbackBondId".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("StoreCntMax".to_string(), json!(self.storeCntMax())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some((
+                "CostPlayerHpLimit".to_string(),
+                json!(self.costPlayerHpLimit()),
+            ));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("BorrowCount".to_string(), json!(self.borrowCount())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.milestoneId() {
+                return Some((
+                    "MilestoneId".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some((
+                "DailyMissionParam".to_string(),
+                json!(self.dailyMissionParam()),
+            ));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.dailyMissionName() {
+                return Some((
+                    "DailyMissionName".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.dailyMissionRule() {
+                return Some((
+                    "DailyMissionRule".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.milestoneTrackId() {
+                return Some((
+                    "MilestoneTrackId".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.escapedBattleTemplateMapSinglePlayer() {
+                return Some((
+                    "EscapedBattleTemplateMapSinglePlayer".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.escapedBattleTemplateMapMultiPlayer() {
+                return Some((
+                    "EscapedBattleTemplateMapMultiPlayer".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.webBusType() {
+                return Some(("WebBusType".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.webUpdateLogBusType() {
+                return Some((
+                    "WebUpdateLogBusType".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("ItemMaxCount".to_string(), json!(self.itemMaxCount())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.diyCharLimitForLevels() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("DiyCharLimitForLevels".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.permShopLogoId() {
+                return Some((
+                    "PermShopLogoId".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some((
+                "ContentUpdateTime".to_string(),
+                json!(self.contentUpdateTime()),
+            ));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.systemCustomChar() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .map(|i| crate::fb_json_macros::json_str(vec.get(i)))
+                    .collect();
+                return Some(("SystemCustomChar".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.bossIconId() {
+                return Some(("BossIconId".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("ModeWarningDiff".to_string(), json!(self.modeWarningDiff())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some((
+                "PerfectBattleVoiceRound".to_string(),
+                json!(self.perfectBattleVoiceRound()),
+            ));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some((
+                "LoseHpVoiceRound".to_string(),
+                json!(self.loseHpVoiceRound()),
+            ));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.bondVoiceLayers() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = vec.iter().map(|v| json!(v)).collect();
+                return Some(("BondVoiceLayers".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.shopTagWarmUpId() {
+                return Some((
+                    "ShopTagWarmUpId".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson
+    for activity_table_generated::clz_Torappu_UI_TemplateShop_TemplateShopData_ShopGood<'_>
+{
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.goodId() {
+                return Some(("GoodId".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.displayName() {
+                return Some((
+                    "DisplayName".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("SortId".to_string(), json!(self.sortId())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("GoodType".to_string(), self.goodType().to_json_value()));
             #[allow(unreachable_code)]
             None
         })) {
@@ -38314,10 +39440,447 @@ impl FlatBufferToJson
             map.insert(k, v);
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some((
-                "DailyMissionPoint".to_string(),
-                json!(self.dailyMissionPoint()),
-            ));
+            if let Some(v) = self.progressGoodId() {
+                return Some((
+                    "ProgressGoodId".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("Price".to_string(), json!(self.price())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("AvailCount".to_string(), json!(self.availCount())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_UI_TemplateShop_TemplateShopData_ShopGood<'_> {
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), crate::fb_json_macros::json_str(k));
+        }
+        if let Some(v) = self.value() {
+            map.insert("value".to_string(), v.to_json());
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson
+    for activity_table_generated::clz_Torappu_UI_TemplateShop_TemplateShopData_ProgessGoodItem<'_>
+{
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("Order".to_string(), json!(self.order())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("Price".to_string(), json!(self.price())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.displayName() {
+                return Some((
+                    "DisplayName".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(nested) = self.item() {
+                return Some(("Item".to_string(), nested.to_json()));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson for activity_table_generated::dict__string__list_clz_Torappu_UI_TemplateShop_TemplateShopData_ProgessGoodItem<'_> {
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), crate::fb_json_macros::json_str(k));
+        }
+        if let Some(vec) = self.value() {
+            assert!(vec.len() <= 10_000_000, "FB vector too large");
+            let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+            map.insert("value".to_string(), json!(arr));
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson
+    for activity_table_generated::clz_Torappu_UI_TemplateShop_TemplateShopData_TShopGroup<'_>
+{
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.shopGroupId() {
+                return Some((
+                    "ShopGroupId".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("SortId".to_string(), json!(self.sortId())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.preGroup() {
+                return Some(("PreGroup".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.bkgIconId() {
+                return Some(("BkgIconId".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.lockDesc() {
+                return Some(("LockDesc".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.shopGood() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("ShopGood".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.progressGoods() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("ProgressGoods".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_UI_TemplateShop_TemplateShopData_TShopGroup<'_> {
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), crate::fb_json_macros::json_str(k));
+        }
+        if let Some(v) = self.value() {
+            map.insert("value".to_string(), v.to_json());
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson
+    for activity_table_generated::clz_Torappu_UI_TemplateShop_TemplateShopData_GroupShopExtraData<
+        '_,
+    >
+{
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.inTimeText() {
+                return Some(("InTimeText".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.allEndText() {
+                return Some(("AllEndText".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson for activity_table_generated::clz_Torappu_UI_TemplateShop_TemplateShopData_ShopAccumulativePrizeItem<'_> {
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.prizeId() {
+                return Some(("PrizeId".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("SortId".to_string(), json!(self.sortId())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.picId() {
+                return Some(("PicId".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.itemId() {
+                return Some(("ItemId".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("ItemType".to_string(), self.itemType().to_json_value()));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("Count".to_string(), json!(self.count())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("CostTotal".to_string(), json!(self.costTotal())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.acquireTitle() {
+                return Some(("AcquireTitle".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.displayName() {
+                return Some(("DisplayName".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.displayDiscription() {
+                return Some(("DisplayDiscription".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_UI_TemplateShop_TemplateShopData_ShopAccumulativePrizeItem<'_> {
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), crate::fb_json_macros::json_str(k));
+        }
+        if let Some(v) = self.value() {
+            map.insert("value".to_string(), v.to_json());
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson
+    for activity_table_generated::clz_Torappu_UI_TemplateShop_TemplateShopData<'_>
+{
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.shopId() {
+                return Some(("ShopId".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.shopName() {
+                return Some(("ShopName".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("Type_".to_string(), self.type_().to_json_value()));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(nested) = self.price() {
+                return Some(("Price".to_string(), nested.to_json()));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.shopGroup() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("ShopGroup".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.iconColorCodes() {
+                return Some((
+                    "IconColorCodes".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.buttonColorCodes() {
+                return Some((
+                    "ButtonColorCodes".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("StartTime".to_string(), json!(self.startTime())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("EndTime".to_string(), json!(self.endTime())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(nested) = self.groupExtraData() {
+                return Some(("GroupExtraData".to_string(), nested.to_json()));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.accumulativePrizeGoods() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("AccumulativePrizeGoods".to_string(), json!(arr)));
+            }
             #[allow(unreachable_code)]
             None
         })) {
@@ -38349,12 +39912,19 @@ impl FlatBufferToJson
             map.insert(k, v);
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(vec) = self.modeTypeList() {
+            return Some(("BandType".to_string(), self.bandType().to_json_value()));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.inactiveModeIdList() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
                 let arr: Vec<Value> = (0..vec.len())
                     .map(|i| crate::fb_json_macros::json_str(vec.get(i)))
                     .collect();
-                return Some(("ModeTypeList".to_string(), json!(arr)));
+                return Some(("InactiveModeIdList".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
             None
@@ -38395,6 +39965,16 @@ impl FlatBufferToJson
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             return Some((
+                "MasterVictorCount".to_string(),
+                json!(self.masterVictorCount()),
+            ));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some((
                 "BandRewardModulus".to_string(),
                 json!(self.bandRewardModulus()),
             ));
@@ -38404,7 +39984,23 @@ impl FlatBufferToJson
             map.insert(k, v);
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some(("UpdateTime".to_string(), json!(self.updateTime())));
+            return Some((
+                "OffseasonPriority".to_string(),
+                json!(self.offseasonPriority()),
+            ));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.relateBondList() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .map(|i| crate::fb_json_macros::json_str(vec.get(i)))
+                    .collect();
+                return Some(("RelateBondList".to_string(), json!(arr)));
+            }
             #[allow(unreachable_code)]
             None
         })) {
@@ -38426,6 +40022,826 @@ impl FlatBufferToJson
         }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson
+    for activity_table_generated::clz_Torappu_ActAutoChessData_ActAutoChessBondInfo<'_>
+{
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.bondId() {
+                return Some(("BondId".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.name() {
+                return Some(("Name".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.desc() {
+                return Some(("Desc".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.iconId() {
+                return Some(("IconId".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("ActiveCount".to_string(), json!(self.activeCount())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some((
+                "ActiveCondition".to_string(),
+                self.activeCondition().to_json_value(),
+            ));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.activeConditionTemplate() {
+                return Some((
+                    "ActiveConditionTemplate".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.activeParamList() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .map(|i| crate::fb_json_macros::json_str(vec.get(i)))
+                    .collect();
+                return Some(("ActiveParamList".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.effectId() {
+                return Some(("EffectId".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("ActiveType".to_string(), self.activeType().to_json_value()));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("Identifier".to_string(), json!(self.identifier())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("Weight".to_string(), json!(self.weight())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("IsActiveInDeck".to_string(), json!(self.isActiveInDeck())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some((
+                "MaxInactiveBondCount".to_string(),
+                json!(self.maxInactiveBondCount()),
+            ));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("NoStack".to_string(), json!(self.noStack())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("NoSelect".to_string(), json!(self.noSelect())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.chessIdList() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .map(|i| crate::fb_json_macros::json_str(vec.get(i)))
+                    .collect();
+                return Some(("ChessIdList".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson
+    for activity_table_generated::dict__string__clz_Torappu_ActAutoChessData_ActAutoChessBondInfo<
+        '_,
+    >
+{
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), crate::fb_json_macros::json_str(k));
+        }
+        if let Some(v) = self.value() {
+            map.insert("value".to_string(), v.to_json());
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson
+    for activity_table_generated::clz_Torappu_ActAutoChessData_ActAutoChessGarrisonData<'_>
+{
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.garrisonDesc() {
+                return Some((
+                    "GarrisonDesc".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.eventType() {
+                return Some(("EventType".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.eventTypeDesc() {
+                return Some((
+                    "EventTypeDesc".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.eventTypeIcon() {
+                return Some((
+                    "EventTypeIcon".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.eventTypeSmallIcon() {
+                return Some((
+                    "EventTypeSmallIcon".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.eventEffect() {
+                return Some((
+                    "EventEffect".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.effectType() {
+                return Some(("EffectType".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("CharLevel".to_string(), json!(self.charLevel())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.battleRuneKey() {
+                return Some((
+                    "BattleRuneKey".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.blackboard() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("Blackboard".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.description() {
+                return Some((
+                    "Description".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_ActAutoChessData_ActAutoChessGarrisonData<'_> {
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), crate::fb_json_macros::json_str(k));
+        }
+        if let Some(v) = self.value() {
+            map.insert("value".to_string(), v.to_json());
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson
+    for activity_table_generated::clz_Torappu_ActAutoChessData_ActAutoChessEffectDescParamInfo<'_>
+{
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.descParamBase() {
+                return Some((
+                    "DescParamBase".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.descParamPerStack() {
+                return Some((
+                    "DescParamPerStack".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("DescParamMax".to_string(), json!(self.descParamMax())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson
+    for activity_table_generated::clz_Torappu_ActAutoChessData_ActAutoChessEffectDescParamData<'_>
+{
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.descParamInfos() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("DescParamInfos".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("PhaseType".to_string(), self.phaseType().to_json_value()));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.bondPhaseCountList() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = vec.iter().map(|v| json!(v)).collect();
+                return Some(("BondPhaseCountList".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_ActAutoChessData_ActAutoChessEffectDescParamData<'_> {
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), crate::fb_json_macros::json_str(k));
+        }
+        if let Some(v) = self.value() {
+            map.insert("value".to_string(), v.to_json());
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson
+    for activity_table_generated::clz_Torappu_ActAutoChessData_ActAutoChessEffectInfoData<'_>
+{
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.effectId() {
+                return Some(("EffectId".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("EffectType".to_string(), self.effectType().to_json_value()));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some((
+                "EffectCounterType".to_string(),
+                self.effectCounterType().to_json_value(),
+            ));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("ContinuedRound".to_string(), json!(self.continuedRound())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.effectName() {
+                return Some(("EffectName".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.effectDesc() {
+                return Some(("EffectDesc".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.effectDecoIconId() {
+                return Some((
+                    "EffectDecoIconId".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("EnemyPrice".to_string(), json!(self.enemyPrice())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.showTag() {
+                return Some(("ShowTag".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("DisplayInHUD".to_string(), json!(self.displayInHUD())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_ActAutoChessData_ActAutoChessEffectInfoData<'_> {
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), crate::fb_json_macros::json_str(k));
+        }
+        if let Some(v) = self.value() {
+            map.insert("value".to_string(), v.to_json());
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson
+    for activity_table_generated::clz_Torappu_ActAutoChessData_ActAutoChessSkillInfoData<'_>
+{
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.effectId() {
+                return Some(("EffectId".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.skillDesc() {
+                return Some(("SkillDesc".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("SkillType".to_string(), self.skillType().to_json_value()));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("SkillCost".to_string(), json!(self.skillCost())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some((
+                "SkillAvailType".to_string(),
+                self.skillAvailType().to_json_value(),
+            ));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("SkillAvailCount".to_string(), json!(self.skillAvailCount())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.unlockType() {
+                return Some(("UnlockType".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.unlockParam() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .map(|i| crate::fb_json_macros::json_str(vec.get(i)))
+                    .collect();
+                return Some(("UnlockParam".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("MinorUnlock".to_string(), json!(self.minorUnlock())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.unlockEffectId() {
+                return Some((
+                    "UnlockEffectId".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.targetType() {
+                return Some(("TargetType".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.targetFilterType() {
+                return Some((
+                    "TargetFilterType".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.targetTip() {
+                return Some(("TargetTip".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some((
+                "IsUnusableAtSpecialRecruit".to_string(),
+                json!(self.isUnusableAtSpecialRecruit()),
+            ));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.bandId() {
+                return Some(("BandId".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_ActAutoChessData_ActAutoChessSkillInfoData<'_> {
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), crate::fb_json_macros::json_str(k));
+        }
+        if let Some(v) = self.value() {
+            map.insert("value".to_string(), v.to_json());
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson
+    for activity_table_generated::clz_Torappu_ActAutoChessData_ActAutoChessBuffInfoData<'_>
+{
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.key() {
+                return Some(("Key".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.blackboard() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("Blackboard".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson for activity_table_generated::dict__string__list_clz_Torappu_ActAutoChessData_ActAutoChessBuffInfoData<'_> {
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), crate::fb_json_macros::json_str(k));
+        }
+        if let Some(vec) = self.value() {
+            assert!(vec.len() <= 10_000_000, "FB vector too large");
+            let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+            map.insert("value".to_string(), json!(arr));
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson
+    for activity_table_generated::clz_Torappu_ActAutoChessData_ActAutoChessShopLevelData<'_>
+{
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("ShopLevel".to_string(), json!(self.shopLevel())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some((
+                "InitialUpgradePrice".to_string(),
+                json!(self.initialUpgradePrice()),
+            ));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("CharChessCount".to_string(), json!(self.charChessCount())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("ItemCount".to_string(), json!(self.itemCount())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.levelTagBgColor() {
+                return Some((
+                    "LevelTagBgColor".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson
+    for activity_table_generated::dict__int__clz_Torappu_ActAutoChessData_ActAutoChessShopLevelData<
+        '_,
+    >
+{
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
+        if let Some(v) = self.value() {
+            map.insert("value".to_string(), v.to_json());
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson for activity_table_generated::dict__string__list_dict__int__clz_Torappu_ActAutoChessData_ActAutoChessShopLevelData<'_> {
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), crate::fb_json_macros::json_str(k));
+        }
+        if let Some(vec) = self.value() {
+            assert!(vec.len() <= 10_000_000, "FB vector too large");
+            let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+            map.insert("value".to_string(), json!(arr));
         }
         Value::Object(map)
     }
@@ -38535,6 +40951,22 @@ impl FlatBufferToJson
             map.insert(k, v);
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("EquipSlotNum".to_string(), json!(self.equipSlotNum())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.showTag() {
+                return Some(("ShowTag".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.bondIds() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
                 let arr: Vec<Value> = (0..vec.len())
@@ -38560,6 +40992,15 @@ impl FlatBufferToJson
         })) {
             map.insert(k, v);
         }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.desc() {
+                return Some(("Desc".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
         Value::Object(map)
     }
 }
@@ -38569,175 +41010,6 @@ impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_Ac
         let mut map = Map::new();
         if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
             map.insert("key".to_string(), crate::fb_json_macros::json_str(k));
-        }
-        if let Some(v) = self.value() {
-            map.insert("value".to_string(), v.to_json());
-        }
-        Value::Object(map)
-    }
-}
-
-impl FlatBufferToJson for activity_table_generated::dict__string__enum__Torappu_RarityRank<'_> {
-    fn to_json(&self) -> Value {
-        let mut map = Map::new();
-        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
-            map.insert("key".to_string(), crate::fb_json_macros::json_str(k));
-        }
-        map.insert("value".to_string(), self.value().to_json_value());
-        Value::Object(map)
-    }
-}
-
-impl FlatBufferToJson
-    for activity_table_generated::clz_Torappu_ActAutoChessData_ActAutoChessShopLevelData<'_>
-{
-    fn to_json(&self) -> Value {
-        let mut map = Map::new();
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some(("ShopLevel".to_string(), json!(self.shopLevel())));
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some((
-                "InitialUpgradePrice".to_string(),
-                json!(self.initialUpgradePrice()),
-            ));
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some(("CharChessCount".to_string(), json!(self.charChessCount())));
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some(("ItemCount".to_string(), json!(self.itemCount())));
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(v) = self.levelTagBgColor() {
-                return Some((
-                    "LevelTagBgColor".to_string(),
-                    crate::fb_json_macros::json_str(v),
-                ));
-            }
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        Value::Object(map)
-    }
-}
-
-impl FlatBufferToJson
-    for activity_table_generated::dict__int__clz_Torappu_ActAutoChessData_ActAutoChessShopLevelData<
-        '_,
-    >
-{
-    fn to_json(&self) -> Value {
-        let mut map = Map::new();
-        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
-            map.insert("key".to_string(), json!(k));
-        }
-        if let Some(v) = self.value() {
-            map.insert("value".to_string(), v.to_json());
-        }
-        Value::Object(map)
-    }
-}
-
-impl FlatBufferToJson for activity_table_generated::dict__string__list_dict__int__clz_Torappu_ActAutoChessData_ActAutoChessShopLevelData<'_> {
-    fn to_json(&self) -> Value {
-        let mut map = Map::new();
-        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
-            map.insert("key".to_string(), crate::fb_json_macros::json_str(k));
-        }
-        if let Some(vec) = self.value() {
-            assert!(vec.len() <= 10_000_000, "FB vector too large");
-            let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
-            map.insert("value".to_string(), json!(arr));
-        }
-        Value::Object(map)
-    }
-}
-
-impl FlatBufferToJson
-    for activity_table_generated::clz_Torappu_ActAutoChessData_ActAutoChessShopLevelDisplayData<'_>
-{
-    fn to_json(&self) -> Value {
-        let mut map = Map::new();
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some(("ShopLevel".to_string(), json!(self.shopLevel())));
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(v) = self.levelTagBgColor() {
-                return Some((
-                    "LevelTagBgColor".to_string(),
-                    crate::fb_json_macros::json_str(v),
-                ));
-            }
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some((
-                "IsLevelCharChessEmpty".to_string(),
-                json!(self.isLevelCharChessEmpty()),
-            ));
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some((
-                "IsLevelTrapChessEmpty".to_string(),
-                json!(self.isLevelTrapChessEmpty()),
-            ));
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(vec) = self.charChessDiySlotIdList() {
-                assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len())
-                    .map(|i| crate::fb_json_macros::json_str(vec.get(i)))
-                    .collect();
-                return Some(("CharChessDiySlotIdList".to_string(), json!(arr)));
-            }
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        Value::Object(map)
-    }
-}
-
-impl FlatBufferToJson for activity_table_generated::dict__int__clz_Torappu_ActAutoChessData_ActAutoChessShopLevelDisplayData<'_> {
-    fn to_json(&self) -> Value {
-        let mut map = Map::new();
-        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
-            map.insert("key".to_string(), json!(k));
         }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
@@ -39051,11 +41323,22 @@ impl FlatBufferToJson
             map.insert(k, v);
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(v) = self.givePowerId() {
-                return Some((
-                    "GivePowerId".to_string(),
-                    crate::fb_json_macros::json_str(v),
-                ));
+            return Some(("CanGiveBond".to_string(), json!(self.canGiveBond())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("CanFuse".to_string(), json!(self.canFuse())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.fuseWith() {
+                return Some(("FuseWith".to_string(), crate::fb_json_macros::json_str(v)));
             }
             #[allow(unreachable_code)]
             None
@@ -39063,7 +41346,9 @@ impl FlatBufferToJson
             map.insert(k, v);
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some(("CanGiveBond".to_string(), json!(self.canGiveBond())));
+            if let Some(v) = self.fuseResult() {
+                return Some(("FuseResult".to_string(), crate::fb_json_macros::json_str(v)));
+            }
             #[allow(unreachable_code)]
             None
         })) {
@@ -39181,13 +41466,16 @@ impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_Ac
 }
 
 impl FlatBufferToJson
-    for activity_table_generated::clz_Torappu_ActAutoChessData_ActAutoChessStageData<'_>
+    for activity_table_generated::clz_Torappu_ActAutoChessData_ActAutoChessEffectChoiceInfoData<'_>
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(v) = self.stageId() {
-                return Some(("StageId".to_string(), crate::fb_json_macros::json_str(v)));
+            if let Some(v) = self.choiceEventId() {
+                return Some((
+                    "ChoiceEventId".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
             }
             #[allow(unreachable_code)]
             None
@@ -39195,12 +41483,32 @@ impl FlatBufferToJson
             map.insert(k, v);
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(vec) = self.mode() {
-                assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len())
-                    .map(|i| crate::fb_json_macros::json_str(vec.get(i)))
-                    .collect();
-                return Some(("Mode".to_string(), json!(arr)));
+            return Some(("ChoiceType".to_string(), self.choiceType().to_json_value()));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("EffectType".to_string(), self.effectType().to_json_value()));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some((
+                "SelectionType".to_string(),
+                self.selectionType().to_json_value(),
+            ));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.name() {
+                return Some(("Name".to_string(), crate::fb_json_macros::json_str(v)));
             }
             #[allow(unreachable_code)]
             None
@@ -39208,7 +41516,9 @@ impl FlatBufferToJson
             map.insert(k, v);
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some(("Weight".to_string(), json!(self.weight())));
+            if let Some(v) = self.desc() {
+                return Some(("Desc".to_string(), crate::fb_json_macros::json_str(v)));
+            }
             #[allow(unreachable_code)]
             None
         })) {
@@ -39218,11 +41528,7 @@ impl FlatBufferToJson
     }
 }
 
-impl FlatBufferToJson
-    for activity_table_generated::dict__string__clz_Torappu_ActAutoChessData_ActAutoChessStageData<
-        '_,
-    >
-{
+impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_ActAutoChessData_ActAutoChessEffectChoiceInfoData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
         if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
@@ -39300,562 +41606,6 @@ impl FlatBufferToJson for activity_table_generated::dict__string__list_dict__int
 }
 
 impl FlatBufferToJson
-    for activity_table_generated::clz_Torappu_ActAutoChessData_ActAutoChessBondInfo<'_>
-{
-    fn to_json(&self) -> Value {
-        let mut map = Map::new();
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(v) = self.bondId() {
-                return Some(("BondId".to_string(), crate::fb_json_macros::json_str(v)));
-            }
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(v) = self.name() {
-                return Some(("Name".to_string(), crate::fb_json_macros::json_str(v)));
-            }
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(v) = self.desc() {
-                return Some(("Desc".to_string(), crate::fb_json_macros::json_str(v)));
-            }
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(v) = self.iconId() {
-                return Some(("IconId".to_string(), crate::fb_json_macros::json_str(v)));
-            }
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some(("ActiveCount".to_string(), json!(self.activeCount())));
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some((
-                "ActiveCondition".to_string(),
-                self.activeCondition().to_json_value(),
-            ));
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(v) = self.activeConditionTemplate() {
-                return Some((
-                    "ActiveConditionTemplate".to_string(),
-                    crate::fb_json_macros::json_str(v),
-                ));
-            }
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(vec) = self.activeParamList() {
-                assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len())
-                    .map(|i| crate::fb_json_macros::json_str(vec.get(i)))
-                    .collect();
-                return Some(("ActiveParamList".to_string(), json!(arr)));
-            }
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(v) = self.effectId() {
-                return Some(("EffectId".to_string(), crate::fb_json_macros::json_str(v)));
-            }
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some(("ActiveType".to_string(), self.activeType().to_json_value()));
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some(("Identifier".to_string(), json!(self.identifier())));
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some(("Weight".to_string(), json!(self.weight())));
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some(("IsActiveInDeck".to_string(), json!(self.isActiveInDeck())));
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some((
-                "MaxInactiveBondCount".to_string(),
-                json!(self.maxInactiveBondCount()),
-            ));
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(vec) = self.descParamBaseList() {
-                assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len())
-                    .map(|i| crate::fb_json_macros::json_str(vec.get(i)))
-                    .collect();
-                return Some(("DescParamBaseList".to_string(), json!(arr)));
-            }
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(vec) = self.descParamPerStackList() {
-                assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len())
-                    .map(|i| crate::fb_json_macros::json_str(vec.get(i)))
-                    .collect();
-                return Some(("DescParamPerStackList".to_string(), json!(arr)));
-            }
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some(("NoStack".to_string(), json!(self.noStack())));
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(vec) = self.chessIdList() {
-                assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len())
-                    .map(|i| crate::fb_json_macros::json_str(vec.get(i)))
-                    .collect();
-                return Some(("ChessIdList".to_string(), json!(arr)));
-            }
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        Value::Object(map)
-    }
-}
-
-impl FlatBufferToJson
-    for activity_table_generated::dict__string__clz_Torappu_ActAutoChessData_ActAutoChessBondInfo<
-        '_,
-    >
-{
-    fn to_json(&self) -> Value {
-        let mut map = Map::new();
-        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
-            map.insert("key".to_string(), crate::fb_json_macros::json_str(k));
-        }
-        if let Some(v) = self.value() {
-            map.insert("value".to_string(), v.to_json());
-        }
-        Value::Object(map)
-    }
-}
-
-impl FlatBufferToJson
-    for activity_table_generated::clz_Torappu_ActAutoChessData_ActAutoChessGarrisonData<'_>
-{
-    fn to_json(&self) -> Value {
-        let mut map = Map::new();
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(v) = self.garrisonDesc() {
-                return Some((
-                    "GarrisonDesc".to_string(),
-                    crate::fb_json_macros::json_str(v),
-                ));
-            }
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(v) = self.eventType() {
-                return Some(("EventType".to_string(), crate::fb_json_macros::json_str(v)));
-            }
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(v) = self.eventTypeDesc() {
-                return Some((
-                    "EventTypeDesc".to_string(),
-                    crate::fb_json_macros::json_str(v),
-                ));
-            }
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(v) = self.eventTypeIcon() {
-                return Some((
-                    "EventTypeIcon".to_string(),
-                    crate::fb_json_macros::json_str(v),
-                ));
-            }
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(v) = self.eventTypeSmallIcon() {
-                return Some((
-                    "EventTypeSmallIcon".to_string(),
-                    crate::fb_json_macros::json_str(v),
-                ));
-            }
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(v) = self.effectType() {
-                return Some(("EffectType".to_string(), crate::fb_json_macros::json_str(v)));
-            }
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some(("CharLevel".to_string(), json!(self.charLevel())));
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(v) = self.battleRuneKey() {
-                return Some((
-                    "BattleRuneKey".to_string(),
-                    crate::fb_json_macros::json_str(v),
-                ));
-            }
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(vec) = self.blackboard() {
-                assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len())
-                    .filter_map(|i| {
-                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
-                    })
-                    .collect();
-                return Some(("Blackboard".to_string(), json!(arr)));
-            }
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(v) = self.description() {
-                return Some((
-                    "Description".to_string(),
-                    crate::fb_json_macros::json_str(v),
-                ));
-            }
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        Value::Object(map)
-    }
-}
-
-impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_ActAutoChessData_ActAutoChessGarrisonData<'_> {
-    fn to_json(&self) -> Value {
-        let mut map = Map::new();
-        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
-            map.insert("key".to_string(), crate::fb_json_macros::json_str(k));
-        }
-        if let Some(v) = self.value() {
-            map.insert("value".to_string(), v.to_json());
-        }
-        Value::Object(map)
-    }
-}
-
-impl FlatBufferToJson
-    for activity_table_generated::clz_Torappu_ActAutoChessData_ActAutoChessEffectInfoData<'_>
-{
-    fn to_json(&self) -> Value {
-        let mut map = Map::new();
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(v) = self.effectId() {
-                return Some(("EffectId".to_string(), crate::fb_json_macros::json_str(v)));
-            }
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some(("EffectType".to_string(), self.effectType().to_json_value()));
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some((
-                "EffectCounterType".to_string(),
-                self.effectCounterType().to_json_value(),
-            ));
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some(("ContinuedRound".to_string(), json!(self.continuedRound())));
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(v) = self.effectName() {
-                return Some(("EffectName".to_string(), crate::fb_json_macros::json_str(v)));
-            }
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(v) = self.effectDesc() {
-                return Some(("EffectDesc".to_string(), crate::fb_json_macros::json_str(v)));
-            }
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(v) = self.effectDecoIconId() {
-                return Some((
-                    "EffectDecoIconId".to_string(),
-                    crate::fb_json_macros::json_str(v),
-                ));
-            }
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some(("EnemyPrice".to_string(), json!(self.enemyPrice())));
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        Value::Object(map)
-    }
-}
-
-impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_ActAutoChessData_ActAutoChessEffectInfoData<'_> {
-    fn to_json(&self) -> Value {
-        let mut map = Map::new();
-        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
-            map.insert("key".to_string(), crate::fb_json_macros::json_str(k));
-        }
-        if let Some(v) = self.value() {
-            map.insert("value".to_string(), v.to_json());
-        }
-        Value::Object(map)
-    }
-}
-
-impl FlatBufferToJson
-    for activity_table_generated::clz_Torappu_ActAutoChessData_ActAutoChessBuffInfoData<'_>
-{
-    fn to_json(&self) -> Value {
-        let mut map = Map::new();
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(v) = self.key() {
-                return Some(("Key".to_string(), crate::fb_json_macros::json_str(v)));
-            }
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(vec) = self.blackboard() {
-                assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len())
-                    .filter_map(|i| {
-                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
-                    })
-                    .collect();
-                return Some(("Blackboard".to_string(), json!(arr)));
-            }
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some(("CountType".to_string(), self.countType().to_json_value()));
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        Value::Object(map)
-    }
-}
-
-impl FlatBufferToJson for activity_table_generated::dict__string__list_clz_Torappu_ActAutoChessData_ActAutoChessBuffInfoData<'_> {
-    fn to_json(&self) -> Value {
-        let mut map = Map::new();
-        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
-            map.insert("key".to_string(), crate::fb_json_macros::json_str(k));
-        }
-        if let Some(vec) = self.value() {
-            assert!(vec.len() <= 10_000_000, "FB vector too large");
-            let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
-            map.insert("value".to_string(), json!(arr));
-        }
-        Value::Object(map)
-    }
-}
-
-impl FlatBufferToJson
-    for activity_table_generated::clz_Torappu_ActAutoChessData_ActAutoChessEffectChoiceInfoData<'_>
-{
-    fn to_json(&self) -> Value {
-        let mut map = Map::new();
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(v) = self.choiceEventId() {
-                return Some((
-                    "ChoiceEventId".to_string(),
-                    crate::fb_json_macros::json_str(v),
-                ));
-            }
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some(("ChoiceType".to_string(), self.choiceType().to_json_value()));
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some(("EffectType".to_string(), self.effectType().to_json_value()));
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(v) = self.name() {
-                return Some(("Name".to_string(), crate::fb_json_macros::json_str(v)));
-            }
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(v) = self.desc() {
-                return Some(("Desc".to_string(), crate::fb_json_macros::json_str(v)));
-            }
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(v) = self.typeTxtColor() {
-                return Some((
-                    "TypeTxtColor".to_string(),
-                    crate::fb_json_macros::json_str(v),
-                ));
-            }
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        Value::Object(map)
-    }
-}
-
-impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_ActAutoChessData_ActAutoChessEffectChoiceInfoData<'_> {
-    fn to_json(&self) -> Value {
-        let mut map = Map::new();
-        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
-            map.insert("key".to_string(), crate::fb_json_macros::json_str(k));
-        }
-        if let Some(v) = self.value() {
-            map.insert("value".to_string(), v.to_json());
-        }
-        Value::Object(map)
-    }
-}
-
-impl FlatBufferToJson
     for activity_table_generated::clz_Torappu_ActAutoChessData_ActAutochessBossEntry<'_>
 {
     fn to_json(&self) -> Value {
@@ -39884,31 +41634,15 @@ impl FlatBufferToJson
             map.insert(k, v);
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some(("BloodPoint".to_string(), json!(self.bloodPoint())));
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some((
-                "BloodPointNormal".to_string(),
-                json!(self.bloodPointNormal()),
-            ));
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some(("BloodPointHard".to_string(), json!(self.bloodPointHard())));
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some(("BloodPointAbyss".to_string(), json!(self.bloodPointAbyss())));
+            if let Some(vec) = self.bloodDataDict() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("BloodDataDict".to_string(), json!(arr)));
+            }
             #[allow(unreachable_code)]
             None
         })) {
@@ -40026,42 +41760,6 @@ impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_Ac
 }
 
 impl FlatBufferToJson
-    for activity_table_generated::clz_Torappu_ActAutoChessData_ActAutochessSpecialEnemyTypeEntry<'_>
-{
-    fn to_json(&self) -> Value {
-        let mut map = Map::new();
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some(("Count".to_string(), json!(self.count())));
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some(("Weight".to_string(), json!(self.weight())));
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        Value::Object(map)
-    }
-}
-
-impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_ActAutoChessData_ActAutochessSpecialEnemyTypeEntry<'_> {
-    fn to_json(&self) -> Value {
-        let mut map = Map::new();
-        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
-            map.insert("key".to_string(), crate::fb_json_macros::json_str(k));
-        }
-        if let Some(v) = self.value() {
-            map.insert("value".to_string(), v.to_json());
-        }
-        Value::Object(map)
-    }
-}
-
-impl FlatBufferToJson
     for activity_table_generated::clz_Torappu_ActAutoChessData_ActAutoChessTrainingNpcData<'_>
 {
     fn to_json(&self) -> Value {
@@ -40116,15 +41814,14 @@ impl FlatBufferToJson
     }
 }
 
-impl FlatBufferToJson for activity_table_generated::clz_Torappu_ActivityCommonMilestoneData<'_> {
+impl FlatBufferToJson
+    for activity_table_generated::clz_Torappu_AutoChessData_AutoChessBandData<'_>
+{
     fn to_json(&self) -> Value {
         let mut map = Map::new();
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(v) = self.milestoneId() {
-                return Some((
-                    "MilestoneId".to_string(),
-                    crate::fb_json_macros::json_str(v),
-                ));
+            if let Some(v) = self.bandId() {
+                return Some(("BandId".to_string(), crate::fb_json_macros::json_str(v)));
             }
             #[allow(unreachable_code)]
             None
@@ -40132,22 +41829,8 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_ActivityCommonMi
             map.insert(k, v);
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some(("MilestoneLvl".to_string(), json!(self.milestoneLvl())));
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some(("TokenNum".to_string(), json!(self.tokenNum())));
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(nested) = self.rewardItem() {
-                return Some(("RewardItem".to_string(), nested.to_json()));
+            if let Some(v) = self.bandName() {
+                return Some(("BandName".to_string(), crate::fb_json_macros::json_str(v)));
             }
             #[allow(unreachable_code)]
             None
@@ -40155,7 +41838,18 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_ActivityCommonMi
             map.insert(k, v);
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some(("AvailableTime".to_string(), json!(self.availableTime())));
+            if let Some(v) = self.bandIconId() {
+                return Some(("BandIconId".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.unlockDesc() {
+                return Some(("UnlockDesc".to_string(), crate::fb_json_macros::json_str(v)));
+            }
             #[allow(unreachable_code)]
             None
         })) {
@@ -40166,42 +41860,8 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_ActivityCommonMi
 }
 
 impl FlatBufferToJson
-    for activity_table_generated::clz_Torappu_ActAutoChessData_ActAutoChessPlayerTitleData<'_>
+    for activity_table_generated::dict__string__clz_Torappu_AutoChessData_AutoChessBandData<'_>
 {
-    fn to_json(&self) -> Value {
-        let mut map = Map::new();
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(v) = self.id() {
-                return Some(("Id".to_string(), crate::fb_json_macros::json_str(v)));
-            }
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(v) = self.picId() {
-                return Some(("PicId".to_string(), crate::fb_json_macros::json_str(v)));
-            }
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(v) = self.txt() {
-                return Some(("Txt".to_string(), crate::fb_json_macros::json_str(v)));
-            }
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        Value::Object(map)
-    }
-}
-
-impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_ActAutoChessData_ActAutoChessPlayerTitleData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
         if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
@@ -40215,19 +41875,66 @@ impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_Ac
 }
 
 impl FlatBufferToJson
-    for activity_table_generated::clz_Torappu_ActAutoChessData_ActAutoChessShopCharChessInfoData<'_>
+    for activity_table_generated::clz_Torappu_AutoChessData_AutoChessBondInfoData<'_>
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some(("ChessLevel".to_string(), json!(self.chessLevel())));
+            if let Some(v) = self.bondId() {
+                return Some(("BondId".to_string(), crate::fb_json_macros::json_str(v)));
+            }
             #[allow(unreachable_code)]
             None
         })) {
             map.insert(k, v);
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some(("IsGolden".to_string(), json!(self.isGolden())));
+            return Some(("BondType".to_string(), self.bondType().to_json_value()));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.powerIdList() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .map(|i| crate::fb_json_macros::json_str(vec.get(i)))
+                    .collect();
+                return Some(("PowerIdList".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.name() {
+                return Some(("Name".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.icon() {
+                return Some(("Icon".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("IsPower".to_string(), json!(self.isPower())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("BondOrder".to_string(), json!(self.bondOrder())));
             #[allow(unreachable_code)]
             None
         })) {
@@ -40235,123 +41942,60 @@ impl FlatBufferToJson
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             return Some((
-                "EvolvePhase".to_string(),
-                self.evolvePhase().to_json_value(),
+                "IsHiddenCharList".to_string(),
+                json!(self.isHiddenCharList()),
             ));
             #[allow(unreachable_code)]
             None
         })) {
             map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some(("CharLevel".to_string(), json!(self.charLevel())));
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some(("SkillLevel".to_string(), json!(self.skillLevel())));
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some(("FavorPoint".to_string(), json!(self.favorPoint())));
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some(("EquipLevel".to_string(), json!(self.equipLevel())));
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some(("PurchasePrice".to_string(), json!(self.purchasePrice())));
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some(("ChessSoldPrice".to_string(), json!(self.chessSoldPrice())));
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(v) = self.eliteIconId() {
-                return Some((
-                    "EliteIconId".to_string(),
-                    crate::fb_json_macros::json_str(v),
-                ));
-            }
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        Value::Object(map)
-    }
-}
-
-impl FlatBufferToJson for activity_table_generated::dict__int__list_clz_Torappu_ActAutoChessData_ActAutoChessShopCharChessInfoData<'_> {
-    fn to_json(&self) -> Value {
-        let mut map = Map::new();
-        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
-            map.insert("key".to_string(), json!(k));
-        }
-        if let Some(vec) = self.value() {
-            assert!(vec.len() <= 10_000_000, "FB vector too large");
-            let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
-            map.insert("value".to_string(), json!(arr));
         }
         Value::Object(map)
     }
 }
 
 impl FlatBufferToJson
-    for activity_table_generated::clz_Torappu_ActAutoChessData_ActAutoChessConstData<'_>
+    for activity_table_generated::dict__string__clz_Torappu_AutoChessData_AutoChessBondInfoData<'_>
+{
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), crate::fb_json_macros::json_str(k));
+        }
+        if let Some(v) = self.value() {
+            map.insert("value".to_string(), v.to_json());
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson
+    for activity_table_generated::clz_Torappu_AutoChessData_AutoChessBossInfoData<'_>
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some((
-                "ShopRefreshPrice".to_string(),
-                json!(self.shopRefreshPrice()),
-            ));
+            if let Some(v) = self.bossId() {
+                return Some(("BossId".to_string(), crate::fb_json_macros::json_str(v)));
+            }
             #[allow(unreachable_code)]
             None
         })) {
             map.insert(k, v);
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some(("MaxDeckChessCnt".to_string(), json!(self.maxDeckChessCnt())));
+            if let Some(v) = self.enemyId() {
+                return Some(("EnemyId".to_string(), crate::fb_json_macros::json_str(v)));
+            }
             #[allow(unreachable_code)]
             None
         })) {
             map.insert(k, v);
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some((
-                "MaxBattleChessCnt".to_string(),
-                json!(self.maxBattleChessCnt()),
-            ));
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(v) = self.fallbackBondId() {
+            if let Some(v) = self.handbookEnemyId() {
                 return Some((
-                    "FallbackBondId".to_string(),
+                    "HandbookEnemyId".to_string(),
                     crate::fb_json_macros::json_str(v),
                 ));
             }
@@ -40360,8 +42004,41 @@ impl FlatBufferToJson
         })) {
             map.insert(k, v);
         }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson
+    for activity_table_generated::dict__string__clz_Torappu_AutoChessData_AutoChessBossInfoData<'_>
+{
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), crate::fb_json_macros::json_str(k));
+        }
+        if let Some(v) = self.value() {
+            map.insert("value".to_string(), v.to_json());
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson
+    for activity_table_generated::clz_Torappu_AutoChessData_AutoChessRandomEnemyAttributeData<'_>
+{
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some(("StoreCntMax".to_string(), json!(self.storeCntMax())));
+            if let Some(v) = self.enemyKey() {
+                return Some(("EnemyKey".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("Level".to_string(), json!(self.level())));
             #[allow(unreachable_code)]
             None
         })) {
@@ -40369,8 +42046,8 @@ impl FlatBufferToJson
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             return Some((
-                "CostPlayerHpLimit".to_string(),
-                json!(self.costPlayerHpLimit()),
+                "ExtraEnemyIdentifier".to_string(),
+                json!(self.extraEnemyIdentifier()),
             ));
             #[allow(unreachable_code)]
             None
@@ -40378,11 +42055,12 @@ impl FlatBufferToJson
             map.insert(k, v);
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(v) = self.milestoneId() {
-                return Some((
-                    "MilestoneId".to_string(),
-                    crate::fb_json_macros::json_str(v),
-                ));
+            if let Some(vec) = self.extraEnemyKeyList() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .map(|i| crate::fb_json_macros::json_str(vec.get(i)))
+                    .collect();
+                return Some(("ExtraEnemyKeyList".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
             None
@@ -40390,7 +42068,7 @@ impl FlatBufferToJson
             map.insert(k, v);
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some(("BorrowCount".to_string(), json!(self.borrowCount())));
+            return Some(("IsFlyEnemy".to_string(), json!(self.isFlyEnemy())));
             #[allow(unreachable_code)]
             None
         })) {
@@ -40398,20 +42076,45 @@ impl FlatBufferToJson
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             return Some((
-                "DailyMissionParam".to_string(),
-                json!(self.dailyMissionParam()),
+                "EnemyBattleEffectivenessFactor".to_string(),
+                json!(self.enemyBattleEffectivenessFactor()),
             ));
             #[allow(unreachable_code)]
             None
         })) {
             map.insert(k, v);
         }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_AutoChessData_AutoChessRandomEnemyAttributeData<'_> {
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), crate::fb_json_macros::json_str(k));
+        }
+        if let Some(v) = self.value() {
+            map.insert("value".to_string(), v.to_json());
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson
+    for activity_table_generated::clz_Torappu_ActAutoChessTrainingData_AutoChessTrainingData<'_>
+{
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(v) = self.dailyMissionName() {
-                return Some((
-                    "DailyMissionName".to_string(),
-                    crate::fb_json_macros::json_str(v),
-                ));
+            if let Some(vec) = self.bandDataDict() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("BandDataDict".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
             None
@@ -40419,17 +42122,59 @@ impl FlatBufferToJson
             map.insert(k, v);
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(v) = self.dailyMissionRule() {
-                return Some((
-                    "DailyMissionRule".to_string(),
-                    crate::fb_json_macros::json_str(v),
-                ));
+            if let Some(vec) = self.bondDataDict() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("BondDataDict".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
             None
         })) {
             map.insert(k, v);
         }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.bossInfoDict() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("BossInfoDict".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.randomEnemyAttributeDict() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("RandomEnemyAttributeDict".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson
+    for activity_table_generated::clz_Torappu_ActAutoChessTrainingData_TrainingConstData<'_>
+{
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(v) = self.trstageBandId() {
                 return Some((
@@ -40515,9 +42260,16 @@ impl FlatBufferToJson
             map.insert(k, v);
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(v) = self.milestoneTrackId() {
+            return Some(("TrStageBossHP".to_string(), json!(self.trStageBossHP())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.trInGameDiyChessId() {
                 return Some((
-                    "MilestoneTrackId".to_string(),
+                    "TrInGameDiyChessId".to_string(),
                     crate::fb_json_macros::json_str(v),
                 ));
             }
@@ -40527,32 +42279,11 @@ impl FlatBufferToJson
             map.insert(k, v);
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(v) = self.escapedBattleTemplateMapSinglePlayer() {
+            if let Some(v) = self.trInGameBanDiyChessId() {
                 return Some((
-                    "EscapedBattleTemplateMapSinglePlayer".to_string(),
+                    "TrInGameBanDiyChessId".to_string(),
                     crate::fb_json_macros::json_str(v),
                 ));
-            }
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(v) = self.escapedBattleTemplateMapMultiPlayer() {
-                return Some((
-                    "EscapedBattleTemplateMapMultiPlayer".to_string(),
-                    crate::fb_json_macros::json_str(v),
-                ));
-            }
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(v) = self.webBusType() {
-                return Some(("WebBusType".to_string(), crate::fb_json_macros::json_str(v)));
             }
             #[allow(unreachable_code)]
             None
@@ -40563,18 +42294,104 @@ impl FlatBufferToJson
     }
 }
 
-impl FlatBufferToJson for activity_table_generated::clz_Torappu_ActAutoChessData<'_> {
+impl FlatBufferToJson
+    for activity_table_generated::clz_Torappu_ActAutoChessTrainingData_TrainingShopSlotData<'_>
+{
     fn to_json(&self) -> Value {
         let mut map = Map::new();
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(vec) = self.modeDataDict() {
+            return Some(("Slot".to_string(), json!(self.slot())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.chessIds() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
                 let arr: Vec<Value> = (0..vec.len())
-                    .filter_map(|i| {
-                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
-                    })
+                    .map(|i| crate::fb_json_macros::json_str(vec.get(i)))
                     .collect();
-                return Some(("ModeDataDict".to_string(), json!(arr)));
+                return Some(("ChessIds".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson for activity_table_generated::dict__int__list_clz_Torappu_ActAutoChessTrainingData_TrainingShopSlotData<'_> {
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
+        if let Some(vec) = self.value() {
+            assert!(vec.len() <= 10_000_000, "FB vector too large");
+            let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+            map.insert("value".to_string(), json!(arr));
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson
+    for activity_table_generated::clz_Torappu_ActAutoChessTrainingData_TrainingRoundInfoData<'_>
+{
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("Round".to_string(), json!(self.round())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("IsBossTurn".to_string(), json!(self.isBossTurn())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("BaseGoldCnt".to_string(), json!(self.baseGoldCnt())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson for activity_table_generated::dict__int__clz_Torappu_ActAutoChessTrainingData_TrainingRoundInfoData<'_> {
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
+        if let Some(v) = self.value() {
+            map.insert("value".to_string(), v.to_json());
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson
+    for activity_table_generated::clz_Torappu_ActAutoChessTrainingData_TrainingSpecialChoiceData<'_>
+{
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.choiceEventId() {
+                return Some((
+                    "ChoiceEventId".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
             }
             #[allow(unreachable_code)]
             None
@@ -40582,14 +42399,234 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_ActAutoChessData
             map.insert(k, v);
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(vec) = self.baseRewardDataList() {
+            return Some(("Round".to_string(), json!(self.round())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("Slot".to_string(), json!(self.slot())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.equipId() {
+                return Some(("EquipId".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.trainingNpcId() {
+                return Some((
+                    "TrainingNpcId".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson for activity_table_generated::dict__string__list_clz_Torappu_ActAutoChessTrainingData_TrainingSpecialChoiceData<'_> {
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), crate::fb_json_macros::json_str(k));
+        }
+        if let Some(vec) = self.value() {
+            assert!(vec.len() <= 10_000_000, "FB vector too large");
+            let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+            map.insert("value".to_string(), json!(arr));
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson
+    for activity_table_generated::clz_Torappu_ActAutoChessTrainingData_TrainingNpcDeployData<'_>
+{
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("Round".to_string(), json!(self.round())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.trainingNpcId() {
+                return Some((
+                    "TrainingNpcId".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.chessId() {
+                return Some(("ChessId".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(nested) = self.position() {
+                return Some(("Position".to_string(), nested.to_json()));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("Direction".to_string(), json!(self.direction())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.equipChessIds() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
                 let arr: Vec<Value> = (0..vec.len())
-                    .filter_map(|i| {
-                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
-                    })
+                    .map(|i| crate::fb_json_macros::json_str(vec.get(i)))
                     .collect();
-                return Some(("BaseRewardDataList".to_string(), json!(arr)));
+                return Some(("EquipChessIds".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("GarrisonLayer".to_string(), json!(self.garrisonLayer())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson for activity_table_generated::dict__int__list_clz_Torappu_ActAutoChessTrainingData_TrainingNpcDeployData<'_> {
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
+        if let Some(vec) = self.value() {
+            assert!(vec.len() <= 10_000_000, "FB vector too large");
+            let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+            map.insert("value".to_string(), json!(arr));
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson
+    for activity_table_generated::clz_Torappu_ActAutoChessTrainingData_TrainingDiyChessData<'_>
+{
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.chessId() {
+                return Some(("ChessId".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.charId() {
+                return Some(("CharId".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.tmplId() {
+                return Some(("TmplId".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.skinId() {
+                return Some(("SkinId".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("SkillIndex".to_string(), json!(self.skillIndex())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.uniEquipId() {
+                return Some(("UniEquipId".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("PotentialRank".to_string(), json!(self.potentialRank())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_ActAutoChessTrainingData_TrainingDiyChessData<'_> {
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), crate::fb_json_macros::json_str(k));
+        }
+        if let Some(v) = self.value() {
+            map.insert("value".to_string(), v.to_json());
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson for activity_table_generated::clz_Torappu_ActAutoChessTrainingData<'_> {
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(nested) = self.overrideAutoChessData() {
+                return Some(("OverrideAutoChessData".to_string(), nested.to_json()));
             }
             #[allow(unreachable_code)]
             None
@@ -40605,156 +42642,6 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_ActAutoChessData
                     })
                     .collect();
                 return Some(("BandDataListDict".to_string(), json!(arr)));
-            }
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(vec) = self.charChessDataDict() {
-                assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len())
-                    .filter_map(|i| {
-                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
-                    })
-                    .collect();
-                return Some(("CharChessDataDict".to_string(), json!(arr)));
-            }
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(vec) = self.chessNormalIdLookupDict() {
-                assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len())
-                    .filter_map(|i| {
-                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
-                    })
-                    .collect();
-                return Some(("ChessNormalIdLookupDict".to_string(), json!(arr)));
-            }
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(vec) = self.diyChessDict() {
-                assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len())
-                    .filter_map(|i| {
-                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
-                    })
-                    .collect();
-                return Some(("DiyChessDict".to_string(), json!(arr)));
-            }
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(vec) = self.shopLevelDataDict() {
-                assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len())
-                    .filter_map(|i| {
-                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
-                    })
-                    .collect();
-                return Some(("ShopLevelDataDict".to_string(), json!(arr)));
-            }
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(vec) = self.shopLevelDisplayDataDict() {
-                assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len())
-                    .filter_map(|i| {
-                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
-                    })
-                    .collect();
-                return Some(("ShopLevelDisplayDataDict".to_string(), json!(arr)));
-            }
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(vec) = self.charShopChessDatas() {
-                assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len())
-                    .filter_map(|i| {
-                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
-                    })
-                    .collect();
-                return Some(("CharShopChessDatas".to_string(), json!(arr)));
-            }
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(vec) = self.trapChessDataDict() {
-                assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len())
-                    .filter_map(|i| {
-                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
-                    })
-                    .collect();
-                return Some(("TrapChessDataDict".to_string(), json!(arr)));
-            }
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(vec) = self.trapShopChessDatas() {
-                assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len())
-                    .filter_map(|i| {
-                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
-                    })
-                    .collect();
-                return Some(("TrapShopChessDatas".to_string(), json!(arr)));
-            }
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(vec) = self.stageDatasDict() {
-                assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len())
-                    .filter_map(|i| {
-                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
-                    })
-                    .collect();
-                return Some(("StageDatasDict".to_string(), json!(arr)));
-            }
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(vec) = self.battleDataDict() {
-                assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len())
-                    .filter_map(|i| {
-                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
-                    })
-                    .collect();
-                return Some(("BattleDataDict".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
             None
@@ -40807,6 +42694,36 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_ActAutoChessData
             map.insert(k, v);
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.effectDescParamDataDict() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("EffectDescParamDataDict".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.skillInfoDataDict() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("SkillInfoDataDict".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.effectBuffInfoDataDict() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
                 let arr: Vec<Value> = (0..vec.len())
@@ -40822,6 +42739,96 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_ActAutoChessData
             map.insert(k, v);
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.shopLevelDataDict() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("ShopLevelDataDict".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.charChessDataDict() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("CharChessDataDict".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.charShopChessDatas() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("CharShopChessDatas".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.trapChessDataDict() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("TrapChessDataDict".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.trapShopChessDatas() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("TrapShopChessDatas".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.chessNormalIdLookupDict() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("ChessNormalIdLookupDict".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.effectChoiceInfoDict() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
                 let arr: Vec<Value> = (0..vec.len())
@@ -40830,6 +42837,21 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_ActAutoChessData
                     })
                     .collect();
                 return Some(("EffectChoiceInfoDict".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.battleDataDict() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("BattleDataDict".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
             None
@@ -40867,6 +42889,241 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_ActAutoChessData
             map.insert(k, v);
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.trainingNpcList() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("TrainingNpcList".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(nested) = self.constData() {
+                return Some(("ConstData".to_string(), nested.to_json()));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(nested) = self.trainingConstData() {
+                return Some(("TrainingConstData".to_string(), nested.to_json()));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.trainingShopDict() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("TrainingShopDict".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.trainingRoundInfoDict() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("TrainingRoundInfoDict".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.trainingSpecialChoiceDict() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("TrainingSpecialChoiceDict".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.trainingNpcDeployDict() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("TrainingNpcDeployDict".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.trainingDiyChessDict() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("TrainingDiyChessDict".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.specialEnemyRandomTypeDict() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("SpecialEnemyRandomTypeDict".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson for activity_table_generated::clz_Torappu_ActAutoChessData<'_> {
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.modeDataDict() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("ModeDataDict".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.modeGroupDataDict() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("ModeGroupDataDict".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.chessNormalIdLookupDict() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("ChessNormalIdLookupDict".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.diyChessDict() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("DiyChessDict".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.diyChessInfoDict() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("DiyChessInfoDict".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.shopLevelDisplayDataDict() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("ShopLevelDisplayDataDict".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.stageDatasDict() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("StageDatasDict".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.enemyInfoDict() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
                 let arr: Vec<Value> = (0..vec.len())
@@ -40897,14 +43154,29 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_ActAutoChessData
             map.insert(k, v);
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(vec) = self.trainingNpcList() {
+            if let Some(vec) = self.enemyRewardTypeDict() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
                 let arr: Vec<Value> = (0..vec.len())
                     .filter_map(|i| {
                         panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
                     })
                     .collect();
-                return Some(("TrainingNpcList".to_string(), json!(arr)));
+                return Some(("EnemyRewardTypeDict".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.enemyRewardTextFormatDict() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("EnemyRewardTextFormatDict".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
             None
@@ -40920,6 +43192,21 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_ActAutoChessData
                     })
                     .collect();
                 return Some(("MilestoneList".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.periodicalRewards() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("PeriodicalRewards".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
             None
@@ -40995,6 +43282,279 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_ActAutoChessData
         })) {
             map.insert(k, v);
         }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(nested) = self.seasonShop() {
+                return Some(("SeasonShop".to_string(), nested.to_json()));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.bandDataListDict() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("BandDataListDict".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.bondInfoDict() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("BondInfoDict".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.garrisonDataDict() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("GarrisonDataDict".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.effectDescParamDataDict() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("EffectDescParamDataDict".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.effectInfoDataDict() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("EffectInfoDataDict".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.skillInfoDataDict() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("SkillInfoDataDict".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.effectBuffInfoDataDict() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("EffectBuffInfoDataDict".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.shopLevelDataDict() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("ShopLevelDataDict".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.charChessDataDict() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("CharChessDataDict".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.charShopChessDatas() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("CharShopChessDatas".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.trapChessDataDict() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("TrapChessDataDict".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.trapShopChessDatas() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("TrapShopChessDatas".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.effectChoiceInfoDict() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("EffectChoiceInfoDict".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.battleDataDict() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("BattleDataDict".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.bossInfoDict() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("BossInfoDict".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.specialEnemyInfoDict() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("SpecialEnemyInfoDict".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.trainingNpcList() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("TrainingNpcList".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(nested) = self.trainingData() {
+                return Some(("TrainingData".to_string(), nested.to_json()));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
         Value::Object(map)
     }
 }
@@ -41007,6 +43567,23 @@ impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_Ac
         }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson
+    for activity_table_generated::dict__string__list_dict__string__clz_Torappu_ActAutoChessData<'_>
+{
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), crate::fb_json_macros::json_str(k));
+        }
+        if let Some(vec) = self.value() {
+            assert!(vec.len() <= 10_000_000, "FB vector too large");
+            let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+            map.insert("value".to_string(), json!(arr));
         }
         Value::Object(map)
     }
@@ -45716,6 +48293,738 @@ impl FlatBufferToJson
 }
 
 impl FlatBufferToJson
+    for activity_table_generated::clz_Torappu_Act55SideData_Act55SideZoneAdditionData<'_>
+{
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.zoneId() {
+                return Some(("ZoneId".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.unlockText() {
+                return Some(("UnlockText".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson
+    for activity_table_generated::dict__string__clz_Torappu_Act55SideData_Act55SideZoneAdditionData<
+        '_,
+    >
+{
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), crate::fb_json_macros::json_str(k));
+        }
+        if let Some(v) = self.value() {
+            map.insert("value".to_string(), v.to_json());
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson
+    for activity_table_generated::clz_Torappu_Act55SideData_Act55SideNewspaperData<'_>
+{
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.stageId() {
+                return Some(("StageId".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("SortId".to_string(), json!(self.sortId())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.stageName() {
+                return Some(("StageName".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.stageDesc() {
+                return Some(("StageDesc".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.bgPic() {
+                return Some(("BgPic".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.unlockStageId() {
+                return Some((
+                    "UnlockStageId".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("UnlockTs".to_string(), json!(self.unlockTs())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.baseRewardList() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("BaseRewardList".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.advancedRewardList() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("AdvancedRewardList".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.basicTargetDesc() {
+                return Some((
+                    "BasicTargetDesc".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.advancedTargetDesc() {
+                return Some((
+                    "AdvancedTargetDesc".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some((
+                "AdvancedTargetParam".to_string(),
+                json!(self.advancedTargetParam()),
+            ));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.initCardIdList() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .map(|i| crate::fb_json_macros::json_str(vec.get(i)))
+                    .collect();
+                return Some(("InitCardIdList".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.ratingScoreList() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = vec.iter().map(|v| json!(v)).collect();
+                return Some(("RatingScoreList".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("MaxScore".to_string(), json!(self.maxScore())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.picId() {
+                return Some(("PicId".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("InitEmptySlot".to_string(), json!(self.initEmptySlot())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.fixedReportIdList() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .map(|i| crate::fb_json_macros::json_str(vec.get(i)))
+                    .collect();
+                return Some(("FixedReportIdList".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson
+    for activity_table_generated::dict__string__clz_Torappu_Act55SideData_Act55SideNewspaperData<'_>
+{
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), crate::fb_json_macros::json_str(k));
+        }
+        if let Some(v) = self.value() {
+            map.insert("value".to_string(), v.to_json());
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson
+    for activity_table_generated::clz_Torappu_Act55SideData_Act55SideFixedReportData<'_>
+{
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.fixedReportId() {
+                return Some((
+                    "FixedReportId".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.fixedReportTag() {
+                return Some((
+                    "FixedReportTag".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson
+    for activity_table_generated::dict__string__clz_Torappu_Act55SideData_Act55SideFixedReportData<
+        '_,
+    >
+{
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), crate::fb_json_macros::json_str(k));
+        }
+        if let Some(v) = self.value() {
+            map.insert("value".to_string(), v.to_json());
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson
+    for activity_table_generated::clz_Torappu_Act55SideData_Act55SideHandReportData<'_>
+{
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.handReportId() {
+                return Some((
+                    "HandReportId".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.handReportPic_1() {
+                return Some((
+                    "HandReportPic_1".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.handReportPic_2() {
+                return Some((
+                    "HandReportPic_2".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.handReportTitleId() {
+                return Some((
+                    "HandReportTitleId".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.handReportSubTitleId() {
+                return Some((
+                    "HandReportSubTitleId".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.handReportPositiveTagList() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .map(|i| crate::fb_json_macros::json_str(vec.get(i)))
+                    .collect();
+                return Some(("HandReportPositiveTagList".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.handReportNegativeTagList() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .map(|i| crate::fb_json_macros::json_str(vec.get(i)))
+                    .collect();
+                return Some(("HandReportNegativeTagList".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("SortId".to_string(), json!(self.sortId())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson
+    for activity_table_generated::dict__string__clz_Torappu_Act55SideData_Act55SideHandReportData<
+        '_,
+    >
+{
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), crate::fb_json_macros::json_str(k));
+        }
+        if let Some(v) = self.value() {
+            map.insert("value".to_string(), v.to_json());
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson
+    for activity_table_generated::clz_Torappu_Act55SideData_Act55SideHandReportColorData<'_>
+{
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.handReportPic_1() {
+                return Some((
+                    "HandReportPic_1".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.handReportTitleColor() {
+                return Some((
+                    "HandReportTitleColor".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.handReportSubTitleColor() {
+                return Some((
+                    "HandReportSubTitleColor".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_Act55SideData_Act55SideHandReportColorData<'_> {
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), crate::fb_json_macros::json_str(k));
+        }
+        if let Some(v) = self.value() {
+            map.insert("value".to_string(), v.to_json());
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson
+    for activity_table_generated::clz_Torappu_Act55SideData_Act55SideBattleItemLevelData<'_>
+{
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("Level".to_string(), json!(self.level())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("Score".to_string(), json!(self.score())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson
+    for activity_table_generated::clz_Torappu_Act55SideData_Act55SideConstData<'_>
+{
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.priceItemId() {
+                return Some((
+                    "PriceItemId".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.priceItemType() {
+                return Some((
+                    "PriceItemType".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.entryRequirement() {
+                return Some((
+                    "EntryRequirement".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.businessUnlockText() {
+                return Some((
+                    "BusinessUnlockText".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.stageUnlockText() {
+                return Some((
+                    "StageUnlockText".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("HandBasicScore".to_string(), json!(self.handBasicScore())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some((
+                "HandPositiveScore".to_string(),
+                json!(self.handPositiveScore()),
+            ));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some((
+                "HandNegativeScore".to_string(),
+                json!(self.handNegativeScore()),
+            ));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson for activity_table_generated::clz_Torappu_Act55SideData<'_> {
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.zoneAdditionDataMap() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("ZoneAdditionDataMap".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.newspaperDataMap() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("NewspaperDataMap".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.fixedReportDataMap() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("FixedReportDataMap".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.handReportDataMap() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("HandReportDataMap".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.handReportColorDataMap() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("HandReportColorDataMap".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.reportTagList() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .map(|i| crate::fb_json_macros::json_str(vec.get(i)))
+                    .collect();
+                return Some(("ReportTagList".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.battleItemLevelDataList() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("BattleItemLevelDataList".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(nested) = self.constData() {
+                return Some(("ConstData".to_string(), nested.to_json()));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_Act55SideData<'_> {
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), crate::fb_json_macros::json_str(k));
+        }
+        if let Some(v) = self.value() {
+            map.insert("value".to_string(), v.to_json());
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson
     for activity_table_generated::clz_Torappu_ActivityTable_ActivityDetailTable<'_>
 {
     fn to_json(&self) -> Value {
@@ -46366,14 +49675,14 @@ impl FlatBufferToJson
             map.insert(k, v);
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(vec) = self.AUTOCHESS_SEASON() {
+            if let Some(vec) = self.AUTOCHESS() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
                 let arr: Vec<Value> = (0..vec.len())
                     .filter_map(|i| {
                         panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
                     })
                     .collect();
-                return Some(("AUTOCHESS_SEASON".to_string(), json!(arr)));
+                return Some(("AUTOCHESS".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
             None
@@ -46449,6 +49758,21 @@ impl FlatBufferToJson
                     })
                     .collect();
                 return Some(("ACT_DP".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.TYPE_ACT55SIDE() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("TYPE_ACT55SIDE".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
             None
@@ -52840,6 +56164,65 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_HalfIdleData<'_>
     }
 }
 
+impl FlatBufferToJson
+    for activity_table_generated::clz_Torappu_ArkNewsData_ArkNewsBuffItemData<'_>
+{
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("Level".to_string(), json!(self.level())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.desc() {
+                return Some(("Desc".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.templateTrapId() {
+                return Some((
+                    "TemplateTrapId".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson for activity_table_generated::clz_Torappu_ArkNewsData<'_> {
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.battleItemLevelDataList() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("BattleItemLevelDataList".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        Value::Object(map)
+    }
+}
+
 impl FlatBufferToJson for activity_table_generated::clz_Torappu_KVSwitchInfo<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
@@ -54949,6 +58332,49 @@ impl FlatBufferToJson
             map.insert(k, v);
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.enrollId() {
+                return Some(("EnrollId".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("PeriodType".to_string(), self.periodType().to_json_value()));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some((
+                "ContentType".to_string(),
+                self.contentType().to_json_value(),
+            ));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some((
+                "IsContentUpdated".to_string(),
+                json!(self.isContentUpdated()),
+            ));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("IsShopUpdated".to_string(), json!(self.isShopUpdated())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(v) = self.seasonName() {
                 return Some(("SeasonName".to_string(), crate::fb_json_macros::json_str(v)));
             }
@@ -54958,7 +58384,64 @@ impl FlatBufferToJson
             map.insert(k, v);
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.seasonYear() {
+                return Some(("SeasonYear".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some((
+                "IsActivityItemMax".to_string(),
+                json!(self.isActivityItemMax()),
+            ));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some((
+                "IsActivityTaskMax".to_string(),
+                json!(self.isActivityTaskMax()),
+            ));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("IsOffseason".to_string(), json!(self.isOffseason())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("SortId".to_string(), json!(self.sortId())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("ExpireVersion".to_string(), json!(self.expireVersion())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             return Some(("StartTime".to_string(), json!(self.startTime())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("EndTime".to_string(), json!(self.endTime())));
             #[allow(unreachable_code)]
             None
         })) {
@@ -54986,13 +58469,13 @@ impl FlatBufferToJson
 }
 
 impl FlatBufferToJson
-    for activity_table_generated::clz_Torappu_AutoChessData_AutoChessBandData<'_>
+    for activity_table_generated::clz_Torappu_AutoChessData_AutoChessWarmupScheduleData<'_>
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(v) = self.bandId() {
-                return Some(("BandId".to_string(), crate::fb_json_macros::json_str(v)));
+            if let Some(v) = self.warmupId() {
+                return Some(("WarmupId".to_string(), crate::fb_json_macros::json_str(v)));
             }
             #[allow(unreachable_code)]
             None
@@ -55000,8 +58483,8 @@ impl FlatBufferToJson
             map.insert(k, v);
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(v) = self.bandName() {
-                return Some(("BandName".to_string(), crate::fb_json_macros::json_str(v)));
+            if let Some(v) = self.versionId() {
+                return Some(("VersionId".to_string(), crate::fb_json_macros::json_str(v)));
             }
             #[allow(unreachable_code)]
             None
@@ -55009,18 +58492,21 @@ impl FlatBufferToJson
             map.insert(k, v);
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(v) = self.bandIconId() {
-                return Some(("BandIconId".to_string(), crate::fb_json_macros::json_str(v)));
-            }
+            return Some(("StartTime".to_string(), json!(self.startTime())));
             #[allow(unreachable_code)]
             None
         })) {
             map.insert(k, v);
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(v) = self.unlockDesc() {
-                return Some(("UnlockDesc".to_string(), crate::fb_json_macros::json_str(v)));
-            }
+            return Some(("EndTime".to_string(), json!(self.endTime())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("IsMainPageUsed".to_string(), json!(self.isMainPageUsed())));
             #[allow(unreachable_code)]
             None
         })) {
@@ -55030,9 +58516,67 @@ impl FlatBufferToJson
     }
 }
 
+impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_AutoChessData_AutoChessWarmupScheduleData<'_> {
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), crate::fb_json_macros::json_str(k));
+        }
+        if let Some(v) = self.value() {
+            map.insert("value".to_string(), v.to_json());
+        }
+        Value::Object(map)
+    }
+}
+
 impl FlatBufferToJson
-    for activity_table_generated::dict__string__clz_Torappu_AutoChessData_AutoChessBandData<'_>
+    for activity_table_generated::clz_Torappu_AutoChessData_AutoChessStagePageDisplayData<'_>
 {
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.displayId() {
+                return Some(("DisplayId".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.versionId() {
+                return Some(("VersionId".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some((
+                "MainDisappearTime".to_string(),
+                json!(self.mainDisappearTime()),
+            ));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some((
+                "StagePageDisappearTime".to_string(),
+                json!(self.stagePageDisappearTime()),
+            ));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_AutoChessData_AutoChessStagePageDisplayData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
         if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
@@ -55133,155 +58677,6 @@ impl FlatBufferToJson
     for activity_table_generated::dict__string__clz_Torappu_AutoChessData_AutoChessEffectTypeData<
         '_,
     >
-{
-    fn to_json(&self) -> Value {
-        let mut map = Map::new();
-        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
-            map.insert("key".to_string(), crate::fb_json_macros::json_str(k));
-        }
-        if let Some(v) = self.value() {
-            map.insert("value".to_string(), v.to_json());
-        }
-        Value::Object(map)
-    }
-}
-
-impl FlatBufferToJson
-    for activity_table_generated::clz_Torappu_AutoChessData_AutoChessBondInfoData<'_>
-{
-    fn to_json(&self) -> Value {
-        let mut map = Map::new();
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(v) = self.bondId() {
-                return Some(("BondId".to_string(), crate::fb_json_macros::json_str(v)));
-            }
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some(("BondType".to_string(), self.bondType().to_json_value()));
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(vec) = self.powerIdList() {
-                assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len())
-                    .map(|i| crate::fb_json_macros::json_str(vec.get(i)))
-                    .collect();
-                return Some(("PowerIdList".to_string(), json!(arr)));
-            }
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(v) = self.name() {
-                return Some(("Name".to_string(), crate::fb_json_macros::json_str(v)));
-            }
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(v) = self.icon() {
-                return Some(("Icon".to_string(), crate::fb_json_macros::json_str(v)));
-            }
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some(("IsPower".to_string(), json!(self.isPower())));
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some(("BondOrder".to_string(), json!(self.bondOrder())));
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some((
-                "IsHiddenCharList".to_string(),
-                json!(self.isHiddenCharList()),
-            ));
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        Value::Object(map)
-    }
-}
-
-impl FlatBufferToJson
-    for activity_table_generated::dict__string__clz_Torappu_AutoChessData_AutoChessBondInfoData<'_>
-{
-    fn to_json(&self) -> Value {
-        let mut map = Map::new();
-        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
-            map.insert("key".to_string(), crate::fb_json_macros::json_str(k));
-        }
-        if let Some(v) = self.value() {
-            map.insert("value".to_string(), v.to_json());
-        }
-        Value::Object(map)
-    }
-}
-
-impl FlatBufferToJson
-    for activity_table_generated::clz_Torappu_AutoChessData_AutoChessBossInfoData<'_>
-{
-    fn to_json(&self) -> Value {
-        let mut map = Map::new();
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(v) = self.bossId() {
-                return Some(("BossId".to_string(), crate::fb_json_macros::json_str(v)));
-            }
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(v) = self.enemyId() {
-                return Some(("EnemyId".to_string(), crate::fb_json_macros::json_str(v)));
-            }
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(v) = self.handbookEnemyId() {
-                return Some((
-                    "HandbookEnemyId".to_string(),
-                    crate::fb_json_macros::json_str(v),
-                ));
-            }
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        Value::Object(map)
-    }
-}
-
-impl FlatBufferToJson
-    for activity_table_generated::dict__string__clz_Torappu_AutoChessData_AutoChessBossInfoData<'_>
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
@@ -55516,10 +58911,11 @@ impl FlatBufferToJson
             map.insert(k, v);
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some((
-                "SkillTriggerType".to_string(),
-                self.skillTriggerType().to_json_value(),
-            ));
+            if let Some(vec) = self.skillTriggerTypes() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = vec.iter().map(|e| e.to_json_value()).collect();
+                return Some(("SkillTriggerTypes".to_string(), json!(arr)));
+            }
             #[allow(unreachable_code)]
             None
         })) {
@@ -55576,84 +58972,6 @@ impl FlatBufferToJson
         '_,
     >
 {
-    fn to_json(&self) -> Value {
-        let mut map = Map::new();
-        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
-            map.insert("key".to_string(), crate::fb_json_macros::json_str(k));
-        }
-        if let Some(v) = self.value() {
-            map.insert("value".to_string(), v.to_json());
-        }
-        Value::Object(map)
-    }
-}
-
-impl FlatBufferToJson
-    for activity_table_generated::clz_Torappu_AutoChessData_AutoChessRandomEnemyAttributeData<'_>
-{
-    fn to_json(&self) -> Value {
-        let mut map = Map::new();
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(v) = self.enemyKey() {
-                return Some(("EnemyKey".to_string(), crate::fb_json_macros::json_str(v)));
-            }
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some(("Level".to_string(), json!(self.level())));
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some((
-                "ExtraEnemyIdentifier".to_string(),
-                json!(self.extraEnemyIdentifier()),
-            ));
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(vec) = self.extraEnemyKeyList() {
-                assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len())
-                    .map(|i| crate::fb_json_macros::json_str(vec.get(i)))
-                    .collect();
-                return Some(("ExtraEnemyKeyList".to_string(), json!(arr)));
-            }
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some(("IsFlyEnemy".to_string(), json!(self.isFlyEnemy())));
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some((
-                "EnemyBattleEffectivenessFactor".to_string(),
-                json!(self.enemyBattleEffectivenessFactor()),
-            ));
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        Value::Object(map)
-    }
-}
-
-impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_AutoChessData_AutoChessRandomEnemyAttributeData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
         if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
@@ -55827,6 +59145,13 @@ impl FlatBufferToJson
             map.insert(k, v);
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("IdCode".to_string(), json!(self.idCode())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(v) = self.desc() {
                 return Some(("Desc".to_string(), crate::fb_json_macros::json_str(v)));
             }
@@ -55837,6 +59162,18 @@ impl FlatBufferToJson
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             return Some(("Priority".to_string(), json!(self.priority())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.commentIcon() {
+                return Some((
+                    "CommentIcon".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
             #[allow(unreachable_code)]
             None
         })) {
@@ -55856,6 +59193,34 @@ impl FlatBufferToJson
                     .map(|i| crate::fb_json_macros::json_str(vec.get(i)))
                     .collect();
                 return Some(("ParamList".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson
+    for activity_table_generated::clz_Torappu_AutoChessData_AutoChessBossDamageStatsStyleData<'_>
+{
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("DamageThreshold".to_string(), json!(self.damageThreshold())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.styleStatusId() {
+                return Some((
+                    "StyleStatusId".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
             }
             #[allow(unreachable_code)]
             None
@@ -56028,6 +59393,16 @@ impl FlatBufferToJson
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             return Some((
+                "SpecialEnemyNumSingle".to_string(),
+                json!(self.specialEnemyNumSingle()),
+            ));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some((
                 "EnemyTypeIdentifierToFillRandom".to_string(),
                 json!(self.enemyTypeIdentifierToFillRandom()),
             ));
@@ -56072,16 +59447,6 @@ impl FlatBufferToJson
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             return Some((
-                "SingleReconnectTime".to_string(),
-                json!(self.singleReconnectTime()),
-            ));
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some((
                 "SpecialPhaseStayTime".to_string(),
                 json!(self.specialPhaseStayTime()),
             ));
@@ -56114,16 +59479,6 @@ impl FlatBufferToJson
             return Some((
                 "HintTimeFightPhase".to_string(),
                 json!(self.hintTimeFightPhase()),
-            ));
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some((
-                "HintTimeDotPhase".to_string(),
-                json!(self.hintTimeDotPhase()),
             ));
             #[allow(unreachable_code)]
             None
@@ -56221,6 +59576,19 @@ impl FlatBufferToJson
             map.insert(k, v);
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.noSkillTipsBand() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .map(|i| crate::fb_json_macros::json_str(vec.get(i)))
+                    .collect();
+                return Some(("NoSkillTipsBand".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             return Some((
                 "BossTrailerStartRound".to_string(),
                 json!(self.bossTrailerStartRound()),
@@ -56259,6 +59627,811 @@ impl FlatBufferToJson
         })) {
             map.insert(k, v);
         }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.playerAvatarWinStreakThresholds() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = vec.iter().map(|v| json!(v)).collect();
+                return Some(("PlayerAvatarWinStreakThresholds".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.playerAvatarBossDamageThresholds() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = vec.iter().map(|v| json!(v)).collect();
+                return Some(("PlayerAvatarBossDamageThresholds".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some((
+                "BossDamageStatsShowDelayTime".to_string(),
+                json!(self.bossDamageStatsShowDelayTime()),
+            ));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson for activity_table_generated::clz_Torappu_AutoChessSkinTimeLimitInfo<'_> {
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.limitId() {
+                return Some(("LimitId".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.id() {
+                return Some(("Id".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("AvailStartTime".to_string(), json!(self.availStartTime())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("AvailEndTime".to_string(), json!(self.availEndTime())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson
+    for activity_table_generated::dict__string__clz_Torappu_AutoChessSkinTimeLimitInfo<'_>
+{
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), crate::fb_json_macros::json_str(k));
+        }
+        if let Some(v) = self.value() {
+            map.insert("value".to_string(), v.to_json());
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson for activity_table_generated::clz_Torappu_AutoChessSkinData<'_> {
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.id() {
+                return Some(("Id".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.name() {
+                return Some(("Name".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("Type_".to_string(), self.type_().to_json_value()));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.skinTrapId() {
+                return Some(("SkinTrapId".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("Rarity".to_string(), self.rarity().to_json_value()));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("SortId".to_string(), json!(self.sortId())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("IsTimeLimit".to_string(), json!(self.isTimeLimit())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.thumbnailPicId() {
+                return Some((
+                    "ThumbnailPicId".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.previewPicId() {
+                return Some((
+                    "PreviewPicId".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.backgroundPreviewPicId() {
+                return Some((
+                    "BackgroundPreviewPicId".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some((
+                "VoicePackType".to_string(),
+                self.voicePackType().to_json_value(),
+            ));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.voiceCv() {
+                return Some(("VoiceCv".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("SkinStartTime".to_string(), json!(self.skinStartTime())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.skinDesc() {
+                return Some(("SkinDesc".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.usageDesc() {
+                return Some(("UsageDesc".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.skinApproach() {
+                return Some((
+                    "SkinApproach".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.timeLimitInfoList() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("TimeLimitInfoList".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson
+    for activity_table_generated::dict__string__clz_Torappu_AutoChessSkinData<'_>
+{
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), crate::fb_json_macros::json_str(k));
+        }
+        if let Some(v) = self.value() {
+            map.insert("value".to_string(), v.to_json());
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson for activity_table_generated::clz_Torappu_AutoChessSkinColorData<'_> {
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.autochessSkinId() {
+                return Some((
+                    "AutochessSkinId".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.garrisonIconColor1() {
+                return Some((
+                    "GarrisonIconColor1".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.garrisonIconColor2() {
+                return Some((
+                    "GarrisonIconColor2".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.garrisonIconColor3() {
+                return Some((
+                    "GarrisonIconColor3".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.bondColor() {
+                return Some(("BondColor".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.bondIconColor() {
+                return Some((
+                    "BondIconColor".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.chessNameColor() {
+                return Some((
+                    "ChessNameColor".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.saleColor1() {
+                return Some(("SaleColor1".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.saleColor2() {
+                return Some(("SaleColor2".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.destroyColor1() {
+                return Some((
+                    "DestroyColor1".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.destroyColor2() {
+                return Some((
+                    "DestroyColor2".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.countdownHintColor() {
+                return Some((
+                    "CountdownHintColor".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.obIconColor() {
+                return Some((
+                    "ObIconColor".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.skinDarkColor() {
+                return Some((
+                    "SkinDarkColor".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.skinLightColor() {
+                return Some((
+                    "SkinLightColor".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson
+    for activity_table_generated::dict__string__clz_Torappu_AutoChessSkinColorData<'_>
+{
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), crate::fb_json_macros::json_str(k));
+        }
+        if let Some(v) = self.value() {
+            map.insert("value".to_string(), v.to_json());
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson for activity_table_generated::clz_Torappu_AutoChessSkinVoiceTriggerData<'_> {
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("Trigger".to_string(), self.trigger().to_json_value()));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("Probability".to_string(), json!(self.probability())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("Cd".to_string(), json!(self.cd())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("Priority".to_string(), json!(self.priority())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson
+    for activity_table_generated::dict__string__clz_Torappu_AutoChessSkinVoiceTriggerData<'_>
+{
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), crate::fb_json_macros::json_str(k));
+        }
+        if let Some(v) = self.value() {
+            map.insert("value".to_string(), v.to_json());
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson for activity_table_generated::clz_Torappu_AutoChessSkinEffectPreviewData<'_> {
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.effectId() {
+                return Some(("EffectId".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("SortId".to_string(), json!(self.sortId())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.title() {
+                return Some(("Title".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.iconId() {
+                return Some(("IconId".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.desc() {
+                return Some(("Desc".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson
+    for activity_table_generated::dict__string__list_clz_Torappu_AutoChessSkinEffectPreviewData<'_>
+{
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), crate::fb_json_macros::json_str(k));
+        }
+        if let Some(vec) = self.value() {
+            assert!(vec.len() <= 10_000_000, "FB vector too large");
+            let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+            map.insert("value".to_string(), json!(arr));
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson for activity_table_generated::clz_Torappu_AutoChessSkinSoundPreviewData<'_> {
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.soundId() {
+                return Some(("SoundId".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("SortId".to_string(), json!(self.sortId())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.title() {
+                return Some(("Title".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.voiceUse() {
+                return Some(("VoiceUse".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.voiceId() {
+                return Some(("VoiceId".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("PlaceType".to_string(), self.placeType().to_json_value()));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.sfxModule() {
+                return Some(("SfxModule".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.sfxPlaySignal() {
+                return Some((
+                    "SfxPlaySignal".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.sfxSubSignal() {
+                return Some((
+                    "SfxSubSignal".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson
+    for activity_table_generated::dict__string__list_clz_Torappu_AutoChessSkinSoundPreviewData<'_>
+{
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), crate::fb_json_macros::json_str(k));
+        }
+        if let Some(vec) = self.value() {
+            assert!(vec.len() <= 10_000_000, "FB vector too large");
+            let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+            map.insert("value".to_string(), json!(arr));
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson for activity_table_generated::dict__string__list_dict__string__string<'_> {
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), crate::fb_json_macros::json_str(k));
+        }
+        if let Some(vec) = self.value() {
+            assert!(vec.len() <= 10_000_000, "FB vector too large");
+            let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+            map.insert("value".to_string(), json!(arr));
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson for activity_table_generated::clz_Torappu_AutoChessSkinConsts<'_> {
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.defaultAutoChessSkinId() {
+                return Some((
+                    "DefaultAutoChessSkinId".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson for activity_table_generated::clz_Torappu_OffseasonConstData<'_> {
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some((
+                "OffSeasonBandFrequency".to_string(),
+                json!(self.offSeasonBandFrequency()),
+            ));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson for activity_table_generated::clz_Torappu_OffseasonData<'_> {
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.offseasonId() {
+                return Some((
+                    "OffseasonId".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.versionId() {
+                return Some(("VersionId".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(nested) = self.offseasonConstData() {
+                return Some(("OffseasonConstData".to_string(), nested.to_json()));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_OffseasonData<'_> {
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), crate::fb_json_macros::json_str(k));
+        }
+        if let Some(v) = self.value() {
+            map.insert("value".to_string(), v.to_json());
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson
+    for activity_table_generated::dict__string__list_dict__string__clz_Torappu_OffseasonData<'_>
+{
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), crate::fb_json_macros::json_str(k));
+        }
+        if let Some(vec) = self.value() {
+            assert!(vec.len() <= 10_000_000, "FB vector too large");
+            let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+            map.insert("value".to_string(), json!(arr));
+        }
         Value::Object(map)
     }
 }
@@ -56275,6 +60448,36 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_AutoChessData<'_
                     })
                     .collect();
                 return Some(("VersionInfoDict".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.warmupScheduleDict() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("WarmupScheduleDict".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.stagePageDisplayDict() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("StagePageDisplayDict".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
             None
@@ -56490,6 +60693,21 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_AutoChessData<'_
             map.insert(k, v);
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.prizeShopRelationDict() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("PrizeShopRelationDict".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.medalDataList() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
                 let arr: Vec<Value> = (0..vec.len())
@@ -56565,8 +60783,146 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_AutoChessData<'_
             map.insert(k, v);
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.bossDamageStatsStyleList() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("BossDamageStatsStyleList".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(nested) = self.constData() {
                 return Some(("ConstData".to_string(), nested.to_json()));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.skinDataDict() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("SkinDataDict".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.skinColorDataDict() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("SkinColorDataDict".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.skinVoiceTriggerDataDict() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("SkinVoiceTriggerDataDict".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.skinEffectPreviewDict() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("SkinEffectPreviewDict".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.skinSoundPreviewDict() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("SkinSoundPreviewDict".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.skinVoiceAnimDict() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("SkinVoiceAnimDict".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(nested) = self.skinConsts() {
+                return Some(("SkinConsts".to_string(), nested.to_json()));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.offseasonDataDict() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("OffseasonDataDict".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.permShopId() {
+                return Some(("PermShopId".to_string(), crate::fb_json_macros::json_str(v)));
             }
             #[allow(unreachable_code)]
             None
@@ -56732,21 +61088,6 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_ArkhubData<'_> {
             None
         })) {
             map.insert(k, v);
-        }
-        Value::Object(map)
-    }
-}
-
-impl FlatBufferToJson for activity_table_generated::dict__string__list_dict__string__string<'_> {
-    fn to_json(&self) -> Value {
-        let mut map = Map::new();
-        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
-            map.insert("key".to_string(), crate::fb_json_macros::json_str(k));
-        }
-        if let Some(vec) = self.value() {
-            assert!(vec.len() <= 10_000_000, "FB vector too large");
-            let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
-            map.insert("value".to_string(), json!(arr));
         }
         Value::Object(map)
     }
@@ -57729,6 +62070,15 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_ActivityTable<'_
             map.insert(k, v);
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(nested) = self.arkNewsData() {
+                return Some(("ArkNewsData".to_string(), nested.to_json()));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.kvSwitchData() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
                 let arr: Vec<Value> = (0..vec.len())
@@ -57938,6 +62288,21 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_ActivityTable<'_
                     })
                     .collect();
                 return Some(("ActivityStoryReadTipsDatas".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.stagesForcePlayActEntryOnFirstRead() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("StagesForcePlayActEntryOnFirstRead".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
             None
@@ -70116,6 +74481,13 @@ impl FlatBufferToJson for char_patch_table_generated::clz_Torappu_AttributesData
             map.insert(k, v);
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("BlockVolume".to_string(), json!(self.blockVolume())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             return Some(("StunImmune".to_string(), json!(self.stunImmune())));
             #[allow(unreachable_code)]
             None
@@ -70877,6 +75249,13 @@ impl FlatBufferToJson for char_patch_table_generated::clz_Torappu_AttributesDelt
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             return Some(("BaseForceLevel".to_string(), json!(self.baseForceLevel())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("BlockVolume".to_string(), json!(self.blockVolume())));
             #[allow(unreachable_code)]
             None
         })) {
@@ -71919,6 +76298,13 @@ impl FlatBufferToJson for character_table_generated::clz_Torappu_AttributesData<
             map.insert(k, v);
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("BlockVolume".to_string(), json!(self.blockVolume())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             return Some(("StunImmune".to_string(), json!(self.stunImmune())));
             #[allow(unreachable_code)]
             None
@@ -72686,6 +77072,13 @@ impl FlatBufferToJson for character_table_generated::clz_Torappu_AttributesDelta
             map.insert(k, v);
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("BlockVolume".to_string(), json!(self.blockVolume())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             return Some(("StunImmune".to_string(), json!(self.stunImmune())));
             #[allow(unreachable_code)]
             None
@@ -73290,6 +77683,16 @@ impl FlatBufferToJson for charm_table_generated::clz_Torappu_RuneData_Selector<'
             return Some((
                 "PlayerSideMask".to_string(),
                 self.playerSideMask().to_json_value(),
+            ));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some((
+                "MapLayerMask".to_string(),
+                self.mapLayerMask().to_json_value(),
             ));
             #[allow(unreachable_code)]
             None
@@ -75634,6 +80037,16 @@ impl FlatBufferToJson for climb_tower_table_generated::clz_Torappu_RuneData_Sele
             return Some((
                 "PlayerSideMask".to_string(),
                 self.playerSideMask().to_json_value(),
+            ));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some((
+                "MapLayerMask".to_string(),
+                self.mapLayerMask().to_json_value(),
             ));
             #[allow(unreachable_code)]
             None
@@ -78341,6 +82754,16 @@ impl FlatBufferToJson for crisis_v2_table_generated::clz_Torappu_RuneData_Select
             return Some((
                 "PlayerSideMask".to_string(),
                 self.playerSideMask().to_json_value(),
+            ));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some((
+                "MapLayerMask".to_string(),
+                self.mapLayerMask().to_json_value(),
             ));
             #[allow(unreachable_code)]
             None
@@ -83656,6 +88079,15 @@ impl FlatBufferToJson for enemy_database_generated::clz_Torappu_EnemyDatabase_At
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(nested) = self.epBreakRecoverSpeed() {
                 return Some(("EpBreakRecoverSpeed".to_string(), nested.to_json()));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(nested) = self.blockVolume() {
+                return Some(("BlockVolume".to_string(), nested.to_json()));
             }
             #[allow(unreachable_code)]
             None
@@ -93152,6 +97584,16 @@ impl FlatBufferToJson for open_server_table_generated::clz_Torappu_OpenServerCon
         })) {
             map.insert(k, v);
         }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some((
+                "OpenServerV2EndTime".to_string(),
+                json!(self.openServerV2EndTime()),
+            ));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
         Value::Object(map)
     }
 }
@@ -94649,6 +99091,782 @@ impl FlatBufferToJson for open_server_table_generated::clz_Torappu_LongTermCheck
     }
 }
 
+impl FlatBufferToJson for open_server_table_generated::clz_Torappu_OpenServerV3CheckInItemData<'_> {
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("Order".to_string(), json!(self.order())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("IsKeyItem".to_string(), json!(self.isKeyItem())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.rewardList() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("RewardList".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson
+    for open_server_table_generated::clz_Torappu_OpenServerV3CheckInGroupData<'_>
+{
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.groupId() {
+                return Some(("GroupId".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(nested) = self.specialRewardItem() {
+                return Some(("SpecialRewardItem".to_string(), nested.to_json()));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some((
+                "SpecialRewardDay".to_string(),
+                json!(self.specialRewardDay()),
+            ));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.charImgId() {
+                return Some(("CharImgId".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.loginTitle() {
+                return Some(("LoginTitle".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.loginDesc() {
+                return Some(("LoginDesc".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.guidebookTrigger() {
+                return Some((
+                    "GuidebookTrigger".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.charList() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .map(|i| crate::fb_json_macros::json_str(vec.get(i)))
+                    .collect();
+                return Some(("CharList".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.checkInItemList() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("CheckInItemList".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson
+    for open_server_table_generated::dict__string__clz_Torappu_OpenServerV3CheckInGroupData<'_>
+{
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), crate::fb_json_macros::json_str(k));
+        }
+        if let Some(v) = self.value() {
+            map.insert("value".to_string(), v.to_json());
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson for open_server_table_generated::clz_Torappu_OpenServerV3MissionData<'_> {
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.id() {
+                return Some(("Id".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("SortId".to_string(), json!(self.sortId())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.description() {
+                return Some((
+                    "Description".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("Type_".to_string(), self.type_().to_json_value()));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some((
+                "OpenServerMissionType".to_string(),
+                self.openServerMissionType().to_json_value(),
+            ));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.missionGroup() {
+                return Some((
+                    "MissionGroup".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("JumpType".to_string(), self.jumpType().to_json_value()));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.jumpPlace() {
+                return Some(("JumpPlace".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.rewards() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("Rewards".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson
+    for open_server_table_generated::dict__string__clz_Torappu_OpenServerV3MissionData<'_>
+{
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), crate::fb_json_macros::json_str(k));
+        }
+        if let Some(v) = self.value() {
+            map.insert("value".to_string(), v.to_json());
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson
+    for open_server_table_generated::clz_Torappu_OpenServerV3MissionGroupData<'_>
+{
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.id() {
+                return Some(("Id".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("Type_".to_string(), self.type_().to_json_value()));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("SortId".to_string(), json!(self.sortId())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.title() {
+                return Some(("Title".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.period() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = vec.iter().map(|v| json!(v)).collect();
+                return Some(("Period".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.rewards() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("Rewards".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("StartTs".to_string(), json!(self.startTs())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("EndTs".to_string(), json!(self.endTs())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson
+    for open_server_table_generated::dict__string__clz_Torappu_OpenServerV3MissionGroupData<'_>
+{
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), crate::fb_json_macros::json_str(k));
+        }
+        if let Some(v) = self.value() {
+            map.insert("value".to_string(), v.to_json());
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson
+    for open_server_table_generated::clz_Torappu_OpenServerV3MissionTypeDescData<'_>
+{
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some((
+                "MissionType".to_string(),
+                self.missionType().to_json_value(),
+            ));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.desc() {
+                return Some(("Desc".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson
+    for open_server_table_generated::dict__string__clz_Torappu_OpenServerV3MissionTypeDescData<'_>
+{
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), crate::fb_json_macros::json_str(k));
+        }
+        if let Some(v) = self.value() {
+            map.insert("value".to_string(), v.to_json());
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson
+    for open_server_table_generated::clz_Torappu_OpenServerV3MilestoneItemData<'_>
+{
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("Level".to_string(), json!(self.level())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(nested) = self.reward() {
+                return Some(("Reward".to_string(), nested.to_json()));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.pointId() {
+                return Some(("PointId".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("PointCnt".to_string(), json!(self.pointCnt())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("IsBonus".to_string(), json!(self.isBonus())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson
+    for open_server_table_generated::clz_Torappu_OpenServerV3MilestoneGroupData<'_>
+{
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.groupId() {
+                return Some(("GroupId".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.rewardImgId() {
+                return Some((
+                    "RewardImgId".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.rewardItemId() {
+                return Some((
+                    "RewardItemId".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.rewardPointId() {
+                return Some((
+                    "RewardPointId".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.itemList() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("ItemList".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson
+    for open_server_table_generated::dict__string__clz_Torappu_OpenServerV3MilestoneGroupData<'_>
+{
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), crate::fb_json_macros::json_str(k));
+        }
+        if let Some(v) = self.value() {
+            map.insert("value".to_string(), v.to_json());
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson for open_server_table_generated::clz_Torappu_OpenServerV3GiftPackageData<'_> {
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.giftPackageId() {
+                return Some((
+                    "GiftPackageId".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.goodId() {
+                return Some(("GoodId".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.giftPackagePic() {
+                return Some((
+                    "GiftPackagePic".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("SortId".to_string(), json!(self.sortId())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("IsLimit".to_string(), json!(self.isLimit())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson
+    for open_server_table_generated::clz_Torappu_OpenServerV3StageCampaignData<'_>
+{
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.stageId() {
+                return Some(("StageId".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("SortId".to_string(), json!(self.sortId())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.imgId() {
+                return Some(("ImgId".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson
+    for open_server_table_generated::clz_Torappu_OpenServerV3StoryRecommendData<'_>
+{
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.storySetId() {
+                return Some(("StorySetId".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("SortId".to_string(), json!(self.sortId())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson for open_server_table_generated::clz_Torappu_OpenServerV3Data<'_> {
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.checkInData() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("CheckInData".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.missionData() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("MissionData".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.missionGroupData() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("MissionGroupData".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.missionTypeDescData() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("MissionTypeDescData".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.milestoneGroupData() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("MilestoneGroupData".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.giftPackageList() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("GiftPackageList".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.stageCampaignData() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("StageCampaignData".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(vec) = self.storyRecommendData() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
+                return Some(("StoryRecommendData".to_string(), json!(arr)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        Value::Object(map)
+    }
+}
+
 impl FlatBufferToJson for open_server_table_generated::clz_Torappu_OpenServerSchedule<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
@@ -94718,6 +99936,15 @@ impl FlatBufferToJson for open_server_table_generated::clz_Torappu_OpenServerSch
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(nested) = self.longTermCheckInData() {
                 return Some(("LongTermCheckInData".to_string(), nested.to_json()));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(nested) = self.openServerV3Data() {
+                return Some(("OpenServerV3Data".to_string(), nested.to_json()));
             }
             #[allow(unreachable_code)]
             None
@@ -95650,6 +100877,13 @@ impl FlatBufferToJson for prts___levels_generated::clz_Torappu_AttributesData<'_
             map.insert(k, v);
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("BlockVolume".to_string(), json!(self.blockVolume())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             return Some(("StunImmune".to_string(), json!(self.stunImmune())));
             #[allow(unreachable_code)]
             None
@@ -96265,6 +101499,15 @@ impl FlatBufferToJson for prts___levels_generated::clz_Torappu_EnemyDatabase_Att
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(nested) = self.epBreakRecoverSpeed() {
                 return Some(("EpBreakRecoverSpeed".to_string(), nested.to_json()));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(nested) = self.blockVolume() {
+                return Some(("BlockVolume".to_string(), nested.to_json()));
             }
             #[allow(unreachable_code)]
             None
@@ -99381,6 +104624,15 @@ impl FlatBufferToJson for retro_table_generated::clz_Torappu_StageData<'_> {
             map.insert(k, v);
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.levelMapId() {
+                return Some(("LevelMapId".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             return Some(("CanUseCharm".to_string(), json!(self.canUseCharm())));
             #[allow(unreachable_code)]
             None
@@ -100749,6 +106001,16 @@ impl FlatBufferToJson for retro_table_generated::clz_Torappu_RuneData_Selector<'
             return Some((
                 "PlayerSideMask".to_string(),
                 self.playerSideMask().to_json_value(),
+            ));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some((
+                "MapLayerMask".to_string(),
+                self.mapLayerMask().to_json_value(),
             ));
             #[allow(unreachable_code)]
             None
@@ -125676,6 +130938,16 @@ impl FlatBufferToJson for sandbox_perm_table_generated::clz_Torappu_RuneData_Sel
             map.insert(k, v);
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some((
+                "MapLayerMask".to_string(),
+                self.mapLayerMask().to_json_value(),
+            ));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             return Some(("SideType".to_string(), self.sideType().to_json_value()));
             #[allow(unreachable_code)]
             None
@@ -145000,6 +150272,18 @@ impl FlatBufferToJson for skin_table_generated::clz_Torappu_SpDynIllustInfo<'_> 
         })) {
             map.insert(k, v);
         }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.spDynEntranceId() {
+                return Some((
+                    "SpDynEntranceId".to_string(),
+                    crate::fb_json_macros::json_str(v),
+                ));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
         Value::Object(map)
     }
 }
@@ -147644,6 +152928,15 @@ impl FlatBufferToJson for stage_table_generated::clz_Torappu_StageData<'_> {
             map.insert(k, v);
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(v) = self.levelMapId() {
+                return Some(("LevelMapId".to_string(), crate::fb_json_macros::json_str(v)));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             return Some(("CanUseCharm".to_string(), json!(self.canUseCharm())));
             #[allow(unreachable_code)]
             None
@@ -149800,11 +155093,12 @@ impl FlatBufferToJson for stage_table_generated::clz_Torappu_StorylineConstData<
     fn to_json(&self) -> Value {
         let mut map = Map::new();
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(v) = self.recommendHideGuideGroupId() {
-                return Some((
-                    "RecommendHideGuideGroupId".to_string(),
-                    crate::fb_json_macros::json_str(v),
-                ));
+            if let Some(vec) = self.recommendHideGuideGroupId() {
+                assert!(vec.len() <= 10_000_000, "FB vector too large");
+                let arr: Vec<Value> = (0..vec.len())
+                    .map(|i| crate::fb_json_macros::json_str(vec.get(i)))
+                    .collect();
+                return Some(("RecommendHideGuideGroupId".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
             None
@@ -154073,6 +159367,13 @@ impl FlatBufferToJson for token_table_generated::clz_Torappu_AttributesData<'_> 
             map.insert(k, v);
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("BlockVolume".to_string(), json!(self.blockVolume())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             return Some(("StunImmune".to_string(), json!(self.stunImmune())));
             #[allow(unreachable_code)]
             None
@@ -154832,6 +160133,13 @@ impl FlatBufferToJson for token_table_generated::clz_Torappu_AttributesDeltaData
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             return Some(("BaseForceLevel".to_string(), json!(self.baseForceLevel())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            return Some(("BlockVolume".to_string(), json!(self.blockVolume())));
             #[allow(unreachable_code)]
             None
         })) {
