@@ -13,13 +13,13 @@ pub const ENUM_MIN_ENUM__TORAPPU_GACHA_RULE_TYPE: i32 = 0;
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
-pub const ENUM_MAX_ENUM__TORAPPU_GACHA_RULE_TYPE: i32 = 11;
+pub const ENUM_MAX_ENUM__TORAPPU_GACHA_RULE_TYPE: i32 = 12;
 #[deprecated(
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_GACHA_RULE_TYPE: [enum__Torappu_GachaRuleType; 12] = [
+pub const ENUM_VALUES_ENUM__TORAPPU_GACHA_RULE_TYPE: [enum__Torappu_GachaRuleType; 13] = [
     enum__Torappu_GachaRuleType::NORMAL,
     enum__Torappu_GachaRuleType::LIMITED,
     enum__Torappu_GachaRuleType::LINKAGE,
@@ -32,6 +32,7 @@ pub const ENUM_VALUES_ENUM__TORAPPU_GACHA_RULE_TYPE: [enum__Torappu_GachaRuleTyp
     enum__Torappu_GachaRuleType::DOUBLE,
     enum__Torappu_GachaRuleType::CLASSIC_DOUBLE,
     enum__Torappu_GachaRuleType::BACKFLOW,
+    enum__Torappu_GachaRuleType::GACHAWITHSPECIFIED6,
 ];
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
@@ -51,9 +52,10 @@ impl enum__Torappu_GachaRuleType {
     pub const DOUBLE: Self = Self(9);
     pub const CLASSIC_DOUBLE: Self = Self(10);
     pub const BACKFLOW: Self = Self(11);
+    pub const GACHAWITHSPECIFIED6: Self = Self(12);
 
     pub const ENUM_MIN: i32 = 0;
-    pub const ENUM_MAX: i32 = 11;
+    pub const ENUM_MAX: i32 = 12;
     pub const ENUM_VALUES: &'static [Self] = &[
         Self::NORMAL,
         Self::LIMITED,
@@ -67,6 +69,7 @@ impl enum__Torappu_GachaRuleType {
         Self::DOUBLE,
         Self::CLASSIC_DOUBLE,
         Self::BACKFLOW,
+        Self::GACHAWITHSPECIFIED6,
     ];
     /// Returns the variant's name or "" if unknown.
     pub fn variant_name(self) -> Option<&'static str> {
@@ -83,6 +86,7 @@ impl enum__Torappu_GachaRuleType {
             Self::DOUBLE => Some("DOUBLE"),
             Self::CLASSIC_DOUBLE => Some("CLASSIC_DOUBLE"),
             Self::BACKFLOW => Some("BACKFLOW"),
+            Self::GACHAWITHSPECIFIED6 => Some("GACHAWITHSPECIFIED6"),
             _ => None,
         }
     }
@@ -167,13 +171,13 @@ pub const ENUM_MIN_ENUM__TORAPPU_ITEM_TYPE: i32 = 0;
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
-pub const ENUM_MAX_ENUM__TORAPPU_ITEM_TYPE: i32 = 94;
+pub const ENUM_MAX_ENUM__TORAPPU_ITEM_TYPE: i32 = 97;
 #[deprecated(
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 95] = [
+pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 98] = [
     enum__Torappu_ItemType::NONE,
     enum__Torappu_ItemType::CHAR,
     enum__Torappu_ItemType::CARD_EXP,
@@ -269,6 +273,9 @@ pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 95] = [
     enum__Torappu_ItemType::STICKER,
     enum__Torappu_ItemType::ARKHUB,
     enum__Torappu_ItemType::LINKAGE_TKT_GACHA,
+    enum__Torappu_ItemType::AUTOCHESS_SKIN,
+    enum__Torappu_ItemType::AUTOCHESS_MISSION_POINT,
+    enum__Torappu_ItemType::OPEN_SERVER_CREDIT,
 ];
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
@@ -371,9 +378,12 @@ impl enum__Torappu_ItemType {
     pub const STICKER: Self = Self(92);
     pub const ARKHUB: Self = Self(93);
     pub const LINKAGE_TKT_GACHA: Self = Self(94);
+    pub const AUTOCHESS_SKIN: Self = Self(95);
+    pub const AUTOCHESS_MISSION_POINT: Self = Self(96);
+    pub const OPEN_SERVER_CREDIT: Self = Self(97);
 
     pub const ENUM_MIN: i32 = 0;
-    pub const ENUM_MAX: i32 = 94;
+    pub const ENUM_MAX: i32 = 97;
     pub const ENUM_VALUES: &'static [Self] = &[
         Self::NONE,
         Self::CHAR,
@@ -470,6 +480,9 @@ impl enum__Torappu_ItemType {
         Self::STICKER,
         Self::ARKHUB,
         Self::LINKAGE_TKT_GACHA,
+        Self::AUTOCHESS_SKIN,
+        Self::AUTOCHESS_MISSION_POINT,
+        Self::OPEN_SERVER_CREDIT,
     ];
     /// Returns the variant's name or "" if unknown.
     pub fn variant_name(self) -> Option<&'static str> {
@@ -569,6 +582,9 @@ impl enum__Torappu_ItemType {
             Self::STICKER => Some("STICKER"),
             Self::ARKHUB => Some("ARKHUB"),
             Self::LINKAGE_TKT_GACHA => Some("LINKAGE_TKT_GACHA"),
+            Self::AUTOCHESS_SKIN => Some("AUTOCHESS_SKIN"),
+            Self::AUTOCHESS_MISSION_POINT => Some("AUTOCHESS_MISSION_POINT"),
+            Self::OPEN_SERVER_CREDIT => Some("OPEN_SERVER_CREDIT"),
             _ => None,
         }
     }

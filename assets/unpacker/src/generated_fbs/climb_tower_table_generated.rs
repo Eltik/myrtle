@@ -124,13 +124,13 @@ pub const ENUM_MIN_ENUM__TORAPPU_ITEM_TYPE: i32 = 0;
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
-pub const ENUM_MAX_ENUM__TORAPPU_ITEM_TYPE: i32 = 94;
+pub const ENUM_MAX_ENUM__TORAPPU_ITEM_TYPE: i32 = 97;
 #[deprecated(
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 95] = [
+pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 98] = [
     enum__Torappu_ItemType::NONE,
     enum__Torappu_ItemType::CHAR,
     enum__Torappu_ItemType::CARD_EXP,
@@ -226,6 +226,9 @@ pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 95] = [
     enum__Torappu_ItemType::STICKER,
     enum__Torappu_ItemType::ARKHUB,
     enum__Torappu_ItemType::LINKAGE_TKT_GACHA,
+    enum__Torappu_ItemType::AUTOCHESS_SKIN,
+    enum__Torappu_ItemType::AUTOCHESS_MISSION_POINT,
+    enum__Torappu_ItemType::OPEN_SERVER_CREDIT,
 ];
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
@@ -328,9 +331,12 @@ impl enum__Torappu_ItemType {
     pub const STICKER: Self = Self(92);
     pub const ARKHUB: Self = Self(93);
     pub const LINKAGE_TKT_GACHA: Self = Self(94);
+    pub const AUTOCHESS_SKIN: Self = Self(95);
+    pub const AUTOCHESS_MISSION_POINT: Self = Self(96);
+    pub const OPEN_SERVER_CREDIT: Self = Self(97);
 
     pub const ENUM_MIN: i32 = 0;
-    pub const ENUM_MAX: i32 = 94;
+    pub const ENUM_MAX: i32 = 97;
     pub const ENUM_VALUES: &'static [Self] = &[
         Self::NONE,
         Self::CHAR,
@@ -427,6 +433,9 @@ impl enum__Torappu_ItemType {
         Self::STICKER,
         Self::ARKHUB,
         Self::LINKAGE_TKT_GACHA,
+        Self::AUTOCHESS_SKIN,
+        Self::AUTOCHESS_MISSION_POINT,
+        Self::OPEN_SERVER_CREDIT,
     ];
     /// Returns the variant's name or "" if unknown.
     pub fn variant_name(self) -> Option<&'static str> {
@@ -526,6 +535,9 @@ impl enum__Torappu_ItemType {
             Self::STICKER => Some("STICKER"),
             Self::ARKHUB => Some("ARKHUB"),
             Self::LINKAGE_TKT_GACHA => Some("LINKAGE_TKT_GACHA"),
+            Self::AUTOCHESS_SKIN => Some("AUTOCHESS_SKIN"),
+            Self::AUTOCHESS_MISSION_POINT => Some("AUTOCHESS_MISSION_POINT"),
+            Self::OPEN_SERVER_CREDIT => Some("OPEN_SERVER_CREDIT"),
             _ => None,
         }
     }
@@ -1512,10 +1524,12 @@ pub const ENUM_MAX_ENUM__TORAPPU_PLAYER_SIDE_MASK: u8 = 255;
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_PLAYER_SIDE_MASK: [enum__Torappu_PlayerSideMask; 4] = [
+pub const ENUM_VALUES_ENUM__TORAPPU_PLAYER_SIDE_MASK: [enum__Torappu_PlayerSideMask; 6] = [
     enum__Torappu_PlayerSideMask::ALL,
     enum__Torappu_PlayerSideMask::SIDE_A,
     enum__Torappu_PlayerSideMask::SIDE_B,
+    enum__Torappu_PlayerSideMask::SIDE_C,
+    enum__Torappu_PlayerSideMask::SIDE_D,
     enum__Torappu_PlayerSideMask::NONE,
 ];
 
@@ -1527,17 +1541,28 @@ impl enum__Torappu_PlayerSideMask {
     pub const ALL: Self = Self(0);
     pub const SIDE_A: Self = Self(2);
     pub const SIDE_B: Self = Self(4);
+    pub const SIDE_C: Self = Self(8);
+    pub const SIDE_D: Self = Self(16);
     pub const NONE: Self = Self(255);
 
     pub const ENUM_MIN: u8 = 0;
     pub const ENUM_MAX: u8 = 255;
-    pub const ENUM_VALUES: &'static [Self] = &[Self::ALL, Self::SIDE_A, Self::SIDE_B, Self::NONE];
+    pub const ENUM_VALUES: &'static [Self] = &[
+        Self::ALL,
+        Self::SIDE_A,
+        Self::SIDE_B,
+        Self::SIDE_C,
+        Self::SIDE_D,
+        Self::NONE,
+    ];
     /// Returns the variant's name or "" if unknown.
     pub fn variant_name(self) -> Option<&'static str> {
         match self {
             Self::ALL => Some("ALL"),
             Self::SIDE_A => Some("SIDE_A"),
             Self::SIDE_B => Some("SIDE_B"),
+            Self::SIDE_C => Some("SIDE_C"),
+            Self::SIDE_D => Some("SIDE_D"),
             Self::NONE => Some("NONE"),
             _ => None,
         }
@@ -1614,6 +1639,136 @@ impl<'a> ::flatbuffers::Verifiable for enum__Torappu_PlayerSideMask {
 }
 
 impl ::flatbuffers::SimpleToVerifyInSlice for enum__Torappu_PlayerSideMask {}
+#[deprecated(
+    since = "2.0.0",
+    note = "Use associated constants instead. This will no longer be generated in 2021."
+)]
+pub const ENUM_MIN_ENUM__TORAPPU_MAP_LAYER_MASK: u8 = 0;
+#[deprecated(
+    since = "2.0.0",
+    note = "Use associated constants instead. This will no longer be generated in 2021."
+)]
+pub const ENUM_MAX_ENUM__TORAPPU_MAP_LAYER_MASK: u8 = 255;
+#[deprecated(
+    since = "2.0.0",
+    note = "Use associated constants instead. This will no longer be generated in 2021."
+)]
+#[allow(non_camel_case_types)]
+pub const ENUM_VALUES_ENUM__TORAPPU_MAP_LAYER_MASK: [enum__Torappu_MapLayerMask; 6] = [
+    enum__Torappu_MapLayerMask::ALL,
+    enum__Torappu_MapLayerMask::LAYER_A,
+    enum__Torappu_MapLayerMask::LAYER_B,
+    enum__Torappu_MapLayerMask::LAYER_C,
+    enum__Torappu_MapLayerMask::LAYER_D,
+    enum__Torappu_MapLayerMask::NONE,
+];
+
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
+#[repr(transparent)]
+pub struct enum__Torappu_MapLayerMask(pub u8);
+#[allow(non_upper_case_globals)]
+impl enum__Torappu_MapLayerMask {
+    pub const ALL: Self = Self(0);
+    pub const LAYER_A: Self = Self(2);
+    pub const LAYER_B: Self = Self(4);
+    pub const LAYER_C: Self = Self(8);
+    pub const LAYER_D: Self = Self(16);
+    pub const NONE: Self = Self(255);
+
+    pub const ENUM_MIN: u8 = 0;
+    pub const ENUM_MAX: u8 = 255;
+    pub const ENUM_VALUES: &'static [Self] = &[
+        Self::ALL,
+        Self::LAYER_A,
+        Self::LAYER_B,
+        Self::LAYER_C,
+        Self::LAYER_D,
+        Self::NONE,
+    ];
+    /// Returns the variant's name or "" if unknown.
+    pub fn variant_name(self) -> Option<&'static str> {
+        match self {
+            Self::ALL => Some("ALL"),
+            Self::LAYER_A => Some("LAYER_A"),
+            Self::LAYER_B => Some("LAYER_B"),
+            Self::LAYER_C => Some("LAYER_C"),
+            Self::LAYER_D => Some("LAYER_D"),
+            Self::NONE => Some("NONE"),
+            _ => None,
+        }
+    }
+}
+impl ::core::fmt::Debug for enum__Torappu_MapLayerMask {
+    fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
+        if let Some(name) = self.variant_name() {
+            f.write_str(name)
+        } else {
+            f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
+        }
+    }
+}
+
+impl<'de> serde::Deserialize<'de> for enum__Torappu_MapLayerMask {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        for item in enum__Torappu_MapLayerMask::ENUM_VALUES {
+            if let Some(item_name) = item.variant_name() {
+                if item_name == s {
+                    return Ok(item.clone());
+                }
+            }
+        }
+        Err(serde::de::Error::custom(format!(
+            "Unknown enum__Torappu_MapLayerMask variant: {s}"
+        )))
+    }
+}
+
+impl<'a> ::flatbuffers::Follow<'a> for enum__Torappu_MapLayerMask {
+    type Inner = Self;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        let b = unsafe { ::flatbuffers::read_scalar_at::<u8>(buf, loc) };
+        Self(b)
+    }
+}
+
+impl ::flatbuffers::Push for enum__Torappu_MapLayerMask {
+    type Output = enum__Torappu_MapLayerMask;
+    #[inline]
+    unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
+        unsafe { ::flatbuffers::emplace_scalar::<u8>(dst, self.0) };
+    }
+}
+
+impl ::flatbuffers::EndianScalar for enum__Torappu_MapLayerMask {
+    type Scalar = u8;
+    #[inline]
+    fn to_little_endian(self) -> u8 {
+        self.0.to_le()
+    }
+    #[inline]
+    #[allow(clippy::wrong_self_convention)]
+    fn from_little_endian(v: u8) -> Self {
+        let b = u8::from_le(v);
+        Self(b)
+    }
+}
+
+impl<'a> ::flatbuffers::Verifiable for enum__Torappu_MapLayerMask {
+    #[inline]
+    fn run_verifier(
+        v: &mut ::flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+        u8::run_verifier(v, pos)
+    }
+}
+
+impl ::flatbuffers::SimpleToVerifyInSlice for enum__Torappu_MapLayerMask {}
 #[deprecated(
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
@@ -1872,13 +2027,13 @@ pub const ENUM_MIN_ENUM__TORAPPU_MISSION_TYPE: i32 = 0;
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
-pub const ENUM_MAX_ENUM__TORAPPU_MISSION_TYPE: i32 = 11;
+pub const ENUM_MAX_ENUM__TORAPPU_MISSION_TYPE: i32 = 12;
 #[deprecated(
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_MISSION_TYPE: [enum__Torappu_MissionType; 12] = [
+pub const ENUM_VALUES_ENUM__TORAPPU_MISSION_TYPE: [enum__Torappu_MissionType; 13] = [
     enum__Torappu_MissionType::UNKNOWN,
     enum__Torappu_MissionType::MAIN,
     enum__Torappu_MissionType::DAILY,
@@ -1891,6 +2046,7 @@ pub const ENUM_VALUES_ENUM__TORAPPU_MISSION_TYPE: [enum__Torappu_MissionType; 12
     enum__Torappu_MissionType::RETRO,
     enum__Torappu_MissionType::SPECIAL_OPERATOR,
     enum__Torappu_MissionType::SPECIAL_OPERATOR_WEEKLY,
+    enum__Torappu_MissionType::GUIDE_V3,
 ];
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
@@ -1910,9 +2066,10 @@ impl enum__Torappu_MissionType {
     pub const RETRO: Self = Self(9);
     pub const SPECIAL_OPERATOR: Self = Self(10);
     pub const SPECIAL_OPERATOR_WEEKLY: Self = Self(11);
+    pub const GUIDE_V3: Self = Self(12);
 
     pub const ENUM_MIN: i32 = 0;
-    pub const ENUM_MAX: i32 = 11;
+    pub const ENUM_MAX: i32 = 12;
     pub const ENUM_VALUES: &'static [Self] = &[
         Self::UNKNOWN,
         Self::MAIN,
@@ -1926,6 +2083,7 @@ impl enum__Torappu_MissionType {
         Self::RETRO,
         Self::SPECIAL_OPERATOR,
         Self::SPECIAL_OPERATOR_WEEKLY,
+        Self::GUIDE_V3,
     ];
     /// Returns the variant's name or "" if unknown.
     pub fn variant_name(self) -> Option<&'static str> {
@@ -1942,6 +2100,7 @@ impl enum__Torappu_MissionType {
             Self::RETRO => Some("RETRO"),
             Self::SPECIAL_OPERATOR => Some("SPECIAL_OPERATOR"),
             Self::SPECIAL_OPERATOR_WEEKLY => Some("SPECIAL_OPERATOR_WEEKLY"),
+            Self::GUIDE_V3 => Some("GUIDE_V3"),
             _ => None,
         }
     }
@@ -6707,21 +6866,22 @@ impl<'a> clz_Torappu_RuneData_Selector<'a> {
     pub const VT_PROFESSIONMASK: ::flatbuffers::VOffsetT = 4;
     pub const VT_BUILDABLEMASK: ::flatbuffers::VOffsetT = 6;
     pub const VT_PLAYERSIDEMASK: ::flatbuffers::VOffsetT = 8;
-    pub const VT_SIDETYPE: ::flatbuffers::VOffsetT = 10;
-    pub const VT_CHARIDFILTER: ::flatbuffers::VOffsetT = 12;
-    pub const VT_CHARIDEXCLUDEFILTER: ::flatbuffers::VOffsetT = 14;
-    pub const VT_ENEMYIDFILTER: ::flatbuffers::VOffsetT = 16;
-    pub const VT_ENEMYIDEXCLUDEFILTER: ::flatbuffers::VOffsetT = 18;
-    pub const VT_ENEMYLEVELTYPEFILTER: ::flatbuffers::VOffsetT = 20;
-    pub const VT_ENEMYACTIONHIDDENGROUPFILTER: ::flatbuffers::VOffsetT = 22;
-    pub const VT_SKILLIDFILTER: ::flatbuffers::VOffsetT = 24;
-    pub const VT_TILEKEYFILTER: ::flatbuffers::VOffsetT = 26;
-    pub const VT_GROUPTAGFILTER: ::flatbuffers::VOffsetT = 28;
-    pub const VT_FILTERTAGFILTER: ::flatbuffers::VOffsetT = 30;
-    pub const VT_FILTERTAGEXCLUDEFILTER: ::flatbuffers::VOffsetT = 32;
-    pub const VT_SUBPROFESSIONEXCLUDEFILTER: ::flatbuffers::VOffsetT = 34;
-    pub const VT_MAPTAGFILTER: ::flatbuffers::VOffsetT = 36;
-    pub const VT_HEIGHTTYPEMASK: ::flatbuffers::VOffsetT = 38;
+    pub const VT_MAPLAYERMASK: ::flatbuffers::VOffsetT = 10;
+    pub const VT_SIDETYPE: ::flatbuffers::VOffsetT = 12;
+    pub const VT_CHARIDFILTER: ::flatbuffers::VOffsetT = 14;
+    pub const VT_CHARIDEXCLUDEFILTER: ::flatbuffers::VOffsetT = 16;
+    pub const VT_ENEMYIDFILTER: ::flatbuffers::VOffsetT = 18;
+    pub const VT_ENEMYIDEXCLUDEFILTER: ::flatbuffers::VOffsetT = 20;
+    pub const VT_ENEMYLEVELTYPEFILTER: ::flatbuffers::VOffsetT = 22;
+    pub const VT_ENEMYACTIONHIDDENGROUPFILTER: ::flatbuffers::VOffsetT = 24;
+    pub const VT_SKILLIDFILTER: ::flatbuffers::VOffsetT = 26;
+    pub const VT_TILEKEYFILTER: ::flatbuffers::VOffsetT = 28;
+    pub const VT_GROUPTAGFILTER: ::flatbuffers::VOffsetT = 30;
+    pub const VT_FILTERTAGFILTER: ::flatbuffers::VOffsetT = 32;
+    pub const VT_FILTERTAGEXCLUDEFILTER: ::flatbuffers::VOffsetT = 34;
+    pub const VT_SUBPROFESSIONEXCLUDEFILTER: ::flatbuffers::VOffsetT = 36;
+    pub const VT_MAPTAGFILTER: ::flatbuffers::VOffsetT = 38;
+    pub const VT_HEIGHTTYPEMASK: ::flatbuffers::VOffsetT = 40;
 
     #[inline]
     pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
@@ -6781,6 +6941,7 @@ impl<'a> clz_Torappu_RuneData_Selector<'a> {
         builder.add_sideType(args.sideType);
         builder.add_buildableMask(args.buildableMask);
         builder.add_professionMask(args.professionMask);
+        builder.add_mapLayerMask(args.mapLayerMask);
         builder.add_playerSideMask(args.playerSideMask);
         builder.finish()
     }
@@ -6789,6 +6950,7 @@ impl<'a> clz_Torappu_RuneData_Selector<'a> {
         let professionMask = self.professionMask();
         let buildableMask = self.buildableMask();
         let playerSideMask = self.playerSideMask();
+        let mapLayerMask = self.mapLayerMask();
         let sideType = self.sideType();
         let charIdFilter = self.charIdFilter().map(|x| {
             x.iter()
@@ -6860,6 +7022,7 @@ impl<'a> clz_Torappu_RuneData_Selector<'a> {
             professionMask,
             buildableMask,
             playerSideMask,
+            mapLayerMask,
             sideType,
             charIdFilter,
             charIdExcludeFilter,
@@ -6916,6 +7079,20 @@ impl<'a> clz_Torappu_RuneData_Selector<'a> {
                 .get::<enum__Torappu_PlayerSideMask>(
                     clz_Torappu_RuneData_Selector::VT_PLAYERSIDEMASK,
                     Some(enum__Torappu_PlayerSideMask::ALL),
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn mapLayerMask(&self) -> enum__Torappu_MapLayerMask {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<enum__Torappu_MapLayerMask>(
+                    clz_Torappu_RuneData_Selector::VT_MAPLAYERMASK,
+                    Some(enum__Torappu_MapLayerMask::ALL),
                 )
                 .unwrap()
         }
@@ -7150,6 +7327,11 @@ impl ::flatbuffers::Verifiable for clz_Torappu_RuneData_Selector<'_> {
                 Self::VT_PLAYERSIDEMASK,
                 false,
             )?
+            .visit_field::<enum__Torappu_MapLayerMask>(
+                "mapLayerMask",
+                Self::VT_MAPLAYERMASK,
+                false,
+            )?
             .visit_field::<enum__Torappu_Battle_SideType>("sideType", Self::VT_SIDETYPE, false)?
             .visit_field::<::flatbuffers::ForwardsUOffset<
                 ::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<&'_ str>>,
@@ -7215,6 +7397,7 @@ pub struct clz_Torappu_RuneData_SelectorArgs<'a> {
     pub professionMask: enum__Torappu_ProfessionCategory,
     pub buildableMask: enum__Torappu_BuildableType,
     pub playerSideMask: enum__Torappu_PlayerSideMask,
+    pub mapLayerMask: enum__Torappu_MapLayerMask,
     pub sideType: enum__Torappu_Battle_SideType,
     pub charIdFilter: Option<
         ::flatbuffers::WIPOffset<
@@ -7290,6 +7473,7 @@ impl<'a> Default for clz_Torappu_RuneData_SelectorArgs<'a> {
             professionMask: enum__Torappu_ProfessionCategory::NONE,
             buildableMask: enum__Torappu_BuildableType::NONE,
             playerSideMask: enum__Torappu_PlayerSideMask::ALL,
+            mapLayerMask: enum__Torappu_MapLayerMask::ALL,
             sideType: enum__Torappu_Battle_SideType::NONE,
             charIdFilter: None,
             charIdExcludeFilter: None,
@@ -7336,6 +7520,14 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_RuneData_Selector
             clz_Torappu_RuneData_Selector::VT_PLAYERSIDEMASK,
             playerSideMask,
             enum__Torappu_PlayerSideMask::ALL,
+        );
+    }
+    #[inline]
+    pub fn add_mapLayerMask(&mut self, mapLayerMask: enum__Torappu_MapLayerMask) {
+        self.fbb_.push_slot::<enum__Torappu_MapLayerMask>(
+            clz_Torappu_RuneData_Selector::VT_MAPLAYERMASK,
+            mapLayerMask,
+            enum__Torappu_MapLayerMask::ALL,
         );
     }
     #[inline]
@@ -7534,6 +7726,7 @@ impl ::core::fmt::Debug for clz_Torappu_RuneData_Selector<'_> {
         ds.field("professionMask", &self.professionMask());
         ds.field("buildableMask", &self.buildableMask());
         ds.field("playerSideMask", &self.playerSideMask());
+        ds.field("mapLayerMask", &self.mapLayerMask());
         ds.field("sideType", &self.sideType());
         ds.field("charIdFilter", &self.charIdFilter());
         ds.field("charIdExcludeFilter", &self.charIdExcludeFilter());
@@ -7564,6 +7757,7 @@ pub struct clz_Torappu_RuneData_SelectorT {
     pub professionMask: enum__Torappu_ProfessionCategory,
     pub buildableMask: enum__Torappu_BuildableType,
     pub playerSideMask: enum__Torappu_PlayerSideMask,
+    pub mapLayerMask: enum__Torappu_MapLayerMask,
     pub sideType: enum__Torappu_Battle_SideType,
     pub charIdFilter: Option<alloc::vec::Vec<alloc::string::String>>,
     pub charIdExcludeFilter: Option<alloc::vec::Vec<alloc::string::String>>,
@@ -7586,6 +7780,7 @@ impl Default for clz_Torappu_RuneData_SelectorT {
             professionMask: enum__Torappu_ProfessionCategory::NONE,
             buildableMask: enum__Torappu_BuildableType::NONE,
             playerSideMask: enum__Torappu_PlayerSideMask::ALL,
+            mapLayerMask: enum__Torappu_MapLayerMask::ALL,
             sideType: enum__Torappu_Battle_SideType::NONE,
             charIdFilter: None,
             charIdExcludeFilter: None,
@@ -7612,6 +7807,7 @@ impl clz_Torappu_RuneData_SelectorT {
         let professionMask = self.professionMask;
         let buildableMask = self.buildableMask;
         let playerSideMask = self.playerSideMask;
+        let mapLayerMask = self.mapLayerMask;
         let sideType = self.sideType;
         let charIdFilter = self.charIdFilter.as_ref().map(|x| {
             let w: alloc::vec::Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
@@ -7672,6 +7868,7 @@ impl clz_Torappu_RuneData_SelectorT {
                 professionMask,
                 buildableMask,
                 playerSideMask,
+                mapLayerMask,
                 sideType,
                 charIdFilter,
                 charIdExcludeFilter,
