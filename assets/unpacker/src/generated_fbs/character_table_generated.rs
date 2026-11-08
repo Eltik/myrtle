@@ -652,13 +652,13 @@ pub const ENUM_MIN_ENUM__TORAPPU_ITEM_TYPE: i32 = 0;
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
-pub const ENUM_MAX_ENUM__TORAPPU_ITEM_TYPE: i32 = 94;
+pub const ENUM_MAX_ENUM__TORAPPU_ITEM_TYPE: i32 = 97;
 #[deprecated(
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 95] = [
+pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 98] = [
     enum__Torappu_ItemType::NONE,
     enum__Torappu_ItemType::CHAR,
     enum__Torappu_ItemType::CARD_EXP,
@@ -754,6 +754,9 @@ pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 95] = [
     enum__Torappu_ItemType::STICKER,
     enum__Torappu_ItemType::ARKHUB,
     enum__Torappu_ItemType::LINKAGE_TKT_GACHA,
+    enum__Torappu_ItemType::AUTOCHESS_SKIN,
+    enum__Torappu_ItemType::AUTOCHESS_MISSION_POINT,
+    enum__Torappu_ItemType::OPEN_SERVER_CREDIT,
 ];
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
@@ -856,9 +859,12 @@ impl enum__Torappu_ItemType {
     pub const STICKER: Self = Self(92);
     pub const ARKHUB: Self = Self(93);
     pub const LINKAGE_TKT_GACHA: Self = Self(94);
+    pub const AUTOCHESS_SKIN: Self = Self(95);
+    pub const AUTOCHESS_MISSION_POINT: Self = Self(96);
+    pub const OPEN_SERVER_CREDIT: Self = Self(97);
 
     pub const ENUM_MIN: i32 = 0;
-    pub const ENUM_MAX: i32 = 94;
+    pub const ENUM_MAX: i32 = 97;
     pub const ENUM_VALUES: &'static [Self] = &[
         Self::NONE,
         Self::CHAR,
@@ -955,6 +961,9 @@ impl enum__Torappu_ItemType {
         Self::STICKER,
         Self::ARKHUB,
         Self::LINKAGE_TKT_GACHA,
+        Self::AUTOCHESS_SKIN,
+        Self::AUTOCHESS_MISSION_POINT,
+        Self::OPEN_SERVER_CREDIT,
     ];
     /// Returns the variant's name or "" if unknown.
     pub fn variant_name(self) -> Option<&'static str> {
@@ -1054,6 +1063,9 @@ impl enum__Torappu_ItemType {
             Self::STICKER => Some("STICKER"),
             Self::ARKHUB => Some("ARKHUB"),
             Self::LINKAGE_TKT_GACHA => Some("LINKAGE_TKT_GACHA"),
+            Self::AUTOCHESS_SKIN => Some("AUTOCHESS_SKIN"),
+            Self::AUTOCHESS_MISSION_POINT => Some("AUTOCHESS_MISSION_POINT"),
+            Self::OPEN_SERVER_CREDIT => Some("OPEN_SERVER_CREDIT"),
             _ => None,
         }
     }
@@ -3265,17 +3277,18 @@ impl<'a> clz_Torappu_AttributesData<'a> {
     pub const VT_TAUNTLEVEL: ::flatbuffers::VOffsetT = 32;
     pub const VT_MASSLEVEL: ::flatbuffers::VOffsetT = 34;
     pub const VT_BASEFORCELEVEL: ::flatbuffers::VOffsetT = 36;
-    pub const VT_STUNIMMUNE: ::flatbuffers::VOffsetT = 38;
-    pub const VT_SILENCEIMMUNE: ::flatbuffers::VOffsetT = 40;
-    pub const VT_SLEEPIMMUNE: ::flatbuffers::VOffsetT = 42;
-    pub const VT_FROZENIMMUNE: ::flatbuffers::VOffsetT = 44;
-    pub const VT_LEVITATEIMMUNE: ::flatbuffers::VOffsetT = 46;
-    pub const VT_DISARMEDCOMBATIMMUNE: ::flatbuffers::VOffsetT = 48;
-    pub const VT_FEAREDIMMUNE: ::flatbuffers::VOffsetT = 50;
-    pub const VT_PALSYIMMUNE: ::flatbuffers::VOffsetT = 52;
-    pub const VT_ATTRACTIMMUNE: ::flatbuffers::VOffsetT = 54;
-    pub const VT_TELEPORTIMMUNE: ::flatbuffers::VOffsetT = 56;
-    pub const VT_GROUNDBOUNDIMMUNE: ::flatbuffers::VOffsetT = 58;
+    pub const VT_BLOCKVOLUME: ::flatbuffers::VOffsetT = 38;
+    pub const VT_STUNIMMUNE: ::flatbuffers::VOffsetT = 40;
+    pub const VT_SILENCEIMMUNE: ::flatbuffers::VOffsetT = 42;
+    pub const VT_SLEEPIMMUNE: ::flatbuffers::VOffsetT = 44;
+    pub const VT_FROZENIMMUNE: ::flatbuffers::VOffsetT = 46;
+    pub const VT_LEVITATEIMMUNE: ::flatbuffers::VOffsetT = 48;
+    pub const VT_DISARMEDCOMBATIMMUNE: ::flatbuffers::VOffsetT = 50;
+    pub const VT_FEAREDIMMUNE: ::flatbuffers::VOffsetT = 52;
+    pub const VT_PALSYIMMUNE: ::flatbuffers::VOffsetT = 54;
+    pub const VT_ATTRACTIMMUNE: ::flatbuffers::VOffsetT = 56;
+    pub const VT_TELEPORTIMMUNE: ::flatbuffers::VOffsetT = 58;
+    pub const VT_GROUNDBOUNDIMMUNE: ::flatbuffers::VOffsetT = 60;
 
     #[inline]
     pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
@@ -3292,6 +3305,7 @@ impl<'a> clz_Torappu_AttributesData<'a> {
         args: &'args clz_Torappu_AttributesDataArgs,
     ) -> ::flatbuffers::WIPOffset<clz_Torappu_AttributesData<'bldr>> {
         let mut builder = clz_Torappu_AttributesDataBuilder::new(_fbb);
+        builder.add_blockVolume(args.blockVolume);
         builder.add_baseForceLevel(args.baseForceLevel);
         builder.add_massLevel(args.massLevel);
         builder.add_tauntLevel(args.tauntLevel);
@@ -3341,6 +3355,7 @@ impl<'a> clz_Torappu_AttributesData<'a> {
         let tauntLevel = self.tauntLevel();
         let massLevel = self.massLevel();
         let baseForceLevel = self.baseForceLevel();
+        let blockVolume = self.blockVolume();
         let stunImmune = self.stunImmune();
         let silenceImmune = self.silenceImmune();
         let sleepImmune = self.sleepImmune();
@@ -3370,6 +3385,7 @@ impl<'a> clz_Torappu_AttributesData<'a> {
             tauntLevel,
             massLevel,
             baseForceLevel,
+            blockVolume,
             stunImmune,
             silenceImmune,
             sleepImmune,
@@ -3572,6 +3588,17 @@ impl<'a> clz_Torappu_AttributesData<'a> {
         }
     }
     #[inline]
+    pub fn blockVolume(&self) -> i32 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i32>(clz_Torappu_AttributesData::VT_BLOCKVOLUME, Some(0))
+                .unwrap()
+        }
+    }
+    #[inline]
     pub fn stunImmune(&self) -> bool {
         // Safety:
         // Created from valid Table for this object
@@ -3724,6 +3751,7 @@ impl ::flatbuffers::Verifiable for clz_Torappu_AttributesData<'_> {
             .visit_field::<i32>("tauntLevel", Self::VT_TAUNTLEVEL, false)?
             .visit_field::<i32>("massLevel", Self::VT_MASSLEVEL, false)?
             .visit_field::<i32>("baseForceLevel", Self::VT_BASEFORCELEVEL, false)?
+            .visit_field::<i32>("blockVolume", Self::VT_BLOCKVOLUME, false)?
             .visit_field::<bool>("stunImmune", Self::VT_STUNIMMUNE, false)?
             .visit_field::<bool>("silenceImmune", Self::VT_SILENCEIMMUNE, false)?
             .visit_field::<bool>("sleepImmune", Self::VT_SLEEPIMMUNE, false)?
@@ -3757,6 +3785,7 @@ pub struct clz_Torappu_AttributesDataArgs {
     pub tauntLevel: i32,
     pub massLevel: i32,
     pub baseForceLevel: i32,
+    pub blockVolume: i32,
     pub stunImmune: bool,
     pub silenceImmune: bool,
     pub sleepImmune: bool,
@@ -3790,6 +3819,7 @@ impl<'a> Default for clz_Torappu_AttributesDataArgs {
             tauntLevel: 0,
             massLevel: 0,
             baseForceLevel: 0,
+            blockVolume: 0,
             stunImmune: false,
             silenceImmune: false,
             sleepImmune: false,
@@ -3917,6 +3947,11 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_AttributesDataBui
         );
     }
     #[inline]
+    pub fn add_blockVolume(&mut self, blockVolume: i32) {
+        self.fbb_
+            .push_slot::<i32>(clz_Torappu_AttributesData::VT_BLOCKVOLUME, blockVolume, 0);
+    }
+    #[inline]
     pub fn add_stunImmune(&mut self, stunImmune: bool) {
         self.fbb_
             .push_slot::<bool>(clz_Torappu_AttributesData::VT_STUNIMMUNE, stunImmune, false);
@@ -4038,6 +4073,7 @@ impl ::core::fmt::Debug for clz_Torappu_AttributesData<'_> {
         ds.field("tauntLevel", &self.tauntLevel());
         ds.field("massLevel", &self.massLevel());
         ds.field("baseForceLevel", &self.baseForceLevel());
+        ds.field("blockVolume", &self.blockVolume());
         ds.field("stunImmune", &self.stunImmune());
         ds.field("silenceImmune", &self.silenceImmune());
         ds.field("sleepImmune", &self.sleepImmune());
@@ -4072,6 +4108,7 @@ pub struct clz_Torappu_AttributesDataT {
     pub tauntLevel: i32,
     pub massLevel: i32,
     pub baseForceLevel: i32,
+    pub blockVolume: i32,
     pub stunImmune: bool,
     pub silenceImmune: bool,
     pub sleepImmune: bool,
@@ -4104,6 +4141,7 @@ impl Default for clz_Torappu_AttributesDataT {
             tauntLevel: 0,
             massLevel: 0,
             baseForceLevel: 0,
+            blockVolume: 0,
             stunImmune: false,
             silenceImmune: false,
             sleepImmune: false,
@@ -4140,6 +4178,7 @@ impl clz_Torappu_AttributesDataT {
         let tauntLevel = self.tauntLevel;
         let massLevel = self.massLevel;
         let baseForceLevel = self.baseForceLevel;
+        let blockVolume = self.blockVolume;
         let stunImmune = self.stunImmune;
         let silenceImmune = self.silenceImmune;
         let sleepImmune = self.sleepImmune;
@@ -4171,6 +4210,7 @@ impl clz_Torappu_AttributesDataT {
                 tauntLevel,
                 massLevel,
                 baseForceLevel,
+                blockVolume,
                 stunImmune,
                 silenceImmune,
                 sleepImmune,
@@ -7479,17 +7519,18 @@ impl<'a> clz_Torappu_AttributesDeltaData<'a> {
     pub const VT_TAUNTLEVEL: ::flatbuffers::VOffsetT = 32;
     pub const VT_MASSLEVEL: ::flatbuffers::VOffsetT = 34;
     pub const VT_BASEFORCELEVEL: ::flatbuffers::VOffsetT = 36;
-    pub const VT_STUNIMMUNE: ::flatbuffers::VOffsetT = 38;
-    pub const VT_SILENCEIMMUNE: ::flatbuffers::VOffsetT = 40;
-    pub const VT_SLEEPIMMUNE: ::flatbuffers::VOffsetT = 42;
-    pub const VT_FROZENIMMUNE: ::flatbuffers::VOffsetT = 44;
-    pub const VT_LEVITATEIMMUNE: ::flatbuffers::VOffsetT = 46;
-    pub const VT_DISARMEDCOMBATIMMUNE: ::flatbuffers::VOffsetT = 48;
-    pub const VT_FEAREDIMMUNE: ::flatbuffers::VOffsetT = 50;
-    pub const VT_PALSYIMMUNE: ::flatbuffers::VOffsetT = 52;
-    pub const VT_ATTRACTIMMUNE: ::flatbuffers::VOffsetT = 54;
-    pub const VT_TELEPORTIMMUNE: ::flatbuffers::VOffsetT = 56;
-    pub const VT_GROUNDBOUNDIMMUNE: ::flatbuffers::VOffsetT = 58;
+    pub const VT_BLOCKVOLUME: ::flatbuffers::VOffsetT = 38;
+    pub const VT_STUNIMMUNE: ::flatbuffers::VOffsetT = 40;
+    pub const VT_SILENCEIMMUNE: ::flatbuffers::VOffsetT = 42;
+    pub const VT_SLEEPIMMUNE: ::flatbuffers::VOffsetT = 44;
+    pub const VT_FROZENIMMUNE: ::flatbuffers::VOffsetT = 46;
+    pub const VT_LEVITATEIMMUNE: ::flatbuffers::VOffsetT = 48;
+    pub const VT_DISARMEDCOMBATIMMUNE: ::flatbuffers::VOffsetT = 50;
+    pub const VT_FEAREDIMMUNE: ::flatbuffers::VOffsetT = 52;
+    pub const VT_PALSYIMMUNE: ::flatbuffers::VOffsetT = 54;
+    pub const VT_ATTRACTIMMUNE: ::flatbuffers::VOffsetT = 56;
+    pub const VT_TELEPORTIMMUNE: ::flatbuffers::VOffsetT = 58;
+    pub const VT_GROUNDBOUNDIMMUNE: ::flatbuffers::VOffsetT = 60;
 
     #[inline]
     pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
@@ -7506,6 +7547,7 @@ impl<'a> clz_Torappu_AttributesDeltaData<'a> {
         args: &'args clz_Torappu_AttributesDeltaDataArgs,
     ) -> ::flatbuffers::WIPOffset<clz_Torappu_AttributesDeltaData<'bldr>> {
         let mut builder = clz_Torappu_AttributesDeltaDataBuilder::new(_fbb);
+        builder.add_blockVolume(args.blockVolume);
         builder.add_baseForceLevel(args.baseForceLevel);
         builder.add_massLevel(args.massLevel);
         builder.add_tauntLevel(args.tauntLevel);
@@ -7555,6 +7597,7 @@ impl<'a> clz_Torappu_AttributesDeltaData<'a> {
         let tauntLevel = self.tauntLevel();
         let massLevel = self.massLevel();
         let baseForceLevel = self.baseForceLevel();
+        let blockVolume = self.blockVolume();
         let stunImmune = self.stunImmune();
         let silenceImmune = self.silenceImmune();
         let sleepImmune = self.sleepImmune();
@@ -7584,6 +7627,7 @@ impl<'a> clz_Torappu_AttributesDeltaData<'a> {
             tauntLevel,
             massLevel,
             baseForceLevel,
+            blockVolume,
             stunImmune,
             silenceImmune,
             sleepImmune,
@@ -7798,6 +7842,17 @@ impl<'a> clz_Torappu_AttributesDeltaData<'a> {
         }
     }
     #[inline]
+    pub fn blockVolume(&self) -> i32 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i32>(clz_Torappu_AttributesDeltaData::VT_BLOCKVOLUME, Some(0))
+                .unwrap()
+        }
+    }
+    #[inline]
     pub fn stunImmune(&self) -> bool {
         // Safety:
         // Created from valid Table for this object
@@ -7968,6 +8023,7 @@ impl ::flatbuffers::Verifiable for clz_Torappu_AttributesDeltaData<'_> {
             .visit_field::<i32>("tauntLevel", Self::VT_TAUNTLEVEL, false)?
             .visit_field::<i32>("massLevel", Self::VT_MASSLEVEL, false)?
             .visit_field::<i32>("baseForceLevel", Self::VT_BASEFORCELEVEL, false)?
+            .visit_field::<i32>("blockVolume", Self::VT_BLOCKVOLUME, false)?
             .visit_field::<bool>("stunImmune", Self::VT_STUNIMMUNE, false)?
             .visit_field::<bool>("silenceImmune", Self::VT_SILENCEIMMUNE, false)?
             .visit_field::<bool>("sleepImmune", Self::VT_SLEEPIMMUNE, false)?
@@ -8001,6 +8057,7 @@ pub struct clz_Torappu_AttributesDeltaDataArgs {
     pub tauntLevel: i32,
     pub massLevel: i32,
     pub baseForceLevel: i32,
+    pub blockVolume: i32,
     pub stunImmune: bool,
     pub silenceImmune: bool,
     pub sleepImmune: bool,
@@ -8034,6 +8091,7 @@ impl<'a> Default for clz_Torappu_AttributesDeltaDataArgs {
             tauntLevel: 0,
             massLevel: 0,
             baseForceLevel: 0,
+            blockVolume: 0,
             stunImmune: false,
             silenceImmune: false,
             sleepImmune: false,
@@ -8175,6 +8233,14 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
+    pub fn add_blockVolume(&mut self, blockVolume: i32) {
+        self.fbb_.push_slot::<i32>(
+            clz_Torappu_AttributesDeltaData::VT_BLOCKVOLUME,
+            blockVolume,
+            0,
+        );
+    }
+    #[inline]
     pub fn add_stunImmune(&mut self, stunImmune: bool) {
         self.fbb_.push_slot::<bool>(
             clz_Torappu_AttributesDeltaData::VT_STUNIMMUNE,
@@ -8299,6 +8365,7 @@ impl ::core::fmt::Debug for clz_Torappu_AttributesDeltaData<'_> {
         ds.field("tauntLevel", &self.tauntLevel());
         ds.field("massLevel", &self.massLevel());
         ds.field("baseForceLevel", &self.baseForceLevel());
+        ds.field("blockVolume", &self.blockVolume());
         ds.field("stunImmune", &self.stunImmune());
         ds.field("silenceImmune", &self.silenceImmune());
         ds.field("sleepImmune", &self.sleepImmune());
@@ -8333,6 +8400,7 @@ pub struct clz_Torappu_AttributesDeltaDataT {
     pub tauntLevel: i32,
     pub massLevel: i32,
     pub baseForceLevel: i32,
+    pub blockVolume: i32,
     pub stunImmune: bool,
     pub silenceImmune: bool,
     pub sleepImmune: bool,
@@ -8365,6 +8433,7 @@ impl Default for clz_Torappu_AttributesDeltaDataT {
             tauntLevel: 0,
             massLevel: 0,
             baseForceLevel: 0,
+            blockVolume: 0,
             stunImmune: false,
             silenceImmune: false,
             sleepImmune: false,
@@ -8401,6 +8470,7 @@ impl clz_Torappu_AttributesDeltaDataT {
         let tauntLevel = self.tauntLevel;
         let massLevel = self.massLevel;
         let baseForceLevel = self.baseForceLevel;
+        let blockVolume = self.blockVolume;
         let stunImmune = self.stunImmune;
         let silenceImmune = self.silenceImmune;
         let sleepImmune = self.sleepImmune;
@@ -8432,6 +8502,7 @@ impl clz_Torappu_AttributesDeltaDataT {
                 tauntLevel,
                 massLevel,
                 baseForceLevel,
+                blockVolume,
                 stunImmune,
                 silenceImmune,
                 sleepImmune,

@@ -778,13 +778,13 @@ pub const ENUM_MIN_ENUM__TORAPPU_ITEM_TYPE: i32 = 0;
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
-pub const ENUM_MAX_ENUM__TORAPPU_ITEM_TYPE: i32 = 94;
+pub const ENUM_MAX_ENUM__TORAPPU_ITEM_TYPE: i32 = 97;
 #[deprecated(
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 95] = [
+pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 98] = [
     enum__Torappu_ItemType::NONE,
     enum__Torappu_ItemType::CHAR,
     enum__Torappu_ItemType::CARD_EXP,
@@ -880,6 +880,9 @@ pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 95] = [
     enum__Torappu_ItemType::STICKER,
     enum__Torappu_ItemType::ARKHUB,
     enum__Torappu_ItemType::LINKAGE_TKT_GACHA,
+    enum__Torappu_ItemType::AUTOCHESS_SKIN,
+    enum__Torappu_ItemType::AUTOCHESS_MISSION_POINT,
+    enum__Torappu_ItemType::OPEN_SERVER_CREDIT,
 ];
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
@@ -982,9 +985,12 @@ impl enum__Torappu_ItemType {
     pub const STICKER: Self = Self(92);
     pub const ARKHUB: Self = Self(93);
     pub const LINKAGE_TKT_GACHA: Self = Self(94);
+    pub const AUTOCHESS_SKIN: Self = Self(95);
+    pub const AUTOCHESS_MISSION_POINT: Self = Self(96);
+    pub const OPEN_SERVER_CREDIT: Self = Self(97);
 
     pub const ENUM_MIN: i32 = 0;
-    pub const ENUM_MAX: i32 = 94;
+    pub const ENUM_MAX: i32 = 97;
     pub const ENUM_VALUES: &'static [Self] = &[
         Self::NONE,
         Self::CHAR,
@@ -1081,6 +1087,9 @@ impl enum__Torappu_ItemType {
         Self::STICKER,
         Self::ARKHUB,
         Self::LINKAGE_TKT_GACHA,
+        Self::AUTOCHESS_SKIN,
+        Self::AUTOCHESS_MISSION_POINT,
+        Self::OPEN_SERVER_CREDIT,
     ];
     /// Returns the variant's name or "" if unknown.
     pub fn variant_name(self) -> Option<&'static str> {
@@ -1180,6 +1189,9 @@ impl enum__Torappu_ItemType {
             Self::STICKER => Some("STICKER"),
             Self::ARKHUB => Some("ARKHUB"),
             Self::LINKAGE_TKT_GACHA => Some("LINKAGE_TKT_GACHA"),
+            Self::AUTOCHESS_SKIN => Some("AUTOCHESS_SKIN"),
+            Self::AUTOCHESS_MISSION_POINT => Some("AUTOCHESS_MISSION_POINT"),
+            Self::OPEN_SERVER_CREDIT => Some("OPEN_SERVER_CREDIT"),
             _ => None,
         }
     }
@@ -5775,22 +5787,23 @@ impl<'a> clz_Torappu_StageData<'a> {
     pub const VT_ISSTORYONLY: ::flatbuffers::VOffsetT = 90;
     pub const VT_APPEARANCESTYLE: ::flatbuffers::VOffsetT = 92;
     pub const VT_STAGEDROPINFO: ::flatbuffers::VOffsetT = 94;
-    pub const VT_CANUSECHARM: ::flatbuffers::VOffsetT = 96;
-    pub const VT_CANUSETECH: ::flatbuffers::VOffsetT = 98;
-    pub const VT_CANUSETRAPTOOL: ::flatbuffers::VOffsetT = 100;
-    pub const VT_CANUSEBATTLEPERFORMANCE: ::flatbuffers::VOffsetT = 102;
-    pub const VT_CANUSEFIREWORK: ::flatbuffers::VOffsetT = 104;
-    pub const VT_CANMULTIPLEBATTLE: ::flatbuffers::VOffsetT = 106;
-    pub const VT_STARTBUTTONOVERRIDEID: ::flatbuffers::VOffsetT = 108;
-    pub const VT_ISSTAGEPATCH: ::flatbuffers::VOffsetT = 110;
-    pub const VT_MAINSTAGEID: ::flatbuffers::VOffsetT = 112;
-    pub const VT_EXTRACONDITION: ::flatbuffers::VOffsetT = 114;
-    pub const VT_EXTRAINFO: ::flatbuffers::VOffsetT = 116;
-    pub const VT_SIXSTARBASEDESC: ::flatbuffers::VOffsetT = 118;
-    pub const VT_SIXSTARDISPLAYREWARDLIST: ::flatbuffers::VOffsetT = 120;
-    pub const VT_ADVANCEDRUNEIDLIST1: ::flatbuffers::VOffsetT = 122;
-    pub const VT_ADVANCEDRUNEIDLIST2: ::flatbuffers::VOffsetT = 124;
-    pub const VT_USESPECIALSIZEMAPPREVIEW: ::flatbuffers::VOffsetT = 126;
+    pub const VT_LEVELMAPID: ::flatbuffers::VOffsetT = 96;
+    pub const VT_CANUSECHARM: ::flatbuffers::VOffsetT = 98;
+    pub const VT_CANUSETECH: ::flatbuffers::VOffsetT = 100;
+    pub const VT_CANUSETRAPTOOL: ::flatbuffers::VOffsetT = 102;
+    pub const VT_CANUSEBATTLEPERFORMANCE: ::flatbuffers::VOffsetT = 104;
+    pub const VT_CANUSEFIREWORK: ::flatbuffers::VOffsetT = 106;
+    pub const VT_CANMULTIPLEBATTLE: ::flatbuffers::VOffsetT = 108;
+    pub const VT_STARTBUTTONOVERRIDEID: ::flatbuffers::VOffsetT = 110;
+    pub const VT_ISSTAGEPATCH: ::flatbuffers::VOffsetT = 112;
+    pub const VT_MAINSTAGEID: ::flatbuffers::VOffsetT = 114;
+    pub const VT_EXTRACONDITION: ::flatbuffers::VOffsetT = 116;
+    pub const VT_EXTRAINFO: ::flatbuffers::VOffsetT = 118;
+    pub const VT_SIXSTARBASEDESC: ::flatbuffers::VOffsetT = 120;
+    pub const VT_SIXSTARDISPLAYREWARDLIST: ::flatbuffers::VOffsetT = 122;
+    pub const VT_ADVANCEDRUNEIDLIST1: ::flatbuffers::VOffsetT = 124;
+    pub const VT_ADVANCEDRUNEIDLIST2: ::flatbuffers::VOffsetT = 126;
+    pub const VT_USESPECIALSIZEMAPPREVIEW: ::flatbuffers::VOffsetT = 128;
 
     #[inline]
     pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
@@ -5830,6 +5843,9 @@ impl<'a> clz_Torappu_StageData<'a> {
         }
         if let Some(x) = args.startButtonOverrideId {
             builder.add_startButtonOverrideId(x);
+        }
+        if let Some(x) = args.levelMapId {
+            builder.add_levelMapId(x);
         }
         if let Some(x) = args.stageDropInfo {
             builder.add_stageDropInfo(x);
@@ -5993,6 +6009,9 @@ impl<'a> clz_Torappu_StageData<'a> {
         let stageDropInfo = self
             .stageDropInfo()
             .map(|x| alloc::boxed::Box::new(x.unpack()));
+        let levelMapId = self
+            .levelMapId()
+            .map(|x| alloc::string::ToString::to_string(x));
         let canUseCharm = self.canUseCharm();
         let canUseTech = self.canUseTech();
         let canUseTrapTool = self.canUseTrapTool();
@@ -6076,6 +6095,7 @@ impl<'a> clz_Torappu_StageData<'a> {
             isStoryOnly,
             appearanceStyle,
             stageDropInfo,
+            levelMapId,
             canUseCharm,
             canUseTech,
             canUseTrapTool,
@@ -6640,6 +6660,18 @@ impl<'a> clz_Torappu_StageData<'a> {
         }
     }
     #[inline]
+    pub fn levelMapId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_StageData::VT_LEVELMAPID,
+                None,
+            )
+        }
+    }
+    #[inline]
     pub fn canUseCharm(&self) -> bool {
         // Safety:
         // Created from valid Table for this object
@@ -6975,6 +7007,11 @@ impl ::flatbuffers::Verifiable for clz_Torappu_StageData<'_> {
                 Self::VT_STAGEDROPINFO,
                 false,
             )?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "levelMapId",
+                Self::VT_LEVELMAPID,
+                false,
+            )?
             .visit_field::<bool>("canUseCharm", Self::VT_CANUSECHARM, false)?
             .visit_field::<bool>("canUseTech", Self::VT_CANUSETECH, false)?
             .visit_field::<bool>("canUseTrapTool", Self::VT_CANUSETRAPTOOL, false)?
@@ -7089,6 +7126,7 @@ pub struct clz_Torappu_StageDataArgs<'a> {
     pub isStoryOnly: bool,
     pub appearanceStyle: enum__Torappu_AppearanceStyle,
     pub stageDropInfo: Option<::flatbuffers::WIPOffset<clz_Torappu_StageData_StageDropInfo<'a>>>,
+    pub levelMapId: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub canUseCharm: bool,
     pub canUseTech: bool,
     pub canUseTrapTool: bool,
@@ -7182,6 +7220,7 @@ impl<'a> Default for clz_Torappu_StageDataArgs<'a> {
             isStoryOnly: false,
             appearanceStyle: enum__Torappu_AppearanceStyle::MAIN_NORMAL,
             stageDropInfo: None,
+            levelMapId: None,
             canUseCharm: false,
             canUseTech: false,
             canUseTrapTool: false,
@@ -7518,6 +7557,13 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_StageDataBuilder<
             );
     }
     #[inline]
+    pub fn add_levelMapId(&mut self, levelMapId: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_StageData::VT_LEVELMAPID,
+            levelMapId,
+        );
+    }
+    #[inline]
     pub fn add_canUseCharm(&mut self, canUseCharm: bool) {
         self.fbb_
             .push_slot::<bool>(clz_Torappu_StageData::VT_CANUSECHARM, canUseCharm, false);
@@ -7731,6 +7777,7 @@ impl ::core::fmt::Debug for clz_Torappu_StageData<'_> {
         ds.field("isStoryOnly", &self.isStoryOnly());
         ds.field("appearanceStyle", &self.appearanceStyle());
         ds.field("stageDropInfo", &self.stageDropInfo());
+        ds.field("levelMapId", &self.levelMapId());
         ds.field("canUseCharm", &self.canUseCharm());
         ds.field("canUseTech", &self.canUseTech());
         ds.field("canUseTrapTool", &self.canUseTrapTool());
@@ -7799,6 +7846,7 @@ pub struct clz_Torappu_StageDataT {
     pub isStoryOnly: bool,
     pub appearanceStyle: enum__Torappu_AppearanceStyle,
     pub stageDropInfo: Option<alloc::boxed::Box<clz_Torappu_StageData_StageDropInfoT>>,
+    pub levelMapId: Option<alloc::string::String>,
     pub canUseCharm: bool,
     pub canUseTech: bool,
     pub canUseTrapTool: bool,
@@ -7865,6 +7913,7 @@ impl Default for clz_Torappu_StageDataT {
             isStoryOnly: false,
             appearanceStyle: enum__Torappu_AppearanceStyle::MAIN_NORMAL,
             stageDropInfo: None,
+            levelMapId: None,
             canUseCharm: false,
             canUseTech: false,
             canUseTrapTool: false,
@@ -7941,6 +7990,7 @@ impl clz_Torappu_StageDataT {
         let isStoryOnly = self.isStoryOnly;
         let appearanceStyle = self.appearanceStyle;
         let stageDropInfo = self.stageDropInfo.as_ref().map(|x| x.pack(_fbb));
+        let levelMapId = self.levelMapId.as_ref().map(|x| _fbb.create_string(x));
         let canUseCharm = self.canUseCharm;
         let canUseTech = self.canUseTech;
         let canUseTrapTool = self.canUseTrapTool;
@@ -8024,6 +8074,7 @@ impl clz_Torappu_StageDataT {
                 isStoryOnly,
                 appearanceStyle,
                 stageDropInfo,
+                levelMapId,
                 canUseCharm,
                 canUseTech,
                 canUseTrapTool,
@@ -22593,9 +22644,11 @@ impl<'a> clz_Torappu_StorylineConstData<'a> {
     }
 
     pub fn unpack(&self) -> clz_Torappu_StorylineConstDataT {
-        let recommendHideGuideGroupId = self
-            .recommendHideGuideGroupId()
-            .map(|x| alloc::string::ToString::to_string(x));
+        let recommendHideGuideGroupId = self.recommendHideGuideGroupId().map(|x| {
+            x.iter()
+                .map(|s| alloc::string::ToString::to_string(s))
+                .collect()
+        });
         let tutorialSelectStorylineId = self
             .tutorialSelectStorylineId()
             .map(|x| alloc::string::ToString::to_string(x));
@@ -22610,12 +22663,16 @@ impl<'a> clz_Torappu_StorylineConstData<'a> {
     }
 
     #[inline]
-    pub fn recommendHideGuideGroupId(&self) -> Option<&'a str> {
+    pub fn recommendHideGuideGroupId(
+        &self,
+    ) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>> {
         // Safety:
         // Created from valid Table for this object
         // which contains a valid value in this slot
         unsafe {
-            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+            self._tab.get::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>,
+            >>(
                 clz_Torappu_StorylineConstData::VT_RECOMMENDHIDEGUIDEGROUPID,
                 None,
             )
@@ -22654,7 +22711,9 @@ impl ::flatbuffers::Verifiable for clz_Torappu_StorylineConstData<'_> {
         pos: usize,
     ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
         v.visit_table(pos)?
-            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+            .visit_field::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<&'_ str>>,
+            >>(
                 "recommendHideGuideGroupId",
                 Self::VT_RECOMMENDHIDEGUIDEGROUPID,
                 false,
@@ -22674,7 +22733,11 @@ impl ::flatbuffers::Verifiable for clz_Torappu_StorylineConstData<'_> {
     }
 }
 pub struct clz_Torappu_StorylineConstDataArgs<'a> {
-    pub recommendHideGuideGroupId: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub recommendHideGuideGroupId: Option<
+        ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>,
+        >,
+    >,
     pub tutorialSelectStorylineId: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub mainlineStorylineId: Option<::flatbuffers::WIPOffset<&'a str>>,
 }
@@ -22699,7 +22762,9 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
     #[inline]
     pub fn add_recommendHideGuideGroupId(
         &mut self,
-        recommendHideGuideGroupId: ::flatbuffers::WIPOffset<&'b str>,
+        recommendHideGuideGroupId: ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<'b, ::flatbuffers::ForwardsUOffset<&'b str>>,
+        >,
     ) {
         self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
             clz_Torappu_StorylineConstData::VT_RECOMMENDHIDEGUIDEGROUPID,
@@ -22761,7 +22826,7 @@ impl ::core::fmt::Debug for clz_Torappu_StorylineConstData<'_> {
 #[non_exhaustive]
 #[derive(Debug, Clone, PartialEq)]
 pub struct clz_Torappu_StorylineConstDataT {
-    pub recommendHideGuideGroupId: Option<alloc::string::String>,
+    pub recommendHideGuideGroupId: Option<alloc::vec::Vec<alloc::string::String>>,
     pub tutorialSelectStorylineId: Option<alloc::string::String>,
     pub mainlineStorylineId: Option<alloc::string::String>,
 }
@@ -22779,10 +22844,10 @@ impl clz_Torappu_StorylineConstDataT {
         &self,
         _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>,
     ) -> ::flatbuffers::WIPOffset<clz_Torappu_StorylineConstData<'b>> {
-        let recommendHideGuideGroupId = self
-            .recommendHideGuideGroupId
-            .as_ref()
-            .map(|x| _fbb.create_string(x));
+        let recommendHideGuideGroupId = self.recommendHideGuideGroupId.as_ref().map(|x| {
+            let w: alloc::vec::Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
         let tutorialSelectStorylineId = self
             .tutorialSelectStorylineId
             .as_ref()
