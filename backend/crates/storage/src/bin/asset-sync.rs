@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use std::process::ExitCode;
 
 use clap::{Args, Parser, Subcommand};
-use dotenv::from_path;
+use dotenvy::from_path;
 use futures::StreamExt;
 use myrtle_storage::config::parse_roots;
 use myrtle_storage::evict::{EvictOptions, run_evict};
