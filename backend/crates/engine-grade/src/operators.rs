@@ -153,7 +153,7 @@ pub fn grade_operators_in(
             &model,
         );
 
-        weighted_sum = op_score.mul_add(rarity_weight, weighted_sum);
+        weighted_sum += op_score * rarity_weight;
         weight_total += rarity_weight;
     }
 
@@ -315,7 +315,7 @@ pub fn operator_score_breakdown_in(
             let dim_share = op_share * weight / op_weight_total;
             let slot = shares.entry(kind).or_insert((0.0, 0.0));
             slot.0 += dim_share;
-            slot.1 = dim_share.mul_add(score, slot.1);
+            slot.1 += dim_share * score;
         }
     }
 
@@ -385,7 +385,7 @@ fn milestone_score(levels: &[i16], slots: usize, ladder: fn(usize, usize) -> f64
         return sub_milestone_progress(levels, slots) * PARTIAL_CAP;
     }
     let remaining = slots.saturating_sub(reached);
-    sub_milestone_progress(levels, remaining).mul_add(PARTIAL_BONUS, ladder(reached, slots)).min(1.0)
+    (ladder(reached, slots) + sub_milestone_progress(levels, remaining) * PARTIAL_BONUS).min(1.0)
 }
 
 fn sub_milestone_progress(levels: &[i16], slots: usize) -> f64 {
@@ -484,7 +484,7 @@ pub const fn has_investment(roster: &RosterEntry) -> bool {
 }
 
 fn log_curve_ratio(t: f64) -> f64 {
-    t.ln_1p() / 2.0_f64.ln()
+    (1.0 + t).ln() / 2.0_f64.ln()
 }
 
 #[derive(Debug, Clone, Serialize)]

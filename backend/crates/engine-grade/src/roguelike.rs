@@ -97,7 +97,7 @@ pub fn grade_roguelike(
         let score = grade_theme(&progress, progress_json, theme_data);
         let w = theme_weight(theme_id);
 
-        weighted_sum = score.mul_add(w, weighted_sum);
+        weighted_sum += score * w;
         weight_total += w;
     }
 
@@ -210,5 +210,5 @@ fn difficulty_milestone_score(progress: &ThemeProgress, theme: &RoguelikeThemeGa
 }
 
 fn log_curve_ratio(t: f64) -> f64 {
-    t.ln_1p() / 2.0_f64.ln()
+    (1.0 + t).ln() / 2.0_f64.ln()
 }

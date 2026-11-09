@@ -115,7 +115,7 @@ impl<'a> PlayerPools<'a> {
 
 pub fn weighted_score<'a>(stages: impl Iterator<Item = PoolStage<'a>>) -> f64 {
     let (credit, weight) = stages.fold((0.0, 0.0), |(credit, weight), s| {
-        (credit + s.credit(), s.weight.mul_add(s.decay, weight))
+        (credit + s.credit(), weight + s.weight * s.decay)
     });
     if weight <= 0.0 {
         return 0.0;

@@ -43,7 +43,11 @@ pub fn grade_sandbox_detail(game_data: &GradeData, progress: Option<&Value>) -> 
     let (content_depth, recipes, music, rift_levels, rift_levels_max) =
         score_content_depth(&sandbox, universe);
 
-    let total = (BASE_WEIGHT.mul_add(base_building, QUEST_WEIGHT.mul_add(quests, TECH_WEIGHT.mul_add(tech_tree, EXPLORATION_WEIGHT.mul_add(exploration, ACHIEVEMENT_WEIGHT * achievements))))
+    let total = (ACHIEVEMENT_WEIGHT * achievements
+        + EXPLORATION_WEIGHT * exploration
+        + TECH_WEIGHT * tech_tree
+        + QUEST_WEIGHT * quests
+        + BASE_WEIGHT * base_building
         + CONTENT_WEIGHT * content_depth)
         .clamp(0.0, 1.0);
 

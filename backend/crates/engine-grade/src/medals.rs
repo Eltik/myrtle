@@ -41,7 +41,7 @@ pub fn grade_medals(
     let permanent_score = score_permanent_pool(&earned, medal_data, owned_operators, now);
     let event_score = score_event_pool(&earned, medal_data, owned_operators, now);
 
-    event_score.mul_add(EVENT_POOL_WEIGHT, permanent_score * PERMANENT_POOL_WEIGHT)
+    (permanent_score * PERMANENT_POOL_WEIGHT) + (event_score * EVENT_POOL_WEIGHT)
 }
 
 fn is_unobtainable_for(medal_id: &str, medal_data: &MedalData, owned: &HashSet<&str>) -> bool {
