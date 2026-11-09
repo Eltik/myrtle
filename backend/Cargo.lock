@@ -1137,6 +1137,7 @@ dependencies = [
  "myrtle-types",
  "serde",
  "serde_json",
+ "uuid",
 ]
 
 [[package]]
