@@ -114,7 +114,7 @@ fn graded_operators_in<'a>(
     game_data: &'a GameData,
     invested_only: bool,
 ) -> impl Iterator<Item = (&'a str, &'a Operator, &'a RosterEntry)> {
-    game_data
+    let mut graded = game_data
         .operators
         .iter()
         .filter(|(_, op)| {
@@ -127,6 +127,11 @@ fn graded_operators_in<'a>(
             let entry = *roster_map.get(op_id.as_str())?;
             (!invested_only || has_investment(entry)).then_some((op_id.as_str(), static_op, entry))
         })
+        .collect::<Vec<_>>();
+    // Id order: the callers fold float sums over this, and `HashMap` order
+    // changes per process, so map order moves the last bits between runs.
+    graded.sort_unstable_by_key(|(op_id, _, _)| *op_id);
+    graded.into_iter()
 }
 
 #[must_use]

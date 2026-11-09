@@ -44,6 +44,14 @@ pub fn grade_medals(
     (permanent_score * PERMANENT_POOL_WEIGHT) + (event_score * EVENT_POOL_WEIGHT)
 }
 
+/// `medals` in id order: the pools are float sums, and `HashMap` order changes per
+/// process, so summing in map order moves the last bits between runs.
+fn medals_by_id(medal_data: &MedalData) -> Vec<&MedalDefinition> {
+    let mut medals: Vec<&MedalDefinition> = medal_data.medals.values().collect();
+    medals.sort_unstable_by(|a, b| a.medal_id.cmp(&b.medal_id));
+    medals
+}
+
 fn is_unobtainable_for(medal_id: &str, medal_data: &MedalData, owned: &HashSet<&str>) -> bool {
     medal_data
         .operator_lock(medal_id)
@@ -59,7 +67,7 @@ fn score_permanent_pool(
     let mut earned_weight = 0.0;
     let mut total_weight = 0.0;
 
-    for medal in medal_data.medals.values() {
+    for medal in medals_by_id(medal_data) {
         if is_unobtainable_for(&medal.medal_id, medal_data, owned) {
             continue;
         }
@@ -94,7 +102,7 @@ fn score_event_pool(
     let mut earned_weighted = 0.0;
     let mut cap = 0.0;
 
-    for medal in medal_data.medals.values() {
+    for medal in medals_by_id(medal_data) {
         if is_unobtainable_for(&medal.medal_id, medal_data, owned) {
             continue;
         }
