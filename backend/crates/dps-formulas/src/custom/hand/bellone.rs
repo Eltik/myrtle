@@ -33,8 +33,11 @@ pub fn dps(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
         0.0
     };
 
-    let hit =
-        |final_atk: f64, scale: f64| final_atk.mul_add(scale, -newdef).max(final_atk * scale * 0.05);
+    let hit = |final_atk: f64, scale: f64| {
+        final_atk
+            .mul_add(scale, -newdef)
+            .max(final_atk * scale * 0.05)
+    };
 
     let dps = match skill {
         1 => {
@@ -52,7 +55,9 @@ pub fn dps(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
         }
         3 => {
             aspd += param(0);
-            let final_atk = unit.atk.mul_add(1.0 + param(1) + unit.buff_atk, unit.buff_atk_flat);
+            let final_atk = unit
+                .atk
+                .mul_add(1.0 + param(1) + unit.buff_atk, unit.buff_atk_flat);
             let prob = param(3);
             let avghit = (1.0 - prob).mul_add(hit(final_atk, 1.0), prob * hit(final_atk, param(2)));
             avghit / atk_interval * (unit.attack_speed + aspd) / 100.0

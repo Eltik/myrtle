@@ -58,7 +58,9 @@ pub fn dps(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
         share = sp(3);
     }
 
-    let final_atk = unit.atk.mul_add(1.0 + atkbuff + unit.buff_atk, unit.buff_atk_flat);
+    let final_atk = unit
+        .atk
+        .mul_add(1.0 + atkbuff + unit.buff_atk, unit.buff_atk_flat);
     let arts = |scale: f64| (final_atk * scale * (1.0 - res / 100.0)).max(final_atk * scale * 0.05);
     let hitdmg = arts(1.0);
     let mut avghit = hitdmg * hits * share.mul_add(hits - 1.0, 1.0);

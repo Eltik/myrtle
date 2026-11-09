@@ -22,7 +22,9 @@ pub fn dps(unit: &OperatorUnit, _enemy: &EnemyStats) -> Option<f64> {
     }
     let sp = |i: usize| unit.skill_parameters.get(i).copied().unwrap_or(0.0);
     let atk_interval = f64::from(unit.attack_interval);
-    let final_atk = unit.atk.mul_add(1.0 + sp(0) + unit.buff_atk, unit.buff_atk_flat);
+    let final_atk = unit
+        .atk
+        .mul_add(1.0 + sp(0) + unit.buff_atk, unit.buff_atk_flat);
     let hitdmg = final_atk * sp(1);
     Some(hitdmg / atk_interval * unit.attack_speed / 100.0 * f64::from(unit.targets))
 }
@@ -63,7 +65,9 @@ pub fn hps(unit: &OperatorUnit, _enemy: &EnemyStats) -> Option<HpsResult> {
         heal_targets = targets.min(2.0);
     }
 
-    let final_atk_skill = unit.atk.mul_add(1.0 + sp(0) + unit.buff_atk, unit.buff_atk_flat);
+    let final_atk_skill = unit
+        .atk
+        .mul_add(1.0 + sp(0) + unit.buff_atk, unit.buff_atk_flat);
     let skill_hps = final_atk_skill * heal_scale / atk_interval * (unit.attack_speed + aspd)
         / 100.0
         * heal_mult

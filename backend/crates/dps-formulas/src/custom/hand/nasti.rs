@@ -27,7 +27,9 @@ pub fn dps(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
         atkbuff = sp(0);
     }
 
-    let final_atk = unit.atk.mul_add(1.0 + atkbuff + unit.buff_atk, unit.buff_atk_flat);
+    let final_atk = unit
+        .atk
+        .mul_add(1.0 + atkbuff + unit.buff_atk, unit.buff_atk_flat);
     let hitdmg = (final_atk - defense).max(final_atk * 0.05);
     Some(hitdmg / atk_interval * unit.attack_speed / 100.0 * targets)
 }

@@ -1,0 +1,214 @@
+use std::collections::{HashMap, HashSet};
+
+use myrtle_gamedata_raw::tables::roguelike::{RoguelikeGameData, RoguelikeThemeGameData};
+use serde::Deserialize;
+
+use crate::{Dimension, weighted_average};
+
+const WEIGHT_ENDINGS: f64 = 30.0;
+const WEIGHT_DIFFICULTY: f64 = 25.0;
+const WEIGHT_COLLECTIBLES: f64 = 20.0;
+const WEIGHT_BP: f64 = 15.0;
+const WEIGHT_CHALLENGES: f64 = 10.0;
+
+fn theme_weight(theme_id: &str) -> f64 {
+    match theme_id {
+        "rogue_1" => 0.12,
+        "rogue_2" => 0.16,
+        "rogue_3" => 0.20,
+        "rogue_4" => 0.24,
+        "rogue_5" => 0.28,
+        _ => 0.20,
+    }
+}
+
+#[derive(Debug, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+struct ThemeProgress {
+    #[serde(default)]
+    record: Option<Record>,
+    #[serde(default)]
+    collect: Option<Collect>,
+    #[serde(default)]
+    challenge: Option<Challenge>,
+    #[serde(default)]
+    bp: Option<Bp>,
+}
+
+/// progress.record
+#[derive(Debug, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+struct Record {
+    /// {MODE: {`ending_id`: count}} - ex. {"NORMAL": {"`ro_ending_1"`: 11}}
+    #[serde(default)]
+    ending_cnt: Option<HashMap<String, HashMap<String, serde_json::Value>>>,
+}
+
+/// progress.collect
+#[derive(Debug, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+struct Collect {
+    /// {MODE: {`grade_str`: {state: 0/2, progress: ...}}}
+    #[serde(default)]
+    mode_grade: Option<HashMap<String, HashMap<String, CollectEntry>>>,
+}
+
+#[derive(Debug, Deserialize, Default, Clone)]
+struct CollectEntry {
+    #[serde(default)]
+    state: i32,
+}
+
+/// progress.challenge
+#[derive(Debug, Deserialize, Default)]
+struct Challenge {
+    /// {`challenge_id`: `grade_value`}
+    #[serde(default)]
+    grade: Option<HashMap<String, serde_json::Value>>,
+}
+
+/// progress.bp
+#[derive(Debug, Deserialize, Default)]
+struct Bp {
+    /// {`bp_level_N`: 1} - count of keys = BP level reached
+    #[serde(default)]
+    reward: Option<HashMap<String, serde_json::Value>>,
+}
+
+#[must_use]
+pub fn grade_roguelike(
+    theme_progress: &[(String, serde_json::Value)],
+    roguelike_data: &RoguelikeGameData,
+) -> f64 {
+    if theme_progress.is_empty() {
+        return 0.0;
+    }
+
+    let mut weighted_sum = 0.0;
+    let mut weight_total = 0.0;
+
+    for (theme_id, progress_json) in theme_progress {
+        let Some(theme_data) = roguelike_data.themes.get(theme_id) else {
+            continue;
+        };
+
+        let progress = ThemeProgress::deserialize(progress_json).unwrap_or_default();
+
+        let score = grade_theme(&progress, progress_json, theme_data);
+        let w = theme_weight(theme_id);
+
+        weighted_sum = score.mul_add(w, weighted_sum);
+        weight_total += w;
+    }
+
+    if weight_total > 0.0 {
+        weighted_sum / weight_total
+    } else {
+        0.0
+    }
+}
+
+fn grade_theme(
+    progress: &ThemeProgress,
+    progress_json: &serde_json::Value,
+    theme: &RoguelikeThemeGameData,
+) -> f64 {
+    let mut dimensions: Vec<Dimension> = vec![];
+
+    if theme.max_endings > 0 {
+        let count = progress
+            .record
+            .as_ref()
+            .and_then(|r| r.ending_cnt.as_ref())
+            .map_or(0, |ec| {
+                let mut ids = HashSet::new();
+                for mode_endings in ec.values() {
+                    for ending_id in mode_endings.keys() {
+                        ids.insert(ending_id.as_str());
+                    }
+                }
+                ids.len()
+            });
+        let score = (count as f64 / f64::from(theme.max_endings)).min(1.0);
+        dimensions.push((WEIGHT_ENDINGS, score));
+    }
+
+    if theme.max_difficulty_grade > 0 {
+        let score = difficulty_milestone_score(progress, theme);
+        dimensions.push((WEIGHT_DIFFICULTY, score));
+    }
+
+    let max_collectibles = theme.max_relics + theme.max_capsules + theme.max_bands;
+    if max_collectibles > 0 {
+        let collected = theme.count_collected(progress_json);
+        let total = collected.relics + collected.capsules + collected.bands;
+        let score = total as f64 / f64::from(max_collectibles);
+
+        let weight = if theme.max_challenges == 0 {
+            WEIGHT_COLLECTIBLES + WEIGHT_CHALLENGES
+        } else {
+            WEIGHT_COLLECTIBLES
+        };
+        dimensions.push((weight, score));
+    }
+
+    if theme.max_bp_levels > 0 {
+        let bp_level = progress
+            .bp
+            .as_ref()
+            .and_then(|bp| bp.reward.as_ref())
+            .map_or(0, |r| r.len() as i32);
+        let raw = (f64::from(bp_level) / f64::from(theme.max_bp_levels)).min(1.0);
+        let score = log_curve_ratio(raw);
+        dimensions.push((WEIGHT_BP, score));
+    }
+
+    if theme.max_challenges > 0 {
+        let count = progress
+            .challenge
+            .as_ref()
+            .and_then(|c| c.grade.as_ref())
+            .map_or(0, std::collections::HashMap::len);
+        let score = (count as f64 / f64::from(theme.max_challenges)).min(1.0);
+        dimensions.push((WEIGHT_CHALLENGES, score));
+    }
+
+    weighted_average(&dimensions)
+}
+
+fn difficulty_milestone_score(progress: &ThemeProgress, theme: &RoguelikeThemeGameData) -> f64 {
+    let max = f64::from(theme.max_difficulty_grade);
+    if max <= 0.0 {
+        return 0.0;
+    }
+
+    let highest = progress
+        .collect
+        .as_ref()
+        .and_then(|c| c.mode_grade.as_ref())
+        .and_then(|mg| mg.get("NORMAL"))
+        .map_or(-1, |normal| {
+            normal
+                .iter()
+                .filter(|(_, entry)| entry.state >= 2)
+                .filter_map(|(grade_str, _)| grade_str.parse::<i32>().ok())
+                .max()
+                .unwrap_or(-1)
+        });
+
+    if highest <= 0 {
+        return 0.0;
+    }
+
+    let ratio = f64::from(highest) / max;
+    match ratio {
+        r if r >= 1.0 => 1.0, // Cleared max difficulty
+        r if r >= 0.75 => 0.75,
+        r if r >= 0.50 => 0.50,
+        _ => 0.25, // Any clear at all
+    }
+}
+
+fn log_curve_ratio(t: f64) -> f64 {
+    t.ln_1p() / 2.0_f64.ln()
+}

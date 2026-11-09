@@ -35,7 +35,9 @@ pub fn dps(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
         skill_scale = sp(4, 1.0);
     }
 
-    let final_atk = unit.atk.mul_add(1.0 + atkbuff + unit.buff_atk, unit.buff_atk_flat);
+    let final_atk = unit
+        .atk
+        .mul_add(1.0 + atkbuff + unit.buff_atk, unit.buff_atk_flat);
     let scale = atk_scale * skill_scale;
     let hitdmg = (final_atk * scale - defense).max(final_atk * scale * 0.05);
     let attack_rate = unit.attack_speed / 100.0 / atk_interval;

@@ -1087,6 +1087,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "myrtle-engine-grade"
+version = "0.1.0"
+dependencies = [
+ "myrtle-gamedata",
+ "myrtle-gamedata-raw",
+ "myrtle-testkit",
+ "myrtle-types",
+ "serde",
+ "serde_json",
+ "uuid",
+]
+
+[[package]]
 name = "myrtle-gamedata"
 version = "0.1.0"
 dependencies = [
@@ -1140,6 +1153,18 @@ dependencies = [
  "tracing",
  "tracing-subscriber",
  "walkdir",
+]
+
+[[package]]
+name = "myrtle-testkit"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "myrtle-gamedata",
+ "myrtle-gamedata-raw",
+ "myrtle-types",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
