@@ -74,18 +74,27 @@ impl SandboxUniverse {
 
     pub fn build_reporting(raw: &Value, warnings: &mut Vec<String>) -> Self {
         let topics = Self::build_topics(raw, warnings);
-        let Some(flat) = topics
-            .iter()
-            .find(|t| t.template == SandboxTemplate::V2)
-            .map(|t| t.counts.clone())
-        else {
+        // The flat totals are the first `Detail.SANDBOX_V2` entry, keyed or
+        // not, as main and gamedata's copy of this type read them.
+        let Some(sandbox_data) = Self::extract_sandbox_v2(raw) else {
             warnings.push("SandboxUniverse: no SANDBOX_V2 data found".to_owned());
             return Self {
                 topics,
                 ..Self::default()
             };
         };
-        Self { topics, ..flat }
+        Self {
+            topics,
+            ..Self::count_v2(sandbox_data)
+        }
+    }
+
+    fn extract_sandbox_v2(raw: &Value) -> Option<&Value> {
+        raw.get("Detail")?
+            .get("SANDBOX_V2")?
+            .as_array()?
+            .first()?
+            .get("value")
     }
 
     fn build_topics(raw: &Value, warnings: &mut Vec<String>) -> Vec<SandboxTopicUniverse> {
