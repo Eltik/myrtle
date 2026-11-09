@@ -75,6 +75,63 @@ fn gamedata_dump() {
     themes.sort();
     put(&out, "roguelike_themes_debug", &themes);
     put(&out, "stage_universe", &m.stage_universe);
+    // extended field set
+    put(&out, "activity_skin_refs", &m.activity_skin_refs);
+    put(
+        &out,
+        "autochess_bonds_debug",
+        &format!("{:?}", m.autochess_bonds),
+    );
+    put(&out, "building_debug", &format!("{:?}", m.building));
+    put(
+        &out,
+        "campaign_rotations_debug",
+        &format!("{:?}", m.campaign_rotations),
+    );
+    put(&out, "consts", &m.consts);
+    put(&out, "enemy_audio", &m.enemy_audio);
+    put(&out, "enemy_stage_index", &m.enemy_stage_index);
+    put(&out, "factions_debug", &format!("{:?}", m.factions));
+    put(
+        &out,
+        "home_backgrounds_debug",
+        &format!("{:?}", m.home_backgrounds),
+    );
+    put(
+        &out,
+        "mission_archives_debug",
+        &format!("{:?}", m.mission_archives),
+    );
+    put(&out, "missions_debug", &format!("{:?}", m.missions));
+    put(&out, "mode_levels", &m.mode_levels);
+    put(&out, "music_debug", &format!("{:?}", m.music));
+    put(&out, "profession_names", &m.profession_names);
+    put(
+        &out,
+        "recommend_tags_debug",
+        &format!("{:?}", m.recommend_tags),
+    );
+    put(&out, "skin_listings", &m.skin_listings);
+    put(&out, "skin_windows", &m.skin_windows);
+    put(&out, "squad_debug", &format!("{:?}", m.squad));
+    put(
+        &out,
+        "stage_evidence_debug",
+        &format!("{:?}", m.stage_evidence),
+    );
+    put(&out, "stage_index", &m.stage_index);
+    put(
+        &out,
+        "storyline_story_sets_debug",
+        &format!("{:?}", m.storyline_story_sets),
+    );
+    put(
+        &out,
+        "story_archives_debug",
+        &format!("{:?}", m.story_archives),
+    );
+    put(&out, "enemies", &m.enemies);
+    put(&out, "event_shops", &m.event_shops);
     put(
         &out,
         "sandbox_universe_debug",
