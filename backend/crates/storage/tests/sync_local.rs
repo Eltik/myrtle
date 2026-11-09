@@ -8,8 +8,8 @@ use myrtle_storage::ObjectStore;
 use myrtle_storage::providers::local::LocalStore;
 use myrtle_storage::restore::{RestoreOptions, run_restore};
 use myrtle_storage::sync::{
-    LOCK_NAME, MANIFEST_VERSION, Manifest, STUB_CHANGED, STUB_GONE, SyncError, SyncOptions,
-    SyncOutcome, SyncReport, run_sync,
+    EMPTY_OVER_OBJECT, LOCK_NAME, MANIFEST_VERSION, Manifest, STUB_CHANGED, STUB_GONE, SyncError,
+    SyncOptions, SyncOutcome, SyncReport, run_sync,
 };
 use myrtle_storage::{EvictPolicy, PutBody, PutObject, StorageConfig};
 
@@ -672,6 +672,26 @@ async fn an_unreadable_manifest_stops_the_sync() {
     let err = run_sync(&f.store, &f.opts()).await.unwrap_err();
     assert!(err.to_string().contains("evicted stubs"), "{err}");
     assert!(run_restore(&f.store, &f.restore_opts()).await.is_err());
+}
+
+#[tokio::test]
+async fn a_missing_manifest_never_uploads_stubs_over_their_objects() {
+    let f = Fixture::new();
+    f.run(&f.evicting()).await;
+    let key = "assets/en/textures/a.png";
+    let before = f.store.head(key).await.unwrap().unwrap().size;
+    assert!(before > 0);
+    std::fs::remove_file(Manifest::path(&f.output, "en")).unwrap();
+    let report = f.run(&f.opts()).await;
+    assert_eq!(report.uploaded, 0, "{}", report.summary_line());
+    assert_eq!(report.outcome, SyncOutcome::Failed);
+    assert!(
+        report
+            .failures
+            .iter()
+            .all(|e| e.contains(EMPTY_OVER_OBJECT))
+    );
+    assert_eq!(f.store.head(key).await.unwrap().unwrap().size, before);
 }
 
 #[tokio::test]
