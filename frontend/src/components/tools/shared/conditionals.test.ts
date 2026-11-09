@@ -14,7 +14,7 @@ function engineConditionals(): { charId: string; type: string; name: string }[] 
     const out: { charId: string; type: string; name: string }[] = [];
     for (const file of ["operator_formulas.json", "heal_formulas.json"]) {
         // Joined by hand: Vite rewrites `new URL(literal, import.meta.url)` into an asset import.
-        const path = join(dirname(fileURLToPath(import.meta.url)), "../../../../../backend/src/dps/config", file);
+        const path = join(dirname(fileURLToPath(import.meta.url)), "../../../../../backend/crates/dps-formulas/data", file);
         const config = JSON.parse(readFileSync(path, "utf8")) as Record<string, IFormulaEntry>;
         for (const [charId, entry] of Object.entries(config)) for (const c of entry.conditionals) out.push({ charId, type: c.type, name: c.name });
     }
