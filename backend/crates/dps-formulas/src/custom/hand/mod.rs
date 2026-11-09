@@ -1,8 +1,27 @@
-//! Hand-written DPS / HPS formulas, consulted before the generated dispatch.
+//! Hand-written DPS / HPS formulas, consulted BEFORE the generated dispatch.
 //!
-//! One file per operator, one row in a registry below, one entry in `formulas.json`.
-//! A hand id that upstream now covers fails `tables::tests::bundled_formula_tables_parse`
-//! until it is deleted or listed in `REVIEWED_HAND_OVERRIDES`.
+//! The generated layer (`generated*.rs`, `dispatch*.rs`, `config/operator_formulas.json`,
+//! `config/heal_formulas.json`) is rewritten wholesale by `generate-dps` from the
+//! upstream Python repo, which updates rarely. An operator it does not cover, or
+//! covers wrongly, lives here instead:
+//!
+//! - one file per operator, exposing `dps` and / or `hps` with the generated
+//!   signature (`fn(&OperatorUnit, &EnemyStats) -> Option<f64>` /
+//!   `Option<HpsResult>`), so the engine runs it through the same path: zones,
+//!   secondary targets, cycle v2 and conditionals apply unchanged;
+//! - one row in `DPS` / `HPS` below (the registry), and one in `SKILL_DURATION` when a
+//!   skill's real duration is not the game data's;
+//! - shared helpers (module blackboard lookups, the unlimited-duration value) in
+//!   `util.rs`;
+//! - one entry in `formulas.json` (`dps` / `hps` section): the same metadata shape as
+//!   `operator_formulas.json`, merged over the generated table by
+//!   `engine::load_formulas` / `load_heal_formulas`.
+//!
+//! An id registered here wins over a generated formula for the same id. The
+//! generator never writes under `custom/hand/` (it refuses to, see
+//! `generate_dps.rs`), and it prints every id that is in both layers so a hand
+//! formula that upstream now covers gets reviewed rather than silently shadowing
+//! the transpiled one. How to add an operator: `backend/DPS_CALCULATOR.md`.
 
 use super::super::HpsResult;
 use super::super::operator_unit::{EnemyStats, OperatorUnit};
@@ -13,6 +32,7 @@ mod bellone;
 mod chen_dawnstreak;
 mod closure;
 mod kaltsit_esperanta;
+mod manticore;
 mod mantra;
 mod nasti;
 mod silverash_alter;
@@ -23,7 +43,8 @@ mod zima_alter;
 
 pub type DpsFn = fn(&OperatorUnit, &EnemyStats) -> Option<f64>;
 pub type HpsFn = fn(&OperatorUnit, &EnemyStats) -> Option<HpsResult>;
-/// Skill duration in seconds; `None` keeps the game data's.
+/// The operator's real skill duration in seconds when it differs from the game data's
+/// (`None`: keep the game-data duration). See [`SKILL_DURATION`].
 pub type DurationFn = fn(&OperatorUnit) -> Option<f64>;
 
 /// Metadata for the hand formulas, `{"dps": {id: OperatorFormula}, "hps": {...}}`.
@@ -38,6 +59,7 @@ pub const DPS: &[(&str, DpsFn)] = &[
     ("char_2027_wang", wang::dps),
     ("char_1047_halo2", astgenne_lightchaser::dps),
     ("char_4212_nasti", nasti::dps),
+    ("char_215_mantic", manticore::dps),
     ("char_1052_kalts2", kaltsit_esperanta::dps),
     ("char_4226_veen", viy::dps),
     ("char_4204_mantra", mantra::dps),
@@ -45,12 +67,21 @@ pub const DPS: &[(&str, DpsFn)] = &[
     ("char_4228_closur", closure::dps),
 ];
 
-/// Hand HPS formulas by operator id, called with a zero-DEF / zero-RES enemy.
+/// Hand HPS formulas by operator id. Called with a zero-DEF / zero-RES enemy, the
+/// way the generated HPS dispatch calls its functions.
 pub const HPS: &[(&str, HpsFn)] = &[("char_1052_kalts2", kaltsit_esperanta::hps)];
 
-/// Durations the game data gets wrong (permanent skills stored as timed, ammo and
-/// stone skills paced by their rate). The engine sets `unit.skill_duration` from
-/// this before the formula runs; one table serves both engines.
+/// Hand skill-duration functions by operator id, the hand layer's
+/// `dispatch_skill_duration`. For an operator the hand layer owns (in `DPS` for the
+/// DPS engine, in `HPS` for the HPS engine) the engine consults this INSTEAD of the
+/// generated table and sets `unit.skill_duration` to the result after the zones and
+/// before the formula, so the formula, `total_damage`, `average_dps` and cycle v2 all
+/// read one duration. One table serves both engines: a duration belongs to the skill.
+/// Use it when the game-data duration is not the real one: a permanent skill whose
+/// game data says otherwise (`util::UNLIMITED_DURATION`), an ammo skill whose length
+/// follows from its attack rate, a stone skill whose length follows from its placement
+/// rate (Wang S3). Only Zima S3 still returns a TOTAL as its skill DPS (an instant
+/// skill with no duration, Degenbrecher's "totalDMG" convention).
 pub const SKILL_DURATION: &[(&str, DurationFn)] = &[
     ("char_1051_headb2", zima_alter::skill_duration),
     ("char_1052_kalts2", kaltsit_esperanta::skill_duration),

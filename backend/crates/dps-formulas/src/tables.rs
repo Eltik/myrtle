@@ -183,7 +183,12 @@ mod tests {
 
     /// Hand ids that are ALSO in a generated table. An id lands here
     /// only after a review decided to keep the hand formula over upstream's.
-    const REVIEWED_HAND_OVERRIDES: &[&str] = &[];
+    const REVIEWED_HAND_OVERRIDES: &[&str] = &[
+        // Manticore: the transpiled formula re-adds the reference's hand-coded module
+        // step to a talent `OperatorUnit` already upgraded (custom/hand/manticore.rs).
+        // Ported from main a6f95021 (#69).
+        "char_215_mantic",
+    ];
 
     fn dispatch_arm_ids(source: &str) -> Vec<String> {
         let body = source
