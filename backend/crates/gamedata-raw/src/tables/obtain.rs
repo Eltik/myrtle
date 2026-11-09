@@ -86,3 +86,41 @@ impl SkinChannel {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn operator_wording_reads_by_prefix() {
+        assert_eq!(
+            ObtainChannel::classify("Recruitment & Headhunting, Pinboard Missions"),
+            Some(ObtainChannel::Headhunting)
+        );
+        assert_eq!(
+            ObtainChannel::classify("集成战略获得"),
+            Some(ObtainChannel::IntegratedStrategies)
+        );
+        assert_eq!(
+            ObtainChannel::classify("Main Theme Story"),
+            Some(ObtainChannel::Other)
+        );
+        // KR wording is not read here; the reference pass resolves it.
+        assert_eq!(
+            ObtainChannel::classify("인재 채용"),
+            Some(ObtainChannel::Other)
+        );
+        assert_eq!(ObtainChannel::classify(""), None);
+    }
+
+    #[test]
+    fn skin_tags_read_exactly() {
+        assert_eq!(SkinChannel::classify(None), SkinChannel::Store);
+        assert_eq!(SkinChannel::classify(Some("联动获得")), SkinChannel::Collab);
+        assert_eq!(
+            SkinChannel::classify(Some("Official Artworks")),
+            SkinChannel::CodeExchange
+        );
+        assert_eq!(SkinChannel::classify(Some("콜라보")), SkinChannel::Other);
+    }
+}

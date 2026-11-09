@@ -46,3 +46,22 @@ pub struct AutoChessBond {
     #[serde(alias = "PowerIdList", alias = "powerIdList", default)]
     pub power_id_list: Vec<String>,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn a_bond_reads_its_type_icon_and_factions() {
+        let raw = r#"{"BasicInfo": [], "AutoChessData": {"BandDataDict": [], "BondInfoDict": [
+            {"key": "yanShip", "value": {"BondId": "yanShip", "BondOrder": 2,
+             "BondType": "SEASON", "Icon": "icon_yanShip", "IsHiddenCharList": false,
+             "IsPower": true, "Name": "Yan", "PowerIdList": ["yan", "sui"]}}]}}"#;
+        let file: ActivityAutoChessFile = serde_json::from_str(raw).expect("parses");
+        let b = &file.auto_chess_data.bond_info_dict["yanShip"];
+        assert_eq!(b.name, "Yan");
+        assert_eq!(b.bond_type, "SEASON");
+        assert_eq!(b.icon, "icon_yanShip");
+        assert_eq!(b.power_id_list, ["yan", "sui"]);
+    }
+}

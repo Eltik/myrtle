@@ -36,3 +36,21 @@ pub struct HandbookTeam {
 
 /// Sentinel id for an operator with no nation, group or team
 pub const NO_FACTION: &str = "none";
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn a_team_row_reads_its_level_and_name() {
+        let raw = r#"{"Handbook_teams": [{"key": "rhodes", "value": {
+            "Color": "000000", "IsLimited": false, "IsRaw": false, "OrderNum": 1,
+            "PowerCode": "Rhodes Island", "PowerId": "rhodes", "PowerLevel": 0,
+            "PowerName": "Rhodes Island"}}]}"#;
+        let file: HandbookTeamTableFile = serde_json::from_str(raw).expect("parses");
+        let t = &file.teams["rhodes"];
+        assert_eq!(t.power_name, "Rhodes Island");
+        assert_eq!(t.power_level, 0);
+        assert_eq!(t.order_num, 1);
+    }
+}

@@ -485,3 +485,232 @@ fn classify_expire_times(times: &[ExpireTime], is_grouped: bool, now: i64) -> Ob
         proxy_close_ts: last_end,
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const NOW: i64 = 1_700_000_000;
+
+    fn mk_medal(id: &str, template: &str, unlock_param: &[&str]) -> MedalDefinition {
+        MedalDefinition {
+            medal_id: id.to_string(),
+            medal_name: id.to_string(),
+            medal_type: "activityMedal".to_string(),
+            slot_id: 0,
+            pre_medal_id_list: Vec::new(),
+            rarity: "T1".to_string(),
+            template: template.to_string(),
+            unlock_param: unlock_param.iter().map(|s| (*s).to_string()).collect(),
+            get_method: String::new(),
+            description: String::new(),
+            display_time: 0,
+            expire_times: Vec::new(),
+            medal_reward_group: serde_json::Value::Null,
+            is_hidden: false,
+            origin_medal: String::new(),
+        }
+    }
+
+    fn data_with(medals: Vec<MedalDefinition>) -> MedalData {
+        let mut d = MedalData::default();
+        for m in medals {
+            d.medals.insert(m.medal_id.clone(), m);
+        }
+        d
+    }
+
+    fn mk_operator(team_id: Option<&str>, display_number: &str, name: &str) -> Operator {
+        Operator {
+            name: name.to_string(),
+            team_id: team_id.map(str::to_string),
+            display_number: display_number.to_string(),
+            ..Default::default()
+        }
+    }
+
+    fn data_with_tower_windows(windows: Vec<(i64, i64)>) -> MedalData {
+        let mut d = data_with(vec![mk_medal("medal_t", "PassTower", &["tower_n_10"])]);
+        d.tower_windows.insert("medal_t".to_string(), windows);
+        d
+    }
+
+    fn data_with_event_window(window: EventWindow) -> MedalData {
+        let mut d = data_with(vec![mk_medal("medal_ev", "", &[])]);
+        d.event_windows.insert("medal_ev".to_string(), window);
+        d
+    }
+
+    #[test]
+    fn no_expire_times_is_permanent() {
+        let d = data_with(vec![mk_medal("medal_perm", "", &[])]);
+        assert_eq!(d.obtainability("medal_perm", NOW), Obtainability::Permanent);
+    }
+
+    /// Login-anniversary medals (`JoinGameDays`, "log in for 6 years") carry an
+    /// `INIT` `ExpireTimes` window with a real End, open since account creation.
+    /// INIT is neither TEMP nor PERM, so it must stay Permanent.
+    #[test]
+    fn init_expire_time_is_permanent() {
+        let mut medal = mk_medal("medal_player_joingame_07", "JoinGameDays", &["2190"]);
+        medal.medal_type = "playerMedal".to_string();
+        medal.expire_times = vec![ExpireTime {
+            start: -1,
+            end: NOW + 1_000_000,
+            expire_type: "INIT".to_string(),
+        }];
+        let d = data_with(vec![medal]);
+        assert_eq!(
+            d.obtainability("medal_player_joingame_07", NOW),
+            Obtainability::Permanent
+        );
+    }
+
+    #[test]
+    fn tower_in_season_is_active_event() {
+        let d = data_with_tower_windows(vec![(NOW - 100, NOW + 100)]);
+        assert_eq!(
+            d.obtainability("medal_t", NOW),
+            Obtainability::Event {
+                proxy_close_ts: NOW + 100
+            }
+        );
+    }
+
+    #[test]
+    fn tower_between_seasons_is_closed_event() {
+        let d = data_with_tower_windows(vec![(NOW - 300, NOW - 100)]);
+        assert_eq!(
+            d.obtainability("medal_t", NOW),
+            Obtainability::Event {
+                proxy_close_ts: NOW - 100
+            }
+        );
+    }
+
+    #[test]
+    fn tower_future_season_is_not_yet() {
+        let d = data_with_tower_windows(vec![(NOW + 100, NOW + 300)]);
+        assert_eq!(d.obtainability("medal_t", NOW), Obtainability::NotYet);
+    }
+
+    #[test]
+    fn retired_tower_with_no_windows_is_unobtainable() {
+        // Pre-schedule tower never carried into SeasonInfos -> empty windows.
+        let d = data_with_tower_windows(Vec::new());
+        assert_eq!(d.obtainability("medal_t", NOW), Obtainability::Unobtainable);
+    }
+
+    #[test]
+    fn one_time_mode_active_is_event() {
+        let d = data_with_event_window(EventWindow {
+            start: NOW - 100,
+            close: NOW + 100,
+            one_time: true,
+        });
+        assert_eq!(
+            d.obtainability("medal_ev", NOW),
+            Obtainability::Event {
+                proxy_close_ts: NOW + 100
+            }
+        );
+    }
+
+    #[test]
+    fn one_time_mode_future_is_not_yet() {
+        let d = data_with_event_window(EventWindow {
+            start: NOW + 100,
+            close: NOW + 300,
+            one_time: true,
+        });
+        assert_eq!(d.obtainability("medal_ev", NOW), Obtainability::NotYet);
+    }
+
+    #[test]
+    fn one_time_mode_finished_is_unobtainable() {
+        let d = data_with_event_window(EventWindow {
+            start: NOW - 300,
+            close: NOW - 100,
+            one_time: true,
+        });
+        assert_eq!(
+            d.obtainability("medal_ev", NOW),
+            Obtainability::Unobtainable
+        );
+    }
+
+    // Event repair: the activity schedule overrides a mislabeled table.
+
+    #[test]
+    fn event_future_window_repairs_to_not_yet() {
+        // Table mislabels it Permanent (empty expire times), but the activity
+        // hasn't started -> NotYet, not a false permanent.
+        let d = data_with_event_window(EventWindow {
+            start: NOW + 100,
+            close: NOW + 300,
+            one_time: false,
+        });
+        assert_eq!(d.obtainability("medal_ev", NOW), Obtainability::NotYet);
+    }
+
+    #[test]
+    fn event_closed_window_is_decayed_event() {
+        let d = data_with_event_window(EventWindow {
+            start: NOW - 300,
+            close: NOW - 100,
+            one_time: false,
+        });
+        assert_eq!(
+            d.obtainability("medal_ev", NOW),
+            Obtainability::Event {
+                proxy_close_ts: NOW - 100
+            }
+        );
+    }
+
+    #[test]
+    fn link_operator_locks_catches_collab_only() {
+        let d_medals = vec![
+            mk_medal("medal_collab", "GotChars", &["char_9001_collab"]),
+            mk_medal("medal_regular", "GotChars", &["char_0001_regular"]),
+        ];
+        let mut d = data_with(d_medals);
+
+        let mut ops = HashMap::new();
+        ops.insert(
+            "char_9001_collab".to_string(),
+            mk_operator(Some("rainbow"), "RB01", "Collab Op"),
+        );
+        ops.insert(
+            "char_0001_regular".to_string(),
+            mk_operator(None, "R001", "Regular Op"),
+        );
+
+        d.link_operator_locks(&ops);
+
+        assert!(d.operator_lock("medal_collab").is_some());
+        assert!(d.operator_lock("medal_regular").is_none());
+    }
+
+    /// Luo Xiaohei (`char_4067_lolxh`) is a team-less collab whose `R` display
+    /// prefix collides with ordinary Rhodes ops, so `is_collab` catches it via
+    /// its curated char id. Its `CharStoryUnlock` medal must be operator-locked.
+    #[test]
+    fn link_operator_locks_catches_teamless_lolxh_collab() {
+        let mut d = data_with(vec![mk_medal(
+            "medal_hidden_story_lolxh_1",
+            "CharStoryUnlock",
+            &["char_4067_lolxh", "story_lolxh_set_1"],
+        )]);
+
+        let mut ops = HashMap::new();
+        // TeamId null, DisplayNumber "R161", as in the real gamedata.
+        let mut lolxh = mk_operator(None, "R161", "Luo Xiaohei");
+        lolxh.id = Some("char_4067_lolxh".to_string());
+        ops.insert("char_4067_lolxh".to_string(), lolxh);
+
+        d.link_operator_locks(&ops);
+
+        assert!(d.operator_lock("medal_hidden_story_lolxh_1").is_some());
+    }
+}

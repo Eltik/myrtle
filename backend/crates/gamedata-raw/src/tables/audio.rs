@@ -247,3 +247,71 @@ pub struct EnemyAudio {
     pub via: Option<String>,
     pub sounds: Vec<AudioSound>,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const RAW: &str = r#"{
+        "Musics": [
+            {"Id": "music_act13side_0", "Name": "The Grand Knight Territory", "Bank": "sys.ON_ACTIVITY_LOADED.act13side"},
+            {"Id": "music_3in1bg_act13side", "Name": " ", "Bank": "sys.ON_ACTIVITY_LOADED.act13side"},
+            {"Id": "music_3in1bg_main1", "Name": " ", "Bank": "battle.ON_GAME_READY.escape"},
+            {"Id": "music_bg_volcano_day", "Name": "Misty Memory", "Bank": "sys.ON_ACTIVITY_LOADED.act27side.day"}
+        ],
+        "BgmBanks": [
+            {"Name": "sys.ON_ACTIVITY_LOADED.act13side", "Intro": "Audio/Sound_Beta_2/Music/act13side/m_sys_kazimierz2_intro", "Loop_": "Audio/Sound_Beta_2/Music/act13side/m_sys_kazimierz2_loop"},
+            {"Name": "battle.ON_GAME_READY", "Loop_": "Audio/Sound_Beta_2/Music/beta1_180603/m_bat_indust_loop"},
+            {"Name": "sys.ON_ACTIVITY_LOADED.act27side.day", "Loop_": "Audio/Sound_Beta_2/Music/act27side/m_sys_volcano_day_loop"}
+        ],
+        "BankAlias": [{"key": "battle.ON_GAME_READY.escape", "value": "battle.ON_GAME_READY"}]
+    }"#;
+
+    #[test]
+    fn a_bank_resolves_through_its_alias() {
+        let raw: RawAudioData = serde_json::from_str(RAW).unwrap();
+        let banks = MusicBanks::from_raw(&raw);
+        assert_eq!(banks.counts(), (4, 3, 1));
+        let m = banks.music("music_3in1bg_main1").unwrap();
+        assert_eq!(m.bank, "battle.ON_GAME_READY.escape");
+        assert!(m.name.trim().is_empty());
+        let bank = banks.bank(&m.bank).unwrap();
+        assert_eq!(
+            bank.loop_.as_deref(),
+            Some("Audio/Sound_Beta_2/Music/beta1_180603/m_bat_indust_loop")
+        );
+        assert!(bank.intro.is_none());
+        assert!(banks.bank("battle.ON_NOTHING").is_none());
+    }
+
+    #[test]
+    fn the_named_row_wins_a_shared_bank() {
+        let raw: RawAudioData = serde_json::from_str(RAW).unwrap();
+        let banks = MusicBanks::from_raw(&raw);
+        let m = banks
+            .music_for_bank("sys.ON_ACTIVITY_LOADED.act13side")
+            .unwrap();
+        assert_eq!(m.id, "music_act13side_0");
+        assert_eq!(m.name, "The Grand Knight Territory");
+        let intro = banks.bank(&m.bank).unwrap().intro.as_deref();
+        assert_eq!(
+            intro,
+            Some("Audio/Sound_Beta_2/Music/act13side/m_sys_kazimierz2_intro")
+        );
+    }
+
+    #[test]
+    fn a_suffixed_bank_is_reached_by_prefix() {
+        let raw: RawAudioData = serde_json::from_str(RAW).unwrap();
+        let banks = MusicBanks::from_raw(&raw);
+        assert!(
+            banks
+                .music_for_bank("sys.ON_ACTIVITY_LOADED.act27side")
+                .is_none()
+        );
+        let m = banks
+            .music_by_bank_prefix("sys.ON_ACTIVITY_LOADED.act27side.")
+            .unwrap();
+        assert_eq!(m.id, "music_bg_volcano_day");
+    }
+}

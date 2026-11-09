@@ -115,3 +115,24 @@ impl CampaignRotations {
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Guard against the real table's shape drifting away from the parser
+    /// (kill ladders live in `Campaigns[].BreakLadders[].KillCnt`). Skips
+    /// when the gamedata assets aren't checked out.
+    #[test]
+    fn kill_max_parses_from_real_campaign_table() {
+        let path = std::path::Path::new("../assets/output/en/gamedata/excel/campaign_table.json");
+        let Ok(text) = std::fs::read_to_string(path) else {
+            return;
+        };
+        let table: CampaignTableFile = serde_json::from_str(&text).unwrap();
+        let rotations = CampaignRotations::from_table(table);
+        assert_eq!(rotations.kill_max("camp_01"), Some(400));
+        assert_eq!(rotations.kill_max("camp_r_01"), Some(400));
+        assert_eq!(rotations.kill_max("main_00-01"), None);
+    }
+}

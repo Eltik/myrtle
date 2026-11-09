@@ -405,3 +405,48 @@ impl ItemTableFile {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::ItemType;
+
+    /// Every item type the EN and CN item tables shipped on 2026-11-03 whose name the plain
+    /// `rename_all` spelling would miss.
+    #[test]
+    fn game_item_types_round_trip() {
+        for name in [
+            "TKT_GACHA_10",
+            "TKT_RECRUIT",
+            "LIMITED_TKT_GACHA_10",
+            "LINKAGE_TKT_GACHA",
+            "LINKAGE_TKT_GACHA_10",
+            "CLASSIC_TKT_GACHA_10",
+            "EXCLUSIVE_TKT_GACHA_10",
+            "VOUCHER_LEVELMAX_4",
+            "VOUCHER_LEVELMAX_5",
+            "VOUCHER_LEVELMAX_6",
+            "VOUCHER_ELITE_II_4",
+            "VOUCHER_SKILL_SPECIALLEVELMAX_4",
+            "VOUCHER_SKILL_SPECIALLEVELMAX_5",
+            "VOUCHER_SKILL_SPECIALLEVELMAX_6",
+            "VOUCHER_SKIN_V2",
+            "RANDOM_VOUCHER_SKIN",
+            "CLASSIC_FES_PICK_TIER_5",
+            "CLASSIC_FES_PICK_TIER_6",
+            "CRS_SHOP_COIN_V2",
+            "GIFTPACKAGE_TKT",
+            "EMOTICON_SET",
+            "SO_CHAR_EXP",
+            "PLOT_ITEM",
+        ] {
+            let json = format!("\"{name}\"");
+            let parsed: ItemType = serde_json::from_str(&json).unwrap();
+            assert_ne!(parsed, ItemType::Unknown, "{name} fell to Unknown");
+            assert_eq!(
+                serde_json::to_string(&parsed).unwrap(),
+                json,
+                "{name} does not round-trip"
+            );
+        }
+    }
+}

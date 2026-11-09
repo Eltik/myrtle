@@ -128,3 +128,74 @@ fn lmd_of(rewards: &[RewardItem]) -> i64 {
         .map(|r| r.count)
         .sum()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn chest(group: &str, lmd: i64, begin: i64, end: i64) -> PeriodicalReward {
+        PeriodicalReward {
+            group_id: group.into(),
+            rewards: vec![
+                RewardItem {
+                    id: LMD_ITEM_ID.into(),
+                    count: lmd,
+                },
+                RewardItem {
+                    id: "2001".into(),
+                    count: 4,
+                },
+            ],
+            begin_time: begin,
+            end_time: end,
+        }
+    }
+
+    #[test]
+    fn daily_lmd_weights_weekday_and_weekend_groups_by_their_days() {
+        let data = MissionData {
+            daily_periods: vec![DailyPeriod {
+                start_time: 100,
+                end_time: 200,
+                period_list: vec![
+                    DailyPeriodGroup {
+                        reward_group_id: "wk".into(),
+                        period: vec![1, 2, 3, 4, 5],
+                    },
+                    DailyPeriodGroup {
+                        reward_group_id: "we".into(),
+                        period: vec![6, 7],
+                    },
+                ],
+            }],
+            daily_rewards: HashMap::from([
+                ("a".to_string(), chest("wk", 700, 0, 0)),
+                ("b".to_string(), chest("wk", 700, 0, 0)),
+                ("c".to_string(), chest("we", 1400, 0, 0)),
+            ]),
+            weekly_rewards: HashMap::new(),
+        };
+        // Weekdays 1400 x 5/7, weekends 1400 x 2/7: 1400 a day.
+        assert!((data.daily_lmd_per_day(150).unwrap() - 1400.0).abs() < 1e-9);
+        assert!(
+            data.daily_lmd_per_day(300).is_none(),
+            "outside every period"
+        );
+    }
+
+    #[test]
+    fn weekly_lmd_is_the_live_chests_over_seven_days() {
+        let data = MissionData {
+            daily_periods: Vec::new(),
+            daily_rewards: HashMap::new(),
+            weekly_rewards: HashMap::from([
+                ("old".to_string(), chest("g1", 7000, 0, 99)),
+                ("live".to_string(), chest("g3", 7000, 100, 200)),
+                ("live2".to_string(), chest("g3", 14000, 100, 200)),
+            ]),
+        };
+        assert!((data.weekly_lmd_per_day(150).unwrap() - 3000.0).abs() < 1e-9);
+        assert!((data.weekly_lmd_per_day(50).unwrap() - 1000.0).abs() < 1e-9);
+        assert!(data.weekly_lmd_per_day(300).is_none());
+    }
+}
