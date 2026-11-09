@@ -1,0 +1,16 @@
+[package]
+name = "myrtle-engine-dps"
+description = "DPS/HPS engine: buff zones, targets, cycles and supporters over the formulas"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+license.workspace = true
+
+[dependencies]
+myrtle-dps-formulas.workspace = true
+myrtle-gamedata-raw.workspace = true
+serde.workspace = true
+
+[lints]
+workspace = true

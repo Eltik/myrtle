@@ -1,6 +1,10 @@
 [workspace]
 resolver = "3"
-members = ["crates/gamedata","crates/gamedata-raw",
+members = [
+    "crates/dps-formulas",
+    "crates/engine-dps",
+    "crates/gamedata",
+    "crates/gamedata-raw",
     "crates/storage",
     "crates/types",
     "xtask",

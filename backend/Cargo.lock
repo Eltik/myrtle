@@ -1069,6 +1069,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "myrtle-dps-formulas"
+version = "0.1.0"
+dependencies = [
+ "myrtle-gamedata-raw",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "myrtle-engine-dps"
+version = "0.1.0"
+dependencies = [
+ "myrtle-dps-formulas",
+ "myrtle-gamedata-raw",
+ "serde",
+]
+
+[[package]]
 name = "myrtle-gamedata"
 version = "0.1.0"
 dependencies = [
