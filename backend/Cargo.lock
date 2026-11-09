@@ -1130,6 +1130,7 @@ version = "0.1.0"
 dependencies = [
  "myrtle-dps-formulas",
  "myrtle-engine-dps",
+ "myrtle-engine-grade",
  "myrtle-gamedata",
  "myrtle-gamedata-raw",
  "myrtle-testkit",

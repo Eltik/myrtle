@@ -16,6 +16,7 @@ myrtle-types.workspace = true
 serde.workspace = true
 myrtle-dps-formulas.workspace = true
 myrtle-engine-dps.workspace = true
+myrtle-engine-grade.workspace = true
 myrtle-testkit.workspace = true
 serde_json.workspace = true
 
