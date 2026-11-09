@@ -1125,6 +1125,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "myrtle-parity"
+version = "0.1.0"
+dependencies = [
+ "myrtle-dps-formulas",
+ "myrtle-engine-dps",
+ "myrtle-gamedata",
+ "myrtle-gamedata-raw",
+ "myrtle-testkit",
+ "myrtle-types",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "myrtle-storage"
 version = "0.1.0"
 dependencies = [

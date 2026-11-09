@@ -7,6 +7,7 @@ members = [
     "crates/gamedata-raw",
     "crates/storage",
     "crates/types",
+    "crates/parity",
     "xtask",
 ]
 # default-members = ["crates/api", "crates/worker", "crates/cli"]

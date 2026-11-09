@@ -1,0 +1,23 @@
+[package]
+name = "myrtle-parity"
+description = "tools: DPS parity dumps against main and the Python reference"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+license.workspace = true
+
+[dependencies]
+
+[dev-dependencies]
+myrtle-gamedata.workspace = true
+myrtle-gamedata-raw.workspace = true
+myrtle-types.workspace = true
+serde.workspace = true
+myrtle-dps-formulas.workspace = true
+myrtle-engine-dps.workspace = true
+myrtle-testkit.workspace = true
+serde_json.workspace = true
+
+[lints]
+workspace = true
