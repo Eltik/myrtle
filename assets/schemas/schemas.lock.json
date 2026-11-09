@@ -1,31 +1,33 @@
 {
   "client": {
-    "version": "2.7.81",
-    "generated_at": "2026-10-28T22:51:19Z",
-    "game_assembly_sha256": "583b04ff4d1b1a4b35eaf09d77d936408c25447c9e345ef0463d814b6a123fc5",
-    "metadata_sha256": "d3fede171f92740a6f5dc053c58c7013d3c962db764ad1f05cbe977c074fcd1f"
+    "version": "2.7.91",
+    "generated_at": "2026-11-08T22:19:34Z",
+    "game_assembly_sha256": "cf7956bf88a61986859ef55c026d231713e2d12cf69ffd9a19779ab491cf76ff",
+    "metadata_sha256": "e58fb854ae519bc22f7d8bc7ac83502425a51b896a907a3374f5215202f9caa5"
   },
-  "type_changes": [],
+  "type_changes": [
+    "stage_table: clz_Torappu_StorylineConstData.recommendHideGuideGroupId: string -> [string]"
+  ],
   "flatc": "25.12.19",
   "servers": {
     "cn": {
-      "resVersion": "26-10-22-14-02-11-51447808"
+      "resVersion": "26-11-06-12-56-09-07186384"
     },
     "en": {
-      "resVersion": "26-10-26-10-03-17_824ce7"
+      "resVersion": "26-11-02-05-12-02_1cd3b6"
     },
     "jp": {
-      "resVersion": "26-10-26-10-03-42_7c52ab"
+      "resVersion": "26-10-28-09-37-36_4fc3dd"
     },
     "kr": {
-      "resVersion": "26-10-26-10-31-28_9f22b2"
+      "resVersion": "26-10-28-10-16-28_ad0867"
     }
   },
   "tables": {
     "activity_table": {
       "cn": {
-        "source": "client@2.7.81",
-        "sha256": "5f9092761c6887fa3f56d1dd20d6e71b3b2245fe2ac621712c94bcff9cffb4e7",
+        "source": "client@2.7.91",
+        "sha256": "b3687fc78c73e353827ccebd6abdbda84452256a89f38e13276d85ff3e5f092d",
         "verified": {
           "cn": true
         }
@@ -42,8 +44,8 @@
     },
     "arkvent_table": {
       "cn": {
-        "source": "client@2.7.81",
-        "sha256": "6a5591293cf4cce2ed8a24bd58132daa245896974e3378cd2399c43c8e764a82",
+        "source": "client@2.7.91",
+        "sha256": "f37b01cc6b96e46d63d9d712019e16dbcbc47df77c92c928552f305020dc0998",
         "verified": {
           "cn": true
         }
@@ -52,8 +54,8 @@
     },
     "audio_data": {
       "cn": {
-        "source": "client@2.7.81",
-        "sha256": "cfaabd38e2c462543ca7e454f045917c4cbe4da205662d8182edff8d7c999cbd",
+        "source": "client@2.7.91",
+        "sha256": "dd544423c520ac5f460c003ffee19e87ac1503073f386b021e9bdcdd002b2f5f",
         "verified": {
           "cn": true
         }
@@ -69,8 +71,8 @@
     },
     "bake_muzzle_data": {
       "cn": {
-        "source": "client@2.7.81",
-        "sha256": "4c12c818ed9f86588d170c9947bf5e2385d925e965192098963c817f8c3b3e55",
+        "source": "client@2.7.91",
+        "sha256": "b703f6b977340e8567b68eb58c89fa9d92bbeb658a8d0e64e4ea8aadb8f876c6",
         "verified": {},
         "note": "absent from the cn bundles"
       },
@@ -78,8 +80,8 @@
     },
     "battle_equip_table": {
       "cn": {
-        "source": "client@2.7.81",
-        "sha256": "4ec6f472014619452f7ea9c63af1e95980a522ac6df706748074aeb2a4db4b2d",
+        "source": "client@2.7.91",
+        "sha256": "e9f0202545947e4eb681df25a722c14d72ba17806130b680499a3e15751041b2",
         "verified": {
           "cn": true
         }
@@ -95,8 +97,8 @@
     },
     "buff_table": {
       "cn": {
-        "source": "client@2.7.81",
-        "sha256": "5d4eb640fd65aac050a5a6bf2716ddc9626d35681f761fd5b440c2b95c9808a8",
+        "source": "client@2.7.91",
+        "sha256": "139f2bf9479fb42ca4754433433d60e2ca17b08984940a87a9098df78281b9a1",
         "verified": {
           "cn": true
         }
@@ -113,8 +115,8 @@
     },
     "building_data": {
       "cn": {
-        "source": "client@2.7.81",
-        "sha256": "90a65421a947ab1cf3b82dc476c08c80fba5b3c054dbfd744bcfa644330f9fb6",
+        "source": "client@2.7.91",
+        "sha256": "4dc497a0146a713189411ea92695a91212278efa304859fc7b5f4d0921432b29",
         "verified": {
           "cn": true
         }
@@ -131,8 +133,8 @@
     },
     "building_local_data": {
       "cn": {
-        "source": "client@2.7.81",
-        "sha256": "07b45a75c98d538dc654a449fd3b144763630be3e40e0e5e3ec9ac7f45570a2e",
+        "source": "client@2.7.91",
+        "sha256": "0931ecd5fdddcb2f22dc8e5abe86be0f8ddf1c5207025545cf2eb294c1a5c47d",
         "verified": {
           "cn": true
         }
@@ -148,8 +150,8 @@
     },
     "campaign_table": {
       "cn": {
-        "source": "client@2.7.81",
-        "sha256": "e1bb3bf59c0e91ff9e130d2fa4d33634026baa6955c3d7ac30b05e6ecfe46392",
+        "source": "client@2.7.91",
+        "sha256": "90127216424b1693eb4bdf4376e2186975e66cff0dc4fce2b18a5f477f33d5f1",
         "verified": {
           "cn": true
         }
@@ -165,8 +167,8 @@
     },
     "chapter_table": {
       "cn": {
-        "source": "client@2.7.81",
-        "sha256": "119b8b624516b24e35f3109a7a94ea452cc4717923065b46c78ba3d0887529f2",
+        "source": "client@2.7.91",
+        "sha256": "067642322b5b89dc35983e1fac28faa8eedd716c43a41d6b1d1ab0e31d0a87b3",
         "verified": {
           "cn": true
         }
@@ -182,8 +184,8 @@
     },
     "char_master_table": {
       "cn": {
-        "source": "client@2.7.81",
-        "sha256": "e4cd2e1e8a0511c43f91f5aeb5315f019b97b1210aed79d88cb126d59c44be5c",
+        "source": "client@2.7.91",
+        "sha256": "d96d12e30674e7d9cfff485531498e902646e1e1ff8ac2fe1502e0f147778f3e",
         "verified": {
           "cn": true
         }
@@ -199,8 +201,8 @@
     },
     "char_meta_table": {
       "cn": {
-        "source": "client@2.7.81",
-        "sha256": "ea987be9f6ec780af650403582dd669b6edd8071db460378a52763592e6356c8",
+        "source": "client@2.7.91",
+        "sha256": "43243932fa5f1ae399df15eb69ace8d626f06ba9b63da99373505028fe36d92d",
         "verified": {
           "cn": true
         }
@@ -216,8 +218,8 @@
     },
     "char_patch_table": {
       "cn": {
-        "source": "client@2.7.81",
-        "sha256": "3a5eb51deb51d5042a0214fd0e5ea30d25891a8be72b0d63aae98dcc6238b282",
+        "source": "client@2.7.91",
+        "sha256": "d6149351c7bccfee3b134bd2e989796101b009664349f16c205d1af8624d4b4f",
         "verified": {
           "cn": true
         }
@@ -233,8 +235,8 @@
     },
     "character_table": {
       "cn": {
-        "source": "client@2.7.81",
-        "sha256": "10b0d15c07839c00e11c2ae7cf76678521ad0209d2c2ecd9e3a0fb4df06ccb9d",
+        "source": "client@2.7.91",
+        "sha256": "6325b7c275cff09be2c5d295ed3c5e588b71a5bf084b16fb73821dc8c15f1973",
         "verified": {
           "cn": true
         }
@@ -250,14 +252,15 @@
     },
     "charm_table": {
       "cn": {
-        "source": "client@2.7.81",
-        "sha256": "8098f062a01f89ffdcf30251fcfe35620fc92965e05a87700885ebad51d81006",
+        "source": "client@2.7.91",
+        "sha256": "cb420ca101db77bcb0226b55686452e8bc7865d37ad1fa7ab1848cdbef55fb78",
         "verified": {
           "cn": true
         }
       },
       "yostar": {
-        "source": "same-as-cn",
+        "source": "history/charm_table/2026-01-09_2.6.91.fbs",
+        "sha256": "0e6baed68596415df965779e59d81476991e1b484f0279826a3393ac3c69ccc5",
         "verified": {
           "en": true,
           "jp": true,
@@ -267,8 +270,8 @@
     },
     "charword_table": {
       "cn": {
-        "source": "client@2.7.81",
-        "sha256": "50e51601bd3285afde3ab4b38d0c8d19957fc0fa515a47b3526e4321a556bb8a",
+        "source": "client@2.7.91",
+        "sha256": "269949e68a987dac9c371cf1bafc0628d0bcb67dbddc0bbd3c3443157db924be",
         "verified": {
           "cn": true
         }
@@ -284,8 +287,8 @@
     },
     "checkin_table": {
       "cn": {
-        "source": "client@2.7.81",
-        "sha256": "8bf1a139d596e256959317bdedf539770c666ca091c23b5b11907aab696e4e8f",
+        "source": "client@2.7.91",
+        "sha256": "6a414a1fd0a4abe0ae6dd0926c609ba51dd7a4b3d8c3f74f7d2f5c1e81d27e47",
         "verified": {
           "cn": true
         }
@@ -301,14 +304,15 @@
     },
     "climb_tower_table": {
       "cn": {
-        "source": "client@2.7.81",
-        "sha256": "cab016eb14b2971844aed6eb538c94200f82626871d0aeafc403d24aaebb2027",
+        "source": "client@2.7.91",
+        "sha256": "19f5a553a3e1ed36ebee384536313651219612d62519167c47b74c540f385a7b",
         "verified": {
           "cn": true
         }
       },
       "yostar": {
-        "source": "same-as-cn",
+        "source": "history/climb_tower_table/2026-09-04_2.7.71.fbs",
+        "sha256": "c6d1770e072686c4542895b3ca0e93e4ef26e06caf4df5775fbc747229b63011",
         "verified": {
           "en": true,
           "jp": true,
@@ -318,8 +322,8 @@
     },
     "clue_data": {
       "cn": {
-        "source": "client@2.7.81",
-        "sha256": "0d697430791ae7e96d419452bf31323484dc413c387c0c81d55ec9d8b0302303",
+        "source": "client@2.7.91",
+        "sha256": "2447e4b03ac98e35e377ad6285ee1df2716bb99096a10cb715a8d4099de40152",
         "verified": {
           "cn": true
         }
@@ -335,8 +339,8 @@
     },
     "cooperate_battle_table": {
       "cn": {
-        "source": "client@2.7.81",
-        "sha256": "637b406e767e731442e62e2bc20f43d287acf333ad2ab60f3259eae9f448ef80",
+        "source": "client@2.7.91",
+        "sha256": "5c01dbe6ffa1b35135b2bd09cdcdca5709b6f68045ec6dc256b2123aa529860c",
         "verified": {
           "cn": true
         }
@@ -352,8 +356,8 @@
     },
     "crisis_table": {
       "cn": {
-        "source": "client@2.7.81",
-        "sha256": "a7520cd880aed28c87f2ed824a169b8a20ab8f088e345ac6f1835f9fa9290a99",
+        "source": "client@2.7.91",
+        "sha256": "7243cb7b12878ffeb4aaa52c171e8608683b319c7c3f264b207d1b00ddcd119d",
         "verified": {
           "cn": true
         }
@@ -369,14 +373,15 @@
     },
     "crisis_v2_table": {
       "cn": {
-        "source": "client@2.7.81",
-        "sha256": "2dfcfc8be24d33554660cb63725504a27fa18bc144cd18626f0424b82b0682ae",
+        "source": "client@2.7.91",
+        "sha256": "e6b60cb145789c0ef5be0de703ca60a93b0915e83c08c34ec300003a0f563a11",
         "verified": {
           "cn": true
         }
       },
       "yostar": {
-        "source": "same-as-cn",
+        "source": "history/crisis_v2_table/2026-09-04_2.7.71.fbs",
+        "sha256": "bb3eff50e788110a5fded49f27f41f29dfa9597650db48ab458e16e213adf89e",
         "verified": {
           "en": true,
           "jp": true,
@@ -386,8 +391,8 @@
     },
     "display_meta_table": {
       "cn": {
-        "source": "client@2.7.81",
-        "sha256": "99c29b91e252658c2bc5ae8212b6c8355f8847883778fff6765eeabf008a0a97",
+        "source": "client@2.7.91",
+        "sha256": "8d75f0ac5b3f8d2829f208032575203cf7fada89fb46f4149b2c326aff3656b1",
         "verified": {
           "cn": true
         }
@@ -404,14 +409,15 @@
     },
     "enemy_database": {
       "cn": {
-        "source": "client@2.7.81",
-        "sha256": "7b6222d043a97a3a95d97e48d4b3dc10fe3f82a9962e9f6e98cd978388afb2b7",
+        "source": "client@2.7.91",
+        "sha256": "88225a13cb4021041d921417883b5ad69b5a4732780fa95fc63c1ad21800b139",
         "verified": {
           "cn": true
         }
       },
       "yostar": {
-        "source": "same-as-cn",
+        "source": "history/enemy_database/2026-08-01_2.7.61.fbs",
+        "sha256": "89eae554c99674d63e1c1a23089d1486609ed22dd2f366d4beed89fe6f20a133",
         "verified": {
           "en": true,
           "jp": true,
@@ -421,8 +427,8 @@
     },
     "enemy_handbook_table": {
       "cn": {
-        "source": "client@2.7.81",
-        "sha256": "5cf4ab26ed168d7e182e678329f22839b59ea34183be1c8bde5de17505579a02",
+        "source": "client@2.7.91",
+        "sha256": "0870b086aeb1a3208341040cbcf79ddfbddd6d80e2b3ed67a8d3a33611c0e06b",
         "verified": {
           "cn": true
         }
@@ -438,8 +444,8 @@
     },
     "ep_breakbuff_table": {
       "cn": {
-        "source": "client@2.7.81",
-        "sha256": "da53b9b0bc779e886146bc14f504fc0aefc9ca760c727bb5e803b7eecd296788",
+        "source": "client@2.7.91",
+        "sha256": "87300507baeda111378ac9ed27b0cd469696fbb9e870bf433892d72005cbf3d7",
         "verified": {
           "cn": true
         }
@@ -455,8 +461,8 @@
     },
     "extra_battlelog_table": {
       "cn": {
-        "source": "client@2.7.81",
-        "sha256": "28ce06283c39da902306a292c253a0805b964f147873dab77635129802aeca05",
+        "source": "client@2.7.91",
+        "sha256": "9b2688395919ac54c437d3ffab989f5e82785c483499eb5e023a1a442f02930d",
         "verified": {
           "cn": true
         }
@@ -472,8 +478,8 @@
     },
     "favor_table": {
       "cn": {
-        "source": "client@2.7.81",
-        "sha256": "11c37cc291717295c096d374429b67e02706222ce831b27be72ed5c2df9c84dc",
+        "source": "client@2.7.91",
+        "sha256": "9506df69cea803c391520cf62f35f7f615951e410c4b802db74547b195b938ff",
         "verified": {
           "cn": true
         }
@@ -489,8 +495,8 @@
     },
     "gacha_table": {
       "cn": {
-        "source": "client@2.7.81",
-        "sha256": "551577dd2b63b058fa139167f9cedfb0dad2a3fa1991b93320ac40ac74c99762",
+        "source": "client@2.7.91",
+        "sha256": "7af890b35a04b45957bd125c5d4fefc7cef46c5e3e72960ca685d1311a053b08",
         "verified": {
           "cn": true
         }
@@ -506,8 +512,8 @@
     },
     "gamedata_const": {
       "cn": {
-        "source": "client@2.7.81",
-        "sha256": "dc08e73a8016558eea564b6bf6895273948d298c17208f2120cb1c37f5c45e71",
+        "source": "client@2.7.91",
+        "sha256": "ea0579a53a1f58c1c0cc9eb70b9bf48c47668f83674613c6adda68d4c525a210",
         "verified": {
           "cn": true
         }
@@ -523,8 +529,8 @@
     },
     "handbook_info_table": {
       "cn": {
-        "source": "client@2.7.81",
-        "sha256": "ba7cc10ba27a0b90f9bd32f5ab93e0ab2da45a69e370637de42686b32b515dc0",
+        "source": "client@2.7.91",
+        "sha256": "0f7eb9666bd317f525c5978b58b9805dd8150b426d3da4706a4a4e94ea63abcf",
         "verified": {
           "cn": true
         }
@@ -540,8 +546,8 @@
     },
     "handbook_team_table": {
       "cn": {
-        "source": "client@2.7.81",
-        "sha256": "91169ca3a36e7448b6c42ff92e98cc726e7fef055fc031abb6c60ba277c24395",
+        "source": "client@2.7.91",
+        "sha256": "85886b91d617d7deb7c4adc3e67d15050bb452818b639b65cd691ff558e7c568",
         "verified": {
           "cn": true
         }
@@ -557,8 +563,8 @@
     },
     "hotupdate_meta_table": {
       "cn": {
-        "source": "client@2.7.81",
-        "sha256": "e5c890e394f902648a695af91859b32d9f8b12d62fdbe2121d82a18196d43a3d",
+        "source": "client@2.7.91",
+        "sha256": "d97e0beda7045570acaa501b6c332ffa501d163f06c50e6cd5e9806f43d6b5c7",
         "verified": {
           "cn": true
         }
@@ -574,8 +580,8 @@
     },
     "init_text": {
       "cn": {
-        "source": "client@2.7.81",
-        "sha256": "877b08aadfdf59998beef89c28df1516503734cc4c05d690dba9dd6dabdcaaf4",
+        "source": "client@2.7.91",
+        "sha256": "22473a3abb9801a6018ee24250f3b97c72f4c776f4f2fec3f15b3b1bca6362f4",
         "verified": {
           "cn": true
         }
@@ -591,8 +597,8 @@
     },
     "item_table": {
       "cn": {
-        "source": "client@2.7.81",
-        "sha256": "49b3bd0c0cb45851ac4e47bfe50b4b60a9fd4e0f7aad01ccea9fe561b89963f9",
+        "source": "client@2.7.91",
+        "sha256": "c59e363f5f6bd32fe12c6b34528a978b5f6dbfc4b1838dd17149cca424b3f530",
         "verified": {
           "cn": true
         }
@@ -609,8 +615,8 @@
     },
     "legion_mode_buff_table": {
       "cn": {
-        "source": "client@2.7.81",
-        "sha256": "0dbf85a2675453933d0bd3fdc1b32a08448be255f0688887e0b13793a694668e",
+        "source": "client@2.7.91",
+        "sha256": "9e941c5f58c5161dd734840bf7f1bd15246f7e83e7c506958d217229020e3104",
         "verified": {
           "cn": true
         }
@@ -626,8 +632,8 @@
     },
     "level_script_table": {
       "cn": {
-        "source": "client@2.7.81",
-        "sha256": "49066f2c188c8aae5680e4059d4809102efe3f96bd7c6fe9d4903a5b24505b3b",
+        "source": "client@2.7.91",
+        "sha256": "cf071e1ab47e48cb8ea9dc65f0f217dd54116abaf981d660d2638d8b0747ba00",
         "verified": {
           "cn": true
         }
@@ -643,8 +649,8 @@
     },
     "main_text": {
       "cn": {
-        "source": "client@2.7.81",
-        "sha256": "877b08aadfdf59998beef89c28df1516503734cc4c05d690dba9dd6dabdcaaf4",
+        "source": "client@2.7.91",
+        "sha256": "22473a3abb9801a6018ee24250f3b97c72f4c776f4f2fec3f15b3b1bca6362f4",
         "verified": {
           "cn": true
         }
@@ -660,8 +666,8 @@
     },
     "medal_table": {
       "cn": {
-        "source": "client@2.7.81",
-        "sha256": "1d7c00b45cd926d1106eaad41181852b6c5bd432d156086dbefd5907bfa090b2",
+        "source": "client@2.7.91",
+        "sha256": "3c2f6ab3965bc08d135e31e9fcea3daa54751561550706a94a4487fcaa5abf0d",
         "verified": {
           "cn": true
         }
@@ -677,8 +683,8 @@
     },
     "meta_ui_table": {
       "cn": {
-        "source": "client@2.7.81",
-        "sha256": "c6a31b58666d7d202b9244f053d99b8b336419658d67ce4442471415f7935ec8",
+        "source": "client@2.7.91",
+        "sha256": "7fb904509ce73ca0a49cbc1ac267307ff3ae366e0a6a6da7b0a9b17f9ad534ab",
         "verified": {
           "cn": true
         }
@@ -694,8 +700,8 @@
     },
     "mission_table": {
       "cn": {
-        "source": "client@2.7.81",
-        "sha256": "637ebd09a22b1608b7df6ba529b8417a653f0bac935a34d3a7e949c61a711612",
+        "source": "client@2.7.91",
+        "sha256": "7658a77fa152388aae8371d02079594d9b4fbd139ef65d825b192e6912935039",
         "verified": {
           "cn": true
         }
@@ -711,8 +717,8 @@
     },
     "open_server_table": {
       "cn": {
-        "source": "client@2.7.81",
-        "sha256": "93c81ff2c75e1db507e6799dc37b0521b04c3f0f6241babf25fa2e9379f78875",
+        "source": "client@2.7.91",
+        "sha256": "8ae8b50ca625aa001717e630b903dd5d3f39d7ebc352036e56e6d5d4aa6ae94c",
         "verified": {
           "cn": true
         }
@@ -728,8 +734,8 @@
     },
     "prts___levels": {
       "cn": {
-        "source": "client@2.7.81",
-        "sha256": "419a98132be730536653a00d5321a2e31709fc6ec9e4f24b2b5c9c3fe10ac6b2",
+        "source": "client@2.7.91",
+        "sha256": "34f7f1168a73879e4f112db0cf8c9cb9397803398b1b4aa943c42fc4c0725e41",
         "verified": {
           "cn": true
         }
@@ -745,8 +751,8 @@
     },
     "replicate_table": {
       "cn": {
-        "source": "client@2.7.81",
-        "sha256": "cf3dd8b709a1f7a8ad98d31ea4b3bbb2b25dfcabb8cd4e8112b11181b6f15ce9",
+        "source": "client@2.7.91",
+        "sha256": "c0c81d65bba1a386cf8104a8e3aeed626c677574d2c58eee58f3691a3d04f2d8",
         "verified": {
           "cn": true
         }
@@ -762,8 +768,8 @@
     },
     "resource_manifest": {
       "cn": {
-        "source": "client@2.7.81",
-        "sha256": "27d53c28a4c834268311180b2059922c529384a11423596461329d1bad502118",
+        "source": "client@2.7.91",
+        "sha256": "c2c56062f78f430cd58e85391f4f06b46d1790dc15766a951d23edeeeaad5866",
         "verified": {},
         "note": "absent from the cn bundles"
       },
@@ -771,8 +777,8 @@
     },
     "retro_table": {
       "cn": {
-        "source": "client@2.7.81",
-        "sha256": "917561df846e26ef1ad2aef383a86586a6a7391a2dfb4e89b7f37774ec4498ae",
+        "source": "client@2.7.91",
+        "sha256": "c89736395c4dd932a5678a00fc82385df5586bd6cb108297158e65145c7c84d3",
         "verified": {
           "cn": true
         }
@@ -789,8 +795,8 @@
     },
     "roguelike_topic_table": {
       "cn": {
-        "source": "client@2.7.81",
-        "sha256": "afa1931beddf41d38c721bc7a59355fd2c0f759f81129f135f4b6984c2a7dc49",
+        "source": "client@2.7.91",
+        "sha256": "4ad2144b11a29ed129d8c1e2b050574228b3105743c6f0013b41b812bd4cde1c",
         "verified": {
           "cn": true
         }
@@ -807,14 +813,15 @@
     },
     "sandbox_perm_table": {
       "cn": {
-        "source": "client@2.7.81",
-        "sha256": "90cc03c56c8edafa6958710baf2dfbed0035eb53a727ee96c7862c86568da406",
+        "source": "client@2.7.91",
+        "sha256": "ee19fc8aedfcfb2dab40c798e1145d31f71eff7ee5037a3f4b007324b62997c7",
         "verified": {
           "cn": true
         }
       },
       "yostar": {
-        "source": "same-as-cn",
+        "source": "history/sandbox_perm_table/2026-09-04_2.7.71.fbs",
+        "sha256": "6347730b4ab8ebf504ede48855169b435e747d6e87679d4b72d0aec026b68e72",
         "verified": {
           "en": true,
           "jp": true,
@@ -833,8 +840,8 @@
     },
     "shop_client_table": {
       "cn": {
-        "source": "client@2.7.81",
-        "sha256": "4c7d0d44ff31bb4ddc19722b7ca3e42ce885227f18f80c03cff7a469c387e07b",
+        "source": "client@2.7.91",
+        "sha256": "e4fc83cbb8938ecd2a1e573ccaf6133e87cc0c42537f697882eeae289e2a899b",
         "verified": {
           "cn": true
         }
@@ -850,8 +857,8 @@
     },
     "skill_table": {
       "cn": {
-        "source": "client@2.7.81",
-        "sha256": "78b997239ca2e434c2f784f5f90b5e78f2aa634e6adfe99b58b90d1d6031cc5d",
+        "source": "client@2.7.91",
+        "sha256": "2b3f66cb5af085f10fa5c06075665589d5d922cf89eadf0e3b99e197d664d0ef",
         "verified": {
           "cn": true
         }
@@ -867,8 +874,8 @@
     },
     "skin_table": {
       "cn": {
-        "source": "client@2.7.81",
-        "sha256": "eb64d90a722004bca8b9143eb576b861a67c69fa0800d931ef41d2ae002de64e",
+        "source": "client@2.7.91",
+        "sha256": "171ec16b90dab7d68c82ded732b70941834ae7c2c8beb9c6938bc4a7ceae7319",
         "verified": {
           "cn": true
         }
@@ -884,8 +891,8 @@
     },
     "special_operator_table": {
       "cn": {
-        "source": "client@2.7.81",
-        "sha256": "e150b7e79403be37582d92a8e5c8de38fd9560f5e73409c074fe33563f97e43d",
+        "source": "client@2.7.91",
+        "sha256": "a00adee589a022b60c27d6d699e8662c405f5a57f70688fa2506da70615708a0",
         "verified": {
           "cn": true
         }
@@ -901,8 +908,8 @@
     },
     "stage_table": {
       "cn": {
-        "source": "client@2.7.81",
-        "sha256": "0682603cb056d4f02550c69218aaf24ad85239f855e6bd5653b17239942dca46",
+        "source": "client@2.7.91",
+        "sha256": "b73ec7c179fe8e23b54d82de4c27c676fc2c1932cbd8758f43ae3d04bd40341d",
         "verified": {
           "cn": true
         }
@@ -919,8 +926,8 @@
     },
     "story_review_meta_table": {
       "cn": {
-        "source": "client@2.7.81",
-        "sha256": "437553ebc55cedb94a6aa226f73f0cd20cc0226c888ee153ce3a3616352cd781",
+        "source": "client@2.7.91",
+        "sha256": "c43697ac801ec0ac229deec15061d415e3d9ee31487edb69ca9d44e1b380b13e",
         "verified": {
           "cn": true
         }
@@ -936,8 +943,8 @@
     },
     "story_review_table": {
       "cn": {
-        "source": "client@2.7.81",
-        "sha256": "270ca28f55a3ce7c4f5b39316cf68d168fa6feffbe9b34a6a582d739f026100c",
+        "source": "client@2.7.91",
+        "sha256": "cff81f0d03ed421e489a64677b9ded105faf8340800c9cda078f0fea83ae6c3e",
         "verified": {
           "cn": true
         }
@@ -953,8 +960,8 @@
     },
     "story_table": {
       "cn": {
-        "source": "client@2.7.81",
-        "sha256": "74644d00c4b95055872acaafefc149abb7e4bfdc6f325fcedc06dc817a59296e",
+        "source": "client@2.7.91",
+        "sha256": "de7210032c851aae1d32164a091979a5bca5a149aeb3008a31f576eefe38287d",
         "verified": {
           "cn": true
         }
@@ -970,8 +977,8 @@
     },
     "tip_table": {
       "cn": {
-        "source": "client@2.7.81",
-        "sha256": "f8b3b7c730b9fb55e31f61eef5614a0c223a917f5b36f3160e55fcf13b1c6a23",
+        "source": "client@2.7.91",
+        "sha256": "5447c04b3d890c0a0f6e1c30c93ddd86c3d1cade6b2b3e9fab72ccf7a9ce9ec2",
         "verified": {
           "cn": true
         }
@@ -987,8 +994,8 @@
     },
     "token_table": {
       "cn": {
-        "source": "client@2.7.81",
-        "sha256": "10b0d15c07839c00e11c2ae7cf76678521ad0209d2c2ecd9e3a0fb4df06ccb9d",
+        "source": "client@2.7.91",
+        "sha256": "6325b7c275cff09be2c5d295ed3c5e588b71a5bf084b16fb73821dc8c15f1973",
         "verified": {
           "cn": true
         }
@@ -1004,8 +1011,8 @@
     },
     "uniequip_table": {
       "cn": {
-        "source": "client@2.7.81",
-        "sha256": "6963bdd3ce1e13ddc3a80c3d3615b66ab203161557cfad7fef5ac2fac85b35e1",
+        "source": "client@2.7.91",
+        "sha256": "6c4174d2f12d0756802b29b4353e9c7e9a9bf71b970a008709fe0a9744a89338",
         "verified": {
           "cn": true
         }
@@ -1021,8 +1028,8 @@
     },
     "zone_table": {
       "cn": {
-        "source": "client@2.7.81",
-        "sha256": "6c4874c89ac70442dd4ffb2a4a223158b5c6862d9f2401efb093bc8d68848176",
+        "source": "client@2.7.91",
+        "sha256": "dacfa2cf2add3072c852c3a4811c761b449705edd22935fdba0fba88c38f9730",
         "verified": {
           "cn": true
         }

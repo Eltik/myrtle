@@ -126,10 +126,15 @@ fn has_yostar_schema(schema_type: &str) -> bool {
         "activity_table"
             | "buff_table"
             | "building_data"
+            | "charm_table"
+            | "climb_tower_table"
+            | "crisis_v2_table"
             | "display_meta_table"
+            | "enemy_database"
             | "item_table"
             | "retro_table"
             | "roguelike_topic_table"
+            | "sandbox_perm_table"
             | "stage_table"
     )
 }
@@ -337,7 +342,16 @@ fn verify_schemas(
                 use crate::generated_fbs::charm_table_generated::root_as_clz_torappu_charm_data_with_opts;
                 root_as_clz_torappu_charm_data_with_opts(&opts, data).err().map(|e| first_line(&e))
             };
-            (cn_err, YostarVerdict::NotRun)
+            if cn_err.is_none() && !full {
+                // The CN schema verified and the caller only wants
+                // the routing decision: skip the second verify.
+                return (None, YostarVerdict::NotRun);
+            }
+            let yostar_err = {
+                use crate::generated_fbs_yostar::charm_table_generated::root_as_clz_torappu_charm_data_with_opts;
+                root_as_clz_torappu_charm_data_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            (cn_err, yostar_err.into())
         }
         "charword_table" => {
             let cn_err = {
@@ -358,7 +372,16 @@ fn verify_schemas(
                 use crate::generated_fbs::climb_tower_table_generated::root_as_clz_torappu_climb_tower_table_with_opts;
                 root_as_clz_torappu_climb_tower_table_with_opts(&opts, data).err().map(|e| first_line(&e))
             };
-            (cn_err, YostarVerdict::NotRun)
+            if cn_err.is_none() && !full {
+                // The CN schema verified and the caller only wants
+                // the routing decision: skip the second verify.
+                return (None, YostarVerdict::NotRun);
+            }
+            let yostar_err = {
+                use crate::generated_fbs_yostar::climb_tower_table_generated::root_as_clz_torappu_climb_tower_table_with_opts;
+                root_as_clz_torappu_climb_tower_table_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            (cn_err, yostar_err.into())
         }
         "clue_data" => {
             let cn_err = {
@@ -386,7 +409,16 @@ fn verify_schemas(
                 use crate::generated_fbs::crisis_v2_table_generated::root_as_clz_torappu_crisis_v2_shared_data_with_opts;
                 root_as_clz_torappu_crisis_v2_shared_data_with_opts(&opts, data).err().map(|e| first_line(&e))
             };
-            (cn_err, YostarVerdict::NotRun)
+            if cn_err.is_none() && !full {
+                // The CN schema verified and the caller only wants
+                // the routing decision: skip the second verify.
+                return (None, YostarVerdict::NotRun);
+            }
+            let yostar_err = {
+                use crate::generated_fbs_yostar::crisis_v2_table_generated::root_as_clz_torappu_crisis_v2_shared_data_with_opts;
+                root_as_clz_torappu_crisis_v2_shared_data_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            (cn_err, yostar_err.into())
         }
         "display_meta_table" => {
             let cn_err = {
@@ -409,7 +441,16 @@ fn verify_schemas(
                 use crate::generated_fbs::enemy_database_generated::root_as_clz_torappu_enemy_database_with_opts;
                 root_as_clz_torappu_enemy_database_with_opts(&opts, data).err().map(|e| first_line(&e))
             };
-            (cn_err, YostarVerdict::NotRun)
+            if cn_err.is_none() && !full {
+                // The CN schema verified and the caller only wants
+                // the routing decision: skip the second verify.
+                return (None, YostarVerdict::NotRun);
+            }
+            let yostar_err = {
+                use crate::generated_fbs_yostar::enemy_database_generated::root_as_clz_torappu_enemy_database_with_opts;
+                root_as_clz_torappu_enemy_database_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            (cn_err, yostar_err.into())
         }
         "enemy_handbook_table" => {
             let cn_err = {
@@ -604,7 +645,16 @@ fn verify_schemas(
                 use crate::generated_fbs::sandbox_perm_table_generated::root_as_clz_torappu_sandbox_perm_table_with_opts;
                 root_as_clz_torappu_sandbox_perm_table_with_opts(&opts, data).err().map(|e| first_line(&e))
             };
-            (cn_err, YostarVerdict::NotRun)
+            if cn_err.is_none() && !full {
+                // The CN schema verified and the caller only wants
+                // the routing decision: skip the second verify.
+                return (None, YostarVerdict::NotRun);
+            }
+            let yostar_err = {
+                use crate::generated_fbs_yostar::sandbox_perm_table_generated::root_as_clz_torappu_sandbox_perm_table_with_opts;
+                root_as_clz_torappu_sandbox_perm_table_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            (cn_err, yostar_err.into())
         }
         "sandbox_table" => {
             let cn_err = {
@@ -818,9 +868,29 @@ fn decode_flatbuffer_yostar(data: &[u8], schema_type: &str) -> Result<Value, Str
                 let root = unsafe { root_as_clz_torappu_building_data_unchecked(data) };
                 Ok(root.to_json())
             }
+            "charm_table" => {
+                use crate::generated_fbs_yostar::charm_table_generated::root_as_clz_torappu_charm_data_unchecked;
+                let root = unsafe { root_as_clz_torappu_charm_data_unchecked(data) };
+                Ok(root.to_json())
+            }
+            "climb_tower_table" => {
+                use crate::generated_fbs_yostar::climb_tower_table_generated::root_as_clz_torappu_climb_tower_table_unchecked;
+                let root = unsafe { root_as_clz_torappu_climb_tower_table_unchecked(data) };
+                Ok(root.to_json())
+            }
+            "crisis_v2_table" => {
+                use crate::generated_fbs_yostar::crisis_v2_table_generated::root_as_clz_torappu_crisis_v2_shared_data_unchecked;
+                let root = unsafe { root_as_clz_torappu_crisis_v2_shared_data_unchecked(data) };
+                Ok(root.to_json())
+            }
             "display_meta_table" => {
                 use crate::generated_fbs_yostar::display_meta_table_generated::root_as_clz_torappu_display_meta_data_unchecked;
                 let root = unsafe { root_as_clz_torappu_display_meta_data_unchecked(data) };
+                Ok(root.to_json())
+            }
+            "enemy_database" => {
+                use crate::generated_fbs_yostar::enemy_database_generated::root_as_clz_torappu_enemy_database_unchecked;
+                let root = unsafe { root_as_clz_torappu_enemy_database_unchecked(data) };
                 Ok(root.to_json())
             }
             "item_table" => {
@@ -836,6 +906,11 @@ fn decode_flatbuffer_yostar(data: &[u8], schema_type: &str) -> Result<Value, Str
             "roguelike_topic_table" => {
                 use crate::generated_fbs_yostar::roguelike_topic_table_generated::root_as_clz_torappu_roguelike_topic_table_unchecked;
                 let root = unsafe { root_as_clz_torappu_roguelike_topic_table_unchecked(data) };
+                Ok(root.to_json())
+            }
+            "sandbox_perm_table" => {
+                use crate::generated_fbs_yostar::sandbox_perm_table_generated::root_as_clz_torappu_sandbox_perm_table_unchecked;
+                let root = unsafe { root_as_clz_torappu_sandbox_perm_table_unchecked(data) };
                 Ok(root.to_json())
             }
             "stage_table" => {
