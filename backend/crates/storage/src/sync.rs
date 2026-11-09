@@ -45,6 +45,9 @@ pub const STUB_GONE: &str =
     "evicted stub but the object is gone from the store; re-extract to recover";
 /// The error a stub whose object no longer matches its record fails with
 pub const STUB_CHANGED: &str = "evicted stub but the stored object no longer matches its manifest record (size or etag); re-extract to recover";
+/// The error a 0-byte file without a stub record fails with when the bucket
+/// holds a non-empty object under its key
+pub const EMPTY_OVER_OBJECT: &str = "0-byte local file over a non-empty object, and no manifest record marks it an evicted stub (was the manifest lost?); not uploaded. Restore the manifest, re-extract the file, or delete the object if the file really is empty";
 /// Retries per object
 pub const OBJECT_RETRIES: u32 = 3;
 /// First retry waits 500 ms, doubling each time
@@ -645,6 +648,19 @@ async fn process_file(
         && let Some(stub) = record.as_ref().filter(|r| r.evicted)
     {
         return stub_result(file.rel, stub.clone(), remote.as_ref());
+    }
+    if file.size == 0
+        && let Some((remote_size, _)) = remote.as_ref()
+        && *remote_size > 0
+    {
+        // A 0-byte file over a non-empty object, and no record calling it an
+        // evicted stub: most likely a stub whose manifest was lost. Uploading
+        // it would replace the only full copy with an empty one.
+        return FileResult::Failed {
+            rel: file.rel,
+            error: EMPTY_OVER_OBJECT.into(),
+            record: None,
+        };
     }
     let key = object_key(&opts.prefix, &opts.server, &file.rel);
     let md5 = match hash(&file.path, hash_sem).await {
