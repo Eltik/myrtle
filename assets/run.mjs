@@ -841,6 +841,8 @@ function runDownload({
  * @param {string} opts.inputDir - Input directory with bundles
  * @param {string} opts.outputDir - Output directory for extracted assets
  * @param {number} [opts.jobs] - Parallel extraction threads
+ * @param {string} [opts.serverKey] - Server the bundles come from (cn, en, jp, kr). On a
+ *   Yostar server the unpacker decodes a table under its Yostar schema first.
  * @param {(p: {completed: number, total: number, percent: number}) => void} [opts.onProgress]
  * @returns {Promise<{exported: number}>}
  */
@@ -848,12 +850,15 @@ function runUnpackOnce({
 	inputDir,
 	outputDir,
 	jobs = DEFAULT_THREADS,
+	serverKey,
 	onProgress,
 }) {
 	return new Promise((resolve, reject) => {
+		const args = ["extract", "-i", inputDir, "-o", outputDir, "-j", String(jobs)];
+		if (serverKey) args.push("--server", serverKey);
 		const child = spawn(
 			UNPACKER_BIN,
-			["extract", "-i", inputDir, "-o", outputDir, "-j", String(jobs)],
+			args,
 			{
 				cwd: __dirname,
 				stdio: ["ignore", "pipe", "pipe"],
@@ -1745,6 +1750,7 @@ async function runUpdate() {
 			inputDir: savedir,
 			outputDir,
 			jobs: threads,
+			serverKey,
 			onProgress: ({ completed }) => {
 				upSpinner.text = `Extracting assets… (${completed.toLocaleString()} exported so far)`;
 			},
@@ -2280,6 +2286,7 @@ async function runWebSocketServer({ nonInteractive = false, cliArgs = {} } = {})
 				inputDir: config.savedir,
 				outputDir: config.outputDir,
 				jobs: config.threads,
+				serverKey: config.serverKey,
 				onProgress: (p) => broadcast({ type: "unpack_progress", ...p }),
 				onNotice: (message) =>
 					broadcast({ type: "status", state: "unpacking", message }),
