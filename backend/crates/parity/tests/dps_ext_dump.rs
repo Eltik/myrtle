@@ -1,11 +1,3 @@
-//! Differential dump of the DPS paths the legacy grid in `parity_dump` never takes:
-//! buff zones, secondary targets and the V2 cycle model, over every formula's
-//! skills, written as bit patterns so a dump from main compares with `cmp`.
-//!
-//! `DPS_EXT_DUMP=<out> DPS_EXT_SCENARIOS=<scenarios.json> GAME_DATA_DIR=<excel dir>
-//! cargo test -p myrtle-parity --test dps_ext_dump -- --nocapture`. Skips without
-//! `DPS_EXT_DUMP`. Main's half is in the bundle's `main-side-harness.patch`.
-
 #![allow(clippy::unwrap_used, clippy::cast_possible_truncation)]
 
 use std::fmt::Write as _;

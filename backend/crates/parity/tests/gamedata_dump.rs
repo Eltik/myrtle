@@ -1,12 +1,3 @@
-//! Differential dump of the compiled game model: each top-level field of
-//! `GameModel` that main's `GameData` also has, serialized to JSON, one file per
-//! field, so main's `init_game_data` output and `gamedata::compile` output compare
-//! field by field.
-//!
-//! `GAMEDATA_DUMP=<out dir> GAMEDATA_ROOT=<dir holding gamedata/excel> [GAMEDATA_SERVER=cn]
-//! cargo test -p myrtle-parity --test gamedata_dump -- --nocapture`. Skips without
-//! `GAMEDATA_DUMP`. Prints the loader's warnings (tables that failed to parse).
-
 #![allow(clippy::unwrap_used)]
 
 use std::path::PathBuf;

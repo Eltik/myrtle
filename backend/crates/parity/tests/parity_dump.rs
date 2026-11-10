@@ -1,15 +1,3 @@
-//! Differential dump: the same case grid `backend/tests/dps_engine_test.rs` (main)
-//! walks, written as `key\tskill_dps\ttotal_damage\taverage_dps` at full f64
-//! precision, sorted, so a dump from main and a dump from here compare with `cmp`.
-//!
-//! Main writes its dump with `DPS_DUMP=<path> cargo test --test dps_engine_test`.
-//! This writes one with `DPS_DUMP=<path> GAME_DATA_DIR=<excel dir> cargo test -p
-//! myrtle-parity --test parity_dump -- --nocapture`. Without `DPS_DUMP` or
-//! without game data it skips and passes, so it is INERT in CI.
-//!
-//! The grid, the skip rules and the key format are copied from main's suite
-//! (lines 283-420 at a6f95021) so the two dumps cover the same keys.
-
 #![allow(clippy::float_cmp, clippy::too_many_lines, clippy::unwrap_used)]
 
 use std::collections::HashMap;
@@ -82,8 +70,6 @@ fn parity_dump() {
         (0.0, 1.0, 0.0, 0.7, 15.0),
     ];
 
-    // `DPS_DUMP_ALL=1` walks every formula's grid, not only the keys the
-    // fixture holds (main's suite has the same switch in this comparison only).
     let dump_all = std::env::var("DPS_DUMP_ALL").is_ok_and(|v| v == "1");
     let mut dump: Vec<String> = Vec::new();
     for (char_id, formula) in &formulas {

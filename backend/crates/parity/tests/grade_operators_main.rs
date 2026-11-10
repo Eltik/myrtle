@@ -1,12 +1,3 @@
-//! Main's `tests/grade_operators_test.rs` (a6f95021) on engine-grade: the
-//! per-dimension breakdown sums to the grade, and the 2026-09-22 and 2026-09-25
-//! reweights stay pinned against their reports. Main's three tests of the
-//! environment entry points, the improvements card and the Postgres census are
-//! left out: the rewrite has none of those yet.
-//!
-//! Reads `GAMEDATA_ROOT` (a directory holding `gamedata/excel`, optionally with
-//! `GAMEDATA_SERVER=cn`); every data test skips without it, so this is inert in CI.
-
 #![allow(
     clippy::unwrap_used,
     clippy::float_cmp,
@@ -66,8 +57,6 @@ const fn uuid_nil() -> uuid::Uuid {
     uuid::Uuid::nil()
 }
 
-/// A roster entry at the given promotion state; investment fields beyond
-/// elite/level start at their fresh-pull defaults and are overridden per test.
 fn entry(operator_id: &str, elite: i16, level: i16) -> RosterEntry {
     RosterEntry {
         user_id: uuid_nil(),
@@ -93,26 +82,20 @@ fn entry(operator_id: &str, elite: i16, level: i16) -> RosterEntry {
 fn breakdown_sums_to_the_operator_grade() {
     let game_data = some_or_skip!(game_data());
 
-    // Early-roster ids, present in every gamedata dump.
-    // 6★ mid-investment with one M3 and a leveled module.
     let mut kaltsit = entry("char_003_kalts", 2, 60);
     kaltsit.skill_level = 7;
     kaltsit.favor_point = 18000;
     kaltsit.masteries = serde_json::json!([{ "mastery": 3 }, { "mastery": 1 }, { "mastery": 0 }]);
     kaltsit.modules = serde_json::json!([{ "id": "uniequip_002_kalts", "level": 2 }]);
-    // 5★ freshly promoted to E1.
     let mut ptilopsis = entry("char_128_plosis", 1, 40);
     ptilopsis.potential = 2;
     ptilopsis.skill_level = 6;
     ptilopsis.favor_point = 8000;
-    // 3★ maxed-out (no masteries/modules exist at this rarity).
     let mut fang = entry("char_123_fang", 1, 55);
     fang.potential = 5;
     fang.skill_level = 7;
     fang.favor_point = 25000;
     let roster = vec![kaltsit, ptilopsis, fang];
-    // Keep only ids that exist in the loaded gamedata so the test doesn't
-    // silently degrade to an empty roster on a trimmed dump.
     let roster: Vec<RosterEntry> = roster
         .into_iter()
         .filter(|e| game_data.operators.contains_key(&e.operator_id))
@@ -160,9 +143,6 @@ fn breakdown_sums_to_the_operator_grade() {
     }
 }
 
-/// An owned operator is in the average from the moment it is pulled: an E0 L1
-/// roster has a full set of weight shares and earns nothing on them. Under the
-/// `GRADE_INVESTED_ONLY` kill switch the same roster is outside the grade.
 #[test]
 fn an_unraised_pull_is_in_the_denominator_unless_invested_only() {
     let game_data = some_or_skip!(game_data());
@@ -222,10 +202,6 @@ fn an_unraised_pull_is_in_the_denominator_unless_invested_only() {
 fn every_skill_at_m3_completes_the_mastery_dimension() {
     let game_data = some_or_skip!(game_data());
 
-    // Most 4★/5★ operators only ever have two skills, so "all skills at M3" is
-    // M6 for them, not M9. Scoring the milestone off the raw M3 count used to
-    // cap them at 0.75 with nothing left to buy; see the ladder in
-    // `mastery_milestone_from_levels`.
     for (operator_id, masteries) in [
         (
             "char_151_myrtle",
@@ -262,9 +238,6 @@ fn every_skill_at_m3_completes_the_mastery_dimension() {
     }
 }
 
-/// The rarity weights follow the cost of a full build (census in
-/// `rarity_to_weight_in`), and the `GRADE_RARITY_WEIGHTS=legacy` switch
-/// restores the pre-2026-09-22 numbers exactly.
 #[test]
 fn rarity_weights_follow_build_cost_and_legacy_restores_the_old_numbers() {
     use myrtle_engine_grade::operators::rarity_to_weight_in;
@@ -289,13 +262,6 @@ fn rarity_weights_follow_build_cost_and_legacy_restores_the_old_numbers() {
     assert_eq!(legacy, [1.0, 0.7, 0.4, 0.15, 0.1, 0.05]);
 }
 
-/// The 2026-09-22 report: a Mod3 on Viviana (6★, two advanced module slots)
-/// showed +0.07 and on Conviction (4★, one slot) +0.06, at a quarter of the
-/// materials (every 4★ module costs 3 blocks / 15 sticks / 5 instruments /
-/// 75k LMD against a 6★'s 12 / 60 / 20 / 300k). Per operator weight the
-/// model priced Conviction at 0.800 of Viviana; per slot with cost-based
-/// rarity weights it is 0.3625, against a cost ratio of 0.25 (the residual
-/// is the gating premium in the dimension constants).
 #[test]
 fn a_mod3_is_priced_per_slot_and_per_rarity_cost() {
     use myrtle_engine_grade::operators::{grade_operator_in, rarity_to_weight_in};
@@ -306,8 +272,6 @@ fn a_mod3_is_priced_per_slot_and_per_rarity_cost() {
         module_per_slot: false,
     };
 
-    // Grade contribution per unit of roster weight of the first Mod3, from
-    // an otherwise module-less E2 max operator.
     let mod3_gain = |op_id: &str, module_id: &str, model: ScoreModel| -> f64 {
         let op = game_data
             .operators
@@ -348,11 +312,6 @@ fn a_mod3_is_priced_per_slot_and_per_rarity_cost() {
     );
 }
 
-/// The 2026-09-25 report: Ebenholz (three advanced module slots) showed
-/// Mod +0.09 where a two-slot 6★ showed +0.07. The first Mod3 was floored at
-/// half the module axis, 37.5 of a three-slot operator's 75 module weight
-/// points, and the next two paid 12.5 and 25. Per slot, every Mod3 buys one
-/// slot's 25 of the operator's 170.
 #[test]
 fn every_mod3_of_a_three_slot_operator_is_worth_one_slot() {
     use myrtle_engine_grade::operators::grade_operator_in;

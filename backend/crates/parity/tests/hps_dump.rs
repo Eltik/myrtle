@@ -1,14 +1,3 @@
-//! Differential dump for HPS: the healer x skill x module grid main's
-//! `backend/tests/hps_engine_test.rs` walks, written as
-//! `key\tskill_hps\tbase_hps\tavg_hps` at full f64 precision, sorted, so a dump
-//! from main (`HPS_DUMP=<path> cargo test --test hps_engine_test`) and one from
-//! here compare with `cmp`.
-//!
-//! `HPS_DUMP=<path> GAME_DATA_DIR=<excel dir> cargo test -p myrtle-parity --test
-//! hps_dump -- --nocapture`. Skips and passes without `HPS_DUMP` or game data.
-//! `HPS_DUMP_ALL=1` drops the fixture-key filter (main has no such switch; the
-//! comparison against main uses the filtered grid).
-
 #![allow(clippy::unwrap_used)]
 
 use std::collections::HashMap;

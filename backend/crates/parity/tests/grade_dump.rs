@@ -1,10 +1,3 @@
-//! Differential dump of engine-grade on synthetic players, for comparison with
-//! main's graders on the same file (`gen_players.py`).
-//!
-//! `GRADE_DIFF=<players.json> GRADE_OUT=<tsv> GAMEDATA_ROOT=<dir holding
-//! gamedata/excel> [GAMEDATA_SERVER=cn] cargo test -p myrtle-parity --test
-//! grade_dump -- --nocapture`. Skips without `GRADE_DIFF`.
-
 #![allow(clippy::unwrap_used, clippy::cast_possible_truncation)]
 
 use std::collections::{HashMap, HashSet};
@@ -29,7 +22,6 @@ fn line(out: &mut String, i: usize, k: &str, v: f64) {
     writeln!(out, "{i}\t{k}\t{:016x}\t{v:?}", v.to_bits()).unwrap();
 }
 
-// SANDBOX_V2_ONLY: the sandbox grade with sandbox_1 alone.
 fn sandbox_v2_only(gd: &GradeData, p: Option<&Value>) -> f64 {
     myrtle_engine_grade::sandbox::grade_progress(p, &gd.sandbox_universe, false).total
 }
@@ -47,8 +39,6 @@ fn grade_dump() {
         _ => Server::EN,
     };
     let raw = load(&DirSource { root }, server).unwrap();
-    // engine-grade's GradeData takes gamedata-raw's SandboxUniverse, which
-    // compile does not produce (it builds gamedata's own copy of the type).
     let sandbox_universe = RawSandboxUniverse::build(&raw.sandbox.perm);
     let m = compile(raw, &CompileOptions::new(server)).unwrap().model;
     let gd = GradeData {
