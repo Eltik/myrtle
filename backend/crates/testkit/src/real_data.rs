@@ -27,12 +27,17 @@ use myrtle_gamedata_raw::tables::operator::{
 };
 use myrtle_gamedata_raw::tables::skill::{Skill, SkillTableFile};
 
-/// `GAME_DATA_DIR`, or the old suites' default
-/// (`backend/tests/dps_engine_test.rs:154-155`), relative to the crate under test.
+/// `GAME_DATA_DIR`, or the repo's EN extract, whatever directory the tests run from.
 #[must_use]
 pub fn excel_dir() -> PathBuf {
     std::env::var("GAME_DATA_DIR")
-        .unwrap_or_else(|_| "../assets/output/en/gamedata/excel".into())
+        .unwrap_or_else(|_| {
+            concat!(
+                env!("CARGO_MANIFEST_DIR"),
+                "/../../../assets/output/en/gamedata/excel"
+            )
+            .into()
+        })
         .into()
 }
 
@@ -392,15 +397,12 @@ fn enrich_module(raw: &RawModule) -> Module {
 
 // ---- Lifted for engine-base (lift-4, Oct 25 2026). The base engine reads one
 // derived operator field `dps_operators` leaves at its default: `profile`
-// (registry/parse.rs faction_tags_of, `basic_info.race`). [`base_tables`] adds it
+// (registry/tags.rs faction_tags_of, `basic_info.race`). [`base_tables`] adds it
 // with the old join (enrich/operators.rs:122-127, enrich/handbook.rs:6-17) and
 // the old parser copied verbatim from enrich/profile.rs:10-19, 116-125, 152-302
 // (`align_profiles` and `relabel`, the KR/JP reference pass, are not needed for
-// EN and are not copied). The building and consts tables are returned raw: the
-// caller sets `building.layout_terms` with
-// `myrtle_engine_base::buff_registry::layout_term_rooms(&consts)` as the old
-// loader did (core/gamedata/mod.rs:326-327); testkit cannot call engine-base
-// (engine-base's tests depend on testkit).
+// EN and are not copied). `building.layout_terms` is derived from the consts
+// table the way `gamedata::compile` derives it.
 
 use myrtle_gamedata_raw::tables::building::BuildingDataFile;
 use myrtle_gamedata_raw::tables::consts::GameDataConst;
@@ -411,7 +413,7 @@ use myrtle_gamedata_raw::tables::handbook::{
 
 /// The three tables the base engine reads (`operators`, `building_data`,
 /// `gamedata_const`), as the old loader built them (`core/gamedata/mod.rs:254-255,
-/// 274-275, 316, 333`), minus `layout_terms` (see above).
+/// 274-275, 316, 333`).
 pub fn base_tables(
     excel_dir: &Path,
 ) -> Result<(HashMap<String, Operator>, BuildingDataFile, GameDataConst), String> {
@@ -433,8 +435,9 @@ pub fn base_tables(
             .get(handbook_id)
             .and_then(|item| parse_operator_profile(&item.story_text_audio));
     }
-    let building: BuildingDataFile = load_or_default(excel_dir, "building_data");
+    let mut building: BuildingDataFile = load_or_default(excel_dir, "building_data");
     let consts: GameDataConst = load_or_default(excel_dir, "gamedata_const");
+    building.layout_terms = myrtle_gamedata::index::base_terms::layout_term_rooms(&consts);
     Ok((operators, building, consts))
 }
 

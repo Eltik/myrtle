@@ -61,10 +61,9 @@ fn assert_hand_check(case: &str, engine_value: f64, from_text: f64) {
 }
 
 fn en() -> GameData {
-    let data = std::env::var("GAME_DATA_DIR")
-        .unwrap_or_else(|_| "../assets/output/en/gamedata/excel".into());
+    let data = myrtle_testkit::real_data::excel_dir();
     let assets = std::env::var("ASSETS_DIR").unwrap_or_else(|_| "../assets/output/en".into());
-    load(&data, &assets)
+    load(&data.to_string_lossy(), &assets)
 }
 
 fn params(skill: i32, module: i32, targets: i32) -> OperatorParams {
@@ -108,10 +107,10 @@ fn hps(gd: &GameData, id: &str, p: OperatorParams) -> Metrics {
 #[test]
 #[ignore = "needs CN game data: Angelina the Mellow Wish is not in EN"]
 fn angelina_the_mellow_wish_snapshot() {
-    let data = std::env::var("DPS_HAND_CN_DATA_DIR")
-        .unwrap_or_else(|_| "../assets/output/cn/gamedata/excel".into());
-    let assets =
-        std::env::var("DPS_HAND_CN_ASSETS_DIR").unwrap_or_else(|_| "../assets/output/cn".into());
+    let cn = concat!(env!("CARGO_MANIFEST_DIR"), "/../../../assets/output/cn");
+    let data =
+        std::env::var("DPS_HAND_CN_DATA_DIR").unwrap_or_else(|_| format!("{cn}/gamedata/excel"));
+    let assets = std::env::var("DPS_HAND_CN_ASSETS_DIR").unwrap_or_else(|_| cn.into());
     let gd = load(&data, &assets);
     let id = "char_1015_aglna2";
 

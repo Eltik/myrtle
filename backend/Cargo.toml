@@ -2,7 +2,7 @@
 resolver = "3"
 members = [
     "crates/dps-formulas",
-    "crates/engine-dps", "crates/engine-grade",
+    "crates/engine-base", "crates/engine-dps", "crates/engine-grade",
     "crates/gamedata",
     "crates/gamedata-raw",
     "crates/storage",
