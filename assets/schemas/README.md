@@ -173,7 +173,9 @@ training levels) and `IsTrainingLevel` true on exactly the 2 that are
 older history version that ALSO verifies everywhere and whose field slots the choice
 shifts (`fields::slot_shifts`: an insertion, removal or swap before the end; appends,
 drops from the end and renames in place are not shifts). It probes the newest three such
-versions. Each hit goes into that table's Yostar `note` (`slot shift: ...`) and into a
+versions, none older than the median of the previous lock's Yostar history picks (the
+layouts the Yostar binaries were last seen to need): measured 2026-11-10 on EN, probing
+without that floor reported 13 tables, 10 of them for shapes from 2024 and 2025. Each hit goes into that table's Yostar `note` (`slot shift: ...`) and into a
 `## Yostar slot shifts (N)` report section. The verifier cannot say which of the two the
 Yostar client has, so nothing is decided for you and the exit code stays 0.
 

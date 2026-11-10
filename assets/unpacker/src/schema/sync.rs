@@ -718,7 +718,10 @@ fn resolve_yostar(
         let shift = effective
             .as_ref()
             .filter(|_| verified_everywhere)
-            .and_then(|eff| shifted_older_verifies(ctx, table, present, eff, hist));
+            .and_then(|eff| {
+                let floor = yostar_floor(inp.prev);
+                shifted_older_verifies(ctx, table, present, eff, hist, &floor)
+            });
         let note = [l.note.take(), pin_released, shift]
             .into_iter()
             .flatten()
@@ -732,16 +735,46 @@ fn resolve_yostar(
 /// each one is a verification pass over the Yostar bundles.
 const SHIFT_PROBES: usize = 3;
 
+/// The label (`YYYY-MM-DD_<version>`) of a `history/<stem>/<label>.fbs`
+/// source, else `None`.
+fn history_label(source: &str) -> Option<&str> {
+    source
+        .strip_prefix("history/")?
+        .rsplit_once('/')?
+        .1
+        .strip_suffix(".fbs")
+}
+
+/// How old a Yostar client can plausibly be: the median label of the previous
+/// lock's Yostar choices that are history versions (the layouts the Yostar
+/// binaries were last seen to need), or `""` (no floor) without any. Older
+/// versions are left out of the slot-shift probe: every table that changed
+/// shape years ago would otherwise be reported on every run.
+fn yostar_floor(prev: Option<&Lock>) -> String {
+    let mut labels: Vec<&str> = prev
+        .into_iter()
+        .flat_map(|l| l.tables.values())
+        .filter_map(|t| t.yostar.as_ref())
+        .filter_map(|y| history_label(&y.source))
+        .collect();
+    labels.sort_unstable();
+    labels
+        .get(labels.len() / 2)
+        .map_or_else(String::new, |l| (*l).to_string())
+}
+
 /// The note for an older history version that ALSO verifies on every present
 /// server while `chosen` shifts its slots (`fields::slot_shifts`): the verifier
 /// cannot tell which of the two the Yostar client has, so a human decides and
-/// pins. Tries the newest `SHIFT_PROBES` older versions that shift.
+/// pins. Tries the newest `SHIFT_PROBES` older versions that shift, none older
+/// than `floor` (`yostar_floor`).
 fn shifted_older_verifies(
     ctx: &Ctx<'_>,
     table: &str,
     present: &[&Server],
     chosen: &[u8],
     hist: &[Spec],
+    floor: &str,
 ) -> Option<String> {
     let start = hist
         .iter()
@@ -751,6 +784,9 @@ fn shifted_older_verifies(
     let mut found = Vec::new();
     let mut probes = 0;
     for s in &hist[start..] {
+        if history_label(&s.source).is_some_and(|l| l < floor) {
+            break;
+        }
         let shifts = fields::slot_shifts(table, &String::from_utf8_lossy(&s.bytes), &chosen_text);
         if shifts.is_empty() {
             continue;
@@ -1691,6 +1727,34 @@ mod tests {
         assert!(json.contains("\"yostar\":null"));
         let back: Lock = serde_json::from_str(&json).unwrap();
         assert!(back.tables["arkvent_table"].yostar.is_none());
+    }
+
+    #[test]
+    fn yostar_floor_is_the_median_history_pick() {
+        assert_eq!(yostar_floor(None), "");
+        let mut lock = Lock::default();
+        for (t, src) in [
+            ("a", "history/a/2026-01-09_2.6.91.fbs"),
+            ("b", "history/b/2026-07-10_2.7.51.fbs"),
+            ("c", "history/c/2026-09-04_2.7.71.fbs"),
+            ("d", "same-as-cn"),
+        ] {
+            let mut y = choice(&[("en", true)]);
+            y.source = src.into();
+            lock.tables.insert(
+                t.into(),
+                LockTable {
+                    cn: choice(&[("cn", true)]),
+                    yostar: Some(y),
+                },
+            );
+        }
+        assert_eq!(yostar_floor(Some(&lock)), "2026-07-10_2.7.51");
+        assert_eq!(
+            history_label("history/a/2026-01-09_2.6.91.fbs"),
+            Some("2026-01-09_2.6.91")
+        );
+        assert_eq!(history_label("same-as-cn"), None);
     }
 
     #[test]
