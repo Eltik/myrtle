@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { calculateResults } from "./calculator";
+import { MAX_TAGS_PER_RECRUIT } from "./constants";
 import { buildPotentials, type IRecruitmentSourceOperator } from "./derive";
 import type { IRecruitableOperator } from "./types";
 
@@ -50,6 +51,23 @@ describe("potential-asc operator sort", () => {
         const potentials = [{ kind: "stat" as const, attribute: "COST", value: -1 }];
         const [result] = calculateResults([MELEE], [op("a", 4, { potentials })], {});
         expect(result?.operators[0]?.potentials).toBe(potentials);
+    });
+});
+
+describe("combination size", () => {
+    // One operator matching all five offered tags: every subset has a non-empty
+    // pool, so only the size cap decides which combinations come back.
+    const TAGS = [MELEE, GUARD, { id: 100, name: "DPS" }, { id: 101, name: "Defense" }, { id: 102, name: "Survival" }];
+    const pool = [op("all", 4, { tagList: TAGS.map((t) => t.name) })];
+
+    it("never uses more tags than a recruit can take", () => {
+        const sizes = calculateResults(TAGS, pool).map((r) => r.tags.length);
+        expect(Math.max(...sizes)).toBe(MAX_TAGS_PER_RECRUIT);
+    });
+
+    it("still returns every one-, two- and three-tag combination of five offered tags", () => {
+        // C(5,1) + C(5,2) + C(5,3)
+        expect(calculateResults(TAGS, pool)).toHaveLength(5 + 10 + 10);
     });
 });
 

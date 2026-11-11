@@ -4,7 +4,10 @@ import type { TagType } from "./types";
 /** A key in `constants.messages.ts`; resolved by whichever component renders it. */
 export type RecruitMessageKey = keyof typeof recruitConstantsMessages & string;
 
+/** How many tags the recruitment screen offers, so how many can be entered here. */
 export const MAX_SELECTED_TAGS = 5;
+/** How many of the offered tags the game lets a single recruit use. A combination never holds more. */
+export const MAX_TAGS_PER_RECRUIT = 3;
 
 export const TAG_ID_TO_TYPE_MAP: Record<number, TagType> = {
     // Class tags (1-8)
