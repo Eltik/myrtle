@@ -1,4 +1,4 @@
-import { SENIOR_OPERATOR_TAG_ID, TOP_OPERATOR_TAG_ID } from "./constants";
+import { MAX_TAGS_PER_RECRUIT, SENIOR_OPERATOR_TAG_ID, TOP_OPERATOR_TAG_ID } from "./constants";
 import type { ICalculatorOptions, IRecruitableOperator, ITagCombinationResult, OperatorSortMode, PotentialByOperator } from "./types";
 
 // "Highest rarity first": 6 > 5 > 4 > Robot(1) > 3 > 2.
@@ -206,7 +206,9 @@ export function calculateResults(selectedTags: { id: number; name: string }[], a
 
     const results: ITagCombinationResult[] = [];
 
-    for (const combo of getCombinations(selectedTags, selectedTags.length)) {
+    // The screen offers five tags but a recruit takes at most three of them, so a
+    // four- or five-tag combination is one nobody can submit in game.
+    for (const combo of getCombinations(selectedTags, MAX_TAGS_PER_RECRUIT)) {
         const comboHasTopOperator = combo.some((t) => t.id === TOP_OPERATOR_TAG_ID);
 
         const operators = allOperators.filter((op) => {
