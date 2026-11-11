@@ -18,6 +18,7 @@ pub mod crisis_v2_table_generated;
 pub mod display_meta_table_generated;
 pub mod enemy_database_generated;
 pub mod item_table_generated;
+pub mod prts___levels_generated;
 pub mod retro_table_generated;
 pub mod roguelike_topic_table_generated;
 pub mod sandbox_perm_table_generated;

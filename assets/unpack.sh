@@ -8,6 +8,7 @@ echo "Extracting $REGION assets with $THREADS threads..."
 unpacker extract \
     --input /data/ArkAssets/"$REGION" \
     --output /data/output/"$REGION" \
+    --server "$REGION" \
     -j "$THREADS"
 
 echo "Unpacking complete!"

@@ -858,6 +858,7 @@ fn cmd_backfill_hubs(args: &cli::BackfillHubsArgs) {
 }
 
 fn cmd_extract(args: &cli::ExtractArgs) {
+    unpacker::flatbuffers_decode::set_yostar_first(cli::is_yostar_server(args.server.as_deref()));
     let should_extract_gamedata = args.gamedata || args.extract_all();
 
     if should_extract_gamedata {
@@ -1131,6 +1132,7 @@ struct VerifyRow {
 /// `extract` does. Rows are aggregated per schema type because `prts___levels`
 /// alone is ~2900 files. Always exits 0 — it is a report, not a gate.
 fn cmd_verify(args: &cli::VerifyArgs) {
+    unpacker::flatbuffers_decode::set_yostar_first(cli::is_yostar_server(args.server.as_deref()));
     let idx_path = if let Some(p) = args
         .idx
         .clone()

@@ -741,12 +741,11 @@
         }
       },
       "yostar": {
-        "source": "same-as-cn",
-        "verified": {
-          "en": true,
-          "jp": true,
-          "kr": true
-        }
+        "source": "history/prts___levels/2026-08-01_2.7.61.fbs",
+        "sha256": "49baa9def9eea1a8574d6be1e1fb3f40a532cfe865f4064d90c1549ceb7dacbe",
+        "verified": {},
+        "note": "pinned by hand, not yet verified on the Yostar bundles: under the CN layout EN, JP and KR level files read isTrainingLevel from reachableCheckIgnoreStartTile's slot (LevelData_Options slot 7, new in 2.7.71)",
+        "pinned": true
       }
     },
     "replicate_table": {

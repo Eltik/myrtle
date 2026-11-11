@@ -15,6 +15,15 @@
 //! a stability-first order silently drops data. "Verifies" is the vendored
 //! reflection verifier under `verifier_opts()`, the options the generated
 //! decoder uses.
+//!
+//! An INSERTED field is invisible too when the slots it shifts hold defaults,
+//! so newest-first can hand an older Yostar client a newer layout that reads
+//! every later field from its neighbour's slot (EN, JP and KR level files read
+//! `isTrainingLevel` from `reachableCheckIgnoreStartTile`'s slot that way).
+//! The verifier cannot decide that, so the run reports it (an older history
+//! version that also verifies and whose slots the chosen schema shifts) and a
+//! human pins the right file: a Yostar choice marked `"pinned": true` in the
+//! lock is kept as long as it verifies on every present server.
 
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use std::fmt::Write as _;
@@ -100,6 +109,10 @@ pub struct LockChoice {
     pub verified: BTreeMap<String, bool>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub note: Option<String>,
+    /// Set by hand on a Yostar choice: keep this file while it verifies on
+    /// every present server, instead of resolving newest first.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub pinned: bool,
 }
 
 impl Lock {
@@ -519,6 +532,7 @@ fn resolve_table(inp: &Inputs<'_>, table: &str) -> Outcome {
             sha256: c.as_ref().map(|c| sha256_hex(&c.bytes)),
             verified: BTreeMap::new(),
             note: Some(note.to_string()),
+            pinned: false,
         };
         (c, lock)
     };
@@ -542,6 +556,7 @@ fn resolve_table(inp: &Inputs<'_>, table: &str) -> Outcome {
                         note: Some(
                             "no cn bundle supplied; file differs from the previous lock".into(),
                         ),
+                        pinned: false,
                     },
                 };
                 (Some(mk(s)), lock)
@@ -581,6 +596,7 @@ fn resolve_table(inp: &Inputs<'_>, table: &str) -> Outcome {
                             head_source.as_deref().unwrap_or("none")
                         )
                     }),
+                    pinned: false,
                 };
                 (Some(c), lock)
             } else {
@@ -661,11 +677,160 @@ fn resolve_yostar(
     let ctx = inp.ctx;
     let all = |v: &BTreeMap<String, bool>| v.len() == present.len() && v.values().all(|ok| *ok);
 
+    // A pinned file stands while it verifies everywhere; see the module docs.
+    let pinned = inp
+        .prev
+        .and_then(|l| l.tables.get(table))
+        .and_then(|t| t.yostar.as_ref())
+        .is_some_and(|c| c.pinned);
+    let mut pin_released = None;
+    if pinned && let Some(bytes) = old_yostar {
+        let c = ctx.cand(table, label_of(hist, bytes), bytes.clone());
+        let v = ctx.verdicts(&c, present, table);
+        if all(&v) {
+            for (s, ok) in &v {
+                after.insert(s.clone(), Some(*ok));
+                any.insert(s.clone(), true);
+            }
+            let lock = LockChoice {
+                source: c.source.clone(),
+                sha256: Some(sha256_hex(&c.bytes)),
+                verified: v,
+                note: Some("pinned".into()),
+                pinned: true,
+            };
+            return (YostarFile::Keep, Some(lock), Some(c.bytes));
+        }
+        pin_released = Some(format!(
+            "pin released: the pinned file no longer verifies on {}",
+            v.iter()
+                .filter(|(_, ok)| !**ok)
+                .map(|(s, _)| s.as_str())
+                .collect::<Vec<_>>()
+                .join(", ")
+        ));
+    }
+    let (file, mut lock, effective) = resolve_yostar_newest_first(
+        ctx, table, present, cn_choice, specs, old_yostar, hist, after, any,
+    );
+    if let Some(l) = lock.as_mut() {
+        let verified_everywhere = all(&l.verified);
+        let shift = effective
+            .as_ref()
+            .filter(|_| verified_everywhere)
+            .and_then(|eff| {
+                let floor = yostar_floor(inp.prev);
+                shifted_older_verifies(ctx, table, present, eff, hist, &floor)
+            });
+        let note = [l.note.take(), pin_released, shift]
+            .into_iter()
+            .flatten()
+            .collect::<Vec<_>>();
+        l.note = (!note.is_empty()).then(|| note.join("; "));
+    }
+    (file, lock, effective)
+}
+
+/// How many older history versions `shifted_older_verifies` tries at most:
+/// each one is a verification pass over the Yostar bundles.
+const SHIFT_PROBES: usize = 3;
+
+/// The label (`YYYY-MM-DD_<version>`) of a `history/<stem>/<label>.fbs`
+/// source, else `None`.
+fn history_label(source: &str) -> Option<&str> {
+    source
+        .strip_prefix("history/")?
+        .rsplit_once('/')?
+        .1
+        .strip_suffix(".fbs")
+}
+
+/// How old a Yostar client can plausibly be: the median label of the previous
+/// lock's Yostar choices that are history versions (the layouts the Yostar
+/// binaries were last seen to need), or `""` (no floor) without any. Older
+/// versions are left out of the slot-shift probe: every table that changed
+/// shape years ago would otherwise be reported on every run.
+fn yostar_floor(prev: Option<&Lock>) -> String {
+    let mut labels: Vec<&str> = prev
+        .into_iter()
+        .flat_map(|l| l.tables.values())
+        .filter_map(|t| t.yostar.as_ref())
+        .filter_map(|y| history_label(&y.source))
+        .collect();
+    labels.sort_unstable();
+    labels
+        .get(labels.len() / 2)
+        .map_or_else(String::new, |l| (*l).to_string())
+}
+
+/// The note for an older history version that ALSO verifies on every present
+/// server while `chosen` shifts its slots (`fields::slot_shifts`): the verifier
+/// cannot tell which of the two the Yostar client has, so a human decides and
+/// pins. Tries the newest `SHIFT_PROBES` older versions that shift, none older
+/// than `floor` (`yostar_floor`).
+fn shifted_older_verifies(
+    ctx: &Ctx<'_>,
+    table: &str,
+    present: &[&Server],
+    chosen: &[u8],
+    hist: &[Spec],
+    floor: &str,
+) -> Option<String> {
+    let start = hist
+        .iter()
+        .position(|s| same_schema(&s.bytes, chosen))
+        .map_or(0, |i| i + 1);
+    let chosen_text = String::from_utf8_lossy(chosen);
+    let mut found = Vec::new();
+    let mut probes = 0;
+    for s in &hist[start..] {
+        if history_label(&s.source).is_some_and(|l| l < floor) {
+            break;
+        }
+        let shifts = fields::slot_shifts(table, &String::from_utf8_lossy(&s.bytes), &chosen_text);
+        if shifts.is_empty() {
+            continue;
+        }
+        probes += 1;
+        let c = ctx.cand(table, s.source.clone(), s.bytes.clone());
+        let v = ctx.verdicts(&c, present, table);
+        if v.len() == present.len() && v.values().all(|ok| *ok) {
+            found.push(format!("{} ({})", s.source, shifts.join(", ")));
+        }
+        if probes == SHIFT_PROBES {
+            break;
+        }
+    }
+    (!found.is_empty()).then(|| {
+        format!(
+            "slot shift: also verifies, with slots the chosen schema shifts: {}; \
+             pin one in the lock if the Yostar client is that old",
+            found.join("; ")
+        )
+    })
+}
+
+/// The unpinned resolution: the CN choice when it verifies everywhere, else
+/// the first candidate in `specs` that does, else the best scoring one.
+#[allow(clippy::too_many_arguments)]
+fn resolve_yostar_newest_first(
+    ctx: &Ctx<'_>,
+    table: &str,
+    present: &[&Server],
+    cn_choice: Option<&Cand>,
+    specs: Vec<Spec>,
+    old_yostar: Option<&Vec<u8>>,
+    hist: &[Spec],
+    after: &mut BTreeMap<String, Option<bool>>,
+    any: &mut BTreeMap<String, bool>,
+) -> (YostarFile, Option<LockChoice>, Option<Arc<Vec<u8>>>) {
+    let all = |v: &BTreeMap<String, bool>| v.len() == present.len() && v.values().all(|ok| *ok);
     let same_as_cn = |verified: BTreeMap<String, bool>| LockChoice {
         source: "same-as-cn".into(),
         sha256: None,
         verified,
         note: None,
+        pinned: false,
     };
 
     // The variant is gone when the CN choice already verifies everywhere.
@@ -725,6 +890,7 @@ fn resolve_yostar(
                     sha256: Some(sha256_hex(&c.bytes)),
                     verified: v,
                     note: None,
+                    pinned: false,
                 };
                 (
                     YostarFile::Write(c.bytes.clone()),
@@ -751,6 +917,7 @@ fn resolve_yostar(
                         .collect::<Vec<_>>()
                         .join(", ")
                 )),
+                pinned: false,
             };
             let effective = old_yostar
                 .cloned()
@@ -1183,6 +1350,38 @@ fn report(
         }
         md.push('\n');
     }
+    let shifted: Vec<String> = lock
+        .tables
+        .iter()
+        .filter_map(|(t, c)| {
+            let y = c.yostar.as_ref()?;
+            let n = y
+                .note
+                .as_deref()
+                .filter(|n| n.contains("slot shift") || n.contains("pin released"))?;
+            Some(format!("- `{t}` ({}): {n}", short(&y.source)))
+        })
+        .collect();
+    if !shifted.is_empty() {
+        let _ = writeln!(
+            md,
+            "## Yostar slot shifts ({})\n\n\
+             The Yostar choice verifies, and so does an older version whose field slots it \
+             shifts; the verifier cannot tell which one the Yostar client has. Check each \
+             and pin the right file (`assets/schemas/README.md`, \"Pinning\").\n",
+            shifted.len()
+        );
+        for line in &shifted {
+            let _ = writeln!(md, "{line}");
+        }
+        md.push('\n');
+    }
+    let pins: Vec<String> = lock
+        .tables
+        .iter()
+        .filter(|(_, c)| c.yostar.as_ref().is_some_and(|y| y.pinned))
+        .map(|(t, _)| t.clone())
+        .collect();
     let fallbacks: Vec<String> = outcomes
         .iter()
         .filter_map(|o| o.cn_fallback.as_ref().map(|f| format!("`{}` {f}", o.table)))
@@ -1192,6 +1391,7 @@ fn report(
         ("New in the client", &notes.new_stems),
         ("History fallback (cn)", &fallbacks),
         ("History added", &notes.history_added),
+        ("Yostar pinned", &pins),
     ] {
         if !list.is_empty() {
             let _ = writeln!(md, "- {label} ({}): {}", list.len(), list.join(", "));
@@ -1200,7 +1400,8 @@ fn report(
     if !(notes.not_regenerated.is_empty()
         && notes.new_stems.is_empty()
         && fallbacks.is_empty()
-        && notes.history_added.is_empty())
+        && notes.history_added.is_empty()
+        && pins.is_empty())
     {
         md.push('\n');
     }
@@ -1362,6 +1563,7 @@ mod tests {
                 .map(|(s, v)| ((*s).to_string(), *v))
                 .collect(),
             note: None,
+            pinned: false,
         }
     }
 
@@ -1525,5 +1727,46 @@ mod tests {
         assert!(json.contains("\"yostar\":null"));
         let back: Lock = serde_json::from_str(&json).unwrap();
         assert!(back.tables["arkvent_table"].yostar.is_none());
+    }
+
+    #[test]
+    fn yostar_floor_is_the_median_history_pick() {
+        assert_eq!(yostar_floor(None), "");
+        let mut lock = Lock::default();
+        for (t, src) in [
+            ("a", "history/a/2026-01-09_2.6.91.fbs"),
+            ("b", "history/b/2026-07-10_2.7.51.fbs"),
+            ("c", "history/c/2026-09-04_2.7.71.fbs"),
+            ("d", "same-as-cn"),
+        ] {
+            let mut y = choice(&[("en", true)]);
+            y.source = src.into();
+            lock.tables.insert(
+                t.into(),
+                LockTable {
+                    cn: choice(&[("cn", true)]),
+                    yostar: Some(y),
+                },
+            );
+        }
+        assert_eq!(yostar_floor(Some(&lock)), "2026-07-10_2.7.51");
+        assert_eq!(
+            history_label("history/a/2026-01-09_2.6.91.fbs"),
+            Some("2026-01-09_2.6.91")
+        );
+        assert_eq!(history_label("same-as-cn"), None);
+    }
+
+    #[test]
+    fn pinned_is_written_only_when_set_and_read_back() {
+        let mut pinned = choice(&[("en", true)]);
+        pinned.pinned = true;
+        let json = serde_json::to_string(&pinned).unwrap();
+        assert!(json.contains("\"pinned\":true"));
+        assert!(serde_json::from_str::<LockChoice>(&json).unwrap().pinned);
+        // Older locks have no key; an unpinned choice writes none.
+        let plain = serde_json::to_string(&choice(&[("en", true)])).unwrap();
+        assert!(!plain.contains("pinned"));
+        assert!(!serde_json::from_str::<LockChoice>(&plain).unwrap().pinned);
     }
 }
