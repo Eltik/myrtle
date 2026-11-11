@@ -15,10 +15,15 @@
 // at -j 2 puts four extraction threads on three cores and, more to the point,
 // four write streams on one queue: that box has logged WRITE DMA timeouts with
 // the SATA link frozen, soft lockups in the writeback kworkers, and RCU stalls.
-// One thread each, half an interval apart on the clock, keeps at most one extract
-// running at a time under the scheduler. A manual force_update still bypasses the
-// phase, so two triggered by hand at once can still overlap.
-// Raise them on a box with more cores and faster storage.
+// One thread each, half an interval apart on the clock, decides which region
+// goes first. It does NOT keep them apart on its own: an extract longer than the
+// offset runs into the next region's check (CN took 37 minutes and EN 57 on
+// 2026-11-11, and the two together filled the disk). What keeps at most one
+// extract running is the lock in disk-guard.mjs, which every watcher sharing
+// this output directory takes, a manual force_update included; WS_MIN_FREE_GB
+// (default 5) is the free space each extract has to leave. See assets/README.md
+// "Disk guards".
+// Raise the threads on a box with more cores and faster storage.
 //
 // Object storage sync (assets/README.md "Object Storage Sync") runs after every
 // extract with no entry here: it reads the bucket settings from ../backend/.env

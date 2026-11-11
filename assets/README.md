@@ -898,7 +898,8 @@ just their names. Prefixes under `output/<server>/`:
 **Disk peak.** Eviction lowers the steady state between extracts, not the peak. Every
 extract rewrites the tree at full size (all but the skipped re-encodes above), and only
 the sync after it turns the files back into stubs, so the box still needs room for a full
-tree during an extract.
+tree during an extract. The watcher checks for that room before it starts: see
+[Disk guards](#disk-guards).
 
 **Configuration** (in the same env files the sync reads):
 
@@ -966,6 +967,61 @@ it reads (`--only`) before such a run. Not fixed, only documented.
 
 ---
 
+## Disk guards
+
+An extract puts a region's whole tree back on disk before its sync frees it again, so the
+disk has to hold that tree for the length of the extract, and two extracts at once need
+room for both. On 2026-11-11 the CN and EN watchers extracted at the same time on a disk
+with 21 GB free (CN had 17.9 GiB of stubs to rewrite, EN 25.3 GiB), filled it, and
+PostgreSQL on the same disk went down. `run.mjs ws` now has three guards against that,
+in [`disk-guard.mjs`](disk-guard.mjs):
+
+**One extract at a time.** Before a watcher downloads anything it takes
+`<output>/.extract.lock`, a file shared by every watcher writing under the same output
+root, and holds it through the download, the extract, the orphan sweep and the sync
+(the sync is what gives the space back). A watcher that finds it held reports
+`state: "waiting"`, logs who has it, and looks again every 5 minutes (or every interval,
+if that is shorter). Waiting is not a failure and does not touch the backoff.
+
+The lock records the holder's pid and region and is touched once a minute. It is taken
+over when the holder is gone (killed, OOM-killed, restarted by pm2) or has not touched it
+for 10 minutes, so a crash never leaves the other regions stuck. The clock offsets in
+`ecosystem.config.cjs` stay: they decide who goes first, the lock decides that nobody
+goes second until the first is done.
+
+**A free-space budget.** With the lock held, and again after the download, the watcher
+adds up what the extract will put back (the recorded size of every file that is a 0-byte
+stub right now, from `.asset-sync.json`) and refuses to start unless that fits with
+`WS_MIN_FREE_GB` left over. A refused update starts no extract, reports
+`state: "low_disk"`, sends one `error` event for the episode (the Discord bot posts it),
+and tries again on the next scheduled check. The estimate is an upper bound: the stubs
+the unpacker skips (video, music, the `tex/` pool) are counted as if rewritten.
+
+**A watchdog.** While the downloader or the unpacker runs, free space is read every 10
+seconds. Under half of `WS_MIN_FREE_GB`, the running child is stopped with SIGTERM and
+the update fails with `stopped to protect the disk`, through the normal failure path
+(backoff, `error` event). This is the guard for space something ELSE took after the
+budget passed. The tree is then partly rewritten at full size, so the box stays low on
+space until room is made elsewhere and an extract completes (`force_update`); the sync
+after that one turns the files back into stubs.
+
+| Variable | Meaning |
+|----------|---------|
+| `WS_EXTRACT_LOCK` | `0` turns the lock off. Anything else, or unset: on. |
+| `WS_MIN_FREE_GB` | GiB an extract must leave free. Default `5`. `0` turns the budget and the watchdog off. Unset, blank or not a number: the default. |
+
+All three fail open. If the lock file cannot be created, the manifest cannot be read, or
+free space cannot be measured, the watcher logs it and carries on as it did before the
+guards existed. A `force_update` goes through the same lock and budget; the reply says
+why when it is not started.
+
+```bash
+cd assets
+node --test disk-guard.test.mjs
+```
+
+---
+
 ## WebSocket Protocol Reference
 
 The WebSocket server broadcasts asset pipeline status and accepts client commands.
@@ -979,7 +1035,7 @@ Sent on connection and when state changes.
 ```json
 {
   "type": "status",
-  "state": "idle|checking|downloading|unpacking|syncing|backing_off",
+  "state": "idle|checking|downloading|unpacking|syncing|backing_off|waiting|low_disk",
   "version": {
     "current": "1.27.5_08_15_11_51"
   }
