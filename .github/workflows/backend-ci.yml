@@ -95,6 +95,20 @@ jobs:
   test:
     name: Tests
     runs-on: ubuntu-latest
+    # For the database-backed suites at the end of this job. Same major version as
+    # docker-compose.yml, on the address those suites default to.
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_PASSWORD: password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
     steps:
       - uses: actions/checkout@v5
         with:
@@ -156,6 +170,50 @@ jobs:
           API_SHAPE_PROFILE: gamedata-only
           RUST_BACKTRACE: 1
         run: cargo test -- --nocapture
+
+      # The suites below are `#[ignore]` because they need Postgres, so the step above
+      # never runs them. They include the checks on the privacy and permission paths
+      # (account deletion, the public gacha history gate, the gacha storage opt-out, the
+      # admin panel queries).
+      #
+      # Two kinds. Some create and drop their own database and run every migration on
+      # it. The rest work inside the database the URL names (in a rolled-back
+      # transaction, or read-only) and expect its schema to exist, so it is migrated
+      # here first, then given the server rows `database::init` seeds at boot.
+      - name: Prepare the test database
+        env:
+          DATABASE_URL: postgres://postgres:password@127.0.0.1:5432/postgres
+        run: |
+          for migration in $(ls backend/src/database/migrations/v*.sql | sort); do
+            psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q -f "$migration"
+          done
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q -c "INSERT INTO servers (id, code, name) VALUES (0, 'en', 'English'), (1, 'jp', 'Japanese'), (2, 'kr', 'Korean'), (3, 'cn', 'Chinese'), (4, 'bili', 'Bilibili'), (5, 'tw', 'Taiwanese') ON CONFLICT (id) DO NOTHING"
+
+      # One thread: the rolled-back suites share one database. The two skipped tests
+      # read a real synced account, which a fresh database does not have; so do
+      # role_recheck_test and i18n_grant_locale_test, which are left off the list.
+      - name: Run database-backed tests
+        working-directory: backend
+        env:
+          DATABASE_URL: postgres://postgres:password@127.0.0.1:5432/postgres
+          RUST_BACKTRACE: 1
+        run: >-
+          cargo test
+          --test gacha_store_opt_out_test
+          --test gacha_public_history_test
+          --test tier_list_create_test
+          --test tier_list_view_test
+          --test leaderboard_rank_test
+          --test squads_storage_test
+          --test music_library_storage_test
+          --test music_stats_storage_test
+          --test account_deletion_test
+          --test admin_panel_queries_test
+          --
+          --ignored
+          --test-threads=1
+          --skip the_largest_real_account_leaves_no_row
+          --skip people_search_finds_a_uid_first_and_matches_nicknames
 
   # ──────────────────────────────────────────────────────────────────────────────
   # Release build
