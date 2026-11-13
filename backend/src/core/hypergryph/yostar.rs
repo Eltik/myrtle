@@ -11,10 +11,11 @@ use tokio::time::sleep;
 use crate::core::hypergryph::{
     constants::{AuthSession, Server},
     fetch::{
-        FetchError, FetchRequest, REQUEST_TIMEOUT, auth_request, fetch, parse_json, read_body,
-        upstream_code,
+        FetchError, FetchRequest, REQUEST_TIMEOUT, UpstreamError, auth_request, fetch, parse_json,
+        read_body, upstream_code,
     },
 };
+use crate::utils::redact::redacted_body;
 
 #[derive(Serialize)]
 #[serde(rename_all = "PascalCase")]
@@ -54,7 +55,50 @@ pub async fn send_code(
     )
     .await?;
 
-    parse_json(response, "yostar::send_code").await
+    let reply: serde_json::Value = parse_json(response, "yostar::send_code").await?;
+    yostar_outcome(&reply, "yostar::send_code")?;
+    Ok(reply)
+}
+
+/// Whether a Yostar SDK endpoint did what it was asked.
+///
+/// These endpoints answer HTTP 200 whatever happened and put the outcome in the
+/// body: `{"Code":200,"Data":{},"Msg":"OK"}`, or another `Code` with the reason
+/// in `Msg` (too many requests, a captcha is wanted). `read_body` only looks at
+/// the HTTP status, so a refusal used to pass for success: `send_code` returned
+/// `Ok` for any reply that was JSON, and the site told the player a code was on
+/// its way when Yostar had said it would not send one.
+///
+/// A refusal becomes [`FetchError::Upstream`], which reaches the client as
+/// `<Msg> (<Code>)`. A reply with no `Code` at all is not a confirmed send
+/// either, and is reported as an invalid upstream response.
+fn yostar_outcome(reply: &serde_json::Value, context: &str) -> Result<(), FetchError> {
+    match reply.get("Code").and_then(serde_json::Value::as_i64) {
+        Some(200) => Ok(()),
+        Some(code) => {
+            let msg = reply
+                .get("Msg")
+                .and_then(serde_json::Value::as_str)
+                .filter(|msg| !msg.is_empty())
+                .unwrap_or("Yostar refused the request")
+                .to_owned();
+            tracing::warn!(context, code, msg = %msg, "yostar refused the request");
+            Err(FetchError::Upstream(UpstreamError {
+                status_code: 200,
+                code,
+                error: String::new(),
+                message: String::new(),
+                msg,
+                info: String::new(),
+            }))
+        }
+        None => {
+            tracing::warn!(context, body = %redacted_body(&reply.to_string()), "yostar reply carries no Code");
+            Err(FetchError::ParseError(format!(
+                "{context}: invalid upstream response"
+            )))
+        }
+    }
 }
 
 #[derive(Serialize)]
@@ -673,4 +717,64 @@ where
     let targets = saved_replay_targets(&sync);
     tracing::info!(count = targets.len(), "discovered saved replays");
     harvest_replays(client, session, server, targets, opts, on_progress).await
+}
+
+#[cfg(test)]
+mod tests {
+    use serde_json::json;
+
+    use super::yostar_outcome;
+    use crate::app::error::ApiError;
+    use crate::core::hypergryph::fetch::FetchError;
+
+    #[test]
+    fn code_200_is_the_only_success() {
+        // The reply to a real send-code request, 2026-11-13.
+        let sent = json!({ "Code": 200, "Data": {}, "Msg": "OK" });
+        assert!(yostar_outcome(&sent, "yostar::send_code").is_ok());
+    }
+
+    #[test]
+    fn a_refusal_carries_yostar_code_and_message_to_the_client() {
+        // The shape Yostar answers a rejected request with (HTTP 200).
+        let refused = json!({ "Code": 100302, "Data": {}, "Msg": "Requests are too frequent" });
+        let err = yostar_outcome(&refused, "yostar::send_code").expect_err("refused");
+        let FetchError::Upstream(upstream) = &err else {
+            panic!("expected Upstream, got {err:?}");
+        };
+        assert_eq!(upstream.code, 100_302);
+        assert_eq!(upstream.msg, "Requests are too frequent");
+
+        let ApiError::BadRequest(shown) = ApiError::from(err) else {
+            panic!("a refusal is the caller's to see, as a 400");
+        };
+        assert_eq!(shown, "Requests are too frequent (100302)");
+    }
+
+    #[test]
+    fn a_refusal_without_a_message_still_says_something() {
+        for refused in [
+            json!({ "Code": 100303 }),
+            json!({ "Code": 100303, "Msg": "" }),
+        ] {
+            let err = yostar_outcome(&refused, "yostar::send_code").expect_err("refused");
+            let ApiError::BadRequest(shown) = ApiError::from(err) else {
+                panic!("expected a 400");
+            };
+            assert_eq!(shown, "Yostar refused the request (100303)");
+        }
+    }
+
+    #[test]
+    fn a_reply_without_a_code_is_not_a_confirmed_send() {
+        for reply in [
+            json!({}),
+            json!({ "Msg": "OK" }),
+            json!({ "Code": "200" }),
+            json!([]),
+        ] {
+            let err = yostar_outcome(&reply, "yostar::send_code").expect_err("unconfirmed");
+            assert!(matches!(err, FetchError::ParseError(_)), "{reply}: {err:?}");
+        }
+    }
 }
