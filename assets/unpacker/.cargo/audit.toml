@@ -1,0 +1,10 @@
+# `cargo audit` fails CI on any advisory that is not listed here.
+# Triaged 2026-11-13.
+
+[advisories]
+ignore = [
+    # Not reachable: the bug is in the `fmt::Pointer` impl of crossbeam-epoch's
+    # `Atomic` and `Shared`, which rayon (the only user here) never formats.
+    # `cargo update -p crossbeam-epoch` to 0.9.20 clears it.
+    "RUSTSEC-2026-0204", # crossbeam-epoch 0.9.18
+]

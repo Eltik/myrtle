@@ -239,9 +239,11 @@ jobs:
       - name: Install cargo-audit
         run: cargo install cargo-audit
 
+      # Blocking. An advisory that has been looked at is listed, with its reason, in
+      # backend/.cargo/audit.toml; anything else fails the job.
       - name: Audit backend
         working-directory: backend
-        run: cargo audit || echo "::warning::Backend audit found vulnerabilities"
+        run: cargo audit
 
   # ──────────────────────────────────────────────────────────────────────────────
   # Final status

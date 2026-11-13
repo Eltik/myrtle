@@ -336,13 +336,26 @@ jobs:
       - name: Install cargo-audit
         run: cargo install cargo-audit
 
+      # Blocking. An advisory that has been looked at is listed, with its reason, in
+      # each crate's .cargo/audit.toml; anything else fails the job.
       - name: Audit downloader
         working-directory: assets/downloader
-        run: cargo audit || echo "::warning::Downloader audit found vulnerabilities"
+        run: cargo audit
 
       - name: Audit unpacker
         working-directory: assets/unpacker
-        run: cargo audit || echo "::warning::Unpacker audit found vulnerabilities"
+        run: cargo audit
+
+      # The watcher's own npm packages (run.mjs: ws, chalk, ...), against the committed
+      # bun.lock. Nothing audited these before, and `ws` is the server the watcher
+      # exposes. Same Bun as frontend-ci.yml.
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.4.2"
+
+      - name: Audit watcher packages
+        working-directory: assets
+        run: bun audit
 
   # ──────────────────────────────────────────────────────────────────────────────
   # Integration

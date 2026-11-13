@@ -1,0 +1,13 @@
+# `cargo audit` fails CI on any advisory that is not listed here.
+# Triaged 2026-11-13.
+
+[advisories]
+ignore = [
+    # OPEN, reachable: `extract_zip` (src/extract.rs) calls `ZipArchive::extract`,
+    # the call all four cover. The input is the game CDN over HTTPS, so it takes a
+    # hostile or compromised CDN. The fix is zip 9; remove these four lines with it.
+    "RUSTSEC-2026-0367", # zip 8.6.0: SUID/SGID bits kept on extract
+    "RUSTSEC-2026-0368", # zip 8.6.0: symlinks pointing outside the destination
+    "RUSTSEC-2026-0369", # zip 8.6.0: permissions applied through symlinks
+    "RUSTSEC-2026-0429", # zip 8.6.0: abort on a symlink entry with a large size
+]

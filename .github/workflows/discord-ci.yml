@@ -155,7 +155,9 @@ jobs:
 
       - name: Audit discord
         working-directory: discord
-        run: cargo audit || echo "::warning::Discord audit found vulnerabilities"
+        # Blocking. An advisory that has been looked at is listed, with its reason, in
+        # discord/.cargo/audit.toml; anything else fails the job.
+        run: cargo audit
 
   # ──────────────────────────────────────────────────────────────────────────────
   # Final status

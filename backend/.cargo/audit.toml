@@ -1,0 +1,39 @@
+# `cargo audit` fails CI on any advisory that is not listed here.
+#
+# Each entry is an advisory that was looked at and is either not reachable from
+# this crate or is waiting on a named fix. Delete the entry when its reason
+# stops being true; an entry with no reason should not be merged.
+# Triaged 2026-11-13.
+
+[advisories]
+ignore = [
+    # OPEN, reachable: the AWS SDK's legacy HTTP client (rustls 0.21, rustls-webpki
+    # 0.101, h2 0.3) in crates/storage, which is the TLS to the object store.
+    # Dropping the default `rustls` feature of `aws-sdk-s3` removes all three
+    # crates from the tree; remove these seven lines with that change.
+    "RUSTSEC-2026-0346", # rustls 0.21.12: Debug impls expose TLS secrets
+    "RUSTSEC-2026-0349", # rustls 0.21.12: ServerHello downgrade
+    "RUSTSEC-2026-0098", # rustls-webpki 0.101.7: URI name constraints
+    "RUSTSEC-2026-0099", # rustls-webpki 0.101.7: wildcard name constraints
+    "RUSTSEC-2026-0104", # rustls-webpki 0.101.7: panic parsing a CRL
+    "RUSTSEC-2026-0382", # rustls-webpki 0.101.7: distrusted intermediates
+    "RUSTSEC-2026-0258", # h2 0.3.27: unbounded empty DATA frames
+
+    # Not reachable: all four are about `ZipArchive::extract` / `ZipStreamReader::extract`.
+    # This crate only reads one entry by name, in memory (core/hypergryph/yostar.rs).
+    # They go away with zip 9.
+    "RUSTSEC-2026-0367", # zip 8.6.0: SUID/SGID bits kept on extract
+    "RUSTSEC-2026-0368", # zip 8.6.0: symlinks pointing outside the destination
+    "RUSTSEC-2026-0369", # zip 8.6.0: permissions applied through symlinks
+    "RUSTSEC-2026-0429", # zip 8.6.0: abort on a symlink entry with a large size
+
+    # Not reachable: the Marvin attack and the bigint timing issues are about
+    # private-key operations. `rsa` is used once, to encrypt a login password with
+    # the provider's public key (core/hypergryph/bilibili.rs).
+    "RUSTSEC-2023-0071", # rsa 0.9.10: Marvin attack
+    "RUSTSEC-2026-0387", # crypto-bigint 0.5.5: timing variability
+
+    # Not built: in Cargo.lock through sqlx's optional SQLite driver. This crate
+    # enables only the `postgres` feature.
+    "RUSTSEC-2026-0459", # libsqlite3-sys 0.30.1: bundled SQLite CVE
+]

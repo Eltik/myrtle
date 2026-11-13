@@ -155,7 +155,7 @@ jobs:
           if-no-files-found: error
 
   # ──────────────────────────────────────────────────────────────────────────────
-  # Security audit (non-blocking)
+  # Security audit
   # ──────────────────────────────────────────────────────────────────────────────
   audit:
     name: Security Audit
@@ -168,7 +168,26 @@ jobs:
           bun-version: ${{ env.BUN_VERSION }}
 
       - name: Audit dependencies
-        run: bun audit || echo "::warning::Frontend audit found vulnerabilities"
+        # Blocking. `bun audit` has no config file, so the advisories that have been
+        # looked at are ignored here, each with its reason; anything else fails the job.
+        # Triaged 2026-11-13. Remove a flag when its package is bumped.
+        #
+        #   GHSA-wx4j-mvgx-mqwp  satori 0.26.0, SVG escaping. OPEN, runtime (the OG
+        #                        image renderer); fixed in 0.33.5, outside the ^0.26 range.
+        #   GHSA-rj75-hqrm-r3gf  postcss-selector-parser, via @tailwindcss/typography.
+        #                        Build time only, on our own stylesheets.
+        #   GHSA-82fw-gwwq-j7x9  vitest and @vitest/mocker 3.2.7. Dev only; fixed in vitest 4.
+        #   GHSA-qxg6-89mg-rqv8  @vitest/mocker. Dev only; fixed in vitest 4.
+        #   GHSA-5gmw-xhrv-c9v3  tinypool, via vitest. Dev only.
+        #   GHSA-85c8-ppgw-ccpr  tinypool, via vitest. Dev only.
+        run: >-
+          bun audit
+          --ignore=GHSA-wx4j-mvgx-mqwp
+          --ignore=GHSA-rj75-hqrm-r3gf
+          --ignore=GHSA-82fw-gwwq-j7x9
+          --ignore=GHSA-qxg6-89mg-rqv8
+          --ignore=GHSA-5gmw-xhrv-c9v3
+          --ignore=GHSA-85c8-ppgw-ccpr
 
   # ──────────────────────────────────────────────────────────────────────────────
   # Final status
