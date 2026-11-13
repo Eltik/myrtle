@@ -3803,7 +3803,8 @@ pub fn export_particles(
         meta
     };
     if let Ok(text) = serde_json::to_string(&meta)
-        && std::fs::write(spine_dir.join(format!("{name}[particles].json")), text).is_ok()
+        && crate::export::failures::write(spine_dir.join(format!("{name}[particles].json")), text)
+            .is_ok()
     {
         saved += 1;
     }

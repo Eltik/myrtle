@@ -30,7 +30,7 @@ import {
 	pendingRewriteBytes,
 	startDiskWatchdog,
 } from "./disk-guard.mjs";
-import { sweepOrphans } from "./orphans.mjs";
+import { parseSweepMaxFraction, sweepOrphans } from "./orphans.mjs";
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
@@ -990,10 +990,24 @@ async function runUnpack(opts) {
 	// produces, still served and referenced by nothing. Remove it and log it, as the local
 	// install does (see orphans.mjs). `--keep-orphans` (WS_KEEP_ORPHANS=1) skips the sweep,
 	// `--dry-orphans` (WS_DRY_ORPHANS=1) logs what it would remove and removes nothing.
+	// The sweep refuses a subtree it would cut by more than WS_SWEEP_MAX_FRACTION (default
+	// 0.1): that many "orphans" is what an extract that failed part-way leaves, and they are
+	// the only good copies. `--allow-sweep-shrink` (WS_ALLOW_SWEEP_SHRINK=1) sweeps regardless;
+	// it is its own switch, not the sync's `--allow-shrink`, which `ws` never passes.
 	const keep = !!(cliArgs["keep-orphans"] ?? process.env.WS_KEEP_ORPHANS);
 	const dry = !!(cliArgs["dry-orphans"] ?? process.env.WS_DRY_ORPHANS);
+	const allowShrink = !!(cliArgs["allow-sweep-shrink"] ?? process.env.WS_ALLOW_SWEEP_SHRINK);
+	const limit = parseSweepMaxFraction(process.env.WS_SWEEP_MAX_FRACTION);
+	if (limit.invalid) {
+		console.log(chalk.yellow(`[${new Date().toLocaleTimeString()}] WS_SWEEP_MAX_FRACTION="${process.env.WS_SWEEP_MAX_FRACTION}" is not a number above 0 and at most 1; using ${limit.fraction}`));
+	}
 	if (!keep) {
-		const swept = sweepOrphans(opts.outputDir, startedAt, { dry });
+		const swept = sweepOrphans(opts.outputDir, startedAt, { dry, allowShrink, maxFraction: limit.fraction });
+		for (const r of swept.refused) {
+			const warning = `Orphan sweep REFUSED for ${r.name}/: it would remove ${r.orphans} of ${r.files} files (${formatBytes(r.bytes)}), more than ${Math.round(limit.fraction * 100)}% of the subtree. That is what a failed extract leaves, so nothing in ${r.name}/ was deleted. If this export really dropped that much, rerun with --allow-sweep-shrink (WS_ALLOW_SWEEP_SHRINK=1).`;
+			console.log(chalk.red(`[${new Date().toLocaleTimeString()}] ${warning}`));
+			opts.onNotice?.(warning);
+		}
 		const verb = dry ? "would remove" : "removed";
 		const msg = `Orphan sweep ${verb} ${swept.files} file(s), ${formatBytes(swept.bytes)}${swept.log ? `, logged at ${swept.log}` : ""}${swept.skipped.length ? ` (untouched subtrees left alone: ${swept.skipped.join(", ")})` : ""}`;
 		console.log(chalk.dim(`[${new Date().toLocaleTimeString()}] ${msg}`));
@@ -2830,6 +2844,7 @@ const USAGE = `Usage:
   node run.mjs ws [--server en] [--savedir ./ArkAssets] [--output ./output]
                   [--threads N] [--port 9160] [--interval 30] [--start-delay 0]
                   [--profile full] [--keep-orphans] [--dry-orphans]
+                  [--allow-sweep-shrink]
                                watch the CDN, re-extract and sync on every new version;
                                a failed sync is retried alone on the next tick
   node run.mjs sync --server en [--output ./output] [--savedir ./ArkAssets]

@@ -6061,7 +6061,7 @@ pub fn export_spine_assets(
             };
             if !bytes.is_empty() {
                 let side = spine_dir.join(format!("{}.collided-{tag:016x}.skel", asset.name));
-                let _ = std::fs::write(side, &bytes);
+                let _ = crate::export::failures::write(side, &bytes);
             }
         }
         match claim {
@@ -6071,7 +6071,7 @@ pub fn export_spine_assets(
             }
             OutputClaim::New | OutputClaim::Won => {}
         }
-        if std::fs::write(&skel_path, &asset.skel_data).is_ok() {
+        if crate::export::failures::write(&skel_path, &asset.skel_data).is_ok() {
             count += 1;
         }
 
@@ -6100,7 +6100,7 @@ pub fn export_spine_assets(
             atlas_text = atlas_text.replace(&format!("{from}.png"), &format!("{to}.png"));
         }
         let atlas_path = spine_dir.join(format!("{}.atlas", asset.name));
-        if std::fs::write(&atlas_path, &atlas_text).is_ok() {
+        if crate::export::failures::write(&atlas_path, &atlas_text).is_ok() {
             count += 1;
         }
 
@@ -6371,7 +6371,7 @@ pub(crate) fn pool_write_png(spine_dir: &Path, rgba: &[u8], w: u32, h: u32) -> O
         .is_ok();
     if !reused {
         std::fs::create_dir_all(path.parent()?).ok()?;
-        std::fs::write(&path, &bytes).ok()?;
+        crate::export::failures::write(&path, &bytes).ok()?;
     }
     Some(rel)
 }
@@ -7855,7 +7855,11 @@ fn export_scene(
         meta
     };
     if let Ok(text) = serde_json::to_string(&meta)
-        && std::fs::write(spine_dir.join(format!("{}[scene].json", asset.name)), text).is_ok()
+        && crate::export::failures::write(
+            spine_dir.join(format!("{}[scene].json", asset.name)),
+            text,
+        )
+        .is_ok()
     {
         saved += 1;
     }

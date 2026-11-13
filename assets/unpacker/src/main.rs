@@ -1109,6 +1109,30 @@ fn cmd_extract(args: &cli::ExtractArgs) {
             std::process::exit(1);
         }
     }
+    // Last, like the gamedata check above and for the same reason: `run.mjs` treats exit 0
+    // as a clean extract and then sweeps every file this run did not rewrite. A bundle
+    // that could not be read or an output that could not be written means the tree still
+    // holds an older copy of something this run should have replaced, so reporting success
+    // would have the sweep delete that copy. Everything the run did write stays; only the
+    // exit code changes. `EXTRACT_IO_FAILURES_FATAL=0` restores exit 0, for a tree that is
+    // known to be whole.
+    let failures = export::failures::counts();
+    if failures.unparsed > 0 {
+        eprintln!(
+            "{} bundle(s) were read but did not parse, and were skipped",
+            failures.unparsed
+        );
+    }
+    if failures.lost_files() {
+        eprintln!(
+            "error: {} bundle(s) could not be read and {} output file(s) could not be written; \
+             refusing to report success (the output tree still holds the previous copies)",
+            failures.unreadable, failures.unwritten
+        );
+        if std::env::var("EXTRACT_IO_FAILURES_FATAL").as_deref() != Ok("0") {
+            std::process::exit(1);
+        }
+    }
 }
 
 /// Search input dir and its parent for a .idx manifest file
@@ -1326,12 +1350,19 @@ fn process_bundle(
 ) -> usize {
     let data = match std::fs::read(file_path) {
         Ok(d) => d,
-        Err(_) => return 0,
+        Err(e) => {
+            // Counted: `cmd_extract` fails the run on it (see `export::failures`).
+            export::failures::read_failed(file_path, &e);
+            return 0;
+        }
     };
 
     let bundle = match BundleFile::parse(data) {
         Ok(b) => b,
-        Err(_) => return 0,
+        Err(_) => {
+            export::failures::parse_failed(file_path);
+            return 0;
+        }
     };
 
     if bundle.files.is_empty() {

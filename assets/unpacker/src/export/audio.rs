@@ -48,28 +48,28 @@ pub fn export_audio(
     // Detect format by magic bytes
     if bytes.len() >= 4 && &bytes[0..4] == b"OggS" {
         let path = output_dir.join(format!("{name}.ogg"));
-        std::fs::write(&path, &bytes)?;
+        crate::export::failures::write(&path, &bytes)?;
     } else if bytes.len() >= 4 && &bytes[0..4] == b"RIFF" {
         let path = output_dir.join(format!("{name}.wav"));
-        std::fs::write(&path, &bytes)?;
+        crate::export::failures::write(&path, &bytes)?;
     } else if bytes.len() >= 8 && &bytes[4..8] == b"ftyp" {
         let path = output_dir.join(format!("{name}.m4a"));
-        std::fs::write(&path, &bytes)?;
+        crate::export::failures::write(&path, &bytes)?;
     } else if bytes.len() >= 4 && &bytes[0..4] == b"FSB5" {
         // Decode FSB5 Vorbis to OGG
         if let Ok(samples) = super::fsb5::fsb5_to_ogg(&bytes) {
             for (_, ogg_data) in samples {
                 let path = output_dir.join(format!("{name}.ogg"));
-                std::fs::write(&path, &ogg_data)?;
+                crate::export::failures::write(&path, &ogg_data)?;
             }
         } else {
             // Fallback: save raw FSB5
             let path = output_dir.join(format!("{name}.fsb"));
-            std::fs::write(&path, &bytes)?;
+            crate::export::failures::write(&path, &bytes)?;
         }
     } else {
         let path = output_dir.join(format!("{name}.bytes"));
-        std::fs::write(&path, &bytes)?;
+        crate::export::failures::write(&path, &bytes)?;
     }
 
     Ok(())
