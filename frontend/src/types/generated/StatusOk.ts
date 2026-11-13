@@ -7,4 +7,4 @@
  * an untyped `serde_json::json!`, which the `OpenAPI` document described from a
  * hand-written copy.
  */
-export type StatusOk = { status: string, };
+export type StatusOk = { status: string };

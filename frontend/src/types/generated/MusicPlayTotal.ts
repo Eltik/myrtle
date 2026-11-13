@@ -4,4 +4,4 @@
  * Plays per track over the account's whole history, for the stats view. The
  * page joins these with the catalogue for titles, artists and albums.
  */
-export type MusicPlayTotal = { trackId: string, plays: number, seconds: number, lastPlayedAt: string | null, };
+export type MusicPlayTotal = { trackId: string; plays: number; seconds: number; lastPlayedAt: string | null };

@@ -2,4 +2,4 @@
 import type { LevelUpCostCond } from "./LevelUpCostCond";
 import type { UnlockCondition } from "./UnlockCondition";
 
-export type OperatorSkillRef = { SkillId: string | null, OverridePrefabKey: string | null, OverrideTokenKey: string | null, LevelUpCostCond: Array<LevelUpCostCond>, UnlockCond: UnlockCondition | null, };
+export type OperatorSkillRef = { SkillId: string | null; OverridePrefabKey: string | null; OverrideTokenKey: string | null; LevelUpCostCond: Array<LevelUpCostCond>; UnlockCond: UnlockCondition | null };

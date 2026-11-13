@@ -3,12 +3,18 @@
 /**
  * Anyone the Archives name: an operator, or an NPC the network places.
  */
-export type ArchivePerson = { id: string, name: string, number?: string, 
-/**
- * 1..=6; `None` for an NPC.
- */
-rarity?: number, profession?: string, npc: boolean, 
-/**
- * The faction the card shows: team, else group, else nation.
- */
-factionId?: string, };
+export type ArchivePerson = {
+    id: string;
+    name: string;
+    number?: string;
+    /**
+     * 1..=6; `None` for an NPC.
+     */
+    rarity?: number;
+    profession?: string;
+    npc: boolean;
+    /**
+     * The faction the card shows: team, else group, else nation.
+     */
+    factionId?: string;
+};

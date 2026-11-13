@@ -3,10 +3,12 @@
 /**
  * One bucket of an investment histogram.
  */
-export type LevelBucket = { 
-/**
- * Mastery 0..3 for a skill, or module level 0..3 where 0 means the owner
- * has not unlocked it. 0 is a real answer in both cases, and the largest
- * bucket in most: it is where people stop, not missing data.
- */
-level: number, users: number, };
+export type LevelBucket = {
+    /**
+     * Mastery 0..3 for a skill, or module level 0..3 where 0 means the owner
+     * has not unlocked it. 0 is a real answer in both cases, and the largest
+     * bucket in most: it is where people stop, not missing data.
+     */
+    level: number;
+    users: number;
+};

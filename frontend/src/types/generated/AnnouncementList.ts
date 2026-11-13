@@ -4,17 +4,19 @@ import type { AnnouncementSummary } from "./AnnouncementSummary";
 /**
  * `GET /announcements`: the board, newest first.
  */
-export type AnnouncementList = { 
-/**
- * The server this board is from.
- */
-server: string, 
-/**
- * Every server that has a board, for a picker.
- */
-servers: Array<string>, announcements: Array<AnnouncementSummary>, 
-/**
- * Unix seconds of the last successful read of this board; `null` before
- * the first one.
- */
-checked_at: number | null, };
+export type AnnouncementList = {
+    /**
+     * The server this board is from.
+     */
+    server: string;
+    /**
+     * Every server that has a board, for a picker.
+     */
+    servers: Array<string>;
+    announcements: Array<AnnouncementSummary>;
+    /**
+     * Unix seconds of the last successful read of this board; `null` before
+     * the first one.
+     */
+    checked_at: number | null;
+};

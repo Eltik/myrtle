@@ -4,4 +4,4 @@ import type { OperatorPopularity } from "./OperatorPopularity";
 import type { PullRates } from "./PullRates";
 import type { PullTimingData } from "./PullTimingData";
 
-export type GachaEnhancedStats = { collectiveStats: CollectiveStats, pullRates: PullRates, mostCommonOperators: Array<OperatorPopularity>, averagePullsToSixStar: number, averagePullsToFiveStar: number, pullTiming?: PullTimingData | null, computedAt: string, cached: boolean, };
+export type GachaEnhancedStats = { collectiveStats: CollectiveStats; pullRates: PullRates; mostCommonOperators: Array<OperatorPopularity>; averagePullsToSixStar: number; averagePullsToFiveStar: number; pullTiming?: PullTimingData | null; computedAt: string; cached: boolean };

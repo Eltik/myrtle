@@ -5,13 +5,14 @@ import type { Unlock } from "./Unlock";
 /**
  * An operator's skill rules.
  */
-export type SkillRules = { 
-/**
- * Skill rank `r` (2 and up) unlocks at `rank_unlocks[r - 2]`; the top rank
- * is `rank_unlocks.len() + 1`.
- */
-rankUnlocks: Array<Unlock>, 
-/**
- * One per skill, in skill order.
- */
-skills: Array<SkillRule>, };
+export type SkillRules = {
+    /**
+     * Skill rank `r` (2 and up) unlocks at `rank_unlocks[r - 2]`; the top rank
+     * is `rank_unlocks.len() + 1`.
+     */
+    rankUnlocks: Array<Unlock>;
+    /**
+     * One per skill, in skill order.
+     */
+    skills: Array<SkillRule>;
+};

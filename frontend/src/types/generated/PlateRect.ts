@@ -9,4 +9,4 @@
  * Absent when the folder has no `hub.json`, or one written before the
  * unpacker read the root rect.
  */
-export type PlateRect = { x: number, y: number, w: number, h: number, };
+export type PlateRect = { x: number; y: number; w: number; h: number };

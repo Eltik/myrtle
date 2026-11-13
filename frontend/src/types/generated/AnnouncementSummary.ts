@@ -3,30 +3,31 @@
 /**
  * One notice in the board list.
  */
-export type AnnouncementSummary = { 
-/**
- * Yostar's id, unique within one server.
- */
-id: string, 
-/**
- * The board title, its line break turned into a space.
- */
-title: string, 
-/**
- * The board's own category, as the meta names it (`ACTIVITY`, `SYSTEM`
- * on 2026-10-11).
- */
-group: string, 
-/**
- * `YYYY-MM-DD`; the year is inferred, see the module docs. `null` when
- * the meta's day and month make no date.
- */
-published_on: string | null, 
-/**
- * Absolute URL of the notice's banner image, if it has one.
- */
-banner_url: string | null, 
-/**
- * The official notice page.
- */
-notice_url: string, };
+export type AnnouncementSummary = {
+    /**
+     * Yostar's id, unique within one server.
+     */
+    id: string;
+    /**
+     * The board title, its line break turned into a space.
+     */
+    title: string;
+    /**
+     * The board's own category, as the meta names it (`ACTIVITY`, `SYSTEM`
+     * on 2026-10-11).
+     */
+    group: string;
+    /**
+     * `YYYY-MM-DD`; the year is inferred, see the module docs. `null` when
+     * the meta's day and month make no date.
+     */
+    published_on: string | null;
+    /**
+     * Absolute URL of the notice's banner image, if it has one.
+     */
+    banner_url: string | null;
+    /**
+     * The official notice page.
+     */
+    notice_url: string;
+};

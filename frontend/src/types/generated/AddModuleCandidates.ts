@@ -2,4 +2,17 @@
 import type { ModuleBlackboard } from "./ModuleBlackboard";
 import type { ModuleUnlockCondition } from "./ModuleUnlockCondition";
 
-export type AddModuleCandidates = { displayRangeId: boolean, upgradeDescription: string, talentIndex: number, unlockCondition: ModuleUnlockCondition, requiredPotentialRank: number, prefabKey: string | null, name: string, description: string | null, rangeId: string | null, blackboard: Array<ModuleBlackboard>, tokenKey: string | null, isHideTalent: boolean | null, };
+export type AddModuleCandidates = {
+    displayRangeId: boolean;
+    upgradeDescription: string;
+    talentIndex: number;
+    unlockCondition: ModuleUnlockCondition;
+    requiredPotentialRank: number;
+    prefabKey: string | null;
+    name: string;
+    description: string | null;
+    rangeId: string | null;
+    blackboard: Array<ModuleBlackboard>;
+    tokenKey: string | null;
+    isHideTalent: boolean | null;
+};

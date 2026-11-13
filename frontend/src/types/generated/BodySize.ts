@@ -6,4 +6,4 @@
  * fraction of the plate is `facePos / bodySize` in both cases. Absent only
  * when neither the hub nor the PNG header could be read.
  */
-export type BodySize = { w: number, h: number, };
+export type BodySize = { w: number; h: number };

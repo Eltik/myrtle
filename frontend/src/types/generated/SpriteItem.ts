@@ -5,4 +5,4 @@
  * `$1` body, the same file `GET /story/{id}` resolves a bare name to, and
  * `faces` counts the DISTINCT `#N` variants the group's scripts ask for.
  */
-export type SpriteItem = { base: string, bodyUrl: string | null, storyIds: Array<string>, faces: number, };
+export type SpriteItem = { base: string; bodyUrl: string | null; storyIds: Array<string>; faces: number };

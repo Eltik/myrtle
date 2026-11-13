@@ -6,4 +6,4 @@ import type { ExamStep } from "./ExamStep";
  * server's files print for it (the most common spelling). `word` is absent
  * when no file on this server gives the step.
  */
-export type ArchiveScaleStep = { key: ExamStep, word?: string, };
+export type ArchiveScaleStep = { key: ExamStep; word?: string };

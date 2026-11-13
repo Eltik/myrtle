@@ -12,21 +12,35 @@ import type { HiddenFaction } from "./HiddenFaction";
 /**
  * The personnel file drawer.
  */
-export type ArchiveOperator = { id: string, name: string, rarity: number, profession: string, subProfessionId: string, subProfessionName?: string, number?: ArchiveNumber, 
-/**
- * What the card shows: nation, group and team, broadest first.
- */
-factions: Array<ArchiveFactionRef>, 
-/**
- * `SubPower` factions the card does not show. A spoiler: the page shows
- * them only with spoilers enabled.
- */
-hiddenFactions: Array<HiddenFaction>, profile?: ArchiveProfile, records: Array<ArchiveRecord>, appearances: Array<ArchiveAppearance>, sharesScenes: Array<ArchiveSceneMate>, linked: Array<string>, charts: Array<ArchiveChartRef>, 
-/**
- * Everyone `sharesScenes` and `linked` name.
- */
-people: Array<ArchivePerson>, 
-/**
- * Steps on the exam scale: a rating's `step` runs 0 to this minus one.
- */
-examSteps: number, };
+export type ArchiveOperator = {
+    id: string;
+    name: string;
+    rarity: number;
+    profession: string;
+    subProfessionId: string;
+    subProfessionName?: string;
+    number?: ArchiveNumber;
+    /**
+     * What the card shows: nation, group and team, broadest first.
+     */
+    factions: Array<ArchiveFactionRef>;
+    /**
+     * `SubPower` factions the card does not show. A spoiler: the page shows
+     * them only with spoilers enabled.
+     */
+    hiddenFactions: Array<HiddenFaction>;
+    profile?: ArchiveProfile;
+    records: Array<ArchiveRecord>;
+    appearances: Array<ArchiveAppearance>;
+    sharesScenes: Array<ArchiveSceneMate>;
+    linked: Array<string>;
+    charts: Array<ArchiveChartRef>;
+    /**
+     * Everyone `sharesScenes` and `linked` name.
+     */
+    people: Array<ArchivePerson>;
+    /**
+     * Steps on the exam scale: a rating's `step` runs 0 to this minus one.
+     */
+    examSteps: number;
+};

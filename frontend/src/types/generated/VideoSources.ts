@@ -6,4 +6,4 @@
  * failed, since the unpacker's video step (`backfill-video`, and the tail of
  * every `extract`) writes both.
  */
-export type VideoSources = { webmUrl?: string, mp4Url?: string, };
+export type VideoSources = { webmUrl?: string; mp4Url?: string };

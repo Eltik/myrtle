@@ -5,12 +5,14 @@ import type { GalleryPicture } from "./GalleryPicture";
  * One archive's pictures: an event (`act13side`) or an Integrated
  * Strategies theme (`rogue_1`), by its archive component id.
  */
-export type GalleryGroup = { id: string, 
-/**
- * The event's or theme's name, or the id when the data names neither.
- */
-name: string, 
-/**
- * In the order the archive shows them.
- */
-pictures: Array<GalleryPicture>, };
+export type GalleryGroup = {
+    id: string;
+    /**
+     * The event's or theme's name, or the id when the data names neither.
+     */
+    name: string;
+    /**
+     * In the order the archive shows them.
+     */
+    pictures: Array<GalleryPicture>;
+};

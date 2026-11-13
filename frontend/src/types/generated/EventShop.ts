@@ -7,13 +7,19 @@ import type { ShopItem } from "./ShopItem";
  * (see `gamedata::types::event_shop`) with the names and icons the client
  * tables give them.
  */
-export type EventShop = { 
-/**
- * Which server's shop this is: CN when that account has fetched it,
- * else EN.
- */
-server: string, shopName: string, token: ShopItem, startTime: number, endTime: number, 
-/**
- * Token cost of every limited good at full stock, the server's figure.
- */
-maxPrice: number, goods: Array<ShopGood>, };
+export type EventShop = {
+    /**
+     * Which server's shop this is: CN when that account has fetched it,
+     * else EN.
+     */
+    server: string;
+    shopName: string;
+    token: ShopItem;
+    startTime: number;
+    endTime: number;
+    /**
+     * Token cost of every limited good at full stock, the server's figure.
+     */
+    maxPrice: number;
+    goods: Array<ShopGood>;
+};

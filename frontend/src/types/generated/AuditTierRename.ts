@@ -3,4 +3,4 @@
 /**
  * A tier's name before and after a run of edits.
  */
-export type AuditTierRename = { id: string, from: string, to: string, };
+export type AuditTierRename = { id: string; from: string; to: string };

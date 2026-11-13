@@ -8,8 +8,14 @@ import type { ArchivePerson } from "./ArchivePerson";
 /**
  * The network: territories, every chart and everyone on them.
  */
-export type ArchiveNetwork = { 
-/**
- * False when this server ships no network tables.
- */
-imported: boolean, forces: Array<ArchiveForce>, forceLinks: Array<ArchivePair>, hexLinks: Array<ArchiveHexLink>, groups: Array<ArchiveGroup>, people: Array<ArchivePerson>, };
+export type ArchiveNetwork = {
+    /**
+     * False when this server ships no network tables.
+     */
+    imported: boolean;
+    forces: Array<ArchiveForce>;
+    forceLinks: Array<ArchivePair>;
+    hexLinks: Array<ArchiveHexLink>;
+    groups: Array<ArchiveGroup>;
+    people: Array<ArchivePerson>;
+};

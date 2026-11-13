@@ -7,44 +7,45 @@ import type { RotationDto } from "./RotationDto";
 import type { ShiftRotationDto } from "./ShiftRotationDto";
 import type { SustainabilityDto } from "./SustainabilityDto";
 
-export type BaseImprovements = { 
-/**
- * The CURRENT base as stationed, to compare against the optimized
- * assignments.
- */
-current: BaseAssignmentDto | null, 
-/**
- * Peak assignment: the highest-efficiency arrangement of the roster across
- * the existing rooms.
- */
-optimal: BaseAssignmentDto | null, 
-/**
- * Staggered rotation for sustained 24/7 operation: a main staffing plus a
- * backup pool swapped in one operator at a time. `sustained_efficiency` is
- * the 24/7 output (near peak) and is what the base score uses.
- */
-rotation: RotationDto | null, 
-/**
- * User's room layout (counts + levels per room type)
- */
-layout: Array<RoomLayoutEntry>, 
-/**
- * Recommended 3-shift rotation paired with the player's saved presets, for the
- * preset-vs-recommended comparison. `None` when the base has no production rooms.
- */
-shift_rotation: ShiftRotationDto | null, 
-/**
- * The base-wide resource economy plan (Rosmontis / Ebenholz / Mr. Nothing "Perception
- * Information" system): support operators to station outside production, and the
- * production operators it powers. `None` unless a 243 roster can field the economy.
- */
-perception: PerceptionPlanDto | null, 
-/**
- * Check-in economics for the CURRENT base (same model as the planner's
- * deep dive), so both tabs read the same numbers.
- */
-claim?: ClaimDto | null, 
-/**
- * The current crews simulated with no rotation at all - "if you never swap".
- */
-unrotated?: SustainabilityDto | null, };
+export type BaseImprovements = {
+    /**
+     * The CURRENT base as stationed, to compare against the optimized
+     * assignments.
+     */
+    current: BaseAssignmentDto | null;
+    /**
+     * Peak assignment: the highest-efficiency arrangement of the roster across
+     * the existing rooms.
+     */
+    optimal: BaseAssignmentDto | null;
+    /**
+     * Staggered rotation for sustained 24/7 operation: a main staffing plus a
+     * backup pool swapped in one operator at a time. `sustained_efficiency` is
+     * the 24/7 output (near peak) and is what the base score uses.
+     */
+    rotation: RotationDto | null;
+    /**
+     * User's room layout (counts + levels per room type)
+     */
+    layout: Array<RoomLayoutEntry>;
+    /**
+     * Recommended 3-shift rotation paired with the player's saved presets, for the
+     * preset-vs-recommended comparison. `None` when the base has no production rooms.
+     */
+    shift_rotation: ShiftRotationDto | null;
+    /**
+     * The base-wide resource economy plan (Rosmontis / Ebenholz / Mr. Nothing "Perception
+     * Information" system): support operators to station outside production, and the
+     * production operators it powers. `None` unless a 243 roster can field the economy.
+     */
+    perception: PerceptionPlanDto | null;
+    /**
+     * Check-in economics for the CURRENT base (same model as the planner's
+     * deep dive), so both tabs read the same numbers.
+     */
+    claim?: ClaimDto | null;
+    /**
+     * The current crews simulated with no rotation at all - "if you never swap".
+     */
+    unrotated?: SustainabilityDto | null;
+};

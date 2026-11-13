@@ -4,14 +4,17 @@ import type { LevelBucket } from "./LevelBucket";
 /**
  * How far E2 owners take one skill's mastery.
  */
-export type SkillMasteryStats = { 
-/**
- * Stable id, resolved from the stored index against the same game data
- * that produces the operator's `skills` array.
- */
-skillId: string, skillIndex: number, 
-/**
- * Ascending by level, always covering 0..3 with zero-filled gaps so a
- * client can render a fixed strip without reasoning about absence.
- */
-buckets: Array<LevelBucket>, total: number, };
+export type SkillMasteryStats = {
+    /**
+     * Stable id, resolved from the stored index against the same game data
+     * that produces the operator's `skills` array.
+     */
+    skillId: string;
+    skillIndex: number;
+    /**
+     * Ascending by level, always covering 0..3 with zero-filled gaps so a
+     * client can render a fixed strip without reasoning about absence.
+     */
+    buckets: Array<LevelBucket>;
+    total: number;
+};

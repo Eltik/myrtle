@@ -7,4 +7,4 @@ import type { OperatorOwnershipCounts } from "./OperatorOwnershipCounts";
  * id implies zero owners. `totalUsers` is the eligible population on this
  * server (players who imported a roster and opted into stat sharing).
  */
-export type OperatorOwnershipResponse = { totalUsers: number, counts: { [key in string]?: OperatorOwnershipCounts }, computedAt: string, };
+export type OperatorOwnershipResponse = { totalUsers: number; counts: { [key in string]?: OperatorOwnershipCounts }; computedAt: string };

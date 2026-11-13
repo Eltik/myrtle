@@ -3,4 +3,4 @@ import type { DatePullData } from "./DatePullData";
 import type { DayOfWeekPullData } from "./DayOfWeekPullData";
 import type { HourlyPullData } from "./HourlyPullData";
 
-export type PullTimingData = { byHour: Array<HourlyPullData>, byDayOfWeek: Array<DayOfWeekPullData>, byDate?: Array<DatePullData> | null, };
+export type PullTimingData = { byHour: Array<HourlyPullData>; byDayOfWeek: Array<DayOfWeekPullData>; byDate?: Array<DatePullData> | null };

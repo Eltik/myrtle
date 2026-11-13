@@ -6,15 +6,16 @@ import type { ProfileHeaderField } from "./ProfileHeaderField";
  * fill the stat strip. Absent, the header and strip render exactly as they did
  * before this existed.
  */
-export type ProfileHeader = { 
-/**
- * Fields a visitor does not receive, in canonical order, each once. The
- * owner still sees them, marked.
- */
-hidden: Array<ProfileHeaderField>, 
-/**
- * The strip's cards, in display order, at most [`HEADER_STRIP_MAX`], each
- * once, strip cards only. `None` is [`ProfileHeaderField::DEFAULT_STRIP`];
- * an empty list is no strip at all.
- */
-strip?: Array<ProfileHeaderField>, };
+export type ProfileHeader = {
+    /**
+     * Fields a visitor does not receive, in canonical order, each once. The
+     * owner still sees them, marked.
+     */
+    hidden: Array<ProfileHeaderField>;
+    /**
+     * The strip's cards, in display order, at most [`HEADER_STRIP_MAX`], each
+     * once, strip cards only. `None` is [`ProfileHeaderField::DEFAULT_STRIP`];
+     * an empty list is no strip at all.
+     */
+    strip?: Array<ProfileHeaderField>;
+};

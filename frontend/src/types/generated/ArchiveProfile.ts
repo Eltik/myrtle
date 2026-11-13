@@ -7,24 +7,40 @@ import type { ProfileField } from "./ProfileField";
  * One operator's file. Every `*_raw`-style string is the file's own text;
  * each parsed sibling is `None` when the text does not read as one.
  */
-export type ArchiveProfile = { codeName?: string, gender?: string, race?: string, birthplace?: string, birthday?: string, 
-/**
- * 1..=12.
- */
-birthMonth?: number, birthDay?: number, height?: string, heightCm?: number, combatExperience?: string, combatYears?: number, infection?: string, infectionState: InfectionState, bloodDensity?: string, 
-/**
- * Blood Originium-Crystal Density in u/L.
- */
-bloodDensityUl?: number, assimilation?: string, 
-/**
- * Cell-Originium Assimilation in percent.
- */
-assimilationPct?: number, 
-/**
- * The six exam columns the file has, in [`ExamAxis::ALL`] order.
- */
-exam: Array<ExamRating>, 
-/**
- * `[Manufacturer]`: present only on a unit that was built.
- */
-manufacturer?: string, extra: Array<ProfileField>, };
+export type ArchiveProfile = {
+    codeName?: string;
+    gender?: string;
+    race?: string;
+    birthplace?: string;
+    birthday?: string;
+    /**
+     * 1..=12.
+     */
+    birthMonth?: number;
+    birthDay?: number;
+    height?: string;
+    heightCm?: number;
+    combatExperience?: string;
+    combatYears?: number;
+    infection?: string;
+    infectionState: InfectionState;
+    bloodDensity?: string;
+    /**
+     * Blood Originium-Crystal Density in u/L.
+     */
+    bloodDensityUl?: number;
+    assimilation?: string;
+    /**
+     * Cell-Originium Assimilation in percent.
+     */
+    assimilationPct?: number;
+    /**
+     * The six exam columns the file has, in [`ExamAxis::ALL`] order.
+     */
+    exam: Array<ExamRating>;
+    /**
+     * `[Manufacturer]`: present only on a unit that was built.
+     */
+    manufacturer?: string;
+    extra: Array<ProfileField>;
+};

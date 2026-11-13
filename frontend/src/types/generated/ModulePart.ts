@@ -3,4 +3,4 @@ import type { AddOrOverrideTalentDataBundle } from "./AddOrOverrideTalentDataBun
 import type { ModuleTarget } from "./ModuleTarget";
 import type { OverrideTraitDataBundle } from "./OverrideTraitDataBundle";
 
-export type ModulePart = { resKey: string | null, target: ModuleTarget, isToken: boolean, addOrOverrideTalentDataBundle: AddOrOverrideTalentDataBundle, overrideTraitDataBundle: OverrideTraitDataBundle, };
+export type ModulePart = { resKey: string | null; target: ModuleTarget; isToken: boolean; addOrOverrideTalentDataBundle: AddOrOverrideTalentDataBundle; overrideTraitDataBundle: OverrideTraitDataBundle };

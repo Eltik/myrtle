@@ -6,4 +6,11 @@ import type { HandbookStageData } from "./HandbookStageData";
 import type { HandbookStageTime } from "./HandbookStageTime";
 import type { TeamMission } from "./TeamMission";
 
-export type Handbook = { handbookDict: { [key in string]?: HandbookItem }, npcDict: { [key in string]?: HandbookNPCItem }, teamMissionList: { [key in string]?: TeamMission }, handbookDisplayConditionList: { [key in string]?: HandbookDisplayCondition }, handbookStageData: { [key in string]?: HandbookStageData }, handbookStageTime: Array<HandbookStageTime>, };
+export type Handbook = {
+    handbookDict: { [key in string]?: HandbookItem };
+    npcDict: { [key in string]?: HandbookNPCItem };
+    teamMissionList: { [key in string]?: TeamMission };
+    handbookDisplayConditionList: { [key in string]?: HandbookDisplayCondition };
+    handbookStageData: { [key in string]?: HandbookStageData };
+    handbookStageTime: Array<HandbookStageTime>;
+};

@@ -8,16 +8,20 @@ import type { StorySpriteVariant } from "./StorySpriteVariant";
  * One sprite folder's expression sheet: its list entry, every expression
  * it offers, and every story it appears in, in library order.
  */
-export type StorySpriteDetail = { sprite: StorySpriteEntry, 
-/**
- * The kept names of `sprite.names`, in the same order, each with where it
- * is spoken and example lines.
- */
-names: Array<StorySpriteNameDetail>, 
-/**
- * The names the alias threshold CUT (`sprite.noise` is their weight),
- * most lines first, with the same detail: mostly someone else speaking
- * while this sprite stays lit. Never searched and never a chip of their
- * own; the sheet lists them behind a disclosure.
- */
-strayNames: Array<StorySpriteNameDetail>, variants: Array<StorySpriteVariant>, stories: Array<StorySpriteStory>, };
+export type StorySpriteDetail = {
+    sprite: StorySpriteEntry;
+    /**
+     * The kept names of `sprite.names`, in the same order, each with where it
+     * is spoken and example lines.
+     */
+    names: Array<StorySpriteNameDetail>;
+    /**
+     * The names the alias threshold CUT (`sprite.noise` is their weight),
+     * most lines first, with the same detail: mostly someone else speaking
+     * while this sprite stays lit. Never searched and never a chip of their
+     * own; the sheet lists them behind a disclosure.
+     */
+    strayNames: Array<StorySpriteNameDetail>;
+    variants: Array<StorySpriteVariant>;
+    stories: Array<StorySpriteStory>;
+};

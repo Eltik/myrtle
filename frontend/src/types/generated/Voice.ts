@@ -6,4 +6,21 @@ import type { UnlockType } from "./UnlockType";
 import type { VoiceData } from "./VoiceData";
 import type { VoiceType } from "./VoiceType";
 
-export type Voice = { charWordId: string, wordKey: string, charId: string, voiceId: string, voiceText: string, voiceTitle: string, voiceIndex: number, voiceType: VoiceType, unlockType: UnlockType, unlockParam: Array<UnlockParam>, lockDescription: string | null, placeType: PlaceType, voiceAsset: string, id: string | null, data: Array<VoiceData> | null, languages: Array<LangType> | null, };
+export type Voice = {
+    charWordId: string;
+    wordKey: string;
+    charId: string;
+    voiceId: string;
+    voiceText: string;
+    voiceTitle: string;
+    voiceIndex: number;
+    voiceType: VoiceType;
+    unlockType: UnlockType;
+    unlockParam: Array<UnlockParam>;
+    lockDescription: string | null;
+    placeType: PlaceType;
+    voiceAsset: string;
+    id: string | null;
+    data: Array<VoiceData> | null;
+    languages: Array<LangType> | null;
+};

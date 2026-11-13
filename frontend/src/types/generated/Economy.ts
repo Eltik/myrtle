@@ -4,44 +4,49 @@ import type { EconomyBonus } from "./EconomyBonus";
 import type { EconomyNote } from "./EconomyNote";
 import type { EconomySeat } from "./EconomySeat";
 
-export type Economy = { 
-/**
- * The request's `start_dp` plus `start_bonus`.
- */
-start_dp: number, start_base: number, 
-/**
- * Talents that add DP at the start just by being in the squad.
- */
-start_bonus: Array<EconomyBonus>, 
-/**
- * Filled seats, support included, sorted by `cost` ascending then seat.
- */
-seats: Array<EconomySeat>, 
-/**
- * Sum of every seat's `cost`.
- */
-total: number, 
-/**
- * Sum of the `cheapest_count` cheapest seats.
- */
-cheapest: number, cheapest_count: number, deploy_limit: number | null, 
-/**
- * The lowest DP the squad may drop to when deploying: 0, or below with a
- * squad talent that lowers the DP Lower Limit (Closure's "Scheduler, Max
- * Settings!" `cost` -4 makes it -4). A seat deploys once DP minus its
- * `cost` stays at or above it.
- */
-dp_lower_limit: number, 
-/**
- * Seats whose `cost` is at or under `start_dp - dp_lower_limit`.
- */
-openers: number, sources: Array<DpSource>, 
-/**
- * Squad-wide effects that changed a number above (an SP bonus that moved a
- * skill's `first_ready`, a redeploy cut), so the footer can say so.
- */
-counted: Array<EconomyNote>, 
-/**
- * Effects left out of the numbers on purpose, with why.
- */
-notes: Array<EconomyNote>, };
+export type Economy = {
+    /**
+     * The request's `start_dp` plus `start_bonus`.
+     */
+    start_dp: number;
+    start_base: number;
+    /**
+     * Talents that add DP at the start just by being in the squad.
+     */
+    start_bonus: Array<EconomyBonus>;
+    /**
+     * Filled seats, support included, sorted by `cost` ascending then seat.
+     */
+    seats: Array<EconomySeat>;
+    /**
+     * Sum of every seat's `cost`.
+     */
+    total: number;
+    /**
+     * Sum of the `cheapest_count` cheapest seats.
+     */
+    cheapest: number;
+    cheapest_count: number;
+    deploy_limit: number | null;
+    /**
+     * The lowest DP the squad may drop to when deploying: 0, or below with a
+     * squad talent that lowers the DP Lower Limit (Closure's "Scheduler, Max
+     * Settings!" `cost` -4 makes it -4). A seat deploys once DP minus its
+     * `cost` stays at or above it.
+     */
+    dp_lower_limit: number;
+    /**
+     * Seats whose `cost` is at or under `start_dp - dp_lower_limit`.
+     */
+    openers: number;
+    sources: Array<DpSource>;
+    /**
+     * Squad-wide effects that changed a number above (an SP bonus that moved a
+     * skill's `first_ready`, a redeploy cut), so the footer can say so.
+     */
+    counted: Array<EconomyNote>;
+    /**
+     * Effects left out of the numbers on purpose, with why.
+     */
+    notes: Array<EconomyNote>;
+};

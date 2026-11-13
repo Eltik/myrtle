@@ -3,9 +3,14 @@
 /**
  * One line of a news body: prose, or a picture that runs in the column.
  */
-export type ArchiveNewsLine = { "kind": "text", text: string, } | { "kind": "image", 
-/**
- * The picture's name, kept so a line with no file on disk still says
- * what is missing.
- */
-name: string, url: string | null, };
+export type ArchiveNewsLine =
+    | { kind: "text"; text: string }
+    | {
+          kind: "image";
+          /**
+           * The picture's name, kept so a line with no file on disk still says
+           * what is missing.
+           */
+          name: string;
+          url: string | null;
+      };

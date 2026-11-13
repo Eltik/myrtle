@@ -2,4 +2,4 @@
 import type { ArchiveFactionRef } from "./ArchiveFactionRef";
 import type { ArchiveHolder } from "./ArchiveHolder";
 
-export type ArchivePrefix = { prefix: string, holders: Array<ArchiveHolder>, faction?: ArchiveFactionRef, factionHolders: number, };
+export type ArchivePrefix = { prefix: string; holders: Array<ArchiveHolder>; faction?: ArchiveFactionRef; factionHolders: number };

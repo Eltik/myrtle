@@ -6,4 +6,4 @@
  * halt with `?line=`; `text` is as written, rich-text tags and
  * `{@nickname}` intact.
  */
-export type StorySpriteExample = { storyId: string, storyName: string, code?: string, tag?: string, line: number, text: string, };
+export type StorySpriteExample = { storyId: string; storyName: string; code?: string; tag?: string; line: number; text: string };

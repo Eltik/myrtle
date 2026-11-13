@@ -5,4 +5,4 @@
  * `record` groups and the 315 operator records list the same 367 stories,
  * so a naive sum of both halves would count those twice.
  */
-export type StoryTotals = { stories: number, withScript: number, words: number, };
+export type StoryTotals = { stories: number; withScript: number; words: number };

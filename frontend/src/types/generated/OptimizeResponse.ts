@@ -3,17 +3,19 @@ import type { BaseAssignmentDto } from "./BaseAssignmentDto";
 import type { PowerDto } from "./PowerDto";
 import type { RoomDiffDto } from "./RoomDiffDto";
 
-export type OptimizeResponse = { 
-/**
- * The proposed layout, scored.
- */
-proposal: BaseAssignmentDto, 
-/**
- * The draft as submitted, scored here rather than trusted from the
- * client, so both sides of the UI's diff come from one engine run.
- */
-baseline: BaseAssignmentDto, 
-/**
- * Only the rooms whose crew actually changed.
- */
-room_diffs: Array<RoomDiffDto>, power: PowerDto, };
+export type OptimizeResponse = {
+    /**
+     * The proposed layout, scored.
+     */
+    proposal: BaseAssignmentDto;
+    /**
+     * The draft as submitted, scored here rather than trusted from the
+     * client, so both sides of the UI's diff come from one engine run.
+     */
+    baseline: BaseAssignmentDto;
+    /**
+     * Only the rooms whose crew actually changed.
+     */
+    room_diffs: Array<RoomDiffDto>;
+    power: PowerDto;
+};

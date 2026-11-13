@@ -5,13 +5,21 @@
  * requested item they hold. Identity fields mirror `LeaderboardEntry` so the
  * same row components render both.
  */
-export type ItemLeaderboardEntry = { 
-/**
- * `rank()` over quantity among visible holders: ties share a rank.
- */
-rank: number, uid: string, nickname: string | null, nick_number: string | null, level: number | null, avatar_id: string | null, server: string, 
-/**
- * The player's score grade, so a row reads the same whichever metric
- * ranks it.
- */
-grade: string | null, quantity: number, };
+export type ItemLeaderboardEntry = {
+    /**
+     * `rank()` over quantity among visible holders: ties share a rank.
+     */
+    rank: number;
+    uid: string;
+    nickname: string | null;
+    nick_number: string | null;
+    level: number | null;
+    avatar_id: string | null;
+    server: string;
+    /**
+     * The player's score grade, so a row reads the same whichever metric
+     * ranks it.
+     */
+    grade: string | null;
+    quantity: number;
+};

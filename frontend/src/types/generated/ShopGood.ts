@@ -2,8 +2,15 @@
 import type { ShopGoodKind } from "./ShopGoodKind";
 import type { ShopItem } from "./ShopItem";
 
-export type ShopGood = { goodId: string, itemType: string, kind: ShopGoodKind, item: ShopItem, count: number, price: number, 
-/**
- * Purchase limit; `-1` is unlimited stock, which the buy-out leaves out.
- */
-availCount: number, };
+export type ShopGood = {
+    goodId: string;
+    itemType: string;
+    kind: ShopGoodKind;
+    item: ShopItem;
+    count: number;
+    price: number;
+    /**
+     * Purchase limit; `-1` is unlimited stock, which the buy-out leaves out.
+     */
+    availCount: number;
+};

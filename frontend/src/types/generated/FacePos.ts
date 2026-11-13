@@ -9,4 +9,4 @@
  * a whole-body sprite, and on any folder whose `hub.json` the unpacker has
  * not written yet.
  */
-export type FacePos = { x: number, y: number, w: number, h: number, };
+export type FacePos = { x: number; y: number; w: number; h: number };

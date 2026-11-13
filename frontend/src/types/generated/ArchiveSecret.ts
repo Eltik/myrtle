@@ -4,4 +4,4 @@ import type { ArchiveFactionRef } from "./ArchiveFactionRef";
 /**
  * An operator counted in a faction their card does not show.
  */
-export type ArchiveSecret = { charId: string, shown: ArchiveFactionRef, hidden: ArchiveFactionRef, };
+export type ArchiveSecret = { charId: string; shown: ArchiveFactionRef; hidden: ArchiveFactionRef };

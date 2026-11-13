@@ -6,20 +6,23 @@
  * `None` when the table lacks the grade, and the page then flags nothing for
  * that stat.
  */
-export type ThreatThresholds = { 
-/**
- * RES at or above this asks for physical or true/elemental damage.
- */
-high_res: number | null, 
-/**
- * DEF at or above this asks for arts or true/elemental damage.
- */
-high_def: number | null, 
-/**
- * Move speed at or above this asks for crowd control or a shift.
- */
-fast_move_speed: number | null, 
-/**
- * The grades the three come from, for the page's tooltip.
- */
-res_grade: string, def_grade: string, move_speed_grade: string, };
+export type ThreatThresholds = {
+    /**
+     * RES at or above this asks for physical or true/elemental damage.
+     */
+    high_res: number | null;
+    /**
+     * DEF at or above this asks for arts or true/elemental damage.
+     */
+    high_def: number | null;
+    /**
+     * Move speed at or above this asks for crowd control or a shift.
+     */
+    fast_move_speed: number | null;
+    /**
+     * The grades the three come from, for the page's tooltip.
+     */
+    res_grade: string;
+    def_grade: string;
+    move_speed_grade: string;
+};

@@ -2,4 +2,4 @@
 import type { CoverageOp } from "./CoverageOp";
 import type { CoverageRowKey } from "./CoverageRowKey";
 
-export type CoverageRow = { key: CoverageRowKey, ops: Array<CoverageOp>, };
+export type CoverageRow = { key: CoverageRowKey; ops: Array<CoverageOp> };

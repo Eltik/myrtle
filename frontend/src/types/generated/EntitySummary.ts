@@ -5,45 +5,49 @@ import type { FacetValue } from "./FacetValue";
 /**
  * The display form of one entity: enough for a tile, a pool filter and a link.
  */
-export type EntitySummary = { kind: EntityKind, id: string, name: string, 
-/**
- * Image path under the API root (`/avatar/char_002_amiya`), server-neutral:
- * the client prefixes its own base and server. `None` when the extract
- * holds no art for the entity.
- */
-icon: string | null, 
-/**
- * Site route for the entity's own page, when it has one.
- */
-href: string | null, 
-/**
- * Kind-specific tags the tile and the pool filters read. Operators carry
- * `rarity`, `profession`, `sub_profession_id`, `position`, and, when set,
- * `nation_id`, `group_id`, `team_id`, `race`, `appellation`, and the
- * server's own `profession_name`, `sub_profession_name`, `nation_name`,
- * `group_name` and `team_name`. Subclasses carry
- * `profession` and the server's `profession_name`; enemies
- * `enemy_level` and `enemy_index`; events `display_type`, `type`,
- * `start_time` (unix seconds) and, for a rerun, `rerun`; factions
- * `power_level` (`nation`, `group` or `team`); Stronghold bonds
- * `bond_type` (`season` or `regular`) and, for a season bond, `power_ids`.
- * Skins carry `char_id`, `operator` (the wearer's name), `rarity`,
- * `profession` and, when filed under one, `brand`; modules `char_id`,
- * `operator`, `profession`, `module_type` (`X`, `Y`, `D`, `A`, `B`) and
- * `type_code` (`SUM`); skills `char_id`, `operator`, `profession`, `slot`
- * (`1` to `3`) and, when the skill has levels, `skill_type` and
- * `sp_type`; Integrated Strategies entries `theme` (`rogue_N`,
- * which is IS N+1) and `item_type` (`theme`, `relic`, `band`, ...);
- * story sprites `source` (`operator` or `npc`), for an operator `char_id`,
- * and, when the hub places the face, `face` (`x,y` fractions of the plate);
- * main story episodes `episode` (`0` to `16` on EN), `act` (the
- * `chapter_table` index) and `act_name`; home backgrounds `bg_type`
- * (`base` or `dynamic`), `obtain` (the server's own wording) and, when it
- * has one, `start_time` (unix seconds). Story CGs and scenes carry their
- * library group's `group` (name), `group_id` and `category` (`main`,
- * `side`, `vignette`, `is`, `reclamation`, `sideContent`, `record`);
- * Archives pictures their archive's `group` (the event's or theme's
- * name), `group_id` (`act13side`, `rogue_1`) and `picture_type`
- * (`IMAGE`, `ENDING_IMAGE`, `ROGUE_IMAGE`, raw from the table).
- */
-facets: { [key in string]?: FacetValue }, };
+export type EntitySummary = {
+    kind: EntityKind;
+    id: string;
+    name: string;
+    /**
+     * Image path under the API root (`/avatar/char_002_amiya`), server-neutral:
+     * the client prefixes its own base and server. `None` when the extract
+     * holds no art for the entity.
+     */
+    icon: string | null;
+    /**
+     * Site route for the entity's own page, when it has one.
+     */
+    href: string | null;
+    /**
+     * Kind-specific tags the tile and the pool filters read. Operators carry
+     * `rarity`, `profession`, `sub_profession_id`, `position`, and, when set,
+     * `nation_id`, `group_id`, `team_id`, `race`, `appellation`, and the
+     * server's own `profession_name`, `sub_profession_name`, `nation_name`,
+     * `group_name` and `team_name`. Subclasses carry
+     * `profession` and the server's `profession_name`; enemies
+     * `enemy_level` and `enemy_index`; events `display_type`, `type`,
+     * `start_time` (unix seconds) and, for a rerun, `rerun`; factions
+     * `power_level` (`nation`, `group` or `team`); Stronghold bonds
+     * `bond_type` (`season` or `regular`) and, for a season bond, `power_ids`.
+     * Skins carry `char_id`, `operator` (the wearer's name), `rarity`,
+     * `profession` and, when filed under one, `brand`; modules `char_id`,
+     * `operator`, `profession`, `module_type` (`X`, `Y`, `D`, `A`, `B`) and
+     * `type_code` (`SUM`); skills `char_id`, `operator`, `profession`, `slot`
+     * (`1` to `3`) and, when the skill has levels, `skill_type` and
+     * `sp_type`; Integrated Strategies entries `theme` (`rogue_N`,
+     * which is IS N+1) and `item_type` (`theme`, `relic`, `band`, ...);
+     * story sprites `source` (`operator` or `npc`), for an operator `char_id`,
+     * and, when the hub places the face, `face` (`x,y` fractions of the plate);
+     * main story episodes `episode` (`0` to `16` on EN), `act` (the
+     * `chapter_table` index) and `act_name`; home backgrounds `bg_type`
+     * (`base` or `dynamic`), `obtain` (the server's own wording) and, when it
+     * has one, `start_time` (unix seconds). Story CGs and scenes carry their
+     * library group's `group` (name), `group_id` and `category` (`main`,
+     * `side`, `vignette`, `is`, `reclamation`, `sideContent`, `record`);
+     * Archives pictures their archive's `group` (the event's or theme's
+     * name), `group_id` (`act13side`, `rogue_1`) and `picture_type`
+     * (`IMAGE`, `ENDING_IMAGE`, `ROGUE_IMAGE`, raw from the table).
+     */
+    facets: { [key in string]?: FacetValue };
+};

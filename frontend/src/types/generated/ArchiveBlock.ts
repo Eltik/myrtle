@@ -4,8 +4,15 @@ import type { ArchivePoint } from "./ArchivePoint";
 /**
  * One force's block on a chart: its label, its colour and its roster.
  */
-export type ArchiveBlock = { forceId: string, name: string, color: string, pos: ArchivePoint, focus: ArchivePoint, 
-/**
- * False for a guest block, a force that is visiting this chart.
- */
-home: boolean, members: Array<string>, };
+export type ArchiveBlock = {
+    forceId: string;
+    name: string;
+    color: string;
+    pos: ArchivePoint;
+    focus: ArchivePoint;
+    /**
+     * False for a guest block, a force that is visiting this chart.
+     */
+    home: boolean;
+    members: Array<string>;
+};

@@ -4,4 +4,4 @@
  * The author of one translation revision. `nickname` is `None` once the
  * account is gone or never synced a name.
  */
-export type UiMessageAuditActor = { id: string, nickname: string | null, };
+export type UiMessageAuditActor = { id: string; nickname: string | null };

@@ -4,4 +4,4 @@
  * A list the caller holds a grant on, at their highest level on it. Read by
  * `GET /tier-lists/granted`.
  */
-export type GrantedTierList = { tier_list_id: string, slug: string, title: string, list_type: string, permission: string, };
+export type GrantedTierList = { tier_list_id: string; slug: string; title: string; list_type: string; permission: string };

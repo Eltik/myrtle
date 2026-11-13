@@ -4,12 +4,14 @@ import type { AssignedOperator } from "./AssignedOperator";
 /**
  * An operator leaving a cell for another room in the SAME shift.
  */
-export type MovedOperator = { operator: AssignedOperator, 
-/**
- * Destination room type ("TRADING", "MANUFACTURE", ...).
- */
-to_room_type: string, 
-/**
- * Destination team/squad label ("Team C", "Squad 2"), when known.
- */
-to_team_label: string | null, };
+export type MovedOperator = {
+    operator: AssignedOperator;
+    /**
+     * Destination room type ("TRADING", "MANUFACTURE", ...).
+     */
+    to_room_type: string;
+    /**
+     * Destination team/squad label ("Team C", "Squad 2"), when known.
+     */
+    to_team_label: string | null;
+};

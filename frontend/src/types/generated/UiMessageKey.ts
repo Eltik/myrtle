@@ -5,4 +5,4 @@ import type { JsonValue } from "./serde_json/JsonValue";
  * `ui_message_keys` table - one row per translatable string in the frontend
  * source, written by the extractor's sync and never by a translator.
  */
-export type UiMessageKey = { key: string, namespace: string, source_text: string, source_hash: string, description: string | null, placeholders: JsonValue, is_active: boolean, };
+export type UiMessageKey = { key: string; namespace: string; source_text: string; source_hash: string; description: string | null; placeholders: JsonValue; is_active: boolean };

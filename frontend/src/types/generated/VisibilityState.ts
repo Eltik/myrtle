@@ -5,4 +5,4 @@
  *
  * Hiding a list does not make it private: a direct link still resolves.
  */
-export type VisibilityState = { is_listed: boolean, };
+export type VisibilityState = { is_listed: boolean };

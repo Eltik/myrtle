@@ -3,4 +3,4 @@ import type { Backtest } from "./Backtest";
 import type { LagModel } from "./LagModel";
 import type { YearlyModel } from "./YearlyModel";
 
-export type LagResponse = { model: LagModel, yearly: YearlyModel, backtest: Backtest, };
+export type LagResponse = { model: LagModel; yearly: YearlyModel; backtest: Backtest };

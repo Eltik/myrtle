@@ -4,4 +4,4 @@ import type { RawModule } from "./RawModule";
 import type { SubProfession } from "./SubProfession";
 import type { JsonValue } from "./serde_json/JsonValue";
 
-export type RawModules = { equipDict: { [key in string]?: RawModule }, missionList: { [key in string]?: Mission }, subProfDict: { [key in string]?: SubProfession }, charEquip: { [key in string]?: Array<string> }, equipTrackDict: Array<JsonValue>, };
+export type RawModules = { equipDict: { [key in string]?: RawModule }; missionList: { [key in string]?: Mission }; subProfDict: { [key in string]?: SubProfession }; charEquip: { [key in string]?: Array<string> }; equipTrackDict: Array<JsonValue> };

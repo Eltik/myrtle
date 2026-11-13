@@ -5,8 +5,12 @@ import type { SweepAxis } from "./SweepAxis";
  * `steps` evenly spaced values from `min` to `max` inclusive, each replacing
  * the primary DEF or RES of every request.
  */
-export type Sweep = { axis: SweepAxis, min: number, max: number, 
-/**
- * 1 to 101. One step is `min` alone.
- */
-steps: number, };
+export type Sweep = {
+    axis: SweepAxis;
+    min: number;
+    max: number;
+    /**
+     * 1 to 101. One step is `min` alone.
+     */
+    steps: number;
+};

@@ -19,68 +19,109 @@ import type { PowerAffiliation } from "./PowerAffiliation";
 import type { Talent } from "./Talent";
 import type { Trait } from "./Trait";
 
-export type Operator = { id: string | null, name: string, description: string, canUseGeneralPotentialItem: boolean, canUseActivityPotentialItem: boolean, potentialItemId: string, activityPotentialItemId: string | null, classicPotentialItemId: string | null, nationId: string, groupId: string | null, teamId: string | null, 
-/**
- * Primary affiliation (mirrors the top-level nation/group ids).
- */
-mainPower: PowerAffiliation | null, 
-/**
- * Secondary affiliations. RIIC faction tags count these: Texas is nation
- * `lungmen` but `SubPower` `siracusa`, and Umiri's "all Siracusa
- * Operators" buff reaches her in-game.
- */
-subPower: Array<PowerAffiliation> | null, 
-/**
- * `handbook_team_table` names of `nation_id`, `group_id` and `team_id`
- * in the server's own language. `None` for an empty id, the `none`
- * sentinel, or an id the server's table does not name.
- */
-nationName: string | null, groupName: string | null, teamName: string | null, 
-/**
- * `sub_power` minus the `main_power` ids, in table order, named. The site
- * shows these only behind the reader's spoiler setting.
- */
-hiddenFactions: Array<HiddenFaction>, displayNumber: string, appellation: string, position: OperatorPosition, tagList: Array<string>, itemUsage: string, itemDesc: string, itemObtainApproach: string, 
-/**
- * `item_obtain_approach` as a category. `None` when the approach is
- * empty. See `types::obtain`.
- */
-obtainChannel: ObtainChannel | null, isNotObtainable: boolean, isSpChar: boolean, maxPotentialLevel: number, rarity: OperatorRarity, profession: OperatorProfession, 
-/**
- * The server's own name for `profession`, from its gacha class tags
- * (see `gacha::PROFESSION_TAG_IDS`). `None` for a token, a trap, or a
- * tag list without the class.
- */
-professionName: string | null, subProfessionId: string, 
-/**
- * `uniequip_table` `subProfDict` name of `sub_profession_id` in the
- * server's own language, `None` when the table has no such id.
- */
-subProfessionName: string | null, trait: Trait | null, phases: Array<Phase>, skills: Array<EnrichedSkill>, displayTokenDict: { [key in string]?: boolean } | null, drones: Array<Drone>, talents: Array<Talent>, potentialRanks: Array<PotentialRank>, favorKeyFrames: Array<AttributeKeyFrame>, allSkillLevelUp: Array<AllSkillLevelUp>, modules: Array<OperatorModule>, handbook: HandbookItem, profile: OperatorProfile | null, artists: Array<string>, baseSkills: Array<OperatorBaseSkill>, 
-/**
- * Battle sound effects + in-battle voice barks linked to this operator,
- * resolved from `audio_data.json` to playable `/audio/sound_beta_2/...`
- * URLs. Empty for operators with no battle audio (and for drones).
- */
-audio: Array<OperatorAudio>, 
-/**
- * Headshot: /upk/arts/charportraits/{pack}/{id}_{1|2}.png
- */
-portrait: string | null, 
-/**
- * Full illustration: /upk/chararts/{id}/{id}_{1|2}.png. `None` if absent
- * (portrait is the fallback).
- */
-skin: string | null, 
-/**
- * Every template id of an operator with alternate forms (only Amiya so
- * far), set on each form in the group; each id is its own entry in
- * `GameData.operators`. `None` for everyone else. `tmpl_default` names
- * the base id.
- */
-tmplIds?: Array<string> | null, 
-/**
- * Canonical base id for a template group (e.g. `char_002_amiya` for all
- * three Amiya forms). `None` when `tmpl_ids` is `None`.
- */
-tmplDefault?: string | null, };
+export type Operator = {
+    id: string | null;
+    name: string;
+    description: string;
+    canUseGeneralPotentialItem: boolean;
+    canUseActivityPotentialItem: boolean;
+    potentialItemId: string;
+    activityPotentialItemId: string | null;
+    classicPotentialItemId: string | null;
+    nationId: string;
+    groupId: string | null;
+    teamId: string | null;
+    /**
+     * Primary affiliation (mirrors the top-level nation/group ids).
+     */
+    mainPower: PowerAffiliation | null;
+    /**
+     * Secondary affiliations. RIIC faction tags count these: Texas is nation
+     * `lungmen` but `SubPower` `siracusa`, and Umiri's "all Siracusa
+     * Operators" buff reaches her in-game.
+     */
+    subPower: Array<PowerAffiliation> | null;
+    /**
+     * `handbook_team_table` names of `nation_id`, `group_id` and `team_id`
+     * in the server's own language. `None` for an empty id, the `none`
+     * sentinel, or an id the server's table does not name.
+     */
+    nationName: string | null;
+    groupName: string | null;
+    teamName: string | null;
+    /**
+     * `sub_power` minus the `main_power` ids, in table order, named. The site
+     * shows these only behind the reader's spoiler setting.
+     */
+    hiddenFactions: Array<HiddenFaction>;
+    displayNumber: string;
+    appellation: string;
+    position: OperatorPosition;
+    tagList: Array<string>;
+    itemUsage: string;
+    itemDesc: string;
+    itemObtainApproach: string;
+    /**
+     * `item_obtain_approach` as a category. `None` when the approach is
+     * empty. See `types::obtain`.
+     */
+    obtainChannel: ObtainChannel | null;
+    isNotObtainable: boolean;
+    isSpChar: boolean;
+    maxPotentialLevel: number;
+    rarity: OperatorRarity;
+    profession: OperatorProfession;
+    /**
+     * The server's own name for `profession`, from its gacha class tags
+     * (see `gacha::PROFESSION_TAG_IDS`). `None` for a token, a trap, or a
+     * tag list without the class.
+     */
+    professionName: string | null;
+    subProfessionId: string;
+    /**
+     * `uniequip_table` `subProfDict` name of `sub_profession_id` in the
+     * server's own language, `None` when the table has no such id.
+     */
+    subProfessionName: string | null;
+    trait: Trait | null;
+    phases: Array<Phase>;
+    skills: Array<EnrichedSkill>;
+    displayTokenDict: { [key in string]?: boolean } | null;
+    drones: Array<Drone>;
+    talents: Array<Talent>;
+    potentialRanks: Array<PotentialRank>;
+    favorKeyFrames: Array<AttributeKeyFrame>;
+    allSkillLevelUp: Array<AllSkillLevelUp>;
+    modules: Array<OperatorModule>;
+    handbook: HandbookItem;
+    profile: OperatorProfile | null;
+    artists: Array<string>;
+    baseSkills: Array<OperatorBaseSkill>;
+    /**
+     * Battle sound effects + in-battle voice barks linked to this operator,
+     * resolved from `audio_data.json` to playable `/audio/sound_beta_2/...`
+     * URLs. Empty for operators with no battle audio (and for drones).
+     */
+    audio: Array<OperatorAudio>;
+    /**
+     * Headshot: /upk/arts/charportraits/{pack}/{id}_{1|2}.png
+     */
+    portrait: string | null;
+    /**
+     * Full illustration: /upk/chararts/{id}/{id}_{1|2}.png. `None` if absent
+     * (portrait is the fallback).
+     */
+    skin: string | null;
+    /**
+     * Every template id of an operator with alternate forms (only Amiya so
+     * far), set on each form in the group; each id is its own entry in
+     * `GameData.operators`. `None` for everyone else. `tmpl_default` names
+     * the base id.
+     */
+    tmplIds?: Array<string> | null;
+    /**
+     * Canonical base id for a template group (e.g. `char_002_amiya` for all
+     * three Amiya forms). `None` when `tmpl_ids` is `None`.
+     */
+    tmplDefault?: string | null;
+};

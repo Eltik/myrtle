@@ -7,12 +7,16 @@ import type { MusicStatWindow } from "./MusicStatWindow";
  * `GET /music/stats/top-listeners`, and one track's listeners from
  * `GET /music/stats/tracks/{track_id}/listeners` (`trackId` set).
  */
-export type MusicListenerPage = { 
-/**
- * The track ranked over, absent for the site-wide ranking.
- */
-trackId?: string, window: MusicStatWindow, sort: MusicListenerSort, entries: Array<MusicListenerEntry>, 
-/**
- * Visible listeners in the window: the population the page is cut from.
- */
-total: number, };
+export type MusicListenerPage = {
+    /**
+     * The track ranked over, absent for the site-wide ranking.
+     */
+    trackId?: string;
+    window: MusicStatWindow;
+    sort: MusicListenerSort;
+    entries: Array<MusicListenerEntry>;
+    /**
+     * Visible listeners in the window: the population the page is cut from.
+     */
+    total: number;
+};

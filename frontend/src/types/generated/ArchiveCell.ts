@@ -4,8 +4,15 @@ import type { ArchiveEdge } from "./ArchiveEdge";
 /**
  * One portrait hex on a chart.
  */
-export type ArchiveCell = { charId: string, x: number, y: number, scale: number, outline: boolean, edges: Array<ArchiveEdge>, 
-/**
- * The force block this cell's character is listed in on this chart.
- */
-forceId?: string, };
+export type ArchiveCell = {
+    charId: string;
+    x: number;
+    y: number;
+    scale: number;
+    outline: boolean;
+    edges: Array<ArchiveEdge>;
+    /**
+     * The force block this cell's character is listed in on this chart.
+     */
+    forceId?: string;
+};

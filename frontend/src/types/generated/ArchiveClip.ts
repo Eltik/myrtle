@@ -4,4 +4,4 @@ import type { ArchiveClipTrack } from "./ArchiveClipTrack";
 /**
  * One recorded line, in every language whose file is on disk.
  */
-export type ArchiveClip = { charId: string, voiceId: string, index: number, tracks: Array<ArchiveClipTrack>, };
+export type ArchiveClip = { charId: string; voiceId: string; index: number; tracks: Array<ArchiveClipTrack> };

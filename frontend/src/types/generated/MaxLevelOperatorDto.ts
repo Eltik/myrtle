@@ -3,16 +3,24 @@
 /**
  * One operator still short of its target, with what closing the gap costs.
  */
-export type MaxLevelOperatorDto = { operator_id: string, name: string, rarity: number, elite: number, level: number, target_elite: number, target_level: number, 
-/**
- * EXP for the remaining levels, across every promotion on the way.
- */
-exp: number, 
-/**
- * LMD for the remaining levels.
- */
-level_lmd: number, 
-/**
- * LMD for the remaining promotions.
- */
-promotion_lmd: number, };
+export type MaxLevelOperatorDto = {
+    operator_id: string;
+    name: string;
+    rarity: number;
+    elite: number;
+    level: number;
+    target_elite: number;
+    target_level: number;
+    /**
+     * EXP for the remaining levels, across every promotion on the way.
+     */
+    exp: number;
+    /**
+     * LMD for the remaining levels.
+     */
+    level_lmd: number;
+    /**
+     * LMD for the remaining promotions.
+     */
+    promotion_lmd: number;
+};

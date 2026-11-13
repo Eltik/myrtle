@@ -5,4 +5,4 @@
  * reference it. `url` is `null` when the name resolves to no file on disk:
  * the tab lists the name and says so rather than dropping it.
  */
-export type IllustrationItem = { name: string, url: string | null, storyIds: Array<string>, };
+export type IllustrationItem = { name: string; url: string | null; storyIds: Array<string> };

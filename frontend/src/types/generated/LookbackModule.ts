@@ -3,8 +3,10 @@
 /**
  * One unlocked module of a [`LookbackOperator`].
  */
-export type LookbackModule = { module_id: string, 
-/**
- * 1 to 3.
- */
-stage: number, };
+export type LookbackModule = {
+    module_id: string;
+    /**
+     * 1 to 3.
+     */
+    stage: number;
+};

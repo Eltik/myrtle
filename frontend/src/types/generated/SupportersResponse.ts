@@ -2,8 +2,10 @@
 import type { SupporterEntry } from "./SupporterEntry";
 import type { UnresolvedSupporter } from "./UnresolvedSupporter";
 
-export type SupportersResponse = { entries: Array<SupporterEntry>, 
-/**
- * Table entries the loaded game data cannot resolve at this investment.
- */
-unresolved: Array<UnresolvedSupporter>, };
+export type SupportersResponse = {
+    entries: Array<SupporterEntry>;
+    /**
+     * Table entries the loaded game data cannot resolve at this investment.
+     */
+    unresolved: Array<UnresolvedSupporter>;
+};

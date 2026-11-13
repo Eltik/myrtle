@@ -2,16 +2,19 @@
 import type { ArchiveNewsFormat } from "./ArchiveNewsFormat";
 import type { ArchiveNewsLine } from "./ArchiveNewsLine";
 
-export type ArchiveNewsItem = { id: string, 
-/**
- * The headline.
- */
-title: string, author?: string, 
-/**
- * The masthead this story ran under.
- */
-format?: ArchiveNewsFormat, 
-/**
- * The body, already split by the table into prose and pictures.
- */
-lines: Array<ArchiveNewsLine>, };
+export type ArchiveNewsItem = {
+    id: string;
+    /**
+     * The headline.
+     */
+    title: string;
+    author?: string;
+    /**
+     * The masthead this story ran under.
+     */
+    format?: ArchiveNewsFormat;
+    /**
+     * The body, already split by the table into prose and pictures.
+     */
+    lines: Array<ArchiveNewsLine>;
+};

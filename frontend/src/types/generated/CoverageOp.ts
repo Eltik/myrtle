@@ -6,4 +6,4 @@ import type { SourceRef } from "./SourceRef";
  * appears once per row, by its first source in `trait, skill, talent, module,
  * stats, tag` order.
  */
-export type CoverageOp = { seat: number, char_id: string, support: boolean, why: SourceRef, };
+export type CoverageOp = { seat: number; char_id: string; support: boolean; why: SourceRef };

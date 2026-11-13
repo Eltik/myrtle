@@ -2,4 +2,4 @@
 import type { BasicInfo } from "./BasicInfo";
 import type { PhysicalExam } from "./PhysicalExam";
 
-export type OperatorProfile = { basicInfo: BasicInfo, physicalExam: PhysicalExam, };
+export type OperatorProfile = { basicInfo: BasicInfo; physicalExam: PhysicalExam };

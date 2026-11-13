@@ -5,4 +5,4 @@
  * chosen skill and the module it had equipped at sync time. The build is the
  * roster's.
  */
-export type GameSquadSlot = { char_id: string, skill_index: number, module_id: string | null, };
+export type GameSquadSlot = { char_id: string; skill_index: number; module_id: string | null };

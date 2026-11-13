@@ -4,21 +4,24 @@ import type { LookbackSummary } from "./LookbackSummary";
 /**
  * One snapshot on the timeline, without its build.
  */
-export type LookbackSnapshot = { 
-/**
- * `period_start` in Unix seconds: the snapshot's key on its account, and
- * the `{id}` of `/lookback/snapshots/{id}`.
- */
-id: number, period_start: string, 
-/**
- * When the sync that wrote it ran: the first sync of the period.
- */
-taken_at: string, 
-/**
- * The event whose launch opened the period; `None` for a week period.
- */
-activity_id: string | null, 
-/**
- * That event's name in the account server's game text, as of the snapshot.
- */
-activity_name: string | null, summary: LookbackSummary, };
+export type LookbackSnapshot = {
+    /**
+     * `period_start` in Unix seconds: the snapshot's key on its account, and
+     * the `{id}` of `/lookback/snapshots/{id}`.
+     */
+    id: number;
+    period_start: string;
+    /**
+     * When the sync that wrote it ran: the first sync of the period.
+     */
+    taken_at: string;
+    /**
+     * The event whose launch opened the period; `None` for a week period.
+     */
+    activity_id: string | null;
+    /**
+     * That event's name in the account server's game text, as of the snapshot.
+     */
+    activity_name: string | null;
+    summary: LookbackSummary;
+};

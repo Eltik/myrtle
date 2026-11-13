@@ -6,10 +6,15 @@ import type { DraftRoom } from "./DraftRoom";
  * No `scope`, unlike optimize: a shift covers every room at once, so the only
  * input is who must stay put.
  */
-export type RotationRequest = { layout: Array<DraftRoom>, locked: Array<string>, excluded: Array<string>, 
-/**
- * Plan with every operator's highest base skills, whether or not the
- * player has promoted them that far. The result is a target to build
- * toward, not a reading of the base they have today.
- */
-ignore_promotion: boolean, facts: AccountFactsReq, };
+export type RotationRequest = {
+    layout: Array<DraftRoom>;
+    locked: Array<string>;
+    excluded: Array<string>;
+    /**
+     * Plan with every operator's highest base skills, whether or not the
+     * player has promoted them that far. The result is a target to build
+     * toward, not a reading of the base they have today.
+     */
+    ignore_promotion: boolean;
+    facts: AccountFactsReq;
+};

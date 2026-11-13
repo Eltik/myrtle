@@ -6,4 +6,21 @@ import type { ItemType } from "./ItemType";
 import type { StageDrop } from "./StageDrop";
 import type { VoucherRelate } from "./VoucherRelate";
 
-export type Item = { itemId: string, name: string, description: string, rarity: ItemRarity, iconId: string, overrideBkg: string | null, stackIconId: string | null, sortId: number, usage: string, obtainApproach: string | null, hideInItemGet: boolean, classifyType: ItemClass, itemType: ItemType, stageDropList: Array<StageDrop>, buildingProductList: Array<BuildingProduct>, voucherRelateList: Array<VoucherRelate> | null, };
+export type Item = {
+    itemId: string;
+    name: string;
+    description: string;
+    rarity: ItemRarity;
+    iconId: string;
+    overrideBkg: string | null;
+    stackIconId: string | null;
+    sortId: number;
+    usage: string;
+    obtainApproach: string | null;
+    hideInItemGet: boolean;
+    classifyType: ItemClass;
+    itemType: ItemType;
+    stageDropList: Array<StageDrop>;
+    buildingProductList: Array<BuildingProduct>;
+    voucherRelateList: Array<VoucherRelate> | null;
+};

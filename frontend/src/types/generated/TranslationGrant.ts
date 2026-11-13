@@ -5,8 +5,16 @@
  * grantee and the granter. Read by `GET /admin/i18n/permissions`; mirrors
  * `TierListGrant`. The names are `None` once the account is gone.
  */
-export type TranslationGrant = { locale: string, user_id: string, user_uid: string | null, user_nickname: string | null, permission: string, 
-/**
- * `None` for grants written by the CLI or whose granter was deleted.
- */
-granted_by: string | null, granted_by_nickname: string | null, granted_at: string, };
+export type TranslationGrant = {
+    locale: string;
+    user_id: string;
+    user_uid: string | null;
+    user_nickname: string | null;
+    permission: string;
+    /**
+     * `None` for grants written by the CLI or whose granter was deleted.
+     */
+    granted_by: string | null;
+    granted_by_nickname: string | null;
+    granted_at: string;
+};

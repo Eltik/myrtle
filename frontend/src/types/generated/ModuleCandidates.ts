@@ -2,4 +2,4 @@
 import type { ModuleBlackboard } from "./ModuleBlackboard";
 import type { ModuleUnlockCondition } from "./ModuleUnlockCondition";
 
-export type ModuleCandidates = { additionalDescription: string, unlockCondition: ModuleUnlockCondition, requiredPotentialRank: number, blackboard: Array<ModuleBlackboard>, overrideDescription: string | null, prefabKey: string | null, rangeId: string | null, };
+export type ModuleCandidates = { additionalDescription: string; unlockCondition: ModuleUnlockCondition; requiredPotentialRank: number; blackboard: Array<ModuleBlackboard>; overrideDescription: string | null; prefabKey: string | null; rangeId: string | null };

@@ -3,8 +3,13 @@
 /**
  * One story that speaks a sprite under one name.
  */
-export type StorySpriteNameStory = { id: string, name: string, code?: string, tag?: string, 
-/**
- * Weighted lines under this name in this story.
- */
-lines: number, };
+export type StorySpriteNameStory = {
+    id: string;
+    name: string;
+    code?: string;
+    tag?: string;
+    /**
+     * Weighted lines under this name in this story.
+     */
+    lines: number;
+};

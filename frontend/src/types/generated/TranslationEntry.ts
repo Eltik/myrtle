@@ -12,4 +12,17 @@ import type { JsonValue } from "./serde_json/JsonValue";
  * which turns `is_stale` from a badge into a diff. `None` for rows saved before
  * the snapshot column existed.
  */
-export type TranslationEntry = { key: string, namespace: string, source_text: string, source_hash: string, description: string | null, placeholders: JsonValue, value: string | null, translated_hash: string | null, translated_source_text: string | null, is_stale: boolean, updated_at: string | null, updated_by: string | null, };
+export type TranslationEntry = {
+    key: string;
+    namespace: string;
+    source_text: string;
+    source_hash: string;
+    description: string | null;
+    placeholders: JsonValue;
+    value: string | null;
+    translated_hash: string | null;
+    translated_source_text: string | null;
+    is_stale: boolean;
+    updated_at: string | null;
+    updated_by: string | null;
+};

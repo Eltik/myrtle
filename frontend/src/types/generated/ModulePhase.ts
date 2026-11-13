@@ -3,4 +3,4 @@ import type { ModuleBlackboard } from "./ModuleBlackboard";
 import type { ModulePart } from "./ModulePart";
 import type { JsonValue } from "./serde_json/JsonValue";
 
-export type ModulePhase = { equipLevel: number, parts: Array<ModulePart>, attributeBlackboard: Array<ModuleBlackboard>, tokenAttributeBlackboard: Array<JsonValue>, };
+export type ModulePhase = { equipLevel: number; parts: Array<ModulePart>; attributeBlackboard: Array<ModuleBlackboard>; tokenAttributeBlackboard: Array<JsonValue> };

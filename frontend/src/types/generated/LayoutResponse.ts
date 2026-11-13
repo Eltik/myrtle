@@ -12,14 +12,16 @@ import type { SlotPresetsDto } from "./SlotPresetsDto";
  * support facility, which breaks the power balance AND the scoring (dorm levels
  * and facility counts feed the clause engine).
  */
-export type LayoutResponse = { rooms: Array<DraftRoomDto>, 
-/**
- * The player's own saved shift rotation, straight out of `presetQueue`.
- * Separate from `rooms` because that is the round-trip shape the client
- * posts back; presets are read-only context and never travel with a draft.
- */
-presets: Array<SlotPresetsDto>, 
-/**
- * The owner's saved account facts, so every viewer scores with them.
- */
-facts: AccountFactsReq, };
+export type LayoutResponse = {
+    rooms: Array<DraftRoomDto>;
+    /**
+     * The player's own saved shift rotation, straight out of `presetQueue`.
+     * Separate from `rooms` because that is the round-trip shape the client
+     * posts back; presets are read-only context and never travel with a draft.
+     */
+    presets: Array<SlotPresetsDto>;
+    /**
+     * The owner's saved account facts, so every viewer scores with them.
+     */
+    facts: AccountFactsReq;
+};

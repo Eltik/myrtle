@@ -2,4 +2,4 @@
 import type { CoverageGroupKey } from "./CoverageGroupKey";
 import type { CoverageRow } from "./CoverageRow";
 
-export type CoverageGroup = { key: CoverageGroupKey, rows: Array<CoverageRow>, };
+export type CoverageGroup = { key: CoverageGroupKey; rows: Array<CoverageRow> };

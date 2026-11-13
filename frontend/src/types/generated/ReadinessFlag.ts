@@ -6,4 +6,4 @@ import type { ReadinessFlagKind } from "./ReadinessFlagKind";
  * the seat's level and the median; for `Promotion` the seat's phase and the
  * usual phase; for the locked kinds the unlock phase and level.
  */
-export type ReadinessFlag = { kind: ReadinessFlagKind, value: number | null, reference: number | null, };
+export type ReadinessFlag = { kind: ReadinessFlagKind; value: number | null; reference: number | null };

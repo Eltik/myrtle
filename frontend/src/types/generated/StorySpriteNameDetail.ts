@@ -8,4 +8,4 @@ import type { StorySpriteNameStory } from "./StorySpriteNameStory";
  * how many more), and up to 3 example lines, spread over different stories
  * where the name is spoken in more than one.
  */
-export type StorySpriteNameDetail = { name: string, count: number, stories: Array<StorySpriteNameStory>, moreStories: number, examples: Array<StorySpriteExample>, };
+export type StorySpriteNameDetail = { name: string; count: number; stories: Array<StorySpriteNameStory>; moreStories: number; examples: Array<StorySpriteExample> };

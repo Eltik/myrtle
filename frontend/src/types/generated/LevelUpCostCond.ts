@@ -2,4 +2,4 @@
 import type { LevelUpCostItem } from "./LevelUpCostItem";
 import type { UnlockCondition } from "./UnlockCondition";
 
-export type LevelUpCostCond = { UnlockCond: UnlockCondition, LvlUpTime: number, LevelUpCost: Array<LevelUpCostItem>, };
+export type LevelUpCostCond = { UnlockCond: UnlockCondition; LvlUpTime: number; LevelUpCost: Array<LevelUpCostItem> };

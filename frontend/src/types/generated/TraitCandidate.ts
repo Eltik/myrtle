@@ -2,4 +2,4 @@
 import type { Blackboard } from "./Blackboard";
 import type { UnlockCondition } from "./UnlockCondition";
 
-export type TraitCandidate = { UnlockCondition: UnlockCondition, RequiredPotentialRank: number, Blackboard: Array<Blackboard>, OverrideDescription: string | null, PrefabKey: string | null, RangeId: string | null, };
+export type TraitCandidate = { UnlockCondition: UnlockCondition; RequiredPotentialRank: number; Blackboard: Array<Blackboard>; OverrideDescription: string | null; PrefabKey: string | null; RangeId: string | null };

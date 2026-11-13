@@ -4,4 +4,4 @@
  * A bracketed Basic Info line the reader has no column for, kept verbatim
  * (`[Weight] 58kg`, `[Dungeoneering Experience] 7 years`).
  */
-export type ProfileField = { label: string, value: string, };
+export type ProfileField = { label: string; value: string };

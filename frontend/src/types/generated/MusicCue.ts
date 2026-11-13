@@ -3,4 +3,4 @@
 /**
  * A music cue: the intro plays once, the loop repeats.
  */
-export type MusicCue = { intro?: string, loop?: string, };
+export type MusicCue = { intro?: string; loop?: string };

@@ -6,4 +6,4 @@ import type { RoguelikeThemeImprovement } from "./RoguelikeThemeImprovement";
 import type { SandboxImprovements } from "./SandboxImprovements";
 import type { StageImprovements } from "./StageImprovements";
 
-export type ImprovementsResponse = { uid: string, stages: StageImprovements, roguelike: Array<RoguelikeThemeImprovement>, sandbox: SandboxImprovements, medals: MedalImprovements, operators: OperatorImprovements, base: BaseImprovements, };
+export type ImprovementsResponse = { uid: string; stages: StageImprovements; roguelike: Array<RoguelikeThemeImprovement>; sandbox: SandboxImprovements; medals: MedalImprovements; operators: OperatorImprovements; base: BaseImprovements };

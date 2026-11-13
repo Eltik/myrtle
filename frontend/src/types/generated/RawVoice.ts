@@ -4,4 +4,4 @@ import type { UnlockParam } from "./UnlockParam";
 import type { UnlockType } from "./UnlockType";
 import type { VoiceType } from "./VoiceType";
 
-export type RawVoice = { charWordId: string, wordKey: string, charId: string, voiceId: string, voiceText: string, voiceTitle: string, voiceIndex: number, voiceType: VoiceType, unlockType: UnlockType, unlockParam: Array<UnlockParam>, lockDescription: string | null, placeType: PlaceType, voiceAsset: string, };
+export type RawVoice = { charWordId: string; wordKey: string; charId: string; voiceId: string; voiceText: string; voiceTitle: string; voiceIndex: number; voiceType: VoiceType; unlockType: UnlockType; unlockParam: Array<UnlockParam>; lockDescription: string | null; placeType: PlaceType; voiceAsset: string };

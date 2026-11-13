@@ -2,12 +2,15 @@
 import type { AssignedOperator } from "./AssignedOperator";
 import type { RotationMemberDto } from "./RotationMemberDto";
 
-export type RoomRotationDto = { slot_id: string, room_type: string, 
-/**
- * Main operators ordered by who needs swapping first (fastest-draining).
- */
-members: Array<RotationMemberDto>, 
-/**
- * The backup to rotate in when a main needs rest.
- */
-backup: AssignedOperator | null, };
+export type RoomRotationDto = {
+    slot_id: string;
+    room_type: string;
+    /**
+     * Main operators ordered by who needs swapping first (fastest-draining).
+     */
+    members: Array<RotationMemberDto>;
+    /**
+     * The backup to rotate in when a main needs rest.
+     */
+    backup: AssignedOperator | null;
+};

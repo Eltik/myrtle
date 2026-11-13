@@ -4,16 +4,19 @@ import type { ArchiveFactionRef } from "./ArchiveFactionRef";
 /**
  * A personnel number's letters, and who else carries them.
  */
-export type ArchiveNumber = { display: string, prefix: string, 
-/**
- * Characters (operators and NPCs) whose number starts with `prefix`.
- */
-holders: number, 
-/**
- * The faction most of them show, when one does.
- */
-faction?: ArchiveFactionRef, 
-/**
- * How many holders show `faction`.
- */
-factionHolders: number, };
+export type ArchiveNumber = {
+    display: string;
+    prefix: string;
+    /**
+     * Characters (operators and NPCs) whose number starts with `prefix`.
+     */
+    holders: number;
+    /**
+     * The faction most of them show, when one does.
+     */
+    faction?: ArchiveFactionRef;
+    /**
+     * How many holders show `faction`.
+     */
+    factionHolders: number;
+};

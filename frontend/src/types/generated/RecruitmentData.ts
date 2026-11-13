@@ -2,8 +2,10 @@
 import type { GachaTag } from "./GachaTag";
 import type { RecruitmentOperator } from "./RecruitmentOperator";
 
-export type RecruitmentData = { tags: Array<GachaTag>, 
-/**
- * Every operator `recruitDetail` names, sorted by id.
- */
-operators: Array<RecruitmentOperator>, };
+export type RecruitmentData = {
+    tags: Array<GachaTag>;
+    /**
+     * Every operator `recruitDetail` names, sorted by id.
+     */
+    operators: Array<RecruitmentOperator>;
+};

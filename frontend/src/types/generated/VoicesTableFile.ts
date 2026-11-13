@@ -3,4 +3,4 @@ import type { CharExtraWord } from "./CharExtraWord";
 import type { RawVoice } from "./RawVoice";
 import type { VoiceLang } from "./VoiceLang";
 
-export type VoicesTableFile = { CharWords: { [key in string]?: RawVoice }, CharExtraWords: { [key in string]?: CharExtraWord }, VoiceLangDict: { [key in string]?: VoiceLang }, DefaultLangType: string, NewTagList: Array<string>, };
+export type VoicesTableFile = { CharWords: { [key in string]?: RawVoice }; CharExtraWords: { [key in string]?: CharExtraWord }; VoiceLangDict: { [key in string]?: VoiceLang }; DefaultLangType: string; NewTagList: Array<string> };

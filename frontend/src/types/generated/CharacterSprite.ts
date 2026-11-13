@@ -3,14 +3,18 @@ import type { BodySize } from "./BodySize";
 import type { FacePos } from "./FacePos";
 import type { PlateRect } from "./PlateRect";
 
-export type CharacterSprite = { bodyUrl: string, faceUrl?: string, facePos?: FacePos, 
-/**
- * The `body_url` texture's own size. `face_pos` divided by THIS is the
- * patch's fraction of the body plate.
- */
-bodySize?: BodySize, 
-/**
- * The canvas rect the whole plate is drawn into, from the character's own
- * prefab root. It is the bundle's, so every sprite of a folder shares it.
- */
-plate?: PlateRect, };
+export type CharacterSprite = {
+    bodyUrl: string;
+    faceUrl?: string;
+    facePos?: FacePos;
+    /**
+     * The `body_url` texture's own size. `face_pos` divided by THIS is the
+     * patch's fraction of the body plate.
+     */
+    bodySize?: BodySize;
+    /**
+     * The canvas rect the whole plate is drawn into, from the character's own
+     * prefab root. It is the bundle's, so every sprite of a folder shares it.
+     */
+    plate?: PlateRect;
+};

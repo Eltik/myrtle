@@ -4,16 +4,23 @@
  * One ranked listener. Identity fields mirror the score and inventory
  * leaderboards' rows.
  */
-export type MusicListenerEntry = { 
-/**
- * `rank()` over the sort: ties share a rank.
- */
-rank: number, uid: string, nickname: string | null, nickNumber: string | null, level: number | null, avatarId: string | null, server: string, 
-/**
- * Counted listens inside the window.
- */
-listens: number, 
-/**
- * Seconds heard inside the window, summed from the account's plays.
- */
-listenedSeconds: number, };
+export type MusicListenerEntry = {
+    /**
+     * `rank()` over the sort: ties share a rank.
+     */
+    rank: number;
+    uid: string;
+    nickname: string | null;
+    nickNumber: string | null;
+    level: number | null;
+    avatarId: string | null;
+    server: string;
+    /**
+     * Counted listens inside the window.
+     */
+    listens: number;
+    /**
+     * Seconds heard inside the window, summed from the account's plays.
+     */
+    listenedSeconds: number;
+};

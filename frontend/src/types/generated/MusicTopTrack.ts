@@ -3,12 +3,14 @@
 /**
  * One row of the top tracks.
  */
-export type MusicTopTrack = { 
-/**
- * `rank()` over listens: ties share a rank.
- */
-rank: number, trackId: string, 
-/**
- * Counted listens inside the window, signed in or not.
- */
-listens: number, };
+export type MusicTopTrack = {
+    /**
+     * `rank()` over listens: ties share a rank.
+     */
+    rank: number;
+    trackId: string;
+    /**
+     * Counted listens inside the window, signed in or not.
+     */
+    listens: number;
+};

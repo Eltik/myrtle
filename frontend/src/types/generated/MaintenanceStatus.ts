@@ -4,14 +4,15 @@ import type { MaintenanceWindow } from "./MaintenanceWindow";
 /**
  * `GET /maintenance`.
  */
-export type MaintenanceStatus = { 
-/**
- * The nearest window that is upcoming, running or overrunning; `null`
- * when there is none.
- */
-window: MaintenanceWindow | null, 
-/**
- * Unix seconds of the last successful announcement read; `null` before
- * the first one.
- */
-checked_at: number | null, };
+export type MaintenanceStatus = {
+    /**
+     * The nearest window that is upcoming, running or overrunning; `null`
+     * when there is none.
+     */
+    window: MaintenanceWindow | null;
+    /**
+     * Unix seconds of the last successful announcement read; `null` before
+     * the first one.
+     */
+    checked_at: number | null;
+};

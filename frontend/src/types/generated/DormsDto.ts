@@ -7,21 +7,23 @@ import type { DormDto } from "./DormDto";
  * staffing survives its own rhythm. Listed apart so no yield doesn't read as
  * unaccounted.
  */
-export type DormsDto = { count: number, 
-/**
- * Sum of dorm levels (the clause engine's `&dorm&lv`).
- */
-total_levels: number, 
-/**
- * Operators the base can rest at once.
- */
-total_capacity: number, 
-/**
- * Morale restored per hour to a resting operator, scaled by dorm levels.
- */
-recovery_per_hour: number, 
-/**
- * Each dorm, best first (the order resters fill them), so a 2/5/2's
- * low dorms show their slower rates.
- */
-per_dorm: Array<DormDto>, };
+export type DormsDto = {
+    count: number;
+    /**
+     * Sum of dorm levels (the clause engine's `&dorm&lv`).
+     */
+    total_levels: number;
+    /**
+     * Operators the base can rest at once.
+     */
+    total_capacity: number;
+    /**
+     * Morale restored per hour to a resting operator, scaled by dorm levels.
+     */
+    recovery_per_hour: number;
+    /**
+     * Each dorm, best first (the order resters fill them), so a 2/5/2's
+     * low dorms show their slower rates.
+     */
+    per_dorm: Array<DormDto>;
+};

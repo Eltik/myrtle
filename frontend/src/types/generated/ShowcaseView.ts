@@ -4,4 +4,4 @@ import type { ShowcaseBlockView } from "./ShowcaseBlockView";
 /**
  * The showcase as `/get-user-showcase` serves it.
  */
-export type ShowcaseView = { blocks: Array<ShowcaseBlockView>, };
+export type ShowcaseView = { blocks: Array<ShowcaseBlockView> };

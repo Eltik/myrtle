@@ -3,4 +3,4 @@
 /**
  * A playlist with its tracks in order.
  */
-export type MusicPlaylist = { id: string, name: string, trackIds: Array<string>, createdAt: string, updatedAt: string, };
+export type MusicPlaylist = { id: string; name: string; trackIds: Array<string>; createdAt: string; updatedAt: string };

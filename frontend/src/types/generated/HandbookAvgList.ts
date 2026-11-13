@@ -3,4 +3,4 @@ import type { HandbookAvgEntry } from "./HandbookAvgEntry";
 import type { HandbookRewardItem } from "./HandbookRewardItem";
 import type { HandbookUnlockParam } from "./HandbookUnlockParam";
 
-export type HandbookAvgList = { storySetId: string, storySetName: string, sortId: number, storyGetTime: number, rewardItem: Array<HandbookRewardItem>, unlockParam: Array<HandbookUnlockParam>, avgList: Array<HandbookAvgEntry>, charId: string, };
+export type HandbookAvgList = { storySetId: string; storySetName: string; sortId: number; storyGetTime: number; rewardItem: Array<HandbookRewardItem>; unlockParam: Array<HandbookUnlockParam>; avgList: Array<HandbookAvgEntry>; charId: string };

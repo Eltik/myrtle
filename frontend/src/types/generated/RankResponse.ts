@@ -4,24 +4,28 @@ import type { RankPreset } from "./RankPreset";
 import type { RankRow } from "./RankRow";
 import type { RetentionStatus } from "./RetentionStatus";
 
-export type RankResponse = { rows: Array<RankRow>, 
-/**
- * Rows that passed the filters, before `limit`.
- */
-matched: number, 
-/**
- * Rows the context computed, before filters.
- */
-computed: number, 
-/**
- * Combinations the engine could not compute (missing skill or module data).
- */
-skipped: number, preset: RankPreset, sortBy: RankMetric, 
-/**
- * The game-data identity the rows were computed on.
- */
-data: string, 
-/**
- * Whether the rows' `retention` is filled yet.
- */
-retentionStatus: RetentionStatus, };
+export type RankResponse = {
+    rows: Array<RankRow>;
+    /**
+     * Rows that passed the filters, before `limit`.
+     */
+    matched: number;
+    /**
+     * Rows the context computed, before filters.
+     */
+    computed: number;
+    /**
+     * Combinations the engine could not compute (missing skill or module data).
+     */
+    skipped: number;
+    preset: RankPreset;
+    sortBy: RankMetric;
+    /**
+     * The game-data identity the rows were computed on.
+     */
+    data: string;
+    /**
+     * Whether the rows' `retention` is filled yet.
+     */
+    retentionStatus: RetentionStatus;
+};

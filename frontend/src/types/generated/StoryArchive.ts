@@ -9,4 +9,4 @@ import type { StoryArchiveSection } from "./StoryArchiveSection";
  * `sections`, because "this event kept no archive" is an answer and a 404 is
  * not.
  */
-export type StoryArchive = { groupId: string, sections: Array<StoryArchiveSection>, };
+export type StoryArchive = { groupId: string; sections: Array<StoryArchiveSection> };

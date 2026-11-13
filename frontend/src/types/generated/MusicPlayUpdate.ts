@@ -3,8 +3,9 @@
 /**
  * `PUT /music/history/{id}`.
  */
-export type MusicPlayUpdate = { 
-/**
- * Seconds actually heard so far. Only ever raises the stored value.
- */
-listenedSeconds: number, };
+export type MusicPlayUpdate = {
+    /**
+     * Seconds actually heard so far. Only ever raises the stored value.
+     */
+    listenedSeconds: number;
+};

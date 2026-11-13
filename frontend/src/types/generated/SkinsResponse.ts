@@ -9,4 +9,4 @@ import type { ReviewWindow } from "./ReviewWindow";
 import type { SkinGroupArt } from "./SkinGroupArt";
 import type { YearlyModel } from "./YearlyModel";
 
-export type SkinsResponse = { model: LagModel, yearly: YearlyModel, anniversaries: Array<AnniversaryStats>, batches: Array<BatchForecast>, newSkins: Array<NewSkin>, rerunForecasts: Array<RerunForecast>, reviews: Array<ReviewWindow>, reviewPool: Array<ReviewOutfit>, groupArt: { [key in string]?: SkinGroupArt }, };
+export type SkinsResponse = { model: LagModel; yearly: YearlyModel; anniversaries: Array<AnniversaryStats>; batches: Array<BatchForecast>; newSkins: Array<NewSkin>; rerunForecasts: Array<RerunForecast>; reviews: Array<ReviewWindow>; reviewPool: Array<ReviewOutfit>; groupArt: { [key in string]?: SkinGroupArt } };

@@ -5,4 +5,4 @@
  * out is unchanged. `track_ids` is the FULL new order; a track left out is
  * removed.
  */
-export type MusicPlaylistPatch = { name: string | null, trackIds: Array<string> | null, };
+export type MusicPlaylistPatch = { name: string | null; trackIds: Array<string> | null };

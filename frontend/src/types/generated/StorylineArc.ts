@@ -7,16 +7,20 @@ import type { ChapterRange } from "./ChapterRange";
  * `HOUR OF AN AWAKENING`, `SHATTER OF A VISION`, `SHADOW OF A DYING SUN`,
  * `NEXUS POINT OF FUTURE`); every `ssLine_*` has an empty list.
  */
-export type StorylineArc = { name: string, sort: number, 
-/**
- * The arc header's own icon, `MainlineSplitData.IconId` resolved through
- * `spritepack/mixstory_deco_sprites_h2_0` (`act_0` to `act_3`, 184x52).
- * All 4 EN mainline arcs carry one and nothing else declares an arc.
- */
-iconUrl?: string, groupIds: Array<string>, 
-/**
- * The chapters the arc spans: the min and max
- * `StoryGroup.chapterNumber` over the groups on it that carry one.
- * Absent on an arc that holds no numbered chapter at all.
- */
-chapterRange?: ChapterRange, };
+export type StorylineArc = {
+    name: string;
+    sort: number;
+    /**
+     * The arc header's own icon, `MainlineSplitData.IconId` resolved through
+     * `spritepack/mixstory_deco_sprites_h2_0` (`act_0` to `act_3`, 184x52).
+     * All 4 EN mainline arcs carry one and nothing else declares an arc.
+     */
+    iconUrl?: string;
+    groupIds: Array<string>;
+    /**
+     * The chapters the arc spans: the min and max
+     * `StoryGroup.chapterNumber` over the groups on it that carry one.
+     * Absent on an arc that holds no numbered chapter at all.
+     */
+    chapterRange?: ChapterRange;
+};

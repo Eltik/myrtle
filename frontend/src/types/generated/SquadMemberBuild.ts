@@ -8,4 +8,4 @@
  * operator's own (`rules::SkillRules`, `battle_equip_table` phases); the
  * analysis clamps to them.
  */
-export type SquadMemberBuild = { char_id: string, phase: number, level: number, potential: number, skill_index: number, skill_level: number, mastery: number, module_id: string | null, module_level: number, };
+export type SquadMemberBuild = { char_id: string; phase: number; level: number; potential: number; skill_index: number; skill_level: number; mastery: number; module_id: string | null; module_level: number };

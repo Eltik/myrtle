@@ -3,14 +3,23 @@ import type { EntityKind } from "./EntityKind";
 import type { GridOwner } from "./GridOwner";
 import type { GridPreviewIcon } from "./GridPreviewIcon";
 
-export type GridSummary = { slug: string, title: string, rows: number, cols: number, owner: GridOwner, fork_count: number, is_listed: boolean, 
-/**
- * The kinds a cell may hold, in canonical order.
- */
-entity_kinds: Array<EntityKind>, updated_at: string, 
-/**
- * The board in miniature for a card thumbnail: one entry per cell,
- * row-major like [`Grid::cells`], `rows * cols` long. `None` for an
- * empty cell, and for a pick no loaded server knows or that has no art.
- */
-preview: Array<GridPreviewIcon | null>, };
+export type GridSummary = {
+    slug: string;
+    title: string;
+    rows: number;
+    cols: number;
+    owner: GridOwner;
+    fork_count: number;
+    is_listed: boolean;
+    /**
+     * The kinds a cell may hold, in canonical order.
+     */
+    entity_kinds: Array<EntityKind>;
+    updated_at: string;
+    /**
+     * The board in miniature for a card thumbnail: one entry per cell,
+     * row-major like [`Grid::cells`], `rows * cols` long. `None` for an
+     * empty cell, and for a pick no loaded server knows or that has no art.
+     */
+    preview: Array<GridPreviewIcon | null>;
+};

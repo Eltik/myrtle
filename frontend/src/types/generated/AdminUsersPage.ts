@@ -4,4 +4,4 @@ import type { AdminUserEntry } from "./AdminUserEntry";
 /**
  * One page of the admin people list, and how many accounts the filters admit.
  */
-export type AdminUsersPage = { users: Array<AdminUserEntry>, total: number, };
+export type AdminUsersPage = { users: Array<AdminUserEntry>; total: number };

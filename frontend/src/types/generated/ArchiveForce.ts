@@ -5,20 +5,30 @@ import type { ArchivePoint } from "./ArchivePoint";
 /**
  * One force (faction) on the territories map.
  */
-export type ArchiveForce = { id: string, name: string, code: string, 
-/**
- * `handbook_team_table` level: 0 nation, 1 group, 2 team.
- */
-level: number, 
-/**
- * Hex without `#`.
- */
-color: string, cardColor: string, 
-/**
- * The chart this force opens.
- */
-groupId: string, logo: ArchivePoint, logoScale: number, card: ArchivePoint, cardScale: number, hexes: Array<ArchiveHex>, 
-/**
- * Members of this force's own block on its chart.
- */
-memberCount: number, };
+export type ArchiveForce = {
+    id: string;
+    name: string;
+    code: string;
+    /**
+     * `handbook_team_table` level: 0 nation, 1 group, 2 team.
+     */
+    level: number;
+    /**
+     * Hex without `#`.
+     */
+    color: string;
+    cardColor: string;
+    /**
+     * The chart this force opens.
+     */
+    groupId: string;
+    logo: ArchivePoint;
+    logoScale: number;
+    card: ArchivePoint;
+    cardScale: number;
+    hexes: Array<ArchiveHex>;
+    /**
+     * Members of this force's own block on its chart.
+     */
+    memberCount: number;
+};

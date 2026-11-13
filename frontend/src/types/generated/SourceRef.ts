@@ -4,12 +4,14 @@ import type { SourceKind } from "./SourceKind";
 /**
  * Where a fact came from, for the chip title and the Economy ladder.
  */
-export type SourceRef = { kind: SourceKind, 
-/**
- * Skill, talent or module name; `None` for trait, stats and tag.
- */
-name: string | null, 
-/**
- * 0-based, with `kind == Skill`.
- */
-skill_index: number | null, };
+export type SourceRef = {
+    kind: SourceKind;
+    /**
+     * Skill, talent or module name; `None` for trait, stats and tag.
+     */
+    name: string | null;
+    /**
+     * 0-based, with `kind == Skill`.
+     */
+    skill_index: number | null;
+};

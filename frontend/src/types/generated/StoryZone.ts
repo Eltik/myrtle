@@ -3,4 +3,4 @@
 /**
  * A main chapter's names, from `zone_table` and `chapter_table`.
  */
-export type StoryZone = { chapterName?: string, nameFirst?: string, nameSecond?: string, nameThird?: string, };
+export type StoryZone = { chapterName?: string; nameFirst?: string; nameSecond?: string; nameThird?: string };

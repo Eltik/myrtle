@@ -2,12 +2,27 @@
 import type { ReadinessFlag } from "./ReadinessFlag";
 import type { Unlock } from "./Unlock";
 
-export type ReadinessRow = { seat: number, char_id: string, support: boolean, phase: number, level: number, 
-/**
- * The promotion's `maxLevel`.
- */
-level_cap: number, 
-/**
- * The highest promotion the rarity allows.
- */
-max_phase: number, potential: number, skill_index: number, skill_level: number, mastery: number, skill_unlock: Unlock | null, module_id: string | null, module_level: number, module_unlock: Unlock | null, flags: Array<ReadinessFlag>, };
+export type ReadinessRow = {
+    seat: number;
+    char_id: string;
+    support: boolean;
+    phase: number;
+    level: number;
+    /**
+     * The promotion's `maxLevel`.
+     */
+    level_cap: number;
+    /**
+     * The highest promotion the rarity allows.
+     */
+    max_phase: number;
+    potential: number;
+    skill_index: number;
+    skill_level: number;
+    mastery: number;
+    skill_unlock: Unlock | null;
+    module_id: string | null;
+    module_level: number;
+    module_unlock: Unlock | null;
+    flags: Array<ReadinessFlag>;
+};

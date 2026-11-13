@@ -5,4 +5,4 @@
  * of the track (the page's rule, not the server's) and its listened time is
  * raised as they go on.
  */
-export type MusicPlay = { id: number, trackId: string, listenedSeconds: number, playedAt: string, };
+export type MusicPlay = { id: number; trackId: string; listenedSeconds: number; playedAt: string };

@@ -5,18 +5,23 @@
  * game's own per-hour figure (including the operator's own morale-cost riders),
  * not a per-room approximation.
  */
-export type SustainEntryDto = { operator_id: string, name: string, slot_id: string, room_type: string, 
-/**
- * Morale lost per working hour.
- */
-drain_per_hour: number, 
-/**
- * Hours until empty FROM THE CURRENT BAR when the sync knows it, else
- * from full. `None` = never depletes.
- */
-lasts_hours: number | null, 
-/**
- * The operator's morale as of the last account sync (0-24). Absent when
- * the sync doesn't cover them.
- */
-morale?: number | null, };
+export type SustainEntryDto = {
+    operator_id: string;
+    name: string;
+    slot_id: string;
+    room_type: string;
+    /**
+     * Morale lost per working hour.
+     */
+    drain_per_hour: number;
+    /**
+     * Hours until empty FROM THE CURRENT BAR when the sync knows it, else
+     * from full. `None` = never depletes.
+     */
+    lasts_hours: number | null;
+    /**
+     * The operator's morale as of the last account sync (0-24). Absent when
+     * the sync doesn't cover them.
+     */
+    morale?: number | null;
+};

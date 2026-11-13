@@ -4,8 +4,12 @@
  * One parsed line. `kind` is lowercased and typo-normalised; a bare text line
  * is `kind: "text"` with the whole line in `text`.
  */
-export type StoryCommand = { kind: string, args: { [key in string]?: string }, text?: string, 
-/**
- * 1-based line number in the script file.
- */
-line: number, };
+export type StoryCommand = {
+    kind: string;
+    args: { [key in string]?: string };
+    text?: string;
+    /**
+     * 1-based line number in the script file.
+     */
+    line: number;
+};

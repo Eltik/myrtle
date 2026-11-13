@@ -8,22 +8,32 @@ import type { ContentTargetKind } from "./ContentTargetKind";
 /**
  * One row of the content audit feed.
  */
-export type ContentAuditEntry = { id: number, action: ContentAuditAction, target_kind: ContentTargetKind, target_id: string, 
-/**
- * The name when the row was last written. The target may be renamed or
- * gone since.
- */
-target_name: string, target_slug: string | null, actor: AuditLogActor, 
-/**
- * The target's owner at the time; differs from `actor` when staff acted
- * on someone else's content. `None` when unknown or since deleted.
- */
-owner: ContentAuditPerson | null, 
-/**
- * `grant` / `revoke`: the account the grant was about.
- */
-subject: ContentAuditPerson | null, details: ContentAuditDetails, 
-/**
- * Requests folded into this row; 1 for anything but a coalesced edit.
- */
-event_count: number, first_at: string, changed_at: string, };
+export type ContentAuditEntry = {
+    id: number;
+    action: ContentAuditAction;
+    target_kind: ContentTargetKind;
+    target_id: string;
+    /**
+     * The name when the row was last written. The target may be renamed or
+     * gone since.
+     */
+    target_name: string;
+    target_slug: string | null;
+    actor: AuditLogActor;
+    /**
+     * The target's owner at the time; differs from `actor` when staff acted
+     * on someone else's content. `None` when unknown or since deleted.
+     */
+    owner: ContentAuditPerson | null;
+    /**
+     * `grant` / `revoke`: the account the grant was about.
+     */
+    subject: ContentAuditPerson | null;
+    details: ContentAuditDetails;
+    /**
+     * Requests folded into this row; 1 for anything but a coalesced edit.
+     */
+    event_count: number;
+    first_at: string;
+    changed_at: string;
+};

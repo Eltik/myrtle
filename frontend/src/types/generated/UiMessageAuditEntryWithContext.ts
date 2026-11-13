@@ -5,4 +5,16 @@
  * doesn't fan out N user lookups per page. Mirrors
  * `OperatorNoteAuditEntryWithContext`.
  */
-export type UiMessageAuditEntryWithContext = { id: number, message_key: string, locale: string, old_value: string | null, new_value: string | null, changed_at: string, actor_user_id: string, actor_uid: string | null, actor_nickname: string | null, actor_secretary: string | null, actor_secretary_skin_id: string | null, };
+export type UiMessageAuditEntryWithContext = {
+    id: number;
+    message_key: string;
+    locale: string;
+    old_value: string | null;
+    new_value: string | null;
+    changed_at: string;
+    actor_user_id: string;
+    actor_uid: string | null;
+    actor_nickname: string | null;
+    actor_secretary: string | null;
+    actor_secretary_skin_id: string | null;
+};

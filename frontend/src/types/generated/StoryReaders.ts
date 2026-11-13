@@ -3,4 +3,4 @@
 /**
  * One story and how many accounts have read it.
  */
-export type StoryReaders = { id: string, readers: number, };
+export type StoryReaders = { id: string; readers: number };

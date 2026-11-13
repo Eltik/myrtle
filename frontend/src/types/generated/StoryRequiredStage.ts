@@ -3,4 +3,4 @@
 /**
  * One stage gate on a story (`RequiredStages[]`).
  */
-export type StoryRequiredStage = { stageId: string, minState: string, maxState: string, };
+export type StoryRequiredStage = { stageId: string; minState: string; maxState: string };

@@ -4,13 +4,15 @@
  * One CG or scene. Its 320 px and up-to-1600 px JPEGs are
  * `/story/art-gallery/{kind}/{id}/thumb` and `.../header`.
  */
-export type StoryArtPicture = { 
-/**
- * The asset key the scripts name, lowercased (`avg_1_1`, `bg_corridor`):
- * what a profile background stores.
- */
-id: string, 
-/**
- * The source PNG's size in px.
- */
-width: number, height: number, };
+export type StoryArtPicture = {
+    /**
+     * The asset key the scripts name, lowercased (`avg_1_1`, `bg_corridor`):
+     * what a profile background stores.
+     */
+    id: string;
+    /**
+     * The source PNG's size in px.
+     */
+    width: number;
+    height: number;
+};

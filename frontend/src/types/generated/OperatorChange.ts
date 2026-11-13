@@ -4,4 +4,14 @@ import type { CnTranslation } from "./CnTranslation";
 /**
  * One way an operator's CN data differs from the trailing server's.
  */
-export type OperatorChange = { "kind": "module_added", moduleId: string, translations: Array<CnTranslation>, } | { "kind": "module_changed", moduleId: string, } | { "kind": "skill_added", skillId: string, } | { "kind": "skill_values_changed", skillId: string, } | { "kind": "talents_changed" } | { "kind": "trait_changed" } | { "kind": "stats_changed" } | { "kind": "range_changed" } | { "kind": "potentials_changed" } | { "kind": "trust_bonus_changed" };
+export type OperatorChange =
+    | { kind: "module_added"; moduleId: string; translations: Array<CnTranslation> }
+    | { kind: "module_changed"; moduleId: string }
+    | { kind: "skill_added"; skillId: string }
+    | { kind: "skill_values_changed"; skillId: string }
+    | { kind: "talents_changed" }
+    | { kind: "trait_changed" }
+    | { kind: "stats_changed" }
+    | { kind: "range_changed" }
+    | { kind: "potentials_changed" }
+    | { kind: "trust_bonus_changed" };

@@ -3,4 +3,4 @@
 /**
  * Whether the caller has this tier list favourited.
  */
-export type FavoriteState = { favorited: boolean, };
+export type FavoriteState = { favorited: boolean };

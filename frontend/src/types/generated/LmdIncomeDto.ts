@@ -5,37 +5,38 @@
  * covered: once from the base and mission chests alone, once with every
  * day's natural sanity spent on the LMD farming stage.
  */
-export type LmdIncomeDto = { 
-/**
- * The synced base's realized LMD per day as stationed right now (the
- * Score tab's current figure). `None` without a synced base.
- */
-base_per_day: number | null, 
-/**
- * The live daily mission chests (weekday and weekend groups weighted by
- * their days) plus the live weekly chests over seven days, LMD only,
- * every chest claimed.
- */
-dailies_per_day: number, 
-/**
- * The stage the farming estimate runs (the LMD stage, CE-6).
- */
-farming_stage: string, 
-/**
- * Runs of that stage a day's natural sanity regeneration buys.
- */
-farming_runs_per_day: number, 
-/**
- * LMD those runs pay.
- */
-farming_per_day: number, 
-/**
- * Days until the shortfall is earned from the base and dailies: 0 when
- * nothing is missing or the balance is hidden, `None` when nothing is
- * earned.
- */
-days_without_farming: number | null, 
-/**
- * The same with the farming stage's LMD added.
- */
-days_with_farming: number | null, };
+export type LmdIncomeDto = {
+    /**
+     * The synced base's realized LMD per day as stationed right now (the
+     * Score tab's current figure). `None` without a synced base.
+     */
+    base_per_day: number | null;
+    /**
+     * The live daily mission chests (weekday and weekend groups weighted by
+     * their days) plus the live weekly chests over seven days, LMD only,
+     * every chest claimed.
+     */
+    dailies_per_day: number;
+    /**
+     * The stage the farming estimate runs (the LMD stage, CE-6).
+     */
+    farming_stage: string;
+    /**
+     * Runs of that stage a day's natural sanity regeneration buys.
+     */
+    farming_runs_per_day: number;
+    /**
+     * LMD those runs pay.
+     */
+    farming_per_day: number;
+    /**
+     * Days until the shortfall is earned from the base and dailies: 0 when
+     * nothing is missing or the balance is hidden, `None` when nothing is
+     * earned.
+     */
+    days_without_farming: number | null;
+    /**
+     * The same with the farming stage's LMD added.
+     */
+    days_with_farming: number | null;
+};

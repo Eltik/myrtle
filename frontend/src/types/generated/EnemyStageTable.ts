@@ -10,8 +10,10 @@ import type { EnemyStageInfo } from "./EnemyStageInfo";
  * the index keys a stage by its level file's name, which two directories
  * could share.
  */
-export type EnemyStageTable = { stages: Array<EnemyStageInfo>, 
-/**
- * `enemy_id -> [[index into stages, count], ...]`, in index order.
- */
-refs: { [key in string]?: Array<[number, number]> }, };
+export type EnemyStageTable = {
+    stages: Array<EnemyStageInfo>;
+    /**
+     * `enemy_id -> [[index into stages, count], ...]`, in index order.
+     */
+    refs: { [key in string]?: Array<[number, number]> };
+};

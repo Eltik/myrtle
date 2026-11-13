@@ -20,9 +20,20 @@ import type { ArchiveTrack } from "./ArchiveTrack";
  * own screen lists, so `logs` counts logs and not the chapters they are
  * grouped into, and `recordings` counts clips and not nodes.
  */
-export type StoryArchiveSection = { "kind": "logs", count: number, chapters: Array<ArchiveLogChapter>, } | { "kind": "landmarks", count: number, landmarks: Array<ArchiveLandmark>, } | { "kind": "news", count: number, news: Array<ArchiveNewsItem>, } | { "kind": "files", count: number, files: Array<ArchiveFile>, } | { "kind": "gallery", count: number, pictures: Array<ArchivePicture>, } | { "kind": "music", count: number, tracks: Array<ArchiveTrack>, } | { "kind": "recordings", count: number, nodes: Array<ArchiveRecordingNode>, 
-/**
- * The clips the shelf hides until they are unlocked, which belong to
- * no node (8 of `main_14`'s 43).
- */
-hidden: Array<ArchiveClip>, };
+export type StoryArchiveSection =
+    | { kind: "logs"; count: number; chapters: Array<ArchiveLogChapter> }
+    | { kind: "landmarks"; count: number; landmarks: Array<ArchiveLandmark> }
+    | { kind: "news"; count: number; news: Array<ArchiveNewsItem> }
+    | { kind: "files"; count: number; files: Array<ArchiveFile> }
+    | { kind: "gallery"; count: number; pictures: Array<ArchivePicture> }
+    | { kind: "music"; count: number; tracks: Array<ArchiveTrack> }
+    | {
+          kind: "recordings";
+          count: number;
+          nodes: Array<ArchiveRecordingNode>;
+          /**
+           * The clips the shelf hides until they are unlocked, which belong to
+           * no node (8 of `main_14`'s 43).
+           */
+          hidden: Array<ArchiveClip>;
+      };

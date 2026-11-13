@@ -4,4 +4,4 @@
  * The author of one per-operator revision. `nickname` is `None` once the
  * account is gone or never synced a name.
  */
-export type OperatorNoteAuditActor = { id: string, nickname: string | null, };
+export type OperatorNoteAuditActor = { id: string; nickname: string | null };

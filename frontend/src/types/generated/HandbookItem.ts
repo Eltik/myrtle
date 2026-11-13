@@ -2,4 +2,4 @@
 import type { HandbookAvgList } from "./HandbookAvgList";
 import type { HandbookStoryTextAudio } from "./HandbookStoryTextAudio";
 
-export type HandbookItem = { charID: string, infoName: string, isLimited: boolean, storyTextAudio: Array<HandbookStoryTextAudio>, handbookAvgList: Array<HandbookAvgList>, };
+export type HandbookItem = { charID: string; infoName: string; isLimited: boolean; storyTextAudio: Array<HandbookStoryTextAudio>; handbookAvgList: Array<HandbookAvgList> };

@@ -3,4 +3,4 @@
 /**
  * [`DraftRoom`] as the client posts it back on every evaluate/optimize call.
  */
-export type DraftRoomDto = { slot_id: string, room_type: string, level: number, operators: Array<string>, formula_type: string | null, comfort: number, };
+export type DraftRoomDto = { slot_id: string; room_type: string; level: number; operators: Array<string>; formula_type: string | null; comfort: number };

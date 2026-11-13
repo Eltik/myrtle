@@ -3,13 +3,18 @@
 /**
  * One player's place on the leaderboard for one item.
  */
-export type ItemStanding = { item_id: string, quantity: number, 
-/**
- * Rank among every visible holder, and that population's size.
- */
-rank_global: number, holders_global: number, 
-/**
- * Rank among visible holders on the player's own server, and that
- * population's size.
- */
-rank_server: number, holders_server: number, };
+export type ItemStanding = {
+    item_id: string;
+    quantity: number;
+    /**
+     * Rank among every visible holder, and that population's size.
+     */
+    rank_global: number;
+    holders_global: number;
+    /**
+     * Rank among visible holders on the player's own server, and that
+     * population's size.
+     */
+    rank_server: number;
+    holders_server: number;
+};

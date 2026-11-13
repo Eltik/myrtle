@@ -13,15 +13,23 @@ import type { SkillMasteryStats } from "./SkillMasteryStats";
  * denominators, and they differ: skills count E2 owners, modules count only
  * owners with an ADVANCED module actually equipped, which is 13.63% of rows.
  */
-export type OperatorBuildStatsResponse = { operatorId: string, defaultSkills: Array<BuildChoice>, skillTotal: number, defaultModules: Array<BuildChoice>, moduleTotal: number, 
-/**
- * Mastery histogram per skill, and level histogram per module: where
- * people STOP investing rather than what they picked. Empty below the
- * reporting floor, like the distributions above.
- */
-masteries: Array<SkillMasteryStats>, moduleLevels: Array<ModuleLevelStats>, 
-/**
- * Below this many samples a distribution is withheld entirely, so a rare
- * operator's numbers cannot describe a handful of identifiable accounts.
- */
-minSample: number, computedAt: string, };
+export type OperatorBuildStatsResponse = {
+    operatorId: string;
+    defaultSkills: Array<BuildChoice>;
+    skillTotal: number;
+    defaultModules: Array<BuildChoice>;
+    moduleTotal: number;
+    /**
+     * Mastery histogram per skill, and level histogram per module: where
+     * people STOP investing rather than what they picked. Empty below the
+     * reporting floor, like the distributions above.
+     */
+    masteries: Array<SkillMasteryStats>;
+    moduleLevels: Array<ModuleLevelStats>;
+    /**
+     * Below this many samples a distribution is withheld entirely, so a rare
+     * operator's numbers cannot describe a handful of identifiable accounts.
+     */
+    minSample: number;
+    computedAt: string;
+};

@@ -3,4 +3,4 @@
 /**
  * One tier, by id and its name at the time.
  */
-export type AuditTierRef = { id: string, name: string, };
+export type AuditTierRef = { id: string; name: string };

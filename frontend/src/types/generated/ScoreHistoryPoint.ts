@@ -3,4 +3,4 @@
 /**
  * One point of a user's leaderboard history: a snapshot they appeared in.
  */
-export type ScoreHistoryPoint = { taken_at: string, total_score: number | null, rank_global: number, rank_server: number, };
+export type ScoreHistoryPoint = { taken_at: string; total_score: number | null; rank_global: number; rank_server: number };

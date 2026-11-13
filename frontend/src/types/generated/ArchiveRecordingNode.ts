@@ -5,4 +5,4 @@ import type { ArchiveClip } from "./ArchiveClip";
  * One node of the recordings shelf: a titled set of clips the player unlocks
  * together.
  */
-export type ArchiveRecordingNode = { id: string, title: string, unlockDesc?: string, clips: Array<ArchiveClip>, };
+export type ArchiveRecordingNode = { id: string; title: string; unlockDesc?: string; clips: Array<ArchiveClip> };

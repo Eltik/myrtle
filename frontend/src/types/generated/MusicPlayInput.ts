@@ -3,8 +3,10 @@
 /**
  * `POST /music/history`.
  */
-export type MusicPlayInput = { trackId: string, 
-/**
- * Seconds actually heard so far, 0 or more.
- */
-listenedSeconds: number, };
+export type MusicPlayInput = {
+    trackId: string;
+    /**
+     * Seconds actually heard so far, 0 or more.
+     */
+    listenedSeconds: number;
+};

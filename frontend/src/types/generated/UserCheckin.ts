@@ -10,57 +10,58 @@
  * so no consumer can say "the 4th was missed", only "N of the month's slots
  * are claimed, D days have elapsed".
  */
-export type UserCheckin = { 
-/**
- * One flag per sign-in claimed this month, in claim order: `1` if the
- * monthly-subscription Daily Supply came with that claim, `0` if not.
- *
- * The game's raw `checkInHistory`, not a per-day calendar: a missed day
- * adds no entry, so `flags[d - 1]` is not "day `d` was claimed", and the
- * `1`s count monthly card days, not sign-ins. (Checked against
- * `user_status.monthly_sub_end`: the final flag agrees with subscription
- * state in 2 193 of 2 219 non-empty rows.) Use [`Self::claimed_this_month`]
- * for the sign-in count.
- */
-monthly_card_flags: Array<number>, 
-/**
- * Sign-ins claimed in the current month's series: the length of
- * `monthly_card_flags`, derived in SQL so no client re-derives it.
- */
-claimed_this_month: number, 
-/**
- * Lifetime cumulative sign-in days (the "total days of sign-ins" counter).
- * `None` only for a visitor when the owner hid it from their header
- * ([`UserCheckin::hide_private`]).
- */
-cumulative_signin: number | null, 
-/**
- * Active monthly sign-in series id (e.g. `signin<N>`).
- */
-checkin_group_id: string | null, 
-/**
- * The game's raw `checkInRewardIndex`: a 0-based pointer into the month's
- * reward slots. It equals `claimed_this_month` while a claim is pending
- * and `claimed_this_month - 1` just after one, and a handful of rows carry
- * a stale `0` across a series rollover. Prefer `claimed_this_month`.
- */
-reward_index: number, 
-/**
- * Whether a daily sign-in is claimable right now (as of the last sync).
- */
-can_check_in: boolean, 
-/**
- * Account creation time (Unix seconds), for "days since joining".
- */
-register_ts: number | null, 
-/**
- * Player's last in-game online time (Unix seconds), distinct from the DB
- * sync time below.
- */
-last_online_ts: number | null, 
-/**
- * When this row was last synced to our DB. Every field above is a snapshot
- * as of this moment, which may be days/weeks before "now", so the month
- * the calendar belongs to is this timestamp's month, not today's.
- */
-updated_at: string, };
+export type UserCheckin = {
+    /**
+     * One flag per sign-in claimed this month, in claim order: `1` if the
+     * monthly-subscription Daily Supply came with that claim, `0` if not.
+     *
+     * The game's raw `checkInHistory`, not a per-day calendar: a missed day
+     * adds no entry, so `flags[d - 1]` is not "day `d` was claimed", and the
+     * `1`s count monthly card days, not sign-ins. (Checked against
+     * `user_status.monthly_sub_end`: the final flag agrees with subscription
+     * state in 2 193 of 2 219 non-empty rows.) Use [`Self::claimed_this_month`]
+     * for the sign-in count.
+     */
+    monthly_card_flags: Array<number>;
+    /**
+     * Sign-ins claimed in the current month's series: the length of
+     * `monthly_card_flags`, derived in SQL so no client re-derives it.
+     */
+    claimed_this_month: number;
+    /**
+     * Lifetime cumulative sign-in days (the "total days of sign-ins" counter).
+     * `None` only for a visitor when the owner hid it from their header
+     * ([`UserCheckin::hide_private`]).
+     */
+    cumulative_signin: number | null;
+    /**
+     * Active monthly sign-in series id (e.g. `signin<N>`).
+     */
+    checkin_group_id: string | null;
+    /**
+     * The game's raw `checkInRewardIndex`: a 0-based pointer into the month's
+     * reward slots. It equals `claimed_this_month` while a claim is pending
+     * and `claimed_this_month - 1` just after one, and a handful of rows carry
+     * a stale `0` across a series rollover. Prefer `claimed_this_month`.
+     */
+    reward_index: number;
+    /**
+     * Whether a daily sign-in is claimable right now (as of the last sync).
+     */
+    can_check_in: boolean;
+    /**
+     * Account creation time (Unix seconds), for "days since joining".
+     */
+    register_ts: number | null;
+    /**
+     * Player's last in-game online time (Unix seconds), distinct from the DB
+     * sync time below.
+     */
+    last_online_ts: number | null;
+    /**
+     * When this row was last synced to our DB. Every field above is a snapshot
+     * as of this moment, which may be days/weeks before "now", so the month
+     * the calendar belongs to is this timestamp's month, not today's.
+     */
+    updated_at: string;
+};

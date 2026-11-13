@@ -7,13 +7,14 @@
  * 78 `character_table` operators have at least one (80 with Amiya's two
  * patch forms).
  */
-export type HiddenFaction = { 
-/**
- * `handbook_team_table` power id, also the `logo_{id}` camp logo name.
- */
-id: string, 
-/**
- * The table's name for it in the server's own language, `None` when the
- * table does not name the id.
- */
-name: string | null, };
+export type HiddenFaction = {
+    /**
+     * `handbook_team_table` power id, also the `logo_{id}` camp logo name.
+     */
+    id: string;
+    /**
+     * The table's name for it in the server's own language, `None` when the
+     * table does not name the id.
+     */
+    name: string | null;
+};

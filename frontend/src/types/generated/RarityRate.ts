@@ -3,8 +3,11 @@
 /**
  * Per-rarity headline rate for a banner, flattened for the API.
  */
-export type RarityRate = { rarityRank: number, totalPercent: number, 
-/**
- * How many operators sit in this rarity band on this banner.
- */
-poolSize: number, };
+export type RarityRate = {
+    rarityRank: number;
+    totalPercent: number;
+    /**
+     * How many operators sit in this rarity band on this banner.
+     */
+    poolSize: number;
+};

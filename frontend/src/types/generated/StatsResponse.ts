@@ -5,4 +5,4 @@ import type { RostersStats } from "./RostersStats";
 import type { TierListSiteStats } from "./TierListSiteStats";
 import type { UserStats } from "./UserStats";
 
-export type StatsResponse = { users: UserStats, gacha: GachaPublicStats, gameData: GameDataStats, tierLists: TierListSiteStats, rosters: RostersStats, computedAt: string, };
+export type StatsResponse = { users: UserStats; gacha: GachaPublicStats; gameData: GameDataStats; tierLists: TierListSiteStats; rosters: RostersStats; computedAt: string };

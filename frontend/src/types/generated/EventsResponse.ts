@@ -3,4 +3,4 @@ import type { LagModel } from "./LagModel";
 import type { ReleaseEvent } from "./ReleaseEvent";
 import type { YearlyModel } from "./YearlyModel";
 
-export type EventsResponse = { model: LagModel, yearly: YearlyModel, events: Array<ReleaseEvent>, };
+export type EventsResponse = { model: LagModel; yearly: YearlyModel; events: Array<ReleaseEvent> };

@@ -6,17 +6,19 @@ import type { DimensionKind } from "./DimensionKind";
  * Operators subscore a dimension is worth, and how much of that worth the
  * user has earned.
  */
-export type ScoreDimension = { kind: DimensionKind, 
-/**
- * Share of the Operators subscore this dimension carries across the
- * graded roster (0.0-1.0; all shares sum to 1.0).
- */
-weight_share: number, 
-/**
- * Rarity-weighted completion of this dimension (0.0-1.0).
- */
-completion: number, 
-/**
- * `weight_share x completion`; contributions sum to `operator_grade`.
- */
-contribution: number, };
+export type ScoreDimension = {
+    kind: DimensionKind;
+    /**
+     * Share of the Operators subscore this dimension carries across the
+     * graded roster (0.0-1.0; all shares sum to 1.0).
+     */
+    weight_share: number;
+    /**
+     * Rarity-weighted completion of this dimension (0.0-1.0).
+     */
+    completion: number;
+    /**
+     * `weight_share x completion`; contributions sum to `operator_grade`.
+     */
+    contribution: number;
+};

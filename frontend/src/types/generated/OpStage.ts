@@ -3,4 +3,4 @@
 /**
  * One stage that awards Originite Prime on first clear.
  */
-export type OpStage = { stageId: string, code: string, op: number, challenge: boolean, };
+export type OpStage = { stageId: string; code: string; op: number; challenge: boolean };

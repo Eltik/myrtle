@@ -3,4 +3,4 @@ import type { OperatorBirthPlace } from "./OperatorBirthPlace";
 import type { OperatorGender } from "./OperatorGender";
 import type { OperatorRace } from "./OperatorRace";
 
-export type BasicInfo = { codeName: string, gender: OperatorGender, combatExperience: string, placeOfBirth: OperatorBirthPlace, dateOfBirth: string, race: OperatorRace, height: string, infectionStatus: string, };
+export type BasicInfo = { codeName: string; gender: OperatorGender; combatExperience: string; placeOfBirth: OperatorBirthPlace; dateOfBirth: string; race: OperatorRace; height: string; infectionStatus: string };

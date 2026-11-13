@@ -4,4 +4,4 @@
  * A CN text and the trailing server's text at the same place, both raw
  * templates (`{key}` placeholders and rich-text tags left in).
  */
-export type CnTranslation = { cn: string, en: string, };
+export type CnTranslation = { cn: string; en: string };

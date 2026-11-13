@@ -3,4 +3,4 @@
 /**
  * `v_gacha_stats` view
  */
-export type GachaStats = { user_id: string, total_pulls: number | null, six_star_count: number | null, five_star_count: number | null, four_star_count: number | null, first_pull: number | null, last_pull: number | null, };
+export type GachaStats = { user_id: string; total_pulls: number | null; six_star_count: number | null; five_star_count: number | null; four_star_count: number | null; first_pull: number | null; last_pull: number | null };

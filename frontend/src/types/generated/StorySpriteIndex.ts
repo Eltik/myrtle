@@ -4,4 +4,4 @@ import type { StorySpriteEntry } from "./StorySpriteEntry";
 /**
  * Every story sprite folder, one entry each, in folder-name order.
  */
-export type StorySpriteIndex = { sprites: Array<StorySpriteEntry>, };
+export type StorySpriteIndex = { sprites: Array<StorySpriteEntry> };

@@ -3,4 +3,4 @@
 /**
  * users table
  */
-export type User = { id: string, uid: string, server_id: number, nickname: string | null, nick_number: string | null, level: number | null, role: string, avatar_id: string | null, resume_id: string | null, secretary: string | null, secretary_skin_id: string | null, created_at: string, updated_at: string, };
+export type User = { id: string; uid: string; server_id: number; nickname: string | null; nick_number: string | null; level: number | null; role: string; avatar_id: string | null; resume_id: string | null; secretary: string | null; secretary_skin_id: string | null; created_at: string; updated_at: string };

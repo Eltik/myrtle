@@ -3,4 +3,4 @@ import type { GachaPaginationInfoDto } from "./GachaPaginationInfoDto";
 import type { GachaRecordEntryDto } from "./GachaRecordEntryDto";
 import type { HistoryFiltersAppliedDto } from "./HistoryFiltersAppliedDto";
 
-export type GachaHistoryEnvelopeDto = { records: Array<GachaRecordEntryDto>, pagination: GachaPaginationInfoDto, filtersApplied: HistoryFiltersAppliedDto, };
+export type GachaHistoryEnvelopeDto = { records: Array<GachaRecordEntryDto>; pagination: GachaPaginationInfoDto; filtersApplied: HistoryFiltersAppliedDto };

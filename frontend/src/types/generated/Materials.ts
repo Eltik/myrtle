@@ -4,4 +4,4 @@ import type { CharVoucherItem } from "./CharVoucherItem";
 import type { ExpItem } from "./ExpItem";
 import type { Item } from "./Item";
 
-export type Materials = { items: { [key in string]?: Item }, expItems: { [key in string]?: ExpItem }, potentialItems: { [key in string]?: { [key in string]?: string } }, apSupplies: { [key in string]?: ApSupply }, charVoucherItems: { [key in string]?: CharVoucherItem }, };
+export type Materials = { items: { [key in string]?: Item }; expItems: { [key in string]?: ExpItem }; potentialItems: { [key in string]?: { [key in string]?: string } }; apSupplies: { [key in string]?: ApSupply }; charVoucherItems: { [key in string]?: CharVoucherItem } };

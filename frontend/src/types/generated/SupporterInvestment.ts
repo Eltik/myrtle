@@ -4,20 +4,21 @@
  * The investment every supporter is resolved at. Level is always the
  * promotion's max level and trust is always max.
  */
-export type SupporterInvestment = { 
-/**
- * 0-2, clamped to the operator's highest promotion.
- */
-promotion: number, 
-/**
- * 1-10 (8-10 = M1-M3), clamped to the promotion's highest rank.
- */
-skillLevel: number, 
-/**
- * 1-6.
- */
-potential: number, 
-/**
- * 0 = no module, 1-3.
- */
-moduleLevel: number, };
+export type SupporterInvestment = {
+    /**
+     * 0-2, clamped to the operator's highest promotion.
+     */
+    promotion: number;
+    /**
+     * 1-10 (8-10 = M1-M3), clamped to the promotion's highest rank.
+     */
+    skillLevel: number;
+    /**
+     * 1-6.
+     */
+    potential: number;
+    /**
+     * 0 = no module, 1-3.
+     */
+    moduleLevel: number;
+};

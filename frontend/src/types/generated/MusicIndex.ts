@@ -5,4 +5,4 @@ import type { MusicTrack } from "./MusicTrack";
 /**
  * Every piece of music the game names, for the In-Game Music gallery.
  */
-export type MusicIndex = { totals: MusicTotals, tracks: Array<MusicTrack>, };
+export type MusicIndex = { totals: MusicTotals; tracks: Array<MusicTrack> };

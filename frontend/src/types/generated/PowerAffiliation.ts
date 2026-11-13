@@ -5,4 +5,4 @@
  * both the `PascalCase` raw character table and the camelCase enriched
  * operators file, so every field aliases both casings.
  */
-export type PowerAffiliation = { nationId: string | null, groupId: string | null, teamId: string | null, };
+export type PowerAffiliation = { nationId: string | null; groupId: string | null; teamId: string | null };

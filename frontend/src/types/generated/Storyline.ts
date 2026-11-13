@@ -21,38 +21,44 @@ import type { StorylineArc } from "./StorylineArc";
  * Picking one shelf per group is the consumer's job, and `own_group_ids`
  * names the one shelf each group is a `STORY_SET` on.
  */
-export type Storyline = { id: string, name: string, sort: number, 
-/**
- * The shelf's own glyph: `StorylineIconId`
- * (`spritepack/mixstory_abbr_sprites_h2_0`, 44x36, 13 of the 14 EN
- * shelves) and, where that is absent, `StorylineLogoId`
- * (`spritepack/mixstory_logo_sprites_0`, 14 of 14). `mainLine` is the one
- * shelf with no abbreviation glyph, so it draws its logo.
- */
-iconUrl?: string, 
-/**
- * The shelf's LOGO, `StorylineLogoId` (`spritepack/mixstory_logo_sprites_0`,
- * 108x108, 14 of 14 EN shelves): the emblem the game's Story Collection
- * draws for the shelf, monochrome white on transparent. The jump bar draws
- * this so every shelf chip carries the same kind of mark as the arcs.
- */
-logoUrl?: string, 
-/**
- * The mainline chapters this shelf spans: the min and max
- * `StoryGroup.chapterNumber` over its groups. `mainLine` is 0 to 16, and
- * a themed shelf carries one when it holds mainline chapters of its own
- * (`ssLine_1` holds `main_7` through `main_14`); it is absent on the 7 EN
- * shelves that hold none.
- */
-chapterRange?: ChapterRange, groupIds: Array<string>, 
-/**
- * The subset of `group_ids` the shelf lists as its OWN entries
- * (`LocationType` `STORY_SET`), in the same order. The rest of the rail
- * is `BEFORE` / `AFTER` pointers at a story that lives on another shelf:
- * `ssLine_3` (Snow and Silver Steel) points at `act25side` (Lone Trail)
- * as the read-first for `act46side`, while `ssLine_7` (Those Who Take The
- * Future) is where Lone Trail is a `STORY_SET`. Every EN group that sits
- * on a shelf is a `STORY_SET` on exactly one, so this is what picks a
- * group's home shelf.
- */
-ownGroupIds: Array<string>, arcs: Array<StorylineArc>, };
+export type Storyline = {
+    id: string;
+    name: string;
+    sort: number;
+    /**
+     * The shelf's own glyph: `StorylineIconId`
+     * (`spritepack/mixstory_abbr_sprites_h2_0`, 44x36, 13 of the 14 EN
+     * shelves) and, where that is absent, `StorylineLogoId`
+     * (`spritepack/mixstory_logo_sprites_0`, 14 of 14). `mainLine` is the one
+     * shelf with no abbreviation glyph, so it draws its logo.
+     */
+    iconUrl?: string;
+    /**
+     * The shelf's LOGO, `StorylineLogoId` (`spritepack/mixstory_logo_sprites_0`,
+     * 108x108, 14 of 14 EN shelves): the emblem the game's Story Collection
+     * draws for the shelf, monochrome white on transparent. The jump bar draws
+     * this so every shelf chip carries the same kind of mark as the arcs.
+     */
+    logoUrl?: string;
+    /**
+     * The mainline chapters this shelf spans: the min and max
+     * `StoryGroup.chapterNumber` over its groups. `mainLine` is 0 to 16, and
+     * a themed shelf carries one when it holds mainline chapters of its own
+     * (`ssLine_1` holds `main_7` through `main_14`); it is absent on the 7 EN
+     * shelves that hold none.
+     */
+    chapterRange?: ChapterRange;
+    groupIds: Array<string>;
+    /**
+     * The subset of `group_ids` the shelf lists as its OWN entries
+     * (`LocationType` `STORY_SET`), in the same order. The rest of the rail
+     * is `BEFORE` / `AFTER` pointers at a story that lives on another shelf:
+     * `ssLine_3` (Snow and Silver Steel) points at `act25side` (Lone Trail)
+     * as the read-first for `act46side`, while `ssLine_7` (Those Who Take The
+     * Future) is where Lone Trail is a `STORY_SET`. Every EN group that sits
+     * on a shelf is a `STORY_SET` on exactly one, so this is what picks a
+     * group's home shelf.
+     */
+    ownGroupIds: Array<string>;
+    arcs: Array<StorylineArc>;
+};

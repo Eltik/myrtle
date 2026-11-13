@@ -6,14 +6,20 @@ import type { SeatHandoff } from "./SeatHandoff";
 import type { Synergy } from "./Synergy";
 import type { Themes } from "./Themes";
 
-export type SquadAnalysis = { coverage: Array<CoverageGroup>, economy: Economy, synergy: Synergy, readiness: Readiness, themes: Themes, 
-/**
- * One entry per filled seat (support included), in request order.
- */
-handoff: Array<SeatHandoff>, 
-/**
- * Seats whose operator's texts have no English reading (an operator the
- * EN server does not have yet): rules that read trait, skill or talent
- * wording skip them, and their talents come back as `Unread` items.
- */
-unread_seats: Array<number>, };
+export type SquadAnalysis = {
+    coverage: Array<CoverageGroup>;
+    economy: Economy;
+    synergy: Synergy;
+    readiness: Readiness;
+    themes: Themes;
+    /**
+     * One entry per filled seat (support included), in request order.
+     */
+    handoff: Array<SeatHandoff>;
+    /**
+     * Seats whose operator's texts have no English reading (an operator the
+     * EN server does not have yet): rules that read trait, skill or talent
+     * wording skip them, and their talents come back as `Unread` items.
+     */
+    unread_seats: Array<number>;
+};

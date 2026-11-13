@@ -2,4 +2,4 @@
 import type { SynergyCounts } from "./SynergyCounts";
 import type { SynergyItem } from "./SynergyItem";
 
-export type Synergy = { items: Array<SynergyItem>, counts: SynergyCounts, };
+export type Synergy = { items: Array<SynergyItem>; counts: SynergyCounts };

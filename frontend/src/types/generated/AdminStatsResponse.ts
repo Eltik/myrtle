@@ -7,4 +7,4 @@ import type { RostersStats } from "./RostersStats";
 import type { TierListSiteStats } from "./TierListSiteStats";
 import type { UserStats } from "./UserStats";
 
-export type AdminStatsResponse = { usersByRole: RoleBreakdown, recentUsers: Array<RecentUser>, users: UserStats, gacha: GachaPublicStats, gameData: GameDataStats, tierLists: TierListSiteStats, rosters: RostersStats, computedAt: string, };
+export type AdminStatsResponse = { usersByRole: RoleBreakdown; recentUsers: Array<RecentUser>; users: UserStats; gacha: GachaPublicStats; gameData: GameDataStats; tierLists: TierListSiteStats; rosters: RostersStats; computedAt: string };

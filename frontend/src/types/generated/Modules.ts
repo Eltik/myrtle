@@ -4,4 +4,4 @@ import type { Mission } from "./Mission";
 import type { Module } from "./Module";
 import type { SubProfession } from "./SubProfession";
 
-export type Modules = { equipDict: { [key in string]?: Module }, missionList: { [key in string]?: Mission }, subProfDict: { [key in string]?: SubProfession }, charEquip: { [key in string]?: Array<string> }, equipTrackDict: { [key in string]?: EquipTrack }, };
+export type Modules = { equipDict: { [key in string]?: Module }; missionList: { [key in string]?: Mission }; subProfDict: { [key in string]?: SubProfession }; charEquip: { [key in string]?: Array<string> }; equipTrackDict: { [key in string]?: EquipTrack } };

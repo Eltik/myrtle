@@ -4,9 +4,11 @@ import type { ProfileTabId } from "./ProfileTabId";
 /**
  * One entry of [`ProfileLayout::tabs`].
  */
-export type ProfileTab = { id: ProfileTabId, 
-/**
- * False hides the tab from visitors and refuses its data to them. The
- * owner always sees and reads every tab.
- */
-visible: boolean, };
+export type ProfileTab = {
+    id: ProfileTabId;
+    /**
+     * False hides the tab from visitors and refuses its data to them. The
+     * owner always sees and reads every tab.
+     */
+    visible: boolean;
+};

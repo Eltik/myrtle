@@ -4,4 +4,4 @@
  * `gamedata_overrides` row - a hand-entered replacement for one field of one
  * game-data entity in one locale.
  */
-export type GamedataOverride = { locale: string, kind: string, entity_id: string, field: string, value: string, updated_at: string, };
+export type GamedataOverride = { locale: string; kind: string; entity_id: string; field: string; value: string; updated_at: string };

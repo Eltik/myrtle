@@ -3,4 +3,4 @@
 /**
  * `translation_permissions` row. Shape-identical to a tier-list permission.
  */
-export type TranslationPermission = { locale: string, user_id: string, permission: string, granted_by: string | null, granted_at: string, };
+export type TranslationPermission = { locale: string; user_id: string; permission: string; granted_by: string | null; granted_at: string };

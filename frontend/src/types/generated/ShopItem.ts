@@ -4,4 +4,4 @@
  * An item as the shop names it: the client table's name and icon, EN when
  * the item exists there.
  */
-export type ShopItem = { itemId: string, name: string, nameEn: string | null, iconPath: string | null, rarity: number, };
+export type ShopItem = { itemId: string; name: string; nameEn: string | null; iconPath: string | null; rarity: number };

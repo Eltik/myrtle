@@ -6,8 +6,12 @@ import type { SpriteItem } from "./SpriteItem";
  * Every illustration one group or one operator's records reference, in
  * first-appearance order over the group's stories in library order.
  */
-export type StoryIllustrations = { 
-/**
- * The id as asked for: a `StoryGroup.id` or an operator `charId`.
- */
-groupId: string, backgrounds: Array<IllustrationItem>, images: Array<IllustrationItem>, sprites: Array<SpriteItem>, };
+export type StoryIllustrations = {
+    /**
+     * The id as asked for: a `StoryGroup.id` or an operator `charId`.
+     */
+    groupId: string;
+    backgrounds: Array<IllustrationItem>;
+    images: Array<IllustrationItem>;
+    sprites: Array<SpriteItem>;
+};

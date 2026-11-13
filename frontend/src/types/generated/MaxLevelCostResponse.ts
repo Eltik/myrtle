@@ -2,42 +2,46 @@
 import type { LmdIncomeDto } from "./LmdIncomeDto";
 import type { MaxLevelOperatorDto } from "./MaxLevelOperatorDto";
 
-export type MaxLevelCostResponse = { 
-/**
- * Owned operators the game data knows.
- */
-operators_total: number, 
-/**
- * Owned operators not yet at their target.
- */
-operators_remaining: number, exp_needed: number, level_lmd_needed: number, promotion_lmd_needed: number, 
-/**
- * `level_lmd_needed + promotion_lmd_needed`.
- */
-lmd_needed: number, 
-/**
- * EXP held as cards (every EXP item times its EXP value).
- */
-exp_owned: number, 
-/**
- * The synced LMD balance; 0 when the profile carries none. `None` for a
- * visitor when the owner hid LMD from their profile header.
- */
-lmd_owned: number | null, 
-/**
- * Needed minus owned, floored at 0.
- */
-exp_missing: number, 
-/**
- * `None` exactly when `lmd_owned` is, since it would give the balance
- * back.
- */
-lmd_missing: number | null, 
-/**
- * Every remaining operator, most expensive first.
- */
-operators: Array<MaxLevelOperatorDto>, 
-/**
- * What the account earns in a day and how long the LMD shortfall takes.
- */
-income: LmdIncomeDto, };
+export type MaxLevelCostResponse = {
+    /**
+     * Owned operators the game data knows.
+     */
+    operators_total: number;
+    /**
+     * Owned operators not yet at their target.
+     */
+    operators_remaining: number;
+    exp_needed: number;
+    level_lmd_needed: number;
+    promotion_lmd_needed: number;
+    /**
+     * `level_lmd_needed + promotion_lmd_needed`.
+     */
+    lmd_needed: number;
+    /**
+     * EXP held as cards (every EXP item times its EXP value).
+     */
+    exp_owned: number;
+    /**
+     * The synced LMD balance; 0 when the profile carries none. `None` for a
+     * visitor when the owner hid LMD from their profile header.
+     */
+    lmd_owned: number | null;
+    /**
+     * Needed minus owned, floored at 0.
+     */
+    exp_missing: number;
+    /**
+     * `None` exactly when `lmd_owned` is, since it would give the balance
+     * back.
+     */
+    lmd_missing: number | null;
+    /**
+     * Every remaining operator, most expensive first.
+     */
+    operators: Array<MaxLevelOperatorDto>;
+    /**
+     * What the account earns in a day and how long the LMD shortfall takes.
+     */
+    income: LmdIncomeDto;
+};
