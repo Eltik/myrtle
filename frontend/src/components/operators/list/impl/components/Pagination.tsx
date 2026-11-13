@@ -13,7 +13,19 @@ interface IPaginationProps {
     currentPage: number;
     totalPages: number;
     onPageChange: (page: number) => void;
+    /**
+     * The URL of a page, for a list whose page lives in the URL. With it the pager's
+     * controls are real links: a crawler follows them to every page, and a modified
+     * click opens the page in a new tab. A plain click still pages in place. Without
+     * it they stay buttons.
+     */
+    hrefForPage?: (page: number) => string;
     className?: string;
+}
+
+/** A click the browser should handle itself: a new tab, a new window, a download. */
+function isModifiedClick(event: React.MouseEvent): boolean {
+    return event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey;
 }
 
 const SLOT_WIDTH_PX = 36;
@@ -67,7 +79,7 @@ function generatePaginationRange(currentPage: number, totalPages: number, siblin
     return items;
 }
 
-export function Pagination({ currentPage, totalPages, onPageChange, className }: IPaginationProps) {
+export function Pagination({ currentPage, totalPages, onPageChange, hrefForPage, className }: IPaginationProps) {
     const t: TypedT<typeof messages> = useT("operators");
     const rt: TypedRichT<typeof messages> = useRichT("operators");
     const contentRef = useRef<HTMLUListElement>(null);
@@ -139,16 +151,33 @@ export function Pagination({ currentPage, totalPages, onPageChange, className }:
         return null;
     }
 
+    // A control that leads somewhere is an anchor when the list gave a URL for its
+    // pages; one that leads nowhere (the current page, previous on page one) stays a
+    // disabled button. The click handler is shared: a plain click pages in place and
+    // cancels the navigation, a modified one is left to the browser.
+    const linkTo = (page: number, enabled: boolean) => {
+        if (!hrefForPage || !enabled) return undefined;
+        // biome-ignore lint/a11y/useAnchorContent: a `render` template; Button supplies the label and the content
+        return <a href={hrefForPage(page)} />;
+    };
+    const goOnClick = (go: () => void) => (event: React.MouseEvent) => {
+        if (isModifiedClick(event)) return;
+        event.preventDefault();
+        go();
+    };
+    const hasPrevious = currentPage > 1;
+    const hasNext = currentPage < totalPages;
+
     return (
         <PaginationRoot className={cn("mt-6", className)}>
             <PaginationContent ref={contentRef} className="w-full flex-nowrap gap-1 sm:justify-center">
                 <PaginationItem className="flex sm:hidden">
-                    <Button variant="outline" size="default" disabled={currentPage <= 1} onClick={handleFirst} aria-label={t("pager.first")} className="aspect-square p-0">
+                    <Button render={linkTo(1, hasPrevious)} variant="outline" size="default" disabled={!hasPrevious} onClick={goOnClick(handleFirst)} aria-label={t("pager.first")} className="aspect-square p-0">
                         <ChevronsLeft />
                     </Button>
                 </PaginationItem>
                 <PaginationItem>
-                    <PaginationPrevious render={<Button variant="outline" size="sm" disabled={currentPage <= 1} onClick={handlePrevious} aria-label={t("pager.previous")} className="h-9 gap-1.5 px-3 sm:h-8" />} />
+                    <PaginationPrevious render={<Button render={linkTo(currentPage - 1, hasPrevious)} variant="outline" size="sm" disabled={!hasPrevious} onClick={goOnClick(handlePrevious)} aria-label={t("pager.previous")} className="h-9 gap-1.5 px-3 sm:h-8" />} />
                 </PaginationItem>
 
                 {paginationRange.map((item) => {
@@ -167,7 +196,17 @@ export function Pagination({ currentPage, totalPages, onPageChange, className }:
                         <PaginationItem key={item} className="hidden sm:flex">
                             <PaginationLink
                                 isActive={isActive}
-                                render={<Button variant={isActive ? "default" : "outline"} size="icon" onClick={() => handlePageClick(item)} aria-label={t("pager.page", { page: item })} aria-current={isActive ? "page" : undefined} className={cn("size-9 sm:size-8", isActive && "pointer-events-none")} />}
+                                render={
+                                    <Button
+                                        render={linkTo(item, !isActive)}
+                                        variant={isActive ? "default" : "outline"}
+                                        size="icon"
+                                        onClick={goOnClick(() => handlePageClick(item))}
+                                        aria-label={t("pager.page", { page: item })}
+                                        aria-current={isActive ? "page" : undefined}
+                                        className={cn("size-9 sm:size-8", isActive && "pointer-events-none")}
+                                    />
+                                }
                             >
                                 {item}
                             </PaginationLink>
@@ -179,10 +218,10 @@ export function Pagination({ currentPage, totalPages, onPageChange, className }:
                     <span className="inline-flex h-9 items-center justify-center px-3 font-medium font-sans text-muted-foreground text-sm">{rt("pager.pageOf", { current: <strong className="mx-1 text-foreground">{currentPage}</strong>, total: <strong className="ml-1 text-foreground">{totalPages}</strong> })}</span>
                 </PaginationItem>
                 <PaginationItem>
-                    <PaginationNext render={<Button variant="outline" size="sm" disabled={currentPage >= totalPages} onClick={handleNext} aria-label={t("pager.next")} className="h-9 gap-1.5 px-3 sm:h-8" />} />
+                    <PaginationNext render={<Button render={linkTo(currentPage + 1, hasNext)} variant="outline" size="sm" disabled={!hasNext} onClick={goOnClick(handleNext)} aria-label={t("pager.next")} className="h-9 gap-1.5 px-3 sm:h-8" />} />
                 </PaginationItem>
                 <PaginationItem className="flex sm:hidden">
-                    <Button variant="outline" size="default" disabled={currentPage >= totalPages} onClick={handleLast} aria-label={t("pager.last")} className="aspect-square p-0">
+                    <Button render={linkTo(totalPages, hasNext)} variant="outline" size="default" disabled={!hasNext} onClick={goOnClick(handleLast)} aria-label={t("pager.last")} className="aspect-square p-0">
                         <ChevronsRight />
                     </Button>
                 </PaginationItem>
