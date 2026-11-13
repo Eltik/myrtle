@@ -270,6 +270,8 @@ async fn async_main() {
 
     maintenance::spawn(state.clone());
     backend::app::services::music::siren::spawn(state.clone());
+    // Not a background job to switch off: logins need what this loads.
+    loaders::spawn_retry(state.http_client.clone(), state.config.servers.clone());
 
     drop(jobs_phase);
 

@@ -93,6 +93,12 @@ impl GlobalConfig {
         self.domains[server.index()][domain.index()] = Some(url);
     }
 
+    /// Whether `server`'s network config has loaded: it sets every domain the
+    /// server has in one go, so one domain present means the load happened.
+    pub fn has_network(&self, server: Server) -> bool {
+        self.domains[server.index()].iter().any(Option::is_some)
+    }
+
     pub const fn version(&self, server: Server) -> &VersionInfo {
         &self.versions[server.index()]
     }
