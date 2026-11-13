@@ -3,4 +3,4 @@
 /**
  * A link the game draws between two characters on a chart.
  */
-export type ArchiveLine = { a: string; b: string };
+export type ArchiveLine = { a: string, b: string, };

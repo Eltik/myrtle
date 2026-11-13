@@ -4,4 +4,4 @@ import type { ArchiveCell } from "./ArchiveCell";
 import type { ArchiveFiller } from "./ArchiveFiller";
 import type { ArchiveLine } from "./ArchiveLine";
 
-export type ArchiveGroup = { id: string; name: string; minScale: number; maxScale: number; cells: Array<ArchiveCell>; blocks: Array<ArchiveBlock>; fillers: Array<ArchiveFiller>; lines: Array<ArchiveLine> };
+export type ArchiveGroup = { id: string, name: string, minScale: number, maxScale: number, cells: Array<ArchiveCell>, blocks: Array<ArchiveBlock>, fillers: Array<ArchiveFiller>, lines: Array<ArchiveLine>, };

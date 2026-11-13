@@ -3,10 +3,8 @@
 /**
  * A liked track.
  */
-export type MusicLike = {
-    /**
-     * `siren:<cid>` or `game:<track id>`.
-     */
-    trackId: string;
-    likedAt: string;
-};
+export type MusicLike = { 
+/**
+ * `siren:<cid>` or `game:<track id>`.
+ */
+trackId: string, likedAt: string, };

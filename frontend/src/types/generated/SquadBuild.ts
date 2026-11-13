@@ -5,23 +5,20 @@
  * roster": the page resolves the build from the synced roster when it loads,
  * and from a full build when the operator is not owned.
  */
-export type SquadBuild = {
-    phase: number;
-    level: number;
-    /**
-     * 0-based (0 = potential 1).
-     */
-    potential: number;
-    /**
-     * 1 to the operator's top skill rank (`AllSkillLvlup` count + 1).
-     */
-    skill_level: number;
-    /**
-     * On top of the top rank, up to the skill's `LevelUpCostCond` count.
-     */
-    mastery: number;
-    /**
-     * 1 to the module's rank count when a module is set, else 0.
-     */
-    module_level: number;
-};
+export type SquadBuild = { phase: number, level: number, 
+/**
+ * 0-based (0 = potential 1).
+ */
+potential: number, 
+/**
+ * 1 to the operator's top skill rank (`AllSkillLvlup` count + 1).
+ */
+skill_level: number, 
+/**
+ * On top of the top rank, up to the skill's `LevelUpCostCond` count.
+ */
+mastery: number, 
+/**
+ * 1 to the module's rank count when a module is set, else 0.
+ */
+module_level: number, };

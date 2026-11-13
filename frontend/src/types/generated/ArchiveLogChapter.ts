@@ -5,19 +5,14 @@ import type { ArchiveLog } from "./ArchiveLog";
  * A run of log entries under one of the archive's own chapter headers, in
  * the order the chapter lists them.
  */
-export type ArchiveLogChapter = {
-    id: string;
-    name: string;
-    /**
-     * The number the chapter header prints (`01`), a string because the
-     * table writes it padded.
-     */
-    displayId?: string;
-    /**
-     * `NORMAL` or `SPECIAL`, the header's own glyph. Kept raw: no art is
-     * joined to it, because the two values are the whole vocabulary.
-     */
-    chapterIcon?: string;
-    unlockDesc?: string;
-    logs: Array<ArchiveLog>;
-};
+export type ArchiveLogChapter = { id: string, name: string, 
+/**
+ * The number the chapter header prints (`01`), a string because the
+ * table writes it padded.
+ */
+displayId?: string, 
+/**
+ * `NORMAL` or `SPECIAL`, the header's own glyph. Kept raw: no art is
+ * joined to it, because the two values are the whole vocabulary.
+ */
+chapterIcon?: string, unlockDesc?: string, logs: Array<ArchiveLog>, };

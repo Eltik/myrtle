@@ -3,4 +3,4 @@ import type { ArchiveNationBehind } from "./ArchiveNationBehind";
 import type { ArchivePerson } from "./ArchivePerson";
 import type { ArchiveSecret } from "./ArchiveSecret";
 
-export type ArchiveHiddenFactions = { secret: Array<ArchiveSecret>; nations: Array<ArchiveNationBehind>; people: Array<ArchivePerson> };
+export type ArchiveHiddenFactions = { secret: Array<ArchiveSecret>, nations: Array<ArchiveNationBehind>, people: Array<ArchivePerson>, };

@@ -4,29 +4,20 @@ import type { StoryRequiredStage } from "./StoryRequiredStage";
 /**
  * One story under a group (`InfoUnlockDatas[]`).
  */
-export type StoryUnlockData = {
-    storyId: string;
-    storyGroup: string;
-    storyName: string;
-    /**
-     * The operation code (`GT-1`); absent on records and interludes.
-     */
-    storyCode: string | null;
-    storySort: number;
-    /**
-     * `Before Operation`, `After Operation` or `Interlude`.
-     */
-    avgTag: string | null;
-    /**
-     * Script path under `gamedata/story/`, without extension.
-     */
-    storyTxt: string;
-    /**
-     * Summary path under `gamedata/story/`, without extension.
-     */
-    storyInfo: string | null;
-    storyDependence: string | null;
-    requiredStages: Array<StoryRequiredStage>;
-    unLockType: string;
-    storyReviewType: string;
-};
+export type StoryUnlockData = { storyId: string, storyGroup: string, storyName: string, 
+/**
+ * The operation code (`GT-1`); absent on records and interludes.
+ */
+storyCode: string | null, storySort: number, 
+/**
+ * `Before Operation`, `After Operation` or `Interlude`.
+ */
+avgTag: string | null, 
+/**
+ * Script path under `gamedata/story/`, without extension.
+ */
+storyTxt: string, 
+/**
+ * Summary path under `gamedata/story/`, without extension.
+ */
+storyInfo: string | null, storyDependence: string | null, requiredStages: Array<StoryRequiredStage>, unLockType: string, storyReviewType: string, };

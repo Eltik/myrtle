@@ -3,11 +3,9 @@
 /**
  * The `/auth/disconnect` response.
  */
-export type DisconnectResult = {
-    status: string;
-    /**
-     * Whether there were stored credentials to remove. Disconnecting twice is
-     * not an error; the second call reports `false`.
-     */
-    removed: boolean;
-};
+export type DisconnectResult = { status: string, 
+/**
+ * Whether there were stored credentials to remove. Disconnecting twice is
+ * not an error; the second call reports `false`.
+ */
+removed: boolean, };

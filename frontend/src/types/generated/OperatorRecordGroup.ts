@@ -2,45 +2,42 @@
 import type { OperatorProfession } from "./OperatorProfession";
 import type { StoryEntry } from "./StoryEntry";
 
-export type OperatorRecordGroup = {
-    charId: string;
-    /**
-     * The operator's name from the character table.
-     */
-    name: string;
-    /**
-     * 1-6 stars, the same `u8` the operators list's `rarity` carries; 0 when
-     * the character table has no such operator (0 of 315 on EN).
-     */
-    rarity: number;
-    /**
-     * The character table's profession, the raw game value the operators
-     * list carries (`PIONEER`, `WARRIOR`, ...).
-     */
-    profession: OperatorProfession;
-    /**
-     * The server's own name for `profession`, from its gacha class tags.
-     * `None` when the character table has no such operator.
-     */
-    professionName: string | null;
-    /**
-     * The `ui_char_avatar_*` sprite as an asset-index path
-     * (`/textures/spritepack/...`), the same form the operators list's
-     * `portrait` and a group's `coverUrl` carry: the frontend serves it
-     * under `/api/assets`. Empty when no avatar resolves (0 of 315 on EN).
-     */
-    avatarUrl: string;
-    /**
-     * The sum of this operator's records' `wordCount`.
-     */
-    wordCount: number;
-    /**
-     * Distinct backgrounds plus distinct CGs over this operator's records.
-     */
-    illustrationCount: number;
-    /**
-     * Distinct sprite folders over this operator's records.
-     */
-    spriteCount: number;
-    stories: Array<StoryEntry>;
-};
+export type OperatorRecordGroup = { charId: string, 
+/**
+ * The operator's name from the character table.
+ */
+name: string, 
+/**
+ * 1-6 stars, the same `u8` the operators list's `rarity` carries; 0 when
+ * the character table has no such operator (0 of 315 on EN).
+ */
+rarity: number, 
+/**
+ * The character table's profession, the raw game value the operators
+ * list carries (`PIONEER`, `WARRIOR`, ...).
+ */
+profession: OperatorProfession, 
+/**
+ * The server's own name for `profession`, from its gacha class tags.
+ * `None` when the character table has no such operator.
+ */
+professionName: string | null, 
+/**
+ * The `ui_char_avatar_*` sprite as an asset-index path
+ * (`/textures/spritepack/...`), the same form the operators list's
+ * `portrait` and a group's `coverUrl` carry: the frontend serves it
+ * under `/api/assets`. Empty when no avatar resolves (0 of 315 on EN).
+ */
+avatarUrl: string, 
+/**
+ * The sum of this operator's records' `wordCount`.
+ */
+wordCount: number, 
+/**
+ * Distinct backgrounds plus distinct CGs over this operator's records.
+ */
+illustrationCount: number, 
+/**
+ * Distinct sprite folders over this operator's records.
+ */
+spriteCount: number, stories: Array<StoryEntry>, };

@@ -5,4 +5,4 @@ import type { ReleaseBanner } from "./ReleaseBanner";
 import type { RuleIndependence } from "./RuleIndependence";
 import type { YearlyModel } from "./YearlyModel";
 
-export type BannersResponse = { model: LagModel; yearly: YearlyModel; banners: Array<ReleaseBanner>; charNames: { [key in string]?: AutoName }; ruleIndependence: Array<RuleIndependence> };
+export type BannersResponse = { model: LagModel, yearly: YearlyModel, banners: Array<ReleaseBanner>, charNames: { [key in string]?: AutoName }, ruleIndependence: Array<RuleIndependence>, };

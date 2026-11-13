@@ -4,4 +4,4 @@ import type { ChibiCharacter } from "./ChibiCharacter";
 /**
  * `characters` and `by_operator` share one `Arc` per character
  */
-export type ChibiData = { characters: Array<ChibiCharacter> };
+export type ChibiData = { characters: Array<ChibiCharacter>, };

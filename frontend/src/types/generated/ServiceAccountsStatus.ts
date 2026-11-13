@@ -4,9 +4,8 @@ import type { ServiceAccountStatus } from "./ServiceAccountStatus";
 /**
  * `GET /service-accounts`.
  */
-export type ServiceAccountsStatus = {
-    /**
-     * Every account with stored credentials, ordered by server code.
-     */
-    accounts: Array<ServiceAccountStatus>;
-};
+export type ServiceAccountsStatus = { 
+/**
+ * Every account with stored credentials, ordered by server code.
+ */
+accounts: Array<ServiceAccountStatus>, };

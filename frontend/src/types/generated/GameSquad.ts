@@ -4,15 +4,12 @@ import type { GameSquadSlot } from "./GameSquadSlot";
 /**
  * An in-game squad from the last roster sync, read only.
  */
-export type GameSquad = {
-    /**
-     * The game's `squadId` as a number, 0-based.
-     */
-    index: number;
-    name: string;
-    /**
-     * Exactly twelve entries.
-     */
-    slots: Array<GameSquadSlot | null>;
-    synced_at: string;
-};
+export type GameSquad = { 
+/**
+ * The game's `squadId` as a number, 0-based.
+ */
+index: number, name: string, 
+/**
+ * Exactly twelve entries.
+ */
+slots: Array<GameSquadSlot | null>, synced_at: string, };

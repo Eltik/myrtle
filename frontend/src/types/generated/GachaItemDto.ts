@@ -3,4 +3,4 @@
 /**
  * `GachaItem` shape expected by the frontend (camelCase/star-as-string).
  */
-export type GachaItemDto = { charId: string; charName: string; star: string; color: string; poolId: string; poolName: string; typeName: string; at: number; atStr: string };
+export type GachaItemDto = { charId: string, charName: string, star: string, color: string, poolId: string, poolName: string, typeName: string, at: number, atStr: string, };

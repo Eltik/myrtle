@@ -3,21 +3,17 @@
 /**
  * One row's score.
  */
-export type RetentionRow = {
-    operatorId: string;
-    skillIndex: number;
-    moduleIndex: number;
-    /**
-     * `skillDps` at DEF 0 RES 0, the denominator's per-enemy value.
-     */
-    baseDps: number;
-    /**
-     * Weighted by stage appearances. `null` when `baseDps` is 0 or a pair
-     * failed to compute.
-     */
-    retention: number | null;
-    /**
-     * The same, weighted by spawn counts instead (the alternative weight).
-     */
-    retentionBySpawns: number | null;
-};
+export type RetentionRow = { operatorId: string, skillIndex: number, moduleIndex: number, 
+/**
+ * `skillDps` at DEF 0 RES 0, the denominator's per-enemy value.
+ */
+baseDps: number, 
+/**
+ * Weighted by stage appearances. `null` when `baseDps` is 0 or a pair
+ * failed to compute.
+ */
+retention: number | null, 
+/**
+ * The same, weighted by spawn counts instead (the alternative weight).
+ */
+retentionBySpawns: number | null, };

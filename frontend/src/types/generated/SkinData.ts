@@ -3,4 +3,4 @@ import type { Brand } from "./Brand";
 import type { Skin } from "./Skin";
 import type { SpecialSkinInfo } from "./SpecialSkinInfo";
 
-export type SkinData = { charSkins: { [key in string]?: Skin }; buildinEvolveMap: { [key in string]?: { [key in string]?: string } }; buildinPatchMap: { [key in string]?: { [key in string]?: string } }; brandList: { [key in string]?: Brand }; specialSkinInfoList: Array<SpecialSkinInfo> };
+export type SkinData = { charSkins: { [key in string]?: Skin }, buildinEvolveMap: { [key in string]?: { [key in string]?: string } }, buildinPatchMap: { [key in string]?: { [key in string]?: string } }, brandList: { [key in string]?: Brand }, specialSkinInfoList: Array<SpecialSkinInfo>, };

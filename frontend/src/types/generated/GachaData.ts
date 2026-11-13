@@ -7,24 +7,4 @@ import type { RecruitPool } from "./RecruitPool";
 import type { RecruitRarityEntry } from "./RecruitRarityEntry";
 import type { JsonValue } from "./serde_json/JsonValue";
 
-export type GachaData = {
-    gachaPoolClient: Array<GachaPoolClient>;
-    newbeeGachaPoolClient: Array<NewbeeGachaPoolClient>;
-    specialRecruitPool: Array<JsonValue>;
-    gachaTags: Array<GachaTag>;
-    recruitPool: RecruitPool;
-    potentialMaterialConverter: JsonValue;
-    classicPotentialMaterialConverter: JsonValue;
-    recruitRarityTable: { [key in string]?: RecruitRarityEntry };
-    specialTagRarityTable: { [key in string]?: Array<number> };
-    recruitDetail: string;
-    showGachaLogEntry: boolean;
-    carousel: Array<JsonValue>;
-    freeGacha: Array<JsonValue>;
-    limitTenGachaItem: Array<JsonValue>;
-    linkageTenGachaItem: Array<JsonValue>;
-    normalGachaItem: Array<JsonValue>;
-    fesGachaPoolRelateItem: { [key in string]?: FesGachaPoolRelateEntry };
-    dicRecruit6StarHint: { [key in string]?: string };
-    specialGachaPercentDict: { [key in string]?: number };
-};
+export type GachaData = { gachaPoolClient: Array<GachaPoolClient>, newbeeGachaPoolClient: Array<NewbeeGachaPoolClient>, specialRecruitPool: Array<JsonValue>, gachaTags: Array<GachaTag>, recruitPool: RecruitPool, potentialMaterialConverter: JsonValue, classicPotentialMaterialConverter: JsonValue, recruitRarityTable: { [key in string]?: RecruitRarityEntry }, specialTagRarityTable: { [key in string]?: Array<number> }, recruitDetail: string, showGachaLogEntry: boolean, carousel: Array<JsonValue>, freeGacha: Array<JsonValue>, limitTenGachaItem: Array<JsonValue>, linkageTenGachaItem: Array<JsonValue>, normalGachaItem: Array<JsonValue>, fesGachaPoolRelateItem: { [key in string]?: FesGachaPoolRelateEntry }, dicRecruit6StarHint: { [key in string]?: string }, specialGachaPercentDict: { [key in string]?: number }, };

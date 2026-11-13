@@ -4,11 +4,8 @@ import type { LevelBucket } from "./LevelBucket";
 /**
  * How far E2 owners take one module's level.
  */
-export type ModuleLevelStats = {
-    uniEquipId: string;
-    /**
-     * Ascending by level, zero-filled across 0..3.
-     */
-    buckets: Array<LevelBucket>;
-    total: number;
-};
+export type ModuleLevelStats = { uniEquipId: string, 
+/**
+ * Ascending by level, zero-filled across 0..3.
+ */
+buckets: Array<LevelBucket>, total: number, };

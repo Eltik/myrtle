@@ -6,16 +6,9 @@ import type { GridCellInput } from "./GridCellInput";
  * A whole grid as the editor saves it. `cells` is row-major and exactly
  * `rows * cols` long, and every pick is of a kind in `entity_kinds`.
  */
-export type GridInput = {
-    title: string;
-    description: string | null;
-    rows: number;
-    cols: number;
-    cells: Array<GridCellInput>;
-    is_listed: boolean;
-    /**
-     * The kinds a cell may hold: at least one. Stored deduplicated and in
-     * canonical order. A fork's set is its template's and cannot change.
-     */
-    entity_kinds: Array<EntityKind>;
-};
+export type GridInput = { title: string, description: string | null, rows: number, cols: number, cells: Array<GridCellInput>, is_listed: boolean, 
+/**
+ * The kinds a cell may hold: at least one. Stored deduplicated and in
+ * canonical order. A fork's set is its template's and cannot change.
+ */
+entity_kinds: Array<EntityKind>, };

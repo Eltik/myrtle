@@ -2,13 +2,12 @@
 import type { CalculateRequest } from "./CalculateRequest";
 import type { Sweep } from "./Sweep";
 
-export type BatchRequest = {
-    /**
-     * 1 to 64 calculations, each the body `/dps/calculate` takes.
-     */
-    requests: Array<CalculateRequest>;
-    /**
-     * DPS only: evaluate every request across a DEF or RES range.
-     */
-    sweep?: Sweep;
-};
+export type BatchRequest = { 
+/**
+ * 1 to 64 calculations, each the body `/dps/calculate` takes.
+ */
+requests: Array<CalculateRequest>, 
+/**
+ * DPS only: evaluate every request across a DEF or RES range.
+ */
+sweep?: Sweep, };

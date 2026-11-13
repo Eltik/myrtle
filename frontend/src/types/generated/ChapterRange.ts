@@ -3,4 +3,4 @@
 /**
  * An inclusive run of mainline chapter numbers, `from <= to`.
  */
-export type ChapterRange = { from: number; to: number };
+export type ChapterRange = { from: number, to: number, };

@@ -3,27 +3,15 @@
 /**
  * `user_scores` table
  */
-export type UserScore = {
-    user_id: string;
-    total_score: number;
-    operator_score: number;
-    stage_score: number;
-    roguelike_score: number;
-    sandbox_score: number;
-    medal_score: number;
-    base_score: number;
-    /**
-     * The base grade's stationing-utilization component (actual vs the
-     * optimizer's best on the built rooms). None on rows graded before the
-     * split was stored.
-     */
-    base_utilization: number | null;
-    /**
-     * The base grade's infrastructure-completeness component (built rooms vs
-     * the same rooms at max level). None on pre-split rows.
-     */
-    base_infrastructure: number | null;
-    skin_score: number;
-    grade: string | null;
-    calculated_at: string;
-};
+export type UserScore = { user_id: string, total_score: number, operator_score: number, stage_score: number, roguelike_score: number, sandbox_score: number, medal_score: number, base_score: number, 
+/**
+ * The base grade's stationing-utilization component (actual vs the
+ * optimizer's best on the built rooms). None on rows graded before the
+ * split was stored.
+ */
+base_utilization: number | null, 
+/**
+ * The base grade's infrastructure-completeness component (built rooms vs
+ * the same rooms at max level). None on pre-split rows.
+ */
+base_infrastructure: number | null, skin_score: number, grade: string | null, calculated_at: string, };

@@ -2,25 +2,4 @@
 import type { ModuleType } from "./ModuleType";
 import type { RawModuleItemCost } from "./RawModuleItemCost";
 
-export type RawModule = {
-    uniEquipId: string;
-    uniEquipName: string;
-    uniEquipIcon: string;
-    uniEquipDesc: string;
-    typeIcon: string;
-    typeName1: string;
-    typeName2: string | null;
-    equipShiningColor: string;
-    showEvolvePhase: string;
-    unlockEvolvePhase: string;
-    charId: string;
-    tmplId: string | null;
-    showLevel: number;
-    unlockLevel: number;
-    unlockFavorPoint: number;
-    missionList: Array<string>;
-    itemCost: { [key in number]?: Array<RawModuleItemCost> } | null;
-    type: ModuleType;
-    uniEquipGetTime: number;
-    charEquipOrder: number;
-};
+export type RawModule = { uniEquipId: string, uniEquipName: string, uniEquipIcon: string, uniEquipDesc: string, typeIcon: string, typeName1: string, typeName2: string | null, equipShiningColor: string, showEvolvePhase: string, unlockEvolvePhase: string, charId: string, tmplId: string | null, showLevel: number, unlockLevel: number, unlockFavorPoint: number, missionList: Array<string>, itemCost: { [key in number]?: Array<RawModuleItemCost> } | null, type: ModuleType, uniEquipGetTime: number, charEquipOrder: number, };

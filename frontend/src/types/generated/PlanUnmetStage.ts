@@ -3,10 +3,8 @@
 /**
  * One stage clear a recipe is still waiting on.
  */
-export type PlanUnmetStage = {
-    stageId: string;
-    /**
-     * Display code (`S9-3`), or the stage id when the stage table lacks it.
-     */
-    code: string;
-};
+export type PlanUnmetStage = { stageId: string, 
+/**
+ * Display code (`S9-3`), or the stage id when the stage table lacks it.
+ */
+code: string, };

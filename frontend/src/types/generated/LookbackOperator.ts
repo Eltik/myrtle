@@ -4,18 +4,12 @@ import type { LookbackModule } from "./LookbackModule";
 /**
  * One operator's build in a snapshot.
  */
-export type LookbackOperator = {
-    operator_id: string;
-    elite: number;
-    level: number;
-    /**
-     * 0-based (0 = potential 1).
-     */
-    potential: number;
-    skill_level: number;
-    /**
-     * Mastery per skill, by skill index. Empty when no skill is mastered.
-     */
-    masteries: Array<number>;
-    modules: Array<LookbackModule>;
-};
+export type LookbackOperator = { operator_id: string, elite: number, level: number, 
+/**
+ * 0-based (0 = potential 1).
+ */
+potential: number, skill_level: number, 
+/**
+ * Mastery per skill, by skill index. Empty when no skill is mastered.
+ */
+masteries: Array<number>, modules: Array<LookbackModule>, };

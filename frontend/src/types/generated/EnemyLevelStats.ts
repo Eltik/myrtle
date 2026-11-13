@@ -2,4 +2,4 @@
 import type { EnemyAttributes } from "./EnemyAttributes";
 import type { EnemySkill } from "./EnemySkill";
 
-export type EnemyLevelStats = { level: number; attributes: EnemyAttributes; applyWay: string | null; motion: string | null; rangeRadius: number | null; lifePointReduce: number; skills: Array<EnemySkill> };
+export type EnemyLevelStats = { level: number, attributes: EnemyAttributes, applyWay: string | null, motion: string | null, rangeRadius: number | null, lifePointReduce: number, skills: Array<EnemySkill>, };

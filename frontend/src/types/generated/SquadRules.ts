@@ -6,11 +6,9 @@ import type { ThreatThresholds } from "./ThreatThresholds";
  * stage's enemies start to count as a threat, and each challenge stage's
  * normal stage.
  */
-export type SquadRules = {
-    threats: ThreatThresholds;
-    /**
-     * Challenge stage id -> its normal stage id, the inverse of
-     * `stage_table` `HardStagedId`.
-     */
-    normal_of: { [key in string]?: string };
-};
+export type SquadRules = { threats: ThreatThresholds, 
+/**
+ * Challenge stage id -> its normal stage id, the inverse of
+ * `stage_table` `HardStagedId`.
+ */
+normal_of: { [key in string]?: string }, };

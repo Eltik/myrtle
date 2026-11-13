@@ -4,4 +4,4 @@
  * The three damage numbers for one share of the targets. Same `snake_case` names
  * as the top level of [`DpsResult`], so one client type reads both.
  */
-export type DpsMetrics = { skill_dps: number; total_damage: number; average_dps: number };
+export type DpsMetrics = { skill_dps: number, total_damage: number, average_dps: number, };

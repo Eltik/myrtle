@@ -5,4 +5,4 @@ import type { SquadMember } from "./SquadMember";
  * `PUT /squads/{slot}`. `members` is at most twelve entries, `None` for an
  * empty seat; shorter lists are padded on read.
  */
-export type SavedSquadInput = { name: string; members: Array<SquadMember | null>; support: SquadMember | null; stage_id: string | null };
+export type SavedSquadInput = { name: string, members: Array<SquadMember | null>, support: SquadMember | null, stage_id: string | null, };

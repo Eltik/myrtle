@@ -2,4 +2,4 @@
 import type { FesTimeData } from "./FesTimeData";
 import type { PlaceType } from "./PlaceType";
 
-export type FesVoiceData = { showType: PlaceType; timeData: Array<FesTimeData> };
+export type FesVoiceData = { showType: PlaceType, timeData: Array<FesTimeData>, };

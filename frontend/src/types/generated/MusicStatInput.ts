@@ -3,9 +3,8 @@
 /**
  * `POST /music/stats/listen` and `POST /music/stats/download`.
  */
-export type MusicStatInput = {
-    /**
-     * `siren:<cid>` or `game:<track id>`, a track the catalogue lists.
-     */
-    trackId: string;
-};
+export type MusicStatInput = { 
+/**
+ * `siren:<cid>` or `game:<track id>`, a track the catalogue lists.
+ */
+trackId: string, };

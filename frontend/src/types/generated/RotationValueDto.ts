@@ -3,4 +3,4 @@
 /**
  * Daily figures of a rotation, averaged over its shifts.
  */
-export type RotationValueDto = { production_efficiency: number; lmd_per_day: number; exp_per_day: number; total_value: number };
+export type RotationValueDto = { production_efficiency: number, lmd_per_day: number, exp_per_day: number, total_value: number, };

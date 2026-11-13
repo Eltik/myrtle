@@ -6,13 +6,8 @@ import type { CutKind } from "./CutKind";
  * is negative for a cut; `ratio` is set instead when the source scales
  * (`SilverAsh`'s "all allied units' Redeployment Time -12%" is `ratio: -0.12`).
  */
-export type Cut = {
-    kind: CutKind;
-    name: string | null;
-    /**
-     * The giver's seat for `kind == Squad`.
-     */
-    from_seat: number | null;
-    amount: number;
-    ratio: number | null;
-};
+export type Cut = { kind: CutKind, name: string | null, 
+/**
+ * The giver's seat for `kind == Squad`.
+ */
+from_seat: number | null, amount: number, ratio: number | null, };

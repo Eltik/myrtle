@@ -4,9 +4,8 @@ import type { MusicTrackCounts } from "./MusicTrackCounts";
 /**
  * `GET /music/stats`: every track anyone has listened to or downloaded.
  */
-export type MusicStatsCatalog = {
-    /**
-     * Track id to its counts. A track absent here has none of either.
-     */
-    tracks: { [key in string]?: MusicTrackCounts };
-};
+export type MusicStatsCatalog = { 
+/**
+ * Track id to its counts. A track absent here has none of either.
+ */
+tracks: { [key in string]?: MusicTrackCounts }, };

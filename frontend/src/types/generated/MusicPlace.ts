@@ -6,16 +6,13 @@ import type { MusicRole } from "./MusicRole";
 /**
  * One place a track plays.
  */
-export type MusicPlace = {
-    kind: MusicPlaceKind;
-    /**
-     * The event, season, chapter, story group, zone, theme or background,
-     * game text. Absent where the place has no name of its own.
-     */
-    name?: string;
-    role?: MusicRole;
-    /**
-     * The stages or stories, in the game's order. Empty for a menu.
-     */
-    items: Array<MusicPlaceItem>;
-};
+export type MusicPlace = { kind: MusicPlaceKind, 
+/**
+ * The event, season, chapter, story group, zone, theme or background,
+ * game text. Absent where the place has no name of its own.
+ */
+name?: string, role?: MusicRole, 
+/**
+ * The stages or stories, in the game's order. Empty for a menu.
+ */
+items: Array<MusicPlaceItem>, };

@@ -4,28 +4,10 @@ import type { DisplaySkin } from "./DisplaySkin";
 import type { SkinChannel } from "./SkinChannel";
 import type { TokenSkinMapEntry } from "./TokenSkinMapEntry";
 
-export type Skin = {
-    skinId: string;
-    charId: string;
-    tokenSkinMap: Array<TokenSkinMapEntry> | null;
-    illustId: string;
-    dynIllustId: string | null;
-    avatarId: string;
-    portraitId: string;
-    dynPortraitId: string | null;
-    dynEntranceId: string | null;
-    buildingId: string | null;
-    battleSkin: BattleSkin;
-    isBuySkin: boolean;
-    tmplId: string | null;
-    voiceId: string | null;
-    spDynIllustId: string | null;
-    voiceType: string;
-    displaySkin: DisplaySkin;
-    /**
-     * `displaySkin.displayTagId` as a category, so a client can group skins
-     * without matching the server's wording. Set when the table loads, and on
-     * KR and JP from a reference server by skin id.
-     */
-    obtainChannel: SkinChannel;
-};
+export type Skin = { skinId: string, charId: string, tokenSkinMap: Array<TokenSkinMapEntry> | null, illustId: string, dynIllustId: string | null, avatarId: string, portraitId: string, dynPortraitId: string | null, dynEntranceId: string | null, buildingId: string | null, battleSkin: BattleSkin, isBuySkin: boolean, tmplId: string | null, voiceId: string | null, spDynIllustId: string | null, voiceType: string, displaySkin: DisplaySkin, 
+/**
+ * `displaySkin.displayTagId` as a category, so a client can group skins
+ * without matching the server's wording. Set when the table loads, and on
+ * KR and JP from a reference server by skin id.
+ */
+obtainChannel: SkinChannel, };

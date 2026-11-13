@@ -4,58 +4,23 @@ import type { ProfileLayout } from "./ProfileLayout";
 /**
  * `v_user_profile` view
  */
-export type UserProfile = {
-    id: string;
-    uid: string;
-    nickname: string | null;
-    nick_number: string | null;
-    level: number | null;
-    avatar_id: string | null;
-    secretary: string | null;
-    secretary_skin_id: string | null;
-    resume_id: string | null;
-    role: string;
-    server: string;
-    total_score: number | null;
-    grade: string | null;
-    public_profile: boolean | null;
-    store_gacha: boolean | null;
-    share_stats: boolean | null;
-    exp: number | null;
-    orundum: number | null;
-    lmd: number | null;
-    sanity: number | null;
-    max_sanity: number | null;
-    gacha_tickets: number | null;
-    ten_pull_tickets: number | null;
-    monthly_sub_end: number | null;
-    register_ts: number | null;
-    last_online_ts: number | null;
-    resume: string | null;
-    friend_num_limit: number | null;
-    cumulative_signin: number | null;
-    operator_count: number | null;
-    item_count: number | null;
-    skin_count: number | null;
-    non_default_skin_count: number | null;
-    updated_at: string;
-    /**
-     * Originite Prime on the account (paid and free pools summed) as of the last sync.
-     */
-    originite: number | null;
-    /**
-     * The owner's tab order and visibility, showcase, header art and header
-     * numbers, normalized on read. `None` when they never customized, which
-     * the client renders exactly as before layouts existed. A visitor
-     * receives [`UserProfile::hide_private`]'s projection, which lists only
-     * the visible tabs and nulls the header numbers the owner hid.
-     */
-    profile_layout: ProfileLayout | null;
-    /**
-     * Whether visitors may read the pull history (`user_settings.public_gacha`,
-     * opt-in): the profile shows its Pulls tab while this is true. Not a
-     * column of `v_user_profile`, so every row read from the view has `None`
-     * and only `/get-user` fills it, from a fresh read of the switch.
-     */
-    public_gacha?: boolean;
-};
+export type UserProfile = { id: string, uid: string, nickname: string | null, nick_number: string | null, level: number | null, avatar_id: string | null, secretary: string | null, secretary_skin_id: string | null, resume_id: string | null, role: string, server: string, total_score: number | null, grade: string | null, public_profile: boolean | null, store_gacha: boolean | null, share_stats: boolean | null, exp: number | null, orundum: number | null, lmd: number | null, sanity: number | null, max_sanity: number | null, gacha_tickets: number | null, ten_pull_tickets: number | null, monthly_sub_end: number | null, register_ts: number | null, last_online_ts: number | null, resume: string | null, friend_num_limit: number | null, cumulative_signin: number | null, operator_count: number | null, item_count: number | null, skin_count: number | null, non_default_skin_count: number | null, updated_at: string, 
+/**
+ * Originite Prime on the account (paid and free pools summed) as of the last sync.
+ */
+originite: number | null, 
+/**
+ * The owner's tab order and visibility, showcase, header art and header
+ * numbers, normalized on read. `None` when they never customized, which
+ * the client renders exactly as before layouts existed. A visitor
+ * receives [`UserProfile::hide_private`]'s projection, which lists only
+ * the visible tabs and nulls the header numbers the owner hid.
+ */
+profile_layout: ProfileLayout | null, 
+/**
+ * Whether visitors may read the pull history (`user_settings.public_gacha`,
+ * opt-in): the profile shows its Pulls tab while this is true. Not a
+ * column of `v_user_profile`, so every row read from the view has `None`
+ * and only `/get-user` fills it, from a fresh read of the switch.
+ */
+public_gacha?: boolean, };

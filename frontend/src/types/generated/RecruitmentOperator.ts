@@ -3,24 +3,18 @@ import type { OperatorPosition } from "./OperatorPosition";
 import type { OperatorProfession } from "./OperatorProfession";
 import type { RecruitmentPotentialRank } from "./RecruitmentPotentialRank";
 
-export type RecruitmentOperator = {
-    id: string;
-    name: string;
-    /**
-     * 1-6, converted from the `TIER_N` enum.
-     */
-    rarity: number;
-    profession: OperatorProfession;
-    position: OperatorPosition;
-    /**
-     * The game's own affix tags, unfiltered: the frontend adds the position,
-     * class and rarity tags and hides the ones the tool does not show.
-     */
-    tagList: Array<string>;
-    potentialRanks: Array<RecruitmentPotentialRank>;
-    /**
-     * Per talent, every candidate's `requiredPotentialRank`; the frontend
-     * names the talent a CUSTOM rank unlocks from these.
-     */
-    talentPotentialRanks: Array<Array<number>>;
-};
+export type RecruitmentOperator = { id: string, name: string, 
+/**
+ * 1-6, converted from the `TIER_N` enum.
+ */
+rarity: number, profession: OperatorProfession, position: OperatorPosition, 
+/**
+ * The game's own affix tags, unfiltered: the frontend adds the position,
+ * class and rarity tags and hides the ones the tool does not show.
+ */
+tagList: Array<string>, potentialRanks: Array<RecruitmentPotentialRank>, 
+/**
+ * Per talent, every candidate's `requiredPotentialRank`; the frontend
+ * names the talent a CUSTOM rank unlocks from these.
+ */
+talentPotentialRanks: Array<Array<number>>, };

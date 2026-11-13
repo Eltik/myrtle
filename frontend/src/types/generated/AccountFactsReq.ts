@@ -5,16 +5,15 @@
  * prompt). With no declaration the never-guess default stands: the dependent
  * skills price 0.
  */
-export type AccountFactsReq = {
-    /**
-     * Recruit slots purchased beyond the initial one (0-3). Prices the
-     * per-slot HR-speed riders (Lin's Meritocracy).
-     */
-    open_recruit_slots: number | null;
-    /**
-     * The class currently training in the Training Room ("Guard", "Sniper",
-     * ...). Lets trainer hints rank class-specific skills honestly instead
-     * of recommending a Guard trainer for a Sniper.
-     */
-    training_class: string | null;
-};
+export type AccountFactsReq = { 
+/**
+ * Recruit slots purchased beyond the initial one (0-3). Prices the
+ * per-slot HR-speed riders (Lin's Meritocracy).
+ */
+open_recruit_slots: number | null, 
+/**
+ * The class currently training in the Training Room ("Guard", "Sniper",
+ * ...). Lets trainer hints rank class-specific skills honestly instead
+ * of recommending a Guard trainer for a Sniper.
+ */
+training_class: string | null, };

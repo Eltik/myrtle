@@ -3,26 +3,25 @@ import type { CycleDto } from "./CycleDto";
 import type { RotationComparisonDto } from "./RotationComparisonDto";
 import type { ShiftRotationDto } from "./ShiftRotationDto";
 
-export type RotationResponse = {
-    /**
-     * `SHIFT_COUNT` shifts, each room labelled with the squad staffing it, plus
-     * the week-long morale simulation of the resulting rhythm.
-     */
-    rotation: ShiftRotationDto;
-    /**
-     * Shifts per day the rotation assumes, so the UI never hardcodes it.
-     */
-    shift_count: number;
-    /**
-     * The recommended rotation against the player's saved presets, both valued
-     * the way the grade values a base (each shift stationed and scored, averaged).
-     */
-    comparison: RotationComparisonDto;
-    /**
-     * A hand-swapped two-stationing cycle beside the rotation: the first
-     * stationing until a room runs dry, the second until the first has
-     * recovered. The game's Rotate cannot run it. `None` when it cannot be
-     * planned (no second crew).
-     */
-    cycle: CycleDto | null;
-};
+export type RotationResponse = { 
+/**
+ * `SHIFT_COUNT` shifts, each room labelled with the squad staffing it, plus
+ * the week-long morale simulation of the resulting rhythm.
+ */
+rotation: ShiftRotationDto, 
+/**
+ * Shifts per day the rotation assumes, so the UI never hardcodes it.
+ */
+shift_count: number, 
+/**
+ * The recommended rotation against the player's saved presets, both valued
+ * the way the grade values a base (each shift stationed and scored, averaged).
+ */
+comparison: RotationComparisonDto, 
+/**
+ * A hand-swapped two-stationing cycle beside the rotation: the first
+ * stationing until a room runs dry, the second until the first has
+ * recovered. The game's Rotate cannot run it. `None` when it cannot be
+ * planned (no second crew).
+ */
+cycle: CycleDto | null, };

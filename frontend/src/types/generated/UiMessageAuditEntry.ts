@@ -5,17 +5,9 @@ import type { UiMessageAuditActor } from "./UiMessageAuditActor";
  * Per-key/locale history. `old_value` is what makes revert a write rather
  * than a restore.
  */
-export type UiMessageAuditEntry = {
-    id: number;
-    message_key: string;
-    locale: string;
-    old_value: string | null;
-    new_value: string | null;
-    changed_by: string;
-    changed_at: string;
-    /**
-     * Who `changed_by` is, so the history can name its author without a user
-     * lookup per row.
-     */
-    actor: UiMessageAuditActor;
-};
+export type UiMessageAuditEntry = { id: number, message_key: string, locale: string, old_value: string | null, new_value: string | null, changed_by: string, changed_at: string, 
+/**
+ * Who `changed_by` is, so the history can name its author without a user
+ * lookup per row.
+ */
+actor: UiMessageAuditActor, };

@@ -8,18 +8,12 @@
  * the elevator shafts (1 unit wide where every room is 2) only make sense at
  * this scale.
  */
-export type CatalogSlotDto = {
-    slot_id: string;
-    /**
-     * Room category this slot accepts, matching `CatalogRoomDto::category`.
-     */
-    category: string;
-    storey_id: string;
-    offset_col: number;
-    /**
-     * Absolute (storey Y-offset applied), counted up from the bottom: B4 is 0.
-     */
-    offset_row: number;
-    size_col: number;
-    size_row: number;
-};
+export type CatalogSlotDto = { slot_id: string, 
+/**
+ * Room category this slot accepts, matching `CatalogRoomDto::category`.
+ */
+category: string, storey_id: string, offset_col: number, 
+/**
+ * Absolute (storey Y-offset applied), counted up from the bottom: B4 is 0.
+ */
+offset_row: number, size_col: number, size_row: number, };

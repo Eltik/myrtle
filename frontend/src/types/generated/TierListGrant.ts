@@ -4,19 +4,8 @@
  * One grant row with the names the admin panel shows beside it: the list,
  * the grantee and the granter. Read by `GET /admin/tier-lists/permissions`.
  */
-export type TierListGrant = {
-    tier_list_id: string;
-    slug: string;
-    title: string;
-    list_type: string;
-    user_id: string;
-    user_uid: string;
-    user_nickname: string | null;
-    permission: string;
-    /**
-     * `None` for grants written before the column existed or by the CLI.
-     */
-    granted_by: string | null;
-    granted_by_nickname: string | null;
-    granted_at: string;
-};
+export type TierListGrant = { tier_list_id: string, slug: string, title: string, list_type: string, user_id: string, user_uid: string, user_nickname: string | null, permission: string, 
+/**
+ * `None` for grants written before the column existed or by the CLI.
+ */
+granted_by: string | null, granted_by_nickname: string | null, granted_at: string, };

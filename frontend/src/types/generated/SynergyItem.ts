@@ -6,28 +6,16 @@ import type { SynergyNeed } from "./SynergyNeed";
 import type { SynergyReason } from "./SynergyReason";
 import type { SynergyTarget } from "./SynergyTarget";
 
-export type SynergyItem = {
-    seat: number;
-    char_id: string;
-    support: boolean;
-    name: string;
-    source: SourceRef;
-    cond: SynergyCond;
-    group: SynergyGroup;
-    /**
-     * The effect text with rich-text tags kept, for `GameText`.
-     */
-    text: string;
-    target: SynergyTarget;
-    /**
-     * Receiving seats. Empty with `to_all` when it reaches everyone else.
-     */
-    to: Array<number>;
-    to_all: boolean;
-    reason: SynergyReason | null;
-    need: SynergyNeed | null;
-    /**
-     * An SP-recovery aura: only the highest of its kind applies.
-     */
-    highest_only: boolean;
-};
+export type SynergyItem = { seat: number, char_id: string, support: boolean, name: string, source: SourceRef, cond: SynergyCond, group: SynergyGroup, 
+/**
+ * The effect text with rich-text tags kept, for `GameText`.
+ */
+text: string, target: SynergyTarget, 
+/**
+ * Receiving seats. Empty with `to_all` when it reaches everyone else.
+ */
+to: Array<number>, to_all: boolean, reason: SynergyReason | null, need: SynergyNeed | null, 
+/**
+ * An SP-recovery aura: only the highest of its kind applies.
+ */
+highest_only: boolean, };

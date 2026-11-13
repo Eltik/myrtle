@@ -7,4 +7,4 @@ import type { ArchiveGender } from "./ArchiveGender";
  * both count under JP's word); otherwise `value` is the file's own word
  * (`Unknown`, 断罪) and `key` is absent.
  */
-export type ArchiveGenderCount = { key?: ArchiveGender; value: string; count: number };
+export type ArchiveGenderCount = { key?: ArchiveGender, value: string, count: number, };

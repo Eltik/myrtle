@@ -3,4 +3,4 @@ import type { AttributeKeyFrame } from "./AttributeKeyFrame";
 import type { EvolveCost } from "./EvolveCost";
 import type { LevelUpCostItem } from "./LevelUpCostItem";
 
-export type Phase = { CharacterPrefabKey: string; RangeId: string | null; MaxLevel: number; AttributesKeyFrames: Array<AttributeKeyFrame>; EvolveCost: Array<EvolveCost> | null; LevelUpCost: Array<LevelUpCostItem> | null };
+export type Phase = { CharacterPrefabKey: string, RangeId: string | null, MaxLevel: number, AttributesKeyFrames: Array<AttributeKeyFrame>, EvolveCost: Array<EvolveCost> | null, LevelUpCost: Array<LevelUpCostItem> | null, };

@@ -3,35 +3,34 @@
 /**
  * One group, its readers, its finishers and its depth curve.
  */
-export type StoryGroupReaders = {
-    /**
-     * A `StoryGroup.id` (`main_8`, `act17side`) or, for an operator's
-     * records, that operator's `charId`.
-     */
-    id: string;
-    /**
-     * Accounts that have read at least one story in the group.
-     */
-    readers: number;
-    /**
-     * Accounts that read every GATED story in the group (the ones stage
-     * records can speak for). 0 on a group with no gated story; the tab shows
-     * that as unmeasurable, not as nobody. 494 EN stories have no gate (every
-     * operator record, 20 mini vignettes, `main_0`'s two Prologue guide
-     * entries) and 2,313 of 2,576 accounts are known only from stage records,
-     * so "every scripted story" made chapter 0 finished by 0 of 2,314 readers.
-     */
-    finished: number;
-    /**
-     * Readers per story in the group's story order (the "how far people get"
-     * curve): the same numbers as `stories[]`, pre-joined.
-     *
-     * Absent only on operator records. On all 766 groups the document was
-     * 153,950 bytes, over the 150 KB wire limit; dropping it from the 315
-     * record groups (367 one-story curves that add nothing over `readers`)
-     * gives 150,066, 3,534 bytes (about 70 stories) under. The real-data test
-     * asserts the ceiling; when it trips, drop the curve everywhere and join
-     * client-side.
-     */
-    depth?: Array<number>;
-};
+export type StoryGroupReaders = { 
+/**
+ * A `StoryGroup.id` (`main_8`, `act17side`) or, for an operator's
+ * records, that operator's `charId`.
+ */
+id: string, 
+/**
+ * Accounts that have read at least one story in the group.
+ */
+readers: number, 
+/**
+ * Accounts that read every GATED story in the group (the ones stage
+ * records can speak for). 0 on a group with no gated story; the tab shows
+ * that as unmeasurable, not as nobody. 494 EN stories have no gate (every
+ * operator record, 20 mini vignettes, `main_0`'s two Prologue guide
+ * entries) and 2,313 of 2,576 accounts are known only from stage records,
+ * so "every scripted story" made chapter 0 finished by 0 of 2,314 readers.
+ */
+finished: number, 
+/**
+ * Readers per story in the group's story order (the "how far people get"
+ * curve): the same numbers as `stories[]`, pre-joined.
+ *
+ * Absent only on operator records. On all 766 groups the document was
+ * 153,950 bytes, over the 150 KB wire limit; dropping it from the 315
+ * record groups (367 one-story curves that add nothing over `readers`)
+ * gives 150,066, 3,534 bytes (about 70 stories) under. The real-data test
+ * asserts the ceiling; when it trips, drop the curve everywhere and join
+ * client-side.
+ */
+depth?: Array<number>, };

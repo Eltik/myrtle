@@ -2,4 +2,4 @@
 import type { BrandGroup } from "./BrandGroup";
 import type { BrandKvImg } from "./BrandKvImg";
 
-export type Brand = { brandId: string; groupList: Array<BrandGroup>; kvImgIdList: Array<BrandKvImg>; brandName: string; brandCapitalName: string; description: string; publishTime: number; sortId: number };
+export type Brand = { brandId: string, groupList: Array<BrandGroup>, kvImgIdList: Array<BrandKvImg>, brandName: string, brandCapitalName: string, description: string, publishTime: number, sortId: number, };

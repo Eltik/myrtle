@@ -3,11 +3,8 @@
 /**
  * Enemies the roster leaves out, by reason.
  */
-export type RetentionExclusion = {
-    reason: string;
-    enemies: number;
-    /**
-     * Stage appearances those enemies had.
-     */
-    appearances: number;
-};
+export type RetentionExclusion = { reason: string, enemies: number, 
+/**
+ * Stage appearances those enemies had.
+ */
+appearances: number, };

@@ -884,7 +884,7 @@ async fn build_stage_improvements(
     let pools = PlayerPools::new(
         &game_data.stage_universe,
         &data.clears,
-        Some(&known),
+        Some(&*known),
         now,
         data.last_synced_ts,
     );

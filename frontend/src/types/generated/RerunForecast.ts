@@ -4,4 +4,4 @@ import type { Resolution } from "./Resolution";
 import type { SaleWindow } from "./SaleWindow";
 import type { SkinTile } from "./SkinTile";
 
-export type RerunForecast = { skinGroupId: string; skinGroupName: string; skinIds: Array<string>; skins: Array<SkinTile>; windows: Array<SaleWindow>; lastSeen: number; next: Resolution; basis: RerunBasis };
+export type RerunForecast = { skinGroupId: string, skinGroupName: string, skinIds: Array<string>, skins: Array<SkinTile>, windows: Array<SaleWindow>, lastSeen: number, next: Resolution, basis: RerunBasis, };

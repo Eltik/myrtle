@@ -11,20 +11,4 @@ import type { VoiceLang } from "./VoiceLang";
 import type { VoiceLangGroupType } from "./VoiceLangGroupType";
 import type { VoiceLangTypeInfo } from "./VoiceLangTypeInfo";
 
-export type Voices = {
-    charWords: { [key in string]?: Voice };
-    charExtraWords: { [key in string]?: CharExtraWord };
-    voiceLangDict: { [key in string]?: VoiceLang };
-    defaultLangType: string;
-    newTagList: Array<string>;
-    voiceLangTypeDict: { [key in LangType]?: VoiceLangTypeInfo };
-    voiceLangGroupTypeDict: { [key in string]?: VoiceLangGroupType };
-    charDefaultTypeDict: { [key in string]?: LangType };
-    startTimeWithTypeDict: { [key in LangType]?: Array<StartTimeWithType> };
-    displayGroupTypeList: Array<string>;
-    displayTypeList: Array<LangType>;
-    playVoiceRange: PlaceType;
-    fesVoiceData: { [key in PlaceType]?: FesVoiceData };
-    fesVoiceWeight: { [key in PlaceType]?: FesVoiceWeight };
-    extraVoiceConfigData: { [key in string]?: ExtraVoiceConfigData };
-};
+export type Voices = { charWords: { [key in string]?: Voice }, charExtraWords: { [key in string]?: CharExtraWord }, voiceLangDict: { [key in string]?: VoiceLang }, defaultLangType: string, newTagList: Array<string>, voiceLangTypeDict: { [key in LangType]?: VoiceLangTypeInfo }, voiceLangGroupTypeDict: { [key in string]?: VoiceLangGroupType }, charDefaultTypeDict: { [key in string]?: LangType }, startTimeWithTypeDict: { [key in LangType]?: Array<StartTimeWithType> }, displayGroupTypeList: Array<string>, displayTypeList: Array<LangType>, playVoiceRange: PlaceType, fesVoiceData: { [key in PlaceType]?: FesVoiceData }, fesVoiceWeight: { [key in PlaceType]?: FesVoiceWeight }, extraVoiceConfigData: { [key in string]?: ExtraVoiceConfigData }, };

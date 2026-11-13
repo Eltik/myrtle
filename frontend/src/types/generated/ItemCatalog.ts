@@ -5,14 +5,13 @@ import type { ItemHoldingSummary } from "./ItemHoldingSummary";
  * The item picker's data: every held item, and the population the holder
  * counts are cut from, so a row can say what share of players hold it.
  */
-export type ItemCatalog = {
-    /**
-     * Visible players under the same gate and server filter as `holders`,
-     * so `holders / population` is a share of the same people.
-     */
-    population: number;
-    /**
-     * Ordered by holders, most first.
-     */
-    items: Array<ItemHoldingSummary>;
-};
+export type ItemCatalog = { 
+/**
+ * Visible players under the same gate and server filter as `holders`,
+ * so `holders / population` is a share of the same people.
+ */
+population: number, 
+/**
+ * Ordered by holders, most first.
+ */
+items: Array<ItemHoldingSummary>, };

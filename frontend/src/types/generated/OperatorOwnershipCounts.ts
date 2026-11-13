@@ -4,15 +4,13 @@
  * One operator's community counts. A struct, not a bare owner tally, so the
  * next statistic is a field here rather than another map in the response.
  */
-export type OperatorOwnershipCounts = {
-    owners: number;
-    /**
-     * Owners who took this operator to E2.
-     *
-     * Zero is NOT a community signal for the 36 operators that cannot reach
-     * E2 at all: one to three stars carry fewer than three phases, so their
-     * rate is structurally zero. Clients must suppress the figure for those
-     * rather than rank them last.
-     */
-    e2Owners: number;
-};
+export type OperatorOwnershipCounts = { owners: number, 
+/**
+ * Owners who took this operator to E2.
+ *
+ * Zero is NOT a community signal for the 36 operators that cannot reach
+ * E2 at all: one to three stars carry fewer than three phases, so their
+ * rate is structurally zero. Clients must suppress the figure for those
+ * rather than rank them last.
+ */
+e2Owners: number, };

@@ -12,21 +12,14 @@ import type { PlateRect } from "./PlateRect";
  * flagged `isWholeBody`). `uses` counts how often the scripts PUT this
  * expression up (a slot, a cut-in, a window).
  */
-export type StorySpriteVariant = {
-    key: string;
-    wholeBody: boolean;
-    uses: number;
-    bodyUrl: string;
-    faceUrl?: string;
-    facePos?: FacePos;
-    /**
-     * The `body_url` texture's own size. `face_pos` divided by THIS is the
-     * patch's fraction of the body plate.
-     */
-    bodySize?: BodySize;
-    /**
-     * The canvas rect the whole plate is drawn into, from the character's own
-     * prefab root. It is the bundle's, so every sprite of a folder shares it.
-     */
-    plate?: PlateRect;
-};
+export type StorySpriteVariant = { key: string, wholeBody: boolean, uses: number, bodyUrl: string, faceUrl?: string, facePos?: FacePos, 
+/**
+ * The `body_url` texture's own size. `face_pos` divided by THIS is the
+ * patch's fraction of the body plate.
+ */
+bodySize?: BodySize, 
+/**
+ * The canvas rect the whole plate is drawn into, from the character's own
+ * prefab root. It is the bundle's, so every sprite of a folder shares it.
+ */
+plate?: PlateRect, };

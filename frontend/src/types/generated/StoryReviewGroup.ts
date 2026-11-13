@@ -4,21 +4,16 @@ import type { StoryUnlockData } from "./StoryUnlockData";
 /**
  * One Archives group: a main chapter, an event, or an operator record set.
  */
-export type StoryReviewGroup = {
-    id: string;
-    name: string;
-    /**
-     * `MAINLINE`, `ACTIVITY`, `MINI_ACTIVITY` or `NONE`.
-     */
-    entryType: string;
-    /**
-     * `MAIN_STORY`, `ACTIVITY_STORY`, `MINI_STORY` or `NONE`.
-     */
-    actType: string;
-    /**
-     * `storyEntryPic_{id}`, the Archives cover; 70 of 451 groups carry one on EN.
-     */
-    storyEntryPicId: string | null;
-    startTime: number;
-    infoUnlockDatas: Array<StoryUnlockData>;
-};
+export type StoryReviewGroup = { id: string, name: string, 
+/**
+ * `MAINLINE`, `ACTIVITY`, `MINI_ACTIVITY` or `NONE`.
+ */
+entryType: string, 
+/**
+ * `MAIN_STORY`, `ACTIVITY_STORY`, `MINI_STORY` or `NONE`.
+ */
+actType: string, 
+/**
+ * `storyEntryPic_{id}`, the Archives cover; 70 of 451 groups carry one on EN.
+ */
+storyEntryPicId: string | null, startTime: number, infoUnlockDatas: Array<StoryUnlockData>, };

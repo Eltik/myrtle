@@ -5,4 +5,4 @@ import type { MusicTopTrack } from "./MusicTopTrack";
 /**
  * `GET /music/stats/top-tracks`.
  */
-export type MusicTopTracks = { window: MusicStatWindow; entries: Array<MusicTopTrack> };
+export type MusicTopTracks = { window: MusicStatWindow, entries: Array<MusicTopTrack>, };

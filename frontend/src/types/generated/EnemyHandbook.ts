@@ -3,4 +3,4 @@ import type { Enemy } from "./Enemy";
 import type { EnemyInfoList } from "./EnemyInfoList";
 import type { RaceData } from "./RaceData";
 
-export type EnemyHandbook = { levelInfoList: Array<EnemyInfoList>; enemyData: { [key in string]?: Enemy }; raceData: { [key in string]?: RaceData } };
+export type EnemyHandbook = { levelInfoList: Array<EnemyInfoList>, enemyData: { [key in string]?: Enemy }, raceData: { [key in string]?: RaceData }, };

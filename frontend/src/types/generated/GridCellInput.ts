@@ -5,4 +5,4 @@ import type { EntityKind } from "./EntityKind";
  * One cell as the editor sends it. `entity_kind` and `entity_id` are set
  * together or not at all.
  */
-export type GridCellInput = { label: string; entity_kind: EntityKind | null; entity_id: string | null };
+export type GridCellInput = { label: string, entity_kind: EntityKind | null, entity_id: string | null, };

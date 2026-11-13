@@ -3,23 +3,18 @@
 /**
  * One story a sprite appears in, with the lines attributed to it there.
  */
-export type StorySpriteStory = {
-    id: string;
-    name: string;
-    /**
-     * The story's `avgTag` ("Before Operation", "After Operation"), which
-     * tells apart the two halves of one stage that share a name.
-     */
-    tag?: string;
-    groupId: string;
-    groupName: string;
-    /**
-     * Weighted named lines attributed to the sprite in this story; 0 when
-     * it is on stage but never the speaker.
-     */
-    lines: number;
-    /**
-     * How often the story puts the sprite up.
-     */
-    uses: number;
-};
+export type StorySpriteStory = { id: string, name: string, 
+/**
+ * The story's `avgTag` ("Before Operation", "After Operation"), which
+ * tells apart the two halves of one stage that share a name.
+ */
+tag?: string, groupId: string, groupName: string, 
+/**
+ * Weighted named lines attributed to the sprite in this story; 0 when
+ * it is on stage but never the speaker.
+ */
+lines: number, 
+/**
+ * How often the story puts the sprite up.
+ */
+uses: number, };

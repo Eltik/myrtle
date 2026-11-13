@@ -5,4 +5,4 @@ import type { ArchiveShownMember } from "./ArchiveShownMember";
 /**
  * A nation, and the operators whose card shows a group or team inside it.
  */
-export type ArchiveNationBehind = { nation: ArchiveFactionRef; members: Array<ArchiveShownMember> };
+export type ArchiveNationBehind = { nation: ArchiveFactionRef, members: Array<ArchiveShownMember>, };

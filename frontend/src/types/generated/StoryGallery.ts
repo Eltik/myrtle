@@ -5,4 +5,4 @@ import type { GalleryGroup } from "./GalleryGroup";
  * `GET /story/gallery`: every Archives gallery picture, by the archive that
  * lists it.
  */
-export type StoryGallery = { groups: Array<GalleryGroup> };
+export type StoryGallery = { groups: Array<GalleryGroup>, };

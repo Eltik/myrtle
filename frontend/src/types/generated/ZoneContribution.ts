@@ -3,20 +3,16 @@ import type { Stacking } from "./Stacking";
 import type { SupporterZone } from "./SupporterZone";
 import type { Transform } from "./Transform";
 
-export type ZoneContribution = {
-    zone: SupporterZone;
-    stacking: Stacking;
-    /**
-     * The blackboard key the value is read from.
-     */
-    key: string;
-    transform: Transform;
-    /**
-     * The blackboard value at the resolved investment.
-     */
-    raw: number;
-    /**
-     * What goes into the zone (fractions for percentages, flat for flat).
-     */
-    value: number;
-};
+export type ZoneContribution = { zone: SupporterZone, stacking: Stacking, 
+/**
+ * The blackboard key the value is read from.
+ */
+key: string, transform: Transform, 
+/**
+ * The blackboard value at the resolved investment.
+ */
+raw: number, 
+/**
+ * What goes into the zone (fractions for percentages, flat for flat).
+ */
+value: number, };

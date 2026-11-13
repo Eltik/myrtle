@@ -9,4 +9,4 @@
  * 404s. `title` is the `Musics` row's `Name`, which 101 of the 208 EN rows
  * write as a single space, so it is trimmed and dropped when empty.
  */
-export type StoryMusic = { title?: string; introUrl?: string; loopUrl: string };
+export type StoryMusic = { title?: string, introUrl?: string, loopUrl: string, };

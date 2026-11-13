@@ -4,4 +4,4 @@ import type { ShowcaseBlock } from "./ShowcaseBlock";
 /**
  * `profile_layout.showcase`: the owner's blocks, in display order.
  */
-export type ProfileShowcase = { blocks: Array<ShowcaseBlock> };
+export type ProfileShowcase = { blocks: Array<ShowcaseBlock>, };

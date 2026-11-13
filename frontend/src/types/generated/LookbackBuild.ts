@@ -5,11 +5,8 @@ import type { LookbackSummary } from "./LookbackSummary";
 /**
  * A whole snapshot: the counts and every operator's build.
  */
-export type LookbackBuild = {
-    /**
-     * When the build was read: the snapshot's sync, or now for the live build.
-     */
-    taken_at: string;
-    summary: LookbackSummary;
-    operators: Array<LookbackOperator>;
-};
+export type LookbackBuild = { 
+/**
+ * When the build was read: the snapshot's sync, or now for the live build.
+ */
+taken_at: string, summary: LookbackSummary, operators: Array<LookbackOperator>, };

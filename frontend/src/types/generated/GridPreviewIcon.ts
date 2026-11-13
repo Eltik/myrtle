@@ -6,11 +6,8 @@ import type { EntityKind } from "./EntityKind";
  * decides how the art sits in the cell), and the server to fetch it from
  * when it is not the reader's, with [`GridCell::entity_server`]'s meaning.
  */
-export type GridPreviewIcon = {
-    kind: EntityKind;
-    /**
-     * Same form as [`EntitySummary::icon`].
-     */
-    icon: string;
-    server: string | null;
-};
+export type GridPreviewIcon = { kind: EntityKind, 
+/**
+ * Same form as [`EntitySummary::icon`].
+ */
+icon: string, server: string | null, };

@@ -7,28 +7,26 @@ import type { MoraleTimelineDto } from "./MoraleTimelineDto";
  * The rotation run through a time-stepped morale simulation (game-true drain
  * and dorm-recovery rates): does the plan survive its own rhythm.
  */
-export type SustainabilityDto = {
-    /**
-     * "`holds_up`" - nobody runs dry; "depletes" - someone's morale hits zero mid-shift.
-     */
-    verdict: string;
-    horizon_hours: number;
-    /**
-     * Operators whose morale empties while working, with when and where.
-     */
-    depleted: Array<DepletedOperatorDto>;
-    /**
-     * Peak number of resting operators the dorms could not hold at once.
-     */
-    dorm_overflow: number;
-    /**
-     * Every simulated operator's morale over the week, sampled at 12h block
-     * boundaries - the "morale over time" chart. Most-at-risk first.
-     */
-    timeline: Array<MoraleTimelineDto>;
-    /**
-     * Per-facility simulated totals over the horizon, with lost hours (dark
-     * shifts + post-depletion time). Absent on older payloads.
-     */
-    facilities?: Array<FacilityOutputDto>;
-};
+export type SustainabilityDto = { 
+/**
+ * "`holds_up`" - nobody runs dry; "depletes" - someone's morale hits zero mid-shift.
+ */
+verdict: string, horizon_hours: number, 
+/**
+ * Operators whose morale empties while working, with when and where.
+ */
+depleted: Array<DepletedOperatorDto>, 
+/**
+ * Peak number of resting operators the dorms could not hold at once.
+ */
+dorm_overflow: number, 
+/**
+ * Every simulated operator's morale over the week, sampled at 12h block
+ * boundaries - the "morale over time" chart. Most-at-risk first.
+ */
+timeline: Array<MoraleTimelineDto>, 
+/**
+ * Per-facility simulated totals over the horizon, with lost hours (dark
+ * shifts + post-depletion time). Absent on older payloads.
+ */
+facilities?: Array<FacilityOutputDto>, };

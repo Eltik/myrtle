@@ -3,4 +3,4 @@
 /**
  * One slot's saved rotation: the crew the player has queued for each shift.
  */
-export type SlotPresetsDto = { slot_id: string; shifts: Array<Array<string>> };
+export type SlotPresetsDto = { slot_id: string, shifts: Array<Array<string>>, };

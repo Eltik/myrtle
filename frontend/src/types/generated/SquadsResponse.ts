@@ -5,15 +5,12 @@ import type { SavedSquad } from "./SavedSquad";
 /**
  * `GET /squads`.
  */
-export type SquadsResponse = {
-    /**
-     * Exactly `slot_limit` entries, `None` for an empty slot.
-     */
-    saved: Array<SavedSquad | null>;
-    /**
-     * Empty until the account syncs after this feature shipped.
-     */
-    synced: Array<GameSquad>;
-    slot_limit: number;
-    squad_size: number;
-};
+export type SquadsResponse = { 
+/**
+ * Exactly `slot_limit` entries, `None` for an empty slot.
+ */
+saved: Array<SavedSquad | null>, 
+/**
+ * Empty until the account syncs after this feature shipped.
+ */
+synced: Array<GameSquad>, slot_limit: number, squad_size: number, };

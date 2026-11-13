@@ -5,26 +5,25 @@
  * `((v - flat - max(steal)) * (1 - percent) - ignoreFlat) * (1 - ignorePercent)`,
  * each step floored at 0.
  */
-export type StatReduction = {
-    /**
-     * Flat reduction, additive. Legacy `shred.defFlat` / `shred.resFlat` add here.
-     */
-    flat?: number;
-    /**
-     * Percentage reduction as a fraction, additive. Legacy `shred.def` /
-     * `shred.res` (whole percent) add here.
-     */
-    percent?: number;
-    /**
-     * Flat ignore (attacker side), additive.
-     */
-    ignoreFlat?: number;
-    /**
-     * Percentage ignore (attacker side) as a fraction.
-     */
-    ignorePercent?: number;
-    /**
-     * Steal: a flat reduction whose sources do not stack, MAX across sources.
-     */
-    steal: Array<number>;
-};
+export type StatReduction = { 
+/**
+ * Flat reduction, additive. Legacy `shred.defFlat` / `shred.resFlat` add here.
+ */
+flat?: number, 
+/**
+ * Percentage reduction as a fraction, additive. Legacy `shred.def` /
+ * `shred.res` (whole percent) add here.
+ */
+percent?: number, 
+/**
+ * Flat ignore (attacker side), additive.
+ */
+ignoreFlat?: number, 
+/**
+ * Percentage ignore (attacker side) as a fraction.
+ */
+ignorePercent?: number, 
+/**
+ * Steal: a flat reduction whose sources do not stack, MAX across sources.
+ */
+steal: Array<number>, };

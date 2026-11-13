@@ -4,10 +4,8 @@ import type { AssignedOperator } from "./AssignedOperator";
 /**
  * One trainer suggestion for the declared training class.
  */
-export type TrainerHintDto = {
-    operator: AssignedOperator;
-    /**
-     * Specialization training speed % their best matching skill provides.
-     */
-    value_pct: number;
-};
+export type TrainerHintDto = { operator: AssignedOperator, 
+/**
+ * Specialization training speed % their best matching skill provides.
+ */
+value_pct: number, };

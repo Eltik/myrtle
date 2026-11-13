@@ -3,4 +3,4 @@ import type { MasteryLevel } from "./MasteryLevel";
 import type { SkillCostItem } from "./SkillCostItem";
 import type { UnlockCondition } from "./UnlockCondition";
 
-export type SkillCost = { unlockCondition: UnlockCondition; lvlUpTime: number; skillCost: Array<SkillCostItem>; level: MasteryLevel };
+export type SkillCost = { unlockCondition: UnlockCondition, lvlUpTime: number, skillCost: Array<SkillCostItem>, level: MasteryLevel, };

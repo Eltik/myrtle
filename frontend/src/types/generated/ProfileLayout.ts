@@ -18,29 +18,28 @@ import type { ProfileTab } from "./ProfileTab";
  * What a visitor receives is [`ProfileLayout::visible_only`]: a private tab is
  * absent from it, not present with `visible: false`.
  */
-export type ProfileLayout = {
-    /**
-     * Display order, first tab first.
-     */
-    tabs: Array<ProfileTab>;
-    /**
-     * The Showcase tab's blocks. `None` when the stored layout has no
-     * `showcase` key: a save that leaves the key out keeps the stored
-     * showcase (see `queries::users::update_settings`), so a client that only
-     * knows about tabs cannot wipe it.
-     */
-    showcase?: ProfileShowcase;
-    /**
-     * The art behind the profile header. `None` when the stored layout has
-     * none, which renders the header exactly as before backgrounds existed.
-     * Not gated by any tab: the header is the profile itself.
-     */
-    background?: ProfileBackground;
-    /**
-     * Which header numbers a visitor receives and which fill the stat strip.
-     * `None` when the stored layout has none, which renders the header and
-     * strip exactly as before this existed, every number shown. Like the
-     * background, not gated by any tab.
-     */
-    header?: ProfileHeader;
-};
+export type ProfileLayout = { 
+/**
+ * Display order, first tab first.
+ */
+tabs: Array<ProfileTab>, 
+/**
+ * The Showcase tab's blocks. `None` when the stored layout has no
+ * `showcase` key: a save that leaves the key out keeps the stored
+ * showcase (see `queries::users::update_settings`), so a client that only
+ * knows about tabs cannot wipe it.
+ */
+showcase?: ProfileShowcase, 
+/**
+ * The art behind the profile header. `None` when the stored layout has
+ * none, which renders the header exactly as before backgrounds existed.
+ * Not gated by any tab: the header is the profile itself.
+ */
+background?: ProfileBackground, 
+/**
+ * Which header numbers a visitor receives and which fill the stat strip.
+ * `None` when the stored layout has none, which renders the header and
+ * strip exactly as before this existed, every number shown. Like the
+ * background, not gated by any tab.
+ */
+header?: ProfileHeader, };

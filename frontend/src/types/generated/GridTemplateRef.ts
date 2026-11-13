@@ -3,4 +3,4 @@
 /**
  * The grid a fork was made from.
  */
-export type GridTemplateRef = { slug: string; title: string };
+export type GridTemplateRef = { slug: string, title: string, };

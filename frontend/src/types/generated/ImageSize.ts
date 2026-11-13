@@ -8,4 +8,4 @@
  * 100 is a FALLBACK, not a read: the size came from the PNG header because no
  * `sprites.json` covered that name.
  */
-export type ImageSize = { w: number; h: number; ppu: number; ppuAssumed?: boolean };
+export type ImageSize = { w: number, h: number, ppu: number, ppuAssumed?: boolean, };

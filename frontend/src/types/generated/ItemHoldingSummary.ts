@@ -5,13 +5,9 @@
  * how much of it they hold between them. Drives the item picker so it
  * never offers an item nobody holds.
  */
-export type ItemHoldingSummary = {
-    item_id: string;
-    holders: number;
-    top: number;
-    /**
-     * Every visible holding of the item summed: how much of it exists
-     * across the ranked population.
-     */
-    total_quantity: number;
-};
+export type ItemHoldingSummary = { item_id: string, holders: number, top: number, 
+/**
+ * Every visible holding of the item summed: how much of it exists
+ * across the ranked population.
+ */
+total_quantity: number, };

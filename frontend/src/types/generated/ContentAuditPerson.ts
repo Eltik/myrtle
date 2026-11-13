@@ -4,4 +4,4 @@
  * An account a row names besides its actor. `uid` and `nickname` are `None`
  * once the account is gone.
  */
-export type ContentAuditPerson = { user_id: string; uid: string | null; nickname: string | null };
+export type ContentAuditPerson = { user_id: string, uid: string | null, nickname: string | null, };

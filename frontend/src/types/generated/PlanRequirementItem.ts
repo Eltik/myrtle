@@ -2,42 +2,27 @@
 import type { PlanRecipe } from "./PlanRecipe";
 import type { PlanUnmetStage } from "./PlanUnmetStage";
 
-export type PlanRequirementItem = {
-    id: string;
-    name: string;
-    iconId: string | null;
-    image: string | null;
-    itemType: string;
-    rarity: number;
-    sortGroup: number;
-    sortSubrank: number;
-    requiredCount: number;
-    inventoryCount: number;
-    craftableCount: number;
-    missingCount: number;
-    canCraft: boolean;
-    craftReason: string;
-    /**
-     * True when the item has a workshop recipe the player cannot use yet
-     * because its room or stage gates are unmet. False when it is craftable
-     * or has no usable recipe at all.
-     */
-    craftBlocked: boolean;
-    /**
-     * The crafting recipe, when this item has one.
-     *
-     * A cycle: a recipe's costs are `PlanRequirementItem`s, which may be
-     * craftable. ts-rs copes, but utoipa inlines nested schemas and would
-     * recurse until the stack runs out, so the cycle is cut here as a `$ref`.
-     * Without the attribute the `OpenAPI` document cannot be built and the
-     * server dies at startup, not in a test.
-     */
-    recipe: PlanRecipe | null;
-    /**
-     * Stage clears the item's workshop recipe waits on that the player has
-     * not made, in recipe order. The same gates `craft_reason` names as
-     * `Stage <code>`, structured so a client can link each stage. Empty when
-     * the item has no recipe or its stage gates are all met.
-     */
-    unmetStages: Array<PlanUnmetStage>;
-};
+export type PlanRequirementItem = { id: string, name: string, iconId: string | null, image: string | null, itemType: string, rarity: number, sortGroup: number, sortSubrank: number, requiredCount: number, inventoryCount: number, craftableCount: number, missingCount: number, canCraft: boolean, craftReason: string, 
+/**
+ * True when the item has a workshop recipe the player cannot use yet
+ * because its room or stage gates are unmet. False when it is craftable
+ * or has no usable recipe at all.
+ */
+craftBlocked: boolean, 
+/**
+ * The crafting recipe, when this item has one.
+ *
+ * A cycle: a recipe's costs are `PlanRequirementItem`s, which may be
+ * craftable. ts-rs copes, but utoipa inlines nested schemas and would
+ * recurse until the stack runs out, so the cycle is cut here as a `$ref`.
+ * Without the attribute the `OpenAPI` document cannot be built and the
+ * server dies at startup, not in a test.
+ */
+recipe: PlanRecipe | null, 
+/**
+ * Stage clears the item's workshop recipe waits on that the player has
+ * not made, in recipe order. The same gates `craft_reason` names as
+ * `Stage <code>`, structured so a client can link each stage. Empty when
+ * the item has no recipe or its stage gates are all met.
+ */
+unmetStages: Array<PlanUnmetStage>, };

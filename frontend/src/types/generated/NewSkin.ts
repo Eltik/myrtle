@@ -4,21 +4,4 @@ import type { EventAnchor } from "./EventAnchor";
 import type { Resolution } from "./Resolution";
 import type { SkinPrice } from "./SkinPrice";
 
-export type NewSkin = {
-    skinId: string;
-    charId: string;
-    skinName: string;
-    skinGroupId: string;
-    skinGroupName: string;
-    isBuySkin: boolean;
-    obtainApproach: string | null;
-    cnGetTime: number;
-    skinNameAuto: AutoName | null;
-    skinGroupNameAuto: AutoName | null;
-    charName: AutoName | null;
-    portraitPath: string | null;
-    colors: Array<string>;
-    price: SkinPrice;
-    anchor: EventAnchor | null;
-    resolution: Resolution;
-};
+export type NewSkin = { skinId: string, charId: string, skinName: string, skinGroupId: string, skinGroupName: string, isBuySkin: boolean, obtainApproach: string | null, cnGetTime: number, skinNameAuto: AutoName | null, skinGroupNameAuto: AutoName | null, charName: AutoName | null, portraitPath: string | null, colors: Array<string>, price: SkinPrice, anchor: EventAnchor | null, resolution: Resolution, };

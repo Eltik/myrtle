@@ -4,47 +4,45 @@ import type { ClaimDto } from "./ClaimDto";
 import type { DormsDto } from "./DormsDto";
 import type { DronesDto } from "./DronesDto";
 import type { PowerDto } from "./PowerDto";
-import type { SustainabilityDto } from "./SustainabilityDto";
 import type { SustainEntryDto } from "./SustainEntryDto";
+import type { SustainabilityDto } from "./SustainabilityDto";
 import type { TrainerHintDto } from "./TrainerHintDto";
 
-export type EvaluateResponse = {
-    assignment: BaseAssignmentDto;
-    /**
-     * Facility power: generated, consumed, and the net the base runs at.
-     */
-    power: PowerDto;
-    /**
-     * How long each stationed operator lasts before morale runs out.
-     */
-    sustain: Array<SustainEntryDto>;
-    /**
-     * What the dormitory wing is worth to this layout.
-     */
-    dorms: DormsDto;
-    /**
-     * Check-in economics: time until the first room stalls, and what each
-     * claim cadence loses. `None` when nothing produces.
-     */
-    claim?: ClaimDto | null;
-    /**
-     * The drafted crews simulated with no rotation ("if you never swap").
-     * `None` when nothing is staffed. Seeded with PROJECTED live morale, so
-     * its clock starts now, not at a full bar.
-     */
-    unrotated?: SustainabilityDto | null;
-    /**
-     * Hours since the sync's newest morale write, i.e. how stale the current
-     * bars are. `None` when the sync carries no morale.
-     */
-    morale_synced_hours_ago?: number | null;
-    /**
-     * Top trainers for the declared `training_class` fact (empty otherwise,
-     * or when the layout has no Training Room).
-     */
-    trainer_hints?: Array<TrainerHintDto>;
-    /**
-     * Drone buffer, projected to now. `None` when the sync carries none.
-     */
-    drones?: DronesDto | null;
-};
+export type EvaluateResponse = { assignment: BaseAssignmentDto, 
+/**
+ * Facility power: generated, consumed, and the net the base runs at.
+ */
+power: PowerDto, 
+/**
+ * How long each stationed operator lasts before morale runs out.
+ */
+sustain: Array<SustainEntryDto>, 
+/**
+ * What the dormitory wing is worth to this layout.
+ */
+dorms: DormsDto, 
+/**
+ * Check-in economics: time until the first room stalls, and what each
+ * claim cadence loses. `None` when nothing produces.
+ */
+claim?: ClaimDto | null, 
+/**
+ * The drafted crews simulated with no rotation ("if you never swap").
+ * `None` when nothing is staffed. Seeded with PROJECTED live morale, so
+ * its clock starts now, not at a full bar.
+ */
+unrotated?: SustainabilityDto | null, 
+/**
+ * Hours since the sync's newest morale write, i.e. how stale the current
+ * bars are. `None` when the sync carries no morale.
+ */
+morale_synced_hours_ago?: number | null, 
+/**
+ * Top trainers for the declared `training_class` fact (empty otherwise,
+ * or when the layout has no Training Room).
+ */
+trainer_hints?: Array<TrainerHintDto>, 
+/**
+ * Drone buffer, projected to now. `None` when the sync carries none.
+ */
+drones?: DronesDto | null, };

@@ -5,24 +5,4 @@ import type { EnemyLevel } from "./EnemyLevel";
 import type { EnemyStats } from "./EnemyStats";
 import type { JsonValue } from "./serde_json/JsonValue";
 
-export type Enemy = {
-    enemyId: string;
-    enemyIndex: string;
-    enemyTags: Array<string> | null;
-    sortId: number;
-    name: string;
-    enemyLevel: EnemyLevel;
-    description: string;
-    attackType: string | null;
-    ability: string | null;
-    isInvalidKilled: boolean;
-    overrideKillCntInfos: JsonValue | null;
-    hideInHandbook: boolean;
-    hideInStage: boolean;
-    abilityList: Array<AbilityInfo>;
-    linkEnemies: Array<string>;
-    damageType: Array<DamageType>;
-    invisibleDetail: boolean;
-    stats: EnemyStats | null;
-    portrait: string | null;
-};
+export type Enemy = { enemyId: string, enemyIndex: string, enemyTags: Array<string> | null, sortId: number, name: string, enemyLevel: EnemyLevel, description: string, attackType: string | null, ability: string | null, isInvalidKilled: boolean, overrideKillCntInfos: JsonValue | null, hideInHandbook: boolean, hideInStage: boolean, abilityList: Array<AbilityInfo>, linkEnemies: Array<string>, damageType: Array<DamageType>, invisibleDetail: boolean, stats: EnemyStats | null, portrait: string | null, };

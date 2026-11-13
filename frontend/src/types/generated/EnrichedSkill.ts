@@ -3,14 +3,8 @@ import type { LevelUpCostCond } from "./LevelUpCostCond";
 import type { SkillStatic } from "./SkillStatic";
 import type { UnlockCondition } from "./UnlockCondition";
 
-export type EnrichedSkill = {
-    skillId: string;
-    overridePrefabKey: string | null;
-    overrideTokenKey: string | null;
-    levelUpCostCond: Array<LevelUpCostCond>;
-    /**
-     * `Skills[i].UnlockCond`: the promotion and level the skill unlocks at.
-     */
-    unlockCond: UnlockCondition | null;
-    static: SkillStatic | null;
-};
+export type EnrichedSkill = { skillId: string, overridePrefabKey: string | null, overrideTokenKey: string | null, levelUpCostCond: Array<LevelUpCostCond>, 
+/**
+ * `Skills[i].UnlockCond`: the promotion and level the skill unlocks at.
+ */
+unlockCond: UnlockCondition | null, static: SkillStatic | null, };

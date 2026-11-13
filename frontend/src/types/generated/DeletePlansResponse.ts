@@ -3,9 +3,8 @@
 /**
  * Result of a bulk plan delete.
  */
-export type DeletePlansResponse = {
-    /**
-     * Plans removed. Ids the caller had no plan for are not counted.
-     */
-    deleted: number;
-};
+export type DeletePlansResponse = { 
+/**
+ * Plans removed. Ids the caller had no plan for are not counted.
+ */
+deleted: number, };

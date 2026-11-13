@@ -2,19 +2,13 @@
 import type { EconomyNoteKind } from "./EconomyNoteKind";
 import type { NoteStat } from "./NoteStat";
 
-export type EconomyNote = {
-    kind: EconomyNoteKind;
-    seat: number;
-    char_id: string;
-    name: string;
-    amount: number | null;
-    /**
-     * The number the note's change is to, when it is a cost or redeploy
-     * change the page can print beside the note.
-     */
-    stat: NoteStat | null;
-    /**
-     * The change as a ratio (-0.1 = -10%) for a scaling redeploy change.
-     */
-    ratio: number | null;
-};
+export type EconomyNote = { kind: EconomyNoteKind, seat: number, char_id: string, name: string, amount: number | null, 
+/**
+ * The number the note's change is to, when it is a cost or redeploy
+ * change the page can print beside the note.
+ */
+stat: NoteStat | null, 
+/**
+ * The change as a ratio (-0.1 = -10%) for a scaling redeploy change.
+ */
+ratio: number | null, };

@@ -3,11 +3,8 @@
 /**
  * The drone (Labor) buffer, projected to now from the synced snapshot.
  */
-export type DronesDto = {
-    current: number;
-    max: number;
-    /**
-     * Hours until the buffer caps and recovery is wasted. `None` = already full.
-     */
-    full_in_hours?: number | null;
-};
+export type DronesDto = { current: number, max: number, 
+/**
+ * Hours until the buffer caps and recovery is wasted. `None` = already full.
+ */
+full_in_hours?: number | null, };

@@ -3,10 +3,8 @@
 /**
  * `POST /music/playlists`.
  */
-export type MusicPlaylistCreate = {
-    name: string;
-    /**
-     * Tracks to start with, in order. Optional.
-     */
-    trackIds: Array<string>;
-};
+export type MusicPlaylistCreate = { name: string, 
+/**
+ * Tracks to start with, in order. Optional.
+ */
+trackIds: Array<string>, };

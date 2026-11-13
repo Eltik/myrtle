@@ -2,15 +2,14 @@
 import type { OperatorGap } from "./OperatorGap";
 import type { ScoreDimension } from "./ScoreDimension";
 
-export type OperatorImprovements = {
-    /**
-     * Where the current Operators subscore comes from: per-dimension weight
-     * share, completion, and contribution. Contributions sum to the subscore.
-     */
-    score_breakdown: Array<ScoreDimension>;
-    /**
-     * Owned operators that haven't reached their full investment milestones.
-     * Each entry lists what's still upgradeable. Sorted by rarity desc.
-     */
-    below_milestone: Array<OperatorGap>;
-};
+export type OperatorImprovements = { 
+/**
+ * Where the current Operators subscore comes from: per-dimension weight
+ * share, completion, and contribution. Contributions sum to the subscore.
+ */
+score_breakdown: Array<ScoreDimension>, 
+/**
+ * Owned operators that haven't reached their full investment milestones.
+ * Each entry lists what's still upgradeable. Sorted by rarity desc.
+ */
+below_milestone: Array<OperatorGap>, };

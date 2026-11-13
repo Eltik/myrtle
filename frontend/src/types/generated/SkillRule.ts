@@ -4,14 +4,13 @@ import type { Unlock } from "./Unlock";
 /**
  * One skill's unlock and masteries.
  */
-export type SkillRule = {
-    /**
-     * `Skills[i].UnlockCond`.
-     */
-    unlock: Unlock;
-    /**
-     * Mastery `m` unlocks at `mastery_unlocks[m - 1]`; the length is the
-     * skill's mastery count (0 for 3-stars and Reserve Operators).
-     */
-    masteryUnlocks: Array<Unlock>;
-};
+export type SkillRule = { 
+/**
+ * `Skills[i].UnlockCond`.
+ */
+unlock: Unlock, 
+/**
+ * Mastery `m` unlocks at `mastery_unlocks[m - 1]`; the length is the
+ * skill's mastery count (0 for 3-stars and Reserve Operators).
+ */
+masteryUnlocks: Array<Unlock>, };

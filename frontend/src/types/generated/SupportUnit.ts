@@ -3,23 +3,13 @@
 /**
  * One entry in a player's published support roster (slot 0..2).
  */
-export type SupportUnit = {
-    slot: number;
-    operator_id: string;
-    skin_id: string | null;
-    skill_index: number;
-    current_equip: string | null;
-    /**
-     * Joined from `user_operators`: null if the support names an operator the
-     * player no longer owns (shouldn't happen, but the FK is soft).
-     */
-    elite: number | null;
-    level: number | null;
-    potential: number | null;
-    skill_level: number | null;
-    favor_point: number | null;
-    /**
-     * Mastery (0-3) for the chosen `skill_index`.
-     */
-    specialize_level: number;
-};
+export type SupportUnit = { slot: number, operator_id: string, skin_id: string | null, skill_index: number, current_equip: string | null, 
+/**
+ * Joined from `user_operators`: null if the support names an operator the
+ * player no longer owns (shouldn't happen, but the FK is soft).
+ */
+elite: number | null, level: number | null, potential: number | null, skill_level: number | null, favor_point: number | null, 
+/**
+ * Mastery (0-3) for the chosen `skill_index`.
+ */
+specialize_level: number, };

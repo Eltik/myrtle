@@ -2,10 +2,8 @@
 import type { ReadinessRow } from "./ReadinessRow";
 import type { ReadinessStats } from "./ReadinessStats";
 
-export type Readiness = {
-    stats: ReadinessStats;
-    /**
-     * One per filled seat, support included, in seat order.
-     */
-    rows: Array<ReadinessRow>;
-};
+export type Readiness = { stats: ReadinessStats, 
+/**
+ * One per filled seat, support included, in seat order.
+ */
+rows: Array<ReadinessRow>, };

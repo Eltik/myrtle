@@ -4,4 +4,4 @@
  * One stage as [`EnemyStageTable`] lists it: every [`EnemyStageRef`] field
  * except the per-enemy `count`.
  */
-export type EnemyStageInfo = { stageId: string; code: string; zoneId: string; zoneName: string | null; category: string; group: string; stageName: string | null; isHard: boolean };
+export type EnemyStageInfo = { stageId: string, code: string, zoneId: string, zoneName: string | null, category: string, group: string, stageName: string | null, isHard: boolean, };

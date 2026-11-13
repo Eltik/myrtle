@@ -2,4 +2,4 @@
 import type { Blackboard } from "./Blackboard";
 import type { UnlockCondition } from "./UnlockCondition";
 
-export type TalentCandidate = { UnlockCondition: UnlockCondition; RequiredPotentialRank: number; PrefabKey: string | null; Name: string | null; Description: string | null; RangeId: string | null; Blackboard: Array<Blackboard>; TokenKey: string | null; IsHideTalent: boolean | null };
+export type TalentCandidate = { UnlockCondition: UnlockCondition, RequiredPotentialRank: number, PrefabKey: string | null, Name: string | null, Description: string | null, RangeId: string | null, Blackboard: Array<Blackboard>, TokenKey: string | null, IsHideTalent: boolean | null, };

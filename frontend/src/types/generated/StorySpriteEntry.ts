@@ -7,61 +7,58 @@ import type { StorySpriteVariant } from "./StorySpriteVariant";
  * One sprite folder in the gallery list: who it is, what the scripts call
  * it, how much it speaks, and the one expression its card shows.
  */
-export type StorySpriteEntry = {
-    /**
-     * The folder under `textures/avg/characters/`, as spelled on disk.
-     */
-    base: string;
-    kind: StorySpriteKind;
-    charId?: string;
-    /**
-     * The character table's name for `charId`.
-     */
-    operatorName?: string;
-    /**
-     * What the folder adds after the `char_*` id: the set number (`1`) or
-     * an outfit tag (`ex`). Never part of the name.
-     */
-    variant?: string;
-    /**
-     * The names the scripts speak this sprite under, most lines first. Empty
-     * when no named line was ever attributed to it. Only ALIASES are listed:
-     * a name needs 3 weighted lines and 2% of the folder's named lines, the
-     * primary excepted; what the cut drops is `noise`.
-     */
-    names: Array<StorySpriteName>;
-    /**
-     * Weighted named lines whose names fell under the alias threshold:
-     * mostly someone else speaking while this sprite stays lit.
-     */
-    noise: number;
-    /**
-     * Weighted named lines attributed to this sprite over the library.
-     */
-    lines: number;
-    /**
-     * Distinct library stories that put this sprite up.
-     */
-    storyCount: number;
-    /**
-     * The earliest `startTime` (unix seconds) of a group that shows it,
-     * counting only dated groups; mainline groups carry none.
-     */
-    firstSeen?: number;
-    /**
-     * The first story, in library order, that shows it.
-     */
-    firstStory?: string;
-    /**
-     * That story's position in library order, for a stable sort.
-     */
-    firstOrder?: number;
-    /**
-     * How many distinct expressions the folder offers.
-     */
-    variantCount: number;
-    /**
-     * The expression the card shows: the most used one, else the first.
-     */
-    thumb?: StorySpriteVariant;
-};
+export type StorySpriteEntry = { 
+/**
+ * The folder under `textures/avg/characters/`, as spelled on disk.
+ */
+base: string, kind: StorySpriteKind, charId?: string, 
+/**
+ * The character table's name for `charId`.
+ */
+operatorName?: string, 
+/**
+ * What the folder adds after the `char_*` id: the set number (`1`) or
+ * an outfit tag (`ex`). Never part of the name.
+ */
+variant?: string, 
+/**
+ * The names the scripts speak this sprite under, most lines first. Empty
+ * when no named line was ever attributed to it. Only ALIASES are listed:
+ * a name needs 3 weighted lines and 2% of the folder's named lines, the
+ * primary excepted; what the cut drops is `noise`.
+ */
+names: Array<StorySpriteName>, 
+/**
+ * Weighted named lines whose names fell under the alias threshold:
+ * mostly someone else speaking while this sprite stays lit.
+ */
+noise: number, 
+/**
+ * Weighted named lines attributed to this sprite over the library.
+ */
+lines: number, 
+/**
+ * Distinct library stories that put this sprite up.
+ */
+storyCount: number, 
+/**
+ * The earliest `startTime` (unix seconds) of a group that shows it,
+ * counting only dated groups; mainline groups carry none.
+ */
+firstSeen?: number, 
+/**
+ * The first story, in library order, that shows it.
+ */
+firstStory?: string, 
+/**
+ * That story's position in library order, for a stable sort.
+ */
+firstOrder?: number, 
+/**
+ * How many distinct expressions the folder offers.
+ */
+variantCount: number, 
+/**
+ * The expression the card shows: the most used one, else the first.
+ */
+thumb?: StorySpriteVariant, };

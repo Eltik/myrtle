@@ -13,32 +13,21 @@ import type { RequestShred } from "./RequestShred";
  * meaning it has on `CalculateRequest`; `operatorId`, the investment fields,
  * `skillIndex` and `moduleIndex` are set per row.
  */
-export type RankRequest = {
-    defense?: number;
-    res?: number;
-    buffs?: RequestBuffs;
-    shred?: RequestShred;
-    targets?: number;
-    spBoost?: number;
-    allCond?: boolean;
-    zones?: BuffZones;
-    secondary?: RequestSecondary;
-    cycleModel?: RequestCycleModel;
-    /**
-     * Absent: `p1Max`.
-     */
-    preset?: RankPreset;
-    /**
-     * Applied after the ranking is computed (and cached); they never change
-     * a row.
-     */
-    filters?: RankFilters;
-    /**
-     * Absent: `skillDps`. Descending.
-     */
-    sortBy?: RankMetric;
-    /**
-     * Rows returned after filtering and sorting, at most 5000. Absent: all.
-     */
-    limit?: number;
-};
+export type RankRequest = { defense?: number, res?: number, buffs?: RequestBuffs, shred?: RequestShred, targets?: number, spBoost?: number, allCond?: boolean, zones?: BuffZones, secondary?: RequestSecondary, cycleModel?: RequestCycleModel, 
+/**
+ * Absent: `p1Max`.
+ */
+preset?: RankPreset, 
+/**
+ * Applied after the ranking is computed (and cached); they never change
+ * a row.
+ */
+filters?: RankFilters, 
+/**
+ * Absent: `skillDps`. Descending.
+ */
+sortBy?: RankMetric, 
+/**
+ * Rows returned after filtering and sorting, at most 5000. Absent: all.
+ */
+limit?: number, };

@@ -2,4 +2,4 @@
 import type { Elite } from "./Elite";
 import type { EliteCostItem } from "./EliteCostItem";
 
-export type LevelCost = { level: number; eliteCost: Array<EliteCostItem>; elite: Elite };
+export type LevelCost = { level: number, eliteCost: Array<EliteCostItem>, elite: Elite, };

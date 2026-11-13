@@ -4,18 +4,12 @@ import type { ArchiveBucket } from "./ArchiveBucket";
 /**
  * One numeric field over every file that states it.
  */
-export type ArchiveDistribution = {
-    counted: number;
-    min: number;
-    max: number;
-    mean: number;
-    /**
-     * Everyone at `min`, by name.
-     */
-    low: Array<string>;
-    /**
-     * Everyone at `max`, by name.
-     */
-    high: Array<string>;
-    buckets: Array<ArchiveBucket>;
-};
+export type ArchiveDistribution = { counted: number, min: number, max: number, mean: number, 
+/**
+ * Everyone at `min`, by name.
+ */
+low: Array<string>, 
+/**
+ * Everyone at `max`, by name.
+ */
+high: Array<string>, buckets: Array<ArchiveBucket>, };

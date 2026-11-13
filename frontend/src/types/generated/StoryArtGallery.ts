@@ -7,10 +7,8 @@ import type { StoryArtKind } from "./StoryArtKind";
  * a profile header, each once, under the first library group whose
  * scripts draw it.
  */
-export type StoryArtGallery = {
-    kind: StoryArtKind;
-    /**
-     * In library order.
-     */
-    groups: Array<StoryArtGroup>;
-};
+export type StoryArtGallery = { kind: StoryArtKind, 
+/**
+ * In library order.
+ */
+groups: Array<StoryArtGroup>, };

@@ -4,16 +4,13 @@ import type { ExamAxis } from "./ExamAxis";
 /**
  * One exam column as the file states it.
  */
-export type ExamRating = {
-    axis: ExamAxis;
-    raw: string;
-    /**
-     * Index into [`ExamStep::ALL`], lowest first; `None` for a redacted,
-     * split (`Standard/Excellent`) or free-text rating.
-     */
-    step?: number;
-    /**
-     * The file prints a row of blocks (`■■`) where the rating would be.
-     */
-    redacted: boolean;
-};
+export type ExamRating = { axis: ExamAxis, raw: string, 
+/**
+ * Index into [`ExamStep::ALL`], lowest first; `None` for a redacted,
+ * split (`Standard/Excellent`) or free-text rating.
+ */
+step?: number, 
+/**
+ * The file prints a row of blocks (`■■`) where the rating would be.
+ */
+redacted: boolean, };

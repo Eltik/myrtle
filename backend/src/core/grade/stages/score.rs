@@ -44,7 +44,7 @@ pub async fn grade_stages_detail(
     let pools = PlayerPools::new(
         &game_data.stage_universe,
         &data.clears,
-        Some(&known_stage_ids),
+        Some(&*known_stage_ids),
         now,
         data.last_synced_ts,
     );

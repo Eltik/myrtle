@@ -370,6 +370,9 @@ pub async fn refresh(
         &game_squads,
     )
     .await?;
+    // The rows this sync wrote can name stages nobody on the server had before,
+    // so the server's cached set is dropped before the grade below reads it.
+    crate::database::queries::stages::forget_known_stage_ids(server.index() as i16);
 
     // The 2026-09-24 defect, both halves: the game's read marks are stored BEFORE
     // the grade, and the grade runs off the async runtime.

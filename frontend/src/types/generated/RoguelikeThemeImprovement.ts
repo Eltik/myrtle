@@ -4,18 +4,10 @@ import type { RoguelikeCollectibles } from "./RoguelikeCollectibles";
 import type { RoguelikeDifficulty } from "./RoguelikeDifficulty";
 import type { RoguelikeSpecialEnding } from "./RoguelikeSpecialEnding";
 
-export type RoguelikeThemeImprovement = {
-    theme_id: string;
-    theme_name: string;
-    endings: ProgressPair;
-    difficulty: RoguelikeDifficulty;
-    collectibles: RoguelikeCollectibles;
-    bp: ProgressPair;
-    challenges: ProgressPair;
-    /**
-     * Endings counted in `endings.max` that a regular run does not reach,
-     * for the note beside the count. Omitted when there are none (4 of 5 EN
-     * themes), so those themes serialize exactly as before.
-     */
-    special_endings?: Array<RoguelikeSpecialEnding>;
-};
+export type RoguelikeThemeImprovement = { theme_id: string, theme_name: string, endings: ProgressPair, difficulty: RoguelikeDifficulty, collectibles: RoguelikeCollectibles, bp: ProgressPair, challenges: ProgressPair, 
+/**
+ * Endings counted in `endings.max` that a regular run does not reach,
+ * for the note beside the count. Omitted when there are none (4 of 5 EN
+ * themes), so those themes serialize exactly as before.
+ */
+special_endings?: Array<RoguelikeSpecialEnding>, };

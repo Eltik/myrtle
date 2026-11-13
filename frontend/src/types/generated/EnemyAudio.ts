@@ -5,25 +5,22 @@ import type { EnemyAudioCategory } from "./EnemyAudioCategory";
 /**
  * A single enemy-linked `SoundFX` bank, resolved to playable URLs.
  */
-export type EnemyAudio = {
-    /**
-     * Full bank name, e.g. `battle.ON_ABILITY_HIT.enemy_1007_slime.combat`.
-     */
-    bankName: string;
-    /**
-     * Event segment of the bank name, e.g. `ON_ABILITY_HIT`.
-     */
-    event: string;
-    category: EnemyAudioCategory;
-    /**
-     * Everything after the entity segment, e.g. `combat`, `IceBurst` or
-     * `T.over_energy`; absent on banks like `ON_UNIT_DEAD.<enemy>`.
-     */
-    ability?: string | null;
-    /**
-     * The entity segment, when it is not the enemy itself: a projectile
-     * (`projectile_frstar`) or a buff (`enemy_sfsui_doom1`).
-     */
-    via?: string | null;
-    sounds: Array<AudioSound>;
-};
+export type EnemyAudio = { 
+/**
+ * Full bank name, e.g. `battle.ON_ABILITY_HIT.enemy_1007_slime.combat`.
+ */
+bankName: string, 
+/**
+ * Event segment of the bank name, e.g. `ON_ABILITY_HIT`.
+ */
+event: string, category: EnemyAudioCategory, 
+/**
+ * Everything after the entity segment, e.g. `combat`, `IceBurst` or
+ * `T.over_energy`; absent on banks like `ON_UNIT_DEAD.<enemy>`.
+ */
+ability?: string | null, 
+/**
+ * The entity segment, when it is not the enemy itself: a projectile
+ * (`projectile_frstar`) or a buff (`enemy_sfsui_doom1`).
+ */
+via?: string | null, sounds: Array<AudioSound>, };

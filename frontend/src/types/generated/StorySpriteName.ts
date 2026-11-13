@@ -5,4 +5,4 @@
  * `count` is WEIGHTED: a line with two lit sprites counts half for each, so
  * it is a number with at most two decimals rather than an integer.
  */
-export type StorySpriteName = { name: string; count: number };
+export type StorySpriteName = { name: string, count: number, };

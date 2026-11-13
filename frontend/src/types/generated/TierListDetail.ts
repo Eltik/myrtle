@@ -5,25 +5,9 @@ import type { TierListAuthor } from "./TierListAuthor";
 import type { TierListFlair } from "./TierListFlair";
 import type { TierListStats } from "./TierListStats";
 
-export type TierListDetail = {
-    tiers: Array<TierDetail>;
-    stats: TierListStats | null;
-    flair: TierListFlair | null;
-    author: TierListAuthor | null;
-    id: string;
-    name: string;
-    slug: string;
-    description: string | null;
-    list_type: string;
-    created_by: string | null;
-    is_active: boolean;
-    is_listed: boolean;
-    flair_id: number | null;
-    /**
-     * The kinds the list's editor offers. Lists cached or snapshotted before
-     * the column existed read as operator-only, which is what they were.
-     */
-    entity_kinds: EntityKinds;
-    created_at: string;
-    updated_at: string;
-};
+export type TierListDetail = { tiers: Array<TierDetail>, stats: TierListStats | null, flair: TierListFlair | null, author: TierListAuthor | null, id: string, name: string, slug: string, description: string | null, list_type: string, created_by: string | null, is_active: boolean, is_listed: boolean, flair_id: number | null, 
+/**
+ * The kinds the list's editor offers. Lists cached or snapshotted before
+ * the column existed read as operator-only, which is what they were.
+ */
+entity_kinds: EntityKinds, created_at: string, updated_at: string, };

@@ -4,11 +4,8 @@
  * An ending the game data lists outside the regular runs; see
  * `core::gamedata::types::roguelike::SpecialEnding`.
  */
-export type RoguelikeSpecialEnding = {
-    id: string;
-    name: string;
-    /**
-     * The mode it belongs to, e.g. "Deep Investigation".
-     */
-    mode_name?: string;
-};
+export type RoguelikeSpecialEnding = { id: string, name: string, 
+/**
+ * The mode it belongs to, e.g. "Deep Investigation".
+ */
+mode_name?: string, };

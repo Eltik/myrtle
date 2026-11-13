@@ -4,14 +4,12 @@ import type { ExamAxis } from "./ExamAxis";
 /**
  * One exam column: how many files give each scale step.
  */
-export type ArchiveExamColumn = {
-    axis: ExamAxis;
-    /**
-     * One count per `scale` step, lowest first.
-     */
-    steps: Array<number>;
-    /**
-     * Files with no single readable rating in this column.
-     */
-    unrecorded: number;
-};
+export type ArchiveExamColumn = { axis: ExamAxis, 
+/**
+ * One count per `scale` step, lowest first.
+ */
+steps: Array<number>, 
+/**
+ * Files with no single readable rating in this column.
+ */
+unrecorded: number, };

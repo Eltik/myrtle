@@ -5,20 +5,18 @@ import type { ServiceAccountState } from "./ServiceAccountState";
  * One service account, as `GET /service-accounts` reports it. Carries no
  * credential, uid or upstream error text.
  */
-export type ServiceAccountStatus = {
-    /**
-     * The server code: `en`, `jp`, `kr`, `cn` or `bili`.
-     */
-    server: string;
-    state: ServiceAccountState;
-    /**
-     * Unix seconds of the first refusal in the current outage; `null` unless
-     * `state` is `refused`.
-     */
-    refused_since: number | null;
-    /**
-     * Unix seconds of the last refresh or request the game accepted; `null`
-     * before the first one in this process.
-     */
-    last_ok_at: number | null;
-};
+export type ServiceAccountStatus = { 
+/**
+ * The server code: `en`, `jp`, `kr`, `cn` or `bili`.
+ */
+server: string, state: ServiceAccountState, 
+/**
+ * Unix seconds of the first refusal in the current outage; `null` unless
+ * `state` is `refused`.
+ */
+refused_since: number | null, 
+/**
+ * Unix seconds of the last refresh or request the game accepted; `null`
+ * before the first one in this process.
+ */
+last_ok_at: number | null, };

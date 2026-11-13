@@ -3,11 +3,10 @@
 /**
  * Whether an ingest call counted.
  */
-export type MusicStatRecorded = {
-    /**
-     * False when the same caller already counted for this track inside the
-     * window (30 minutes for a listen, 24 hours for a download). A client
-     * may call on every play or download; the server decides.
-     */
-    counted: boolean;
-};
+export type MusicStatRecorded = { 
+/**
+ * False when the same caller already counted for this track inside the
+ * window (30 minutes for a listen, 24 hours for a download). A client
+ * may call on every play or download; the server decides.
+ */
+counted: boolean, };

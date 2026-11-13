@@ -4,39 +4,37 @@ import type { RetentionExclusion } from "./RetentionExclusion";
 /**
  * The enemy set the score runs over.
  */
-export type RetentionRoster = {
-    /**
-     * Distinct enemies with at least one stage appearance and stats.
-     */
-    enemies: number;
-    /**
-     * (enemy, stage) appearances: the total weight.
-     */
-    appearances: number;
-    /**
-     * Distinct (DEF, RES) pairs the appearances collapse into.
-     */
-    distinctPairs: number;
-    /**
-     * Sum of the alternative weight (spawn counts).
-     */
-    totalSpawns: number;
-    /**
-     * Appearances at a database level other than 0.
-     */
-    nonzeroLevel: number;
-    /**
-     * Appearances whose stage overrides DEF or RES.
-     */
-    overridden: number;
-    /**
-     * Appearances with no level file (boss declarations), taken at level 0.
-     */
-    noLevelFile: number;
-    /**
-     * Appearances whose stage names a level the database lacks, taken at
-     * level 0.
-     */
-    levelFallback: number;
-    excluded: Array<RetentionExclusion>;
-};
+export type RetentionRoster = { 
+/**
+ * Distinct enemies with at least one stage appearance and stats.
+ */
+enemies: number, 
+/**
+ * (enemy, stage) appearances: the total weight.
+ */
+appearances: number, 
+/**
+ * Distinct (DEF, RES) pairs the appearances collapse into.
+ */
+distinctPairs: number, 
+/**
+ * Sum of the alternative weight (spawn counts).
+ */
+totalSpawns: number, 
+/**
+ * Appearances at a database level other than 0.
+ */
+nonzeroLevel: number, 
+/**
+ * Appearances whose stage overrides DEF or RES.
+ */
+overridden: number, 
+/**
+ * Appearances with no level file (boss declarations), taken at level 0.
+ */
+noLevelFile: number, 
+/**
+ * Appearances whose stage names a level the database lacks, taken at
+ * level 0.
+ */
+levelFallback: number, excluded: Array<RetentionExclusion>, };

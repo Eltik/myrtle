@@ -8,4 +8,4 @@
  * `item_type` (MATERIAL / CHAR / `CARD_EXP` / DIAMOND / …) are kept as raw strings
  * for forward-compatibility with new game-data values.
  */
-export type DisplayDetailReward = { dropType: string; id: string; occPercent: string; itemType: string };
+export type DisplayDetailReward = { dropType: string, id: string, occPercent: string, itemType: string, };

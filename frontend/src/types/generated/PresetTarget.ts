@@ -4,30 +4,29 @@
  * A preset's target, independent of rarity: a bulk-add applies it to each
  * selected operator and clamps it to what that operator can reach.
  */
-export type PresetTarget = {
-    /**
-     * Promotion, 0 to 2.
-     */
-    elite: number;
-    /**
-     * Level at that promotion. Null means the operator's cap at `elite`.
-     */
-    level: number | null;
-    /**
-     * Skill level, 1 to 7.
-     */
-    skill_level: number;
-    /**
-     * Mastery per skill index, each 0 to 3.
-     */
-    masteries: [number, number, number];
-    /**
-     * Stage for every module, 0 to 3.
-     */
-    module_stage: number;
-    /**
-     * Whether plans made from it show on the public profile. Absent in
-     * presets saved before this field existed, which read as private.
-     */
-    display_on_profile: boolean;
-};
+export type PresetTarget = { 
+/**
+ * Promotion, 0 to 2.
+ */
+elite: number, 
+/**
+ * Level at that promotion. Null means the operator's cap at `elite`.
+ */
+level: number | null, 
+/**
+ * Skill level, 1 to 7.
+ */
+skill_level: number, 
+/**
+ * Mastery per skill index, each 0 to 3.
+ */
+masteries: [number, number, number], 
+/**
+ * Stage for every module, 0 to 3.
+ */
+module_stage: number, 
+/**
+ * Whether plans made from it show on the public profile. Absent in
+ * presets saved before this field existed, which read as private.
+ */
+display_on_profile: boolean, };

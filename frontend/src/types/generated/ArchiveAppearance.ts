@@ -3,15 +3,8 @@
 /**
  * One story an operator speaks in.
  */
-export type ArchiveAppearance = {
-    storyId: string;
-    name: string;
-    code?: string;
-    tag?: string;
-    groupId: string;
-    groupName: string;
-    /**
-     * Weighted lines attributed to the operator in this story.
-     */
-    lines: number;
-};
+export type ArchiveAppearance = { storyId: string, name: string, code?: string, tag?: string, groupId: string, groupName: string, 
+/**
+ * Weighted lines attributed to the operator in this story.
+ */
+lines: number, };

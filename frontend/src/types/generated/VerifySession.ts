@@ -3,28 +3,26 @@
 /**
  * The `/auth/verify` response: the session a token currently represents.
  */
-export type VerifySession = {
-    /**
-     * Always true - a failing token is a 401, not `valid: false`.
-     */
-    valid: boolean;
-    userId: string;
-    /**
-     * The player's in-game uid.
-     */
-    uid: string;
-    /**
-     * The game server the session is bound to.
-     */
-    server: string;
-    /**
-     * Re-read from the database on every call, so a promotion takes effect
-     * without the user logging out and back in.
-     */
-    role: string;
-    /**
-     * True for a role that may open the admin panel, or for any holder of a
-     * translation grant.
-     */
-    canAccessAdminPanel: boolean;
-};
+export type VerifySession = { 
+/**
+ * Always true - a failing token is a 401, not `valid: false`.
+ */
+valid: boolean, userId: string, 
+/**
+ * The player's in-game uid.
+ */
+uid: string, 
+/**
+ * The game server the session is bound to.
+ */
+server: string, 
+/**
+ * Re-read from the database on every call, so a promotion takes effect
+ * without the user logging out and back in.
+ */
+role: string, 
+/**
+ * True for a role that may open the admin panel, or for any holder of a
+ * translation grant.
+ */
+canAccessAdminPanel: boolean, };

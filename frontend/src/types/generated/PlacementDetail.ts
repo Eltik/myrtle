@@ -5,24 +5,19 @@ import type { EntitySummary } from "./EntitySummary";
 /**
  * A stored placement and what it points at in the served game data.
  */
-export type PlacementDetail = {
-    /**
-     * `None` when the served game data has no such entity (a CN-only operator
-     * read on EN, an id from a removed kind). The placement is still served,
-     * so the client can show it rather than silently drop it.
-     */
-    entity: EntitySummary | null;
-    tier_id: string;
-    /**
-     * Absent from snapshots and cache entries written before kinds existed,
-     * all of which were operators.
-     */
-    entity_kind: EntityKind;
-    /**
-     * Was `operator_id`; old snapshots still spell it that way.
-     */
-    entity_id: string;
-    sub_order: number;
-    description: string | null;
-    updated_at: string;
-};
+export type PlacementDetail = { 
+/**
+ * `None` when the served game data has no such entity (a CN-only operator
+ * read on EN, an id from a removed kind). The placement is still served,
+ * so the client can show it rather than silently drop it.
+ */
+entity: EntitySummary | null, tier_id: string, 
+/**
+ * Absent from snapshots and cache entries written before kinds existed,
+ * all of which were operators.
+ */
+entity_kind: EntityKind, 
+/**
+ * Was `operator_id`; old snapshots still spell it that way.
+ */
+entity_id: string, sub_order: number, description: string | null, updated_at: string, };

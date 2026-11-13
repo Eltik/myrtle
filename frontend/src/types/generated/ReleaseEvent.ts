@@ -5,19 +5,4 @@ import type { FarmStage } from "./FarmStage";
 import type { OpStage } from "./OpStage";
 import type { Resolution } from "./Resolution";
 
-export type ReleaseEvent = {
-    cnId: string;
-    nameCn: string;
-    nameEn: string | null;
-    activityType: string;
-    hasStage: boolean;
-    cnStart: number;
-    cnEnd: number;
-    opStages: Array<OpStage>;
-    farmStages: Array<FarmStage>;
-    missionTokens: number;
-    shop: EventShop | null;
-    nameEnAuto: AutoName | null;
-    imagePath: string | null;
-    resolution: Resolution;
-};
+export type ReleaseEvent = { cnId: string, nameCn: string, nameEn: string | null, activityType: string, hasStage: boolean, cnStart: number, cnEnd: number, opStages: Array<OpStage>, farmStages: Array<FarmStage>, missionTokens: number, shop: EventShop | null, nameEnAuto: AutoName | null, imagePath: string | null, resolution: Resolution, };

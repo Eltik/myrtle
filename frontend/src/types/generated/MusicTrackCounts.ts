@@ -3,4 +3,4 @@
 /**
  * One track's all-time community counts.
  */
-export type MusicTrackCounts = { listens: number; downloads: number };
+export type MusicTrackCounts = { listens: number, downloads: number, };

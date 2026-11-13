@@ -4,10 +4,8 @@
  * The count of operators owned at the end of one UTC day, rebuilt from their
  * obtain times. Ownership only: builds before the first snapshot are lost.
  */
-export type OwnershipPoint = {
-    /**
-     * 00:00 UTC of the day, Unix seconds.
-     */
-    ts: number;
-    count: number;
-};
+export type OwnershipPoint = { 
+/**
+ * 00:00 UTC of the day, Unix seconds.
+ */
+ts: number, count: number, };

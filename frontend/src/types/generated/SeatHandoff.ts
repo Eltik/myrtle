@@ -10,4 +10,4 @@ import type { HandoffSource } from "./HandoffSource";
  * and skill-bound effects, and anything that is not an ATK, flat ATK or ASPD
  * number, are listed in `left_out`.
  */
-export type SeatHandoff = { seat: number; char_id: string; buffs: HandoffBuffs; counted: Array<HandoffSource>; left_out: Array<HandoffLeftOut> };
+export type SeatHandoff = { seat: number, char_id: string, buffs: HandoffBuffs, counted: Array<HandoffSource>, left_out: Array<HandoffLeftOut>, };

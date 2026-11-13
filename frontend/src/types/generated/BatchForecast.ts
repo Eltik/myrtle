@@ -2,4 +2,4 @@
 import type { AutoName } from "./AutoName";
 import type { Resolution } from "./Resolution";
 
-export type BatchForecast = { name: string; nameEnAuto: AutoName | null; cnStart: number; cnEnd: number; resolution: Resolution };
+export type BatchForecast = { name: string, nameEnAuto: AutoName | null, cnStart: number, cnEnd: number, resolution: Resolution, };

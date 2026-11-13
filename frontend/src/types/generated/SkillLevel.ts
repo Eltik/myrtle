@@ -2,4 +2,4 @@
 import type { SkillBlackboard } from "./SkillBlackboard";
 import type { SkillSpData } from "./SkillSpData";
 
-export type SkillLevel = { name: string; rangeId: string | null; description: string; skillType: string; durationType: string | null; spData: SkillSpData; prefabId: string; duration: number; blackboard: Array<SkillBlackboard> };
+export type SkillLevel = { name: string, rangeId: string | null, description: string, skillType: string, durationType: string | null, spData: SkillSpData, prefabId: string, duration: number, blackboard: Array<SkillBlackboard>, };

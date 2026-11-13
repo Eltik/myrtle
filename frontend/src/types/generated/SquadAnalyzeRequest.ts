@@ -10,4 +10,4 @@ import type { SquadMemberBuild } from "./SquadMemberBuild";
  * (`EN`, `JP`, `CN_MANDARIN`, `KR`, ...) for the Themes voice-actor row;
  * `None` reads the server's `charword_table.DefaultLangType`.
  */
-export type SquadAnalyzeRequest = { members: Array<SquadMemberBuild | null>; support: SquadMemberBuild | null; start_dp: number; deploy_limit: number | null; dub: string | null };
+export type SquadAnalyzeRequest = { members: Array<SquadMemberBuild | null>, support: SquadMemberBuild | null, start_dp: number, deploy_limit: number | null, dub: string | null, };

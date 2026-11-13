@@ -8,4 +8,4 @@ import type { SweepPoint } from "./SweepPoint";
  * unknown operator, a configuration the engine cannot compute). One failed
  * request does not fail the batch.
  */
-export type BatchItem = { result?: DpsResult; points?: Array<SweepPoint>; error?: string };
+export type BatchItem = { result?: DpsResult, points?: Array<SweepPoint>, error?: string, };

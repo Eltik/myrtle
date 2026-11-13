@@ -2,4 +2,4 @@
 import type { AutoName } from "./AutoName";
 import type { SkinPrice } from "./SkinPrice";
 
-export type SkinTile = { skinId: string; charId: string; skinName: string; charName: AutoName | null; portraitPath: string | null; colors: Array<string>; price: SkinPrice };
+export type SkinTile = { skinId: string, charId: string, skinName: string, charName: AutoName | null, portraitPath: string | null, colors: Array<string>, price: SkinPrice, };

@@ -4,4 +4,4 @@
  * `POST /music/playlists/{id}/tracks`: append these, skipping any already in
  * the playlist.
  */
-export type MusicPlaylistAdd = { trackIds: Array<string> };
+export type MusicPlaylistAdd = { trackIds: Array<string>, };

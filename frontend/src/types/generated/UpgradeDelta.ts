@@ -3,26 +3,25 @@
 /**
  * Score gain from a single upgrade path, clamped to non-negative.
  */
-export type UpgradeDelta = {
-    /**
-     * Tag from `OperatorGap.missing`, e.g. "ELITE", "M3", "MOD3", "TRUST".
-     */
-    tag: string;
-    /**
-     * Δ in this operator's score (0.0-1.0). The change in `grade_operator(...)`
-     * before any rarity weighting.
-     */
-    operator_score_delta: number;
-    /**
-     * Δ contribution to the user's `operator_grade` subscore (0.0-1.0).
-     * Already accounts for this operator's rarity weight and the total
-     * roster weight.
-     */
-    operator_grade_delta: number;
-    /**
-     * Δ contribution to the user's `total_score` (0.0-1.0). Accounts for
-     * the Operators subscore's share of the overall grade
-     * (`SECTION_WEIGHT_OPERATOR / SECTION_WEIGHT_TOTAL`).
-     */
-    total_score_delta: number;
-};
+export type UpgradeDelta = { 
+/**
+ * Tag from `OperatorGap.missing`, e.g. "ELITE", "M3", "MOD3", "TRUST".
+ */
+tag: string, 
+/**
+ * Δ in this operator's score (0.0-1.0). The change in `grade_operator(...)`
+ * before any rarity weighting.
+ */
+operator_score_delta: number, 
+/**
+ * Δ contribution to the user's `operator_grade` subscore (0.0-1.0).
+ * Already accounts for this operator's rarity weight and the total
+ * roster weight.
+ */
+operator_grade_delta: number, 
+/**
+ * Δ contribution to the user's `total_score` (0.0-1.0). Accounts for
+ * the Operators subscore's share of the overall grade
+ * (`SECTION_WEIGHT_OPERATOR / SECTION_WEIGHT_TOTAL`).
+ */
+total_score_delta: number, };

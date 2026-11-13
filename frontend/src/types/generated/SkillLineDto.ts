@@ -7,36 +7,33 @@ import type { LineDisposition } from "./LineDisposition";
  * number loses if this one skill is removed - so pair riders, non-stacking
  * rules and faction gates are already folded in.
  */
-export type SkillLineDto = {
-    operator_id: string;
-    /**
-     * Display name, so Control-Center lines shown on another room need no
-     * roster join client-side.
-     */
-    operator_name: string;
-    buff_id: string;
-    /**
-     * The skill's display name from `building_data`.
-     */
-    buff_name: string;
-    /**
-     * Marginal speed/efficiency %.
-     */
-    speed_pct: number;
-    /**
-     * Marginal order-value %.
-     */
-    value_pct?: number;
-    /**
-     * The line's owner sits in the Control Center, not this room.
-     */
-    from_control_center?: boolean;
-    /**
-     * How to read a zero-marginal line.
-     */
-    disposition: LineDisposition;
-    /**
-     * A reading aid for marginals spread over other lines (count skills).
-     */
-    note?: string | null;
-};
+export type SkillLineDto = { operator_id: string, 
+/**
+ * Display name, so Control-Center lines shown on another room need no
+ * roster join client-side.
+ */
+operator_name: string, buff_id: string, 
+/**
+ * The skill's display name from `building_data`.
+ */
+buff_name: string, 
+/**
+ * Marginal speed/efficiency %.
+ */
+speed_pct: number, 
+/**
+ * Marginal order-value %.
+ */
+value_pct?: number, 
+/**
+ * The line's owner sits in the Control Center, not this room.
+ */
+from_control_center?: boolean, 
+/**
+ * How to read a zero-marginal line.
+ */
+disposition: LineDisposition, 
+/**
+ * A reading aid for marginals spread over other lines (count skills).
+ */
+note?: string | null, };

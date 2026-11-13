@@ -3,11 +3,10 @@
 /**
  * Whether a `POST /tier-lists/{slug}/view` counted as a new view.
  */
-export type ViewRecorded = {
-    /**
-     * False when the same user or session already counted for this list, or
-     * when the call carried neither an account nor a session id (`X-Session-Id`
-     * header or `mtl_sid` cookie), which is not recorded at all.
-     */
-    unique: boolean;
-};
+export type ViewRecorded = { 
+/**
+ * False when the same user or session already counted for this list, or
+ * when the call carried neither an account nor a session id (`X-Session-Id`
+ * header or `mtl_sid` cookie), which is not recorded at all.
+ */
+unique: boolean, };

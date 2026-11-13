@@ -4,21 +4,4 @@ import type { JsonValue } from "./serde_json/JsonValue";
 /**
  * `v_user_roster` view
  */
-export type RosterEntry = {
-    user_id: string;
-    operator_id: string;
-    elite: number;
-    level: number;
-    exp: number;
-    potential: number;
-    skill_level: number;
-    favor_point: number;
-    skin_id: string | null;
-    default_skill: number | null;
-    voice_lan: string | null;
-    current_equip: string | null;
-    current_tmpl: string | null;
-    obtained_at: number | null;
-    masteries: JsonValue;
-    modules: JsonValue;
-};
+export type RosterEntry = { user_id: string, operator_id: string, elite: number, level: number, exp: number, potential: number, skill_level: number, favor_point: number, skin_id: string | null, default_skill: number | null, voice_lan: string | null, current_equip: string | null, current_tmpl: string | null, obtained_at: number | null, masteries: JsonValue, modules: JsonValue, };

@@ -5,17 +5,4 @@
  * fan out N user lookups per page. `actor_uid` is the game UID (used in
  * `/user/{uid}` routes); `actor_user_id` is the internal DB UUID.
  */
-export type OperatorNoteAuditEntryWithContext = {
-    id: number;
-    note_id: string;
-    operator_id: string;
-    field_name: string;
-    old_value: string | null;
-    new_value: string | null;
-    changed_at: string;
-    actor_user_id: string;
-    actor_uid: string | null;
-    actor_nickname: string | null;
-    actor_secretary: string | null;
-    actor_secretary_skin_id: string | null;
-};
+export type OperatorNoteAuditEntryWithContext = { id: number, note_id: string, operator_id: string, field_name: string, old_value: string | null, new_value: string | null, changed_at: string, actor_user_id: string, actor_uid: string | null, actor_nickname: string | null, actor_secretary: string | null, actor_secretary_skin_id: string | null, };

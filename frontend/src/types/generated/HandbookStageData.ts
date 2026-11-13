@@ -2,19 +2,4 @@
 import type { HandbookRewardItem } from "./HandbookRewardItem";
 import type { HandbookUnlockParam } from "./HandbookUnlockParam";
 
-export type HandbookStageData = {
-    charId: string;
-    stageId: string;
-    levelId: string;
-    zoneId: string;
-    code: string;
-    name: string;
-    loadingPicId: string;
-    description: string;
-    unlockParam: Array<HandbookUnlockParam>;
-    rewardItem: Array<HandbookRewardItem>;
-    stageNameForShow: string;
-    zoneNameForShow: string;
-    picId: string;
-    stageGetTime: number;
-};
+export type HandbookStageData = { charId: string, stageId: string, levelId: string, zoneId: string, code: string, name: string, loadingPicId: string, description: string, unlockParam: Array<HandbookUnlockParam>, rewardItem: Array<HandbookRewardItem>, stageNameForShow: string, zoneNameForShow: string, picId: string, stageGetTime: number, };

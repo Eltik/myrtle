@@ -3,4 +3,4 @@
 /**
  * `ui_documents` row - long-form prose translated as a whole document.
  */
-export type UiDocument = { slug: string; locale: string; title: string; body: string; updated_at: string };
+export type UiDocument = { slug: string, locale: string, title: string, body: string, updated_at: string, };
