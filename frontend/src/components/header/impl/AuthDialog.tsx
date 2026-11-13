@@ -187,11 +187,13 @@ export function AuthDialog({ trigger, onOpenChange, open: openProp }: IAuthDialo
         authActions.resetLoginForm();
     };
     // A 400 from a login endpoint is the credentials being turned down: the
-    // backend forwards the publisher's reason when it can read one and says
-    // "invalid upstream response" when it cannot (a wrong Yostar code today,
-    // see backend core::hypergryph::fetch::parse_json). Either way the action
+    // backend forwards the publisher's reason when it can read one (a wrong
+    // Yostar code arrives as "The code is wrong, has expired, or was already
+    // used (100303)") and says "invalid upstream response" when it cannot
+    // (see backend core::hypergryph::fetch::parse_json). Either way the action
     // for the visitor is the same, so lead with that and keep the detail under.
-    // Everything else (server down, rate limited, 5xx) reads as itself.
+    // Everything else (server down, rate limited, 5xx) reads as itself: a
+    // server whose addresses have not loaded is a 503, not a rejected code.
     const onLoginError = (err: unknown) => {
         const failure = classifyFailure(err);
         const detail = describeError(err);

@@ -181,7 +181,19 @@ impl From<FetchError> for ApiError {
     fn from(e: FetchError) -> Self {
         match e {
             FetchError::NotLoggedIn => Self::Unauthorized,
-            FetchError::DomainNotFound(_, _) => Self::BadRequest("unsupported server".into()),
+            // Every server this backend knows has a network config to load, so
+            // a missing domain means that load has not succeeded yet (it is
+            // retried in the background, `loaders::spawn_retry`), not that the
+            // server is unsupported. As a 400 the login dialog read it as the
+            // player's code being turned down and told them to request another.
+            FetchError::DomainNotFound(server, domain) => {
+                tracing::warn!(
+                    server = server.as_str(),
+                    domain = ?domain,
+                    "request needs a domain that has not loaded"
+                );
+                Self::ServiceUnavailable
+            }
             FetchError::RequestFailed(e) => Self::Internal(e.into()),
             FetchError::ParseError(msg) => Self::BadRequest(msg),
             FetchError::Upstream(err) => Self::BadRequest(format!(

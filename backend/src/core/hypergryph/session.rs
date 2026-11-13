@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::core::hypergryph::{
     bilibili,
-    config::config,
+    config::{GlobalConfig, config},
     constants::{AuthSession, Domain, Server},
     crypto::generate_u8_sign,
     fetch::{FetchError, FetchRequest, REQUEST_TIMEOUT, fetch_domain, parse_json},
@@ -363,12 +363,31 @@ pub struct LoginResult {
     pub portal_session: Option<AccountPortalSession>,
 }
 
+/// Whether `server`'s domains have loaded, as the error a request for one of
+/// them would get.
+fn network_ready(cfg: &GlobalConfig, server: Server) -> Result<(), FetchError> {
+    if cfg.has_network(server) {
+        Ok(())
+    } else {
+        Err(FetchError::DomainNotFound(server, Domain::U8))
+    }
+}
+
 pub async fn login(
     client: &Client,
     email: &str,
     code: &str,
     server: Server,
 ) -> Result<LoginResult, FetchError> {
+    // Checked BEFORE the code goes to Yostar. The u8 step further down needs
+    // these domains, and by then `submit_auth` has spent the one-time code: on
+    // 2026-11-13, with EN's domains unloaded, every attempt burned a code and
+    // then failed, so the player had to wait for another email to fail again.
+    {
+        let cfg = config().read().await;
+        network_ready(&cfg, server)?;
+    }
+
     let yostar_data = submit_auth(client, email, code, server).await?;
 
     let portal_session = if server.yostar_domain().is_some() {
@@ -450,4 +469,29 @@ pub async fn refresh_secret_by_step(
     session.seqnum = 1;
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::network_ready;
+    use crate::app::error::ApiError;
+    use crate::core::hypergryph::config::GlobalConfig;
+    use crate::core::hypergryph::constants::{Domain, Server};
+    use crate::core::hypergryph::fetch::FetchError;
+
+    #[test]
+    fn a_login_is_refused_before_the_code_is_spent_while_the_domains_are_missing() {
+        let mut cfg = GlobalConfig::new();
+        let err = network_ready(&cfg, Server::EN).expect_err("nothing loaded");
+        assert!(matches!(
+            err,
+            FetchError::DomainNotFound(Server::EN, Domain::U8)
+        ));
+        // And the client is told to come back, not that its code was wrong.
+        assert!(matches!(ApiError::from(err), ApiError::ServiceUnavailable));
+
+        cfg.set_domain(Server::EN, Domain::U8, "https://as.example/u8".to_owned());
+        assert!(network_ready(&cfg, Server::EN).is_ok());
+        assert!(network_ready(&cfg, Server::JP).is_err());
+    }
 }

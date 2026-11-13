@@ -79,18 +79,8 @@ fn yostar_outcome(reply: &serde_json::Value, context: &str) -> Result<(), FetchE
             let msg = reply
                 .get("Msg")
                 .and_then(serde_json::Value::as_str)
-                .filter(|msg| !msg.is_empty())
-                .unwrap_or("Yostar refused the request")
-                .to_owned();
-            tracing::warn!(context, code, msg = %msg, "yostar refused the request");
-            Err(FetchError::Upstream(UpstreamError {
-                status_code: 200,
-                code,
-                error: String::new(),
-                message: String::new(),
-                msg,
-                info: String::new(),
-            }))
+                .unwrap_or_default();
+            Err(yostar_refusal(code, msg, context))
         }
         None => {
             tracing::warn!(context, body = %redacted_body(&reply.to_string()), "yostar reply carries no Code");
@@ -99,6 +89,32 @@ fn yostar_outcome(reply: &serde_json::Value, context: &str) -> Result<(), FetchE
             )))
         }
     }
+}
+
+/// Yostar turning a login code down: wrong, expired, or already spent. Its own
+/// `Msg` for this is a Chinese format string with the verb left in
+/// (`获取授权信息失败,错误代码:%!d(string=3)`), so the client gets ours.
+const CODE_REJECTED: i64 = 100_303;
+
+/// The error for a Yostar reply whose `Code` is not 200, logged as it is made.
+///
+/// It reaches the client as `<message> (<code>)`. The message is Yostar's `Msg`,
+/// except where that says nothing a player can act on.
+fn yostar_refusal(code: i64, msg: &str, context: &str) -> FetchError {
+    tracing::warn!(context, code, msg, "yostar refused the request");
+    let shown = match code {
+        CODE_REJECTED => "The code is wrong, has expired, or was already used",
+        _ if msg.is_empty() => "Yostar refused the request",
+        _ => msg,
+    };
+    FetchError::Upstream(UpstreamError {
+        status_code: 200,
+        code,
+        error: String::new(),
+        message: String::new(),
+        msg: shown.to_owned(),
+        info: String::new(),
+    })
 }
 
 #[derive(Serialize)]
@@ -113,13 +129,36 @@ struct AuthBody<'a> {
 struct AuthFetchResponse {
     code: i64,
     data: Option<AuthFetchData>,
+    #[serde(default)]
     msg: String,
 }
 
+/// `Token` exists ONLY on success. A refusal is `{"Code":100303,"Data":{},...}`:
+/// `Data` is there and empty. Requiring `Token` made serde fail on that first,
+/// so the `Code` check below never ran and every wrong code surfaced as
+/// `yostar::submit_auth: invalid upstream response` (314 times between
+/// 2026-10-15 and 2026-11-13) instead of what Yostar had answered.
 #[derive(Deserialize)]
 #[serde(rename_all = "PascalCase")]
 struct AuthFetchData {
-    token: String,
+    #[serde(default)]
+    token: Option<String>,
+}
+
+/// The email token out of a `yostar/get-auth` reply, or why there is none.
+fn auth_token(reply: AuthFetchResponse) -> Result<String, FetchError> {
+    if reply.code != 200 {
+        return Err(yostar_refusal(
+            reply.code,
+            &reply.msg,
+            "yostar::submit_auth",
+        ));
+    }
+    reply
+        .data
+        .and_then(|data| data.token)
+        .filter(|token| !token.is_empty())
+        .ok_or_else(|| FetchError::ParseError("yostar::submit_auth: no token in the reply".into()))
 }
 
 pub struct AuthResponse {
@@ -158,18 +197,9 @@ pub async fn submit_auth(
 
     let data: AuthFetchResponse = parse_json(response, "yostar::submit_auth").await?;
 
-    if data.code != 200 {
-        return Err(FetchError::ParseError(format!(
-            "Auth failed: {} (code: {})",
-            data.msg, data.code
-        )));
-    }
-
-    let inner = data
-        .data
-        .ok_or(FetchError::ParseError("Missing auth data".into()))?;
-
-    Ok(AuthResponse { token: inner.token })
+    Ok(AuthResponse {
+        token: auth_token(data)?,
+    })
 }
 
 #[derive(Serialize)]
@@ -257,7 +287,25 @@ pub async fn request_token(
     )
     .await?;
 
-    let data: TokenFetchResponse = parse_json(response, "yostar::request_token").await?;
+    // Parsed loosely first for the same reason as `AuthFetchData`: a refusal has
+    // no `UserInfo`, and reading it as the success shape would hide its `Code`.
+    // Only a `Code` that is present and not 200 counts as one. This endpoint's
+    // success reply has not been seen without its fields, so a reply with no
+    // `Code` still goes to the typed parse below, as it always has.
+    let reply: serde_json::Value = parse_json(response, "yostar::request_token").await?;
+    if let Some(code) = reply.get("Code").and_then(serde_json::Value::as_i64)
+        && code != 200
+    {
+        let msg = reply
+            .get("Msg")
+            .and_then(serde_json::Value::as_str)
+            .unwrap_or_default();
+        return Err(yostar_refusal(code, msg, "yostar::request_token"));
+    }
+    let data: TokenFetchResponse = serde_json::from_value(reply).map_err(|e| {
+        tracing::warn!(context = "yostar::request_token", error = %e, "failed to parse response body");
+        FetchError::ParseError("yostar::request_token: invalid upstream response".into())
+    })?;
 
     Ok(TokenResponse {
         uid: data.data.user_info.id,
@@ -723,9 +771,57 @@ where
 mod tests {
     use serde_json::json;
 
-    use super::yostar_outcome;
+    use super::{AuthFetchResponse, auth_token, yostar_outcome};
     use crate::app::error::ApiError;
     use crate::core::hypergryph::fetch::FetchError;
+
+    fn auth_reply(body: &str) -> AuthFetchResponse {
+        serde_json::from_str(body).expect("the reply parses")
+    }
+
+    #[test]
+    fn a_rejected_login_code_says_so() {
+        // Yostar's reply to a wrong code, verbatim from the backend log.
+        let reply = auth_reply(
+            r#"{"Code":100303,"Data":{},"Msg":"获取授权信息失败,错误代码:%!d(string=3)"}"#,
+        );
+        let err = auth_token(reply).expect_err("rejected");
+        let ApiError::BadRequest(shown) = ApiError::from(err) else {
+            panic!("a rejected code is a 400");
+        };
+        assert_eq!(
+            shown,
+            "The code is wrong, has expired, or was already used (100303)"
+        );
+    }
+
+    #[test]
+    fn an_accepted_login_code_yields_its_token() {
+        let reply = auth_reply(r#"{"Code":200,"Data":{"Token":"abc123"},"Msg":"OK"}"#);
+        assert_eq!(auth_token(reply).expect("accepted"), "abc123");
+    }
+
+    #[test]
+    fn other_refusals_keep_yostars_own_message() {
+        let reply = auth_reply(r#"{"Code":100123,"Data":null,"Msg":"Account is banned"}"#);
+        let ApiError::BadRequest(shown) = ApiError::from(auth_token(reply).expect_err("refused"))
+        else {
+            panic!("expected a 400");
+        };
+        assert_eq!(shown, "Account is banned (100123)");
+    }
+
+    #[test]
+    fn a_200_without_a_token_is_not_a_login() {
+        for body in [
+            r#"{"Code":200,"Data":{},"Msg":"OK"}"#,
+            r#"{"Code":200,"Msg":"OK"}"#,
+            r#"{"Code":200,"Data":{"Token":""}}"#,
+        ] {
+            let err = auth_token(auth_reply(body)).expect_err("no token");
+            assert!(matches!(err, FetchError::ParseError(_)), "{body}: {err:?}");
+        }
+    }
 
     #[test]
     fn code_200_is_the_only_success() {
@@ -737,7 +833,7 @@ mod tests {
     #[test]
     fn a_refusal_carries_yostar_code_and_message_to_the_client() {
         // The shape Yostar answers a rejected request with (HTTP 200).
-        let refused = json!({ "Code": 100302, "Data": {}, "Msg": "Requests are too frequent" });
+        let refused = json!({ "Code": 100_302, "Data": {}, "Msg": "Requests are too frequent" });
         let err = yostar_outcome(&refused, "yostar::send_code").expect_err("refused");
         let FetchError::Upstream(upstream) = &err else {
             panic!("expected Upstream, got {err:?}");
@@ -754,14 +850,14 @@ mod tests {
     #[test]
     fn a_refusal_without_a_message_still_says_something() {
         for refused in [
-            json!({ "Code": 100303 }),
-            json!({ "Code": 100303, "Msg": "" }),
+            json!({ "Code": 100_999 }),
+            json!({ "Code": 100_999, "Msg": "" }),
         ] {
             let err = yostar_outcome(&refused, "yostar::send_code").expect_err("refused");
             let ApiError::BadRequest(shown) = ApiError::from(err) else {
                 panic!("expected a 400");
             };
-            assert_eq!(shown, "Yostar refused the request (100303)");
+            assert_eq!(shown, "Yostar refused the request (100999)");
         }
     }
 
