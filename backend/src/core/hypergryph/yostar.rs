@@ -96,6 +96,11 @@ fn yostar_outcome(reply: &serde_json::Value, context: &str) -> Result<(), FetchE
 /// (`获取授权信息失败,错误代码:%!d(string=3)`), so the client gets ours.
 const CODE_REJECTED: i64 = 100_303;
 
+/// Yostar declining to email another code to an address it has sent too many
+/// to (`邮件发送频率上限,错误代码:1`, "email sending frequency limit"). Seen in
+/// production within a minute of `send_code` starting to read refusals.
+const CODE_EMAIL_LIMIT: i64 = 100_302;
+
 /// The error for a Yostar reply whose `Code` is not 200, logged as it is made.
 ///
 /// It reaches the client as `<message> (<code>)`. The message is Yostar's `Msg`,
@@ -104,6 +109,9 @@ fn yostar_refusal(code: i64, msg: &str, context: &str) -> FetchError {
     tracing::warn!(context, code, msg, "yostar refused the request");
     let shown = match code {
         CODE_REJECTED => "The code is wrong, has expired, or was already used",
+        CODE_EMAIL_LIMIT => {
+            "Yostar has emailed this address too many codes recently. Wait a while before requesting another"
+        }
         _ if msg.is_empty() => "Yostar refused the request",
         _ => msg,
     };
@@ -833,18 +841,33 @@ mod tests {
     #[test]
     fn a_refusal_carries_yostar_code_and_message_to_the_client() {
         // The shape Yostar answers a rejected request with (HTTP 200).
-        let refused = json!({ "Code": 100_302, "Data": {}, "Msg": "Requests are too frequent" });
+        let refused = json!({ "Code": 100_555, "Data": {}, "Msg": "Requests are too frequent" });
         let err = yostar_outcome(&refused, "yostar::send_code").expect_err("refused");
         let FetchError::Upstream(upstream) = &err else {
             panic!("expected Upstream, got {err:?}");
         };
-        assert_eq!(upstream.code, 100_302);
+        assert_eq!(upstream.code, 100_555);
         assert_eq!(upstream.msg, "Requests are too frequent");
 
         let ApiError::BadRequest(shown) = ApiError::from(err) else {
             panic!("a refusal is the caller's to see, as a 400");
         };
-        assert_eq!(shown, "Requests are too frequent (100302)");
+        assert_eq!(shown, "Requests are too frequent (100555)");
+    }
+
+    #[test]
+    fn the_email_limit_is_explained_in_english() {
+        // Yostar's reply to a send-code it would not honour, verbatim from the
+        // backend log of 2026-11-13.
+        let refused = json!({ "Code": 100_302, "Data": {}, "Msg": "邮件发送频率上限,错误代码:1" });
+        let err = yostar_outcome(&refused, "yostar::send_code").expect_err("refused");
+        let ApiError::BadRequest(shown) = ApiError::from(err) else {
+            panic!("expected a 400");
+        };
+        assert_eq!(
+            shown,
+            "Yostar has emailed this address too many codes recently. Wait a while before requesting another (100302)"
+        );
     }
 
     #[test]
