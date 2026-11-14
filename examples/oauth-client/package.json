@@ -1,0 +1,12 @@
+{
+    "name": "myrtle-oauth-client-example",
+    "private": true,
+    "type": "module",
+    "description": "A complete \"Sign in with myrtle.moe\" OAuth 2.0 client in one dependency-free file.",
+    "scripts": {
+        "start": "node server.mjs"
+    },
+    "engines": {
+        "node": ">=18"
+    }
+}
