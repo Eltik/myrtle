@@ -134,6 +134,7 @@ const MIGRATIONS: &[(&str, &str)] = &[
         "v045_sandbox_keep_unloaded_topics",
         include_str!("v045_sandbox_keep_unloaded_topics.sql"),
     ),
+    ("v046_oauth", include_str!("v046_oauth.sql")),
 ];
 
 pub async fn run_migrations(pool: &PgPool) -> Result<(), sqlx::Error> {

@@ -72,6 +72,12 @@ pub const TABLES: &[&str] = &[
     "gamedata_overrides",
     "gamedata_sightings",
     "release_overrides",
+    // OAuth (v046). The secret columns hold SHA-256 hashes, so an export
+    // carries nothing that could be presented as a credential. `oauth_codes`
+    // is not here: a code lives five minutes.
+    "oauth_apps",
+    "oauth_grants",
+    "oauth_tokens",
     "operator_ownership_stats",
     "operator_skill_choice_stats",
     "operator_mastery_stats",
@@ -186,7 +192,10 @@ mod tests {
     /// `_migrations` is the migration runner's own bookkeeping; `--migrate`
     /// rebuilds it, and restoring it would mark migrations applied that the
     /// target schema never ran.
-    const NOT_EXPORTED: &[&str] = &["_migrations"];
+    ///
+    /// `oauth_codes` holds authorization codes that expire five minutes after
+    /// they are minted: by the time an export is restored every row is dead.
+    const NOT_EXPORTED: &[&str] = &["_migrations", "oauth_codes"];
 
     #[test]
     fn every_migrated_table_is_exported() {

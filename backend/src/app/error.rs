@@ -208,3 +208,138 @@ impl From<FetchError> for ApiError {
         }
     }
 }
+
+/// A failure of one of the OAuth protocol endpoints (`/oauth/token`,
+/// `/oauth/revoke`, `/oauth/userinfo`), answered in the format RFC 6749 5.2
+/// gives instead of [`ErrorBody`]: the caller is an OAuth client library, and
+/// `{"error": "invalid_grant"}` is the shape every one of them reads.
+///
+/// The site's own OAuth routes (registering an application, the consent page)
+/// are called by this site's web client and keep [`ApiError`].
+#[derive(Debug)]
+pub struct OAuthError {
+    status: StatusCode,
+    error: &'static str,
+    description: String,
+    /// The `WWW-Authenticate` challenge a 401 carries.
+    challenge: Option<&'static str>,
+}
+
+impl OAuthError {
+    fn new(status: StatusCode, error: &'static str, description: impl Into<String>) -> Self {
+        Self {
+            status,
+            error,
+            description: description.into(),
+            challenge: None,
+        }
+    }
+
+    /// A parameter is missing, repeated or malformed.
+    pub fn invalid_request(description: impl Into<String>) -> Self {
+        Self::new(StatusCode::BAD_REQUEST, "invalid_request", description)
+    }
+
+    /// The application did not authenticate: unknown id or wrong secret. The
+    /// two are not told apart, so a response never confirms that an id exists.
+    pub fn invalid_client() -> Self {
+        Self {
+            challenge: Some(r#"Basic realm="myrtle.moe""#),
+            ..Self::new(
+                StatusCode::UNAUTHORIZED,
+                "invalid_client",
+                "client authentication failed: unknown client_id or wrong client_secret",
+            )
+        }
+    }
+
+    /// The code or refresh token is invalid, expired, spent, or was issued to
+    /// another application or for another redirect URI.
+    pub fn invalid_grant(description: impl Into<String>) -> Self {
+        Self::new(StatusCode::BAD_REQUEST, "invalid_grant", description)
+    }
+
+    pub fn unsupported_grant_type() -> Self {
+        Self::new(
+            StatusCode::BAD_REQUEST,
+            "unsupported_grant_type",
+            "grant_type must be authorization_code or refresh_token",
+        )
+    }
+
+    pub fn invalid_scope(description: impl Into<String>) -> Self {
+        Self::new(StatusCode::BAD_REQUEST, "invalid_scope", description)
+    }
+
+    /// The access token is missing, unknown, expired or revoked (RFC 6750 3.1).
+    pub fn invalid_token() -> Self {
+        Self {
+            challenge: Some(r#"Bearer error="invalid_token""#),
+            ..Self::new(
+                StatusCode::UNAUTHORIZED,
+                "invalid_token",
+                "the access token is missing, expired or revoked",
+            )
+        }
+    }
+
+    /// The access token is valid but was not granted what this endpoint needs.
+    pub fn insufficient_scope(scope: &str) -> Self {
+        Self::new(
+            StatusCode::FORBIDDEN,
+            "insufficient_scope",
+            format!("the access token lacks the {scope} scope"),
+        )
+    }
+
+    pub const fn status(&self) -> StatusCode {
+        self.status
+    }
+
+    /// The RFC 6749 error code, e.g. `invalid_grant`.
+    pub const fn code(&self) -> &'static str {
+        self.error
+    }
+}
+
+impl IntoResponse for OAuthError {
+    fn into_response(self) -> Response {
+        let body = crate::database::models::oauth::OAuthErrorBody {
+            error: self.error,
+            error_description: self.description,
+        };
+        let mut response = (self.status, axum::Json(body)).into_response();
+        let headers = response.headers_mut();
+        // RFC 6749 5.1: nothing from these endpoints may be stored by a cache.
+        headers.insert(
+            axum::http::header::CACHE_CONTROL,
+            axum::http::HeaderValue::from_static("no-store"),
+        );
+        if let Some(challenge) = self.challenge {
+            headers.insert(
+                axum::http::header::WWW_AUTHENTICATE,
+                axum::http::HeaderValue::from_static(challenge),
+            );
+        }
+        response
+    }
+}
+
+impl From<sqlx::Error> for OAuthError {
+    fn from(e: sqlx::Error) -> Self {
+        if matches!(e, sqlx::Error::PoolTimedOut) {
+            tracing::warn!("database pool exhausted; shedding OAuth request");
+            return Self::new(
+                StatusCode::SERVICE_UNAVAILABLE,
+                "temporarily_unavailable",
+                "the server is busy; retry shortly",
+            );
+        }
+        tracing::error!(error = %e, "OAuth endpoint failed");
+        Self::new(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "server_error",
+            "unexpected server-side failure",
+        )
+    }
+}

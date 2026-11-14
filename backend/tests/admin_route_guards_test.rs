@@ -166,6 +166,14 @@ const GUARDED: &[Guarded] = &[
         Some(r#"{"entries":[]}"#),
     ),
     row(
+        "DELETE",
+        "/api/admin/oauth/apps/{id}",
+        Gate::SuperAdmin,
+        Doc::Matches,
+        "/api/admin/oauth/apps/00000000-0000-4000-8000-000000000003",
+        None,
+    ),
+    row(
         "GET",
         "/api/release/overrides",
         Gate::SuperAdmin,

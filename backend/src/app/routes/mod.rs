@@ -210,6 +210,7 @@ pub mod level;
 pub mod lookback;
 pub mod maintenance;
 pub mod music;
+pub mod oauth;
 pub mod operator_notes;
 pub mod operators;
 pub mod planner;
@@ -447,5 +448,6 @@ pub fn router() -> OpenApiRouter<AppState> {
         .merge(grids::router())
         .merge(squads::router())
         .merge(music::router())
+        .merge(oauth::router())
         .merge(i18n::router())
 }
