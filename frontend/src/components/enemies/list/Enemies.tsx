@@ -127,6 +127,9 @@ export function EnemiesList() {
     // Paging is a deliberate jump, so it puts the top of the new page in view;
     // a filter change only rewinds the counter and leaves the scroll alone.
     const handlePageChange = useCallback((next: number) => goToPage(next, true), [goToPage]);
+    // Page one is the bare path, as `validateSearch` keeps it: the param only
+    // appears once you have paged somewhere else.
+    const pageHref = useCallback((target: number) => (target > 1 ? `/enemies?page=${target}` : "/enemies"), []);
     const resetPage = useCallback(() => goToPage(1, false), [goToPage]);
 
     const { filters, filteredEnemies, setSearchQuery, setLevels, setDamageTypes, setAttackTypes, setRaces, setImmunities, setAppearsIn, setSortBy, setSortOrder, clearFilters, activeFilterCount } = useEnemyFilters(enriched, locationIndex, resetPage);
@@ -361,7 +364,7 @@ export function EnemiesList() {
                     </div>
                 )}
 
-                <Pagination currentPage={page} totalPages={totalPages} onPageChange={handlePageChange} />
+                <Pagination currentPage={page} totalPages={totalPages} onPageChange={handlePageChange} hrefForPage={pageHref} />
             </section>
 
             <DynamicExportDialog open={exportOpen} onOpenChange={setExportOpen} schema={enemiesExportSchema} allRows={enriched} filteredRows={filteredEnemies} pageRows={paginated} title={t("list.export.dialogTitle")} />
