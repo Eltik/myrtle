@@ -1,6 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { LogInIcon, PaletteIcon, ShieldIcon, TriangleAlertIcon, UserRoundIcon } from "lucide-react";
+import { BlocksIcon, LogInIcon, PaletteIcon, ShieldIcon, TriangleAlertIcon, UserRoundIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "#/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "#/components/ui/card";
@@ -17,6 +17,7 @@ import { forgetSession } from "#/lib/root-context";
 import type { IUserProfile } from "#/types/user";
 import { AccountPanel } from "./AccountPanel";
 import { AppearancePanel } from "./AppearancePanel";
+import { AppsPanel } from "./AppsPanel";
 import { DangerPanel } from "./DangerPanel";
 import { PrivacyPanel } from "./PrivacyPanel";
 import type { messages } from "./SettingsPage.messages";
@@ -31,6 +32,7 @@ const NAV = [
     { id: "account" as const, labelKey: "nav.account" as const, Icon: UserRoundIcon },
     { id: "appearance" as const, labelKey: "nav.appearance" as const, Icon: PaletteIcon },
     { id: "privacy" as const, labelKey: "nav.privacy" as const, Icon: ShieldIcon },
+    { id: "apps" as const, labelKey: "nav.apps" as const, Icon: BlocksIcon },
     { id: "danger" as const, labelKey: "nav.danger" as const, Icon: TriangleAlertIcon },
 ];
 
@@ -144,6 +146,7 @@ export function SettingsPage({ user }: { user: IUserProfile | null }) {
             ) : null}
             {active === "appearance" && <AppearancePanel />}
             {user && active === "privacy" && <PrivacyPanel settings={settings} onChange={handleSettingsChange} saving={settingsMutation.isPending} />}
+            {user && active === "apps" && <AppsPanel userId={user.id} />}
             {user && active === "danger" && <DangerPanel onDelete={() => deleteMutation.mutate()} deleting={deleteMutation.isPending} errorMessage={deleteMutation.error ? describeError(deleteMutation.error) : null} onDialogClose={() => deleteMutation.reset()} />}
         </SettingsShell>
     );

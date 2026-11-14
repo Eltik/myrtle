@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-11-03T23:03:12.883Z",
+    "generatedAt": "2026-11-14T15:23:26.899Z",
     "entries": [
         {
             "key": "admin.home.access.everyList",
@@ -18999,6 +18999,20 @@
             "placeholders": []
         },
         {
+            "key": "meta.oauthAuthorize.description",
+            "namespace": "meta",
+            "source_text": "Choose whether another site may confirm who you are on myrtle.moe.",
+            "description": "Meta description of the consent page.",
+            "placeholders": []
+        },
+        {
+            "key": "meta.oauthAuthorize.title",
+            "namespace": "meta",
+            "source_text": "Authorize an application",
+            "description": "Document title of the consent page another site sends a player to, to confirm who they are (OAuth).",
+            "placeholders": []
+        },
+        {
             "key": "meta.og.archives.subtitle",
             "namespace": "meta",
             "source_text": "Operator files, records and voice lines from the Rhodes Island archives.",
@@ -21144,6 +21158,196 @@
             "namespace": "nav",
             "source_text": "User avatar",
             "description": "Alt text on the signed-in visitor's avatar image in the header.",
+            "placeholders": []
+        },
+        {
+            "key": "oauth.authorize.account",
+            "namespace": "oauth",
+            "source_text": "Signed in as {name}",
+            "description": "Row on the consent card naming the account that would be shared. {name} is the visitor's in-game name with its # tag.",
+            "placeholders": [
+                "name"
+            ]
+        },
+        {
+            "key": "oauth.authorize.again",
+            "namespace": "oauth",
+            "source_text": "You've authorized this before.",
+            "description": "Note on the consent card when the visitor already authorized this application earlier.",
+            "placeholders": []
+        },
+        {
+            "key": "oauth.authorize.approve",
+            "namespace": "oauth",
+            "source_text": "Authorize",
+            "description": "Primary button on the consent card: allow the application to learn who the visitor is.",
+            "placeholders": []
+        },
+        {
+            "key": "oauth.authorize.by",
+            "namespace": "oauth",
+            "source_text": "Registered by {owner}. Not made by or affiliated with myrtle.moe.",
+            "description": "Line under the consent heading. {owner} is the in-game name of the player who registered the application.",
+            "placeholders": [
+                "owner"
+            ]
+        },
+        {
+            "key": "oauth.authorize.cannot.change",
+            "namespace": "oauth",
+            "source_text": "Change your settings or your data",
+            "description": "One thing the application cannot do.",
+            "placeholders": []
+        },
+        {
+            "key": "oauth.authorize.cannot.game",
+            "namespace": "oauth",
+            "source_text": "Reach your game account or its login",
+            "description": "One thing the application cannot do: it gets no access to the Arknights account itself.",
+            "placeholders": []
+        },
+        {
+            "key": "oauth.authorize.cannot.private",
+            "namespace": "oauth",
+            "source_text": "See anything your profile keeps private",
+            "description": "One thing the application cannot do.",
+            "placeholders": []
+        },
+        {
+            "key": "oauth.authorize.decideFailed",
+            "namespace": "oauth",
+            "source_text": "Couldn't finish",
+            "description": "Error toast title when sending the visitor's answer failed. The body explains why.",
+            "placeholders": []
+        },
+        {
+            "key": "oauth.authorize.deny",
+            "namespace": "oauth",
+            "source_text": "Cancel",
+            "description": "Secondary button on the consent card: refuse and go back to the other site.",
+            "placeholders": []
+        },
+        {
+            "key": "oauth.authorize.failed.retry",
+            "namespace": "oauth",
+            "source_text": "Try again",
+            "description": "Button under that error that checks the request again.",
+            "placeholders": []
+        },
+        {
+            "key": "oauth.authorize.failed.title",
+            "namespace": "oauth",
+            "source_text": "Couldn't check the request",
+            "description": "Card title on the consent page when checking the request failed for a reason on our side (offline, server error). The reason follows.",
+            "placeholders": []
+        },
+        {
+            "key": "oauth.authorize.invalid.body",
+            "namespace": "oauth",
+            "source_text": "The site that sent you here made a request myrtle.moe can't accept, so nothing was shared. Go back and try again. If it keeps happening, its developer needs the reason below.",
+            "description": "Card body under that title. The technical reason follows in a monospace box.",
+            "placeholders": []
+        },
+        {
+            "key": "oauth.authorize.invalid.title",
+            "namespace": "oauth",
+            "source_text": "This sign-in link doesn't work",
+            "description": "Card title on the consent page when the other site's request cannot be accepted (unknown application, or a return address it never registered).",
+            "placeholders": []
+        },
+        {
+            "key": "oauth.authorize.loading",
+            "namespace": "oauth",
+            "source_text": "Checking the request…",
+            "description": "Status line on the consent page while the request from the other site is being checked.",
+            "placeholders": []
+        },
+        {
+            "key": "oauth.authorize.redirectNote",
+            "namespace": "oauth",
+            "source_text": "You'll be sent to {host} either way. Remove access any time in Settings, under Applications.",
+            "description": "Footnote on the consent card. {host} is the other site's address in monospace; move it wherever the sentence needs it.",
+            "placeholders": [
+                "host"
+            ]
+        },
+        {
+            "key": "oauth.authorize.redirecting",
+            "namespace": "oauth",
+            "source_text": "Sending you back…",
+            "description": "Status line on the consent page while the browser is being sent back to the other site.",
+            "placeholders": []
+        },
+        {
+            "key": "oauth.authorize.scope.identify.account",
+            "namespace": "oauth",
+            "source_text": "Your in-game UID and server",
+            "description": "One thing the application learns. UID is the in-game account number; server is the game region (EN, JP, ...).",
+            "placeholders": []
+        },
+        {
+            "key": "oauth.authorize.scope.identify.avatar",
+            "namespace": "oauth",
+            "source_text": "Your avatar",
+            "description": "One thing the application learns: the visitor's in-game profile picture.",
+            "placeholders": []
+        },
+        {
+            "key": "oauth.authorize.scope.identify.name",
+            "namespace": "oauth",
+            "source_text": "Your nickname and its # number",
+            "description": "One thing the application learns: the visitor's in-game name and the digits after the #.",
+            "placeholders": []
+        },
+        {
+            "key": "oauth.authorize.signIn.action",
+            "namespace": "oauth",
+            "source_text": "Sign in",
+            "description": "Button on the signed-out consent page that opens the sign-in dialog.",
+            "placeholders": []
+        },
+        {
+            "key": "oauth.authorize.signIn.body",
+            "namespace": "oauth",
+            "source_text": "Another site is asking to confirm who you are on myrtle.moe. Sign in first, then you decide whether to allow it.",
+            "description": "Card body on the consent page when the visitor is signed out.",
+            "placeholders": []
+        },
+        {
+            "key": "oauth.authorize.signIn.title",
+            "namespace": "oauth",
+            "source_text": "Sign in to continue",
+            "description": "Card title on the OAuth consent page when the visitor is signed out. Another website sent them here to confirm who they are.",
+            "placeholders": []
+        },
+        {
+            "key": "oauth.authorize.switch",
+            "namespace": "oauth",
+            "source_text": "Not you? Sign out",
+            "description": "Link button next to the signed-in account on the consent card. Signs out so another account can sign in.",
+            "placeholders": []
+        },
+        {
+            "key": "oauth.authorize.title",
+            "namespace": "oauth",
+            "source_text": "{app} wants to know who you are",
+            "description": "Heading of the consent card. {app} is the name the other site registered, shown as written.",
+            "placeholders": [
+                "app"
+            ]
+        },
+        {
+            "key": "oauth.authorize.willSee",
+            "namespace": "oauth",
+            "source_text": "It will see",
+            "description": "Label over the list of what the application learns. 'It' is the application.",
+            "placeholders": []
+        },
+        {
+            "key": "oauth.authorize.wontSee",
+            "namespace": "oauth",
+            "source_text": "It won't be able to",
+            "description": "Label over the list of what the application cannot do. 'It' is the application.",
             "placeholders": []
         },
         {
@@ -25738,6 +25942,461 @@
             "placeholders": []
         },
         {
+            "key": "settings.apps.authorized.by",
+            "namespace": "settings",
+            "source_text": "Registered by {owner}",
+            "description": "Line under an application's name. {owner} is the in-game name of the player who registered it.",
+            "placeholders": [
+                "owner"
+            ]
+        },
+        {
+            "key": "settings.apps.authorized.desc",
+            "namespace": "settings",
+            "source_text": "Sites you signed in to with your myrtle.moe account. Each can see who you are, and nothing else.",
+            "description": "Card description under that title.",
+            "placeholders": []
+        },
+        {
+            "key": "settings.apps.authorized.empty",
+            "namespace": "settings",
+            "source_text": "Nothing here yet. A site you sign in to with myrtle.moe shows up in this list.",
+            "description": "Empty state of the authorized applications list.",
+            "placeholders": []
+        },
+        {
+            "key": "settings.apps.authorized.lastUsed",
+            "namespace": "settings",
+            "source_text": "last used {when}",
+            "description": "When an application last used its access, after the authorized date and a separator. {when} is a relative time such as '2 d ago'.",
+            "placeholders": [
+                "when"
+            ]
+        },
+        {
+            "key": "settings.apps.authorized.loadFailed",
+            "namespace": "settings",
+            "source_text": "Couldn't load your authorized applications.",
+            "description": "Error line when the authorized applications list failed to load. A retry button follows.",
+            "placeholders": []
+        },
+        {
+            "key": "settings.apps.authorized.revoke",
+            "namespace": "settings",
+            "source_text": "Remove access",
+            "description": "Button on an authorized application: withdraw the visitor's authorization so the site can no longer see who they are.",
+            "placeholders": []
+        },
+        {
+            "key": "settings.apps.authorized.revokeLabel",
+            "namespace": "settings",
+            "source_text": "Remove access for {app}",
+            "description": "Accessible name of that button. {app} is the application's name.",
+            "placeholders": [
+                "app"
+            ]
+        },
+        {
+            "key": "settings.apps.authorized.since",
+            "namespace": "settings",
+            "source_text": "Authorized {date}",
+            "description": "When the visitor authorized an application. {date} is a calendar date.",
+            "placeholders": [
+                "date"
+            ]
+        },
+        {
+            "key": "settings.apps.authorized.title",
+            "namespace": "settings",
+            "source_text": "Authorized applications",
+            "description": "Card title in Settings over the list of other sites the visitor has signed in to with their myrtle.moe account (OAuth).",
+            "placeholders": []
+        },
+        {
+            "key": "settings.apps.copied",
+            "namespace": "settings",
+            "source_text": "Copied",
+            "description": "Label the Copy button shows for a moment after copying.",
+            "placeholders": []
+        },
+        {
+            "key": "settings.apps.copy",
+            "namespace": "settings",
+            "source_text": "Copy",
+            "description": "Button that copies the value next to it (a client ID or a client secret) to the clipboard.",
+            "placeholders": []
+        },
+        {
+            "key": "settings.apps.copyLabel",
+            "namespace": "settings",
+            "source_text": "Copy {what}",
+            "description": "Accessible name of a Copy button. {what} is the label of the value it copies, such as 'Client ID'.",
+            "placeholders": [
+                "what"
+            ]
+        },
+        {
+            "key": "settings.apps.delete.body",
+            "namespace": "settings",
+            "source_text": "Everyone who signed in with it is signed out, and its client ID and secret stop working. This can't be undone.",
+            "description": "Body of that confirmation.",
+            "placeholders": []
+        },
+        {
+            "key": "settings.apps.delete.confirm",
+            "namespace": "settings",
+            "source_text": "Delete application",
+            "description": "Confirm button of that confirmation.",
+            "placeholders": []
+        },
+        {
+            "key": "settings.apps.delete.title",
+            "namespace": "settings",
+            "source_text": "Delete {app}?",
+            "description": "Title of the confirmation before deleting an application. {app} is its name.",
+            "placeholders": [
+                "app"
+            ]
+        },
+        {
+            "key": "settings.apps.dev.clientId",
+            "namespace": "settings",
+            "source_text": "Client ID",
+            "description": "Label of an application's public identifier, an OAuth term developers know as 'client ID'.",
+            "placeholders": []
+        },
+        {
+            "key": "settings.apps.dev.delete",
+            "namespace": "settings",
+            "source_text": "Delete",
+            "description": "Button on one of the visitor's applications: delete it.",
+            "placeholders": []
+        },
+        {
+            "key": "settings.apps.dev.desc",
+            "namespace": "settings",
+            "source_text": "Let people sign in to your own site with their myrtle.moe account. {docs} has the endpoints and a working example.",
+            "description": "Card description under that title. {docs} is a link whose text is apps.dev.docsLink; move it wherever the sentence needs it.",
+            "placeholders": [
+                "docs"
+            ]
+        },
+        {
+            "key": "settings.apps.dev.docsLink",
+            "namespace": "settings",
+            "source_text": "The developer guide",
+            "description": "Link text substituted into apps.dev.desc as {docs}. It opens the OAuth guide on GitHub.",
+            "placeholders": []
+        },
+        {
+            "key": "settings.apps.dev.edit",
+            "namespace": "settings",
+            "source_text": "Edit",
+            "description": "Button on one of the visitor's applications: change its name, description and redirect URIs.",
+            "placeholders": []
+        },
+        {
+            "key": "settings.apps.dev.empty",
+            "namespace": "settings",
+            "source_text": "You haven't registered an application.",
+            "description": "Empty state of the visitor's own applications list.",
+            "placeholders": []
+        },
+        {
+            "key": "settings.apps.dev.limit",
+            "namespace": "settings",
+            "source_text": "You've reached the limit of {max} applications.",
+            "description": "Note shown in place of the New application button once the account has the most it may register.",
+            "placeholders": [
+                "max"
+            ]
+        },
+        {
+            "key": "settings.apps.dev.loadFailed",
+            "namespace": "settings",
+            "source_text": "Couldn't load your applications.",
+            "description": "Error line when the visitor's own applications failed to load. A retry button follows.",
+            "placeholders": []
+        },
+        {
+            "key": "settings.apps.dev.new",
+            "namespace": "settings",
+            "source_text": "New application",
+            "description": "Button that opens the form to register an OAuth application.",
+            "placeholders": []
+        },
+        {
+            "key": "settings.apps.dev.redirectUris",
+            "namespace": "settings",
+            "source_text": "Redirect URIs",
+            "description": "Label of the list of addresses an application may send players back to, an OAuth term.",
+            "placeholders": []
+        },
+        {
+            "key": "settings.apps.dev.rotate",
+            "namespace": "settings",
+            "source_text": "New secret",
+            "description": "Button on one of the visitor's applications: replace its client secret with a new one.",
+            "placeholders": []
+        },
+        {
+            "key": "settings.apps.dev.title",
+            "namespace": "settings",
+            "source_text": "Your applications",
+            "description": "Card title in Settings over the OAuth applications the visitor registered as a developer.",
+            "placeholders": []
+        },
+        {
+            "key": "settings.apps.dev.users",
+            "namespace": "settings",
+            "source_text": "{count, plural, =0 {No one has authorized it yet} one {# person has authorized it} other {# people have authorized it}}",
+            "description": "How many players currently have this application authorized.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "settings.apps.form.cancel",
+            "namespace": "settings",
+            "source_text": "Cancel",
+            "description": "Button that closes the application form without saving.",
+            "placeholders": []
+        },
+        {
+            "key": "settings.apps.form.create",
+            "namespace": "settings",
+            "source_text": "Create application",
+            "description": "Submit button of the form that registers an application.",
+            "placeholders": []
+        },
+        {
+            "key": "settings.apps.form.createTitle",
+            "namespace": "settings",
+            "source_text": "New application",
+            "description": "Title of the dialog that registers an OAuth application.",
+            "placeholders": []
+        },
+        {
+            "key": "settings.apps.form.description",
+            "namespace": "settings",
+            "source_text": "Description",
+            "description": "Label of the application description field. Optional.",
+            "placeholders": []
+        },
+        {
+            "key": "settings.apps.form.descriptionHint",
+            "namespace": "settings",
+            "source_text": "Optional. One line about what the site is.",
+            "description": "Hint under the application description field.",
+            "placeholders": []
+        },
+        {
+            "key": "settings.apps.form.editTitle",
+            "namespace": "settings",
+            "source_text": "Edit application",
+            "description": "Title of the dialog that edits an OAuth application.",
+            "placeholders": []
+        },
+        {
+            "key": "settings.apps.form.intro",
+            "namespace": "settings",
+            "source_text": "People see the name and description, and your in-game name, when they are asked to authorize it.",
+            "description": "Intro line of the application form dialog.",
+            "placeholders": []
+        },
+        {
+            "key": "settings.apps.form.name",
+            "namespace": "settings",
+            "source_text": "Name",
+            "description": "Label of the application name field.",
+            "placeholders": []
+        },
+        {
+            "key": "settings.apps.form.namePlaceholder",
+            "namespace": "settings",
+            "source_text": "My site",
+            "description": "Placeholder of the application name field.",
+            "placeholders": []
+        },
+        {
+            "key": "settings.apps.form.nameRequired",
+            "namespace": "settings",
+            "source_text": "Give the application a name.",
+            "description": "Validation message when the application name is empty.",
+            "placeholders": []
+        },
+        {
+            "key": "settings.apps.form.redirectHint",
+            "namespace": "settings",
+            "source_text": "One per line, up to {max}. Each must be an https address; http is allowed for localhost. A sign-in request has to name one of these exactly.",
+            "description": "Hint under the redirect URIs field. {max} is a number.",
+            "placeholders": [
+                "max"
+            ]
+        },
+        {
+            "key": "settings.apps.form.redirectRequired",
+            "namespace": "settings",
+            "source_text": "Add at least one redirect URI.",
+            "description": "Validation message when no redirect URI was entered.",
+            "placeholders": []
+        },
+        {
+            "key": "settings.apps.form.redirectUris",
+            "namespace": "settings",
+            "source_text": "Redirect URIs",
+            "description": "Label of the redirect URIs field, an OAuth term: the addresses players may be sent back to.",
+            "placeholders": []
+        },
+        {
+            "key": "settings.apps.form.save",
+            "namespace": "settings",
+            "source_text": "Save changes",
+            "description": "Submit button of the form that edits an application.",
+            "placeholders": []
+        },
+        {
+            "key": "settings.apps.retry",
+            "namespace": "settings",
+            "source_text": "Try again",
+            "description": "Button that reloads a list that failed to load.",
+            "placeholders": []
+        },
+        {
+            "key": "settings.apps.rotate.body",
+            "namespace": "settings",
+            "source_text": "{app} stops being able to sign people in until you put the new secret on your server. People who already signed in stay signed in.",
+            "description": "Body of that confirmation. {app} is the application's name.",
+            "placeholders": [
+                "app"
+            ]
+        },
+        {
+            "key": "settings.apps.rotate.confirm",
+            "namespace": "settings",
+            "source_text": "Replace secret",
+            "description": "Confirm button of that confirmation.",
+            "placeholders": []
+        },
+        {
+            "key": "settings.apps.rotate.title",
+            "namespace": "settings",
+            "source_text": "Replace the client secret?",
+            "description": "Title of the confirmation before replacing an application's client secret.",
+            "placeholders": []
+        },
+        {
+            "key": "settings.apps.secret.body",
+            "namespace": "settings",
+            "source_text": "Copy the client secret now and keep it on your server. It is stored only as a hash, so this is the one time it can be shown.",
+            "description": "Body of the dialog that reveals a client secret. 'Hash' is the one-way fingerprint of the secret.",
+            "placeholders": []
+        },
+        {
+            "key": "settings.apps.secret.createdTitle",
+            "namespace": "settings",
+            "source_text": "Application created",
+            "description": "Title of the dialog shown right after registering an application, which reveals its credentials.",
+            "placeholders": []
+        },
+        {
+            "key": "settings.apps.secret.done",
+            "namespace": "settings",
+            "source_text": "I've saved it",
+            "description": "Button that closes the dialog revealing a client secret.",
+            "placeholders": []
+        },
+        {
+            "key": "settings.apps.secret.label",
+            "namespace": "settings",
+            "source_text": "Client secret",
+            "description": "Label of an application's secret credential, an OAuth term developers know as 'client secret'.",
+            "placeholders": []
+        },
+        {
+            "key": "settings.apps.secret.rotatedNote",
+            "namespace": "settings",
+            "source_text": "The previous secret has stopped working. People who already signed in stay signed in.",
+            "description": "Extra line in that dialog after a secret was replaced.",
+            "placeholders": []
+        },
+        {
+            "key": "settings.apps.secret.rotatedTitle",
+            "namespace": "settings",
+            "source_text": "New client secret",
+            "description": "Title of the dialog shown right after replacing an application's client secret.",
+            "placeholders": []
+        },
+        {
+            "key": "settings.apps.toast.deleteFailed.title",
+            "namespace": "settings",
+            "source_text": "Couldn't delete the application",
+            "description": "Error toast title when deleting an application failed. The body explains why.",
+            "placeholders": []
+        },
+        {
+            "key": "settings.apps.toast.deleted.body",
+            "namespace": "settings",
+            "source_text": "{app} and its access are gone.",
+            "description": "Success toast body after deleting an application. {app} is its name.",
+            "placeholders": [
+                "app"
+            ]
+        },
+        {
+            "key": "settings.apps.toast.deleted.title",
+            "namespace": "settings",
+            "source_text": "Application deleted",
+            "description": "Success toast title after deleting an application.",
+            "placeholders": []
+        },
+        {
+            "key": "settings.apps.toast.revokeFailed.title",
+            "namespace": "settings",
+            "source_text": "Couldn't remove access",
+            "description": "Error toast title when withdrawing an authorization failed. The body explains why.",
+            "placeholders": []
+        },
+        {
+            "key": "settings.apps.toast.revoked.body",
+            "namespace": "settings",
+            "source_text": "{app} can no longer see who you are.",
+            "description": "Success toast body after withdrawing an application's authorization. {app} is its name.",
+            "placeholders": [
+                "app"
+            ]
+        },
+        {
+            "key": "settings.apps.toast.revoked.title",
+            "namespace": "settings",
+            "source_text": "Access removed",
+            "description": "Success toast title after withdrawing an application's authorization.",
+            "placeholders": []
+        },
+        {
+            "key": "settings.apps.toast.rotateFailed.title",
+            "namespace": "settings",
+            "source_text": "Couldn't replace the secret",
+            "description": "Error toast title when replacing a client secret failed. The body explains why.",
+            "placeholders": []
+        },
+        {
+            "key": "settings.apps.toast.saved.body",
+            "namespace": "settings",
+            "source_text": "{app} is up to date.",
+            "description": "Success toast body after editing an application. {app} is its name.",
+            "placeholders": [
+                "app"
+            ]
+        },
+        {
+            "key": "settings.apps.toast.saved.title",
+            "namespace": "settings",
+            "source_text": "Application saved",
+            "description": "Success toast title after editing an application.",
+            "placeholders": []
+        },
+        {
             "key": "settings.danger.delete.action",
             "namespace": "settings",
             "source_text": "Delete my data",
@@ -25993,6 +26652,13 @@
             "namespace": "settings",
             "source_text": "Appearance",
             "description": "Settings section for theme, accent colour and artwork options.",
+            "placeholders": []
+        },
+        {
+            "key": "settings.nav.apps",
+            "namespace": "settings",
+            "source_text": "Applications",
+            "description": "Settings section listing the other sites the visitor signed in to with their myrtle.moe account, and the OAuth applications they registered as a developer.",
             "placeholders": []
         },
         {
