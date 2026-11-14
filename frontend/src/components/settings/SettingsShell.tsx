@@ -6,7 +6,7 @@ import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
 import type { messages } from "./SettingsShell.messages";
 
-export type SettingsSectionId = "account" | "appearance" | "privacy" | "danger";
+export type SettingsSectionId = "account" | "appearance" | "privacy" | "apps" | "danger";
 
 interface ISettingsNavItem {
     id: SettingsSectionId;

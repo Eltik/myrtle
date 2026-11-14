@@ -35,6 +35,8 @@ import { Route as GachaCommunityRouteImport } from './routes/gacha.community'
 import { Route as GachaHistoryRouteImport } from './routes/gacha.history'
 import { Route as GalleryMusicRouteImport } from './routes/gallery.music'
 import { Route as GridsSlugRouteImport } from './routes/grids_.$slug'
+import { Route as OauthAuthorizeRouteImport } from './routes/oauth.authorize'
+import { Route as OauthConsentRouteImport } from './routes/oauth.consent'
 import { Route as OperatorsIdRouteImport } from './routes/operators_.$id'
 import { Route as StagesStageIdRouteImport } from './routes/stages_.$stageId'
 import { Route as StoriesStoryIdRouteImport } from './routes/stories_.$storyId'
@@ -199,6 +201,16 @@ const GalleryMusicRoute = GalleryMusicRouteImport.update({
 const GridsSlugRoute = GridsSlugRouteImport.update({
   id: '/grids_/$slug',
   path: '/grids/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OauthAuthorizeRoute = OauthAuthorizeRouteImport.update({
+  id: '/oauth/authorize',
+  path: '/oauth/authorize',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OauthConsentRoute = OauthConsentRouteImport.update({
+  id: '/oauth/consent',
+  path: '/oauth/consent',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OperatorsIdRoute = OperatorsIdRouteImport.update({
@@ -410,6 +422,8 @@ export interface FileRoutesByFullPath {
   '/gacha/history': typeof GachaHistoryRoute
   '/gallery/music': typeof GalleryMusicRoute
   '/grids/$slug': typeof GridsSlugRoute
+  '/oauth/authorize': typeof OauthAuthorizeRoute
+  '/oauth/consent': typeof OauthConsentRoute
   '/operators/$id': typeof OperatorsIdRoute
   '/stages/$stageId': typeof StagesStageIdRoute
   '/stories/$storyId': typeof StoriesStoryIdRoute
@@ -472,6 +486,8 @@ export interface FileRoutesByTo {
   '/gacha/history': typeof GachaHistoryRoute
   '/gallery/music': typeof GalleryMusicRoute
   '/grids/$slug': typeof GridsSlugRoute
+  '/oauth/authorize': typeof OauthAuthorizeRoute
+  '/oauth/consent': typeof OauthConsentRoute
   '/operators/$id': typeof OperatorsIdRoute
   '/stages/$stageId': typeof StagesStageIdRoute
   '/stories/$storyId': typeof StoriesStoryIdRoute
@@ -537,6 +553,8 @@ export interface FileRoutesById {
   '/gacha/history': typeof GachaHistoryRoute
   '/gallery/music': typeof GalleryMusicRoute
   '/grids_/$slug': typeof GridsSlugRoute
+  '/oauth/authorize': typeof OauthAuthorizeRoute
+  '/oauth/consent': typeof OauthConsentRoute
   '/operators_/$id': typeof OperatorsIdRoute
   '/stages_/$stageId': typeof StagesStageIdRoute
   '/stories_/$storyId': typeof StoriesStoryIdRoute
@@ -602,6 +620,8 @@ export interface FileRouteTypes {
     | '/gacha/history'
     | '/gallery/music'
     | '/grids/$slug'
+    | '/oauth/authorize'
+    | '/oauth/consent'
     | '/operators/$id'
     | '/stages/$stageId'
     | '/stories/$storyId'
@@ -664,6 +684,8 @@ export interface FileRouteTypes {
     | '/gacha/history'
     | '/gallery/music'
     | '/grids/$slug'
+    | '/oauth/authorize'
+    | '/oauth/consent'
     | '/operators/$id'
     | '/stages/$stageId'
     | '/stories/$storyId'
@@ -728,6 +750,8 @@ export interface FileRouteTypes {
     | '/gacha/history'
     | '/gallery/music'
     | '/grids_/$slug'
+    | '/oauth/authorize'
+    | '/oauth/consent'
     | '/operators_/$id'
     | '/stages_/$stageId'
     | '/stories_/$storyId'
@@ -792,6 +816,8 @@ export interface RootRouteChildren {
   GachaHistoryRoute: typeof GachaHistoryRoute
   GalleryMusicRoute: typeof GalleryMusicRoute
   GridsSlugRoute: typeof GridsSlugRoute
+  OauthAuthorizeRoute: typeof OauthAuthorizeRoute
+  OauthConsentRoute: typeof OauthConsentRoute
   OperatorsIdRoute: typeof OperatorsIdRoute
   StagesStageIdRoute: typeof StagesStageIdRoute
   StoriesStoryIdRoute: typeof StoriesStoryIdRoute
@@ -997,6 +1023,20 @@ declare module '@tanstack/react-router' {
       path: '/grids/$slug'
       fullPath: '/grids/$slug'
       preLoaderRoute: typeof GridsSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/oauth/authorize': {
+      id: '/oauth/authorize'
+      path: '/oauth/authorize'
+      fullPath: '/oauth/authorize'
+      preLoaderRoute: typeof OauthAuthorizeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/oauth/consent': {
+      id: '/oauth/consent'
+      path: '/oauth/consent'
+      fullPath: '/oauth/consent'
+      preLoaderRoute: typeof OauthConsentRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/operators_/$id': {
@@ -1331,6 +1371,8 @@ const rootRouteChildren: RootRouteChildren = {
   GachaHistoryRoute: GachaHistoryRoute,
   GalleryMusicRoute: GalleryMusicRoute,
   GridsSlugRoute: GridsSlugRoute,
+  OauthAuthorizeRoute: OauthAuthorizeRoute,
+  OauthConsentRoute: OauthConsentRoute,
   OperatorsIdRoute: OperatorsIdRoute,
   StagesStageIdRoute: StagesStageIdRoute,
   StoriesStoryIdRoute: StoriesStoryIdRoute,
