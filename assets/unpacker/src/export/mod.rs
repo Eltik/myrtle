@@ -4,6 +4,7 @@ pub mod audio;
 pub mod avg_hub;
 pub mod avg_sprites;
 pub mod cardfields;
+pub mod failures;
 pub mod fsb5;
 pub mod fx_textures;
 pub mod gamedata;

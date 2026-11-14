@@ -25,6 +25,15 @@ type Aes128CbcDec = Decryptor<Aes128>;
 /// guarantee is "never torn", not "durable". The temp file is removed on a failed
 /// rename so a stalling disk cannot litter the output tree.
 fn write_atomic(path: &Path, bytes: &[u8]) -> io::Result<()> {
+    let result = write_atomic_uncounted(path, bytes);
+    if let Err(e) = &result {
+        // On record even where the caller drops the result (see `export::failures`).
+        crate::export::failures::write_failed(path, e);
+    }
+    result
+}
+
+fn write_atomic_uncounted(path: &Path, bytes: &[u8]) -> io::Result<()> {
     let mut tmp_name = path.as_os_str().to_os_string();
     tmp_name.push(".tmp");
     let tmp = PathBuf::from(tmp_name);

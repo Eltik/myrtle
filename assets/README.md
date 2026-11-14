@@ -1015,6 +1015,23 @@ free space cannot be measured, the watcher logs it and carries on as it did befo
 guards existed. A `force_update` goes through the same lock and budget; the reply says
 why when it is not started.
 
+**A bounded orphan sweep.** After an extract the sweep removes every file, in each
+top-level folder the run wrote into, that the run did not rewrite
+([`orphans.mjs`](orphans.mjs)). That is only right when the run rewrote everything it
+should have. An extract that lost its disk part-way rewrites a fraction of a folder, and
+everything else in it then looks like an orphan: sweeping it deletes the last good copy
+of each file the run failed to write. So the sweep leaves a folder alone, and says so in
+red and as a notice, when it would remove more than `WS_SWEEP_MAX_FRACTION` of that
+folder's files (and more than 25 of them). The files it kept are listed in the sweep log
+as `kept (sweep refused)`. The unpacker also exits non-zero now when a bundle cannot be
+read or an output cannot be written, so such a run normally fails before the sweep is
+reached; this is the second line.
+
+| Variable | Meaning |
+|----------|---------|
+| `WS_SWEEP_MAX_FRACTION` | Share of a folder's files one sweep may remove, above 0 and at most 1. Default `0.1`. `1` never refuses. Unset, blank or unusable: the default. |
+| `WS_ALLOW_SWEEP_SHRINK` | `1` (or `--allow-sweep-shrink`) sweeps whatever the share, for an export that really dropped that much. Not the sync's `--allow-shrink`. |
+
 ```bash
 cd assets
 node --test disk-guard.test.mjs
