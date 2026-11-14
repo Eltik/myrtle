@@ -1212,6 +1212,62 @@
         ]
       }
     },
+    "/api/admin/oauth/apps/{id}": {
+      "delete": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Take down any OAuth application, whoever registered it.",
+        "description": "Super-admin only. For an application that impersonates another or abuses\nthe consent screen: its id is the `client_id` in the authorization link it\nsends players to. Every player is signed out of it and its tokens stop\nworking. Not undoable.",
+        "operationId": "admin_oauth_apps_delete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The application's id (its `client_id`).",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "The application is gone."
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": []
+          },
+          {
+            "service_key": []
+          }
+        ]
+      }
+    },
     "/api/admin/operator-notes/audit": {
       "get": {
         "tags": [
@@ -7751,6 +7807,751 @@
             "$ref": "#/components/responses/ServiceUnavailable"
           }
         }
+      }
+    },
+    "/api/oauth/apps": {
+      "get": {
+        "tags": [
+          "oauth"
+        ],
+        "summary": "The OAuth applications the caller has registered.",
+        "operationId": "oauth_apps_list",
+        "responses": {
+          "200": {
+            "description": "Oldest first. No secrets: one is readable only in the response that minted it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OAuthApp"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "oauth"
+        ],
+        "summary": "Register an OAuth application.",
+        "description": "The response carries the `client_secret`. It is stored only as a hash, so\nthis is the one time it can be read; a lost secret is replaced with\n`POST /oauth/apps/{id}/secret`. An account may register ten applications.",
+        "operationId": "oauth_apps_create",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OAuthAppInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "The application, with its client secret.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthAppWithSecret"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": []
+          }
+        ]
+      }
+    },
+    "/api/oauth/apps/{id}": {
+      "put": {
+        "tags": [
+          "oauth"
+        ],
+        "summary": "Replace an application's name, description and redirect URIs.",
+        "description": "A redirect URI that is removed stops being accepted by the consent page at\nonce. Sign-ins already made are unaffected.",
+        "operationId": "oauth_apps_update",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The application's id (its `client_id`).",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OAuthAppInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The application as stored.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthApp"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "oauth"
+        ],
+        "summary": "Delete an application.",
+        "description": "Every player's authorization of it goes too, and every token it holds\nstops working. Not undoable. Someone else's application answers 404, the\nsame as one that does not exist.",
+        "operationId": "oauth_apps_delete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The application's id (its `client_id`).",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "The application is gone."
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": []
+          }
+        ]
+      }
+    },
+    "/api/oauth/apps/{id}/secret": {
+      "post": {
+        "tags": [
+          "oauth"
+        ],
+        "summary": "Replace an application's client secret.",
+        "description": "The old secret stops working at once and the response carries the new one,\nreadable this one time. Tokens already issued keep working: the secret\nauthenticates the application, not the sign-ins it has made.",
+        "operationId": "oauth_apps_rotate_secret",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The application's id (its `client_id`).",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The application, with its new client secret.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthAppWithSecret"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": []
+          }
+        ]
+      }
+    },
+    "/api/oauth/authorizations": {
+      "get": {
+        "tags": [
+          "oauth"
+        ],
+        "summary": "The applications the caller has authorized.",
+        "operationId": "oauth_authorizations_list",
+        "responses": {
+          "200": {
+            "description": "Most recently used first.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OAuthAuthorization"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": []
+          }
+        ]
+      }
+    },
+    "/api/oauth/authorizations/{app_id}": {
+      "delete": {
+        "tags": [
+          "oauth"
+        ],
+        "summary": "Withdraw the caller's authorization of an application.",
+        "description": "Every token the application holds for the caller stops working at once.\nThe application can ask again, and the player will see the consent screen.",
+        "operationId": "oauth_authorizations_revoke",
+        "parameters": [
+          {
+            "name": "app_id",
+            "in": "path",
+            "description": "The application's id.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "The application no longer has access."
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": []
+          }
+        ]
+      }
+    },
+    "/api/oauth/authorize": {
+      "get": {
+        "tags": [
+          "oauth"
+        ],
+        "summary": "Check an authorization request before showing the player a consent screen.",
+        "description": "This is the backend half of the authorization endpoint. A third party\nsends the player's browser to `https://myrtle.moe/oauth/authorize` with\nthese same query parameters; that page calls here with the player's site\ntoken. It is not called by the third party.\n\nAn unknown `client_id`, or a `redirect_uri` the application did not\nregister, is a 400: there is no trustworthy place to send the browser, so\nthe player is shown the error. Every other problem is reported to the\napplication, as a `redirect` result whose URL carries the `error`.",
+        "operationId": "oauth_authorize_check",
+        "parameters": [
+          {
+            "name": "response_type",
+            "in": "query",
+            "description": "Must be `code`.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "client_id",
+            "in": "query",
+            "description": "The application's id.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "redirect_uri",
+            "in": "query",
+            "description": "One of the application's registered redirect URIs, exactly. May be left out when it registered only one.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "scope",
+            "in": "query",
+            "description": "Space-separated scopes. Defaults to `identify`, the only one.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "description": "The application's own opaque value, returned to it unchanged. Up to 1024 bytes.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "code_challenge",
+            "in": "query",
+            "description": "PKCE: the unpadded base64url SHA-256 of the application's code verifier.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "code_challenge_method",
+            "in": "query",
+            "description": "PKCE: must be `S256` when a challenge is sent.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "What the consent page should do: ask the player, or send the browser back with an error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthorizeCheck"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "oauth"
+        ],
+        "summary": "Record the player's answer to an authorization request.",
+        "description": "Approving stores their consent and mints a single-use authorization code,\ngood for five minutes; `redirect_to` is the application's redirect URI\ncarrying that `code`. Declining returns the same URI carrying\n`error=access_denied`. The request's `state` rides along either way. The\nrequest is validated again here, exactly as `GET /oauth/authorize` does.",
+        "operationId": "oauth_authorize_decide",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AuthorizeDecisionInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Where to send the player's browser.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthorizeDecision"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": []
+          }
+        ]
+      }
+    },
+    "/api/oauth/revoke": {
+      "post": {
+        "tags": [
+          "oauth"
+        ],
+        "summary": "Revoke an access token or a refresh token.",
+        "description": "RFC 7009. Either token ends the whole sign-in it belongs to: its access\ntoken and its refresh token both stop working. The application\nauthenticates as it does at the token endpoint, and can only revoke\ntokens it was issued. A token that is unknown or already dead is a 200\ntoo: the caller wanted it gone and it is.",
+        "operationId": "oauth_revoke",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/OAuthRevokeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The token no longer works. Empty body."
+          },
+          "400": {
+            "description": "`invalid_request`: no `token`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "`invalid_client`: unknown `client_id` or wrong `client_secret`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthErrorBody"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "description": "`server_error`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "`temporarily_unavailable`: safe to retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "oauth_client": []
+          },
+          {}
+        ]
+      }
+    },
+    "/api/oauth/token": {
+      "post": {
+        "tags": [
+          "oauth"
+        ],
+        "summary": "Exchange an authorization code, or a refresh token, for tokens.",
+        "description": "The token endpoint of RFC 6749. The body is\n`application/x-www-form-urlencoded`. The application authenticates with\nits `client_id` and `client_secret`, as HTTP Basic credentials or as body\nfields.\n\n- `grant_type=authorization_code` with `code` (and `code_verifier` when\n  the authorization request used PKCE). A code works once and expires\n  after five minutes; presenting one a second time also revokes what the\n  first exchange issued.\n- `grant_type=refresh_token` with `refresh_token`. The refresh token is\n  single use: the response carries a new one.\n\nThe access token lasts seven days, the refresh token ninety from its last\nuse. Errors use the RFC 6749 body (`error`, `error_description`), not this\nAPI's usual envelope.",
+        "operationId": "oauth_token",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/OAuthTokenRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "A new access token and refresh token. `Cache-Control: no-store`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthTokenResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_request`, `invalid_grant`, `invalid_scope` or `unsupported_grant_type`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "`invalid_client`: unknown `client_id` or wrong `client_secret`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthErrorBody"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "description": "`server_error`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "`temporarily_unavailable`: safe to retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "oauth_client": []
+          },
+          {}
+        ]
+      }
+    },
+    "/api/oauth/userinfo": {
+      "get": {
+        "tags": [
+          "oauth"
+        ],
+        "summary": "The player an access token speaks for.",
+        "description": "Send the access token as `Authorization: Bearer`. Needs the `identify`\nscope. `id` is the stable key for a connected account; `username` is the\nplayer's in-game nickname, which is not unique and can change.\n\nA site token from `/login` is not accepted here, and an access token is\nnot accepted anywhere else in this API.",
+        "operationId": "oauth_userinfo",
+        "responses": {
+          "200": {
+            "description": "The player's identity. `Cache-Control: no-store`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthUserInfo"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "`invalid_token`: the access token is missing, expired or revoked.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "`insufficient_scope`: the token was not granted `identify`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthErrorBody"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "description": "`server_error`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "`temporarily_unavailable`: safe to retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "oauth_access_token": []
+          }
+        ]
       }
     },
     "/api/operator-notes": {
@@ -18770,6 +19571,160 @@
           }
         }
       },
+      "AuthorizeCheck": {
+        "oneOf": [
+          {
+            "type": "object",
+            "description": "The request is valid: ask the player.",
+            "required": [
+              "app",
+              "scopes",
+              "redirect_uri",
+              "redirect_host",
+              "already_authorized",
+              "status"
+            ],
+            "properties": {
+              "already_authorized": {
+                "type": "boolean",
+                "description": "The player has authorized this application before."
+              },
+              "app": {
+                "$ref": "#/components/schemas/OAuthAppPublic"
+              },
+              "redirect_host": {
+                "type": "string",
+                "description": "The host of `redirect_uri` (with its port when it has one), for the\nscreen to name."
+              },
+              "redirect_uri": {
+                "type": "string",
+                "description": "Where the player goes after deciding."
+              },
+              "scopes": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "What the application is asking for."
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "consent"
+                ]
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "The request is invalid in a way the application is told about: send\nthe browser to `redirect_to`, which carries the `error`.",
+            "required": [
+              "redirect_to",
+              "status"
+            ],
+            "properties": {
+              "redirect_to": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "redirect"
+                ]
+              }
+            }
+          }
+        ],
+        "description": "What the consent page should do with an authorization request.\n\nA request naming an unknown application or an unregistered redirect URI is\nnot one of these: it is a 400, shown to the player, because there is no\ntrusted place to send them. Every other problem is the application's to\nhear about, so it comes back as `redirect`."
+      },
+      "AuthorizeDecision": {
+        "type": "object",
+        "description": "Where to send the browser after the player decided: the application's\nredirect URI carrying either a `code` or `error=access_denied`, and the\nrequest's `state` either way.",
+        "required": [
+          "redirect_to"
+        ],
+        "properties": {
+          "redirect_to": {
+            "type": "string"
+          }
+        }
+      },
+      "AuthorizeDecisionInput": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/AuthorizeParams",
+            "description": "The authorization request, as the page received it."
+          },
+          {
+            "type": "object",
+            "required": [
+              "approve"
+            ],
+            "properties": {
+              "approve": {
+                "type": "boolean",
+                "description": "`true` to authorize, `false` to cancel."
+              }
+            }
+          }
+        ],
+        "description": "The player's answer on the consent page."
+      },
+      "AuthorizeParams": {
+        "type": "object",
+        "description": "An authorization request as the browser carried it to the consent page:\nthe query parameters of RFC 6749 4.1.1 and RFC 7636 4.3, all optional here\nso that a missing one is answered with the protocol's own error rather\nthan a deserialization failure.",
+        "properties": {
+          "client_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The application's id."
+          },
+          "code_challenge": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "PKCE: the base64url SHA-256 of the application's code verifier."
+          },
+          "code_challenge_method": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "PKCE: must be `S256` when a challenge is sent."
+          },
+          "redirect_uri": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "One of the application's registered redirect URIs, exactly. May be\nleft out when the application registered only one."
+          },
+          "response_type": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Must be `code`."
+          },
+          "scope": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Space-separated scopes. Defaults to `identify`, the only one."
+          },
+          "state": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The application's own opaque value, returned to it unchanged."
+          }
+        }
+      },
       "AutoName": {
         "type": "object",
         "required": [
@@ -25890,6 +26845,393 @@
           "cost",
           "respawn"
         ]
+      },
+      "OAuthApp": {
+        "type": "object",
+        "description": "`oauth_apps`, as its owner reads it. The secret is not here: it is shown\nonce, by the call that minted it ([`OAuthAppWithSecret`]).",
+        "required": [
+          "id",
+          "name",
+          "description",
+          "redirect_uris",
+          "authorized_users",
+          "created_at",
+          "updated_at"
+        ],
+        "properties": {
+          "authorized_users": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Players who currently have this application authorized."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "description": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The application's `client_id`."
+          },
+          "name": {
+            "type": "string"
+          },
+          "redirect_uris": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Where a player may be sent back to. An authorization request must name\none of these exactly."
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "OAuthAppInput": {
+        "type": "object",
+        "description": "The editable fields of an application. Creating one and updating one take\nthe same body; an update replaces all three.",
+        "required": [
+          "name",
+          "redirect_uris"
+        ],
+        "properties": {
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Up to 280 characters, shown under the name on the consent screen."
+          },
+          "name": {
+            "type": "string",
+            "description": "1 to 64 characters. Shown to players on the consent screen.",
+            "example": "miowawa.de"
+          },
+          "redirect_uris": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "1 to 10 absolute `https` URLs (`http` is accepted for `localhost`,\n`127.0.0.1` and `[::1]`), without a fragment.",
+            "example": [
+              "https://miowawa.de/auth/myrtle/callback"
+            ]
+          }
+        }
+      },
+      "OAuthAppOwner": {
+        "type": "object",
+        "description": "The account that registered an application, as the consent screen names it.",
+        "properties": {
+          "nick_number": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The digits after the `#` in the in-game name."
+          },
+          "nickname": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "OAuthAppPublic": {
+        "type": "object",
+        "description": "An application as anyone but its owner sees it: on the consent screen and\nin a player's list of authorized applications.",
+        "required": [
+          "id",
+          "name",
+          "description",
+          "owner",
+          "created_at"
+        ],
+        "properties": {
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "description": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "owner": {
+            "$ref": "#/components/schemas/OAuthAppOwner"
+          }
+        }
+      },
+      "OAuthAppWithSecret": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/OAuthApp"
+          },
+          {
+            "type": "object",
+            "required": [
+              "client_secret"
+            ],
+            "properties": {
+              "client_secret": {
+                "type": "string",
+                "example": "myrtle_cs_3q2-7wX0s0mZ0f1J9bq0vK1yQ4mB8sN5tU6vW7xY8z0"
+              }
+            }
+          }
+        ],
+        "description": "An application together with its client secret, returned by the two calls\nthat mint one: creating the application and rotating its secret. Only the\nsecret's hash is stored, so this response is the one time it can be read."
+      },
+      "OAuthAuthorization": {
+        "type": "object",
+        "description": "One application the caller has authorized.",
+        "required": [
+          "app",
+          "scopes",
+          "authorized_at"
+        ],
+        "properties": {
+          "app": {
+            "$ref": "#/components/schemas/OAuthAppPublic"
+          },
+          "authorized_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "last_used_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "The last time the application exchanged a code or refreshed a token."
+          },
+          "scopes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "OAuthErrorBody": {
+        "type": "object",
+        "description": "The error body of the token, revocation and userinfo endpoints\n(RFC 6749 5.2). These three speak the OAuth error format instead of this\nAPI's usual envelope, because the caller is an OAuth client library.",
+        "required": [
+          "error",
+          "error_description"
+        ],
+        "properties": {
+          "error": {
+            "type": "string",
+            "description": "`invalid_request`, `invalid_client`, `invalid_grant`,\n`unsupported_grant_type`, `invalid_scope`, `invalid_token`,\n`server_error` or `temporarily_unavailable`.",
+            "example": "invalid_grant"
+          },
+          "error_description": {
+            "type": "string",
+            "example": "the authorization code is invalid, expired or already used"
+          }
+        }
+      },
+      "OAuthRevokeRequest": {
+        "type": "object",
+        "description": "The body of `POST /oauth/revoke`, form-encoded.",
+        "properties": {
+          "client_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The application's id, when not sent as HTTP Basic credentials."
+          },
+          "client_secret": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The application's secret, when not sent as HTTP Basic credentials."
+          },
+          "token": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The access token or refresh token to revoke."
+          },
+          "token_type_hint": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Accepted and ignored: both kinds of token are looked up either way."
+          }
+        }
+      },
+      "OAuthTokenRequest": {
+        "type": "object",
+        "description": "The body of `POST /oauth/token`, form-encoded.",
+        "properties": {
+          "client_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The application's id, when not sent as HTTP Basic credentials."
+          },
+          "client_secret": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The application's secret, when not sent as HTTP Basic credentials."
+          },
+          "code": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "With `authorization_code`: the code from the redirect."
+          },
+          "code_verifier": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "With `authorization_code`: the PKCE verifier. Required when the\nauthorization request carried a `code_challenge`."
+          },
+          "grant_type": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`authorization_code` or `refresh_token`.",
+            "example": "authorization_code"
+          },
+          "redirect_uri": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "With `authorization_code`: the redirect URI the code was issued for.\nChecked when sent."
+          },
+          "refresh_token": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "With `refresh_token`: the refresh token."
+          },
+          "scope": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "With `refresh_token`: optional, and may only name granted scopes."
+          }
+        }
+      },
+      "OAuthTokenResponse": {
+        "type": "object",
+        "description": "A successful token response (RFC 6749 5.1).",
+        "required": [
+          "access_token",
+          "token_type",
+          "expires_in",
+          "refresh_token",
+          "scope"
+        ],
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "example": "myrtle_at_3q2-7wX0s0mZ0f1J9bq0vK1yQ4mB8sN5tU6vW7xY8z0"
+          },
+          "expires_in": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Seconds until the access token expires.",
+            "example": 604800
+          },
+          "refresh_token": {
+            "type": "string",
+            "description": "Trades for a new pair at the token endpoint. Single use: each refresh\nreturns a new one and retires this one.",
+            "example": "myrtle_rt_9bq0vK1yQ4mB8sN5tU6vW7xY8z03q2-7wX0s0mZ0f1J"
+          },
+          "scope": {
+            "type": "string",
+            "description": "The granted scopes, space-separated.",
+            "example": "identify"
+          },
+          "token_type": {
+            "type": "string",
+            "description": "Always `Bearer`.",
+            "example": "Bearer"
+          }
+        }
+      },
+      "OAuthUserInfo": {
+        "type": "object",
+        "description": "The identity behind an access token with the `identify` scope.",
+        "required": [
+          "id",
+          "username",
+          "uid",
+          "server",
+          "avatar_url"
+        ],
+        "properties": {
+          "avatar_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The id of the avatar the player picked in game; `null` when they never\nset one, in which case `avatar_url` is the default.",
+            "example": "char_002_amiya"
+          },
+          "avatar_url": {
+            "type": "string",
+            "description": "A square PNG of that avatar.",
+            "example": "https://api.myrtle.moe/api/avatar/char_002_amiya"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The myrtle.moe account id. Stable for the life of the account, and the\nvalue to key a connected account on."
+          },
+          "server": {
+            "type": "string",
+            "description": "The game server the account is on, lowercase: `en`, `jp`, `kr`, `cn`,\n`bili` or `tw`.",
+            "example": "en"
+          },
+          "tag": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The digits after the `#` in the in-game name, when the game gave one.",
+            "example": "1234"
+          },
+          "uid": {
+            "type": "string",
+            "description": "The player's in-game uid on `server`. `https://myrtle.moe/user/{uid}`\nis their profile page, which only opens when they made it public.",
+            "example": "12345678"
+          },
+          "username": {
+            "type": "string",
+            "description": "The player's in-game nickname. Not unique, and it changes when they\nrename in game and sync again. The game uid stands in for an account\nwhose nickname has not synced yet.",
+            "example": "Doctor"
+          }
+        }
       },
       "ObtainChannel": {
         "type": "string",
@@ -36444,6 +37786,16 @@
         "bearerFormat": "JWT",
         "description": "A site token from one of the `/api/login*` endpoints. Valid for seven days."
       },
+      "oauth_access_token": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "An OAuth access token from `POST /api/oauth/token`. Valid for seven days, and accepted only by `GET /api/oauth/userinfo`."
+      },
+      "oauth_client": {
+        "type": "http",
+        "scheme": "basic",
+        "description": "An OAuth application's `client_id` as the username and its `client_secret` as the password. The same pair may instead be sent as `client_id` and `client_secret` fields of the form body."
+      },
       "service_key": {
         "type": "apiKey",
         "in": "header",
@@ -36456,6 +37808,10 @@
     {
       "name": "auth",
       "description": "Logging in to a Hypergryph, Bilibili or CN account, and managing the resulting session."
+    },
+    {
+      "name": "oauth",
+      "description": "Sign in with myrtle.moe: an OAuth 2.0 provider (authorization-code grant with PKCE) that lets another site learn who a player is, with their consent. Register an application, send the player to `https://myrtle.moe/oauth/authorize`, exchange the code at `/oauth/token`, then read `/oauth/userinfo`."
     },
     {
       "name": "leaderboard",

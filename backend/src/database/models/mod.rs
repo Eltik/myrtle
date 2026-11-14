@@ -7,6 +7,7 @@ pub mod item_leaderboard;
 pub mod lookback;
 pub mod music;
 pub mod music_stats;
+pub mod oauth;
 pub mod operator_notes;
 pub mod planner;
 pub mod profile_layout;

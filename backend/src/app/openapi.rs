@@ -111,6 +111,33 @@ impl Modify for SecurityAddon {
         );
 
         components.add_security_scheme(
+            "oauth_client",
+            SecurityScheme::Http(
+                HttpBuilder::new()
+                    .scheme(HttpAuthScheme::Basic)
+                    .description(Some(
+                        "An OAuth application's `client_id` as the username and its `client_secret` \
+                         as the password. The same pair may instead be sent as `client_id` and \
+                         `client_secret` fields of the form body.",
+                    ))
+                    .build(),
+            ),
+        );
+
+        components.add_security_scheme(
+            "oauth_access_token",
+            SecurityScheme::Http(
+                HttpBuilder::new()
+                    .scheme(HttpAuthScheme::Bearer)
+                    .description(Some(
+                        "An OAuth access token from `POST /api/oauth/token`. Valid for seven days, \
+                         and accepted only by `GET /api/oauth/userinfo`.",
+                    ))
+                    .build(),
+            ),
+        );
+
+        components.add_security_scheme(
             "service_key",
             SecurityScheme::ApiKey(ApiKey::Header(ApiKeyValue::with_description(
                 "x-service-key",
@@ -169,6 +196,7 @@ it is missing from the server too.",
     ),
     tags(
         (name = "auth", description = "Logging in to a Hypergryph, Bilibili or CN account, and managing the resulting session."),
+        (name = "oauth", description = "Sign in with myrtle.moe: an OAuth 2.0 provider (authorization-code grant with PKCE) that lets another site learn who a player is, with their consent. Register an application, send the player to `https://myrtle.moe/oauth/authorize`, exchange the code at `/oauth/token`, then read `/oauth/userinfo`."),
         (name = "leaderboard", description = "Global and per-server score rankings, movement over time, a single player's standing, and per-item inventory rankings."),
         (name = "dps", description = "Damage- and healing-per-second simulation. Pure functions of the request body and the loaded game data."),
         (name = "gamedata", description = "Game data as shipped by the game: operators, stages, enemies, skins and the raw tables behind them. Cacheable and unauthenticated."),
