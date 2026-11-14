@@ -11,9 +11,13 @@
 //! under both), `plan_presets`, `release_plans`, `grids`, `tier_list_favorites`,
 //! `tier_list_permissions` held by the user, `translation_permissions` held by
 //! the user, `ui_message_audit_log` and `content_audit_log` rows the user wrote,
-//! `leaderboard_snapshot_entries`, and the music library's `music_likes`,
+//! `leaderboard_snapshot_entries`, the music library's `music_likes`,
 //! `music_history` and `music_playlists` (with `music_playlist_tracks` under
-//! it).
+//! it), and both sides of OAuth: the `oauth_apps` the user registered (every
+//! other player's grant and token for those go with them, so a deleted
+//! developer's applications sign everyone out) and the `oauth_grants` the user
+//! gave other applications (with the `oauth_codes` and `oauth_tokens` under
+//! each).
 //!
 //! Anonymized (`ON DELETE SET NULL`), because the row is shared content other
 //! people keep reading: `tier_lists.created_by` on official lists,
