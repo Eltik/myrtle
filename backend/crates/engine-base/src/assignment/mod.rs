@@ -68,10 +68,12 @@ pub(crate) use self::teams::{SUSTAINED_AFK_DAYS, factory_cap_factor, gold_base_c
 const CANDIDATE_LIMIT: usize = 16;
 
 /// `char_id` -> profile
+#[must_use]
 pub fn build_op_index(operators: &[OperatorBaseProfile]) -> HashMap<&str, &OperatorBaseProfile> {
     operators.iter().map(|o| (o.char_id.as_str(), o)).collect()
 }
 
+#[must_use]
 pub fn compute_optimal_assignment(
     operators: &[OperatorBaseProfile],
     building: &UserBuilding,
@@ -90,6 +92,7 @@ pub fn compute_optimal_assignment(
 }
 
 /// As `compute_optimal_assignment`, plus `(char_id, room_type)` pins
+#[must_use]
 pub fn compute_optimal_assignment_with_pins(
     operators: &[OperatorBaseProfile],
     building: &UserBuilding,
@@ -408,6 +411,7 @@ fn optimal_inner_core(
 }
 
 /// Total realized daily output of a production assignment, in LMD
+#[must_use]
 pub fn assignment_value(rooms: &[RoomAssignment]) -> f64 {
     base_flows(rooms).total_value()
 }
@@ -439,7 +443,7 @@ fn room_value(raw_efficiency: f64, room_type: &str) -> f64 {
     if raw_efficiency <= soft_cap {
         raw_efficiency
     } else {
-        soft_cap + (raw_efficiency - soft_cap) * 0.5
+        (raw_efficiency - soft_cap).mul_add(0.5, soft_cap)
     }
 }
 

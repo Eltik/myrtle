@@ -85,14 +85,14 @@ pub fn dps(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let dps = match skill {
         1 => {
             atkbuff += param(0);
-            let final_atk = unit.atk * (1.0 + atkbuff + unit.buff_atk) + unit.buff_atk_flat;
+            let final_atk = unit.atk.mul_add(1.0 + atkbuff + unit.buff_atk, unit.buff_atk_flat);
             2.0 * attack_hit(final_atk) / atk_interval * (unit.attack_speed + aspd) / 100.0
         }
         2 => {
-            let slash_atk = unit.atk * (1.0 + atkbuff + unit.buff_atk) + unit.buff_atk_flat;
+            let slash_atk = unit.atk.mul_add(1.0 + atkbuff + unit.buff_atk, unit.buff_atk_flat);
             let slashes = S2_SLASHES * arts(slash_atk * param(0));
             let final_atk =
-                unit.atk * (1.0 + atkbuff + param(1) + unit.buff_atk) + unit.buff_atk_flat;
+                unit.atk.mul_add(1.0 + atkbuff + param(1) + unit.buff_atk, unit.buff_atk_flat);
             let attacks = attack_hit(final_atk) / atk_interval * (unit.attack_speed + aspd) / 100.0;
             if duration > 0.0 {
                 attacks + slashes / duration
@@ -101,7 +101,7 @@ pub fn dps(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
             }
         }
         3 => {
-            let final_atk = unit.atk * (1.0 + atkbuff + unit.buff_atk) + unit.buff_atk_flat;
+            let final_atk = unit.atk.mul_add(1.0 + atkbuff + unit.buff_atk, unit.buff_atk_flat);
             let targets = f64::from(unit.targets);
             let attacks = S3_INSTANCES * attack_hit(final_atk * param(2)) / atk_interval
                 * (unit.attack_speed + aspd)
@@ -115,7 +115,7 @@ pub fn dps(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
             }
         }
         _ => {
-            let final_atk = unit.atk * (1.0 + atkbuff + unit.buff_atk) + unit.buff_atk_flat;
+            let final_atk = unit.atk.mul_add(1.0 + atkbuff + unit.buff_atk, unit.buff_atk_flat);
             attack_hit(final_atk) / atk_interval * (unit.attack_speed + aspd) / 100.0
         }
     };

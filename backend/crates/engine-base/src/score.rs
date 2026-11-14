@@ -25,7 +25,7 @@ pub struct BaseGrade {
 impl BaseGrade {
     pub(crate) fn blend(utilization: f64, infrastructure: f64) -> Self {
         Self {
-            score: UTILIZATION_WEIGHT * utilization + INFRASTRUCTURE_WEIGHT * infrastructure,
+            score: INFRASTRUCTURE_WEIGHT.mul_add(infrastructure, UTILIZATION_WEIGHT * utilization),
             utilization,
             infrastructure,
         }
@@ -189,5 +189,5 @@ fn build_operator_profiles(
 }
 
 pub(crate) fn log_curve_ratio(t: f64) -> f64 {
-    (1.0 + t).ln() / 2.0_f64.ln()
+    t.ln_1p() / 2.0_f64.ln()
 }

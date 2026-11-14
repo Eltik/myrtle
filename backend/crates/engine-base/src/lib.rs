@@ -34,6 +34,7 @@ pub struct BaseData {
 }
 
 impl BaseData {
+    #[must_use]
     pub fn new(
         operators: HashMap<String, Operator>,
         building: BuildingDataFile,
@@ -52,28 +53,34 @@ impl BaseData {
         }
     }
 
+    #[must_use]
     pub const fn operators(&self) -> &HashMap<String, Operator> {
         &self.operators
     }
 
+    #[must_use]
     pub const fn building(&self) -> &BuildingDataFile {
         &self.building
     }
 
+    #[must_use]
     pub const fn consts(&self) -> &GameDataConst {
         &self.consts
     }
 
     /// `char_id` -> glossary tags
+    #[must_use]
     pub const fn glossary(&self) -> &HashMap<String, Vec<String>> {
         &self.glossary
     }
 
+    #[must_use]
     pub const fn registry(&self) -> &Arc<HashMap<String, BuffResolutionStrategy>> {
         &self.registry
     }
 
     /// `buff_id` -> morale drain modifier
+    #[must_use]
     pub const fn morale_drains(&self) -> &Arc<HashMap<String, f64>> {
         &self.morale_drains
     }

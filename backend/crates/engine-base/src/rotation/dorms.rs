@@ -18,6 +18,7 @@ pub struct Dorm {
 }
 
 /// Dorms BEST FIRST
+#[must_use]
 pub fn dorm_list(building: &UserBuilding, building_data: &BuildingDataFile) -> Vec<Dorm> {
     let phases = &building_data.dorm_data.phases;
     let mut dorms: Vec<Dorm> = building
@@ -55,6 +56,7 @@ pub fn dorm_list(building: &UserBuilding, building_data: &BuildingDataFile) -> V
 }
 
 /// WHOLE-DORM aura, 0 if none
+#[must_use]
 pub fn dorm_aura_value(
     op: &OperatorBaseProfile,
     registry: &HashMap<String, BuffResolutionStrategy>,
@@ -64,6 +66,7 @@ pub fn dorm_aura_value(
 }
 
 /// SINGLE-TARGET dorm heal, 0 if none
+#[must_use]
 pub fn dorm_single_value(
     op: &OperatorBaseProfile,
     registry: &HashMap<String, BuffResolutionStrategy>,
@@ -122,10 +125,12 @@ pub fn manager_swap_rate(
         .fold(0.0, f64::max)
 }
 
+#[must_use]
 pub fn manager_can_sustain(swap_rate: f64, drain_per_hour: f64) -> bool {
     swap_rate > 0.0 && drain_per_hour <= swap_rate + 1e-9
 }
 
+#[must_use]
 pub fn building_hosts_manager(building: &UserBuilding, building_data: &BuildingDataFile) -> bool {
     dorm_list(building, building_data)
         .iter()
@@ -133,6 +138,7 @@ pub fn building_hosts_manager(building: &UserBuilding, building_data: &BuildingD
 }
 
 /// `(manager, "DORMITORY")` pin for a hostable morale-swap manager
+#[must_use]
 pub fn morale_manager_pin(
     profiles: &[OperatorBaseProfile],
     building: &UserBuilding,
@@ -146,6 +152,7 @@ pub fn morale_manager_pin(
 }
 
 /// Permanent 24/7 dorm staff, picked from operators the plan left unseated
+#[must_use]
 pub fn plan_dorm_staffing(
     dorms: &[Dorm],
     leftovers: &[&OperatorBaseProfile],

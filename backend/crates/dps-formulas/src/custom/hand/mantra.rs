@@ -81,7 +81,7 @@ pub fn dps(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
         atk_interval += sp(0, 0.0);
     }
 
-    let final_atk = unit.atk * (1.0 + atkbuff + unit.buff_atk) + unit.buff_atk_flat;
+    let final_atk = unit.atk.mul_add(1.0 + atkbuff + unit.buff_atk, unit.buff_atk_flat);
     let arts = |scale: f64| (final_atk * scale * (1.0 - res / 100.0)).max(final_atk * scale * 0.05);
     let attack_rate = unit.attack_speed / 100.0 / atk_interval;
     let hitdmg = arts(1.0);
@@ -137,8 +137,7 @@ pub fn dps(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
         } else {
             0.0
         };
-        dps = (primary_dps * time_to_burst
-            + burst_dps * NERV_BURST_DURATION
+        dps = (primary_dps.mul_add(time_to_burst, burst_dps * NERV_BURST_DURATION)
             + NERV_BURST_DAMAGE
             + paralysis)
             / (time_to_burst + NERV_BURST_DURATION);

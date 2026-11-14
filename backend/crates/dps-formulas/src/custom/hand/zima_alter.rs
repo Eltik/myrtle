@@ -100,8 +100,7 @@ pub fn dps(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let attack = |final_atk: f64, scale: f64| {
         let main = final_atk * atk_scale * scale;
         let splash = SPLASH_SCALE * main;
-        (main - defense).max(main * 0.05)
-            + (splash - defense).max(splash * 0.05) * splash_dmg_scale * others
+        ((splash - defense).max(splash * 0.05) * splash_dmg_scale).mul_add(others, (main - defense).max(main * 0.05))
     };
 
     let mut aspd = 0.0;
@@ -120,8 +119,8 @@ pub fn dps(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
         3 => {
             let mut total = 0.0;
             for k in 0..S3_BLOWS {
-                let blow_buff = atkbuff + param(4) + f64::from(k) * param(1);
-                let final_atk = unit.atk * (1.0 + blow_buff + unit.buff_atk) + unit.buff_atk_flat;
+                let blow_buff = f64::from(k).mul_add(param(1), atkbuff + param(4));
+                let final_atk = unit.atk.mul_add(1.0 + blow_buff + unit.buff_atk, unit.buff_atk_flat);
                 total += attack(final_atk, param(0));
             }
             return Some(total);
@@ -129,6 +128,6 @@ pub fn dps(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
         _ => {}
     }
 
-    let final_atk = unit.atk * (1.0 + atkbuff + unit.buff_atk) + unit.buff_atk_flat;
+    let final_atk = unit.atk.mul_add(1.0 + atkbuff + unit.buff_atk, unit.buff_atk_flat);
     Some(attack(final_atk, 1.0) / atk_interval * (unit.attack_speed + aspd) / 100.0)
 }

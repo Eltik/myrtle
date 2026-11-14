@@ -175,6 +175,7 @@ static RE_DORM_OCC_GRANT: LazyLock<Regex> = LazyLock::new(|| {
     .expect("valid regex")
 });
 
+#[must_use]
 pub fn has_morale_conditional_grant(
     op: &OperatorBaseProfile,
     building_data: &BuildingDataFile,
@@ -313,14 +314,13 @@ pub(crate) fn settle_current_pools(
                     let per: f64 = c[3].parse().unwrap_or(0.0);
                     let unit_cap: f64 = c[4].parse().unwrap_or(f64::INFINITY);
                     let units = deployed_with_tag(&c[1]).min(unit_cap);
-                    *points.entry(c[2].to_string()).or_insert(0.0) += per * units;
+                    *points.entry(c[2].to_string()).or_insert(0.0) = per.mul_add(units, *points.entry(c[2].to_string()).or_insert(0.0));
                 }
                 if let Some(c) = RE_TAG_GRANT.captures(&buff.description)
                     && !strategy_generates(registry, buff_id, buff, &c[2])
                 {
                     let per: f64 = c[3].parse().unwrap_or(0.0);
-                    *points.entry(c[2].to_string()).or_insert(0.0) +=
-                        per * deployed_with_tag(&c[1]);
+                    *points.entry(c[2].to_string()).or_insert(0.0) = per.mul_add(deployed_with_tag(&c[1]), *points.entry(c[2].to_string()).or_insert(0.0));
                 }
             }
         }
@@ -560,6 +560,7 @@ fn settle_by_origin(econ: &DormEconomy) -> HashMap<String, HashMap<String, f64>>
     pools
 }
 
+#[must_use]
 pub fn plan_optimal_economies(
     profiles: &[OperatorBaseProfile],
     building: &UserBuilding,
@@ -1201,6 +1202,7 @@ pub struct SearchEconomy {
     pub manager: Option<String>,
 }
 
+#[must_use]
 pub fn search_economy(
     profiles: &[OperatorBaseProfile],
     building: &UserBuilding,
@@ -1245,6 +1247,7 @@ pub struct AcceptedEconomy {
 }
 
 /// Optimal search with bundle trials, keeping a bundle only if realized yield improves
+#[must_use]
 pub fn optimal_with_bundles(
     profiles: &[OperatorBaseProfile],
     building: &UserBuilding,

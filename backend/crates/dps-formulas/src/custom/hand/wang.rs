@@ -95,7 +95,7 @@ pub fn dps(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let talent2 = |i: usize| unit.talent2_parameters.get(i).copied().unwrap_or(0.0);
     let targets = f64::from(unit.targets);
 
-    let final_atk = unit.atk * (1.0 + unit.buff_atk) + unit.buff_atk_flat;
+    let final_atk = unit.atk.mul_add(1.0 + unit.buff_atk, unit.buff_atk_flat);
     let attack_dps =
         (final_atk - defense).max(final_atk * 0.05) / atk_interval * unit.attack_speed / 100.0;
 
@@ -125,8 +125,8 @@ pub fn dps(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     };
 
     let dps = match skill {
-        1 => attack_dps + stone_hit(param(1)) * param(2).floor() * stones_per_second,
-        2 => attack_dps + stone_hit(param(1)) * targets * stones_per_second,
+        1 => (stone_hit(param(1)) * param(2).floor()).mul_add(stones_per_second, attack_dps),
+        2 => (stone_hit(param(1)) * targets).mul_add(stones_per_second, attack_dps),
         3 => {
             let duration = unit.skill_duration;
             let total = (param(0) + param(1)) * stone_hit(param(2)) * targets;

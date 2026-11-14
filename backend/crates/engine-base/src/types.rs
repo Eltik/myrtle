@@ -37,6 +37,7 @@ pub struct MoraleSnapshot {
 }
 
 /// Every operator's morale snapshot from the synced building data, keyed by char id
+#[must_use]
 pub fn live_morale_snapshot(
     data: &serde_json::Value,
 ) -> std::collections::HashMap<String, MoraleSnapshot> {
@@ -210,6 +211,7 @@ impl UserBuilding {
         }
     }
 
+    #[must_use]
     pub fn total_dorm_levels(&self) -> i32 {
         self.rooms
             .iter()
@@ -218,6 +220,7 @@ impl UserBuilding {
             .sum()
     }
 
+    #[must_use]
     pub const fn is_empty(&self) -> bool {
         self.rooms.is_empty()
     }
@@ -238,6 +241,7 @@ pub struct OperatorBaseProfile {
 
 impl OperatorBaseProfile {
     /// `ignore_promotion` takes each slot's top tier regardless of elite/level
+    #[must_use]
     pub fn build(
         roster: &RosterEntry,
         building_char: &BuildingChar,
@@ -271,6 +275,7 @@ impl OperatorBaseProfile {
     }
 }
 
+#[must_use]
 pub fn compute_match_tags(
     faction_tags: &[String],
     available_buffs: &[String],

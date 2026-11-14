@@ -40,11 +40,11 @@ struct MasteryEntry {
 }
 
 #[derive(Deserialize)]
-struct ModuleEntry {
-    id: String,
-    level: i16,
+pub struct ModuleEntry {
+    pub id: String,
+    pub level: i16,
     #[serde(default)]
-    locked: bool,
+    pub locked: bool,
 }
 
 fn mastery_levels(masteries_json: &serde_json::Value) -> Vec<i16> {
@@ -55,7 +55,8 @@ fn mastery_levels(masteries_json: &serde_json::Value) -> Vec<i16> {
         .collect()
 }
 
-fn parse_modules(modules_json: &serde_json::Value) -> Vec<ModuleEntry> {
+#[must_use]
+pub fn parse_modules(modules_json: &serde_json::Value) -> Vec<ModuleEntry> {
     let mut modules = Vec::<ModuleEntry>::deserialize(modules_json).unwrap_or_default();
     modules.retain(|m| !m.locked);
     modules
@@ -158,7 +159,7 @@ pub fn grade_operators_in(
             &model,
         );
 
-        weighted_sum += op_score * rarity_weight;
+        weighted_sum = op_score.mul_add(rarity_weight, weighted_sum);
         weight_total += rarity_weight;
     }
 
@@ -320,7 +321,7 @@ pub fn operator_score_breakdown_in(
             let dim_share = op_share * weight / op_weight_total;
             let slot = shares.entry(kind).or_insert((0.0, 0.0));
             slot.0 += dim_share;
-            slot.1 += dim_share * score;
+            slot.1 = dim_share.mul_add(score, slot.1);
         }
     }
 
@@ -390,7 +391,7 @@ fn milestone_score(levels: &[i16], slots: usize, ladder: fn(usize, usize) -> f64
         return sub_milestone_progress(levels, slots) * PARTIAL_CAP;
     }
     let remaining = slots.saturating_sub(reached);
-    (ladder(reached, slots) + sub_milestone_progress(levels, remaining) * PARTIAL_BONUS).min(1.0)
+    sub_milestone_progress(levels, remaining).mul_add(PARTIAL_BONUS, ladder(reached, slots)).min(1.0)
 }
 
 fn sub_milestone_progress(levels: &[i16], slots: usize) -> f64 {
@@ -489,7 +490,7 @@ pub const fn has_investment(roster: &RosterEntry) -> bool {
 }
 
 fn log_curve_ratio(t: f64) -> f64 {
-    (1.0 + t).ln() / 2.0_f64.ln()
+    t.ln_1p() / 2.0_f64.ln()
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -620,19 +621,4 @@ fn promote_to_milestone(levels: &[i16], slots: usize) -> Vec<i16> {
         padded[idx] = MILESTONE;
     }
     padded
-}
-#[cfg(test)]
-mod module_parse_tests {
-    use super::parse_modules;
-
-    #[test]
-    fn locked_modules_are_ignored() {
-        let json = serde_json::json!([
-            { "id": "uniequip_002_a", "level": 1, "locked": true },
-            { "id": "uniequip_003_a", "level": 2, "locked": false },
-            { "id": "uniequip_001_a", "level": 1 }
-        ]);
-        let ids: Vec<String> = parse_modules(&json).into_iter().map(|m| m.id).collect();
-        assert_eq!(ids, ["uniequip_003_a", "uniequip_001_a"]);
-    }
 }

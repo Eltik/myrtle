@@ -325,7 +325,7 @@ pub fn skill_zero_dps(
     let duration = unit.skill_duration;
     let cost = unit.skill_cost;
     unit.skill_parameters = params.iter().map(|p| p * 2.0 + 1.0).collect();
-    unit.skill_duration = duration * 2.0 + 1.0;
+    unit.skill_duration = duration.mul_add(2.0, 1.0);
     unit.skill_cost = cost * 2 + 1;
     let perturbed = calculate_skill_dps(unit, formula, enemy);
 
@@ -416,7 +416,7 @@ fn evaluate(
             let off_skill_dps =
                 unit.normal_attack(enemy, None, None, None) * (1.0 + unit.buff_fragile);
             let sp_time = f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost));
-            let cycle_dmg = skill_dps * unit.skill_duration + off_skill_dps * sp_time;
+            let cycle_dmg = skill_dps.mul_add(unit.skill_duration, off_skill_dps * sp_time);
             cycle_dmg / (unit.skill_duration + sp_time)
         } else {
             skill_dps
@@ -484,7 +484,7 @@ fn evaluate(
                 };
                 off_skill_source = Some(source);
                 let off = off * ctx.off_mult;
-                (skill_dps * duration + off * sp_time) / (duration + sp_time)
+                off.mul_add(sp_time, skill_dps * duration) / (duration + sp_time)
             }
             // TOOD: Defensive or unrecognised SP: not modelled
             None => legacy_average(unit),

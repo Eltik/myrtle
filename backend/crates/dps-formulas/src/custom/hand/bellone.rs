@@ -56,7 +56,7 @@ pub fn dps(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     } else {
         (0.0, 0.0, 0.0)
     };
-    let newdef = defense * (1.0 - def_per_stack * max_stacks).max(0.0);
+    let newdef = defense * def_per_stack.mul_add(-max_stacks, 1.0).max(0.0);
     let dmg_scale = if unit.talent_damage {
         1.0 + low_hp_bonus
     } else {
@@ -70,31 +70,31 @@ pub fn dps(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     };
 
     let hit =
-        |final_atk: f64, scale: f64| (final_atk * scale - newdef).max(final_atk * scale * 0.05);
+        |final_atk: f64, scale: f64| final_atk.mul_add(scale, -newdef).max(final_atk * scale * 0.05);
 
     let dps = match skill {
         1 => {
-            let final_atk = unit.atk * (1.0 + unit.buff_atk) + unit.buff_atk_flat;
+            let final_atk = unit.atk.mul_add(1.0 + unit.buff_atk, unit.buff_atk_flat);
             let sp_cost = f64::from(unit.skill_cost);
             let skillhit = hit(final_atk, param(0)) * 2.0;
-            let avghit = (sp_cost * hit(final_atk, 1.0) + skillhit) / (sp_cost + 1.0);
+            let avghit = sp_cost.mul_add(hit(final_atk, 1.0), skillhit) / (sp_cost + 1.0);
             avghit / atk_interval * (unit.attack_speed + aspd) / 100.0
         }
         2 => {
             aspd += param(2);
-            let final_atk = unit.atk * (1.0 + unit.buff_atk) + unit.buff_atk_flat;
+            let final_atk = unit.atk.mul_add(1.0 + unit.buff_atk, unit.buff_atk_flat);
             hit(final_atk, param(0)) / atk_interval * (unit.attack_speed + aspd) / 100.0
                 * f64::from(unit.targets).min(param(1))
         }
         3 => {
             aspd += param(0);
-            let final_atk = unit.atk * (1.0 + param(1) + unit.buff_atk) + unit.buff_atk_flat;
+            let final_atk = unit.atk.mul_add(1.0 + param(1) + unit.buff_atk, unit.buff_atk_flat);
             let prob = param(3);
-            let avghit = (1.0 - prob) * hit(final_atk, 1.0) + prob * hit(final_atk, param(2));
+            let avghit = (1.0 - prob).mul_add(hit(final_atk, 1.0), prob * hit(final_atk, param(2)));
             avghit / atk_interval * (unit.attack_speed + aspd) / 100.0
         }
         _ => {
-            let final_atk = unit.atk * (1.0 + unit.buff_atk) + unit.buff_atk_flat;
+            let final_atk = unit.atk.mul_add(1.0 + unit.buff_atk, unit.buff_atk_flat);
             hit(final_atk, 1.0) / atk_interval * (unit.attack_speed + aspd) / 100.0
         }
     };

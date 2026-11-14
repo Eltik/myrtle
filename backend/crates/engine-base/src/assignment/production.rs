@@ -960,7 +960,7 @@ pub(super) fn best_post_combination(
         .iter()
         .map(|(_, v, _)| *v)
         .fold(f64::NEG_INFINITY, f64::max);
-    let floor = top - top.abs() * POST_TIE_BAND;
+    let floor = top.abs().mul_add(-POST_TIE_BAND, top);
     search
         .complete
         .into_iter()

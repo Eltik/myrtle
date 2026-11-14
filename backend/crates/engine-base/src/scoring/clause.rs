@@ -46,6 +46,7 @@ pub enum CombineRule {
 }
 
 impl Metric {
+    #[must_use]
     pub fn speed_for_room(room_type: &str) -> Self {
         match room_type {
             "MANUFACTURE" => Self::ManufactureSpeed,
@@ -59,6 +60,7 @@ impl Metric {
         }
     }
 
+    #[must_use]
     pub const fn combine(&self) -> CombineRule {
         match self {
             Self::OrderValue { .. } => CombineRule::OrderMix,
@@ -206,12 +208,13 @@ pub enum ClauseKind {
 /// Synthetic `facility_counts` key: hours a crew stays seated
 pub const TENURE_HOURS: &str = "TENURE_HOURS";
 
+#[must_use]
 pub fn ramp_average(first_hour: f64, per_hour: f64, cap: f64, hours: f64) -> f64 {
     #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
     let n = hours.round().max(1.0) as usize;
     #[allow(clippy::cast_precision_loss)]
     let total: f64 = (1..=n)
-        .map(|k| (first_hour + per_hour * (k as f64 - 1.0)).min(cap))
+        .map(|k| per_hour.mul_add(k as f64 - 1.0, first_hour).min(cap))
         .sum();
     #[allow(clippy::cast_precision_loss)]
     let avg = total / n as f64;
@@ -258,6 +261,7 @@ fn cc_non_stacking_family(buff_id: &str, buff: &Buff) -> Option<String> {
 
 /// Legacy [`BuffResolutionStrategy`] -> clauses
 #[allow(clippy::too_many_lines)]
+#[must_use]
 pub fn clauses_from_strategy(
     buff_id: &str,
     buff: &Buff,
@@ -1273,6 +1277,7 @@ pub const PERCEPTION_POOL: &str = "PERCEPTION_INFO";
 
 pub const UNRESOLVED_CARRIES_LEGACY_ESTIMATE: bool = false;
 
+#[must_use]
 pub fn build_clauses(
     buffs: &HashMap<String, Buff>,
     name_to_char: &HashMap<String, String>,
@@ -1312,6 +1317,7 @@ pub fn build_clauses(
 }
 
 /// Buffs with an [`ClauseKind::Unresolved`] clause
+#[must_use]
 pub fn unresolved_buffs(clauses: &HashMap<String, ClauseSet>) -> Vec<&str> {
     let mut ids: Vec<&str> = clauses
         .iter()

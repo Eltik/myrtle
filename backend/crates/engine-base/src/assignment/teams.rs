@@ -767,6 +767,7 @@ pub fn compute_team_totals(
 
 /// Score an arbitrary team with the room search's speed/value objective
 #[allow(clippy::too_many_arguments)]
+#[must_use]
 pub fn team_value(
     team: &[String],
     room_type: &str,

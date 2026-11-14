@@ -200,6 +200,7 @@ impl LedgerCtx<'_> {
 }
 
 /// Globals + conditions a fixed CC crew grants
+#[must_use]
 pub fn grants_of(
     ctx: &LedgerCtx<'_>,
     cc_ops: &[String],
@@ -209,6 +210,7 @@ pub fn grants_of(
 
 /// Breakdown for one production room
 #[allow(clippy::too_many_arguments)]
+#[must_use]
 pub fn production_room_ledger(
     ctx: &LedgerCtx<'_>,
     ops: &[String],
@@ -513,6 +515,7 @@ fn conditional_reach_note(cond: &crate::assignment::CcCondition, reach: usize) -
     }
 }
 
+#[must_use]
 pub fn control_room_ledger(
     ctx: &LedgerCtx<'_>,
     cc_ops: &[String],

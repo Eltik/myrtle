@@ -113,17 +113,17 @@ pub fn dps(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
         share = sp(3);
     }
 
-    let final_atk = unit.atk * (1.0 + atkbuff + unit.buff_atk) + unit.buff_atk_flat;
+    let final_atk = unit.atk.mul_add(1.0 + atkbuff + unit.buff_atk, unit.buff_atk_flat);
     let arts = |scale: f64| (final_atk * scale * (1.0 - res / 100.0)).max(final_atk * scale * 0.05);
     let hitdmg = arts(1.0);
-    let mut avghit = hitdmg * hits * (1.0 + share * (hits - 1.0));
+    let mut avghit = hitdmg * hits * share.mul_add(hits - 1.0, 1.0);
 
     if skill == 2 {
         let primary = targets.min(sp(6));
         let linked = (targets - primary).max(0.0).min(sp(6) * sp(2));
         let skilldmg = primary * arts(skill_atk_scale) + linked * arts(link_scale);
         let sp_cost = f64::from(unit.skill_cost);
-        avghit = (sp_cost * hitdmg + skilldmg) / (sp_cost + 1.0);
+        avghit = sp_cost.mul_add(hitdmg, skilldmg) / (sp_cost + 1.0);
     }
 
     let dps = avghit / atk_interval * (unit.attack_speed + aspd) / 100.0;

@@ -49,7 +49,7 @@ pub fn dps(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let sp = |i: usize, d: f64| unit.skill_parameters.get(i).copied().unwrap_or(d);
 
     let atk_interval = f64::from(unit.attack_interval);
-    let final_atk = unit.atk * (1.0 + unit.buff_atk) + unit.buff_atk_flat;
+    let final_atk = unit.atk.mul_add(1.0 + unit.buff_atk, unit.buff_atk_flat);
     let phys = |scale: f64| (final_atk * scale - defense).max(final_atk * scale * 0.05);
     let attack_rate = unit.attack_speed / 100.0 / atk_interval;
 

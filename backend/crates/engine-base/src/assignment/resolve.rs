@@ -24,6 +24,7 @@ pub fn base_wide_relevant(
 }
 
 /// A copy of `registry` with every base-wide conditional collapsed to a flat `DirectEfficiency`
+#[must_use]
 pub fn resolve_base_wide(
     registry: &HashMap<String, BuffResolutionStrategy>,
     working: &HashSet<String>,
@@ -128,6 +129,7 @@ pub fn room_presence_relevant(
 }
 
 /// A copy of `registry` with every room-presence gate collapsed to a flat `DirectEfficiency`
+#[must_use]
 pub fn resolve_room_presence(
     registry: &HashMap<String, BuffResolutionStrategy>,
     deployed_rooms: &HashMap<String, String>,
@@ -259,6 +261,7 @@ pub fn resolve_room_presence(
 }
 
 /// A copy of `registry` with every layout-counted branch collapsed to a plain `GlobalEffect`
+#[must_use]
 pub fn resolve_layout_branches(
     registry: &HashMap<String, BuffResolutionStrategy>,
     building: &UserBuilding,
@@ -312,6 +315,7 @@ pub fn resolve_layout_branches(
 }
 
 /// A copy of `registry` with every pool-scaled CC global collapsed to a flat `GlobalEffect`
+#[must_use]
 pub fn resolve_global_pool(
     registry: &HashMap<String, BuffResolutionStrategy>,
     points: &HashMap<String, f64>,

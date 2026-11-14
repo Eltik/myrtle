@@ -16,6 +16,7 @@ pub(super) fn count_facilities(building: &UserBuilding) -> HashMap<String, usize
 }
 
 /// The building's facility counts with the enabler bonuses the roster can field
+#[must_use]
 pub fn effective_facility_counts(
     building: &UserBuilding,
     operators: &[OperatorBaseProfile],
@@ -81,6 +82,7 @@ pub fn parked_tokens(
         .collect()
 }
 
+#[must_use]
 pub fn working_crew(crew: &[String], parked: &HashSet<String>) -> Vec<String> {
     crew.iter()
         .filter(|id| !parked.contains(*id))
@@ -195,6 +197,7 @@ pub fn effective_facility_counts_with_inert(
     counts
 }
 
+#[must_use]
 pub fn drone_capacity(building: &UserBuilding, building_data: &BuildingDataFile) -> usize {
     if let Some(cap) = building.drone_capacity {
         return usize::try_from(cap).unwrap_or(0);

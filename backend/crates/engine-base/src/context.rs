@@ -15,6 +15,7 @@ pub struct BaseContext {
 }
 
 impl BaseContext {
+    #[must_use]
     pub fn build(roster: &[RosterEntry], game_data: &BaseData, ignore_promotion: bool) -> Self {
         let glossary = game_data.glossary();
         let profiles: Vec<OperatorBaseProfile> = roster

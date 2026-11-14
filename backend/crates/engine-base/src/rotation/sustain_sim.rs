@@ -63,6 +63,7 @@ pub struct OperatorMoraleTimeline {
 }
 
 /// Working drain at game rates, points/h
+#[must_use]
 pub fn game_morale_drain(op: &OperatorBaseProfile, morale_drains: &HashMap<String, f64>) -> f64 {
     let modifier: f64 = op
         .available_buffs
@@ -72,10 +73,12 @@ pub fn game_morale_drain(op: &OperatorBaseProfile, morale_drains: &HashMap<Strin
     (GAME_BASE_MORALE_DRAIN + modifier).max(MIN_MORALE_DRAIN)
 }
 
+#[must_use]
 pub fn sustains_24h_block(op: &OperatorBaseProfile, morale_drains: &HashMap<String, f64>) -> bool {
     sustains_hours(op, morale_drains, 2.0 * SHIFT_HOURS)
 }
 
+#[must_use]
 pub fn sustains_hours(
     op: &OperatorBaseProfile,
     morale_drains: &HashMap<String, f64>,
@@ -90,6 +93,7 @@ struct OpSchedule {
     drain: f64,
 }
 
+#[must_use]
 pub fn synced_live_morale(building_json: &serde_json::Value) -> HashMap<String, f64> {
     crate::types::live_morale_snapshot(building_json)
         .into_iter()
@@ -98,6 +102,7 @@ pub fn synced_live_morale(building_json: &serde_json::Value) -> HashMap<String, 
 }
 
 /// Project snapshots to `now_unix`
+#[must_use]
 pub fn project_morale(
     snapshots: &HashMap<String, crate::types::MoraleSnapshot>,
     now_unix: i64,
@@ -132,7 +137,7 @@ pub fn project_morale(
                 let drain = profile_of
                     .get(id.as_str())
                     .map_or(MIN_MORALE_DRAIN, |p| game_morale_drain(p, morale_drains));
-                snap.morale - drain * hours
+                drain.mul_add(-hours, snap.morale)
             } else {
                 snap.morale
             };
@@ -141,6 +146,7 @@ pub fn project_morale(
         .collect()
 }
 
+#[must_use]
 pub fn simulate_rotation(
     rotation: &ShiftRotation,
     profiles: &[OperatorBaseProfile],
@@ -506,10 +512,10 @@ pub fn simulate_rotation_from(
                 None,
             );
             let day_frac = SHIFT_HOURS / 24.0 * crew_frac;
-            acc.lmd += y.lmd_per_day * day_frac;
-            acc.gold += y.gold_per_day * day_frac;
-            acc.exp += y.exp_per_day * day_frac;
-            acc.idle_hours += SHIFT_HOURS * (1.0 - crew_frac);
+            acc.lmd = y.lmd_per_day.mul_add(day_frac, acc.lmd);
+            acc.gold = y.gold_per_day.mul_add(day_frac, acc.gold);
+            acc.exp = y.exp_per_day.mul_add(day_frac, acc.exp);
+            acc.idle_hours = SHIFT_HOURS.mul_add(1.0 - crew_frac, acc.idle_hours);
         }
 
         let must_rest_now = |id: &str| -> bool {
@@ -547,7 +553,7 @@ pub fn simulate_rotation_from(
                 let Some(id) = queue.next() else { break };
                 let boost = if taken == 0 { single } else { 0.0 };
                 let m = morale.get_mut(id.as_str()).expect("rester has morale");
-                *m = (*m + (rate + boost) * SHIFT_HOURS).min(MORALE_MAX);
+                *m = (rate + boost).mul_add(SHIFT_HOURS, *m).min(MORALE_MAX);
             }
         }
         unseated += queue

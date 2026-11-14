@@ -24,6 +24,7 @@ use crate::{
 use myrtle_gamedata_raw::tables::building::BuildingDataFile;
 
 /// Effective per-hour morale recovery for this base
+#[must_use]
 pub fn morale_recovery(building: &UserBuilding) -> f64 {
     let levels: Vec<i32> = building
         .rooms
@@ -156,6 +157,7 @@ pub(super) fn op_morale_drain(
 }
 
 /// Fraction of time an operator is working at steady state
+#[must_use]
 pub fn op_uptime(
     op: &OperatorBaseProfile,
     morale_drains: &HashMap<String, f64>,
@@ -201,6 +203,7 @@ pub fn crew_drain_aura(
         .sum()
 }
 
+#[must_use]
 pub fn has_drain_aura_immunity(
     op: &OperatorBaseProfile,
     room_type: &str,
@@ -220,6 +223,7 @@ pub fn has_drain_aura_immunity(
 }
 
 /// The roster's morale-swap manager, if any
+#[must_use]
 pub fn morale_swap_enabler(
     operators: &[OperatorBaseProfile],
     building_data: &BuildingDataFile,
@@ -255,6 +259,7 @@ pub fn num_morale_swap_managers(
 }
 
 /// Production operators the roster's morale-swap managers keep at full morale 24/7
+#[must_use]
 pub fn morale_sustained_beneficiaries(
     main: &BaseAssignment,
     operators: &[OperatorBaseProfile],
@@ -323,10 +328,11 @@ pub(super) fn room_sustain_factor(
         return 1.0;
     }
     let avg_uptime = uptimes.iter().sum::<f64>() / uptimes.len() as f64;
-    1.0 - (1.0 - avg_uptime) * (1.0 - BACKUP_COVERAGE)
+    (1.0 - avg_uptime).mul_add(-(1.0 - BACKUP_COVERAGE), 1.0)
 }
 
 /// Sustained 24/7 efficiency of a staffing under a staggered rotation
+#[must_use]
 pub fn sustained_efficiency_of(
     main: &BaseAssignment,
     operators: &[OperatorBaseProfile],
@@ -369,6 +375,7 @@ pub fn sustained_efficiency_of(
 }
 
 /// Sustained LMD-equivalent daily value of an assignment
+#[must_use]
 pub fn sustained_assignment_value(
     main: &BaseAssignment,
     operators: &[OperatorBaseProfile],
@@ -439,6 +446,7 @@ pub(super) fn is_gold_factory(room: &RoomAssignment) -> bool {
     room.room_type == "MANUFACTURE" && room.formula_type.as_deref() == Some("F_GOLD")
 }
 
+#[must_use]
 pub fn compute_sustained_assignment(
     operators: &[OperatorBaseProfile],
     building: &UserBuilding,

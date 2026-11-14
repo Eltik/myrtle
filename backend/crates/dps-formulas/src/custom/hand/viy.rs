@@ -141,7 +141,7 @@ pub fn dps(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
         }
     }
 
-    let final_atk = unit.atk * (1.0 + atkbuff + unit.buff_atk) + unit.buff_atk_flat;
+    let final_atk = unit.atk.mul_add(1.0 + atkbuff + unit.buff_atk, unit.buff_atk_flat);
     let arts = |scale: f64| (final_atk * scale * (1.0 - res / 100.0)).max(final_atk * scale * 0.05);
     let hitdmg = arts(atk_scale);
     let bouncedmg = if bounce_scale > 0.0 {
@@ -159,7 +159,7 @@ pub fn dps(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
         let stored_in_lockout = t2(0) / effective_interval;
         let stacks = t2(2).min(per_release).min(stored_in_lockout);
         let value = t2(1);
-        dps += (value * (1.0 - res / 100.0)).max(value * 0.05) * stacks;
+        dps = (value * (1.0 - res / 100.0)).max(value * 0.05).mul_add(stacks, dps);
     }
 
     Some(dps)

@@ -1,5 +1,6 @@
 use myrtle_gamedata_raw::tables::building::{BuildingDataFile, RoomPhase};
 
+#[must_use]
 pub fn is_production_room(room_type: &str) -> bool {
     matches!(room_type, "MANUFACTURE" | "TRADING")
 }
@@ -24,6 +25,7 @@ pub fn max_stationed_at_level(
 }
 
 /// Buff id without the tier suffix
+#[must_use]
 pub fn buff_family(buff_id: &str) -> &str {
     buff_id.split('[').next().unwrap_or(buff_id)
 }

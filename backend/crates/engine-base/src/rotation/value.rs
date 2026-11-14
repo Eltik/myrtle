@@ -24,6 +24,7 @@ pub struct StaffingValue {
 }
 
 impl StaffingValue {
+    #[must_use]
     pub fn of(asn: &BaseAssignment) -> Self {
         let mut flows = BaseFlows::default();
         for r in &asn.rooms {
@@ -74,6 +75,7 @@ impl StaffingValue {
 }
 
 /// The recommended rotation valued as the player will run it
+#[must_use]
 pub fn rotation_value(
     rotation: &ShiftRotation,
     operators: &[OperatorBaseProfile],
@@ -131,6 +133,7 @@ fn crew_tenure_hours(rotation: &ShiftRotation) -> f64 {
     }
 }
 
+#[must_use]
 pub fn usable_preset_shifts(building: &UserBuilding) -> Vec<usize> {
     let with_presets: Vec<&crate::types::UserRoom> = building
         .rooms
@@ -159,6 +162,7 @@ pub struct PresetsValuation {
     pub legs_hours: Vec<f64>,
 }
 
+#[must_use]
 pub fn presets_value(
     operators: &[OperatorBaseProfile],
     building: &UserBuilding,
@@ -312,6 +316,7 @@ pub struct CyclePlan {
 }
 
 #[allow(clippy::too_many_arguments)]
+#[must_use]
 pub fn plan_cycle(
     first: &BaseAssignment,
     operators: &[OperatorBaseProfile],

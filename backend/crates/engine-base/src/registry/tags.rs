@@ -6,6 +6,7 @@ use super::parse::plain_text;
 use myrtle_gamedata_raw::tables::consts::GameDataConst;
 
 /// Lowercased display name -> `char_id`
+#[must_use]
 pub fn build_name_to_char(operators: &HashMap<String, Operator>) -> HashMap<String, String> {
     operators
         .iter()
@@ -14,6 +15,7 @@ pub fn build_name_to_char(operators: &HashMap<String, Operator>) -> HashMap<Stri
 }
 
 /// Lowercased group/nation/team ids, the match tags for count scalers
+#[must_use]
 pub fn faction_tags_of(op: &Operator) -> Vec<String> {
     let mut tags = Vec::new();
     let mut push = |s: &str| {
@@ -49,6 +51,7 @@ pub fn faction_tags_of(op: &Operator) -> Vec<String> {
     tags
 }
 
+#[must_use]
 pub fn build_faction_map(operators: &HashMap<String, Operator>) -> HashMap<String, Vec<String>> {
     operators
         .iter()
@@ -57,6 +60,7 @@ pub fn build_faction_map(operators: &HashMap<String, Operator>) -> HashMap<Strin
 }
 
 /// `char_id` -> glossary tags
+#[must_use]
 pub fn glossary_tags(
     consts: &GameDataConst,
     name_to_char: &HashMap<String, String>,
@@ -88,6 +92,7 @@ pub fn glossary_tags(
     out
 }
 
+#[must_use]
 pub fn faction_tags_for(
     char_id: &str,
     op: &Operator,

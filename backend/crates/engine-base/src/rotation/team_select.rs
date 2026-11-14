@@ -628,7 +628,7 @@ fn select_balanced_teams(
                 }
                 let mut new = st.clone();
                 new.mask = new.mask.union(mask);
-                new.total += cand.score * weight;
+                new.total = cand.score.mul_add(weight, new.total);
                 new.picks[si] = Some(ci);
                 push(new);
                 taken += 1;
@@ -682,7 +682,7 @@ fn select_balanced_teams(
                 }
                 if cand.score > cur_score + 1e-9 {
                     best.mask = rest.union(mask);
-                    best.total += (cand.score - cur_score) * weight;
+                    best.total = (cand.score - cur_score).mul_add(weight, best.total);
                     best.picks[si] = Some(ci);
                     improved = true;
                     break;
@@ -707,9 +707,7 @@ fn select_balanced_teams(
                 ) else {
                     continue;
                 };
-                let new_total = best.total - ti.score * wi - tj.score * wj
-                    + masked[gi][j_in_i].0.score * wi
-                    + masked[gj][i_in_j].0.score * wj;
+                let new_total = masked[gj][i_in_j].0.score.mul_add(wj, masked[gi][j_in_i].0.score.mul_add(wi, tj.score.mul_add(-wj, ti.score.mul_add(-wi, best.total))));
                 if new_total > best.total + 1e-9 {
                     best.total = new_total;
                     best.picks[i] = Some(j_in_i);

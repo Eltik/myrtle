@@ -359,6 +359,7 @@ fn merge_kept(
 }
 
 /// Build the recommended rotation
+#[must_use]
 pub fn recommend_shift_rotation(
     operators: &[OperatorBaseProfile],
     building: &UserBuilding,

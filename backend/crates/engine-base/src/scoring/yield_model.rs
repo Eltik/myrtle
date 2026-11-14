@@ -52,6 +52,7 @@ fn trading_orders_per_day(level: i32, mult: f64, order_limit: Option<i32>) -> f6
 }
 
 /// Share of a post's peak output that survives its order buffer (<= 1.0)
+#[must_use]
 pub fn trading_cap_factor(
     room_type: &str,
     level: i32,
@@ -122,7 +123,7 @@ impl BaseFlows {
             }
             ("MANUFACTURE", Some("F_GOLD")) => {
                 self.gold_factories += 1;
-                self.gold_produced += FACTORY_GOLD_PER_DAY_BASE * mult;
+                self.gold_produced = FACTORY_GOLD_PER_DAY_BASE.mul_add(mult, self.gold_produced);
                 self.best_gold_mult = self.best_gold_mult.max(mult);
             }
             ("MANUFACTURE", Some("F_EXP")) => {
@@ -138,6 +139,7 @@ impl BaseFlows {
     }
 
     /// Realized gold->trade LMD/day: the slower side caps the bars moved
+    #[must_use]
     pub fn realized_lmd(&self) -> f64 {
         self.realized_lmd_with(self.gold_produced)
     }
@@ -156,7 +158,7 @@ impl BaseFlows {
         let mut lmd = 0.0;
         for (bars, per_bar) in posts {
             let sold = bars.min(supply);
-            lmd += sold * per_bar * GOLD_BAR_LMD;
+            lmd = (sold * per_bar).mul_add(GOLD_BAR_LMD, lmd);
             supply -= sold;
             if supply <= 0.0 {
                 break;
@@ -165,6 +167,7 @@ impl BaseFlows {
         lmd
     }
 
+    #[must_use]
     pub fn drones(&self) -> DroneFlow {
         let per_day = DRONES_PER_DAY_BASE * productivity_mult(self.drone_recovery_pct);
         let bars_per_drone = DRONE_ROOM_DAYS * FACTORY_GOLD_PER_DAY_BASE * self.best_gold_mult;
@@ -180,7 +183,7 @@ impl BaseFlows {
             0.0
         };
         let gold_lmd = |drones: f64| {
-            self.realized_lmd_with(self.gold_produced + drones * bars_per_drone)
+            self.realized_lmd_with(drones.mul_add(bars_per_drone, self.gold_produced))
                 - self.realized_lmd()
         };
         let gold_per_drone = if gold_fill > 0.0 {
@@ -208,32 +211,33 @@ impl BaseFlows {
         }
     }
 
+    #[must_use]
     pub fn lmd_per_day(&self) -> f64 {
         self.realized_lmd() + self.drones().lmd
     }
 
+    #[must_use]
     pub fn exp_per_day(&self) -> f64 {
         self.exp + self.drones().exp
     }
 
     /// The search objective
+    #[must_use]
     pub fn total_value(&self) -> f64 {
-        self.realized_lmd()
-            + self.exp * EXP_TO_LMD
-            + self.drone_recovery_pct / 100.0
+        (self.drone_recovery_pct / 100.0
                 * DRONES_PER_DAY_BASE
-                * DRONE_ROOM_DAYS
-                * FACTORY_GOLD_PER_DAY_BASE
-                * GOLD_BAR_LMD
+                * DRONE_ROOM_DAYS * FACTORY_GOLD_PER_DAY_BASE).mul_add(GOLD_BAR_LMD, self.exp.mul_add(EXP_TO_LMD, self.realized_lmd()))
     }
 
     /// What the player banks, for display only
+    #[must_use]
     pub fn value_with_drones(&self) -> f64 {
-        self.lmd_per_day() + self.exp_per_day() * EXP_TO_LMD
+        self.exp_per_day().mul_add(EXP_TO_LMD, self.lmd_per_day())
     }
 }
 
 /// LMD-equivalent of a +`pct`% global bonus on every `room_type` room
+#[must_use]
 pub fn global_bonus_value(room_type: &str, room_count: usize, pct: f64) -> f64 {
     let per_room_base = match room_type {
         "MANUFACTURE" => FACTORY_GOLD_PER_DAY_BASE * GOLD_BAR_LMD,
@@ -252,6 +256,7 @@ pub struct RoomFill {
 
 const POINTS_PER_DAY: f64 = 86400.0;
 
+#[must_use]
 pub fn room_fill(
     room_type: &str,
     formula: Option<&str>,
@@ -313,12 +318,14 @@ pub struct RoomYield {
 }
 
 impl RoomYield {
-    pub fn lmd_equivalent(&self) -> f64 {
-        self.lmd_per_day + self.gold_per_day * GOLD_BAR_LMD + self.exp_per_day * EXP_TO_LMD
+    #[must_use]
+    pub const fn lmd_equivalent(&self) -> f64 {
+        self.exp_per_day.mul_add(EXP_TO_LMD, self.gold_per_day.mul_add(GOLD_BAR_LMD, self.lmd_per_day))
     }
 }
 
 /// Uncoupled per-room yield for display
+#[must_use]
 pub fn room_yield(
     room_type: &str,
     formula: Option<&str>,

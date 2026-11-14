@@ -1,0 +1,87 @@
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TargetSkillPlan {
+    pub skill_index: i16,
+    pub mastery_level: i16,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TargetModulePlan {
+    pub module_id: String,
+    pub module_stage: i16,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct OperatorPlan {
+    pub operator_id: String,
+    pub target_elite: i16,
+    pub target_level: i16,
+    pub target_skill_level: i16,
+    pub target_skills: serde_json::Value,
+    pub target_modules: serde_json::Value,
+}
+
+#[derive(Debug, Clone)]
+pub struct PlanInput {
+    pub target_elite: i16,
+    pub target_level: i16,
+    pub target_skill_level: i16,
+    pub target_skills: serde_json::Value,
+    pub target_modules: serde_json::Value,
+    pub display_on_profile: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PlanRecipeCost {
+    pub count: i32,
+    pub item: PlanRequirementItem,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PlanRecipe {
+    pub count: i32,
+    pub costs: Vec<PlanRecipeCost>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PlanRequirementItem {
+    pub id: String,
+    pub name: String,
+    pub icon_id: Option<String>,
+    pub image: Option<String>,
+    pub item_type: String,
+    pub rarity: i16,
+    pub sort_group: i8,
+    pub sort_subrank: i8,
+    pub required_count: i32,
+    pub inventory_count: i32,
+    pub craftable_count: i32,
+    pub missing_count: i32,
+    pub can_craft: bool,
+    pub craft_reason: String,
+    pub craft_blocked: bool,
+    pub recipe: Option<PlanRecipe>,
+    pub unmet_stages: Vec<PlanUnmetStage>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PlanUnmetStage {
+    pub stage_id: String,
+    pub code: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct PresetTarget {
+    pub elite: i16,
+    pub level: Option<i16>,
+    pub skill_level: i16,
+    pub masteries: [i16; 3],
+    pub module_stage: i16,
+    #[serde(default)]
+    pub display_on_profile: bool,
+}

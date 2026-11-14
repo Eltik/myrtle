@@ -37,6 +37,7 @@ const TAILORING_MIX_BY_STEPS: [[f64; 3]; 3] =
 
 const MAX_RARITY: usize = 3;
 
+#[must_use]
 pub fn rarity_for_level(building_data: &BuildingDataFile, level: i32) -> usize {
     let phases = &building_data.trading_data.phases;
     #[allow(clippy::cast_sign_loss)]
@@ -87,7 +88,7 @@ fn order_lmd(effects: &[OrderEffect], size: OrderSize) -> f64 {
         .max()
         .unwrap_or(0);
     flat += f64::from(high_bonus);
-    gold * GOLD_BAR_LMD + flat
+    gold.mul_add(GOLD_BAR_LMD, flat)
 }
 
 fn order_gold(effects: &[OrderEffect], size: OrderSize) -> f64 {
@@ -115,12 +116,13 @@ fn per_minute(mix: [f64; 3], per_order: impl Fn(OrderSize) -> f64) -> f64 {
         .iter()
         .zip(mix)
         .fold((0.0, 0.0), |(t, m), (size, w)| {
-            (t + w * per_order(*size), m + w * size.minutes)
+            (w.mul_add(per_order(*size), t), w.mul_add(size.minutes, m))
         });
     if minutes <= 0.0 { 0.0 } else { total / minutes }
 }
 
 /// Order-VALUE %: LMD/hr with `effects` over a bare post's, minus one
+#[must_use]
 pub fn value_pct(effects: &[OrderEffect], rarity: usize) -> f64 {
     if effects.is_empty() {
         return 0.0;
@@ -134,6 +136,7 @@ pub fn value_pct(effects: &[OrderEffect], rarity: usize) -> f64 {
 }
 
 /// Gold-THROUGHPUT %: bars consumed/hr with `effects` over a bare post's, minus one
+#[must_use]
 pub fn gold_pct(effects: &[OrderEffect], rarity: usize) -> f64 {
     if effects.is_empty() {
         return 0.0;
@@ -147,6 +150,7 @@ pub fn gold_pct(effects: &[OrderEffect], rarity: usize) -> f64 {
 }
 
 /// OPTIMISTIC bound for candidate ranking only, never a final score
+#[must_use]
 pub fn optimistic_value_pct(effect: &OrderEffect, rarity: usize) -> f64 {
     let solo = value_pct(std::slice::from_ref(effect), rarity);
     let strong = OrderEffect::HigherYieldChance { strong: true };
@@ -155,6 +159,7 @@ pub fn optimistic_value_pct(effect: &OrderEffect, rarity: usize) -> f64 {
     solo.max(with - without)
 }
 
+#[must_use]
 pub fn optimistic_value_pct_among(
     effect: &OrderEffect,
     rarity: usize,
@@ -170,13 +175,14 @@ pub fn optimistic_value_pct_among(
 }
 
 /// Bars a bare post sells per day at 100%
+#[must_use]
 pub fn bars_per_day(rarity: usize) -> f64 {
     let mix = MIX_BY_RARITY[rarity.clamp(1, MAX_RARITY) - 1];
     let (gold, minutes) = ORDER_SIZES
         .iter()
         .zip(mix)
         .fold((0.0, 0.0), |(g, m), (size, w)| {
-            (g + w * f64::from(size.gold), m + w * size.minutes)
+            (w.mul_add(f64::from(size.gold), g), w.mul_add(size.minutes, m))
         });
     if minutes <= 0.0 {
         0.0
@@ -185,6 +191,7 @@ pub fn bars_per_day(rarity: usize) -> f64 {
     }
 }
 
+#[must_use]
 pub fn avg_gold_per_order(rarity: usize) -> f64 {
     let mix = MIX_BY_RARITY[rarity.clamp(1, MAX_RARITY) - 1];
     ORDER_SIZES

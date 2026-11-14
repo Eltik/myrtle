@@ -69,7 +69,7 @@ pub fn dps(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
         maxtargets = unit.skill_parameters.get(1).copied().unwrap_or(1.0);
     }
 
-    let final_atk = unit.atk * (1.0 + atkbuff + unit.buff_atk) + unit.buff_atk_flat;
+    let final_atk = unit.atk.mul_add(1.0 + atkbuff + unit.buff_atk, unit.buff_atk_flat);
 
     let hitdmg = if arts_attack {
         (final_atk * atk_scale * (1.0 - res / 100.0)).max(final_atk * atk_scale * 0.05)

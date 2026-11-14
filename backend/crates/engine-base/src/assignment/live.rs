@@ -56,11 +56,13 @@ pub(super) fn room_ops_for_shift(room: &UserRoom, shift: Option<usize>) -> Vec<S
     }
 }
 
+#[must_use]
 pub fn has_preset_shifts(building: &UserBuilding) -> bool {
     building.rooms.iter().any(|r| r.preset_shifts.len() > 1)
 }
 
 /// Evaluate the player's current base as stationed
+#[must_use]
 pub fn compute_current_assignment(
     operators: &[OperatorBaseProfile],
     building: &UserBuilding,
@@ -80,6 +82,7 @@ pub fn compute_current_assignment(
     )
 }
 
+#[must_use]
 pub fn compute_current_assignment_over(
     operators: &[OperatorBaseProfile],
     building: &UserBuilding,
@@ -101,6 +104,7 @@ pub fn compute_current_assignment_over(
     )
 }
 
+#[must_use]
 pub fn compute_live_assignment(
     operators: &[OperatorBaseProfile],
     building: &UserBuilding,

@@ -11,6 +11,7 @@ use crate::types::{BaseAssignment, OperatorBaseProfile, RoomAssignment, UserBuil
 
 /// The scoped proposal as applied
 #[allow(clippy::too_many_arguments)]
+#[must_use]
 pub fn settle_scoped_proposal(
     operators: &[OperatorBaseProfile],
     building: &UserBuilding,

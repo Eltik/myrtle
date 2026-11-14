@@ -75,7 +75,7 @@ pub fn dps(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
         skill_scale = sp(4, 1.0);
     }
 
-    let final_atk = unit.atk * (1.0 + atkbuff + unit.buff_atk) + unit.buff_atk_flat;
+    let final_atk = unit.atk.mul_add(1.0 + atkbuff + unit.buff_atk, unit.buff_atk_flat);
     let scale = atk_scale * skill_scale;
     let hitdmg = (final_atk * scale - defense).max(final_atk * scale * 0.05);
     let attack_rate = unit.attack_speed / 100.0 / atk_interval;
@@ -111,7 +111,7 @@ fn s3_average_targets(attacks: f64, enemies: f64, per_trigger: f64, max_trigger:
         } else {
             attacks
         };
-        sum += (end - start) * enemies.min(1.0 + step);
+        sum = (end - start).mul_add(enemies.min(1.0 + step), sum);
         step += 1.0;
     }
     sum / attacks

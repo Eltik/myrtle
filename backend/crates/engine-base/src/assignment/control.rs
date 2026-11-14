@@ -41,6 +41,7 @@ impl ControlCenter {
 }
 
 /// Append unused operators to `slots` until it reaches `max_slots`.
+///
 /// Fillers add no value, picks lowest *opportunity cost*: fewest base skills for
 /// OTHER rooms, keeping operators with useful Dormitory/Training/etc. skills (e.g. Schwarz)
 /// for the rooms they help.
@@ -94,6 +95,7 @@ pub fn fill_remaining_slots(
     added
 }
 
+#[must_use]
 pub fn cc_non_production_effects(
     crew: &[String],
     operators: &[OperatorBaseProfile],
@@ -145,6 +147,7 @@ pub fn cc_non_production_effects(
     out
 }
 
+#[must_use]
 pub fn cc_seated_coverage(
     seated: &[String],
     operators: &[OperatorBaseProfile],
@@ -178,6 +181,7 @@ pub fn cc_seated_coverage(
     best
 }
 
+#[must_use]
 pub fn cc_spare_seat_value(
     op: &OperatorBaseProfile,
     building_data: &BuildingDataFile,
@@ -188,6 +192,7 @@ pub fn cc_spare_seat_value(
     facility + clue
 }
 
+#[must_use]
 pub fn cc_spare_seat_split(
     op: &OperatorBaseProfile,
     building_data: &BuildingDataFile,

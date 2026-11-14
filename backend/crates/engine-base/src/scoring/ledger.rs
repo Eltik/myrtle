@@ -124,6 +124,7 @@ fn trading_level(
         })
 }
 
+#[must_use]
 pub fn score_room(ev: &RoomEval<'_>) -> RoomTotals {
     let members: Vec<&OperatorBaseProfile> = ev
         .member_ids
@@ -704,6 +705,7 @@ fn applicable_clauses<'a>(
 
 /// Optimistic solo upper bound for candidate ranking
 #[allow(clippy::too_many_arguments, clippy::cast_precision_loss)]
+#[must_use]
 pub fn op_optimistic_bound(
     op: &OperatorBaseProfile,
     room_type: &str,
@@ -850,6 +852,7 @@ pub fn op_optimistic_bound(
 }
 
 /// The facility-count part of an operator's value
+#[must_use]
 pub fn op_facility_only_value(
     op: &OperatorBaseProfile,
     room_type: &str,
@@ -894,6 +897,7 @@ pub fn op_facility_only_value(
         .sum()
 }
 
+#[must_use]
 pub fn op_capacity_limit(
     op: &OperatorBaseProfile,
     room_type: &str,
@@ -919,6 +923,7 @@ pub fn op_capacity_limit(
 }
 
 /// Order VALUE that survives a Shamare-type nullifier
+#[must_use]
 pub fn op_surviving_order_value(
     op: &OperatorBaseProfile,
     room_type: &str,
@@ -940,6 +945,7 @@ pub fn op_surviving_order_value(
         .sum()
 }
 
+#[must_use]
 pub fn roster_order_effects(
     operators: &[&OperatorBaseProfile],
     room_type: &str,
