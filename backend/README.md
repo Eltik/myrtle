@@ -160,6 +160,24 @@ Around 70 unique paths under `/api`, most of which also accept a `{server}` pref
 | POST | `/auth/disconnect` | Yes | Disconnect the linked game account |
 | POST | `/refresh` | No | Sync game data from the Arknights server |
 
+### OAuth provider ("Sign in with myrtle.moe")
+
+Lets another site learn who a player is, with their consent. The full
+walkthrough for third-party developers is [`OAUTH.md`](OAUTH.md).
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET · POST | `/oauth/apps` | Yes | List or register the caller's applications |
+| PUT · DELETE | `/oauth/apps/{id}` | Yes | Edit or delete one of the caller's applications |
+| POST | `/oauth/apps/{id}/secret` | Yes | Replace an application's client secret |
+| GET · POST | `/oauth/authorize` | Yes | Check an authorization request and record the player's answer (called by the web client's consent page) |
+| GET | `/oauth/authorizations` | Yes | Applications the caller has authorized |
+| DELETE | `/oauth/authorizations/{app_id}` | Yes | Withdraw an authorization |
+| POST | `/oauth/token` | Client secret | Exchange a code or refresh token for tokens (RFC 6749) |
+| POST | `/oauth/revoke` | Client secret | Revoke a token (RFC 7009) |
+| GET | `/oauth/userinfo` | OAuth access token | The player's id, nickname, UID, server and avatar |
+| DELETE | `/admin/oauth/apps/{id}` | Super admin | Take down any application |
+
 ### Users, Search & Social
 
 | Method | Path | Auth | Description |
@@ -547,6 +565,7 @@ Tier-list operations use a 4-level hierarchy - **View → Edit → Publish → A
 | `ASSET_WS_URLS` | - | Per-server hot-reload map, e.g. `en=ws://host:9160,cn=ws://host:9161` |
 | `ASSET_WS_URL` | - | Single-server form (`disabled`/empty = off) |
 | `RATE_LIMIT_RPM` | `100` | Requests per minute per IP |
+| `PUBLIC_API_URL` | request `Host` | Public base URL of this API, for the absolute `avatar_url` in `/oauth/userinfo` |
 | `RUST_LOG` | `backend=info,tower_http=info` | Tracing filter |
 | `DISABLE_BACKGROUND_JOBS` | - | `1`/`true`/`yes` skips every watcher and cron job |
 | `DISCORD_ALERT_WEBHOOK` | - | Posts an alert when a game-data table fails to deserialize |
