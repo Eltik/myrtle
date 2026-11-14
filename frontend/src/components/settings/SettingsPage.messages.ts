@@ -15,6 +15,10 @@ export const messages = {
         text: "Privacy",
         description: "Settings section for profile visibility and leaderboard opt-in.",
     },
+    "nav.apps": {
+        text: "Applications",
+        description: "Settings section listing the other sites the visitor signed in to with their myrtle.moe account, and the OAuth applications they registered as a developer.",
+    },
     "nav.danger": {
         text: "Danger zone",
         description: "Settings section holding account deletion. Deliberately alarming.",

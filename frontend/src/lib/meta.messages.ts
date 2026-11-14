@@ -261,6 +261,15 @@ export const messages = {
         description: "Meta description of account settings.",
     },
 
+    "oauthAuthorize.title": {
+        text: "Authorize an application",
+        description: "Document title of the consent page another site sends a player to, to confirm who they are (OAuth).",
+    },
+    "oauthAuthorize.description": {
+        text: "Choose whether another site may confirm who you are on myrtle.moe.",
+        description: "Meta description of the consent page.",
+    },
+
     "privacy.title": {
         text: "Privacy Policy",
         description: "Document title of the privacy policy.",
