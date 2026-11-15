@@ -21,6 +21,17 @@ fn clips<'a>(audio: &'a [EnemyAudio], bank: &str) -> Vec<&'a str> {
 
 #[test]
 fn enemy_sounds_link_and_resolve() {
+    // Links resolve against the `.ogg` files on disk, and the game data CI
+    // downloads is tables only: without the tree every enemy links nothing.
+    let assets = std::env::var("ASSETS_DIR").unwrap_or_else(|_| "../assets/output/en".into());
+    let audio = std::path::Path::new(&assets).join("audio/audio/sound_beta_2");
+    if !audio.is_dir() {
+        eprintln!(
+            "enemy_audio_real_data_test: no EN audio tree at {}, skipping",
+            audio.display()
+        );
+        return;
+    }
     let data = load_game_data();
     let total = data.enemies.enemy_data.len();
     let with_audio = data
