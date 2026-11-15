@@ -214,9 +214,10 @@ pub fn compute(ctx: &Ctx<'_>, seats: &[Seat<'_>], req: &SquadAnalyzeRequest) -> 
                 continue;
             }
             if let Some(c) = bb(&t.board, "cost").filter(|c| *c < 0.0)
-                && tt.says_dp_cost {
-                    cuts.push(cut(CutKind::Talent, Some(t.name.clone()), None, (c, None)));
-                }
+                && tt.says_dp_cost
+            {
+                cuts.push(cut(CutKind::Talent, Some(t.name.clone()), None, (c, None)));
+            }
             if let Some(v) = bb(&t.board, "respawn_time").filter(|v| *v != 0.0) {
                 respawn_cuts.push(cut(
                     CutKind::Talent,

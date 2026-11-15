@@ -1176,6 +1176,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "myrtle-engine-music"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "myrtle-gamedata",
+ "myrtle-gamedata-raw",
+ "myrtle-testkit",
+ "myrtle-types",
+ "regex",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "myrtle-engine-planner"
 version = "0.1.0"
 dependencies = [
@@ -1254,6 +1268,7 @@ dependencies = [
  "myrtle-engine-base",
  "myrtle-engine-dps",
  "myrtle-engine-grade",
+ "myrtle-engine-music",
  "myrtle-engine-planner",
  "myrtle-engine-release",
  "myrtle-engine-squad",

@@ -391,7 +391,9 @@ fn milestone_score(levels: &[i16], slots: usize, ladder: fn(usize, usize) -> f64
         return sub_milestone_progress(levels, slots) * PARTIAL_CAP;
     }
     let remaining = slots.saturating_sub(reached);
-    sub_milestone_progress(levels, remaining).mul_add(PARTIAL_BONUS, ladder(reached, slots)).min(1.0)
+    sub_milestone_progress(levels, remaining)
+        .mul_add(PARTIAL_BONUS, ladder(reached, slots))
+        .min(1.0)
 }
 
 fn sub_milestone_progress(levels: &[i16], slots: usize) -> f64 {

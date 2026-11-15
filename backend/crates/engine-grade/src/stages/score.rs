@@ -44,7 +44,8 @@ pub fn grade_stages_detail(
 
     let permanent_score = weighted_score(pools.permanent());
     let event_score = weighted_score(pools.event());
-    let total = EVENT_POOL_WEIGHT.mul_add(event_score, PERMANENT_POOL_WEIGHT * permanent_score)
+    let total = EVENT_POOL_WEIGHT
+        .mul_add(event_score, PERMANENT_POOL_WEIGHT * permanent_score)
         .clamp(0.0, 1.0);
 
     StageGradeDetail {

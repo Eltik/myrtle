@@ -182,7 +182,10 @@ pub fn bars_per_day(rarity: usize) -> f64 {
         .iter()
         .zip(mix)
         .fold((0.0, 0.0), |(g, m), (size, w)| {
-            (w.mul_add(f64::from(size.gold), g), w.mul_add(size.minutes, m))
+            (
+                w.mul_add(f64::from(size.gold), g),
+                w.mul_add(size.minutes, m),
+            )
         });
     if minutes <= 0.0 {
         0.0

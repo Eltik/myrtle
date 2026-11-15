@@ -202,8 +202,21 @@ const fn json_kind(v: &Value) -> &'static str {
 }
 
 fn weighted_total(d: &SandboxGradeDetail) -> f64 {
-    (BASE_WEIGHT.mul_add(d.base_building, QUEST_WEIGHT.mul_add(d.quests, TECH_WEIGHT.mul_add(d.tech_tree, EXPLORATION_WEIGHT.mul_add(d.exploration, ACHIEVEMENT_WEIGHT * d.achievements))))
-        + CONTENT_WEIGHT * d.content_depth)
+    CONTENT_WEIGHT
+        .mul_add(
+            d.content_depth,
+            BASE_WEIGHT.mul_add(
+                d.base_building,
+                QUEST_WEIGHT.mul_add(
+                    d.quests,
+                    TECH_WEIGHT.mul_add(
+                        d.tech_tree,
+                        EXPLORATION_WEIGHT
+                            .mul_add(d.exploration, ACHIEVEMENT_WEIGHT * d.achievements),
+                    ),
+                ),
+            ),
+        )
         .clamp(0.0, 1.0)
 }
 
@@ -301,8 +314,11 @@ fn score_topic_v3(sandbox: Option<&Value>, universe: &SandboxUniverse) -> Sandbo
         .filter(|z| !z.is_empty())
         .collect::<BTreeSet<_>>()
         .len();
-    let exploration = f64::midpoint(ratio(nodes_explored, universe.max_nodes), ratio(zones_unlocked, universe.max_zones))
-        .min(1.0);
+    let exploration = f64::midpoint(
+        ratio(nodes_explored, universe.max_nodes),
+        ratio(zones_unlocked, universe.max_zones),
+    )
+    .min(1.0);
 
     let base_level = sandbox
         .get("base")
@@ -318,8 +334,11 @@ fn score_topic_v3(sandbox: Option<&Value>, universe: &SandboxUniverse) -> Sandbo
                 .filter_map(|b| b.get("level").and_then(Value::as_u64))
                 .sum::<u64>() as usize
         });
-    let base_building = f64::midpoint(ratio(base_level, universe.max_base_level), ratio(band_levels, universe.max_band_levels))
-        .min(1.0);
+    let base_building = f64::midpoint(
+        ratio(base_level, universe.max_base_level),
+        ratio(band_levels, universe.max_band_levels),
+    )
+    .min(1.0);
 
     let recipes = sandbox
         .get("inventory")
@@ -327,8 +346,11 @@ fn score_topic_v3(sandbox: Option<&Value>, universe: &SandboxUniverse) -> Sandbo
         .and_then(Value::as_array)
         .map_or(0, Vec::len);
     let music = completed_music(sandbox);
-    let content_depth =
-        f64::midpoint(ratio(recipes, universe.max_recipes), ratio(music, universe.max_music)).min(1.0);
+    let content_depth = f64::midpoint(
+        ratio(recipes, universe.max_recipes),
+        ratio(music, universe.max_music),
+    )
+    .min(1.0);
 
     let mut d = SandboxGradeDetail {
         v3: true,
@@ -402,7 +424,10 @@ pub fn score_exploration(sandbox: &Value, universe: &SandboxUniverse) -> (f64, u
         .and_then(|z| z.as_object())
         .map_or(0, |obj| obj.values().filter(|v| is_unlocked(v)).count());
 
-    let score = f64::midpoint(ratio(nodes_explored, universe.max_nodes), ratio(zones_unlocked, universe.max_zones));
+    let score = f64::midpoint(
+        ratio(nodes_explored, universe.max_nodes),
+        ratio(zones_unlocked, universe.max_zones),
+    );
 
     (score.min(1.0), nodes_explored, zones_unlocked)
 }

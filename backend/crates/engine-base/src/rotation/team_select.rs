@@ -707,7 +707,13 @@ fn select_balanced_teams(
                 ) else {
                     continue;
                 };
-                let new_total = masked[gj][i_in_j].0.score.mul_add(wj, masked[gi][j_in_i].0.score.mul_add(wi, tj.score.mul_add(-wj, ti.score.mul_add(-wi, best.total))));
+                let new_total = masked[gj][i_in_j].0.score.mul_add(
+                    wj,
+                    masked[gi][j_in_i]
+                        .0
+                        .score
+                        .mul_add(wi, tj.score.mul_add(-wj, ti.score.mul_add(-wi, best.total))),
+                );
                 if new_total > best.total + 1e-9 {
                     best.total = new_total;
                     best.picks[i] = Some(j_in_i);

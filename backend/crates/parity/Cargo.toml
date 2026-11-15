@@ -19,6 +19,7 @@ myrtle-engine-dps.workspace = true
 myrtle-engine-grade.workspace = true
 myrtle-engine-base.workspace = true
 myrtle-engine-archives.workspace = true
+myrtle-engine-music.workspace = true
 myrtle-engine-planner.workspace = true
 myrtle-engine-release.workspace = true
 myrtle-engine-squad.workspace = true

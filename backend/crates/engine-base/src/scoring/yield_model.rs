@@ -225,8 +225,13 @@ impl BaseFlows {
     #[must_use]
     pub fn total_value(&self) -> f64 {
         (self.drone_recovery_pct / 100.0
-                * DRONES_PER_DAY_BASE
-                * DRONE_ROOM_DAYS * FACTORY_GOLD_PER_DAY_BASE).mul_add(GOLD_BAR_LMD, self.exp.mul_add(EXP_TO_LMD, self.realized_lmd()))
+            * DRONES_PER_DAY_BASE
+            * DRONE_ROOM_DAYS
+            * FACTORY_GOLD_PER_DAY_BASE)
+            .mul_add(
+                GOLD_BAR_LMD,
+                self.exp.mul_add(EXP_TO_LMD, self.realized_lmd()),
+            )
     }
 
     /// What the player banks, for display only
@@ -320,7 +325,10 @@ pub struct RoomYield {
 impl RoomYield {
     #[must_use]
     pub const fn lmd_equivalent(&self) -> f64 {
-        self.exp_per_day.mul_add(EXP_TO_LMD, self.gold_per_day.mul_add(GOLD_BAR_LMD, self.lmd_per_day))
+        self.exp_per_day.mul_add(
+            EXP_TO_LMD,
+            self.gold_per_day.mul_add(GOLD_BAR_LMD, self.lmd_per_day),
+        )
     }
 }
 

@@ -314,13 +314,17 @@ pub(crate) fn settle_current_pools(
                     let per: f64 = c[3].parse().unwrap_or(0.0);
                     let unit_cap: f64 = c[4].parse().unwrap_or(f64::INFINITY);
                     let units = deployed_with_tag(&c[1]).min(unit_cap);
-                    *points.entry(c[2].to_string()).or_insert(0.0) = per.mul_add(units, *points.entry(c[2].to_string()).or_insert(0.0));
+                    *points.entry(c[2].to_string()).or_insert(0.0) =
+                        per.mul_add(units, *points.entry(c[2].to_string()).or_insert(0.0));
                 }
                 if let Some(c) = RE_TAG_GRANT.captures(&buff.description)
                     && !strategy_generates(registry, buff_id, buff, &c[2])
                 {
                     let per: f64 = c[3].parse().unwrap_or(0.0);
-                    *points.entry(c[2].to_string()).or_insert(0.0) = per.mul_add(deployed_with_tag(&c[1]), *points.entry(c[2].to_string()).or_insert(0.0));
+                    *points.entry(c[2].to_string()).or_insert(0.0) = per.mul_add(
+                        deployed_with_tag(&c[1]),
+                        *points.entry(c[2].to_string()).or_insert(0.0),
+                    );
                 }
             }
         }

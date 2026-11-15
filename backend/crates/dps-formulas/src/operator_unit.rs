@@ -724,8 +724,10 @@ impl OperatorUnit {
         let hits = f64::from(hits.unwrap_or(1));
         let aoe = f64::from(aoe.unwrap_or(1));
 
-        let final_atk =
-            self.atk.mul_add(1.0 + extra.atk + self.buff_atk, extra.flat_atk) + self.buff_atk_flat;
+        let final_atk = self
+            .atk
+            .mul_add(1.0 + extra.atk + self.buff_atk, extra.flat_atk)
+            + self.buff_atk_flat;
 
         let hit_dmg = if self.is_physical {
             (final_atk - enemy.defense).max(final_atk * 0.05)
@@ -763,7 +765,10 @@ impl OperatorUnit {
             let off_skill_dps = self.skill_dps(enemy);
             self.skill_index = tmp;
 
-            let cycle_dmg = skill_dps.mul_add(self.skill_duration, (off_skill_dps * f64::from(self.skill_cost)) / (1.0 + f64::from(self.sp_boost)));
+            let cycle_dmg = skill_dps.mul_add(
+                self.skill_duration,
+                (off_skill_dps * f64::from(self.skill_cost)) / (1.0 + f64::from(self.sp_boost)),
+            );
 
             cycle_dmg
                 / (self.skill_duration
