@@ -197,7 +197,7 @@ fn build_operator_profiles(
 
         if let Some(bc) = building_char {
             let static_op = game_data.operators.get(&entry.operator_id);
-            let faction_tags = static_op.map(faction_tags_of).unwrap_or_default();
+            let faction_tags = static_op.map_or_default(faction_tags_of);
             let rarity = static_op.map_or(0, |o| o.rarity.to_star_int());
             profiles.push(OperatorBaseProfile::build(
                 entry,

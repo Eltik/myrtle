@@ -331,7 +331,7 @@ fn reruns(
                 .map_or_else(|| g.skin_group_name.clone(), |e| e.skin_group_name.clone()),
             skin_ids: g.skin_ids.clone(),
             skins: tiles(p, names, g),
-            windows: en_g.map(|e| e.windows.clone()).unwrap_or_default(),
+            windows: en_g.map_or_default(|e| e.windows.clone()),
             last_seen: en_g.and_then(GroupHistory::last_seen).unwrap_or(0),
             next,
             basis,
@@ -350,8 +350,7 @@ fn reruns(
                 skin_ids: g.skin_ids.clone(),
                 skins: cn_by_group
                     .get(g.skin_group_id.as_str())
-                    .map(|c| tiles(p, names, c))
-                    .unwrap_or_default(),
+                    .map_or_default(|c| tiles(p, names, c)),
                 windows: g.windows.clone(),
                 last_seen: g.last_seen().unwrap_or(0),
                 next: Resolution::Confirmed {

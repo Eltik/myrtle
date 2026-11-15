@@ -1550,8 +1550,7 @@ pub async fn rotation(
                             .rooms
                             .iter()
                             .find(|r| &r.slot_id == slot_id)
-                            .map(|r| r.room_type.clone())
-                            .unwrap_or_default(),
+                            .map_or_default(|r| r.room_type.clone()),
                         operators: ops
                             .iter()
                             .map(|id| {
@@ -1594,7 +1593,7 @@ pub async fn rotation(
         comparison: RotationComparisonDto {
             recommended: recommended.into(),
             presets: presets.as_ref().map(|p| p.value.into()),
-            preset_legs_hours: presets.map(|p| p.legs_hours).unwrap_or_default(),
+            preset_legs_hours: presets.map_or_default(|p| p.legs_hours),
             matching_cells,
             production_cells,
         },
@@ -1749,22 +1748,20 @@ pub fn catalog(state: &AppState) -> CatalogResponse {
     // second layout can't blank the board.
     let layout = game_data.building.layouts.values().next();
 
-    let mut slots: Vec<CatalogSlotDto> = layout
-        .map(|l| {
-            l.slots
-                .values()
-                .map(|s| CatalogSlotDto {
-                    slot_id: s.id.clone(),
-                    category: s.category.clone(),
-                    storey_id: s.storey_id.clone(),
-                    offset_col: s.offset.col,
-                    offset_row: s.offset.row,
-                    size_col: s.size.col,
-                    size_row: s.size.row,
-                })
-                .collect()
-        })
-        .unwrap_or_default();
+    let mut slots: Vec<CatalogSlotDto> = layout.map_or_default(|l| {
+        l.slots
+            .values()
+            .map(|s| CatalogSlotDto {
+                slot_id: s.id.clone(),
+                category: s.category.clone(),
+                storey_id: s.storey_id.clone(),
+                offset_col: s.offset.col,
+                offset_row: s.offset.row,
+                size_col: s.size.col,
+                size_row: s.size.row,
+            })
+            .collect()
+    });
     // Reading order, so the client never has to sort to lay the board out.
     slots.sort_by(|a, b| {
         b.offset_row
@@ -1772,17 +1769,15 @@ pub fn catalog(state: &AppState) -> CatalogResponse {
             .then(a.offset_col.cmp(&b.offset_col))
     });
 
-    let mut storeys: Vec<CatalogStoreyDto> = layout
-        .map(|l| {
-            l.storeys
-                .values()
-                .map(|s| CatalogStoreyDto {
-                    storey_id: s.id.clone(),
-                    unlock_control_level: s.unlock_control_level,
-                })
-                .collect()
-        })
-        .unwrap_or_default();
+    let mut storeys: Vec<CatalogStoreyDto> = layout.map_or_default(|l| {
+        l.storeys
+            .values()
+            .map(|s| CatalogStoreyDto {
+                storey_id: s.id.clone(),
+                unlock_control_level: s.unlock_control_level,
+            })
+            .collect()
+    });
     storeys.sort_by(|a, b| a.storey_id.cmp(&b.storey_id));
 
     CatalogResponse {

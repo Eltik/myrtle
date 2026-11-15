@@ -249,9 +249,7 @@ impl Tracker {
                 }
             }
         }
-        let f = focus
-            .map(|s| s.trim().to_ascii_lowercase())
-            .unwrap_or_default();
+        let f = focus.map_or_default(|s| s.trim().to_ascii_lowercase());
         let all = f.is_empty() || f == "all" || f == "a";
         let listed: Vec<&'static str> = if all || f == "n" || f == "none" {
             Vec::new()
@@ -269,7 +267,7 @@ impl Tracker {
         walk: &mut SpeakerWalk,
         folder_of: &impl Fn(&str) -> Option<String>,
     ) {
-        let name = c.args.get("name").map(|s| s.trim()).unwrap_or_default();
+        let name = c.args.get("name").map_or_default(|s| s.trim());
         if name.is_empty() {
             self.cutin = None;
             return;
@@ -303,7 +301,7 @@ impl Tracker {
             return;
         };
         let kind = engine_int(c.args.get("type"));
-        let name = c.args.get("name").map(|s| s.trim()).unwrap_or_default();
+        let name = c.args.get("name").map_or_default(|s| s.trim());
         if kind == 3
             && !name.is_empty()
             && let Some(folder) = walk.put_up(name, folder_of)
@@ -384,7 +382,7 @@ pub fn attribute_speakers_with(
             "charactercutin" => stage.cutin(c, &mut walk, &folder_of),
             "interlude" => stage.interlude(c, &mut walk, &folder_of),
             "name" | "multiline" => {
-                let speaker = c.args.get("name").map(|s| s.trim()).unwrap_or_default();
+                let speaker = c.args.get("name").map_or_default(|s| s.trim());
                 if speaker.is_empty() {
                     continue;
                 }

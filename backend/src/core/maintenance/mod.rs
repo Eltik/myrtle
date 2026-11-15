@@ -315,7 +315,7 @@ fn signals(snapshot: &Snapshot, now: i64) -> Signals {
 /// What `GET /maintenance` answers.
 pub fn current() -> MaintenanceStatus {
     let now = now_secs();
-    let snapshot = SNAPSHOT.read().map(|s| s.clone()).unwrap_or_default();
+    let snapshot = SNAPSHOT.read().map_or_default(|s| s.clone());
     MaintenanceStatus {
         window: resolve(&snapshot.notices, now, signals(&snapshot, now)),
         checked_at: snapshot.checked_at,
@@ -535,10 +535,7 @@ async fn poll(state: &AppState, caches: &mut HashMap<Server, PageCache>) -> anyh
             })
         })
         .collect();
-    let previous = SNAPSHOT
-        .read()
-        .map(|s| s.notices.clone())
-        .unwrap_or_default();
+    let previous = SNAPSHOT.read().map_or_default(|s| s.notices.clone());
     let notices = carry_over(&previous, notices, now);
 
     let prean_active = prean_active(client, &meta_url).await;

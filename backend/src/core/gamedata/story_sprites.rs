@@ -114,10 +114,7 @@ impl StorySprites {
                 base.clone(),
                 StorySprite {
                     speaker: speakers.get(&base).map(|n| n.speaker.clone()),
-                    aliases: speakers
-                        .get(&base)
-                        .map(|n| n.aliases.clone())
-                        .unwrap_or_default(),
+                    aliases: speakers.get(&base).map_or_default(|n| n.aliases.clone()),
                     id: base,
                     folder: folder.to_owned(),
                     body,

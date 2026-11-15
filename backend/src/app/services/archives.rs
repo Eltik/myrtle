@@ -118,12 +118,10 @@ pub async fn cached_archive(state: &AppState, server: Server) -> Result<Arc<Arch
                 let built = cpu::run("archives", move || {
                     let started = Instant::now();
                     let teams = load_table::<HandbookTeamTableFile>(Path::new(&excel_dir), "handbook_team_table")
-                        .map(|t| t.teams)
-                        .unwrap_or_default();
+                        .map_or_default(|t| t.teams);
                     let network = roots.iter().find_map(|root| load_network(Path::new(root)));
                     let scenes = scenes_in
-                        .map(|(library, sprites)| scene_index(&sprites, &story_order(&library)))
-                        .unwrap_or_default();
+                        .map_or_default(|(library, sprites)| scene_index(&sprites, &story_order(&library)));
                     let lang = Lang::for_server(server);
                     let archive = build_archive(&build_gd, &teams, network.as_ref(), &scenes, lang);
                     tracing::info!(

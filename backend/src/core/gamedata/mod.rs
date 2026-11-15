@@ -297,8 +297,7 @@ pub fn init_game_data_with_art(
         );
     let event_shops = load_event_shops(assets_dir, &mut warnings);
     let activity_skin_refs = std::fs::read_to_string(data_dir.join("activity_table.json"))
-        .map(|raw| crate::core::gamedata::types::activity::scan_skin_refs(&raw))
-        .unwrap_or_default();
+        .map_or_default(|raw| crate::core::gamedata::types::activity::scan_skin_refs(&raw));
     let retro_file: RetroTableFile = load_table_or_warn(data_dir, "retro_table", &mut warnings);
     let story_review_file: crate::core::gamedata::types::story_review::StoryReviewTableFile =
         load_table_or_warn(data_dir, "story_review_table", &mut warnings);
@@ -529,10 +528,7 @@ pub fn init_game_data_with_art(
         tracing::warn!("{w}");
     }
     // `data_dir` is `<server>/gamedata/excel`; the unpacker writes its skip list one up.
-    let stale_tables = data_dir
-        .parent()
-        .map(stale::read_stale_tables)
-        .unwrap_or_default();
+    let stale_tables = data_dir.parent().map_or_default(stale::read_stale_tables);
 
     let mut data = GameData {
         table_warnings: warnings,

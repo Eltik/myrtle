@@ -64,12 +64,11 @@ impl CurrentState {
             elite: entry.map_or(0, |r| r.elite),
             level: entry.map_or(1, |r| r.level),
             skill_level: entry.map_or(1, |r| r.skill_level),
-            masteries: entry
-                .map(|r| serde_json::from_value(r.masteries.clone()).unwrap_or_default())
-                .unwrap_or_default(),
+            masteries: entry.map_or_default(|r| {
+                serde_json::from_value(r.masteries.clone()).unwrap_or_default()
+            }),
             modules: entry
-                .map(|r| serde_json::from_value(r.modules.clone()).unwrap_or_default())
-                .unwrap_or_default(),
+                .map_or_default(|r| serde_json::from_value(r.modules.clone()).unwrap_or_default()),
         }
     }
 

@@ -90,7 +90,7 @@ fn merge_level_entry(
     // Skills are authored at level 0 for nearly every enemy; higher tiers ship an
     // empty array, which means inherit (in game the boss keeps its kit, stats scale).
     let skills = if data.skills.is_empty() {
-        base.map(|l| l.skills.clone()).unwrap_or_default()
+        base.map_or_default(|l| l.skills.clone())
     } else {
         data.skills
             .iter()

@@ -75,16 +75,12 @@ pub async fn list(
             "max_tier must be between {MIN_FLATTEN_TIER} and {MAX_FLATTEN_TIER}"
         )));
     }
-    let active_ids: Vec<String> = query
-        .active
-        .as_ref()
-        .map(|s| {
-            s.split(',')
-                .map(|id| id.trim().to_owned())
-                .filter(|id| !id.is_empty())
-                .collect()
-        })
-        .unwrap_or_default();
+    let active_ids: Vec<String> = query.active.as_ref().map_or_default(|s| {
+        s.split(',')
+            .map(|id| id.trim().to_owned())
+            .filter(|id| !id.is_empty())
+            .collect()
+    });
     let response = services::planner::list_plans(
         &state,
         user_id,

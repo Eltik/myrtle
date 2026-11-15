@@ -482,7 +482,7 @@ pub async fn login_otp(
         ("timestamp", unix_millis()),
     ]);
     let mut body = signed_form(fields);
-    let sign = body.last().map(|(_, v)| v.clone()).unwrap_or_default();
+    let sign = body.last().map_or_default(|(_, v)| v.clone());
     body.push(("feign_sign", feign_sign(&sign)?));
 
     let text = post_otp(client, "login/otp/v3", &body, "login_otp").await?;

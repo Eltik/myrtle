@@ -32,8 +32,7 @@ impl BaseContext {
                 let bc = game_data.building.chars.get(&entry.operator_id)?;
                 let static_op = game_data.operators.get(&entry.operator_id);
                 let faction_tags = static_op
-                    .map(|op| faction_tags_for(&entry.operator_id, op, &glossary))
-                    .unwrap_or_default();
+                    .map_or_default(|op| faction_tags_for(&entry.operator_id, op, &glossary));
                 let rarity = static_op.map_or(0, |o| o.rarity.to_star_int());
                 Some(OperatorBaseProfile::build(
                     entry,

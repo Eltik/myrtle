@@ -923,9 +923,9 @@ fn build_stage_pool<'a>(
         let stage_meta = game_data.stages.get(stage.stage_id);
         let gap = StageGap {
             stage_id: stage.stage_id.to_string(),
-            code: stage_meta.map(|s| s.code.clone()).unwrap_or_default(),
+            code: stage_meta.map_or_default(|s| s.code.clone()),
             name: stage_meta.and_then(|s| s.name.clone()),
-            zone_id: stage_meta.map(|s| s.zone_id.clone()).unwrap_or_default(),
+            zone_id: stage_meta.map_or_default(|s| s.zone_id.clone()),
             weight: stage.weight,
             state: stage.state(),
             rotation: rotation_for(stage.stage_id),
@@ -2136,8 +2136,7 @@ pub fn shift_rotation_to_dto(
             .rooms
             .iter()
             .find(|r| r.room_type == "CONTROL" && r.active)
-            .map(|r| r.recommended.clone())
-            .unwrap_or_default();
+            .map_or_default(|r| r.recommended.clone());
         let (shift_globals, shift_conditions) =
             crate::core::grade::base::skill_ledger::grants_of(&ledger_ctx, &shift_cc);
         // One room per operator per shift. The recommended teams are a partition, but

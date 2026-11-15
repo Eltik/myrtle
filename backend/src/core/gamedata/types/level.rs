@@ -502,9 +502,7 @@ pub fn parse_stage_map(
             RosterEntry {
                 name: e.map_or_else(|| id.clone(), |e| e.name.clone()),
                 level: e.map_or_else(|| "NORMAL".into(), |e| level_str(&e.enemy_level).to_owned()),
-                damage_type: e
-                    .map(|e| e.damage_type.iter().map(damage_str).collect())
-                    .unwrap_or_default(),
+                damage_type: e.map_or_default(|e| e.damage_type.iter().map(damage_str).collect()),
                 attack_type: e.and_then(|e| e.attack_type.clone()),
                 motion: e.and_then(enemy_motion).unwrap_or_else(|| "WALK".into()),
                 count,

@@ -379,7 +379,7 @@ pub fn plan_production_groups(
             best = Some((objective, planned));
         }
     }
-    best.map(|(_, planned)| planned).unwrap_or_default()
+    best.map_or_default(|(_, planned)| planned)
 }
 
 /// Realized yield summed over three shifts, each room staffed by its tiling

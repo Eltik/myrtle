@@ -34,9 +34,7 @@ where
     V: Deserialize<'de>,
 {
     let items: Option<Vec<FbKeyValue<K, V>>> = Option::deserialize(deserializer)?;
-    Ok(items
-        .map(|v| v.into_iter().map(|kv| (kv.key, kv.value)).collect())
-        .unwrap_or_default())
+    Ok(items.map_or_default(|v| v.into_iter().map(|kv| (kv.key, kv.value)).collect()))
 }
 
 pub fn deserialize_fb_nested_map<'de, D, K1, K2, V>(

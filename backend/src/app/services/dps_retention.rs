@@ -411,6 +411,6 @@ pub fn response(gd: &Arc<GameData>, data: &str) -> RetentionResponse {
         reference: REFERENCE.to_owned(),
         roster: table.as_ref().map(|t| t.roster.clone()),
         compute_ms: table.as_ref().map(|t| t.compute_ms),
-        rows: table.map(|t| t.rows.clone()).unwrap_or_default(),
+        rows: table.map_or_default(|t| t.rows.clone()),
     }
 }

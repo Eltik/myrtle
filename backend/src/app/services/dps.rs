@@ -438,15 +438,12 @@ fn build_params(req: CalculateRequest) -> OperatorParams {
         skill_level: req.skill_level,
         module_index: req.module_index,
         module_level: req.module_level,
-        buffs: req
-            .buffs
-            .map(|b| OperatorBuffs {
-                atk: b.atk,
-                flat_atk: b.flat_atk,
-                aspd: b.aspd,
-                fragile: b.fragile,
-            })
-            .unwrap_or_default(),
+        buffs: req.buffs.map_or_default(|b| OperatorBuffs {
+            atk: b.atk,
+            flat_atk: b.flat_atk,
+            aspd: b.aspd,
+            fragile: b.fragile,
+        }),
         sp_boost: req.sp_boost,
         targets: req.targets,
         shred: req.shred.map(|s| OperatorShred {

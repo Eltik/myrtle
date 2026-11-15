@@ -2332,7 +2332,7 @@ fn transpile_skill_dps(py_body: &str, init_mutations: &InitState, shape: OutputS
         if let Some(cap) = RE.array_assign_re.captures(trimmed) {
             let var = escape_keyword(&cap[1]);
             if !builtin_vars.contains(&var.as_str()) {
-                vec_vars.insert(var.clone());
+                vec_vars.insert(var);
             }
         }
 

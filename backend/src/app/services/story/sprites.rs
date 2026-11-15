@@ -319,7 +319,7 @@ impl<'a> OperatorIds<'a> {
             .iter()
             .find(|(id, _)| id.rsplit_once('_').is_some_and(|(_, s)| s == stem))
             .or_else(|| (ids.len() == 1).then(|| &ids[0]))?;
-        let tail = parts.get(2..).map(|t| t.join("_")).unwrap_or_default();
+        let tail = parts.get(2..).map_or_default(|t| t.join("_"));
         Some((
             (*id).to_owned(),
             (*name).to_owned(),

@@ -54,7 +54,7 @@ pub fn live_morale_snapshot(
     const MORALE_MAX: f64 = 24.0;
     data.get("chars")
         .and_then(|v| v.as_object())
-        .map(|chars| {
+        .map_or_default(|chars| {
             chars
                 .values()
                 .filter_map(|c| {
@@ -78,7 +78,6 @@ pub fn live_morale_snapshot(
                 })
                 .collect()
         })
-        .unwrap_or_default()
 }
 
 fn formula_from_id(id: &str) -> Option<String> {
@@ -95,7 +94,7 @@ impl UserBuilding {
         let inst_to_char: HashMap<i64, String> = data
             .get("chars")
             .and_then(|v| v.as_object())
-            .map(|chars| {
+            .map_or_default(|chars| {
                 chars
                     .iter()
                     .filter_map(|(inst, c)| {
@@ -104,15 +103,14 @@ impl UserBuilding {
                         Some((id, char_id.to_string()))
                     })
                     .collect()
-            })
-            .unwrap_or_default();
+            });
 
         // slot_id -> factory formula (`rooms.MANUFACTURE[slot].formulaId`).
         let formula_by_slot: HashMap<String, String> = data
             .get("rooms")
             .and_then(|v| v.get("MANUFACTURE"))
             .and_then(|v| v.as_object())
-            .map(|slots| {
+            .map_or_default(|slots| {
                 slots
                     .iter()
                     .filter_map(|(slot_id, room)| {
@@ -120,15 +118,14 @@ impl UserBuilding {
                         Some((slot_id.clone(), formula_from_id(id)?))
                     })
                     .collect()
-            })
-            .unwrap_or_default();
+            });
 
         // slot_id -> dorm ambience (`rooms.DORMITORY[slot].comfort`).
         let comfort_by_slot: HashMap<String, i32> = data
             .get("rooms")
             .and_then(|v| v.get("DORMITORY"))
             .and_then(|v| v.as_object())
-            .map(|slots| {
+            .map_or_default(|slots| {
                 slots
                     .iter()
                     .filter_map(|(slot_id, room)| {
@@ -137,8 +134,7 @@ impl UserBuilding {
                         Some((slot_id.clone(), c as i32))
                     })
                     .collect()
-            })
-            .unwrap_or_default();
+            });
 
         // slot_id -> preset shifts (`rooms.<type>[slot].presetQueue`, instIds -> char_ids).
         let mut presets_by_slot: HashMap<String, Vec<Vec<String>>> = HashMap::new();
@@ -154,15 +150,12 @@ impl UserBuilding {
                     let shifts: Vec<Vec<String>> = queue
                         .iter()
                         .map(|shift| {
-                            shift
-                                .as_array()
-                                .map(|ids| {
-                                    ids.iter()
-                                        .filter_map(serde_json::Value::as_i64)
-                                        .filter_map(|id| inst_to_char.get(&id).cloned())
-                                        .collect()
-                                })
-                                .unwrap_or_default()
+                            shift.as_array().map_or_default(|ids| {
+                                ids.iter()
+                                    .filter_map(serde_json::Value::as_i64)
+                                    .filter_map(|id| inst_to_char.get(&id).cloned())
+                                    .collect()
+                            })
                         })
                         .collect();
                     if !shifts.is_empty() {
@@ -191,13 +184,12 @@ impl UserBuilding {
                     let current_operators = slot
                         .get("charInstIds")
                         .and_then(|v| v.as_array())
-                        .map(|ids| {
+                        .map_or_default(|ids| {
                             ids.iter()
                                 .filter_map(serde_json::Value::as_i64)
                                 .filter_map(|id| inst_to_char.get(&id).cloned())
                                 .collect()
-                        })
-                        .unwrap_or_default();
+                        });
                     rooms.push(UserRoom {
                         slot_id: slot_id.clone(),
                         room_type: room_type.to_string(),

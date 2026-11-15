@@ -95,8 +95,7 @@ pub async fn update_settings(
     let patch = profile_layout.flatten();
     let removed: Vec<&str> = patch
         .as_ref()
-        .map(ProfileLayoutPatch::removed_keys)
-        .unwrap_or_default();
+        .map_or_default(ProfileLayoutPatch::removed_keys);
     sqlx::query(
         "UPDATE user_settings SET public_profile = COALESCE($2, public_profile), \
          store_gacha = COALESCE($3, store_gacha), share_stats = COALESCE($4, share_stats), \

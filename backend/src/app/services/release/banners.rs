@@ -142,7 +142,7 @@ pub async fn get_banners(state: &AppState) -> Result<BannersResponse, ApiError> 
                     en_pool_id: pair.map(|pr| pr.en_pool_id.clone()),
                     method: pair.map_or(AlignMethod::None, |pr| pr.method),
                 },
-                en_featured6: en_pool.map(|e| e.featured6.clone()).unwrap_or_default(),
+                en_featured6: en_pool.map_or_default(|e| e.featured6.clone()),
                 override_featured,
                 name_en_auto,
                 image_path: p.ctx.banner_image(

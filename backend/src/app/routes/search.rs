@@ -54,15 +54,13 @@ impl SearchParams {
                 )));
             }
         };
-        let mut has: Vec<String> = non_empty(self.has.as_ref())
-            .map(|list| {
-                list.split(',')
-                    .map(str::trim)
-                    .filter(|id| !id.is_empty())
-                    .map(str::to_owned)
-                    .collect()
-            })
-            .unwrap_or_default();
+        let mut has: Vec<String> = non_empty(self.has.as_ref()).map_or_default(|list| {
+            list.split(',')
+                .map(str::trim)
+                .filter(|id| !id.is_empty())
+                .map(str::to_owned)
+                .collect()
+        });
         has.sort();
         has.dedup();
         if has.len() > MAX_HAS {
