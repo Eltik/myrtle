@@ -47,6 +47,18 @@ fn story_art_present() -> bool {
     en_dir().join("textures/spritepack").is_dir()
 }
 
+/// The lobby's preview strips, a sprite pack CI's story-art artifact does not
+/// carry: `textures/spritepack` existing says nothing about this one.
+fn home_background_previews_present() -> bool {
+    std::fs::read_dir(en_dir().join("textures/spritepack")).is_ok_and(|packs| {
+        packs.flatten().any(|pack| {
+            pack.file_name()
+                .to_string_lossy()
+                .starts_with("ui_homebackground_preview_")
+        })
+    })
+}
+
 /// The story CG and scene trees, which CI's artifact does not carry.
 fn story_pictures_present() -> bool {
     en_dir().join("textures/avg/imgs").is_dir() && en_dir().join("textures/avg/bg").is_dir()
@@ -655,7 +667,7 @@ fn backgrounds_are_the_lobby_list_in_order() {
     assert_eq!(bgs[0].name, "Vision");
     assert_eq!(facet(&bgs[0].facets, "obtain"), Some("Default"));
     assert!(dynamic >= 2);
-    if story_art_present() {
+    if home_background_previews_present() {
         assert!(no_icon.len() <= 1, "{no_icon:?}");
     }
     let volcano = resolve(
@@ -707,7 +719,8 @@ fn story_pictures_take_the_profile_background_ids() {
         .filter_map(|s| facet(&s.facets, "group_id").map(str::to_owned))
         .collect();
     println!("archive_pic groups: {groups:?}");
-    if story_art_present() {
+    // A gallery picture has a thumb only when its file under `avg/imgs` exists.
+    if story_pictures_present() {
         assert_eq!(
             pic.icon.as_deref(),
             Some("/story/gallery/act13side_pic_0/thumb")
