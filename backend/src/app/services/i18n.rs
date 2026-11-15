@@ -376,14 +376,11 @@ fn validate_message(value: &str, declared: &serde_json::Value) -> Result<(), Api
         }])
     })?;
 
-    let declared: HashSet<String> = declared
-        .as_array()
-        .map(|a| {
-            a.iter()
-                .filter_map(|v| v.as_str().map(std::borrow::ToOwned::to_owned))
-                .collect()
-        })
-        .unwrap_or_default();
+    let declared: HashSet<String> = declared.as_array().map_or_default(|a| {
+        a.iter()
+            .filter_map(|v| v.as_str().map(std::borrow::ToOwned::to_owned))
+            .collect()
+    });
 
     let mut errors = Vec::new();
 

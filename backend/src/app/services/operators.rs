@@ -550,8 +550,7 @@ pub async fn get_build_stats(
     let skills = game_data
         .operators
         .get(operator_id)
-        .map(|op| op.skills.as_slice())
-        .unwrap_or_default();
+        .map_or_default(|op| op.skills.as_slice());
 
     let default_skills: Vec<BuildChoice> = skill_rows
         .into_iter()

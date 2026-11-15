@@ -216,19 +216,17 @@ pub fn build_archive(
 ) -> Archive {
     let ctx = Ctx { gd, teams };
     let ids = file_ids(gd);
-    let profiles: HashMap<&str, ArchiveProfile> = lang
-        .map(|lang| {
-            ids.iter()
-                .filter_map(|id| {
-                    let item = gd.handbook.handbook_dict.get(id)?;
-                    Some((
-                        id.as_str(),
-                        parse_archive_profile(lang, &item.story_text_audio)?,
-                    ))
-                })
-                .collect()
-        })
-        .unwrap_or_default();
+    let profiles: HashMap<&str, ArchiveProfile> = lang.map_or_default(|lang| {
+        ids.iter()
+            .filter_map(|id| {
+                let item = gd.handbook.handbook_dict.get(id)?;
+                Some((
+                    id.as_str(),
+                    parse_archive_profile(lang, &item.story_text_audio)?,
+                ))
+            })
+            .collect()
+    });
 
     let net = network.map_or_else(ArchiveNetwork::default, |n| build_network(&ctx, n));
     let links = links_by_char(&net);
@@ -246,8 +244,7 @@ pub fn build_archive(
         let appearances = scenes.get(id).cloned().unwrap_or_default();
         let linked = links
             .get(id.as_str())
-            .map(|s| fold_npc_twins(&ctx, s))
-            .unwrap_or_default();
+            .map_or_default(|s| fold_npc_twins(&ctx, s));
         let records = records(gd, id);
         let shares = mates.get(id.as_str()).cloned().unwrap_or_default();
         let rarity = u8::try_from(op.rarity.to_star_int()).unwrap_or(0);
@@ -327,19 +324,15 @@ pub fn build_archive(
 
 /// The operator's records (`handbook_avg_list`), in table order.
 fn records(gd: &GameData, id: &str) -> Vec<ArchiveRecord> {
-    gd.handbook
-        .handbook_dict
-        .get(id)
-        .map(|h| {
-            h.handbook_avg_list
-                .iter()
-                .map(|r| ArchiveRecord {
-                    id: r.story_set_id.clone(),
-                    name: r.story_set_name.clone(),
-                })
-                .collect()
-        })
-        .unwrap_or_default()
+    gd.handbook.handbook_dict.get(id).map_or_default(|h| {
+        h.handbook_avg_list
+            .iter()
+            .map(|r| ArchiveRecord {
+                id: r.story_set_id.clone(),
+                name: r.story_set_name.clone(),
+            })
+            .collect()
+    })
 }
 
 /// The operator's personnel number with its prefix row counted in.
@@ -754,9 +747,7 @@ fn facet<'a>(values: impl Iterator<Item = &'a str>) -> Vec<ArchiveCount> {
         .into_values()
         .map(|spellings| {
             let count = spellings.values().sum();
-            let value = modal(spellings)
-                .map(|(s, _)| s.to_owned())
-                .unwrap_or_default();
+            let value = modal(spellings).map_or_default(|(s, _)| s.to_owned());
             ArchiveCount { value, count }
         })
         .collect();

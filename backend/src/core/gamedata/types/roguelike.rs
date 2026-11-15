@@ -255,8 +255,7 @@ fn special_endings(detail: &serde_json::Value) -> Vec<SpecialEnding> {
     let endings = detail
         .get("Endings")
         .or_else(|| detail.get("endings"))
-        .map(kv_to_map)
-        .unwrap_or_default();
+        .map_or_default(kv_to_map);
     let count = endings.len() as i64;
     let mode_name = get_array(detail, &["Difficulties", "difficulties"])
         .iter()
@@ -293,8 +292,7 @@ fn band_item_ids(detail: &serde_json::Value) -> Vec<String> {
     let items = detail
         .get("Items")
         .or_else(|| detail.get("items"))
-        .map(kv_to_map)
-        .unwrap_or_default();
+        .map_or_default(kv_to_map);
     let mut ids: Vec<String> = items
         .into_iter()
         .filter(|(_, v)| get_str(v, &["Type_", "Type", "type"]).as_deref() == Some("BAND"))

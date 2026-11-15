@@ -550,8 +550,7 @@ pub fn simulate_rotation_from(
         for room in rotation
             .shifts
             .get(shift)
-            .map(|s| s.rooms.as_slice())
-            .unwrap_or_default()
+            .map_or_default(|s| s.rooms.as_slice())
             .iter()
             .filter(|r| super::util::is_production_room(&r.room_type))
         {

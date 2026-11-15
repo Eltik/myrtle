@@ -234,15 +234,13 @@ fn main() -> Result<()> {
             let id = r
                 .get("id")
                 .and_then(|v| v.as_str())
-                .map(String::from)
-                .unwrap_or_default();
+                .map_or_default(String::from);
             let op = r
                 .get("operator_id")
                 .and_then(|v| v.as_str())
-                .map(String::from)
-                .unwrap_or_default();
+                .map_or_default(String::from);
             if !id.is_empty() && !op.is_empty() {
-                note_id_by_op.insert(op.clone(), id.clone());
+                note_id_by_op.insert(op, id);
             }
             w.write(&json!({
                 "id": r.get("id"),

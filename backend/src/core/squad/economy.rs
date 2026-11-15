@@ -476,7 +476,7 @@ pub fn compute(ctx: &Ctx<'_>, seats: &[Seat<'_>], req: &SquadAnalyzeRequest) -> 
                 for r in &receivers {
                     *sp_bonus.entry(*r).or_insert(0.0) += sp;
                 }
-                sp_givers.push((g, t.name.clone(), sp, receivers.clone()));
+                sp_givers.push((g, t.name.clone(), sp, receivers));
             }
         }
     }

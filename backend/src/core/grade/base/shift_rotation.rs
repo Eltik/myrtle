@@ -1155,8 +1155,7 @@ fn rotation_core_tiled(
         presets
             .get(slot)
             .filter(|p| !p.is_empty())
-            .map(|p| p[k % p.len()].clone())
-            .unwrap_or_default()
+            .map_or_default(|p| p[k % p.len()].clone())
     };
 
     if timing {

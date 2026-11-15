@@ -748,10 +748,10 @@ fn extract_operators(troop: &Option<Troop>) -> serde_json::Value {
             "favor_point": c.favor_point.unwrap_or(0),
             "skin_id": c.skin.clone().unwrap_or_default(),
             "default_skill": c.default_skill_index.unwrap_or(0),
-            "current_equip": c.current_equip.clone(),
+            "current_equip": c.current_equip,
             "obtained_at": c.gain_time.unwrap_or(0),
-            "voice_lan": c.voice_lan.clone(),
-            "current_tmpl": c.current_tmpl.clone(),
+            "voice_lan": c.voice_lan,
+            "current_tmpl": c.current_tmpl,
         }));
     }
 
@@ -929,8 +929,7 @@ fn log_story_block(
     let user_keys: Vec<&str> = raw
         .get("user")
         .and_then(serde_json::Value::as_object)
-        .map(|o| o.keys().map(String::as_str).collect())
-        .unwrap_or_default();
+        .map_or_default(|o| o.keys().map(String::as_str).collect());
     tracing::info!(
         uid,
         ?user_keys,

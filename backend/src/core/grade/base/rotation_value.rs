@@ -104,8 +104,7 @@ pub fn rotation_value(
                     .rooms
                     .iter()
                     .find(|c| c.slot_id == r.slot_id && c.active)
-                    .map(|c| c.recommended.clone())
-                    .unwrap_or_default();
+                    .map_or_default(|c| c.recommended.clone());
             }
             StaffingValue::of(&compute_current_assignment_over(
                 operators,
@@ -416,8 +415,7 @@ pub fn plan_cycle(
         asn.rooms
             .iter()
             .find(|r| r.slot_id == slot)
-            .map(|r| r.operators.clone())
-            .unwrap_or_default()
+            .map_or_default(|r| r.operators.clone())
     };
     // Dorm seating per leg: the OTHER leg's workers, highest drain first, best
     // dorm first, as many as the beds take.

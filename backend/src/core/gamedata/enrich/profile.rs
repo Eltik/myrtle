@@ -83,9 +83,7 @@ pub fn align_profiles(target: &mut GameData, references: &[&GameData]) -> usize 
                 .find_map(|(reference, _)| relabel(text, section_text(reference, section)?))
         };
 
-        let mut basic_info = relabelled(0)
-            .map(|text| parse_basic_info(&text))
-            .unwrap_or_default();
+        let mut basic_info = relabelled(0).map_or_default(|text| parse_basic_info(&text));
         // Per field, the first reference that knows the value: EN writes
         // Skadi's race as the literal "Unknown" where CN says 未公开.
         let fact = |known: &dyn Fn(&BasicInfo) -> bool| {
@@ -104,9 +102,7 @@ pub fn align_profiles(target: &mut GameData, references: &[&GameData]) -> usize 
             .clone();
         op.profile = Some(OperatorProfile {
             basic_info,
-            physical_exam: relabelled(1)
-                .map(|text| parse_physical_exam(&text))
-                .unwrap_or_default(),
+            physical_exam: relabelled(1).map_or_default(|text| parse_physical_exam(&text)),
         });
         aligned += 1;
     }

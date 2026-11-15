@@ -347,16 +347,12 @@ fn enrich_phases(phases: &[Phase], rarity: usize, ctx: &EnrichCtx) -> Vec<Phase>
             } else {
                 Some(level_up_cost)
             };
-            let mut evolve_cost = phase
-                .evolve_cost
-                .as_ref()
-                .map(|costs| {
-                    costs
-                        .iter()
-                        .map(|c| enrich_evolve_cost(c, ctx))
-                        .collect::<Vec<_>>()
-                })
-                .unwrap_or_default();
+            let mut evolve_cost = phase.evolve_cost.as_ref().map_or_default(|costs| {
+                costs
+                    .iter()
+                    .map(|c| enrich_evolve_cost(c, ctx))
+                    .collect::<Vec<_>>()
+            });
             if elite_index > 0
                 && rarity > 0
                 && let Some(gold_cost_entry) = ctx.consts.evolve_gold_cost.get(rarity - 1)

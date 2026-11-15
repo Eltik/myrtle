@@ -2205,9 +2205,7 @@ fn compute_live_assignment_over(
     // Global bonuses from whoever the player has in the Control Center for this
     // shift (same non-stacking rule as the optimizer).
     let control_room = building.rooms.iter().find(|r| r.room_type == "CONTROL");
-    let cc_ops = control_room
-        .map(|cc| room_ops_for_shift(cc, shift))
-        .unwrap_or_default();
+    let cc_ops = control_room.map_or_default(|cc| room_ops_for_shift(cc, shift));
     let mut acc = CcBonusAccumulator::default();
     for op in cc_ops
         .iter()
@@ -4381,7 +4379,7 @@ fn poach_facility_partners(
                 };
                 new_auto.remove(weakest);
             }
-            new_auto.push(partner.clone());
+            new_auto.push(partner);
             let (auto_speed, _) = compute_team_efficiency(
                 &new_auto,
                 "MANUFACTURE",
@@ -4851,10 +4849,7 @@ fn assign_trading_rooms_by_yield(
 /// community does (user report 2026-10-08: worth 7% more than the plan's).
 fn diverse_shortlist(candidates: Vec<CandidateTeam>, width: usize) -> Vec<CandidateTeam> {
     let mut shortlist: Vec<CandidateTeam> = candidates.iter().take(width).cloned().collect();
-    let anchors: Vec<String> = candidates
-        .first()
-        .map(|best| best.ops.clone())
-        .unwrap_or_default();
+    let anchors: Vec<String> = candidates.first().map_or_default(|best| best.ops.clone());
     for op in &anchors {
         if let Some(team) = candidates
             .iter()
@@ -5094,7 +5089,7 @@ pub fn align_rooms_to_current(building: &UserBuilding, proposal: &mut BaseAssign
             .iter()
             .filter(|u| u.room_type == room_type && u.level == level)
             .collect();
-        let mut pending = idxs.clone();
+        let mut pending = idxs;
         while !pending.is_empty() && !free_slots.is_empty() {
             let mut best: Option<(usize, usize, usize, bool)> = None;
             for (pi, &i) in pending.iter().enumerate() {

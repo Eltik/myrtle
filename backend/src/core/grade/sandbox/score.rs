@@ -315,14 +315,13 @@ fn score_topic_v3(sandbox: Option<&Value>, universe: &SandboxUniverse) -> Sandbo
         .get("map")
         .and_then(|m| m.get("node"))
         .and_then(Value::as_object)
-        .map(|nodes| {
+        .map_or_default(|nodes| {
             nodes
                 .iter()
                 .filter(|(id, v)| universe.node_zones.contains_key(id.as_str()) && is_unlocked(v))
                 .map(|(id, _)| id.as_str())
                 .collect()
-        })
-        .unwrap_or_default();
+        });
     let nodes_explored = open_nodes.len();
     let zones_unlocked = open_nodes
         .iter()

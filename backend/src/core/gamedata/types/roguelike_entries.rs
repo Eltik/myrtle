@@ -147,7 +147,7 @@ fn theme_entry(theme_id: &str, topic: &Value) -> RoguelikeEntry {
 /// The theme's offered items, by [`ITEM_TYPES`] and then natural id order.
 fn theme_items(theme_id: &str, detail: &Value) -> Vec<RoguelikeEntry> {
     let archived = archive_ids(detail);
-    let mut items: Vec<(&str, &Value)> = detail.get("Items").map(kv_pairs).unwrap_or_default();
+    let mut items: Vec<(&str, &Value)> = detail.get("Items").map_or_default(kv_pairs);
     items.sort_by(|a, b| natural_cmp(a.0, b.0));
 
     let mut seen_names: HashSet<(&str, &str)> = HashSet::new();

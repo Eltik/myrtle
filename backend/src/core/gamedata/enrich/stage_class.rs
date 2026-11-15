@@ -190,8 +190,7 @@ struct ModeNames {
 fn load_mode_names(data_dir: &Path, roguelike: &RoguelikeTopicTableFile) -> ModeNames {
     let is_topics = fb_list_names(&roguelike.topics, "Name");
     let towers = read_json(data_dir, "climb_tower_table")
-        .map(|t| fb_map_names(&t, "Towers", "Name"))
-        .unwrap_or_default();
+        .map_or_default(|t| fb_map_names(&t, "Towers", "Name"));
 
     let mut node_named = HashMap::new();
     let mut is_node_ids = HashMap::new();

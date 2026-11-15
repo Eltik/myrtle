@@ -103,8 +103,7 @@ pub async fn fetch(
     if req.sign {
         let body_str = req
             .body
-            .map(|b| serde_json::to_string(b).unwrap_or_default())
-            .unwrap_or_default();
+            .map_or_default(|b| serde_json::to_string(b).unwrap_or_default());
 
         let device_id = config().read().await.device_ids.device_id.clone();
 
