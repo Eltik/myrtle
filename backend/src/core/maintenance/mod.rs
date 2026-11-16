@@ -14,8 +14,10 @@
 //!   grammar in [`parse`] is English, and only `SYSTEM` notices are parsed
 //!   (see [`MAINTENANCE_GROUP`]).
 //! - `preannouncement.meta.json` beside it, the notice the login screen shows.
-//!   Public. `actived: false` on 2026-10-11, outside any window; whether it
-//!   flips to `true` during a maintenance has not been observed yet.
+//!   Public. `actived: false` on 2026-10-11, outside any window. It is NOT a
+//!   "the game is down" flag: on 2026-11-16 it went `true` ten minutes after a
+//!   maintenance had ended, for a notice about Facebook logins (id 132). So it
+//!   only counts when the login probe below has nothing to say.
 //! - The EN service account (see [`crate::core::service_account`]). The only
 //!   authenticated call: once a planned window has started and its end has
 //!   passed (or it has none), one `account/login` per poll says whether the
@@ -157,8 +159,21 @@ pub struct Signals {
 }
 
 impl Signals {
+    /// The login probe decides whenever it has an answer; the login-screen
+    /// notice is only the fallback for when it has none (no service account, a
+    /// dead token, a probe older than [`signals`] trusts).
+    ///
+    /// They used to be OR-ed. On 2026-11-16 a 10-minute maintenance ended on
+    /// time and the service account was logging in fine, but Yostar had put a
+    /// notice about Facebook logins on the login screen: the window reopened as
+    /// an overrun and every EN sync was refused for seven hours (it would have
+    /// been twelve, [`OVERRUN_LIMIT_SECS`]). A notice can be about anything; a
+    /// login that the game server answers cannot be the game being down.
     const fn still_down(self) -> bool {
-        self.prean_active || matches!(self.game_down, Some(true))
+        match self.game_down {
+            Some(down) => down,
+            None => self.prean_active,
+        }
     }
 }
 
@@ -228,7 +243,7 @@ pub fn resolve(notices: &[Notice], now: i64, signals: Signals) -> Option<Mainten
                 Some(end) => (signals.still_down() && now - end < OVERRUN_LIMIT_SECS)
                     .then_some(MaintenancePhase::Extended)?,
                 None => {
-                    if signals.game_down == Some(false) && !signals.prean_active {
+                    if signals.game_down == Some(false) {
                         return None;
                     }
                     if now - m.starts_at >= OPEN_ENDED_LIMIT_SECS && !signals.still_down() {
@@ -692,6 +707,38 @@ mod tests {
             game_down: Some(false),
         };
         assert!(resolve(&n, T0 + 2 * H, up).is_none());
+    }
+
+    /// 2026-11-16: a 10-minute maintenance, over on time, the service account
+    /// logging in, and an unrelated notice (Facebook logins) live on the login
+    /// screen. That reopened the window and blocked every EN sync.
+    #[test]
+    fn a_login_screen_notice_does_not_outrank_a_login_that_works() {
+        let ten_minutes = [notice(1663, T0, Some(T0 + 600), false)];
+        let notice_up_game_up = Signals {
+            prean_active: true,
+            game_down: Some(false),
+        };
+        assert!(resolve(&ten_minutes, T0 + 7 * H, notice_up_game_up).is_none());
+
+        // The same holds for a window with no stated end.
+        let open_ended = [notice(1, T0, None, false)];
+        assert!(resolve(&open_ended, T0 + H, notice_up_game_up).is_none());
+
+        // A refused login still keeps the window up, notice or not...
+        for prean_active in [true, false] {
+            let down = Signals {
+                prean_active,
+                game_down: Some(true),
+            };
+            assert!(resolve(&ten_minutes, T0 + 7 * H, down).is_some());
+        }
+        // ...and with no probe to go by, the notice is still the fallback.
+        let notice_only = Signals {
+            prean_active: true,
+            game_down: None,
+        };
+        assert!(resolve(&ten_minutes, T0 + 7 * H, notice_only).is_some());
     }
 
     #[test]
