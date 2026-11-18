@@ -13,3 +13,5 @@ startup_timings.json.tmp
 
 # Checkout of the ArknightsDpsCompare submodule on main
 external/
+
+.sqlx
