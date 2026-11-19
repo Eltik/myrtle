@@ -28,8 +28,7 @@ pub const MAX_TEMPLATE_SHAPE_LOGS: usize = 8;
 /// Most child keys listed under one top-level key of a logged shape.
 const MAX_CHILD_KEYS_LOGGED: usize = 12;
 
-/// Main's `grade_sandbox_detail` after its query: the stored `sandboxPerm` blob
-/// (`None` when the user has none) is an input.
+/// `progress` is the stored `sandboxPerm` blob, `None` when the user has none
 #[must_use]
 pub fn grade_sandbox_detail(game_data: &GradeData, progress: Option<&Value>) -> SandboxGrade {
     grade_progress(progress, &game_data.sandbox_universe, GRADE_SANDBOX_V3)

@@ -1,5 +1,6 @@
 pub mod align;
 pub mod estimate;
+pub mod event_banner;
 pub mod kinds;
 pub mod operator_changes;
 pub mod prices;

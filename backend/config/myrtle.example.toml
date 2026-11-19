@@ -1,0 +1,440 @@
+# GENERATED from crates/app/src/config.rs (FIELDS, RETIRED). Do not edit by hand:
+# change FIELDS, then run `MYRTLE_BLESS=1 cargo test -p myrtle-app example_is_current`.
+#
+# Copy to config/myrtle.toml. Secrets are references: "env:NAME" or "file:/path".
+# Each key notes the env var it replaces and where today's code reads it.
+
+[server]
+# Interface the API binds. Today the default is 0.0.0.0 (backend/src/app/server.rs:132); nginx is in front, so loopback.
+# was: HOST (backend/src/app/server.rs:93)
+bind_host = "127.0.0.1"
+# API port.
+# was: PORT (backend/src/app/server.rs:89)
+port = 3060
+# Separate listener for /metrics. Today /metrics is on the public router (backend/src/app/server.rs:71).
+# was: (new)
+metrics_bind = "127.0.0.1:9464"
+# X-Forwarded-For entries appended by trusted proxies, counted from the right. Production behind nginx needs 1; check before changing.
+# was: TRUSTED_PROXY_HOPS (backend/src/app/middleware.rs:145)
+trusted_proxy_hops = 0
+# Servers served; the first is the default.
+# was: SERVERS (backend/src/app/state.rs:244)
+servers = ["en"]
+
+[database]
+# Postgres URL. Also read by 10 of the 13 bins today.
+# was: DATABASE_URL (backend/src/main.rs:166)
+url = "env:DATABASE_URL"
+# Pool size.
+# was: DATABASE_MAX_CONNECTIONS (backend/src/database/pool.rs:23)
+max_connections = 40
+# Pool acquire timeout; a timeout answers 503 SERVICE_UNAVAILABLE. A const today.
+# was: (new)
+acquire_timeout_ms = 5000
+
+[redis]
+# Redis for the shared cache. Remove the key to use the in-memory cache.
+# was: REDIS_URL (backend/src/main.rs:176)
+url = "env:REDIS_URL"
+
+[secrets]
+# Session signing key, at least 32 bytes.
+# was: JWT_SECRET (backend/src/app/state.rs:258)
+jwt_secret = "env:JWT_SECRET"
+# Seals user_game_credentials; 32 bytes as hex or base64.
+# was: GAME_CREDENTIAL_KEY (backend/src/app/state.rs:264)
+game_credential_key = "env:GAME_CREDENTIAL_KEY"
+# Legacy SuperAdmin key for frontend SSR. Replaced by a scoped api_keys row; removed in phase 7 (Retire).
+# was: SERVICE_KEY (backend/src/app/state.rs:271)
+service_key = "env:SERVICE_KEY"
+# Raises the GitHub API limit for the DPS upstream watch.
+# was: GITHUB_TOKEN (backend/src/core/dps_watcher.rs:93)
+github_token = "env:GITHUB_TOKEN"
+# Where service-account refusals are posted.
+# was: DISCORD_ALERT_WEBHOOK (backend/src/core/alerts.rs:16)
+discord_alert_webhook = "env:DISCORD_ALERT_WEBHOOK"
+
+[rate_limit]
+# Requests per minute per client.
+# was: RATE_LIMIT_RPM (backend/src/app/state.rs:267)
+rpm = 100
+# CIDRs with no allowance at all. Loopback is NOT implicitly exempt in the rewrite.
+# was: RATE_LIMIT_EXEMPT_IPS (backend/src/app/middleware.rs:256)
+exempt_ips = []
+
+[cpu]
+# Concurrent CPU-bound requests; 0 = half the cores. Production sets 2.
+# was: CPU_TASK_PERMITS (backend/src/app/cpu.rs:35)
+task_permits = 0
+# Light CPU pool; 0 = same as task_permits.
+# was: CPU_LIGHT_PERMITS (backend/src/app/cpu.rs:53)
+light_permits = 0
+# How long a request waits for a permit; 0 refuses at once (the old behaviour).
+# was: CPU_TASK_WAIT_MS (backend/src/app/cpu.rs:73)
+task_wait_ms = 8000
+# Waiters allowed; 0 = task_permits * 8.
+# was: CPU_TASK_QUEUE (backend/src/app/cpu.rs:87)
+task_queue = 0
+
+[assets]
+# Extract root; per-server dirs are {dir}/{server}.
+# was: ASSETS_DIR (backend/src/app/state.rs:272)
+dir = "../assets/output"
+# Serve any directory under the root, not only the public list.
+# was: ASSETS_ALLOW_ALL_DIRS (backend/src/app/routes/assets.rs:36)
+allow_all_dirs = false
+# Chunk size when streaming a local file.
+# was: ASSET_STREAM_CHUNK_BYTES (backend/src/app/routes/assets.rs:73)
+stream_chunk_bytes = 65536
+# Per-server asset-pipeline WebSocket, e.g. { en = "ws://127.0.0.1:9160" }. ASSET_WS_URL (:349) was the one-server form.
+# was: ASSET_WS_URLS, ASSET_WS_URL (backend/src/app/state.rs:346)
+ws_urls = {}
+# local | redirect | proxy; empty = derived from [storage] as today.
+# was: ASSET_DELIVERY (backend/crates/storage/README.md:59)
+delivery = ""
+
+[storage]
+# cloudflare (alias r2) | local (alias fs); empty or off = storage disabled. R2 only: no aws or generic s3.
+# was: S3_TYPE (backend/crates/storage/README.md:42)
+type = ""
+# Bucket name.
+# was: S3_BUCKET (backend/crates/storage/README.md:43)
+bucket = ""
+# Static credential.
+# was: S3_ACCESS_KEY_ID, CLOUDFLARE_API_ACCESS_KEY (backend/crates/storage/README.md:44)
+access_key_id = "env:S3_ACCESS_KEY_ID"
+# Static credential.
+# was: S3_SECRET_ACCESS_KEY, CLOUDFLARE_API_SECRET_KEY (backend/crates/storage/README.md:44)
+secret_access_key = "env:S3_SECRET_ACCESS_KEY"
+# Cloudflare account; derives the R2 endpoint.
+# was: S3_ACCOUNT_ID, CLOUDFLARE_ACCOUNT_ID (backend/crates/storage/README.md:45)
+account_id = ""
+# R2 S3 API endpoint; empty = https://{account_id}.r2.cloudflarestorage.com.
+# was: S3_ENDPOINT, CLOUDFLARE_S3_API (backend/crates/storage/README.md:46)
+endpoint = ""
+# Key prefix, e.g. "myrtle".
+# was: S3_PREFIX (backend/crates/storage/README.md:49)
+prefix = ""
+# Public base for GETs. S3_PUBLIC_URL was an alias.
+# was: S3_PUBLIC_BASE_URL, S3_PUBLIC_URL (backend/crates/storage/README.md:50)
+public_base_url = ""
+# Directory standing in for the bucket (type = local).
+# was: S3_LOCAL_DIR (backend/crates/storage/README.md:51)
+local_dir = ""
+# Top-level dirs under each server that live in the store.
+# was: S3_ROOTS (backend/crates/storage/README.md:52)
+roots = ["textures", "spine", "audio", "video", "portraits"]
+# Cache-Control on uploads.
+# was: S3_CACHE_CONTROL (backend/crates/storage/README.md:53)
+cache_control = "public, max-age=604800"
+# Concurrent uploads and deletes.
+# was: S3_SYNC_CONCURRENCY (backend/crates/storage/README.md:54)
+sync_concurrency = 16
+# Hashing tasks; 0 = available CPUs.
+# was: S3_SYNC_HASH_THREADS (backend/crates/storage/README.md:55)
+sync_hash_threads = 0
+# Multipart above this size.
+# was: S3_MULTIPART_THRESHOLD_BYTES (backend/crates/storage/README.md:56)
+multipart_threshold_bytes = 268435456
+# Truncate local copies the bucket holds.
+# was: S3_EVICT_LOCAL (backend/crates/storage/README.md:57)
+evict_local = false
+# Extra path prefixes never evicted.
+# was: S3_EVICT_KEEP (backend/crates/storage/README.md:58)
+evict_keep = []
+
+[hypergryph]
+# Probe another networkVersion without a rebuild; empty = per-server default.
+# was: AK_NETWORK_VERSION (backend/src/core/hypergryph/session.rs:45)
+network_version_override = ""
+# CN passport app code (the public client value).
+# was: HYPERGRYPH_CN_APP_CODE (backend/src/core/hypergryph/passport.rs:36)
+cn_app_code = "4ca99fa6b56cc2ba"
+# Pinned device id; empty = generated once by `cli hypergryph device-ids` and written here.
+# was: DEVICE_ID (backend/src/core/hypergryph/loaders/device_ids.rs:17)
+device_id = ""
+# Second device id.
+# was: DEVICE_ID2 (backend/src/core/hypergryph/loaders/device_ids.rs:18)
+device_id2 = ""
+# Third device id.
+# was: DEVICE_ID3 (backend/src/core/hypergryph/loaders/device_ids.rs:19)
+device_id3 = ""
+# Re-mint a service-account secret older than this.
+# was: GAME_SESSION_MAX_AGE_SECS (backend/src/core/service_account.rs:53)
+service_session_max_age_secs = 1800
+
+[jobs]
+# Window schedule offsets are spread across; 0 = none.
+# was: JOB_STAGGER_SECS (backend/src/core/jobs.rs:12)
+stagger_secs = 180
+
+[jobs.trending]
+# Trending recompute period.
+# was: TRENDING_RECOMPUTE_SECS (backend/src/core/trending_job.rs:37)
+every_secs = 900
+# Entries ranked.
+# was: TRENDING_TOP_N (backend/src/core/trending_job.rs:8)
+top_n = 10
+
+[jobs.regrade]
+# Full regrade period.
+# was: REGRADE_INTERVAL_SECS (backend/src/core/regrade_job.rs:87)
+every_secs = 86400
+# RegradeUser jobs one worker runs at once.
+# was: REGRADE_CONCURRENCY (backend/src/core/regrade_job.rs:91)
+concurrency = 2
+# Users enqueued per RegradeAll page.
+# was: REGRADE_PAGE_SIZE (backend/src/core/regrade_job.rs:96)
+page_size = 500
+
+[jobs.gacha_detail]
+# Pool detail refresh period.
+# was: GACHA_DETAIL_REFRESH_SECS (backend/src/core/gacha_detail_job.rs:74)
+every_secs = 21600
+# Delay between upstream calls.
+# was: GACHA_DETAIL_CALL_DELAY_MS (backend/src/core/gacha_detail_job.rs:47)
+call_delay_ms = 120
+# Failures before a pass gives up.
+# was: GACHA_DETAIL_MAX_FAILURES (backend/src/core/gacha_detail_job.rs:51)
+max_failures = 5
+# Pools between checkpoints.
+# was: GACHA_DETAIL_CHECKPOINT_EVERY (backend/src/core/gacha_detail_job.rs:59)
+checkpoint_every = 50
+# Output dir override; empty = {assets.dir}/{server}/derived.
+# was: GACHA_DETAIL_DIR (backend/src/core/gamedata/types/gacha_detail.rs:58)
+dir = ""
+
+[jobs.event_shop]
+# Event shop refresh period.
+# was: EVENT_SHOP_REFRESH_SECS (backend/src/core/event_shop_job.rs:54)
+every_secs = 21600
+# Delay between upstream calls.
+# was: EVENT_SHOP_CALL_DELAY_MS (backend/src/core/event_shop_job.rs:39)
+call_delay_ms = 120
+# Failures before a pass gives up.
+# was: EVENT_SHOP_MAX_FAILURES (backend/src/core/event_shop_job.rs:40)
+max_failures = 5
+# Output dir override; empty = {assets.dir}/{server}/derived.
+# was: EVENT_SHOP_DIR (backend/src/core/gamedata/types/event_shop.rs:26)
+dir = ""
+
+[jobs.maintenance]
+# Announcement poll period (60 s inside a window, a const).
+# was: MAINTENANCE_POLL_SECS (backend/src/core/maintenance/mod.rs:297)
+poll_secs = 300
+
+[jobs.siren]
+# Monster Siren catalogue sync period; 0 = sync only when empty.
+# was: SIREN_REFRESH_SECS (backend/src/app/services/music/siren/mod.rs:483)
+every_secs = 21600
+# Siren API base.
+# was: SIREN_API_BASE (backend/src/app/services/music/siren/client.rs:112)
+api_base = "https://monster-siren.hypergryph.com/api"
+
+[jobs.dps_watch]
+# Poll ArknightsDpsCompare for new commits; 0 = off (unset is off today).
+# was: DPS_POLL_INTERVAL (backend/src/core/dps_watcher.rs:23)
+every_secs = 0
+# Upstream repo.
+# was: DPS_UPSTREAM_REPO (backend/src/core/dps_watcher.rs:29)
+upstream_repo = "WhoAteMyCQQkie/ArknightsDpsCompare"
+# Upstream branch.
+# was: DPS_UPSTREAM_BRANCH (backend/src/core/dps_watcher.rs:31)
+upstream_branch = "main"
+
+[jobs.sandbox_backfill]
+# Wait before switching an account back to its loaded RA topic; the client's CD_REQUEST_SWITCH_TOPIC reads 10, unit unknown.
+# was: SANDBOX_TOPIC_BACKFILL_WAIT_S (backend/src/app/services/sandbox_backfill.rs:69)
+switch_wait_secs = 15
+
+[dps]
+# Lifetime of a DPS rank entry off the page grid; 86400 matches the grid's. Above 0.
+# was: DPS_RANK_OFF_GRID_TTL_SECS (backend/src/app/cache/keys.rs:16)
+rank_off_grid_ttl_secs = 3600
+
+[release]
+# server=url pairs; empty = the built-in DEFAULT_MIRRORS (art.rs:7).
+# was: RELEASE_ART_MIRRORS (backend/src/core/release/art.rs:32)
+art_mirrors = []
+# Events in the CN->EN lag median.
+# was: RELEASE_LAG_WINDOW (backend/src/core/release/estimate.rs:13)
+lag_window = 10
+# Half-life (events) of the lag weighting.
+# was: RELEASE_LAG_HALF_LIFE (backend/src/core/release/estimate.rs:35)
+lag_half_life = 3.0
+
+[story]
+# Story art below this density is treated as a placeholder.
+# was: STORY_ART_MIN_BPP (backend/src/app/services/story/story_art.rs:87)
+art_min_bytes_per_px = 0.2
+
+[cli]
+# Server the CLI acts on when none is given; empty = first of server.servers.
+# was: BIN_SERVER (backend/src/app/state.rs:573)
+default_server = ""
+# Acting admin for `cli grants`.
+# was: ADMIN_UID (backend/src/bin/manage_permissions.rs:41)
+admin_uid = ""
+
+[tools]
+# Python used by tools/dps-transpile.
+# was: PYTHON_BIN (backend/src/bin/generate_dps.rs:193)
+python_bin = "python3"
+
+[debug]
+# Log why each pinned base operator stayed.
+# was: BASE_PIN_TRACE (backend/src/core/grade/base/shift_rotation.rs:785)
+base_pin_trace = false
+# Time the rotation search (as a tracing span in the caller).
+# was: BASE_ROT_TIMING (backend/src/core/grade/base/shift_rotation.rs:654)
+base_rot_timing = false
+# Write raw syncData responses here; empty = off.
+# was: MYRTLE_SYNC_DUMP_DIR (backend/src/app/services/roster.rs:870)
+sync_dump_dir = ""
+# Write story sprite thumbnails here for inspection; empty = off.
+# was: STORY_THUMB_OUT (backend/src/app/services/story_sprite_thumb.rs:389)
+story_thumb_out = ""
+
+# Scheduler enqueues recurring jobs. Today DISABLE_BACKGROUND_JOBS=1 turns off every loop at once.
+# was: DISABLE_BACKGROUND_JOBS (backend/src/main.rs:253)
+[switches.background_jobs]
+enabled = true
+owner = "eltik"
+remove_after = "2027-01-31" # PLACEHOLDER date, set in phase 1
+
+# Gates re-read the stored role instead of trusting the JWT claim.
+# was: DISABLE_ROLE_RECHECK (backend/src/app/state.rs:277)
+[switches.role_recheck]
+enabled = true
+owner = "eltik"
+remove_after = "2027-01-31" # PLACEHOLDER date, set in phase 1
+
+# Record gamedata sightings for the release planner.
+# was: RELEASE_LEDGER (backend/src/core/release/ledger.rs:21)
+[switches.release_ledger]
+enabled = true
+owner = "eltik"
+remove_after = "2027-01-31" # PLACEHOLDER date, set in phase 1
+
+# Treat skipped-tag CN listings as Unlisted.
+# was: RELEASE_TRUST_SKIPPED_TAGS (backend/src/core/release/skipped.rs:39)
+[switches.release_trust_skipped_tags]
+enabled = true
+owner = "eltik"
+remove_after = "2027-01-31" # PLACEHOLDER date, set in phase 1
+
+# Restore the pre-fix skin cadence rule.
+# was: RELEASE_POOLED_CADENCE (backend/src/app/services/release/skins.rs:226)
+[switches.release_pooled_cadence]
+enabled = false
+owner = "eltik"
+remove_after = "2027-01-31" # PLACEHOLDER date, set in phase 1
+
+# Keep skins never sold in a shop.
+# was: RELEASE_KEEP_UNSOLD_SKINS (backend/src/core/release/skins.rs:30)
+[switches.release_keep_unsold_skins]
+enabled = false
+owner = "eltik"
+remove_after = "2027-01-31" # PLACEHOLDER date, set in phase 1
+
+# Attach every outfit-review window to every earlier group.
+# was: RELEASE_REVIEWS_ALL_GROUPS (backend/src/core/release/skins.rs:36)
+[switches.release_reviews_all_groups]
+enabled = false
+owner = "eltik"
+remove_after = "2027-01-31" # PLACEHOLDER date, set in phase 1
+
+# Reload after every job run that fetched anything, not only on change.
+# was: SIDECAR_RELOAD_ALWAYS (backend/src/core/sidecar.rs:76)
+[switches.sidecar_reload_always]
+enabled = false
+owner = "eltik"
+remove_after = "2027-01-31" # PLACEHOLDER date, set in phase 1
+
+# Serve CN art when a server lacks its own.
+# was: ASSET_CN_FALLBACK (backend/src/app/state.rs:155)
+[switches.asset_cn_fallback]
+enabled = true
+owner = "eltik"
+remove_after = "2027-01-31" # PLACEHOLDER date, set in phase 1
+
+# Fall back to the default server's art tree.
+# was: ART_FALLBACK (backend/src/app/state.rs:518)
+[switches.art_fallback]
+enabled = true
+owner = "eltik"
+remove_after = "2027-01-31" # PLACEHOLDER date, set in phase 1
+
+# Align obtain channels across servers at compile.
+# was: OBTAIN_CHANNEL_ALIGN (backend/src/core/gamedata/enrich/reference.rs:42)
+[switches.obtain_channel_align]
+enabled = true
+owner = "eltik"
+remove_after = "2027-01-31" # PLACEHOLDER date, set in phase 1
+
+# Align profile text across servers at compile.
+# was: PROFILE_ALIGN (backend/src/core/gamedata/enrich/profile.rs:51)
+[switches.profile_align]
+enabled = true
+owner = "eltik"
+remove_after = "2027-01-31" # PLACEHOLDER date, set in phase 1
+
+# Grade only invested operators.
+# was: GRADE_INVESTED_ONLY (backend/src/core/grade/grade_operators.rs:142)
+[switches.grade_invested_only]
+enabled = false
+owner = "eltik"
+remove_after = "2027-01-31" # PLACEHOLDER date, set in phase 1
+
+# Old rarity weights (GRADE_RARITY_WEIGHTS=legacy).
+# was: GRADE_RARITY_WEIGHTS (backend/src/core/grade/grade_operators.rs:143)
+[switches.grade_legacy_rarity_weights]
+enabled = false
+owner = "eltik"
+remove_after = "2027-01-31" # PLACEHOLDER date, set in phase 1
+
+# Score modules per slot.
+# was: GRADE_MODULE_PER_SLOT (backend/src/core/grade/grade_operators.rs:144)
+[switches.grade_module_per_slot]
+enabled = true
+owner = "eltik"
+remove_after = "2027-01-31" # PLACEHOLDER date, set in phase 1
+
+# Use hub sprites in story art (STORY_NO_HUB turned it off).
+# was: STORY_NO_HUB (backend/src/core/story/assets.rs:525)
+[switches.story_hub]
+enabled = true
+owner = "eltik"
+remove_after = "2027-01-31" # PLACEHOLDER date, set in phase 1
+
+# Fall back to hub sprites.
+# was: STORY_NO_HUB_FALLBACK (backend/src/core/story/assets.rs:1304)
+[switches.story_hub_fallback]
+enabled = true
+owner = "eltik"
+remove_after = "2027-01-31" # PLACEHOLDER date, set in phase 1
+
+# Use whole-body sprites.
+# was: STORY_NO_WHOLE_BODY (backend/src/core/story/assets.rs:1181)
+[switches.story_whole_body]
+enabled = true
+owner = "eltik"
+remove_after = "2027-01-31" # PLACEHOLDER date, set in phase 1
+
+# Fetch RA topics a sync does not carry by switching the account to each.
+# was: SANDBOX_TOPIC_BACKFILL (backend/src/app/services/sandbox_backfill.rs:59)
+[switches.sandbox_topic_backfill]
+enabled = true
+owner = "eltik"
+remove_after = "2027-01-31" # PLACEHOLDER date, set in phase 1
+
+# Retired: read today, no key here.
+#   DEVICE_IDS_FILE (backend/src/core/hypergryph/loaders/device_ids.rs:9): device ids are config values ([hypergryph] device_id*), not a file on the VPS disk
+#   GAME_SESSION_DIR (backend/src/core/service_account.rs:63): service-account sessions move to Postgres behind hypergryph::SessionStore
+#   REGRADE_STATE_FILE (backend/src/core/regrade_job.rs:35): last-run state is job_schedules.last_enqueued_at
+#   DPS_STATE_FILE (backend/src/core/dps_watcher.rs:32): last-seen commit is stored on the DpsUpstreamWatch schedule row
+#   STARTUP_TIMINGS_FILE (backend/src/core/startup.rs:148): boot no longer compiles game data, so the boot phase plan goes
+#   STEP_RSS (backend/src/core/startup.rs:362): boot step RSS tracing goes with the boot phase plan
+#   S3_REGION (backend/crates/storage/README.md:47): the store is R2 only, whose region is always auto
+#   S3_FORCE_PATH_STYLE (backend/crates/storage/README.md:48): the store is R2 only, always addressed path-style
+#   NO_PROGRESS (backend/src/core/startup.rs:535): boot progress bars go with the boot phase plan; the CLI uses --quiet

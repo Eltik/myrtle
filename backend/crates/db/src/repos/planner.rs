@@ -222,7 +222,7 @@ pub async fn update_group(
     Ok(sqlx::query_as!(
         PlanGroupRow,
         "UPDATE plan_groups
-         SET name = COALESCE($1, name), pinned = COALESCE($2, pinned)
+         SET name = COALESCE($1, name), pinned = COALESCE($2, pinned), updated_at = NOW()
          WHERE user_id = $3 AND name = $4
          RETURNING id, user_id, name, pinned, created_at, updated_at",
         name,

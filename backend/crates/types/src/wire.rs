@@ -58,4 +58,5 @@ pub enum ProfileTab {
     Inventory,
     Enemies,
     Optimizer,
+    Lookback,
 }

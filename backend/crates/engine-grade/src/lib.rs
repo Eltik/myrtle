@@ -6,6 +6,7 @@ use myrtle_gamedata_raw::tables::{
     sandbox_universe::SandboxUniverse, trust::Favor,
 };
 
+pub mod improvements;
 pub mod inputs;
 pub mod medals;
 pub mod operators;

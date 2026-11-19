@@ -45,7 +45,7 @@ async fn a_fresh_database_gets_the_schema_and_the_servers(pool: PgPool) {
              WHERE table_schema = 'public' AND table_type = 'BASE TABLE'"
         )
         .await,
-        78
+        80
     );
 
     migrate::run(&db).await.unwrap();

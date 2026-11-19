@@ -14,7 +14,7 @@ members = [
     "crates/parity",
     "xtask",
     "crates/engine-music",
-    "crates/hypergryph", "crates/db", "crates/jobs",
+    "crates/hypergryph", "crates/db", "crates/jobs", "crates/app",
 ]
 # default-members = ["crates/api", "crates/worker", "crates/cli"]
 
@@ -50,6 +50,7 @@ myrtle-app = { path = "crates/app" }
 myrtle-testkit = { path = "crates/testkit" }
 
 # external
+ammonia = "4.2.3"
 anyhow = "1.0.104"
 arc-swap = "1.9.2"
 async-trait = "0.1.92"
@@ -57,12 +58,14 @@ axum = "0.8.9"
 base64 = "0.22.1"
 bson = "3.1.0"
 bytes = "1.12.1"
+chacha20poly1305 = "0.10.1"
 chrono = { version = "0.4.45", default-features = false, features = ["std", "clock", "serde"] }
 clap = { version = "4.6.7", features = ["derive"] }
 dashmap = "6.2.1"
 futures-util = "0.3.34"
 hex = "0.4.3"
 hmac = "0.12.1"
+image = { version = "0.25.9", default-features = false, features = ["png", "webp", "jpeg"] }
 jsonwebtoken = { version = "10.4.0", features = ["rust_crypto"] }
 md-5 = "0.10.6"
 rand = "0.10.3"
@@ -81,6 +84,7 @@ tempfile = "3.27.0"
 thiserror = "2.0.21"
 tikv-jemallocator = "0.6.1"
 tokio = { version = "1.53.2", features = ["rt-multi-thread", "macros", "sync", "signal", "time"] }
+tokio-tungstenite = "0.26.2"
 tokio-util = "0.7.20"
 tower = { version = "0.5.3", features = ["util"] }
 tower-http = { version = "0.6.11", features = ["cors", "compression-gzip", "compression-br", "trace"] }

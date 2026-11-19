@@ -1,5 +1,6 @@
 pub mod content_audit;
 pub mod credentials;
+pub mod data_generations;
 pub mod gacha;
 pub mod grids;
 pub mod i18n;
@@ -15,6 +16,7 @@ pub mod progress;
 pub mod release;
 pub mod roster;
 pub mod scores;
+pub mod service_sessions;
 pub mod squads;
 pub mod stats;
 pub mod story;

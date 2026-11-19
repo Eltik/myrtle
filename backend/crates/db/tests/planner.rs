@@ -238,6 +238,23 @@ async fn groups_list_pinned_first_then_by_name_and_update_in_place(pool: PgPool)
 }
 
 #[sqlx::test(migrator = "myrtle_db::migrate::MIGRATOR")]
+async fn a_group_update_bumps_updated_at_without_the_trigger(pool: PgPool) {
+    let db = common::db(pool).await;
+    let mut conn = db.conn().await.unwrap();
+    let user = common::user(&mut conn, 1).await;
+    let group = planner::create_group(&mut conn, user, "g").await.unwrap();
+    sqlx::query("ALTER TABLE plan_groups DISABLE TRIGGER trg_plan_groups_timestamp")
+        .execute(&mut *conn)
+        .await
+        .unwrap();
+
+    let pinned = planner::update_group(&mut conn, user, "g", None, Some(true))
+        .await
+        .unwrap();
+    assert!(pinned.updated_at > group.updated_at);
+}
+
+#[sqlx::test(migrator = "myrtle_db::migrate::MIGRATOR")]
 async fn memberships_come_by_plan_then_group_name(pool: PgPool) {
     let db = common::db(pool).await;
     let mut conn = db.conn().await.unwrap();
