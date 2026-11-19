@@ -1,5 +1,3 @@
--- Indexes for predicates and foreign-key actions that otherwise scan the table.
-
 CREATE INDEX idx_plan_group_members_plan ON plan_group_members (operator_plan_id);
 
 CREATE INDEX idx_tier_lists_created_by ON tier_lists (created_by);
@@ -59,4 +57,4 @@ CREATE INDEX idx_users_admin_order ON users (
     id
 );
 
-DROP INDEX idx_tier_lists_slug; -- same key as the tier_lists_slug_key constraint
+DROP INDEX idx_tier_lists_slug;

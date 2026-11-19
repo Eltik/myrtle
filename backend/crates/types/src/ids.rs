@@ -50,7 +50,7 @@ uuid_id!(
     ApiKeyId
 );
 uuid_id!(
-    /// `worker_heartbeats.worker_id`
+    /// `jobs.leased_by`
     WorkerId
 );
 

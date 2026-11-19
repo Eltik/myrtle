@@ -1706,6 +1706,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "myrtle-jobs"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "chrono",
+ "myrtle-db",
+ "myrtle-types",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "thiserror",
+ "tokio",
+ "uuid",
+]
+
+[[package]]
 name = "myrtle-parity"
 version = "0.1.0"
 dependencies = [
