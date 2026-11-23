@@ -11,6 +11,7 @@ static GLOBAL: tikv_jemallocator::Jemalloc = tikv_jemallocator::Jemalloc;
 fn main() -> ExitCode {
     tracing_subscriber::fmt()
         .with_env_filter(EnvFilter::try_from_default_env().unwrap_or_else(|_| "info".into()))
+        .with_writer(|| myrtle_api::boot::LogWriter)
         .init();
     let config = std::env::args().nth(1).map(PathBuf::from);
     let runtime = match tokio::runtime::Builder::new_multi_thread()
@@ -24,6 +25,7 @@ fn main() -> ExitCode {
         }
     };
     let served = runtime.block_on(myrtle_api::run(config.as_deref()));
+    myrtle_api::boot::clear();
     runtime.shutdown_timeout(Duration::from_secs(2));
     match served {
         Ok(()) => ExitCode::SUCCESS,

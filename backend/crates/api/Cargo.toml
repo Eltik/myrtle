@@ -26,6 +26,7 @@ myrtle-storage.workspace = true
 axum.workspace = true
 chrono.workspace = true
 dashmap.workspace = true
+indicatif.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 subtle.workspace = true

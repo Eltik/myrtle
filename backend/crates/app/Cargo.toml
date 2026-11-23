@@ -41,6 +41,7 @@ rand.workspace = true
 redis.workspace = true
 regex.workspace = true
 reqwest.workspace = true
+rustls = { version = "0.23.46", default-features = false, features = ["ring", "std", "tls12"] }
 serde = { workspace = true, features = ["rc"] }
 serde_json.workspace = true
 sha2.workspace = true
@@ -55,7 +56,6 @@ walkdir.workspace = true
 
 [dev-dependencies]
 myrtle-testkit.workspace = true
-rustls = { version = "0.23.46", default-features = false, features = ["ring", "std", "tls12"] }
 tempfile.workspace = true
 tokio = { workspace = true, features = ["test-util"] }
 

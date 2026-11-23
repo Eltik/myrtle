@@ -63,6 +63,14 @@ impl Announced {
     }
 }
 
+#[derive(Debug, Clone, Copy)]
+pub enum BootStep {
+    Database,
+    GameData(Server),
+    Upstream,
+    Accounts,
+}
+
 #[derive(Clone)]
 pub struct AppContext {
     pub config: Arc<Config>,
@@ -82,6 +90,14 @@ pub struct AppContext {
 
 impl AppContext {
     pub async fn build(config: Config) -> Result<Self, AppError> {
+        Self::build_with(config, |_| {}).await
+    }
+
+    pub async fn build_with(
+        config: Config,
+        step: impl Fn(BootStep) + Send + Sync,
+    ) -> Result<Self, AppError> {
+        step(BootStep::Database);
         let secrets = Secrets::resolve(&config).map_err(AppError::internal)?;
         let database_url = config.database.url.resolve().map_err(AppError::internal)?;
         let db = Db::connect(&PoolOptions {
@@ -101,6 +117,7 @@ impl AppContext {
                 .into_iter()
                 .collect();
         for server in snapshots.servers() {
+            step(BootStep::GameData(server));
             let stored = generations.get(&server).cloned().unwrap_or_default();
             let activated = snapshots.activate_at(server, &stored).await;
             match activated {
@@ -112,6 +129,8 @@ impl AppContext {
             }
         }
 
+        step(BootStep::Upstream);
+        let _ = rustls::crypto::ring::default_provider().install_default();
         let client = reqwest::Client::builder()
             .timeout(Duration::from_secs(15))
             .connect_timeout(Duration::from_secs(5))
@@ -125,6 +144,7 @@ impl AppContext {
             cache.clone(),
             Arc::clone(&secrets.credentials),
         ));
+        step(BootStep::Accounts);
         let options = AccountOptions {
             secret_max_age: Duration::from_secs(config.hypergryph.service_session_max_age_secs),
         };

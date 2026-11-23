@@ -1,3 +1,4 @@
+pub mod boot;
 pub mod error;
 pub mod extract;
 pub mod health;
@@ -13,7 +14,9 @@ use std::path::Path;
 use std::time::Duration;
 
 use myrtle_app::config::Config;
+use myrtle_app::context::BootStep;
 use myrtle_app::{AppContext, AppError};
+use myrtle_db::{Db, PoolOptions};
 use tokio::net::TcpListener;
 
 pub use error::{ApiError, ApiResult};
@@ -21,10 +24,29 @@ pub use error::{ApiError, ApiResult};
 const SHUTDOWN_GRACE: Duration = Duration::from_secs(5);
 const RELOAD_POLL: Duration = Duration::from_secs(15);
 
+async fn migrate(config: &Config) -> Result<(), AppError> {
+    let url = config.database.url.resolve().map_err(AppError::internal)?;
+    let db = Db::connect(&PoolOptions {
+        max_connections: 2,
+        ..PoolOptions::new(url)
+    })
+    .await?;
+    myrtle_db::migrate::run(&db).await?;
+    Ok(())
+}
+
 pub async fn run(config: Option<&Path>) -> Result<(), AppError> {
     let config = Config::load(config).map_err(AppError::internal)?;
-    let ctx = AppContext::build(config).await?;
-    myrtle_db::migrate::check(&ctx.db).await?;
+    boot::begin(4 + config.server.servers.len());
+    boot::step("migrations");
+    migrate(&config).await?;
+    let ctx = AppContext::build_with(config, |step| match step {
+        BootStep::Database => boot::step("database and cache"),
+        BootStep::GameData(server) => boot::step(format!("game data {}", server.as_str())),
+        BootStep::Upstream => boot::step("upstream versions"),
+        BootStep::Accounts => boot::step("service accounts"),
+    })
+    .await?;
     let today = chrono::Utc::now().format("%Y-%m-%d").to_string();
     for switch in ctx.config.expired_switches(&today) {
         tracing::warn!(
@@ -42,9 +64,11 @@ pub async fn run(config: Option<&Path>) -> Result<(), AppError> {
     let listener = TcpListener::bind((server.bind_host.as_str(), server.port))
         .await
         .map_err(AppError::internal)?;
+    let boot_secs = boot::done().as_secs();
     tracing::info!(
         host = server.bind_host,
         port = server.port,
+        boot_secs,
         cpu_permits = ctx.cpu.permits(),
         "listening"
     );

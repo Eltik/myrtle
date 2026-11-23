@@ -65,6 +65,7 @@ dashmap = "6.2.1"
 dotenvy = "0.15.7"
 futures-util = "0.3.34"
 hex = "0.4.3"
+indicatif = "0.18.6"
 hmac = "0.12.1"
 image = { version = "0.25.9", default-features = false, features = ["png", "webp", "jpeg"] }
 jsonwebtoken = { version = "10.4.0", features = ["rust_crypto"] }
