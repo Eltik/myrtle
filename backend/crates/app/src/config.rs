@@ -1,9 +1,16 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashMap};
 use std::fmt::Write as _;
 use std::path::Path;
+use std::sync::LazyLock;
 
 use myrtle_types::Server;
 use serde::Deserialize;
+
+static DOTENV: LazyLock<HashMap<String, String>> = LazyLock::new(|| {
+    dotenvy::dotenv_iter()
+        .map(|vars| vars.flatten().collect())
+        .unwrap_or_default()
+});
 
 #[derive(Clone, Deserialize)]
 #[serde(transparent)]
@@ -26,7 +33,10 @@ impl SecretRef {
             reference: self.0.clone(),
         };
         let value = if let Some(name) = self.0.strip_prefix("env:") {
-            std::env::var(name).map_err(|_| unresolved())?
+            std::env::var(name)
+                .ok()
+                .or_else(|| DOTENV.get(name).cloned())
+                .ok_or_else(unresolved)?
         } else if let Some(path) = self.0.strip_prefix("file:") {
             let text = std::fs::read_to_string(path).map_err(|_| unresolved())?;
             text.trim_end_matches(['\r', '\n']).to_owned()

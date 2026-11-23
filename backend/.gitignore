@@ -15,3 +15,6 @@ startup_timings.json.tmp
 external/
 
 .sqlx
+
+# Local config
+config/myrtle.toml
