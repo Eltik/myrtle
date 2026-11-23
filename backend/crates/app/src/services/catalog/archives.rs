@@ -1,6 +1,3 @@
-//! The Archives: one build per server and game-data load, cached as its four
-//! list bodies and one body per personnel file.
-
 use std::collections::HashMap;
 use std::path::Path;
 use std::sync::Arc;
@@ -21,7 +18,6 @@ use crate::cache::CachedJson;
 use crate::snapshots::Snapshot;
 use crate::{AppContext, AppError};
 
-/// Outlives the build marker, so a live marker always finds its entries
 const ENTRY_TTL: Duration = TTL.saturating_add(Duration::from_mins(5));
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -56,7 +52,6 @@ fn operator_key(snapshot: &Snapshot, server: Server, char_id: &str) -> String {
     )
 }
 
-/// `handbook_force_map_table` and `handbookpos_table`, `None` when either is absent or unparsable
 fn load_network(root: &Path) -> Option<RawNetwork> {
     let source = DirSource {
         root: root.to_path_buf(),
@@ -74,7 +69,6 @@ fn load_network(root: &Path) -> Option<RawNetwork> {
         .ok()
 }
 
-/// Every operator's speaking appearances in library order, one row per story with all their folders' lines summed
 #[must_use]
 pub fn scene_index(sprites: &SpriteGallery, library: &StoryIndex) -> SceneIndex {
     let order: HashMap<&str, (usize, Option<&String>)> = library
@@ -127,7 +121,6 @@ pub fn scene_index(sprites: &SpriteGallery, library: &StoryIndex) -> SceneIndex 
         .collect()
 }
 
-/// Every cache entry of one build, keyed
 fn build_entries(
     snapshot: &Snapshot,
     server: Server,
@@ -167,7 +160,6 @@ fn build_entries(
     Ok(entries)
 }
 
-/// Builds the Archives once per load; concurrent callers share the build
 async fn ensure_built(
     ctx: &AppContext,
     snapshot: &Arc<Snapshot>,
@@ -212,7 +204,6 @@ async fn ensure_built(
     Ok(())
 }
 
-/// The entry under `key`; a miss the build should have filled drops the marker and rebuilds once
 async fn entry(
     ctx: &AppContext,
     snapshot: &Arc<Snapshot>,
@@ -251,7 +242,6 @@ pub async fn list(
         .ok_or(AppError::Unavailable)
 }
 
-/// One personnel file
 pub async fn operator(
     ctx: &AppContext,
     server: Server,

@@ -1,5 +1,3 @@
-//! The in-game notice boards of the Yostar servers, refreshed by the maintenance poll.
-
 pub mod page;
 
 use std::sync::LazyLock;
@@ -20,7 +18,6 @@ const DEFAULT_ANNOUNCE_URL: &str =
     "https://ark-us-static-online.yo-star.com/announce/{0}/announcement.meta.json";
 const ANNOUNCE_PLATFORM: &str = "Android";
 const FETCH_TIMEOUT: Duration = Duration::from_secs(10);
-/// Boards are stamped in the server's own zone, up to UTC+9, so a date can sit a day ahead of UTC
 const FUTURE_SLACK_DAYS: i64 = 1;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -33,7 +30,6 @@ pub struct AnnouncementSummary {
     pub notice_url: String,
 }
 
-/// One notice with its sanitized body
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Announcement {
     #[serde(flatten)]
@@ -57,7 +53,6 @@ pub struct Board {
     pub checked_at: i64,
 }
 
-/// One row of `announcement.meta.json`
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct MetaItem {
@@ -81,7 +76,6 @@ struct Meta {
     announce_list: Vec<MetaItem>,
 }
 
-/// A board row with its page read, `html` only when the page was fetched this tick
 #[derive(Debug, Clone)]
 pub struct Listed {
     pub item: MetaItem,
@@ -104,7 +98,7 @@ pub fn detail_key(server: Server, id: &str) -> String {
     format!("announcements:{}:{id}", server.as_str())
 }
 
-/// The servers whose boards are read: every one with a Yostar SDK host
+#[must_use]
 pub fn servers(ctx: &AppContext) -> Vec<Server> {
     let config = ctx.upstream.config();
     Server::ALL
@@ -122,7 +116,7 @@ pub fn parse_meta(raw: &str) -> Result<Vec<MetaItem>, serde_json::Error> {
         .collect())
 }
 
-/// This year's date for `day`/`month` seen on `today`, or last year's when that is in the future
+#[must_use]
 pub fn published_on(day: u32, month: u32, today: NaiveDate) -> Option<NaiveDate> {
     let limit = today + chrono::Duration::days(FUTURE_SLACK_DAYS);
     [today.year(), today.year() - 1]
@@ -174,7 +168,6 @@ pub fn sort_newest_first(list: &mut [AnnouncementSummary]) {
     });
 }
 
-/// The page's `banner-image`, absolute against `page_url`, `http(s)` only
 pub fn banner_url(html: &str, page_url: &str) -> Option<String> {
     let src = RE_IMG
         .find_iter(html)
@@ -189,7 +182,6 @@ pub fn banner_url(html: &str, page_url: &str) -> Option<String> {
     matches!(url.scheme(), "http" | "https").then(|| url.to_string())
 }
 
-/// `requested`, or the default server when it has a board, or the first server that does
 pub fn board_server(ctx: &AppContext, requested: Option<Server>) -> Result<Server, AppError> {
     let servers = servers(ctx);
     match requested {
@@ -221,7 +213,6 @@ pub async fn list(ctx: &AppContext, server: Option<Server>) -> Result<Announceme
     })
 }
 
-/// One notice of `server`'s current board
 pub async fn detail(
     ctx: &AppContext,
     server: Option<Server>,
@@ -258,7 +249,7 @@ pub async fn get_text(ctx: &AppContext, url: &str) -> Result<String, AppError> {
         .map_err(myrtle_hypergryph::UpstreamError::from)?)
 }
 
-/// `server`'s board meta URL from its `an` route; EN falls back to the last route seen there
+#[must_use]
 pub fn announce_url(ctx: &AppContext, server: Server) -> Option<String> {
     let config = ctx.upstream.config();
     let template = match config.domain(server, Domain::AN) {
@@ -269,7 +260,6 @@ pub fn announce_url(ctx: &AppContext, server: Server) -> Option<String> {
     Some(template.replace("{0}", ANNOUNCE_PLATFORM))
 }
 
-/// Fetches only pages whose URL `previous` lacks; the `?t=` stamp changes on a rebuilt board
 pub async fn read_board(
     ctx: &AppContext,
     server: Server,
@@ -314,7 +304,6 @@ pub async fn read_board(
     Ok((meta_url, board))
 }
 
-/// Stores the board and one detail per notice; a page not fetched this tick keeps its stored detail
 pub async fn publish(ctx: &AppContext, server: Server, listed: &[Listed], now: i64, ttl: Duration) {
     let today = chrono::DateTime::from_timestamp(now, 0)
         .unwrap_or_default()

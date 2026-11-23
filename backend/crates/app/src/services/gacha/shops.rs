@@ -25,7 +25,6 @@ pub fn event_shop_path(ctx: &AppContext, server: Server) -> PathBuf {
     )
 }
 
-/// The `EventShopRefresh` job: one server, or every server with a service account
 pub async fn refresh_event_shops(
     ctx: &AppContext,
     server: Option<Server>,
@@ -45,7 +44,6 @@ pub async fn refresh_event_shops(
     Ok(fetched)
 }
 
-/// (activity id, shop id) of started activities whose shop is unheld or open and never refused, latest end first
 #[must_use]
 pub fn shops_to_fetch(
     activities: &HashMap<String, ActivityBasicInfo>,
@@ -87,10 +85,10 @@ async fn refresh_server(ctx: &AppContext, server: Server) -> Result<usize, AppEr
         cached = file.shops.len(),
         "fetching event shops"
     );
-    let loaded_shops = Fingerprint::of(&file.shops); // only `shops` decides the reload; refusals are just persisted
+    let loaded_shops = Fingerprint::of(&file.shops);
     let on_disk = stored_data(&file);
 
-    account.sync_player(&ctx.upstream).await?; // shop queries answer only for a materialised player
+    account.sync_player(&ctx.upstream).await?;
 
     let job = &ctx.config.jobs.event_shop;
     let delay = Duration::from_millis(job.call_delay_ms);
@@ -164,13 +162,12 @@ async fn refresh_server(ctx: &AppContext, server: Server) -> Result<usize, AppEr
     Ok(fetched)
 }
 
-/// Everything the sidecar persists but the run metadata
 #[must_use]
 pub fn stored_data(file: &EventShopFile) -> Fingerprint {
     Fingerprint::of(&(&file.shops, &file.absent))
 }
 
-/// The sidecar, or an empty one when absent, unreadable or another version
+#[must_use]
 pub fn read_event_shops(path: &Path) -> EventShopFile {
     sidecar::read::<EventShopFile>(path)
         .filter(|file| file.version == EVENT_SHOP_FILE_VERSION)

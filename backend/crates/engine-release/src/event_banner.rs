@@ -14,6 +14,7 @@ const JPEG_QUALITY: u8 = 88;
 const VERSION: &str = "v1";
 
 /// The key visual and title paths in the art tree
+#[must_use]
 pub fn sources(m: &GameModel, act_id: &str) -> Option<(String, String)> {
     let set = m
         .storyline_story_sets
@@ -29,6 +30,7 @@ pub fn sources(m: &GameModel, act_id: &str) -> Option<(String, String)> {
 }
 
 /// Served path relative to the server's assets root
+#[must_use]
 pub fn cache_rel_path(act_id: &str) -> String {
     format!("{CACHE_DIR}/{VERSION}/{act_id}.jpg")
 }

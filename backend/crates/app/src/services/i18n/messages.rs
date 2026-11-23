@@ -22,7 +22,6 @@ pub struct TranslationEntry {
     pub placeholders: serde_json::Value,
     pub value: Option<String>,
     pub translated_hash: Option<String>,
-    /// The English on screen when the value was saved
     pub translated_source_text: Option<String>,
     pub is_stale: bool,
     pub updated_at: Option<DateTime<Utc>>,
@@ -131,7 +130,6 @@ pub struct ListMessagesQuery {
     pub namespace: Option<String>,
     #[serde(default)]
     pub search: Option<String>,
-    /// `all` | `untranslated` | `stale` | `todo` | `translated`
     #[serde(default)]
     pub filter: Option<String>,
     #[serde(default)]
@@ -188,17 +186,14 @@ pub struct SyncResult {
     pub deactivated: u64,
 }
 
-/// First 16 hex digits of the source text's SHA-256
 #[must_use]
 pub fn source_hash(text: &str) -> String {
     hex::encode(&Sha256::digest(text.as_bytes())[..8])
 }
 
-/// Placeholder names an ICU message references; `plural`/`select` branch bodies are text
 pub fn referenced_placeholders(message: &str) -> Result<HashSet<String>, String> {
     enum Ctx {
         Message,
-        /// `{` opens a branch body, and the token before it is a branch key
         Branches,
     }
     const SELECTORS: [&str; 3] = ["plural", "selectordinal", "select"];
@@ -220,7 +215,7 @@ pub fn referenced_placeholders(message: &str) -> Result<HashSet<String>, String>
                 if chars.get(i + 1) == Some(&'\'') {
                     i += 1;
                 } else if matches!(chars.get(i + 1), Some('{' | '}' | '#' | '|')) {
-                    i += 1; // only `'{ '} '# '|` open a quoted run, as in `format.ts`
+                    i += 1;
                     while i < chars.len() && chars[i] != '\'' {
                         i += 1;
                     }
@@ -274,7 +269,6 @@ pub fn referenced_placeholders(message: &str) -> Result<HashSet<String>, String>
     Ok(found)
 }
 
-/// Refuses a translation that invents or drops a placeholder, or would not parse
 pub fn validate_message(value: &str, declared: &serde_json::Value) -> Result<(), AppError> {
     let field_error = |message| FieldError {
         field: "value".to_owned(),
@@ -323,7 +317,6 @@ pub fn validate_message(value: &str, declared: &serde_json::Value) -> Result<(),
     }
 }
 
-/// One locale's messages, filtered and paged
 pub async fn list_messages(
     ctx: &AppContext,
     subject: &Subject,
@@ -347,7 +340,6 @@ pub async fn list_messages(
     })
 }
 
-/// Every active namespace
 pub async fn list_namespaces(ctx: &AppContext, subject: &Subject) -> Result<Vec<String>, AppError> {
     require_panel(ctx, subject).await?;
     Ok(i18n::list_namespaces(&mut *ctx.db.conn().await?).await?)
@@ -370,7 +362,6 @@ pub async fn locale_progress(
         .collect())
 }
 
-/// One key's history in one locale; each entry carries the value it replaced, for revert
 pub async fn entry_history(
     ctx: &AppContext,
     subject: &Subject,
@@ -381,7 +372,6 @@ pub async fn entry_history(
     Ok(rows.into_iter().map(UiMessageAuditEntry::from).collect())
 }
 
-/// Translation edits across the workspace, newest first
 pub async fn audit_feed(
     ctx: &AppContext,
     subject: &Subject,
@@ -414,7 +404,6 @@ pub async fn audit_feed(
     Ok(TranslationAuditResponse { entries, total })
 }
 
-/// Writes one translation stamped with the source it was made against; audited when it changed
 pub async fn update_message(
     ctx: &AppContext,
     subject: &Subject,
@@ -431,7 +420,7 @@ pub async fn update_message(
         &req.key,
         &req.locale,
         &req.value,
-        &existing.source_hash, // re-stamped even on a no-op save, which clears the stale flag
+        &existing.source_hash,
         &existing.source_text,
         user,
     )
@@ -455,7 +444,6 @@ pub async fn update_message(
     Ok(entry.into())
 }
 
-/// Drops a translation back to the fallback locale, audited as a change to nothing
 pub async fn clear_message(
     ctx: &AppContext,
     subject: &Subject,
@@ -475,7 +463,6 @@ pub async fn clear_message(
     Ok(())
 }
 
-/// Makes the extractor's output the set of keys; vanished keys are deactivated, never deleted
 pub async fn sync_source_catalog(
     ctx: &AppContext,
     subject: &Subject,

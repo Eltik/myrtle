@@ -1,5 +1,3 @@
-//! Response and session cache: Redis, or process memory when no Redis is configured.
-
 use std::collections::HashMap;
 use std::future::Future;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -19,7 +17,6 @@ use crate::AppError;
 
 const SWEEP_EVERY: Duration = Duration::from_mins(1);
 
-/// A JSON body with its strong `ETag`, hashed once on entry; a clone shares the body
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct CachedJson {
     pub body: Arc<str>,
@@ -37,13 +34,11 @@ impl CachedJson {
     }
 }
 
-/// The body's SHA-256, hex, quoted
 #[must_use]
 pub fn strong_etag(body: &[u8]) -> String {
     format!("\"{}\"", hex::encode(Sha256::digest(body)))
 }
 
-/// First 16 hex digits of the SHA-256, for a request folded into a key
 #[must_use]
 pub fn key_hash(bytes: &[u8]) -> String {
     hex::encode(&Sha256::digest(bytes)[..8])
@@ -52,7 +47,7 @@ pub fn key_hash(bytes: &[u8]) -> String {
 #[must_use]
 pub fn hmac_hex(key: &[u8], message: &[u8]) -> String {
     let Ok(mut mac) = Hmac::<Sha256>::new_from_slice(key) else {
-        return String::new(); // HMAC accepts a key of any length
+        return String::new();
     };
     mac.update(message);
     hex::encode(mac.finalize().into_bytes())
@@ -61,7 +56,6 @@ pub fn hmac_hex(key: &[u8], message: &[u8]) -> String {
 type Outcome = Option<Arc<Result<CachedJson, AppError>>>;
 type Inflight = Arc<Mutex<HashMap<String, Building>>>;
 
-/// A build in flight; `outdated` is set by an invalidation covering its key, so its body is not kept
 #[derive(Clone)]
 struct Building {
     outcome: watch::Receiver<Outcome>,
@@ -97,7 +91,6 @@ impl Cache {
         Self::over(Store::Memory(Arc::new(DashMap::new())))
     }
 
-    /// Redis at `url`, or memory with its sweep task when `url` is `None`
     pub async fn connect(url: Option<&str>) -> Result<Self, AppError> {
         let Some(url) = url else {
             let cache = Self::memory();
@@ -151,7 +144,7 @@ impl Cache {
                 let mut conn = conn.clone();
                 let millis = u64::try_from(ttl.as_millis()).unwrap_or(u64::MAX);
                 let stored: Result<(), _> = if millis == 0 {
-                    conn.del(key).await // SETEX refuses 0 and would keep the old value
+                    conn.del(key).await
                 } else {
                     conn.pset_ex(key, value, millis).await
                 };
@@ -244,7 +237,6 @@ impl Cache {
         }
     }
 
-    /// Drops expired memory entries every minute; a no-op on Redis
     pub fn spawn_sweep(&self) {
         let Store::Memory(entries) = &self.store else {
             return;
@@ -263,7 +255,6 @@ impl Cache {
         });
     }
 
-    /// The cached body, or `build` run once and stored
     pub async fn json<F, Fut>(
         &self,
         key: &str,
@@ -282,7 +273,6 @@ impl Cache {
         Ok(cached)
     }
 
-    /// [`Self::json`] built on its own task, so it outlives the request and callers of one key share it
     pub async fn json_detached<F, Fut>(
         &self,
         key: &str,
@@ -299,7 +289,6 @@ impl Cache {
         self.single_flight(key, ttl, false, build).await
     }
 
-    /// [`Self::json_detached`] held in this process for a large immutable body: a hit parses and copies nothing
     pub async fn shared<F, Fut>(
         &self,
         key: &str,
@@ -363,7 +352,7 @@ impl Cache {
                     Ok(cached) => cache.store(&registration.key, cached, ttl, &outdated).await,
                     Err(_) => {}
                 }
-                drop(registration); // after the store, so a new caller finds the entry
+                drop(registration);
                 let _ = tx.send(Some(Arc::new(result)));
             });
         }
@@ -376,7 +365,7 @@ impl Cache {
                 };
             }
             if rx.changed().await.is_err() {
-                return Err(AppError::Unavailable); // the build panicked
+                return Err(AppError::Unavailable);
             }
         }
     }
@@ -390,7 +379,6 @@ impl Cache {
         }
     }
 
-    /// Stores an in-process body unless an invalidation covered its key since its build began
     fn keep(&self, key: &str, cached: &CachedJson, ttl: Duration, outdated: &AtomicBool) {
         self.shared
             .insert(key.to_owned(), (cached.clone(), Instant::now() + ttl));
@@ -400,7 +388,6 @@ impl Cache {
         }
     }
 
-    /// [`Self::keep`] for the store: an invalidation during the write deletes it again
     async fn store(&self, key: &str, cached: &CachedJson, ttl: Duration, outdated: &AtomicBool) {
         if outdated.load(Ordering::SeqCst) {
             return;
@@ -411,20 +398,17 @@ impl Cache {
         }
     }
 
-    /// Drops every in-process body and outdates the builds in flight: a reload makes them all suspect
     pub fn clear_shared(&self) {
         self.outdate_builds(|_| true);
         self.shared.clear();
     }
 
-    /// [`Self::clear_shared`] for the bodies under `prefix` only; Redis is not touched
     pub fn drop_shared(&self, prefix: &str) {
         self.outdate_builds(|building| building.starts_with(prefix));
         self.shared.retain(|key, _| !key.starts_with(prefix));
     }
 }
 
-/// Frees the key when the build ends, a panic included
 struct Registration {
     inflight: Inflight,
     key: String,

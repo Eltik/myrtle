@@ -1,5 +1,3 @@
-//! Story pages: the library, one script, a group's art and archive, and the galleries derived from them
-
 pub mod community;
 mod files;
 mod gallery;
@@ -28,7 +26,6 @@ pub use sprites::{
 use crate::snapshots::{Snapshot, Story};
 use crate::{AppContext, AppError};
 
-/// Galleries derived from one [`Story`], each built once under its own gate and dropped with it
 #[derive(Default)]
 pub struct Derived {
     gallery: OnceCell<Arc<myrtle_engine_story::dto::StoryGallery>>,
@@ -36,7 +33,6 @@ pub struct Derived {
     sprites: OnceCell<Arc<SpriteGallery>>,
 }
 
-/// `server`'s snapshot with its story library built off the async workers
 pub async fn snapshot(ctx: &AppContext, server: Server) -> Result<Arc<Snapshot>, AppError> {
     let snapshot = ctx.snapshots.require(server)?;
     if !snapshot.story_built() {
@@ -51,7 +47,6 @@ pub async fn snapshot(ctx: &AppContext, server: Server) -> Result<Arc<Snapshot>,
     Ok(snapshot)
 }
 
-/// Builds the library after a load, so the first reader does not pay for it
 pub async fn warm(ctx: &AppContext, server: Server) {
     let started = std::time::Instant::now();
     match snapshot(ctx, server)
@@ -67,7 +62,6 @@ pub async fn warm(ctx: &AppContext, server: Server) {
     }
 }
 
-/// One derived value of `server`'s story, built on the CPU pool by one caller while the rest wait
 async fn derived<T, F>(
     ctx: &AppContext,
     server: Server,
@@ -99,7 +93,6 @@ pub async fn get_story_index(ctx: &AppContext, server: Server) -> Result<StoryIn
     Ok(snapshot(ctx, server).await?.story()?.library.index.clone())
 }
 
-/// One parsed script with its synopsis; `None` for an id the library does not list
 pub async fn get_story(
     ctx: &AppContext,
     server: Server,
@@ -140,7 +133,6 @@ fn listed(story: &Story, group_id: &str) -> Result<(), AppError> {
     }
 }
 
-/// A group's (or an operator's) distinct backgrounds, images and sprites with their URLs
 pub async fn get_group_illustrations(
     ctx: &AppContext,
     server: Server,
@@ -160,7 +152,6 @@ pub async fn get_group_illustrations(
         .await?
 }
 
-/// The group's "from the archive" screen, empty for a listed group the archive table skips
 pub async fn get_group_archive(
     ctx: &AppContext,
     server: Server,

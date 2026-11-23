@@ -1,5 +1,3 @@
-//! Staff-written operator notes and their per-field edit history.
-
 use chrono::{DateTime, Utc};
 use myrtle_db::repos::operator_notes::{self as notes, AuditFeedRow, AuditRow, NoteRow};
 use myrtle_types::UserId;
@@ -104,7 +102,6 @@ pub async fn audit_log(
     Ok(rows.into_iter().map(audit_entry).collect())
 }
 
-/// Newest edits first; `limit` defaults to 100 and is clamped to 1..=500
 pub async fn global_audit_log(
     ctx: &AppContext,
     subject: &Subject,
@@ -123,7 +120,6 @@ pub async fn global_audit_log(
     })
 }
 
-/// Whose edits the caller may read (`None` is everyone); always their own without `ReadOthersNoteAudit`
 pub fn audit_actor_scope(
     ctx: &AppContext,
     subject: &Subject,
@@ -157,7 +153,6 @@ pub fn audit_actor_scope(
     }
 }
 
-/// Writes the note and one audit row per text field the edit changed
 pub async fn update(
     ctx: &AppContext,
     subject: &Subject,

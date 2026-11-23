@@ -1,6 +1,3 @@
-//! RA topics a sync does not carry: only the loaded one is sent, and
-//! `sandboxPerm/changeTopic` is the one call that answers with another.
-
 use std::time::Duration;
 
 use myrtle_db::repos::{progress, users};
@@ -18,7 +15,6 @@ use crate::{AppContext, AppError};
 
 const CHANGE_TOPIC: &str = "sandboxPerm/changeTopic";
 
-/// A topic by its `template` key (`SANDBOX_V2`) and id (`sandbox_1`)
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct MissingTopic {
     pub template: String,
@@ -28,7 +24,6 @@ pub struct MissingTopic {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SandboxBackfill {
     pub user_id: uuid::Uuid,
-    /// The topic to switch back to
     pub loaded: String,
     pub topics: Vec<MissingTopic>,
 }
@@ -41,7 +36,6 @@ fn held(stored: Option<&Value>, m: &MissingTopic) -> bool {
         .is_some_and(Value::is_object)
 }
 
-/// Unloaded topics `stored` lacks that the player entered (`_entry` flag and summary progress)
 #[must_use]
 pub fn missing_topics(sync: &Value, stored: Option<&Value>) -> Vec<MissingTopic> {
     let Some(perm) = sync.pointer("/user/sandboxPerm") else {
@@ -92,7 +86,6 @@ pub fn blob_from_change<'a>(response: &'a Value, missing: &MissingTopic) -> Opti
         .filter(|b| b.is_object())
 }
 
-/// The backfill a sync calls for: `None` when it lists no topic to fetch
 #[must_use]
 pub fn plan(user: UserId, sync: &Value) -> Option<SandboxBackfill> {
     let topics = missing_topics(sync, None);
@@ -107,7 +100,6 @@ pub fn plan(user: UserId, sync: &Value) -> Option<SandboxBackfill> {
     })
 }
 
-/// One queued per account
 pub async fn enqueue(ctx: &AppContext, job: &SandboxBackfill) -> Result<(), AppError> {
     if !ctx.config.switches.sandbox_topic_backfill.enabled {
         return Ok(());
@@ -122,7 +114,6 @@ pub async fn enqueue(ctx: &AppContext, job: &SandboxBackfill) -> Result<(), AppE
     Ok(())
 }
 
-/// The `SandboxBackfill` body: fetch each topic the row still lacks, then rescore RA; the count stored
 pub async fn backfill(ctx: &AppContext, job: &SandboxBackfill) -> Result<usize, AppError> {
     let user = UserId(job.user_id);
     let mut conn = ctx.db.conn().await?;
@@ -152,7 +143,7 @@ pub async fn backfill(ctx: &AppContext, job: &SandboxBackfill) -> Result<usize, 
             Ok(r) => r,
             Err(e) => {
                 tracing::warn!(uid = %account.uid, topic = %m.topic, error = %e, "RA topic backfill: switch refused");
-                continue; // the loaded topic did not move
+                continue;
             }
         };
         if let Some(blob) = blob_from_change(&response, m) {
@@ -170,9 +161,8 @@ pub async fn backfill(ctx: &AppContext, job: &SandboxBackfill) -> Result<usize, 
     Ok(fetched)
 }
 
-/// Queues a full regrade: one queued now reads the new topics whatever grade ran before or beside it
 pub async fn topics_stored(ctx: &AppContext, user: UserId, uid: &str) -> Result<(), AppError> {
-    users::touch(&mut *ctx.db.conn().await?, user).await?; // a new generation for the improvements key
+    users::touch(&mut *ctx.db.conn().await?, user).await?;
     grading::enqueue_regrade(ctx, user).await?;
     invalidate_user(ctx, uid).await;
     Ok(())
@@ -203,7 +193,6 @@ async fn change_topic(
     })
 }
 
-/// One retry; a failure leaves the account on the fetched topic, which the player can switch back
 async fn switch_back(ctx: &AppContext, key: &SessionKey, session: &mut AuthSession, loaded: &str) {
     for attempt in 1..=2 {
         tokio::time::sleep(Duration::from_secs(

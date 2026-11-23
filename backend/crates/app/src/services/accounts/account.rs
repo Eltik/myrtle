@@ -21,7 +21,6 @@ pub fn user_key(uid: &str) -> String {
     format!("user:{uid}")
 }
 
-/// A `v_user_profile` row as the owner sees it
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UserProfile {
     pub id: Uuid,
@@ -60,7 +59,6 @@ pub struct UserProfile {
     pub updated_at: DateTime<Utc>,
     pub originite: Option<i32>,
     pub profile_layout: Option<ProfileLayout>,
-    /// Not in the view: the caller fills it from a fresh read
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub public_gacha: Option<bool>,
 }
@@ -112,18 +110,15 @@ impl From<ProfileRow> for UserProfile {
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct VerifySession {
-    /// Always true: a failing token is a 401
     pub valid: bool,
     pub user_id: String,
     pub uid: String,
     pub server: String,
-    /// The stored role, so a promotion counts without a new login
     pub role: String,
     pub can_access_admin_panel: bool,
 }
 
 impl UserProfile {
-    /// What a visitor sees: Score tab numbers and the hidden header numbers nulled, private tabs gone
     pub fn hide_private(&mut self) {
         let Some(layout) = &mut self.profile_layout else {
             return;
@@ -160,7 +155,6 @@ impl UserProfile {
     }
 }
 
-/// The profile behind `uid` as the subject may see it; a visitor gets [`UserProfile::hide_private`]
 pub async fn get_user(
     ctx: &AppContext,
     subject: &Subject,
@@ -181,7 +175,6 @@ pub async fn get_user(
     Ok(profile)
 }
 
-/// The owner's row, cached for [`USER_TTL`]
 async fn cached_profile(ctx: &AppContext, uid: &str) -> Result<UserProfile, AppError> {
     let key = user_key(uid);
     if let Some(cached) = ctx.cache.get_json(&key).await {
@@ -195,7 +188,6 @@ async fn cached_profile(ctx: &AppContext, uid: &str) -> Result<UserProfile, AppE
     Ok(profile)
 }
 
-/// The session a verified token stands for, its role re-read; 401 once the account is gone
 pub async fn verify(ctx: &AppContext, claims: &Claims) -> Result<VerifySession, AppError> {
     let mut conn = ctx.db.conn().await?;
     let id = claims.user_id().ok();
@@ -223,7 +215,6 @@ pub async fn verify(ctx: &AppContext, claims: &Claims) -> Result<VerifySession, 
     })
 }
 
-/// Deletes the caller's account and its rows in one transaction; 401 when it is already gone
 pub async fn delete_account(ctx: &AppContext, subject: &Subject) -> Result<(), AppError> {
     let user = subject.user_id().ok_or(AppError::Unauthorized)?;
     let mut tx = ctx.db.begin().await?;
@@ -232,7 +223,7 @@ pub async fn delete_account(ctx: &AppContext, subject: &Subject) -> Result<(), A
         .ok_or(AppError::Unauthorized)?;
     tx.commit().await?;
 
-    let uid = deleted.uid.as_str(); // after the commit, so a racing read cannot cache the old rows back
+    let uid = deleted.uid.as_str();
     let cache = &ctx.cache;
     cache.invalidate(&user_key(uid)).await;
     cache.invalidate(&session_key(uid)).await;

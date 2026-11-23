@@ -1,5 +1,3 @@
-//! What a placement's `(kind, id)` points at in one server's game data, read at serve time.
-
 mod background;
 mod class;
 mod enemy;
@@ -35,13 +33,11 @@ pub enum FacetValue {
     Many(Vec<String>),
 }
 
-/// Enough of one entity for a tile, a pool filter and a link
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct EntitySummary {
     pub kind: EntityKind,
     pub id: String,
     pub name: String,
-    /// Path under the API root; `None` when the extract has no art
     pub icon: Option<String>,
     pub href: Option<String>,
     pub facets: BTreeMap<String, FacetValue>,
@@ -50,11 +46,9 @@ pub struct EntitySummary {
 struct KindSource {
     resolve: fn(&GameModel, &str) -> Option<EntitySummary>,
     known: fn(&GameModel, &str) -> bool,
-    /// What an editor may place, in pool order
     catalogue: fn(&GameModel) -> Vec<EntitySummary>,
 }
 
-/// Picture kinds read the request's [`StoryCatalogues`], every other kind the game model
 enum Source {
     Data(&'static KindSource),
     Story(&'static story_pictures::StorySource),
@@ -103,7 +97,6 @@ pub fn known(model: &GameModel, story: &StoryCatalogues, kind: EntityKind, id: &
     }
 }
 
-/// Narrower than [`resolve`]: an unobtainable operator resolves but is not offered
 #[must_use]
 pub fn catalogue(
     model: &GameModel,
@@ -116,7 +109,6 @@ pub fn catalogue(
     }
 }
 
-/// `Ok` when any of `servers` knows `(kind, id)`
 pub fn validate<'a>(
     servers: impl IntoIterator<Item = (&'a GameModel, &'a StoryCatalogues)>,
     kind: EntityKind,
@@ -135,7 +127,6 @@ pub fn validate<'a>(
     }
 }
 
-/// Every loaded server once, with the picture catalogues `kinds` read
 pub async fn loaded_sources(
     ctx: &AppContext,
     kinds: &[EntityKind],
@@ -155,7 +146,6 @@ pub async fn loaded_sources(
     out
 }
 
-/// [`validate`] over [`loaded_sources`]: a CN-locale editor places what EN lacks
 pub async fn validate_loaded(ctx: &AppContext, kind: EntityKind, id: &str) -> Result<(), AppError> {
     let loaded = loaded_sources(ctx, &[kind]).await;
     validate(loaded.iter().map(|(s, story)| (&s.model, story)), kind, id)
@@ -185,7 +175,6 @@ impl Facets {
         self
     }
 
-    /// `char_id`, plus the owner's `operator` and `profession` when it is in the data
     fn owner(self, char_id: &str, op: Option<&Operator>) -> Self {
         let facets = self.one("char_id", char_id);
         match op {
@@ -207,7 +196,6 @@ fn non_empty(value: &str) -> Option<&str> {
     (!value.is_empty()).then_some(value)
 }
 
-/// A game enum's serde spelling (`WARRIOR`, `MELEE`)
 fn wire_name<T: Serialize>(value: &T) -> Option<String> {
     match serde_json::to_value(value) {
         Ok(serde_json::Value::String(s)) => Some(s),
@@ -215,7 +203,6 @@ fn wire_name<T: Serialize>(value: &T) -> Option<String> {
     }
 }
 
-/// The pack directories spell `[uc]`, which a URL path must not carry raw
 fn asset_url(path: &str) -> String {
     format!(
         "/assets{}",
@@ -240,7 +227,6 @@ const fn stars(rarity: &OperatorRarity) -> u8 {
     }
 }
 
-/// Stable, so equal keys keep their input order
 fn in_key_order<K: Ord>(mut keyed: Vec<(K, EntitySummary)>) -> Vec<EntitySummary> {
     keyed.sort_by(|(a, _), (b, _)| a.cmp(b));
     keyed.into_iter().map(|(_, s)| s).collect()

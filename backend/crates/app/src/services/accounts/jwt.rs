@@ -8,9 +8,7 @@ pub const TOKEN_DAYS: u64 = 7;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Claims {
-    /// `users.id`
     pub sub: String,
-    /// The game account uid
     pub uid: String,
     pub server: String,
     pub role: String,
@@ -26,14 +24,12 @@ impl Claims {
             .map_err(|_| AppError::Unauthorized)
     }
 
-    /// Exact codes only, as [`super::login::parse_server`]
     #[must_use]
     pub fn server(&self) -> Option<Server> {
         super::login::parse_server(&self.server).ok()
     }
 }
 
-/// The stored spelling of a role, as `users.role` and the token carry it
 #[must_use]
 pub const fn role_name(role: Role) -> &'static str {
     match role {
@@ -45,7 +41,6 @@ pub const fn role_name(role: Role) -> &'static str {
     }
 }
 
-/// An unknown spelling reads as a plain user
 #[must_use]
 pub fn parse_role(s: &str) -> Role {
     [

@@ -1,5 +1,3 @@
-//! A player's improvement suggestions, cached per sync; the grade sections are `engine-grade`.
-
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::sync::Arc;
 use std::time::Duration;
@@ -56,30 +54,24 @@ pub struct ImprovementsResponse {
 #[derive(Debug, Clone, Serialize, Default)]
 pub struct BaseImprovements {
     pub current: Option<BaseAssignmentDto>,
-    /// Peak arrangement of the roster over the existing rooms
     pub optimal: Option<BaseAssignmentDto>,
-    /// Staggered 24/7 rotation, what the base score uses
     pub rotation: Option<RotationDto>,
     pub layout: Vec<RoomLayoutEntry>,
-    /// `None` without a full production spread
     pub shift_rotation: Option<ShiftRotationDto>,
     pub perception: Option<PerceptionPlanDto>,
     #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub claim: Option<ClaimDto>,
-    /// The current crews never swapped
     #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub unrotated: Option<SustainabilityDto>,
 }
 
-/// The committed resource economy: generators stationed outside production and the consumers they boost
 #[derive(Debug, Clone, Serialize)]
 pub struct PerceptionPlanDto {
     pub support: Vec<PerceptionSupportDto>,
     pub consumers: Vec<PerceptionConsumerDto>,
     pub rotation_manager: Option<AssignedOperator>,
-    /// The plan uses a morale-conditional generator but the roster has no swap manager
     pub needs_rotation_manager: bool,
 }
 
@@ -94,7 +86,6 @@ pub struct PerceptionConsumerDto {
     pub operator: AssignedOperator,
     pub room_type: String,
     pub bonus_pct: f64,
-    /// Peak scaled by the other generators' uptime
     pub sustained_pct: f64,
 }
 
@@ -123,7 +114,6 @@ pub struct RotationSetRoomDto {
 pub struct RoomRotationDto {
     pub slot_id: String,
     pub room_type: String,
-    /// Fastest-draining first
     pub members: Vec<RotationMemberDto>,
     pub backup: Option<AssignedOperator>,
 }
@@ -141,13 +131,11 @@ pub struct RoomLayoutEntry {
     pub levels: Vec<i32>,
 }
 
-/// `updated_at` moves on every sync, so a resync lands on a new key
 #[must_use]
 pub fn cache_key(uid: &str, updated_at_ms: i64) -> String {
     format!("improvements:{uid}:{updated_at_ms}")
 }
 
-/// Another player's suggestions need their Score tab visible; `None` is the subject's own
 pub async fn improvements(
     ctx: &AppContext,
     subject: &Subject,
@@ -195,7 +183,7 @@ async fn build(
         open_recruit_slots,
         (population, owners),
     ) = {
-        let mut conn = ctx.db.conn().await?; // dropped before the CPU permit wait
+        let mut conn = ctx.db.conn().await?;
         let conn = &mut *conn;
         let building = progress::building(conn, user).await?;
         let open_recruit_slots = if building.is_some() {
@@ -270,7 +258,6 @@ async fn build(
         .await
 }
 
-/// Current, optimal and rotated staffing; economy overrides price only the optimal view
 #[must_use]
 pub fn base_improvements(
     roster: &[RosterEntry],
@@ -381,7 +368,6 @@ pub fn base_improvements(
     }
 }
 
-/// `None` when the optimal registry re-priced no buff
 #[allow(clippy::too_many_arguments)]
 fn economy_plan(
     base_registry: &HashMap<String, BuffResolutionStrategy>,
@@ -476,7 +462,6 @@ fn economy_plan(
     })
 }
 
-/// A trading post, a factory pair to split and a power plant
 fn has_shift_rotation_layout(building: &UserBuilding) -> bool {
     let count = |room_type: &str| {
         building
@@ -529,7 +514,6 @@ fn rotation_dto(asn: &RotationAssignment, data: &BaseData) -> RotationDto {
     }
 }
 
-/// Room types in name order, levels highest first
 #[must_use]
 pub fn layout_summary(building: &UserBuilding) -> Vec<RoomLayoutEntry> {
     let mut by_type: BTreeMap<&str, Vec<i32>> = BTreeMap::new();

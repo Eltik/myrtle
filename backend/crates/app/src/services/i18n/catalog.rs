@@ -8,13 +8,10 @@ use super::CACHE_PREFIX;
 use crate::cache::CachedJson;
 use crate::{AppContext, AppError};
 
-/// The every-namespace catalog's name in the manifest and in a catalog URL
 pub const ALL_NAMESPACES: &str = "-";
 
 const MANIFEST_KEY: &str = "i18n:manifest";
-/// Bounds how long a saved edit takes to reach a browser
 const MANIFEST_TTL: Duration = Duration::from_secs(30);
-/// Content-addressed, so it cannot go stale
 const CATALOG_TTL: Duration = Duration::from_hours(24);
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -23,7 +20,6 @@ pub struct I18nManifestLocale {
     pub native_name: String,
     pub english_name: String,
     pub gamedata_server: String,
-    /// Namespace to content hash, the cache-busting part of the catalog URL
     pub namespaces: BTreeMap<String, String>,
     pub translated: i64,
     pub total: i64,
@@ -33,17 +29,14 @@ pub struct I18nManifestLocale {
 pub struct I18nManifest {
     pub default_locale: String,
     pub locales: Vec<I18nManifestLocale>,
-    /// The loaded game-data servers, the default first
     pub gamedata_servers: Vec<String>,
 }
 
 pub struct CatalogResponse {
     pub json: CachedJson,
-    /// `false` for a superseded or `latest` hash: serve it, but never as immutable
     pub is_current: bool,
 }
 
-/// Enabled locales with the current hash of each namespace's catalog
 pub async fn manifest(ctx: &AppContext) -> Result<CachedJson, AppError> {
     ctx.cache
         .json(MANIFEST_KEY, MANIFEST_TTL, || async {
@@ -98,7 +91,6 @@ pub async fn manifest(ctx: &AppContext) -> Result<CachedJson, AppError> {
         .await
 }
 
-/// One locale's rendered catalog; `namespace` is [`ALL_NAMESPACES`] for every one
 pub async fn catalog(
     ctx: &AppContext,
     locale: &str,

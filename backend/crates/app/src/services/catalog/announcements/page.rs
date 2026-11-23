@@ -1,5 +1,3 @@
-//! One notice page cut into its headline, banner and allowlist-sanitized body.
-
 use std::collections::{HashMap, HashSet};
 use std::sync::LazyLock;
 
@@ -11,10 +9,8 @@ use crate::services::catalog::maintenance::parse::head_title;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PageParts {
-    /// Whitespace collapsed; `None` on a cover-only notice
     pub headline: Option<String>,
     pub banner_url: Option<String>,
-    /// Empty on a cover-only notice
     pub body_html: String,
 }
 
@@ -33,7 +29,6 @@ static RE_COLOR: LazyLock<Regex> = LazyLock::new(|| {
 static RE_EMPTY_P: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"<p>\s*</p>").expect("static regex is valid"));
 
-/// Channels further apart than this make a colour, not a grey
 const GREY_SPREAD: u8 = 40;
 
 #[must_use]
@@ -52,7 +47,6 @@ pub fn is_coloured(hex: &str) -> bool {
     r.max(g).max(b) - r.min(g).min(b) > GREY_SPREAD
 }
 
-/// A coloured span becomes `class="accent"`; every other styled span loses its style
 fn mark_accents(html: &str) -> String {
     RE_STYLED_SPAN
         .replace_all(html, |caps: &regex::Captures<'_>| {

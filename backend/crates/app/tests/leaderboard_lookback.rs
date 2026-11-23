@@ -14,7 +14,6 @@ use myrtle_types::{Role, Server};
 use serde_json::json;
 
 const DAY: i64 = 86_400;
-/// 2026-09-16 00:00 UTC, a Wednesday
 const SEP16: i64 = 1_789_516_800;
 
 fn act(id: &str, start: i64, has_stage: bool, kind: &str) -> ActivityBasicInfo {

@@ -5,22 +5,22 @@ mod common;
 use std::path::Path;
 use std::sync::Arc;
 
-use myrtle_app::AppContext;
 use myrtle_app::cache::Cache;
 use myrtle_app::context::Announced;
 use myrtle_app::services::catalog::release::jobs::{
-    enqueue_boot_pass, has_own_art, mirror_art, record_ledger,
+    self, enqueue_boot_pass, mirror_art, record_ledger,
 };
+use myrtle_app::services::catalog::reload::announce_and_record;
 use myrtle_app::snapshots::SnapshotRegistry;
-use myrtle_db::repos::data_generations;
-use myrtle_db::repos::release::{self, Sighting};
+use myrtle_app::{AppContext, AppError};
+use myrtle_db::repos::data_generations::{self, Generation};
+use myrtle_db::repos::release;
 use myrtle_hypergryph::{DeviceIds, NetworkConfig, Upstream};
 use myrtle_jobs::{Job, JobKind};
 use myrtle_types::{Server, WorkerId};
 
 const BANNER: &str = "textures/ui_home_act_banner_gacha_x/pic_pool1.png";
 
-/// One process over `assets`, its own registry and memory cache, network config from a closed local port
 fn over(base: &AppContext, assets: &Path, ledger: bool, art_fallback: bool) -> AppContext {
     let mut config = (*base.config).clone();
     config.assets.dir = assets.to_str().unwrap().to_owned();
@@ -44,7 +44,6 @@ fn write(root: &Path, rel: &str, body: &str) {
     std::fs::write(path, body).unwrap();
 }
 
-/// A tree whose gacha table names `POOL1` and whose art carries its banner
 fn extract(root: &Path) {
     write(
         root,
@@ -67,7 +66,6 @@ fn extract(root: &Path) {
     write(root, BANNER, "png");
 }
 
-/// [`extract`] naming `pools` and the operators `chars` instead
 fn extract_with(root: &Path, pools: &[&str], chars: &[&str]) {
     extract(root);
     let chars: Vec<String> = chars
@@ -126,17 +124,20 @@ async fn only_servers_with_their_own_art_archive_it() {
     let assets = tempfile::tempdir().unwrap();
     std::fs::create_dir_all(assets.path().join("cn/portraits")).unwrap();
     let ctx = over(&base, assets.path(), true, true);
-    assert!(has_own_art(&ctx, Server::EN), "the default server");
-    assert!(has_own_art(&ctx, Server::CN));
-    assert!(has_own_art(&ctx, Server::Bilibili), "shares CN's tree");
-    assert!(!has_own_art(&ctx, Server::JP), "text-only");
+    assert!(ctx.snapshots.has_own_art(Server::EN), "the default server");
+    assert!(ctx.snapshots.has_own_art(Server::CN));
+    assert!(
+        ctx.snapshots.has_own_art(Server::Bilibili),
+        "shares CN's tree"
+    );
+    assert!(!ctx.snapshots.has_own_art(Server::JP), "text-only");
     assert_eq!(
         mirror_art(&ctx, Server::JP, 0).await.unwrap(),
         "jp: text-only, no art to archive"
     );
     let own = over(&base, assets.path(), true, false);
     assert!(
-        has_own_art(&own, Server::JP),
+        own.snapshots.has_own_art(Server::JP),
         "fallback off: every tree is its own"
     );
     db.close().await;
@@ -153,16 +154,13 @@ async fn an_announcement_queues_its_jobs_once_however_many_processes_reload() {
     );
     for ctx in [&api, &worker] {
         ctx.snapshots
-            .activate_at(Server::EN, 0, None)
+            .activate_at(Server::EN, &Generation::default())
             .await
             .unwrap();
     }
     let generation = api.announce_update(Server::EN, Some("v1")).await.unwrap();
     assert_eq!(worker.reload_if_changed().await.unwrap(), [Server::EN]);
-    let want = Announced {
-        generation,
-        res_version: Some("v1".into()),
-    };
+    let want = Announced { generation };
     for kind in [
         JobKind::ReleaseLedgerRecord,
         JobKind::ReleaseArtMirror,
@@ -204,13 +202,13 @@ async fn an_announcement_queues_its_jobs_once_however_many_processes_reload() {
 }
 
 #[tokio::test]
-async fn a_sidecar_reload_carries_no_version() {
+async fn a_sidecar_reload_queues_the_ledger_record_at_its_generation() {
     let (base, db) = common::context().await;
     let assets = tempfile::tempdir().unwrap();
     extract(&assets.path().join("en"));
     let ctx = over(&base, assets.path(), true, true);
     ctx.snapshots
-        .activate_at(Server::EN, 0, None)
+        .activate_at(Server::EN, &Generation::default())
         .await
         .unwrap();
     ctx.reload_game_data(Server::EN).await.unwrap();
@@ -218,11 +216,8 @@ async fn a_sidecar_reload_carries_no_version() {
     assert_eq!(jobs.len(), 1);
     assert_eq!(
         announced(&jobs[0]),
-        Announced {
-            generation: 1,
-            res_version: None
-        },
-        "never the loaded snapshot's generation and fingerprint"
+        Announced { generation: 1 },
+        "the announced generation, not the one this process had loaded"
     );
     db.close().await;
 }
@@ -239,7 +234,7 @@ async fn an_extract_with_new_art_costs_one_more_bump_and_no_second_round_of_jobs
     );
     for ctx in [&listener, &worker] {
         ctx.snapshots
-            .activate_at(Server::EN, 0, None)
+            .activate_at(Server::EN, &Generation::default())
             .await
             .unwrap();
     }
@@ -297,22 +292,21 @@ async fn an_extract_with_new_art_costs_one_more_bump_and_no_second_round_of_jobs
     assert_eq!(listener.reload_if_changed().await.unwrap(), []);
 
     assert_eq!(
-        record_ledger(&worker, Server::EN, Some("v1"), 1)
-            .await
-            .unwrap(),
-        "en: 1 inserted, 0 refreshed"
+        record_ledger(&worker, Server::EN, 1).await.unwrap(),
+        "en: 1 inserted, 0 refreshed as v1",
+        "the art bump moved no pipeline version"
     );
     db.close().await;
 }
 
 #[tokio::test]
-async fn the_boot_pass_queues_each_loaded_server_once_with_no_version() {
+async fn the_boot_pass_queues_each_loaded_server_once() {
     let (base, db) = common::context().await;
     let assets = tempfile::tempdir().unwrap();
     extract(&assets.path().join("en"));
     let ctx = over(&base, assets.path(), true, true);
     ctx.snapshots
-        .activate_at(Server::EN, 0, None)
+        .activate_at(Server::EN, &Generation::default())
         .await
         .unwrap();
     assert_eq!(enqueue_boot_pass(&ctx).await.unwrap(), 2);
@@ -331,70 +325,316 @@ async fn the_boot_pass_queues_each_loaded_server_once_with_no_version() {
     db.close().await;
 }
 
+async fn record(ctx: &AppContext) -> Option<String> {
+    record_with(ctx).await.unwrap()
+}
+
+async fn record_with(ctx: &AppContext) -> Result<Option<String>, AppError> {
+    jobs::record(ctx, Server::EN).await
+}
+
+async fn pairs(ctx: &AppContext) -> Vec<(String, String)> {
+    release::debut_pairs(&mut ctx.db.conn().await.unwrap(), Server::EN)
+        .await
+        .unwrap()
+}
+
+fn pair(pool: &str, char: &str) -> (String, String) {
+    (pool.to_owned(), char.to_owned())
+}
+
+async fn cursor(ctx: &AppContext) -> i64 {
+    let mut tx = ctx.db.begin().await.unwrap();
+    data_generations::lock_recorded(&mut tx, Server::EN)
+        .await
+        .unwrap()
+}
+
+fn tree(assets: &Path, updates: &[&str]) {
+    let pools: Vec<String> = std::iter::once("POOL0".to_owned())
+        .chain(updates.iter().map(|u| format!("POOL_{u}")))
+        .collect();
+    let chars: Vec<String> = std::iter::once("char_0".to_owned())
+        .chain(updates.iter().map(|u| format!("char_{u}")))
+        .collect();
+    let (pools, chars): (Vec<&str>, Vec<&str>) = (
+        pools.iter().map(String::as_str).collect(),
+        chars.iter().map(String::as_str).collect(),
+    );
+    extract_with(&assets.join("en"), &pools, &chars);
+}
+
+async fn process(base: &AppContext, assets: &Path) -> AppContext {
+    let ctx = over(base, assets, true, true);
+    let stored = data_generations::all(&mut ctx.db.conn().await.unwrap())
+        .await
+        .unwrap()
+        .into_iter()
+        .find(|(server, _)| *server == Server::EN)
+        .map(|(_, stored)| stored)
+        .unwrap_or_default();
+    ctx.snapshots
+        .activate_at(Server::EN, &stored)
+        .await
+        .unwrap();
+    ctx
+}
+
+async fn booted(base: &AppContext, assets: &Path) -> AppContext {
+    tree(assets, &[]);
+    let ctx = process(base, assets).await;
+    assert_eq!(record(&ctx).await.unwrap(), "en: 2 inserted, 0 refreshed");
+    ctx
+}
+
+async fn pipeline_update(ctx: &AppContext, version: &str) {
+    ctx.announce_update(Server::EN, Some(version))
+        .await
+        .unwrap();
+    assert_eq!(ctx.reload_if_changed().await.unwrap(), [Server::EN]);
+}
+
 #[tokio::test]
-async fn a_job_run_on_newer_data_records_it_under_that_datas_version() {
+async fn the_listener_records_each_update_on_its_own_data() {
     let (base, db) = common::context().await;
     let assets = tempfile::tempdir().unwrap();
-    let root = assets.path().join("en");
-    extract_with(&root, &["POOL1"], &["char_a"]);
-    let (pipeline, worker) = (
-        over(&base, assets.path(), true, true),
-        over(&base, assets.path(), true, true),
-    );
-    let v1 = pipeline
-        .announce_update(Server::EN, Some("v1"))
-        .await
-        .unwrap();
-    let mut conn = db.db.conn().await.unwrap();
-    let pool1 = Sighting {
-        kind: "pool",
-        id: "POOL1",
-        start_time: None,
-        end_time: None,
-    };
-    release::upsert_sightings(&mut conn, Server::EN, Some("v1"), &[pool1])
-        .await
-        .unwrap();
-    extract_with(&root, &["POOL1", "POOL2"], &["char_a", "char_b"]);
-    pipeline
-        .announce_update(Server::EN, Some("v2"))
-        .await
-        .unwrap();
-
-    record_ledger(&worker, Server::EN, Some("v1"), v1)
-        .await
-        .unwrap();
-    let live = worker.snapshots.require(Server::EN).unwrap();
-    assert_eq!(live.generation, 2, "the v1 job ran on the v2 data");
-    assert_eq!(live.res_version.as_deref(), Some("v2"));
+    let ctx = booted(&base, assets.path()).await;
+    tree(assets.path(), &["v1"]);
+    assert_eq!(record(&ctx).await.unwrap(), "en: 0 inserted, 2 refreshed");
+    pipeline_update(&ctx, "v1").await;
     assert_eq!(
-        release::debut_pairs(&mut conn, Server::EN).await.unwrap(),
-        [
-            ("POOL2".to_owned(), "char_a".to_owned()),
-            ("POOL2".to_owned(), "char_b".to_owned()),
-        ],
-        "v2's sightings carry v2, and no v2 operator debuts on the v1 pool"
+        record(&ctx).await.unwrap(),
+        "en: 2 inserted, 2 refreshed as v1"
     );
-    drop(conn);
+    tree(assets.path(), &["v1", "v2"]);
+    record(&ctx).await;
+    pipeline_update(&ctx, "v2").await;
+    assert_eq!(
+        record(&ctx).await.unwrap(),
+        "en: 2 inserted, 4 refreshed as v2"
+    );
+    assert_eq!(
+        pairs(&ctx).await,
+        [pair("POOL_v1", "char_v1"), pair("POOL_v2", "char_v2")],
+    );
+    assert_eq!(cursor(&ctx).await, 2);
+    db.close().await;
+}
+
+async fn a_stale_process_records(b_first: bool) {
+    let (base, db) = common::context().await;
+    let assets = tempfile::tempdir().unwrap();
+    let a = booted(&base, assets.path()).await;
+    let b = process(&base, assets.path()).await;
+    tree(assets.path(), &["v1"]);
+    pipeline_update(&a, "v1").await;
+    assert!(record(&a).await.unwrap().ends_with("as v1"));
+    assert_eq!(b.reload_if_changed().await.unwrap(), [Server::EN]);
+
+    tree(assets.path(), &["v1", "v2"]);
+    a.announce_update(Server::EN, Some("v2")).await.unwrap();
+    let order = if b_first { [&b, &a] } else { [&a, &b] };
+    for ctx in order {
+        assert_eq!(ctx.reload_if_changed().await.unwrap(), [Server::EN]);
+        record(ctx).await;
+    }
+    assert_eq!(
+        pairs(&a).await,
+        [pair("POOL_v1", "char_v1"), pair("POOL_v2", "char_v2")],
+        "b first: {b_first}"
+    );
+
+    tree(assets.path(), &["v1", "v2", "v3", "v4"]);
+    a.announce_update(Server::EN, Some("v3")).await.unwrap();
+    pipeline_update(&b, "v4").await;
+    assert!(
+        !record(&b).await.unwrap().contains(" as "),
+        "v3 was never recorded alone"
+    );
+    assert_eq!(pairs(&a).await.len(), 2, "b first: {b_first}");
+    assert_eq!(cursor(&a).await, 4);
     db.close().await;
 }
 
 #[tokio::test]
-async fn a_bump_without_a_version_keeps_the_snapshots_pipeline_version() {
+async fn a_stale_process_recording_first_stamps_like_one_process() {
+    a_stale_process_records(true).await;
+}
+
+#[tokio::test]
+async fn a_stale_process_recording_second_stamps_like_one_process() {
+    a_stale_process_records(false).await;
+}
+
+#[tokio::test]
+async fn two_updates_before_a_record_link_no_debut() {
+    let (base, db) = common::context().await;
+    let assets = tempfile::tempdir().unwrap();
+    let ctx = booted(&base, assets.path()).await;
+    tree(assets.path(), &["v1"]);
+    ctx.announce_update(Server::EN, Some("v1")).await.unwrap();
+    let behind = process(&base, assets.path()).await;
+    tree(assets.path(), &["v1", "v2"]);
+    pipeline_update(&ctx, "v2").await;
+    assert_eq!(record(&ctx).await.unwrap(), "en: 4 inserted, 2 refreshed");
+    assert_eq!(pairs(&ctx).await, []);
+    assert_eq!(cursor(&ctx).await, 2);
+    assert_eq!(
+        record(&behind).await,
+        None,
+        "a process still on v1 writes nothing"
+    );
+    db.close().await;
+}
+
+#[tokio::test]
+async fn a_sidecar_load_stamps_no_version() {
+    let (base, db) = common::context().await;
+    let assets = tempfile::tempdir().unwrap();
+    let ctx = booted(&base, assets.path()).await;
+    tree(assets.path(), &["side"]);
+    ctx.reload_game_data(Server::EN).await.unwrap();
+    assert_eq!(record(&ctx).await.unwrap(), "en: 2 inserted, 2 refreshed");
+    assert_eq!(pairs(&ctx).await, []);
+    db.close().await;
+}
+
+#[tokio::test]
+async fn an_art_bump_before_the_record_keeps_the_updates_version() {
+    let (base, db) = common::context().await;
+    let assets = tempfile::tempdir().unwrap();
+    let ctx = booted(&base, assets.path()).await;
+    tree(assets.path(), &["v1"]);
+    pipeline_update(&ctx, "v1").await;
+    ctx.announce_art(Server::EN).await.unwrap();
+    assert_eq!(ctx.reload_if_changed().await.unwrap(), [Server::EN]);
+    assert!(record(&ctx).await.unwrap().ends_with("as v1"));
+    assert_eq!(pairs(&ctx).await, [pair("POOL_v1", "char_v1")]);
+    db.close().await;
+}
+
+#[tokio::test]
+async fn a_boot_on_a_database_five_updates_in_stamps_no_version() {
+    let (base, db) = common::context().await;
+    let assets = tempfile::tempdir().unwrap();
+    tree(assets.path(), &["v5"]);
+    let mut conn = db.db.conn().await.unwrap();
+    for n in 1..=5 {
+        data_generations::bump(&mut conn, Server::EN, Some(&format!("v{n}")))
+            .await
+            .unwrap();
+    }
+    drop(conn);
+    let ctx = process(&base, assets.path()).await;
+    let live = ctx.snapshots.require(Server::EN).unwrap();
+    assert_eq!(
+        (live.pipeline_seq, live.res_version.as_deref()),
+        (5, Some("v5"))
+    );
+    assert_eq!(record(&ctx).await.unwrap(), "en: 4 inserted, 0 refreshed");
+    assert_eq!(pairs(&ctx).await, []);
+    assert_eq!(cursor(&ctx).await, 5);
+    db.close().await;
+}
+
+#[tokio::test]
+async fn two_concurrent_records_stamp_once() {
+    let (base, db) = common::context().await;
+    let assets = tempfile::tempdir().unwrap();
+    let a = booted(&base, assets.path()).await;
+    let b = process(&base, assets.path()).await;
+    tree(assets.path(), &["v1"]);
+    pipeline_update(&a, "v1").await;
+    assert_eq!(b.reload_if_changed().await.unwrap(), [Server::EN]);
+    let (one, two) = tokio::join!(
+        tokio::spawn({
+            let a = a.clone();
+            async move { record(&a).await.unwrap() }
+        }),
+        tokio::spawn({
+            let b = b.clone();
+            async move { record(&b).await.unwrap() }
+        }),
+    );
+    let mut results = [one.unwrap(), two.unwrap()];
+    results.sort();
+    assert_eq!(
+        results,
+        [
+            "en: 0 inserted, 4 refreshed".to_owned(),
+            "en: 2 inserted, 2 refreshed as v1".to_owned(),
+        ]
+    );
+    assert_eq!(pairs(&a).await, [pair("POOL_v1", "char_v1")]);
+    assert_eq!(cursor(&a).await, 1);
+    db.close().await;
+}
+
+#[tokio::test]
+async fn a_failed_record_rolls_its_cursor_back() {
+    let (base, db) = common::context().await;
+    let assets = tempfile::tempdir().unwrap();
+    let ctx = booted(&base, assets.path()).await;
+    extract_with(
+        &assets.path().join("en"),
+        &["POOL0", "POOL_v1"],
+        &["char_0", "char_v1", r"char_\u0000"],
+    );
+    pipeline_update(&ctx, "v1").await;
+    assert!(record_with(&ctx).await.is_err(), "Postgres refuses a NUL");
+    assert_eq!(cursor(&ctx).await, 0);
+    assert_eq!(pairs(&ctx).await, [], "the pool's upsert rolled back too");
+
+    tree(assets.path(), &["v1"]);
+    ctx.reload_game_data(Server::EN).await.unwrap();
+    assert!(record(&ctx).await.unwrap().ends_with("as v1"));
+    assert_eq!(pairs(&ctx).await, [pair("POOL_v1", "char_v1")]);
+    db.close().await;
+}
+
+#[tokio::test]
+async fn a_versionless_bump_keeps_the_last_pipeline_version_and_seq() {
     let (base, db) = common::context().await;
     let assets = tempfile::tempdir().unwrap();
     extract(&assets.path().join("en"));
     let ctx = over(&base, assets.path(), true, true);
     ctx.snapshots
-        .activate_at(Server::EN, 0, None)
+        .activate_at(Server::EN, &Generation::default())
         .await
         .unwrap();
     ctx.announce_update(Server::EN, Some("v1")).await.unwrap();
     ctx.reload_game_data(Server::EN).await.unwrap();
     let live = ctx.snapshots.require(Server::EN).unwrap();
     assert_eq!(
-        (live.generation, live.res_version.as_deref()),
-        (2, Some("v1"))
+        (
+            live.generation,
+            live.res_version.as_deref(),
+            live.pipeline_seq
+        ),
+        (2, Some("v1"), 1)
     );
+    db.close().await;
+}
+
+#[tokio::test]
+async fn the_listener_sequence_pairs_each_update_with_its_own_data() {
+    let (base, db) = common::context().await;
+    let assets = tempfile::tempdir().unwrap();
+    tree(assets.path(), &[]);
+    let ctx = process(&base, assets.path()).await;
+    tree(assets.path(), &["v1"]);
+    announce_and_record(&ctx, Server::EN, Some("v1"))
+        .await
+        .unwrap();
+    tree(assets.path(), &["v1", "v2"]);
+    announce_and_record(&ctx, Server::EN, Some("v2"))
+        .await
+        .unwrap();
+    assert_eq!(
+        pairs(&ctx).await,
+        [pair("POOL_v1", "char_v1"), pair("POOL_v2", "char_v2")],
+        "the boot load's unrecorded data is recorded before v1 moves the cursor"
+    );
+    assert_eq!(cursor(&ctx).await, 2);
     db.close().await;
 }

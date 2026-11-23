@@ -1,5 +1,3 @@
-//! The content audit log: who changed which tier list or grid, coalesced per editing run.
-
 use std::collections::BTreeSet;
 
 use chrono::{DateTime, Utc};
@@ -14,9 +12,7 @@ use uuid::Uuid;
 use crate::AppError;
 use crate::policy::{Action, Policy, Resource, Subject};
 
-/// Edits by one actor on one target inside this window fold into one row
 pub const EDIT_RUN_SECS: f64 = 15.0 * 60.0;
-/// Most entries of one kind of change a row keeps
 pub const AUDIT_SET_MAX: usize = 500;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -32,14 +28,12 @@ pub struct AuditTierRename {
     pub to: String,
 }
 
-/// What one row records; entries are `kind:id` strings
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ContentAuditDetails {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub list_type: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub forked_from: Option<String>,
-    /// The name before the run's first rename
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub renamed_from: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -48,7 +42,6 @@ pub struct ContentAuditDetails {
     pub kinds: Option<Vec<String>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub listed: Option<bool>,
-    /// `rows x cols` after a grid resize
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub size: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -63,7 +56,6 @@ pub struct ContentAuditDetails {
     pub tiers_restyled: Option<Vec<AuditTierRef>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub tiers_deleted: Option<Vec<AuditTierRef>>,
-    /// Placements removed with a deleted tier
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub entries_dropped: Option<u32>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -123,7 +115,6 @@ fn add_count(into: &mut Option<u32>, more: Option<u32>) {
 }
 
 impl ContentAuditDetails {
-    /// Folds a later edit of the same run into this one
     pub fn merge(&mut self, later: Self) {
         if self.renamed_from.is_none() {
             self.renamed_from = later.renamed_from;
@@ -157,7 +148,7 @@ impl ContentAuditDetails {
         if let (Some(added), Some(renamed)) = (&mut self.tiers_added, &mut self.tiers_renamed) {
             renamed.retain(|r| match added.iter_mut().find(|t| t.id == r.id) {
                 Some(tier) => {
-                    tier.name.clone_from(&r.to); // added then renamed reads as added under the latest name
+                    tier.name.clone_from(&r.to);
                     false
                 }
                 None => true,
@@ -179,7 +170,6 @@ impl ContentAuditDetails {
     }
 }
 
-/// One change to record
 #[derive(Debug, Clone)]
 pub struct ContentEvent<'a> {
     pub actor: UserId,
@@ -238,7 +228,6 @@ pub struct Auditor {
 }
 
 impl Auditor {
-    /// Best effort: a failed write is logged, never returned to the edit that caused it
     pub async fn record(&self, event: ContentEvent<'_>) {
         if event.action == ContentAuditAction::Edit
             && event.details == ContentAuditDetails::default()

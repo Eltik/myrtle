@@ -1,6 +1,3 @@
-//! Read-side game data pages: operators, static data, levels, recruitment,
-//! archives, release planner, DPS, announcements, maintenance.
-
 pub mod announcements;
 pub mod archives;
 pub mod dps;

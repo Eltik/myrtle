@@ -58,12 +58,27 @@ fn configured_urls_map_to_data_servers() {
 }
 
 #[test]
+fn a_data_server_named_twice_gets_one_listener_under_its_own_name() {
+    let configured: BTreeMap<String, String> = [
+        ("bilibili", "ws://127.0.0.1:9161"),
+        ("cn", "ws://127.0.0.1:9163"),
+    ]
+    .into_iter()
+    .map(|(k, v)| (k.to_owned(), v.to_owned()))
+    .collect();
+    assert_eq!(
+        pipeline_urls(&configured),
+        [(Server::CN, "ws://127.0.0.1:9163".to_owned())]
+    );
+}
+
+#[test]
 fn the_debounce_runs_from_the_end_of_the_last_announcement() {
     let start = Instant::now();
     let mut announcer = Announcer::default();
     assert!(announcer.receive("a".into(), start));
-    assert_eq!(announcer.due(start), Some("a"));
-    let done = start + Duration::from_secs(20); // a slow reload
+    assert_eq!(announcer.due(start), Some(Some("a")));
+    let done = start + Duration::from_secs(20);
     announcer.finished(done);
     assert_eq!(announcer.due(done), None);
     assert!(
@@ -71,7 +86,7 @@ fn the_debounce_runs_from_the_end_of_the_last_announcement() {
         "a frame read right after a long reload repeats it"
     );
     assert!(announcer.receive("b".into(), done + DEBOUNCE));
-    assert_eq!(announcer.due(done + DEBOUNCE), Some("b"));
+    assert_eq!(announcer.due(done + DEBOUNCE), Some(Some("b")));
 }
 
 #[test]
@@ -94,11 +109,27 @@ fn a_failed_announcement_is_kept_retried_and_absorbs_later_frames() {
     );
     assert_eq!(
         announcer.due(now),
-        Some("c"),
-        "the latest version is announced"
+        Some(None),
+        "one announcement for b and c stamps neither"
     );
     announcer.finished(now);
     assert_eq!(announcer.wait(now), None);
+    assert!(announcer.receive("d".into(), now + DEBOUNCE));
+    assert_eq!(
+        announcer.due(now + DEBOUNCE),
+        Some(Some("d")),
+        "the next update carries its version again"
+    );
+}
+
+#[test]
+fn a_failed_announcement_alone_keeps_its_version() {
+    let start = Instant::now();
+    let mut announcer = Announcer::default();
+    announcer.receive("a".into(), start);
+    announcer.failed(start);
+    let later = start + retry_delay(1);
+    assert_eq!(announcer.due(later), Some(Some("a")));
 }
 
 #[test]

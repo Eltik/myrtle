@@ -9,11 +9,9 @@ use crate::{AppContext, AppError, Subject};
 #[derive(Debug, Serialize)]
 pub struct DisconnectResult {
     pub status: String,
-    /// False when nothing was stored, so a second disconnect is not an error
     pub removed: bool,
 }
 
-/// The cached session only, for a path that ran [`ensure_fresh`] earlier in the request
 pub async fn load(ctx: &AppContext, uid: &str) -> Result<AuthSession, AppError> {
     let json = ctx
         .cache
@@ -23,7 +21,6 @@ pub async fn load(ctx: &AppContext, uid: &str) -> Result<AuthSession, AppError> 
     serde_json::from_str(&json).map_err(|_| AppError::bad_request("invalid game session"))
 }
 
-/// A live session, cached or rebuilt from the stored credential, with a fresh secret
 pub async fn ensure_fresh(
     ctx: &AppContext,
     uid: &str,
@@ -41,7 +38,6 @@ pub async fn ensure_fresh(
         })
 }
 
-/// Forgets the cached sessions and the stored credential; synced data stays
 pub async fn disconnect(ctx: &AppContext, subject: &Subject) -> Result<DisconnectResult, AppError> {
     let (Some(user), Some(uid)) = (subject.user_id(), subject.uid()) else {
         return Err(AppError::Unauthorized);

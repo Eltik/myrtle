@@ -30,7 +30,6 @@ pub struct CalculateRequest {
     pub trust: Option<i32>,
     pub skill_index: Option<i32>,
     pub mastery_level: Option<i32>,
-    /// Pre-mastery skill level 1-7, over `mastery_level` when set
     pub skill_level: Option<i32>,
     pub module_index: Option<i32>,
     pub module_level: Option<i32>,
@@ -42,17 +41,14 @@ pub struct CalculateRequest {
     pub sp_boost: Option<f32>,
     pub conditionals: Option<RequestConditionals>,
     pub all_cond: Option<bool>,
-    #[serde(default, skip_serializing_if = "Option::is_none")] // unset keeps the cache hash
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub zones: Option<BuffZones>,
-    /// Exclusive with `targets` above 1
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub secondary: Option<RequestSecondary>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub cycle_model: Option<RequestCycleModel>,
-    /// Not built: `true` is rejected
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub frame_timing: Option<bool>,
-    /// The operator a Muelsyse clone copies, at the same investment
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub clone_operator_id: Option<String>,
 }
@@ -91,7 +87,6 @@ pub struct RequestShred {
 }
 
 impl CalculateRequest {
-    /// Cost ceilings for an unauthenticated simulator, wider than the game allows
     pub fn validate(&self) -> Result<(), AppError> {
         int_range("promotion", self.promotion, 0, 2)?;
         int_range("level", self.level, 1, 90)?;
@@ -109,7 +104,7 @@ impl CalculateRequest {
         float_range("spBoost", self.sp_boost.map(f64::from), -10.0, 100.0)?;
 
         if let Some(buffs) = &self.buffs {
-            int_range("buffs.aspd", buffs.aspd, -500, 1_000)?; // multiplies the simulated tick count
+            int_range("buffs.aspd", buffs.aspd, -500, 1_000)?;
             int_range("buffs.flatAtk", buffs.flat_atk, -100_000, 100_000)?;
             float_range("buffs.atk", buffs.atk.map(f64::from), -10.0, 100.0)?;
             float_range("buffs.fragile", buffs.fragile.map(f64::from), -10.0, 100.0)?;
@@ -273,7 +268,6 @@ fn int_range(field: &str, value: Option<i32>, min: i32, max: i32) -> Result<(), 
     }
 }
 
-/// Out of range or not finite: nothing non-finite may reach the arithmetic
 fn float_range(field: &str, value: Option<f64>, min: f64, max: f64) -> Result<(), AppError> {
     match value {
         Some(v) if !v.is_finite() => Err(AppError::BadRequest(format!(
@@ -293,7 +287,6 @@ pub enum SweepAxis {
     Res,
 }
 
-/// `steps` evenly spaced values from `min` to `max`, each replacing every request's primary DEF or RES
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Sweep {
@@ -304,6 +297,7 @@ pub struct Sweep {
 }
 
 impl Sweep {
+    #[must_use]
     pub fn points(&self) -> Vec<f64> {
         let n = self.steps.max(1);
         (0..n)
@@ -375,7 +369,6 @@ pub struct SweepPoint {
     pub result: DpsResult,
 }
 
-/// Exactly one field is set: `result`, `points` under a sweep, or `error`
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct BatchItem {

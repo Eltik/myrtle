@@ -1,5 +1,3 @@
-//! UI translations: the public catalogue, the translation workspace, translator grants.
-
 mod catalog;
 mod grants;
 mod messages;
@@ -29,7 +27,6 @@ use crate::policy::{Action, Resource, Subject};
 use crate::services::accounts::with_grants;
 use crate::{AppContext, AppError};
 
-/// Every key this unit writes starts with it, so one prefix flush clears manifest and catalogs
 const CACHE_PREFIX: &str = "i18n:";
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -110,7 +107,6 @@ pub struct DeleteOverrideRequest {
     pub field: String,
 }
 
-/// `subject` with its grants, once it may open the translation workspace
 async fn require_panel(ctx: &AppContext, subject: &Subject) -> Result<Subject, AppError> {
     let subject = with_grants(ctx, subject.clone()).await?;
     ctx.policy
@@ -118,7 +114,6 @@ async fn require_panel(ctx: &AppContext, subject: &Subject) -> Result<Subject, A
     Ok(subject)
 }
 
-/// The acting user, once `action` on `locale` is allowed
 async fn require_locale(
     ctx: &AppContext,
     subject: &Subject,
@@ -136,14 +131,12 @@ async fn require_locale(
     subject.user_id().ok_or(AppError::Unauthorized)
 }
 
-/// Every locale, enabled or not
 pub async fn list_locales(ctx: &AppContext, subject: &Subject) -> Result<Vec<Locale>, AppError> {
     require_panel(ctx, subject).await?;
     let rows = i18n::list_locales(&mut *ctx.db.conn().await?, false).await?;
     Ok(rows.into_iter().map(Locale::from).collect())
 }
 
-/// The locales `subject` may write: all for a super admin, else exactly its grants
 pub async fn writable_locales(
     ctx: &AppContext,
     subject: &Subject,
@@ -170,7 +163,6 @@ pub async fn writable_locales(
     Ok(codes)
 }
 
-/// Adds, renames, enables or retires a locale; enabling commits the site to a game-data region
 pub async fn upsert_locale(
     ctx: &AppContext,
     subject: &Subject,
@@ -246,7 +238,6 @@ pub async fn delete_override(
     Ok(())
 }
 
-/// Overrides are applied when game data is serialized, so the static responses go too
 async fn flush_with_static(ctx: &AppContext) {
     ctx.cache.invalidate_prefix(CACHE_PREFIX).await;
     ctx.cache.invalidate_prefix("static:").await;

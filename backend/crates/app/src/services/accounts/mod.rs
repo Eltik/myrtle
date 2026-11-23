@@ -1,5 +1,3 @@
-//! Sign-in, game sessions, account settings and deletion.
-
 pub mod account;
 pub mod credentials;
 pub mod game_session;
@@ -16,7 +14,6 @@ use crate::policy::{Action, Grant, Permission, Subject};
 use crate::{AppContext, AppError};
 use jwt::Claims;
 
-/// The token's subject; a claim above `user` is capped by the stored role under `role_recheck`, 401 when the row is gone
 pub async fn subject(ctx: &AppContext, claims: &Claims) -> Result<Subject, AppError> {
     let id = claims.user_id()?;
     let claimed = jwt::parse_role(&claims.role);
@@ -37,7 +34,6 @@ pub async fn subject(ctx: &AppContext, claims: &Claims) -> Result<Subject, AppEr
     })
 }
 
-/// [`subject`] for a route open to everyone: any token or role check that fails reads as anonymous
 pub async fn subject_optional(ctx: &AppContext, token: Option<&str>) -> Subject {
     let Some(claims) = token.and_then(|t| jwt::verify_token(&ctx.secrets.jwt, t).ok()) else {
         return Subject::Anonymous;
@@ -45,7 +41,6 @@ pub async fn subject_optional(ctx: &AppContext, token: Option<&str>) -> Subject 
     subject(ctx, &claims).await.unwrap_or(Subject::Anonymous)
 }
 
-/// `subject` with its per-list and per-locale grants loaded, for a gate that reads them
 pub async fn with_grants(ctx: &AppContext, subject: Subject) -> Result<Subject, AppError> {
     let Subject::User {
         id,

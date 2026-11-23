@@ -1,5 +1,3 @@
-//! Site-wide totals, public and admin.
-
 use std::time::Duration;
 
 use chrono::{SecondsFormat, Utc};

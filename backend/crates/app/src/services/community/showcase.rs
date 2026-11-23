@@ -1,5 +1,3 @@
-//! The profile Showcase: saves refuse dangling blocks, reads hide those that dangle since.
-
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 
@@ -28,9 +26,7 @@ pub struct ShowcaseView {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct ShowcaseBlockView {
     pub block: ShowcaseBlock,
-    /// The referent is gone; only the owner is ever sent such a block
     pub removed: bool,
-    /// Favourites only, one per id in `block`
     pub entities: Vec<ShowcaseEntity>,
 }
 
@@ -105,7 +101,6 @@ impl Existing {
         }
     }
 
-    /// The block's own plan while shown, else its operator's re-created shown plan
     fn live_plan_id(&self, id: Uuid, operator_id: Option<&String>) -> Option<Uuid> {
         if self.plans.contains(&id) {
             return Some(id);
@@ -128,7 +123,6 @@ impl Existing {
     }
 }
 
-/// 400 naming the first block, counted from 1, whose referent is missing
 pub async fn validate(
     ctx: &AppContext,
     owner: UserId,
@@ -175,7 +169,6 @@ fn prefixed(context: &str, e: AppError) -> AppError {
     }
 }
 
-/// 400 unless some loaded server knows the id for its kind
 pub async fn validate_background(
     ctx: &AppContext,
     background: &ProfileBackground,
@@ -184,7 +177,7 @@ pub async fn validate_background(
     if background.kind == ProfileBackgroundKind::Skin && !id.contains('@') {
         return Err(AppError::BadRequest(format!(
             "background: `{id}` is not an outfit"
-        ))); // `#1` and `#2` are default art, picked through the operator kind
+        )));
     }
     if let Some(kind) = background.kind.entity_kind() {
         entities::validate_loaded(ctx, kind, id)
@@ -224,7 +217,6 @@ fn loaded_models(ctx: &AppContext) -> Vec<Arc<Snapshot>> {
         .collect()
 }
 
-/// A gallery picture needs only its table row; a story CG or scene a listing in some server's catalogue
 async fn background_known(ctx: &AppContext, background: &ProfileBackground) -> bool {
     let id = background.id.as_str();
     let kind = match background.kind {
@@ -258,7 +250,6 @@ fn favourite_kinds(blocks: &[ShowcaseBlock]) -> Vec<EntityKind> {
         .collect()
 }
 
-/// The caller's settings, saved only once the showcase and background referents check out
 pub async fn save_profile(
     ctx: &AppContext,
     subject: &Subject,
@@ -276,7 +267,6 @@ pub async fn save_profile(
     privacy::update_settings(ctx, subject, request).await
 }
 
-/// Drops gone blocks and favourite ids from a [`ProfileLayout::visible_only`] layout
 pub async fn prune_for_visitor(
     ctx: &AppContext,
     owner: UserId,
@@ -308,7 +298,6 @@ pub async fn prune_for_visitor(
     Ok(())
 }
 
-/// The owner (`own`) gets every block, broken ones `removed`; a visitor only what still resolves
 pub async fn view(
     ctx: &AppContext,
     owner: UserId,
@@ -373,7 +362,6 @@ pub async fn view(
     Ok(ShowcaseView { blocks: out })
 }
 
-/// `uid`'s Showcase tab behind the profile and tab gates; no layout is an empty showcase
 pub async fn user_showcase(
     ctx: &AppContext,
     subject: &Subject,

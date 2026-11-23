@@ -1,5 +1,3 @@
-//! The score leaderboard: pages, movers, server shares, one player's standing.
-
 use std::time::Duration;
 
 use chrono::{DateTime, Utc};
@@ -41,7 +39,6 @@ pub struct LeaderboardEntry {
     pub skin_score: Option<f64>,
     pub rank_global: Option<i64>,
     pub rank_server: Option<i64>,
-    /// Positive = climbed; `None` without a movement interval or a baseline
     pub rank_delta: Option<i64>,
 }
 
@@ -121,7 +118,6 @@ pub struct ServerShare {
 pub struct PlayerStanding {
     pub player: LeaderboardEntry,
     pub neighbors: Vec<LeaderboardEntry>,
-    /// 0.0 = top, 1.0 = bottom
     pub percentile: f64,
     pub rank_delta: Option<i64>,
 }
@@ -167,7 +163,6 @@ pub fn is_valid_interval(interval: &str) -> bool {
     matches!(interval, "1 day" | "7 days" | "30 days")
 }
 
-/// Unknown columns rank by total score
 fn sort_of(sort: Option<&str>) -> LeaderboardSort {
     use LeaderboardSort as S;
     [
@@ -287,7 +282,6 @@ pub async fn top_movers(
     Ok(movers)
 }
 
-/// How the top `top` (250 when absent, at most 10 000) players split across servers
 pub async fn distribution(
     ctx: &AppContext,
     top: Option<u32>,
@@ -310,7 +304,6 @@ pub async fn distribution(
     Ok(shares)
 }
 
-/// 404 for the owner too while the Score tab is private: the board leaves them out
 pub async fn standing(
     ctx: &AppContext,
     subject: &Subject,
@@ -342,7 +335,6 @@ pub async fn standing(
     })
 }
 
-/// Every snapshot the player appears in, oldest first
 pub async fn score_history(
     ctx: &AppContext,
     subject: &Subject,

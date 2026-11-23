@@ -1,5 +1,3 @@
-//! Grades a user from their stored rows and writes `user_scores`.
-
 use myrtle_db::repos::scores::ScoreWrite;
 use myrtle_db::repos::{progress, roster, scores, users};
 use myrtle_engine_base::score::grade_base;
@@ -32,7 +30,6 @@ pub fn score_model(ctx: &AppContext) -> ScoreModel {
     }
 }
 
-/// Everything the grade reads for `user`, the base section already scored
 pub async fn load_inputs(
     ctx: &AppContext,
     user: UserId,
@@ -85,7 +82,6 @@ pub async fn load_inputs(
     })
 }
 
-/// Loads, grades, stores `user_scores`
 pub async fn regrade(ctx: &AppContext, user: UserId) -> Result<UserGrade, AppError> {
     let snapshot = snapshot_of(ctx)?;
     let inputs = load_inputs(ctx, user, &snapshot).await?;
@@ -112,7 +108,6 @@ pub async fn regrade(ctx: &AppContext, user: UserId) -> Result<UserGrade, AppErr
     Ok(grade)
 }
 
-/// Rescores only the RA section and rebuilds the total; the new grade, `None` without a stored row
 pub async fn rescore_sandbox(ctx: &AppContext, user: UserId) -> Result<Option<String>, AppError> {
     let snapshot = snapshot_of(ctx)?;
     let mut conn = ctx.db.conn().await?;
@@ -121,19 +116,25 @@ pub async fn rescore_sandbox(ctx: &AppContext, user: UserId) -> Result<Option<St
     };
     let progress = progress::sandbox(&mut conn, user).await?;
     let sandbox = grade_sandbox(&snapshot.grade, progress.as_ref());
-    let total = (SECTION_WEIGHT_OPERATOR * stored.operator_score
-        + SECTION_WEIGHT_BASE * stored.base_score
-        + SECTION_WEIGHT_ROGUELIKE * stored.roguelike_score
-        + SECTION_WEIGHT_MEDAL * stored.medal_score
-        + SECTION_WEIGHT_STAGE * stored.stage_score
-        + SECTION_WEIGHT_SANDBOX * sandbox)
+    let total = SECTION_WEIGHT_SANDBOX.mul_add(sandbox, SECTION_WEIGHT_STAGE.mul_add(
+        stored.stage_score,
+        SECTION_WEIGHT_MEDAL.mul_add(
+            stored.medal_score,
+            SECTION_WEIGHT_ROGUELIKE.mul_add(
+                stored.roguelike_score,
+                SECTION_WEIGHT_BASE.mul_add(
+                    stored.base_score,
+                    SECTION_WEIGHT_OPERATOR * stored.operator_score,
+                ),
+            ),
+        ),
+    ))
         / SECTION_WEIGHT_TOTAL;
     let overall = score_to_grade(total);
     scores::write_sandbox(&mut conn, user, sandbox, total, &overall).await?;
     Ok(Some(overall))
 }
 
-/// Queues one `RegradeUser`, deduplicated per user
 pub async fn enqueue_regrade(ctx: &AppContext, user: UserId) -> Result<(), AppError> {
     ctx.queue
         .enqueue(JobSpec {
@@ -145,7 +146,6 @@ pub async fn enqueue_regrade(ctx: &AppContext, user: UserId) -> Result<(), AppEr
     Ok(())
 }
 
-/// The `RegradeAll` body: one `RegradeUser` per account, a keyset page at a time
 pub async fn enqueue_regrade_all(ctx: &AppContext) -> Result<u64, AppError> {
     let page_size = ctx.config.jobs.regrade.page_size.max(1);
     let mut after = None;

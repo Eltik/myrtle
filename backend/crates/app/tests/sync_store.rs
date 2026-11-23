@@ -26,7 +26,6 @@ use serde_json::{Value, json};
 const UID: &str = "10000001";
 const FIXTURE: &str = include_str!("fixtures/sync/sync_data.json");
 
-/// An EN model carrying only what a sync reads: module types and the annihilation ladders
 fn sync_model() -> GameModel {
     let mut model = GameModel::default();
     for (id, kind) in [
@@ -476,7 +475,6 @@ async fn a_sync_stores_against_the_real_extract() {
     db.close().await;
 }
 
-/// The fixture's invented event: st01 is flagged played, st02 sits in the Archive behind an uncleared stage
 fn install_story_library(ctx: &AppContext) {
     let mut model = sync_model();
     let group = serde_json::from_value(json!({

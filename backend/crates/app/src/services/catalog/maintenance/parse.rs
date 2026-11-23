@@ -1,17 +1,13 @@
-//! A maintenance window read out of the prose of one Yostar notice page.
-
 use std::sync::LazyLock;
 
 use chrono::{DateTime, Datelike, Duration, FixedOffset, NaiveDate, TimeZone, Utc};
 use regex::{Captures, Regex};
 use serde::{Deserialize, Serialize};
 
-/// One maintenance window as one notice states it
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct NoticeWindow {
     pub starts_at: i64,
     pub ends_at: Option<i64>,
-    /// The notice moves the end of a window already announced
     pub extended: bool,
     pub title: String,
 }
@@ -59,14 +55,12 @@ static RE_BREAK: LazyLock<Regex> = LazyLock::new(|| regex(r"(?i)<br\s*/?>|</p>|<
 static RE_TAG: LazyLock<Regex> = LazyLock::new(|| regex(r"<[^>]*>"));
 static RE_SPACE: LazyLock<Regex> = LazyLock::new(|| regex(r"[ \t\u{a0}]+"));
 static RE_MAINT_WORD: LazyLock<Regex> = LazyLock::new(|| regex(r"(?i)\bmaintenance\b"));
-/// An event page can name a `[Maintenance Checklist]` mission, so the bare word in the body is not enough
 static RE_MAINT_BODY: LazyLock<Regex> = LazyLock::new(|| {
     regex(
         r"(?i)server maintenance|maintenance date and time|maintenance (?:has been|will be|is) (?:extended|postponed)|emergency maintenance",
     )
 });
 
-/// Tags to text: line breaks kept, entities decoded, runs of spaces collapsed
 pub fn html_to_text(html: &str) -> String {
     let broken = RE_BREAK.replace_all(html, "\n");
     let stripped = RE_TAG.replace_all(&broken, " ");
@@ -80,7 +74,6 @@ pub fn html_to_text(html: &str) -> String {
         .join("\n")
 }
 
-/// The page's `head-title` on one line; empty on a cover-only notice
 pub fn head_title(html: &str) -> Option<String> {
     RE_HEAD_TITLE
         .captures(html)
@@ -94,7 +87,7 @@ fn decode_entities(s: &str) -> String {
     while let Some(amp) = rest.find('&') {
         out.push_str(&rest[..amp]);
         let tail = &rest[amp..];
-        let Some(semi) = tail.as_bytes()[..tail.len().min(10)] // bytes: the 10th can fall inside a multi-byte character
+        let Some(semi) = tail.as_bytes()[..tail.len().min(10)]
             .iter()
             .position(|&b| b == b';')
         else {
@@ -176,7 +169,6 @@ fn month_number(name: &str) -> Option<u32> {
     u32::try_from(n + 1).ok()
 }
 
-/// A missing year is the one that puts the date closest to `reference`
 fn instant(
     (month, day, year): (u32, u32, Option<i32>),
     (hour, minute): (u32, u32),
@@ -233,7 +225,7 @@ fn range_of(caps: &Captures<'_>, reference: i64) -> Option<(i64, i64)> {
         start,
     )?;
     if end <= start && caps.name("emon").is_none() {
-        end += Duration::days(1).num_seconds(); // `23:00-01:00` crosses midnight
+        end += Duration::days(1).num_seconds();
     }
     (end > start).then_some((start, end))
 }
@@ -259,7 +251,6 @@ fn find_instant(text: &str, reference: i64) -> Option<i64> {
     })
 }
 
-/// `None` for a page that is not a maintenance notice or names no time; `reference` settles a missing year
 pub fn parse_notice(html: &str, reference: i64) -> Option<NoticeWindow> {
     let title = head_title(html).unwrap_or_default();
     let body_html = RE_CONTENT

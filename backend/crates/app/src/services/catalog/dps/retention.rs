@@ -1,6 +1,3 @@
-//! How much of a ranked row's damage survives the real enemy roster:
-//! `sum_p w_p * dps(DEF_p, RES_p) / (sum_p w_p * dps(0, 0))` over the distinct (DEF, RES) pairs.
-
 use std::collections::{BTreeMap, HashMap};
 use std::time::Instant;
 
@@ -16,9 +13,7 @@ pub const REFERENCE: &str = "skillDps at preset p1Max, no buffs, no zones, singl
 pub struct RosterPair {
     pub def: f64,
     pub res: f64,
-    /// (enemy, stage) appearances at this pair, the score's weight
     pub stages: u64,
-    /// Spawns over those appearances, the alternative weight
     pub spawns: u64,
 }
 
@@ -39,13 +34,12 @@ pub struct RetentionRoster {
     pub total_spawns: u64,
     pub nonzero_level: usize,
     pub overridden: usize,
-    /// Appearances with no level file (boss declarations), taken at level 0
     pub no_level_file: usize,
-    /// Appearances naming a level the database lacks, taken at level 0
     pub level_fallback: usize,
     pub excluded: Vec<RetentionExclusion>,
 }
 
+#[must_use]
 pub fn enemy_roster(model: &GameModel) -> (RetentionRoster, Vec<RosterPair>) {
     let mut ids: Vec<&String> = model.enemy_stage_index.keys().collect();
     ids.sort();
@@ -102,7 +96,7 @@ pub fn enemy_roster(model: &GameModel) -> (RetentionRoster, Vec<RosterPair>) {
             }
             let def = battle.def.unwrap_or_else(|| f64::from(at.attributes.def));
             let res = battle.res.unwrap_or(at.attributes.magic_resistance);
-            let (def, res) = (def + 0.0, res + 0.0); // folds -0.0 into 0.0 so both share a key
+            let (def, res) = (def + 0.0, res + 0.0);
             let p = pairs
                 .entry((def.to_bits(), res.to_bits()))
                 .or_insert(RosterPair {
@@ -131,6 +125,7 @@ pub fn enemy_roster(model: &GameModel) -> (RetentionRoster, Vec<RosterPair>) {
     (roster, pairs)
 }
 
+#[must_use]
 pub fn reference_context(def: f64, res: f64) -> RankRequest {
     RankRequest {
         defense: Some(def),
@@ -146,9 +141,7 @@ pub struct RetentionRow {
     pub operator_id: String,
     pub skill_index: i32,
     pub module_index: i32,
-    /// `skillDps` at DEF 0 RES 0
     pub base_dps: f64,
-    /// Weighted by stage appearances; `None` when `base_dps` is 0 or a pair failed
     pub retention: Option<f64>,
     pub retention_by_spawns: Option<f64>,
 }
@@ -162,6 +155,7 @@ pub struct RetentionTable {
 }
 
 impl RetentionTable {
+    #[must_use]
     pub fn get(&self, operator_id: &str, skill: i32, module: i32) -> Option<f64> {
         self.by_key
             .get(&(operator_id.to_owned(), skill, module))
@@ -169,13 +163,13 @@ impl RetentionTable {
             .flatten()
     }
 
-    /// Boss declarations alone are not a roster
+    #[must_use]
     pub const fn scorable(&self) -> bool {
         self.roster.appearances > self.roster.no_level_file
     }
 }
 
-/// Every reference-context row's retention. Blocking, about 30 s in a debug build
+#[must_use]
 pub fn compute_retention(data: &Data) -> RetentionTable {
     let started = Instant::now();
     let (roster, pairs) = enemy_roster(&data.snapshot.model);
@@ -209,8 +203,8 @@ pub fn compute_retention(data: &Data) -> RetentionTable {
                     ok = false;
                     break;
                 };
-                sum_stages += p.stages as f64 * r.skill_dps;
-                sum_spawns += p.spawns as f64 * r.skill_dps;
+                sum_stages = (p.stages as f64).mul_add(r.skill_dps, sum_stages);
+                sum_spawns = (p.spawns as f64).mul_add(r.skill_dps, sum_spawns);
             }
             if ok {
                 out.retention = Some(sum_stages / (w_stages * base_dps));
@@ -240,12 +234,10 @@ pub fn compute_retention(data: &Data) -> RetentionTable {
 #[derive(Debug, Clone, Copy, Default, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub enum RetentionStatus {
-    /// Not computed yet: `retention` is `null` on every row
     #[default]
     Pending,
     Ready,
     Failed,
-    /// No level files in this data, so no roster: every row is `null`
     Unavailable,
 }
 

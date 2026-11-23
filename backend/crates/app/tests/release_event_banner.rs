@@ -19,7 +19,6 @@ use myrtle_gamedata_raw::tables::stage::{StorySetEventData, StorylineStorySet};
 use myrtle_testkit::db::TestDb;
 use myrtle_types::Server;
 
-/// An 8x4 opaque RGBA PNG
 const PNG: &str = "iVBORw0KGgoAAAANSUhEUgAAAAgAAAAECAYAAACzzX7wAAAAEklEQVR4nGM4kWL0Hx9moL0CAHmxS6FrGgA4AAAAAElFTkSuQmCC";
 const ACT: &str = "act9test";
 const BACKGROUND: &str = "textures/spritepack/mixstory_retro_bkg_sprites_0/storybg_test.png";
@@ -31,7 +30,6 @@ fn png() -> Vec<u8> {
         .unwrap()
 }
 
-/// A context whose extracts live under `dir`, with `servers` configured and none loaded
 async fn context(dir: &Path, servers: &[Server]) -> (AppContext, TestDb) {
     let (mut ctx, db) = common::context().await;
     let mut config = (*ctx.config).clone();
@@ -43,7 +41,6 @@ async fn context(dir: &Path, servers: &[Server]) -> (AppContext, TestDb) {
     (ctx, db)
 }
 
-/// Installs a `server` snapshot whose story set covers [`ACT`], its art written with `art` into its art tree
 fn install(ctx: &AppContext, server: Server, art: &[u8]) {
     let root = ctx.snapshots.art_dir(server);
     for rel in [BACKGROUND, TITLE] {
@@ -139,7 +136,7 @@ async fn a_banner_renders_once_into_the_servers_derived_tree() {
 async fn a_set_only_cn_knows_renders_from_the_cn_tree() {
     let dir = tempfile::tempdir().unwrap();
     let (ctx, db) = context(dir.path(), &[Server::EN, Server::CN]).await;
-    std::fs::create_dir_all(ctx.snapshots.server_dir(Server::CN).join("portraits")).unwrap(); // its own art tree
+    std::fs::create_dir_all(ctx.snapshots.server_dir(Server::CN).join("portraits")).unwrap();
     install(&ctx, Server::CN, &png());
     let path = event_banner(&ctx, Server::EN, ACT).await.unwrap();
     assert!(path.starts_with(ctx.snapshots.server_dir(Server::CN)));

@@ -1,5 +1,3 @@
-//! Story character sprites, keyed by folder with the set number cut (`avg_npc_935`).
-
 use myrtle_engine_story::sprites::sprite_operator;
 use myrtle_gamedata::model::GameModel;
 use myrtle_gamedata::story_sprites::StorySprite;
@@ -13,7 +11,6 @@ pub(super) const SOURCE: KindSource = KindSource {
     catalogue,
 };
 
-/// Operators, then the named cast by name, then the unnamed by id
 fn catalogue(m: &GameModel) -> Vec<EntitySummary> {
     in_key_order(
         m.assets

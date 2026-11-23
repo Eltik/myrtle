@@ -1,5 +1,3 @@
-//! The recruitment calculator's input: the gacha tags and the recruitable operators.
-
 use std::collections::HashSet;
 
 use myrtle_gamedata_raw::tables::gacha::GachaTag;
@@ -29,10 +27,8 @@ pub struct RecruitmentOperator {
     pub rarity: u8,
     pub profession: OperatorProfession,
     pub position: OperatorPosition,
-    /// The game's own affix tags; the client adds position, class and rarity
     pub tag_list: Vec<String>,
     pub potential_ranks: Vec<RecruitmentPotentialRank>,
-    /// Per talent, every candidate's `requiredPotentialRank`
     pub talent_potential_ranks: Vec<Vec<i32>>,
 }
 
@@ -40,7 +36,6 @@ pub struct RecruitmentOperator {
 #[serde(rename_all = "camelCase")]
 pub struct RecruitmentPotentialRank {
     pub description: String,
-    /// The rank's first attribute modifier, the only one the label reads
     pub modifier: Option<RecruitmentModifier>,
 }
 
@@ -51,7 +46,6 @@ pub struct RecruitmentModifier {
     pub value: f64,
 }
 
-/// Drops every `<...>` tag and keeps an unclosed `<`
 #[must_use]
 pub fn strip_tags(line: &str) -> String {
     let mut out = String::with_capacity(line.len());
@@ -67,7 +61,6 @@ pub fn strip_tags(line: &str) -> String {
     out
 }
 
-/// Operator names in the recruitment pool text, headings and star-only lines skipped
 #[must_use]
 pub fn recruitable_names(recruit_detail: &str) -> HashSet<String> {
     let mut names = HashSet::new();

@@ -1,5 +1,3 @@
-//! A stage's level file, camelCased with its map reshaped into rows.
-
 use std::path::{Path, PathBuf};
 
 use myrtle_gamedata::model::GameModel;
@@ -29,7 +27,6 @@ pub async fn level(
         .await
 }
 
-/// The level behind `stage_id`, uncached; 404 when the stage has none
 pub(crate) async fn read(
     ctx: &AppContext,
     gd: &GameModel,
@@ -50,7 +47,6 @@ pub(crate) async fn read(
     Ok(camelize_keys(raw))
 }
 
-/// `{levels}/{level_id lowercased}.json`, `None` for an id that would leave `levels`
 #[must_use]
 pub fn level_path(levels: &Path, level_id: &str) -> Option<PathBuf> {
     let rel = level_id.to_lowercase().replace('\\', "/");
@@ -60,7 +56,6 @@ pub fn level_path(levels: &Path, level_id: &str) -> Option<PathBuf> {
     safe.then(|| levels.join(format!("{rel}.json")))
 }
 
-/// A missing file is a 404; any other read failure is the server's
 #[must_use]
 pub fn read_error(e: std::io::Error) -> AppError {
     if e.kind() == std::io::ErrorKind::NotFound {
@@ -70,7 +65,6 @@ pub fn read_error(e: std::io::Error) -> AppError {
     }
 }
 
-/// `MapData.Map` from the flat `{Column_size, Matrix_data}` form into row-major rows
 pub fn reshape_map_matrix(root: &mut Value) {
     let Some(map_data) = root.get_mut("MapData").and_then(Value::as_object_mut) else {
         return;
@@ -98,7 +92,6 @@ pub fn reshape_map_matrix(root: &mut Value) {
     map_data.insert("Map".to_owned(), Value::Array(grid));
 }
 
-/// Lowercases the first char of every key, a trailing `_` dropped first (`Type_`)
 #[must_use]
 pub fn camelize_keys(value: Value) -> Value {
     match value {

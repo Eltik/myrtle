@@ -162,7 +162,7 @@ fn a_stored_set_rebuilds_to_the_refresh_payload_and_the_same_verdict() {
             false,
             true,
         ),
-        row("gone_level_x_beg", 0, None, true, false), // known to no index entry, like an unknown path
+        row("gone_level_x_beg", 0, None, true, false),
     ];
     let stages = json!({ "main_08_st_01": { "state": 1, "startTimes": 1, "completeTimes": 0 } });
     let raw = stored_payload(&rows, Some(stages), &lookup);
@@ -222,7 +222,6 @@ fn group(id: &str, stories: &[(&str, &str, Option<&str>)]) -> StoryReviewGroup {
     .unwrap()
 }
 
-/// One event: an ungated story and a story behind stage `act1_01`
 fn install_library(ctx: &AppContext) {
     let mut model = GameModel::default();
     model.story_reviews.insert(
@@ -353,7 +352,6 @@ async fn a_set_without_either_source_never_erases_the_stored_marks() {
 async fn import_reruns_the_verdict_over_the_stored_rows() {
     let (ctx, db, user, me) = signed_in().await;
     install_library(&ctx);
-    // Stored by an older rule: the ungated archived story unread, the gated one read
     let marks = [
         mark("act1_level_st_01", true, false),
         mark("act1_level_01_end", true, true),

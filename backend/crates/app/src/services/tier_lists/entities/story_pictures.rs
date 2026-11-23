@@ -1,5 +1,3 @@
-//! Story CGs, scene plates and Archives pictures, read off the story service's catalogues.
-
 use std::sync::Arc;
 
 use myrtle_engine_story::dto::{
@@ -12,7 +10,6 @@ use super::{EntitySummary, Facets};
 use crate::AppContext;
 use crate::services::story::{self, StoryArt};
 
-/// One story art gallery: the story service's shared build, or one held alone
 #[derive(Clone)]
 pub enum ArtRef {
     Shared(Arc<StoryArt>),
@@ -28,7 +25,6 @@ impl ArtRef {
     }
 }
 
-/// One server's picture catalogues for one request; a kind not asked for, or not built, lists nothing
 #[derive(Clone, Default)]
 pub struct StoryCatalogues {
     pub cg: Option<ArtRef>,
@@ -43,7 +39,6 @@ impl StoryCatalogues {
         archive: None,
     };
 
-    /// Only the catalogues `kinds` read, so a list with no picture kind never builds the story index
     pub async fn gather(ctx: &AppContext, server: Server, kinds: &[EntityKind]) -> Self {
         let wants = |k: EntityKind| kinds.contains(&k);
         let (cg, scene, archive) = (
@@ -127,7 +122,6 @@ pub(super) const ARCHIVE_PIC: StorySource = StorySource {
     },
 };
 
-/// Exact match: wire ids are lowercase
 fn find_art<'a>(
     story: &'a StoryCatalogues,
     kind: StoryArtKind,
@@ -156,7 +150,6 @@ fn art_resolve(story: &StoryCatalogues, kind: StoryArtKind, id: &str) -> Option<
     find_art(story, kind, id).map(|(group, p)| art_summary(kind, group, p))
 }
 
-/// Library order, each picture under the first group that draws it
 fn art_catalogue(story: &StoryCatalogues, kind: StoryArtKind) -> Vec<EntitySummary> {
     story.art(kind).map_or_else(Vec::new, |gallery| {
         gallery
@@ -174,7 +167,7 @@ fn art_summary(kind: StoryArtKind, group: &StoryArtGroup, p: &StoryArtPicture) -
             StoryArtKind::Scene => EntityKind::StoryScene,
         },
         id: p.id.clone(),
-        name: group.name.clone(), // a CG has no title of its own
+        name: group.name.clone(),
         icon: Some(format!(
             "/story/art-gallery/{}/{}/thumb",
             kind.as_str(),
@@ -198,7 +191,7 @@ fn archive_summary(group: &GalleryGroup, p: &GalleryPicture) -> EntitySummary {
         } else {
             p.title.clone()
         },
-        icon: p // a picture whose file is missing is listed with no url, and has no thumb
+        icon: p
             .url
             .is_some()
             .then(|| format!("/story/gallery/{}/thumb", urlencoding::encode(&p.id))),

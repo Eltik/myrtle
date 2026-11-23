@@ -1,5 +1,3 @@
-//! CPU admission for compute-heavy requests: DPS, base optimiser, squad analysis.
-
 use std::num::NonZero;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicUsize, Ordering};
@@ -25,13 +23,11 @@ pub struct CpuLimiter {
     pools: Arc<Pools>,
 }
 
-/// A permit held while an async service computes inline
 #[derive(Debug)]
 pub struct Admission {
     _permit: OwnedSemaphorePermit,
 }
 
-/// Uncounts a waiter on every exit, a cancelled request included
 struct Waiter<'a>(&'a AtomicUsize);
 
 impl Drop for Waiter<'_> {
@@ -52,8 +48,6 @@ impl Default for CpuLimiter {
 }
 
 impl CpuLimiter {
-    /// A zero in `config` takes its derived default: half the cores, the heavy
-    /// pool's size, eight waiters per permit
     #[must_use]
     pub fn new(config: &CpuConfig) -> Self {
         let or = |n: usize, fallback: usize| if n == 0 { fallback } else { n };
@@ -81,7 +75,6 @@ impl CpuLimiter {
         self.pools.waiting.load(Ordering::Relaxed)
     }
 
-    /// Runs `work` on the blocking pool under a heavy permit
     pub async fn run<T, F>(&self, label: &'static str, work: F) -> Result<T, AppError>
     where
         F: FnOnce() -> T + Send + 'static,
@@ -89,13 +82,12 @@ impl CpuLimiter {
     {
         let admission = self.admit(label).await?;
         let held = move || {
-            let _admission = admission; // released when the task ends, not when the caller goes
+            let _admission = admission;
             work()
         };
         self.offload(label, held).await
     }
 
-    /// Runs `work` on the blocking pool with no permit, for a caller already admitted
     pub async fn offload<T, F>(&self, label: &'static str, work: F) -> Result<T, AppError>
     where
         F: FnOnce() -> T + Send + 'static,
@@ -111,7 +103,6 @@ impl CpuLimiter {
         self.acquire(&self.pools.heavy, label).await
     }
 
-    /// A permit from the light pool, for work well under a second
     pub async fn admit_light(&self, label: &'static str) -> Result<Admission, AppError> {
         self.acquire(&self.pools.light, label).await
     }
@@ -128,7 +119,6 @@ impl CpuLimiter {
         if pools.wait.is_zero() {
             return Err(self.refuse(label, "no permit free and waiting is disabled"));
         }
-        // counted before the check so two arrivals cannot both take the last slot
         let depth = pools.waiting.fetch_add(1, Ordering::Relaxed) + 1;
         let _waiter = Waiter(&pools.waiting);
         if depth > pools.queue_depth {

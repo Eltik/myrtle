@@ -21,7 +21,6 @@ use myrtle_engine_base::types::{
 use myrtle_engine_base::{BaseData, is_production_room};
 use serde::Serialize;
 
-/// A kept team within this fraction of the recommendation's output needs no swap
 const EQUIVALENT_LENIENCY: f64 = 0.05;
 
 #[derive(Debug, Clone, Serialize)]
@@ -86,7 +85,7 @@ pub struct SkillLineDto {
     pub note: Option<String>,
 }
 
-#[allow(clippy::trivially_copy_pass_by_ref)] // serde passes a reference
+#[allow(clippy::trivially_copy_pass_by_ref)]
 fn is_zero(v: &f64) -> bool {
     v.abs() < 1e-9
 }
@@ -95,11 +94,9 @@ fn is_zero(v: &f64) -> bool {
 pub struct AssignedOperator {
     pub operator_id: String,
     pub name: String,
-    /// Spare Control Center seat, parked for lowest opportunity cost
     #[serde(default)]
     #[serde(skip_serializing_if = "std::ops::Not::not")]
     pub bench: bool,
-    /// Zero-morale token seated for a facility gate
     #[serde(default)]
     #[serde(skip_serializing_if = "std::ops::Not::not")]
     pub parked: bool,
@@ -122,7 +119,6 @@ pub struct ShiftRotationDto {
 
 #[derive(Debug, Clone, Serialize)]
 pub struct SustainabilityDto {
-    /// `holds_up` or `depletes`
     pub verdict: String,
     pub horizon_hours: f64,
     pub depleted: Vec<DepletedOperatorDto>,
@@ -176,10 +172,8 @@ pub struct ShiftRoomDto {
     pub current: Vec<AssignedOperator>,
     pub swap_in: Vec<AssignedOperator>,
     pub swap_out: Vec<AssignedOperator>,
-    /// Current operators recommended in another room this shift
     pub moved_out: Vec<MovedOperator>,
     pub matches: bool,
-    /// The current team scores within the leniency band of the recommendation
     pub equivalent: bool,
     pub gap_pct: Option<f64>,
     pub efficiency: Option<f64>,
@@ -190,6 +184,7 @@ pub struct ShiftRoomDto {
     pub team_label: Option<String>,
 }
 
+#[must_use]
 pub fn assigned_operator(id: &str, data: &BaseData) -> AssignedOperator {
     AssignedOperator {
         operator_id: id.to_owned(),
@@ -199,6 +194,7 @@ pub fn assigned_operator(id: &str, data: &BaseData) -> AssignedOperator {
     }
 }
 
+#[must_use]
 pub fn operator_name(id: &str, data: &BaseData) -> String {
     data.operators()
         .get(id)
@@ -403,7 +399,7 @@ fn simulate(
     )
 }
 
-/// The drafted crews worked around the clock with no rotation; `None` when nothing is staffed
+#[must_use]
 pub fn static_sustainability(
     building: &UserBuilding,
     assignment: &BaseAssignment,
@@ -467,7 +463,6 @@ pub fn static_sustainability(
     Some(sustainability_dto(&sim, data, room_type_of, false))
 }
 
-/// Each recommended cell's closest current team in its (shift, room type, formula) group; unpaired cells get none
 fn match_current_teams(rotation: &ShiftRotation) -> HashMap<(usize, String), Vec<String>> {
     struct Cell<'a> {
         key: (usize, String),
@@ -530,7 +525,6 @@ fn match_current_teams(rotation: &ShiftRotation) -> HashMap<(usize, String), Vec
     out
 }
 
-/// `operator -> room type` of every active cell
 fn seats<'a>(rooms: impl Iterator<Item = &'a ShiftRoom>) -> HashMap<String, String> {
     rooms
         .filter(|r| r.active)
@@ -542,7 +536,6 @@ fn seats<'a>(rooms: impl Iterator<Item = &'a ShiftRoom>) -> HashMap<String, Stri
         .collect()
 }
 
-/// The rotation with each cell diffed against the player's closest preset team
 pub fn shift_rotation_to_dto(
     rotation: &ShiftRotation,
     data: &BaseData,
@@ -578,7 +571,7 @@ pub fn shift_rotation_to_dto(
 
     let mut shift_dtos = Vec::with_capacity(rotation.shifts.len());
     for shift in &rotation.shifts {
-        let shift_seats = seats(shift.rooms.iter()); // counts and gates follow who works this shift
+        let shift_seats = seats(shift.rooms.iter());
         let working: HashSet<String> = shift_seats
             .iter()
             .filter(|(_, rt)| *rt != "DORMITORY")
@@ -693,7 +686,7 @@ pub fn shift_rotation_to_dto(
                         || rec_shifts
                             .get(id.as_str())
                             .is_some_and(|s| !s.contains(&shift.index))
-                }); // no double-booking, no work through a rest shift
+                });
                 if !matches && cur_v >= rec_v * (1.0 - EQUIVALENT_LENIENCY) && !conflicts {
                     equivalent = true;
                     matches = true;

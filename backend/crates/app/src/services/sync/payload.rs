@@ -1,5 +1,3 @@
-//! `account/syncData` read into the rows `sp_sync_user_data` stores.
-
 use std::collections::{BTreeMap, HashMap};
 
 use myrtle_db::repos::roster::SyncUserData;
@@ -14,7 +12,6 @@ use serde_json::{Map, Value, json};
 
 use crate::AppError;
 
-/// Item ids of the counters kept on `status` rather than in `inventory`
 pub const EXPEDITED_PLAN_ITEM: &str = "7002";
 pub const UNIVERSAL_CERTIFICATE_ITEM: &str = "classic_normal_ticket";
 
@@ -31,7 +28,6 @@ struct GameUser {
     status: Option<PlayerStatus>,
     troop: Option<Troop>,
     inventory: Option<Object>,
-    /// `itemId -> instId -> { ts, count }`, `ts` the expiry (-1 = never)
     consumable: Option<Object>,
     skin: Option<SkinStore>,
     medal: Option<MedalStore>,
@@ -52,7 +48,6 @@ struct Social {
     assist_char_list: Option<Vec<Option<Seat>>>,
 }
 
-/// A support or squad seat, pointing at a troop slot by `charInstId`
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct Seat {
@@ -131,7 +126,6 @@ struct TroopChar {
     current_tmpl: Option<String>,
     skills: Option<Vec<TroopSkill>>,
     equip: Option<Object>,
-    /// Amiya's forms, each with its own progression; the parent fields fill the gaps
     tmpl: Option<HashMap<String, TroopTmpl>>,
 }
 
@@ -175,10 +169,8 @@ struct MedalStore {
 
 #[derive(Deserialize)]
 struct CheckIn {
-    /// One flag per claim this month: 1 when the monthly card's supply came with it
     #[serde(rename = "checkInHistory")]
     history: Option<Vec<i16>>,
-    /// Lifetime sign-in days
     #[serde(rename = "showCount")]
     show_count: Option<i64>,
     #[serde(rename = "checkInGroupId")]
@@ -189,7 +181,6 @@ struct CheckIn {
     can_check_in: Option<i64>,
 }
 
-/// Everything one sync stores, owned so it can be built off the async runtime
 #[derive(Debug, Clone)]
 pub struct SyncRows {
     pub nickname: String,
@@ -217,6 +208,7 @@ pub struct SyncRows {
 }
 
 impl SyncRows {
+    #[must_use]
     pub fn input<'a>(&'a self, uid: &'a str, server: Server) -> SyncUserData<'a> {
         SyncUserData {
             uid,
@@ -247,7 +239,6 @@ impl SyncRows {
     }
 }
 
-/// `model` is the account's server, `campaign` the default server's rotations
 pub fn rows(
     raw: &Value,
     model: &GameModel,
@@ -321,7 +312,6 @@ pub fn rows(
     })
 }
 
-/// `payDiamond` + `freeDiamond`; absent when the payload carries neither
 #[must_use]
 pub fn extract_originite(raw: &Value) -> Option<i64> {
     let number = |key: &str| {
@@ -334,7 +324,6 @@ pub fn extract_originite(raw: &Value) -> Option<i64> {
     }
 }
 
-/// A string or an integer depending on the server, on `status` or beside it
 #[must_use]
 pub fn extract_nick_number(raw: &Value) -> Option<String> {
     [
@@ -363,7 +352,6 @@ fn troop_chars(troop: Option<&Troop>) -> Vec<(String, TroopChar)> {
         .collect()
 }
 
-/// Amiya's forms each get a row of their own under the form id
 fn forms(
     chars: &[(String, TroopChar)],
 ) -> impl Iterator<Item = (&str, &TroopChar, Option<&TroopTmpl>)> {
@@ -442,7 +430,6 @@ fn extract_modules(chars: &[(String, TroopChar)]) -> Value {
         .collect()
 }
 
-/// `inventory`, unexpired `consumable` instances summed per item, and the `status` counters
 #[must_use]
 pub fn extract_items(
     inventory: Option<&Object>,
@@ -542,7 +529,7 @@ fn extract_medals(medal: Option<&MedalStore>) -> Value {
         .into_iter()
         .flatten()
         .filter_map(|(id, data)| {
-            let val = data.get("val").cloned().unwrap_or(Value::Null); // an array of pairs on multi-condition medals
+            let val = data.get("val").cloned().unwrap_or(Value::Null);
             let ts = |key: &str| data.get(key).and_then(Value::as_i64).unwrap_or(0);
             let (fts, rts) = (ts("fts"), ts("rts"));
             is_medal_earned(&val, fts, rts)
@@ -551,7 +538,6 @@ fn extract_medals(medal: Option<&MedalStore>) -> Value {
         .collect()
 }
 
-/// Claimed (`rts > 0`), or `rts == -1` with `fts > 0` and every `[achieved, required]` pair met
 #[must_use]
 pub fn is_medal_earned(val: &Value, fts: i64, rts: i64) -> bool {
     if rts > 0 {
@@ -590,7 +576,6 @@ fn extract_supports(troop: Option<&Troop>, social: Option<&Social>) -> Value {
         .collect()
 }
 
-/// `slots` exactly [`SQUAD_SIZE`] long; an unresolved seat is `null`, an `INITIAL` equip no module
 #[must_use]
 pub fn extract_game_squads(troop: Option<&Value>, modules: &Modules) -> Value {
     let Some(squads) = troop
@@ -658,7 +643,6 @@ pub fn extract_game_squads(troop: Option<&Value>, modules: &Modules) -> Value {
         .collect()
 }
 
-/// Annihilation kills from `campaignsV2.instances` as stage records: target reached 3, partial 2
 pub fn merge_campaign_clears(stages: &mut Value, raw: &Value, campaign: &CampaignRotations) {
     let Some(instances) = raw
         .pointer("/user/campaignsV2/instances")
@@ -700,7 +684,6 @@ pub fn merge_campaign_clears(stages: &mut Value, raw: &Value, campaign: &Campaig
     }
 }
 
-/// Copies each opened `dungeon.cowLevel` entry's `fts` onto its existing stage record as `cowFirstTs`
 pub fn merge_cow_level(stages: &mut Value, raw: &Value) {
     let Some(cow) = raw
         .pointer("/user/dungeon/cowLevel")
@@ -721,7 +704,6 @@ pub fn merge_cow_level(stages: &mut Value, raw: &Value) {
     }
 }
 
-/// Closed events' dropped battle records, re-proved from surviving missions, medals and flags
 fn merge_inferred_clears(stages: &mut Value, raw: &Value, evidence: &StageEvidenceIndex) {
     let Some(user) = raw.get("user") else {
         return;

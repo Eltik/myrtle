@@ -11,13 +11,11 @@ use crate::audit::{AuditTierRef, AuditTierRename, ContentAuditDetails};
 use crate::policy::{Action, Resource, Subject};
 use crate::{AppContext, AppError};
 
-/// `tiers.name varchar(40)`; raising it needs a migration
 pub const TIER_NAME_MAX: usize = 40;
 pub const TIER_DESCRIPTION_MAX: usize = 1000;
 pub const LIST_NAME_MAX: usize = 80;
 pub const LIST_DESCRIPTION_MAX: usize = 4000;
 pub const PLACEMENT_DESCRIPTION_MAX: usize = 1000;
-/// Active lists a non-staff user may own
 pub const MAX_LISTS_PER_USER: i64 = 10;
 const CHANGELOG_AUDIT_MAX: usize = 280;
 
@@ -32,7 +30,6 @@ pub struct CreateListRequest {
 pub struct UpdateListRequest {
     pub name: String,
     pub description: Option<String>,
-    /// Omitted keeps the stored set; dropping a kind keeps its placements
     #[serde(default)]
     pub entity_kinds: Option<Vec<EntityKind>>,
 }
@@ -65,7 +62,6 @@ pub struct PublishRequest {
     pub changelog: Option<String>,
 }
 
-/// Only a 6-digit `#rrggbb`, so a value cannot smuggle CSS into an inline style
 pub fn validate_hex_color(value: Option<&str>) -> Result<(), AppError> {
     let Some(color) = value else { return Ok(()) };
     let bytes = color.as_bytes();
@@ -102,7 +98,6 @@ fn validate_tier(tier: &TierRequest) -> Result<(), AppError> {
     validate_hex_color(tier.color.as_deref())
 }
 
-/// `name` lowercased, each non-alphanumeric run one dash, then six random `[0-9a-z]`
 #[must_use]
 pub fn generate_slug(name: &str) -> String {
     let base = name
@@ -123,7 +118,6 @@ pub fn generate_slug(name: &str) -> String {
     format!("{base}-{suffix}")
 }
 
-/// First sighting kept, order kept; 400 when empty
 pub fn offered_kinds(kinds: &[EntityKind]) -> Result<Vec<EntityKind>, AppError> {
     let mut out: Vec<EntityKind> = Vec::with_capacity(kinds.len());
     for kind in kinds {
@@ -139,7 +133,6 @@ pub fn offered_kinds(kinds: &[EntityKind]) -> Result<Vec<EntityKind>, AppError> 
     Ok(out)
 }
 
-/// Official lists are staff only; a non-staff user's community lists are capped
 pub async fn create(
     ctx: &AppContext,
     subject: &Subject,
@@ -240,7 +233,6 @@ pub async fn update(
     Ok(updated.into())
 }
 
-/// The list and everything in it; needs admin on the list
 pub async fn delete(ctx: &AppContext, subject: &Subject, slug: &str) -> Result<(), AppError> {
     let mut conn = ctx.db.conn().await?;
     let (list, user) =
@@ -365,7 +357,6 @@ pub async fn update_tier(
     Ok(tier.into())
 }
 
-/// Needs admin on the list: the tier's placements go with it
 pub async fn delete_tier(
     ctx: &AppContext,
     subject: &Subject,
@@ -405,7 +396,6 @@ fn entry_key(kind: EntityKind, id: &str) -> Vec<String> {
     vec![format!("{}:{id}", kind.as_str())]
 }
 
-/// Adds or re-places one entity; the id must be known to some loaded server
 pub async fn add_placement(
     ctx: &AppContext,
     subject: &Subject,
@@ -421,7 +411,7 @@ pub async fn add_placement(
         let mut conn = ctx.db.conn().await?;
         find_and_authorize(ctx, &mut conn, subject, slug, Action::EditTierList).await?
     };
-    validate_entity(ctx, req.entity_kind, &req.entity_id).await?; // may build story catalogues, so outside a connection
+    validate_entity(ctx, req.entity_kind, &req.entity_id).await?;
     let mut conn = ctx.db.conn().await?;
     let placement = repo::add_placement(
         &mut conn,
@@ -478,7 +468,6 @@ pub async fn set_placement_description(
     Ok(placement.into())
 }
 
-/// Removing an entity the list does not hold is not an error
 pub async fn remove_placement(
     ctx: &AppContext,
     subject: &Subject,
@@ -505,7 +494,6 @@ pub async fn remove_placement(
     Ok(())
 }
 
-/// Moves to another tier of the list, or reorders within one
 pub async fn move_placement(
     ctx: &AppContext,
     subject: &Subject,
@@ -551,7 +539,6 @@ pub async fn move_placement(
     Ok(moved.into())
 }
 
-/// The tier of the list that holds `(kind, id)`
 async fn holding_tier(
     conn: &mut myrtle_db::Conn,
     list: myrtle_types::TierListId,
@@ -570,7 +557,6 @@ async fn holding_tier(
         .map(|p| p.tier_id))
 }
 
-/// Stores the list's current rows as the next version
 pub async fn publish(
     ctx: &AppContext,
     subject: &Subject,

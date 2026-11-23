@@ -1,5 +1,3 @@
-//! Integrated Strategies themes and items, keyed by `roguelike_topic_table` id.
-
 use myrtle_gamedata::assets::{AssetIndex, AssetKind};
 use myrtle_gamedata_raw::tables::roguelike_entries::{RoguelikeEntry, THEME_TYPE};
 use myrtle_types::EntityKind;

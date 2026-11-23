@@ -1,5 +1,3 @@
-//! Enemies, keyed by `enemy_handbook_table` id.
-
 use myrtle_gamedata::assets::{AssetIndex, AssetKind};
 use myrtle_gamedata::model::GameModel;
 use myrtle_gamedata_raw::tables::enemy::Enemy;
@@ -18,7 +16,6 @@ pub(super) const SOURCE: KindSource = KindSource {
     catalogue,
 };
 
-/// What the handbook shows, in its order
 fn catalogue(m: &GameModel) -> Vec<EntitySummary> {
     in_key_order(
         m.enemies

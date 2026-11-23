@@ -1,6 +1,3 @@
-//! The interactive base planner: score a drafted layout, optimise or rotate it,
-//! against a player's roster. The draft lives in the client and arrives with every request.
-
 mod dto;
 
 use std::collections::{HashMap, HashSet};
@@ -48,17 +45,13 @@ use crate::privacy::{self, layout::ProfileTabId};
 use crate::snapshots::Snapshot;
 use crate::{AppContext, AppError};
 
-/// Bounds the work one request can ask of the optimiser
 const MAX_ROOMS: usize = 40;
 const SEARCH_TTL: Duration = Duration::from_mins(5);
 const PLAN_TTL: Duration = Duration::from_mins(10);
 const PLAN_CAP: usize = 64;
-/// The bundled optimum per draft, the heaviest step, shared by optimize and the rotation asked for next
 static PLANS: LazyLock<DashMap<String, (Instant, Arc<AcceptedEconomy>)>> =
     LazyLock::new(DashMap::new);
-/// Full morale in game units
 const MAX_MORALE: f64 = 24.0;
-/// Rooms the optimiser never staffs; dorms stay out so resters count as labour
 const UNMODELED_ROOM_TYPES: [&str; 2] = ["TRAINING", "WORKSHOP"];
 const TRAINER_CLASSES: [&str; 8] = [
     "Vanguard",
@@ -99,7 +92,6 @@ impl DraftRoom {
     }
 }
 
-/// Facts the sync cannot read; undeclared, the dependent skills price 0
 #[derive(Debug, Clone, Default, Deserialize, Serialize)]
 pub struct AccountFactsReq {
     #[serde(default)]
@@ -111,7 +103,6 @@ pub struct AccountFactsReq {
 #[derive(Debug, Clone, Deserialize)]
 pub struct EvaluateRequest {
     pub layout: Vec<DraftRoom>,
-    /// A check-in cadence priced beside 6/12/24 hours
     #[serde(default)]
     pub claim_interval_hours: Option<f64>,
     #[serde(default)]
@@ -123,7 +114,6 @@ pub struct EvaluateRequest {
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct OptimizeRequest {
     pub layout: Vec<DraftRoom>,
-    /// Slots the optimiser may restaff; empty is every room
     #[serde(default)]
     pub scope: Vec<String>,
     #[serde(default)]
@@ -152,7 +142,6 @@ pub struct RotationRequest {
 #[derive(Debug, Clone, Serialize)]
 pub struct LayoutResponse {
     pub rooms: Vec<DraftRoomDto>,
-    /// The saved `presetQueue` per slot, read-only beside the draft
     pub presets: Vec<SlotPresetsDto>,
     #[serde(default)]
     pub facts: AccountFactsReq,
@@ -183,7 +172,6 @@ pub struct EvaluateResponse {
     #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub claim: Option<ClaimDto>,
-    /// The drafted crews never swapped, from projected live morale
     #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub unrotated: Option<SustainabilityDto>,
@@ -215,7 +203,6 @@ pub struct DronesDto {
 
 #[derive(Debug, Clone, Serialize)]
 pub struct ClaimDto {
-    /// Hours from a claim until the first production buffer is full
     pub next_full_hours: f64,
     pub intervals: Vec<ClaimIntervalDto>,
 }
@@ -234,7 +221,6 @@ pub struct DormsDto {
     pub total_levels: i32,
     pub total_capacity: i32,
     pub recovery_per_hour: f64,
-    /// Best first, the order resters fill them
     pub per_dorm: Vec<DormDto>,
 }
 
@@ -258,7 +244,6 @@ pub struct SustainEntryDto {
     pub slot_id: String,
     pub room_type: String,
     pub drain_per_hour: f64,
-    /// From the synced bar when known, else from full; `None` never depletes
     pub lasts_hours: Option<f64>,
     #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -297,7 +282,6 @@ pub struct RotationResponse {
     pub rotation: ShiftRotationDto,
     pub shift_count: usize,
     pub comparison: RotationComparisonDto,
-    /// A hand-swapped two-stationing cycle; `None` without a second crew
     pub cycle: Option<CycleDto>,
 }
 
@@ -325,10 +309,8 @@ pub struct CycleRoomDto {
 pub struct RotationComparisonDto {
     pub recommended: RotationValueDto,
     pub presets: Option<RotationValueDto>,
-    /// Production room-shift cells of the presets matching the recommendation
     pub matching_cells: usize,
     pub production_cells: usize,
-    /// Hours each of two presets works per cycle; empty for equal shifts
     pub preset_legs_hours: Vec<f64>,
 }
 
@@ -360,7 +342,6 @@ pub struct CatalogResponse {
     pub storeys: Vec<CatalogStoreyDto>,
 }
 
-/// Coordinates in the game's half-tile units
 #[derive(Debug, Clone, Serialize)]
 pub struct CatalogSlotDto {
     pub slot_id: String,
@@ -404,7 +385,6 @@ pub struct CatalogFormulaDto {
     pub label: String,
 }
 
-/// The roster's profiles under the effective facts, beside the synced base
 struct Planning {
     base: BaseContext,
     synced: Option<Value>,
@@ -421,7 +401,6 @@ fn facts_of(stored: Option<Value>) -> AccountFactsReq {
         .unwrap_or_default()
 }
 
-/// The planned user and their game uid; the uid param is gated as the Optimizer tab
 async fn target(
     ctx: &AppContext,
     subject: &Subject,
@@ -436,7 +415,6 @@ async fn target(
     Ok((subject.user_id().ok_or(AppError::Unauthorized)?, uid))
 }
 
-/// Saved facts are the default; the request's own override per field
 async fn planning(
     ctx: &AppContext,
     user: UserId,
@@ -468,7 +446,6 @@ async fn planning(
     })
 }
 
-/// Refuses unknown room types, impossible levels, over-seated or over-counted rooms by name
 fn validate(layout: &[DraftRoom], building: &BuildingDataFile) -> Result<(), AppError> {
     if layout.is_empty() {
         return Err(AppError::bad_request("layout is empty"));
@@ -510,7 +487,7 @@ fn validate(layout: &[DraftRoom], building: &BuildingDataFile) -> Result<(), App
                 room.level
             )));
         }
-        let count = per_type.entry(&room.room_type).or_default(); // also caps the rotation search's per-type pool
+        let count = per_type.entry(&room.room_type).or_default();
         *count += 1;
         if def.max_count > 0 && *count > def.max_count {
             return Err(AppError::bad_request(format!(
@@ -545,7 +522,6 @@ fn draft_building(layout: Vec<DraftRoom>, drone_capacity: Option<i32>) -> UserBu
     }
 }
 
-/// The owner saving their own facts; another player's cannot be set
 pub async fn save_facts(
     ctx: &AppContext,
     subject: &Subject,
@@ -558,7 +534,6 @@ pub async fn save_facts(
     Ok(facts)
 }
 
-/// Every built slot of the player's stationed base, as an editable draft
 pub async fn layout(
     ctx: &AppContext,
     subject: &Subject,
@@ -579,7 +554,7 @@ pub async fn layout(
     let mut presets: Vec<SlotPresetsDto> = building
         .rooms
         .iter()
-        .filter(|room| room.preset_shifts.iter().any(|shift| !shift.is_empty())) // an all-empty queue is the game's "no rotation saved"
+        .filter(|room| room.preset_shifts.iter().any(|shift| !shift.is_empty()))
         .map(|room| SlotPresetsDto {
             slot_id: room.slot_id.clone(),
             shifts: room.preset_shifts.clone(),
@@ -606,7 +581,6 @@ pub async fn layout(
     })
 }
 
-/// The draft scored as stationed, with power, endurance, dorms and claim economics
 pub async fn evaluate(
     ctx: &AppContext,
     subject: &Subject,
@@ -653,7 +627,7 @@ fn evaluate_planned(
         let snapshots = live_morale_snapshot(json);
         let latest = snapshots.values().map(|s| s.at_unix).max().unwrap_or(0);
         morale_synced_hours_ago = (latest > 0).then(|| hours_between(latest, now_unix));
-        let real = UserBuilding::from_json(json); // projected from the real base's seats, not the draft's
+        let real = UserBuilding::from_json(json);
         live_morale = project_morale(
             &snapshots,
             now_unix,
@@ -709,7 +683,6 @@ fn hours_between(from_unix: i64, to_unix: i64) -> f64 {
     (to_unix - from_unix).max(0) as f64 / 3600.0
 }
 
-/// `labor` recovers 240 drones a day, scaled by its `buffSpeed`, capped at `maxValue`
 fn drones_of(labor: &Value, now_unix: i64) -> Option<DronesDto> {
     let value = labor.get("value").and_then(Value::as_f64)?;
     let max = i32::try_from(labor.get("maxValue").and_then(Value::as_i64)?).ok()?;
@@ -733,7 +706,6 @@ fn drones_of(labor: &Value, now_unix: i64) -> Option<DronesDto> {
     })
 }
 
-/// Claiming every `T` hours realises `min(fill, T) / T` of a room's rate; losses per resource
 #[must_use]
 pub fn claim_of(assignment: &BaseAssignmentDto, custom_hours: Option<f64>) -> Option<ClaimDto> {
     let fills: Vec<(&RoomAssignmentDto, f64)> = assignment
@@ -761,10 +733,16 @@ pub fn claim_of(assignment: &BaseAssignmentDto, custom_hours: Option<f64>) -> Op
             for (r, fill) in &fills {
                 let lost = (1.0 - (fill / hours).min(1.0)).max(0.0);
                 match r.room_type.as_str() {
-                    "TRADING" => interval.lost_lmd_per_day += r.yield_lmd_per_day * lost,
+                    "TRADING" => {
+                        interval.lost_lmd_per_day =
+                            r.yield_lmd_per_day.mul_add(lost, interval.lost_lmd_per_day);
+                    }
                     "MANUFACTURE" => {
-                        interval.lost_gold_per_day += r.yield_gold_per_day * lost;
-                        interval.lost_exp_per_day += r.yield_exp_per_day * lost;
+                        interval.lost_gold_per_day = r
+                            .yield_gold_per_day
+                            .mul_add(lost, interval.lost_gold_per_day);
+                        interval.lost_exp_per_day =
+                            r.yield_exp_per_day.mul_add(lost, interval.lost_exp_per_day);
                     }
                     _ => {}
                 }
@@ -902,7 +880,6 @@ fn sustain_of(
     out
 }
 
-/// A buff text's flat Specialization speed for `class`; composition-scaled texts are skipped, not guessed
 #[must_use]
 pub fn trainer_value(desc: &str, class: &str) -> Option<f64> {
     if !desc.contains("Specialization training speed") || desc.contains("for each") {
@@ -925,7 +902,6 @@ pub fn trainer_value(desc: &str, class: &str) -> Option<f64> {
     fits.then_some(pct)
 }
 
-/// The three strongest TRAINING-room skills for `class` across the roster
 fn trainer_hints(base: &BaseContext, data: &BaseData, class: &str) -> Vec<TrainerHintDto> {
     if !TRAINER_CLASSES.contains(&class) {
         return Vec::new();
@@ -955,7 +931,6 @@ fn trainer_hints(base: &BaseContext, data: &BaseData, class: &str) -> Vec<Traine
         .collect()
 }
 
-/// `base:optimize:{uid}:{hash}`, the hash over the request's JSON
 #[must_use]
 pub fn optimize_key(uid: &str, req: &OptimizeRequest) -> String {
     format!(
@@ -964,7 +939,6 @@ pub fn optimize_key(uid: &str, req: &OptimizeRequest) -> String {
     )
 }
 
-/// `base:rotation:{uid}:{hash}`, the hash over the request's JSON
 #[must_use]
 pub fn rotation_key(uid: &str, req: &RotationRequest) -> String {
     format!(
@@ -973,7 +947,6 @@ pub fn rotation_key(uid: &str, req: &RotationRequest) -> String {
     )
 }
 
-/// The best staffing for the draft beside the draft itself, cached and detached
 pub async fn optimize(
     ctx: &AppContext,
     subject: &Subject,
@@ -1029,7 +1002,7 @@ fn optimize_planned(
     for room in &mut building.rooms {
         room.frozen = !scope.is_empty()
             && !scope.contains(&room.slot_id)
-            && is_production_room(&room.room_type); // outside the scope a production room keeps its drafted crew
+            && is_production_room(&room.room_type);
     }
     let candidates = base.profiles_excluding(&req.excluded);
     let economy = search_economy(&candidates, &building, building_data, &base.registry);
@@ -1090,7 +1063,6 @@ fn optimize_planned(
     }
 }
 
-/// A three-shift rotation for the draft, aligned to the player's saved presets, cached and detached
 pub async fn rotation(
     ctx: &AppContext,
     subject: &Subject,
@@ -1189,7 +1161,7 @@ fn rotation_planned(
         &base.registry,
         &base.morale_drains,
     )
-    .unwrap_or_default(); // the full roster, so an excluded operator in a saved preset still prices
+    .unwrap_or_default();
     let presets = presets_value(
         &base.profiles,
         &building,
@@ -1264,7 +1236,6 @@ fn rotation_planned(
     }
 }
 
-/// Everything the bundle search reads: uid, facts and the sorted scope, locks, exclusions and rooms
 #[must_use]
 pub fn plan_cache_key(
     uid: &str,
@@ -1305,7 +1276,6 @@ pub fn plan_cache_key(
     )
 }
 
-/// The plan kept under `key`, while fresh
 #[must_use]
 pub fn cached_plan(key: &str) -> Option<Arc<AcceptedEconomy>> {
     PLANS
@@ -1314,7 +1284,6 @@ pub fn cached_plan(key: &str) -> Option<Arc<AcceptedEconomy>> {
         .map(|entry| Arc::clone(&entry.1))
 }
 
-/// Past [`PLAN_CAP`] expired plans go first, then the oldest
 fn plan(key: String, search: impl FnOnce() -> AcceptedEconomy) -> Arc<AcceptedEconomy> {
     if let Some(hit) = cached_plan(&key) {
         return hit;
@@ -1348,7 +1317,6 @@ fn with_pins(
     pins
 }
 
-/// Seats outside `scope`, in unmodelled rooms or locked; pinned, not excluded, so cross-room buffs still score
 #[must_use]
 pub fn build_pins(
     layout: &[DraftRoom],
@@ -1370,7 +1338,6 @@ pub fn build_pins(
     pins
 }
 
-/// Rooms whose crew changed; "before" is the draft, since a `BaseAssignment` omits support rooms
 fn diff_rooms(
     draft: &[DraftRoom],
     baseline: &BaseAssignment,
@@ -1413,7 +1380,6 @@ fn diff_rooms(
     diffs
 }
 
-/// Facility capacities, power, level caps and the shared floorplan from `building_data`
 pub fn catalog(ctx: &AppContext) -> Result<CatalogResponse, AppError> {
     let snapshot = game_data(ctx)?;
     let building = snapshot.base.building();
@@ -1452,7 +1418,7 @@ pub fn catalog(ctx: &AppContext) -> Result<CatalogResponse, AppError> {
         label: label.to_owned(),
     })
     .collect();
-    let layout = building.layouts.values().next(); // whichever the game keys; a second one cannot blank the board
+    let layout = building.layouts.values().next();
     let mut slots: Vec<CatalogSlotDto> = layout
         .map(|l| {
             l.slots

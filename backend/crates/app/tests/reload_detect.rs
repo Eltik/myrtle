@@ -14,7 +14,7 @@ use myrtle_app::services::catalog::static_data::{ENEMY_AVERAGE_KEY, community_en
 use myrtle_app::services::gacha::reconcile_rarities;
 use myrtle_app::services::gacha::sidecar::{is_pending, mark_pending};
 use myrtle_app::snapshots::{SnapshotRegistry, fingerprint, game_version};
-use myrtle_db::repos::data_generations;
+use myrtle_db::repos::data_generations::{self, Generation};
 use myrtle_gamedata::assets::AssetKind;
 use myrtle_hypergryph::{DeviceIds, NetworkConfig, Upstream};
 use myrtle_jobs::JobKind;
@@ -92,14 +92,12 @@ fn the_game_version_carries_the_data_version_and_fingerprint() {
     assert_eq!(version.res, fingerprint(dir.path()).unwrap());
 }
 
-/// Network config fetched from `route`, so a reload never leaves the machine
 fn upstream(route: &str) -> Arc<Upstream> {
     let mut network = NetworkConfig::new(DeviceIds::default());
     network.hosts.network_routes = std::array::from_fn(|_| route.to_owned());
     Arc::new(Upstream::new(reqwest::Client::new(), network))
 }
 
-/// A second process: its own registry and memory cache over the same database and files
 fn process(base: &AppContext, assets: &Path, retry: Duration) -> AppContext {
     serving(base, assets, retry, &[Server::EN])
 }
@@ -139,7 +137,7 @@ async fn an_announcement_reloads_every_process_once() {
     let worker = process(&base, assets.path(), Duration::from_mins(10));
     for ctx in [&api, &worker] {
         ctx.snapshots
-            .activate_at(Server::EN, 0, None)
+            .activate_at(Server::EN, &Generation::default())
             .await
             .unwrap();
         assert_eq!(ctx.reload_if_changed().await.unwrap(), []);
@@ -193,7 +191,7 @@ async fn an_asset_only_update_reloads_the_asset_index() {
     extract(&root, "52.0.0");
     let ctx = process(&base, assets.path(), Duration::from_mins(10));
     ctx.snapshots
-        .activate_at(Server::EN, 0, None)
+        .activate_at(Server::EN, &Generation::default())
         .await
         .unwrap();
     let banner = |ctx: &AppContext| {
@@ -244,7 +242,7 @@ async fn a_process_on_old_data_never_writes_or_serves_the_reloaded_key() {
     };
     for ctx in [&api, &worker] {
         ctx.snapshots
-            .activate_at(Server::EN, 0, None)
+            .activate_at(Server::EN, &Generation::default())
             .await
             .unwrap();
     }
@@ -285,7 +283,7 @@ async fn a_failed_load_waits_out_the_retry_window() {
     let eager = process(&base, assets.path(), Duration::ZERO);
     for ctx in [&patient, &eager] {
         ctx.snapshots
-            .activate_at(Server::EN, 0, None)
+            .activate_at(Server::EN, &Generation::default())
             .await
             .unwrap();
     }
@@ -329,27 +327,21 @@ async fn a_job_for_a_generation_this_process_cannot_load_fails_to_retry() {
     config.switches.release_ledger.enabled = true;
     ctx.config = Arc::new(config);
     ctx.snapshots
-        .activate_at(Server::EN, 0, None)
+        .activate_at(Server::EN, &Generation::default())
         .await
         .unwrap();
     std::fs::remove_file(root.join("gamedata/excel/character_table.json")).unwrap();
     let generation = ctx.announce_update(Server::EN, Some("v1")).await.unwrap();
 
-    assert!(
-        record_ledger(&ctx, Server::EN, Some("v1"), generation)
-            .await
-            .is_err()
-    );
+    assert!(record_ledger(&ctx, Server::EN, generation).await.is_err());
     assert!(mirror_art(&ctx, Server::EN, generation).await.is_err());
     assert!(reconcile_rarities(&ctx, generation).await.is_err());
     assert_eq!(ctx.snapshots.require(Server::EN).unwrap().generation, 0);
 
     extract(&root, "52.0.0");
     assert_eq!(
-        record_ledger(&ctx, Server::EN, Some("v1"), generation)
-            .await
-            .unwrap(),
-        "en: 0 inserted, 0 refreshed"
+        record_ledger(&ctx, Server::EN, generation).await.unwrap(),
+        "en: 0 inserted, 0 refreshed as v1"
     );
     assert_eq!(
         ctx.snapshots.require(Server::EN).unwrap().generation,
@@ -357,7 +349,7 @@ async fn a_job_for_a_generation_this_process_cannot_load_fails_to_retry() {
         "the job reloaded first"
     );
     assert!(
-        record_ledger(&ctx, Server::EN, None, 0).await.is_ok(),
+        record_ledger(&ctx, Server::EN, 0).await.is_ok(),
         "newer data serves an older job"
     );
     db.close().await;
@@ -376,7 +368,10 @@ async fn a_reload_drops_only_its_own_servers_bodies() {
         &[Server::EN, Server::JP],
     );
     for server in [Server::EN, Server::JP] {
-        ctx.snapshots.activate_at(server, 0, None).await.unwrap();
+        ctx.snapshots
+            .activate_at(server, &Generation::default())
+            .await
+            .unwrap();
     }
     let builds = Arc::new(AtomicU32::new(0));
     let body = |key: &'static str| {
@@ -420,7 +415,6 @@ async fn a_reload_drops_only_its_own_servers_bodies() {
     db.close().await;
 }
 
-/// Counts connections to a local port that answers every request with a 503
 async fn counting_route() -> (String, Arc<AtomicU32>) {
     let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
     let url = format!("http://{}/", listener.local_addr().unwrap());
@@ -454,7 +448,10 @@ async fn a_default_server_reload_refreshes_the_network_config() {
         )
     };
     for server in [Server::EN, Server::JP] {
-        ctx.snapshots.activate_at(server, 0, None).await.unwrap();
+        ctx.snapshots
+            .activate_at(server, &Generation::default())
+            .await
+            .unwrap();
     }
     ctx.announce_update(Server::JP, None).await.unwrap();
     assert_eq!(ctx.reload_if_changed().await.unwrap(), [Server::JP]);
@@ -498,7 +495,10 @@ async fn a_text_only_server_reads_the_default_servers_art() {
         config.switches.art_fallback.enabled = fallback;
         let snapshots = SnapshotRegistry::new(&config);
         assert_eq!(&snapshots.art_dir(Server::KR), art);
-        snapshots.activate_at(Server::KR, 0, None).await.unwrap();
+        snapshots
+            .activate_at(Server::KR, &Generation::default())
+            .await
+            .unwrap();
         let live = snapshots.require(Server::KR).unwrap();
         assert_eq!(live.model.meta.game_version.client, "9.9.9", "KR's tables");
         assert_eq!(
@@ -532,12 +532,12 @@ async fn a_text_only_servers_key_names_the_servers_it_was_aligned_on() {
         );
         if aligned_on_en {
             ctx.snapshots
-                .activate_at(Server::EN, 0, None)
+                .activate_at(Server::EN, &Generation::default())
                 .await
                 .unwrap();
         }
         ctx.snapshots
-            .activate_at(Server::JP, 0, None)
+            .activate_at(Server::JP, &Generation::default())
             .await
             .unwrap();
         let en = ctx.snapshots.get(Server::EN).map(|en| en.key("k"));
@@ -570,7 +570,10 @@ async fn any_reload_takes_the_sidecar_flag_and_a_failed_one_sets_it() {
         &[Server::EN, Server::KR],
     );
     for server in [Server::EN, Server::KR] {
-        ctx.snapshots.activate_at(server, 0, None).await.unwrap();
+        ctx.snapshots
+            .activate_at(server, &Generation::default())
+            .await
+            .unwrap();
     }
     mark_pending(Server::KR);
     ctx.announce_update(Server::KR, Some("v1")).await.unwrap();
@@ -600,7 +603,10 @@ async fn a_reload_warms_the_story_library_without_waiting_for_it() {
         &[Server::EN, Server::JP],
     );
     for server in [Server::EN, Server::JP] {
-        ctx.snapshots.activate_at(server, 0, None).await.unwrap();
+        ctx.snapshots
+            .activate_at(server, &Generation::default())
+            .await
+            .unwrap();
     }
     ctx.announce_update(Server::JP, None).await.unwrap();
     assert_eq!(ctx.reload_if_changed().await.unwrap(), [Server::JP]);

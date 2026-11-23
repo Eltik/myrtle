@@ -189,7 +189,6 @@ async fn the_status_of_a_server_with_no_session_is_not_found() {
     db.close().await;
 }
 
-/// Answers the two refresh calls; `getToken` holds until `release` and signals `reached` first
 async fn refresh_server(reached: Arc<Notify>, release: Arc<Notify>) -> String {
     let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
     let base = format!("http://{}", listener.local_addr().unwrap());

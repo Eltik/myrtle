@@ -1,5 +1,3 @@
-//! Account Lookback: one roster snapshot per period, and the timeline reads.
-
 use std::collections::HashMap;
 
 use chrono::{DateTime, Utc};
@@ -14,26 +12,17 @@ use crate::privacy::{self, layout::ProfileTabId};
 use crate::{AppContext, AppError, Subject};
 
 const DAY_SECS: i64 = 86_400;
-
-/// A policy, not a derivation: EN's longest gap between launches in 2024-2026 is 26 days
 pub const STALE_LAUNCH_SECS: i64 = 28 * DAY_SECS;
-
-/// Snapshots older than this keep only the first of each calendar month
 pub const KEEP_EVERY_DAYS: i32 = 365;
-
-/// A snapshot shows the roster as it was, so a visitor needs both tabs visible
 const TABS: [ProfileTabId; 2] = [ProfileTabId::Lookback, ProfileTabId::Roster];
 
-/// Every field defaults, so a row written before a field existed still reads
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct LookbackSummary {
     pub operators: u32,
     pub elite2: u32,
-    /// At the level cap of their promotion; operators missing from game data are not counted
     pub max_level: u32,
     pub skill_level7: u32,
-    /// Mastery ranks over every skill: an M3 counts 3
     pub masteries: u32,
     pub mastery3: u32,
     pub modules: u32,
@@ -46,7 +35,6 @@ pub struct LookbackSummary {
 
 #[derive(Debug, Clone, Serialize)]
 pub struct LookbackSnapshot {
-    /// `period_start` in Unix seconds
     pub id: i64,
     pub period_start: DateTime<Utc>,
     pub taken_at: DateTime<Utc>,
@@ -68,7 +56,6 @@ pub struct LookbackOperator {
     pub level: i16,
     pub potential: i16,
     pub skill_level: i16,
-    /// By skill index; empty when no skill is mastered
     pub masteries: Vec<i16>,
     pub modules: Vec<LookbackModule>,
 }
@@ -82,7 +69,6 @@ pub struct LookbackBuild {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub struct OwnershipPoint {
-    /// 00:00 UTC of the day, Unix seconds
     pub ts: i64,
     pub count: u32,
 }
@@ -93,7 +79,6 @@ pub struct LookbackOverview {
     pub ownership: Vec<OwnershipPoint>,
 }
 
-/// An array, not an object, so 236 operators a row do not repeat key names
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct StoredOperator(
     pub String,
@@ -113,9 +98,7 @@ pub struct StoredBuild {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Period {
-    /// Unix seconds
     pub start: i64,
-    /// `None` for a week period
     pub activity_id: Option<String>,
     pub activity_name: Option<String>,
 }
@@ -137,20 +120,17 @@ impl From<SummaryExtrasRow> for SummaryExtras {
     }
 }
 
-/// An event with stages, not a one-time competitive mode; EN files side stories under `display_type` `NONE`
 #[must_use]
 pub fn is_launch(activity: &ActivityBasicInfo) -> bool {
     activity.has_stage && activity.start_time > 0 && !activity.is_one_time_competitive()
 }
 
-/// 00:00 UTC of the Monday of the week holding `now`
 #[must_use]
 pub const fn week_start(now: i64) -> i64 {
     let day = now.div_euclid(DAY_SECS);
-    (day - (day + 3).rem_euclid(7)) * DAY_SECS // 1970-01-01 was a Thursday
+    (day - (day + 3).rem_euclid(7)) * DAY_SECS
 }
 
-/// The latest launch by `now`, else the current week; same-second launches resolve to the smaller id
 pub fn current_period<'a>(
     activities: impl IntoIterator<Item = &'a ActivityBasicInfo>,
     now: i64,
@@ -187,7 +167,6 @@ pub fn level_cap(
         .map(|p| p.max_level)
 }
 
-/// `rows` as a snapshot; masteries are stored only for an operator with one
 pub fn compact(
     rows: &[BuildRow],
     extras: SummaryExtras,
@@ -271,7 +250,6 @@ pub fn expand(build: StoredBuild) -> Vec<LookbackOperator> {
         .collect()
 }
 
-/// The owned count at the end of each UTC day an operator was obtained; non-positive times are left off
 #[must_use]
 pub fn ownership_series(mut obtained: Vec<i64>) -> Vec<OwnershipPoint> {
     obtained.retain(|&t| t > 0);
@@ -296,7 +274,6 @@ fn encode<T: Serialize>(value: &T) -> Result<Value, AppError> {
     serde_json::to_value(value).map_err(AppError::internal)
 }
 
-/// Takes `user`'s snapshot for the current period unless it has one; returns whether a row was written
 pub async fn record(ctx: &AppContext, user: UserId, server: Server) -> Result<bool, AppError> {
     let snapshot = ctx.snapshots.or_default(server)?;
     let model = &snapshot.model;
@@ -322,7 +299,6 @@ pub async fn record(ctx: &AppContext, user: UserId, server: Server) -> Result<bo
     Ok(lookback::insert(&mut conn, user, &new, KEEP_EVERY_DAYS).await?)
 }
 
-/// The timeline of `uid`, or of the caller when `uid` is absent
 pub async fn overview(
     ctx: &AppContext,
     subject: &Subject,
@@ -351,7 +327,6 @@ pub async fn overview(
     })
 }
 
-/// One stored snapshot by its key, `period_start` in Unix seconds
 pub async fn snapshot(
     ctx: &AppContext,
     subject: &Subject,
@@ -370,7 +345,6 @@ pub async fn snapshot(
     })
 }
 
-/// The roster as of its last sync, compacted like a snapshot: a "since then" diff's right side
 pub async fn current(
     ctx: &AppContext,
     subject: &Subject,

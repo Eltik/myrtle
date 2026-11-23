@@ -48,7 +48,6 @@ fn building_json(now: i64) -> Value {
     })
 }
 
-/// A synced public player at E2 L60 with a five-room base
 async fn seed(ctx: &myrtle_app::AppContext, uid: &str) -> UserId {
     let now = chrono::Utc::now().timestamp();
     let operators: Vec<Value> = OPERATORS
@@ -138,7 +137,7 @@ async fn settings(
     let mut conn = ctx.db.conn().await.unwrap();
     users::set_base_facts(&mut conn, user, &json!({}))
         .await
-        .unwrap(); // update_settings needs the row
+        .unwrap();
     users::update_settings(
         &mut conn,
         user,
@@ -198,7 +197,7 @@ async fn reads_follow_profile_privacy_and_the_score_tab() {
     let owner = db.user(7101, Server::EN).await;
     let own = common::user(&ctx, owner, Role::User).await;
     let visitor = common::user(&ctx, db.user(7102, Server::EN).await, Role::User).await;
-    let past_gate = |r: Result<_, AppError>| matches!(r, Err(AppError::Unavailable)); // no game data loaded
+    let past_gate = |r: Result<_, AppError>| matches!(r, Err(AppError::Unavailable));
 
     assert!(matches!(
         improvements(&ctx, &Subject::Anonymous, None).await,
@@ -252,7 +251,7 @@ async fn a_synced_player_gets_every_section_once_per_sync() {
     let first = improvements(&ctx, &own, None).await.unwrap();
     let body: Value = serde_json::from_str(&first.body).unwrap();
     assert_eq!(body["uid"], "7201");
-    assert!(body["stages"]["permanent"]["missing"].is_array()); // no known stages without a stage sync
+    assert!(body["stages"]["permanent"]["missing"].is_array());
     assert!(body["roguelike"].as_array().unwrap().len() >= 4);
     let gaps = body["operators"]["below_milestone"].as_array().unwrap();
     assert!(gaps.iter().any(|g| {

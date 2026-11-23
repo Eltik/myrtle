@@ -4,7 +4,6 @@ use chrono::DateTime;
 use myrtle_app::services::catalog::maintenance::parse::html_to_text;
 use myrtle_app::services::catalog::maintenance::{NoticeWindow, parse_notice};
 
-/// 2026-10-11T00:00:00Z, the day the fixtures were fetched
 const FETCHED: i64 = 1_791_676_800;
 
 fn ts(s: &str) -> i64 {

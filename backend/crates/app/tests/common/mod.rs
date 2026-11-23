@@ -1,5 +1,3 @@
-//! An `AppContext` over a throwaway database and a memory cache.
-
 #![allow(dead_code, clippy::unwrap_used)]
 
 use std::path::PathBuf;
@@ -28,7 +26,6 @@ pub fn config() -> Config {
     toml::from_str(&render_example()).unwrap()
 }
 
-/// A context with no game data loaded; close the returned database when done
 pub async fn context() -> (AppContext, TestDb) {
     let _ = rustls::crypto::ring::default_provider().install_default();
     let test_db = database().await;
@@ -63,7 +60,6 @@ pub async fn context() -> (AppContext, TestDb) {
     (ctx, test_db)
 }
 
-/// The subject a token for `id` carries; with no stored account, a uid no account holds
 pub async fn user(ctx: &AppContext, id: UserId, role: Role) -> Subject {
     let account = users::account(&mut ctx.db.conn().await.unwrap(), id)
         .await
@@ -81,8 +77,6 @@ pub async fn user(ctx: &AppContext, id: UserId, role: Role) -> Subject {
     }
 }
 
-/// The EN extract under `MYRTLE_TEST_ASSETS` (default `assets/output` at the
-/// repo root), compiled once per test binary; `None` when it is not on disk
 pub fn snapshot() -> Option<Arc<Snapshot>> {
     static SNAPSHOT: OnceLock<Option<Arc<Snapshot>>> = OnceLock::new();
     SNAPSHOT
@@ -107,7 +101,6 @@ pub fn snapshot() -> Option<Arc<Snapshot>> {
         .clone()
 }
 
-/// [`context`] with the EN snapshot installed, or `None` when there is no extract
 pub async fn context_with_data() -> Option<(AppContext, TestDb, Arc<Snapshot>)> {
     let snapshot = snapshot()?;
     let (ctx, db) = context().await;

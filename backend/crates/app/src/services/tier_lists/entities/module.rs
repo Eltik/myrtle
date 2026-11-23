@@ -1,5 +1,3 @@
-//! Operator modules, keyed by `uniequip_table.EquipDict` id.
-
 use std::cmp::Reverse;
 
 use myrtle_gamedata::assets::AssetKind;
@@ -15,7 +13,6 @@ pub(super) const SOURCE: KindSource = KindSource {
     catalogue,
 };
 
-/// Real modules of obtainable operators, newest first
 fn catalogue(m: &GameModel) -> Vec<EntitySummary> {
     in_key_order(
         m.modules
@@ -37,7 +34,6 @@ fn catalogue(m: &GameModel) -> Vec<EntitySummary> {
     )
 }
 
-/// Not the ORIGINAL placeholder every moduled operator has
 fn module<'a>(m: &'a GameModel, id: &str) -> Option<&'a Module> {
     m.modules
         .equip_dict
@@ -50,7 +46,7 @@ fn summary(m: &GameModel, id: &str, module: &Module) -> EntitySummary {
     let icon = m
         .assets
         .module_big_path(&module.uni_equip_icon)
-        .or_else(|| m.assets.path(AssetKind::ModuleType, &module.type_icon)) // the shared type badge
+        .or_else(|| m.assets.path(AssetKind::ModuleType, &module.type_icon))
         .map(asset_url);
     EntitySummary {
         kind: EntityKind::Module,

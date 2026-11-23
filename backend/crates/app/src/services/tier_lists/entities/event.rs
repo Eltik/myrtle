@@ -1,5 +1,3 @@
-//! Events, keyed by `activity_table.BasicInfo` id.
-
 use std::cmp::Reverse;
 
 use myrtle_gamedata::assets::AssetKind;
@@ -15,7 +13,6 @@ pub(super) const SOURCE: KindSource = KindSource {
     catalogue,
 };
 
-/// Rankable events, newest first
 fn catalogue(m: &GameModel) -> Vec<EntitySummary> {
     in_key_order(
         m.activities
@@ -26,7 +23,6 @@ fn catalogue(m: &GameModel) -> Vec<EntitySummary> {
     )
 }
 
-/// Sign-in sheets, login bonuses and shop switches
 fn is_filler(activity_type: &str) -> bool {
     activity_type.starts_with("CHECKIN_")
         || matches!(
@@ -42,13 +38,11 @@ fn is_filler(activity_type: &str) -> bool {
         )
 }
 
-/// Filed on an Archives shelf or has stages, and not filler
 fn is_rankable(info: &ActivityBasicInfo) -> bool {
     ((info.display_type != "NONE" && !info.display_type.is_empty()) || info.has_stage)
         && !is_filler(&info.activity_type)
 }
 
-/// Whether the Story Collection holds the key visual and title a banner is made from
 fn has_story_art(m: &GameModel, id: &str) -> bool {
     m.storyline_story_sets
         .values()
@@ -62,7 +56,6 @@ fn has_story_art(m: &GameModel, id: &str) -> bool {
         })
 }
 
-/// `/event-image` when a banner exists or can be made, else the story group's Archives cover
 fn icon(m: &GameModel, id: &str) -> Option<String> {
     if m.assets.event_banner_path(id).is_some() || has_story_art(m, id) {
         return Some(format!("/event-image/{id}"));

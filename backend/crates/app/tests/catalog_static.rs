@@ -20,7 +20,6 @@ use myrtle_testkit::db::TestDb;
 use myrtle_types::Server;
 use serde_json::{Value, json};
 
-/// [`common::context_with_data`] whose `server_dir` is the real extract, for the level files
 async fn context_with_files() -> Option<(AppContext, TestDb, Arc<Snapshot>)> {
     let (mut ctx, db, snapshot) = common::context_with_data().await?;
     let mut config = common::config();
@@ -81,7 +80,7 @@ async fn a_table_is_served_once_and_hit_with_the_same_etag() {
         "a hit shares the body"
     );
 
-    ctx.cache.invalidate_prefix("static:en:").await; // what a reload flushes
+    ctx.cache.invalidate_prefix("static:en:").await;
     let rebuilt = static_data::resource(&ctx, Server::EN, "ranges")
         .await
         .unwrap();

@@ -1,5 +1,3 @@
-//! Grids: R x C boards of labelled cells, each holding at most one tier-list entity.
-
 use std::sync::Arc;
 
 use chrono::{DateTime, Utc};
@@ -20,7 +18,7 @@ use crate::{AppContext, AppError};
 
 pub const SIZE_MIN: i32 = 1;
 pub const SIZE_MAX: i32 = 10;
-pub const TITLE_MAX: usize = 100; // `grids.title varchar(100)`
+pub const TITLE_MAX: usize = 100;
 pub const DESCRIPTION_MAX: usize = 2000;
 pub const LABEL_MAX: usize = 60;
 pub const PER_PAGE_DEFAULT: i32 = 24;
@@ -28,7 +26,6 @@ pub const PER_PAGE_MAX: i32 = 60;
 pub const MAX_GRIDS_PER_USER: i64 = 50;
 pub const SLUG_BASE_MAX: usize = 60;
 
-/// `entity_kind` and `entity_id` are set together or not at all
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GridCellInput {
     pub label: String,
@@ -36,7 +33,6 @@ pub struct GridCellInput {
     pub entity_id: Option<String>,
 }
 
-/// Row-major `cells`, exactly `rows * cols` long, every pick of a kind in `entity_kinds`
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GridInput {
     pub title: String,
@@ -53,9 +49,7 @@ pub struct GridCell {
     pub label: String,
     pub entity_kind: Option<EntityKind>,
     pub entity_id: Option<String>,
-    /// `None` when empty or no loaded server knows the pick
     pub entity: Option<EntitySummary>,
-    /// Where `entity` resolved when the reader's server does not know it
     pub entity_server: Option<Server>,
 }
 
@@ -69,7 +63,6 @@ pub struct GridPreviewIcon {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GridOwner {
     pub id: Uuid,
-    /// Nickname, else uid
     pub name: String,
 }
 
@@ -90,7 +83,6 @@ pub struct Grid {
     pub cells: Vec<GridCell>,
     pub is_listed: bool,
     pub entity_kinds: Vec<EntityKind>,
-    /// Every fork, even one whose template the viewer cannot see
     pub kinds_locked: bool,
     pub owner: GridOwner,
     pub template_of: Option<GridTemplateRef>,
@@ -122,7 +114,6 @@ pub struct GridListResponse {
     pub per_page: i32,
 }
 
-/// One cell as `grids.cells` stores it; the kind stays text so an unknown one drops the pick only
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct StoredCell {
     pub label: String,
@@ -154,7 +145,6 @@ pub struct GridDocument {
     pub cols: i16,
     pub cells: Vec<StoredCell>,
     pub is_listed: bool,
-    /// Deduplicated, in canonical order
     pub entity_kinds: Vec<EntityKind>,
 }
 
@@ -180,7 +170,6 @@ pub fn stored_cells(row: &GridRow) -> Vec<StoredCell> {
     })
 }
 
-/// Known kinds in canonical order; a set with none known reads as every kind
 #[must_use]
 pub fn kinds_of(row: &GridRow) -> Vec<EntityKind> {
     let mut kinds: Vec<EntityKind> = row
@@ -211,7 +200,6 @@ fn actor(subject: &Subject) -> Result<UserId, AppError> {
     subject.user_id().ok_or(AppError::Unauthorized)
 }
 
-/// An unlisted grid is still served to anyone with its slug
 pub async fn get(
     ctx: &AppContext,
     subject: &Subject,
@@ -256,7 +244,6 @@ pub async fn list(
     })
 }
 
-/// Every grid the caller owns, listed or not, latest edit first
 pub async fn mine(
     ctx: &AppContext,
     subject: &Subject,
@@ -294,7 +281,6 @@ pub async fn create(
     Ok(grid)
 }
 
-/// Replaces the document; a pick the stored grid already holds is kept unvalidated
 pub async fn update(
     ctx: &AppContext,
     subject: &Subject,
@@ -326,7 +312,6 @@ pub async fn update(
     Ok(grid)
 }
 
-/// Forks are kept and lose their `template_of`
 pub async fn delete(ctx: &AppContext, subject: &Subject, slug: &str) -> Result<(), AppError> {
     let mut conn = ctx.db.conn().await?;
     let (row, user) = load_editable(ctx, &mut conn, subject, slug).await?;
@@ -348,7 +333,6 @@ pub async fn delete(ctx: &AppContext, subject: &Subject, slug: &str) -> Result<(
     Ok(())
 }
 
-/// A new grid owned by the caller with the source's labels, size and kinds and no picks
 pub async fn fork(
     ctx: &AppContext,
     subject: &Subject,
@@ -380,7 +364,6 @@ async fn load(conn: &mut Conn, slug: &str) -> Result<GridRow, AppError> {
         .ok_or(AppError::NotFound(None))
 }
 
-/// 401 without a user, 404, then 403
 async fn load_editable(
     ctx: &AppContext,
     conn: &mut Conn,
@@ -396,7 +379,6 @@ async fn load_editable(
     Ok((row, user))
 }
 
-/// 409 when the owner already keeps [`MAX_GRIDS_PER_USER`]; the cap is checked inside the insert
 async fn insert_capped(
     conn: &mut Conn,
     doc: &GridDocument,
@@ -468,7 +450,6 @@ fn update_details(
     }
 }
 
-/// The input as stored, trimmed and checked; entity refs are checked separately
 pub fn checked(input: GridInput) -> Result<GridDocument, AppError> {
     let title = input.title.trim();
     if title.is_empty() {
@@ -559,7 +540,6 @@ fn checked_cell(
     })
 }
 
-/// Every pick some loaded server knows, except those `kept` already holds
 fn validate_entities(
     resolver: &Resolver,
     cells: &[StoredCell],
@@ -574,7 +554,6 @@ fn validate_entities(
     Ok(())
 }
 
-/// Listed only when the source is, so a fork never publishes an unlisted grid
 fn template_of(source: &GridRow) -> GridDocument {
     GridDocument {
         title: source.title.clone(),
@@ -622,7 +601,7 @@ fn to_grid(ctx: &AppContext, row: GridRow, subject: &Subject, resolver: &Resolve
             },
         )
         .is_allowed();
-    let template_visible = row.template_listed.unwrap_or(false) // an unlisted template's slug is shown only to its owner
+    let template_visible = row.template_listed.unwrap_or(false)
         || subject
             .user_id()
             .is_some_and(|u| Some(u.0) == row.template_owner);
@@ -655,7 +634,7 @@ fn to_grid(ctx: &AppContext, row: GridRow, subject: &Subject, resolver: &Resolve
 }
 
 fn to_cell(cell: StoredCell, resolver: &Resolver) -> GridCell {
-    let pick = cell.entity().map(|(kind, id)| (kind, id.to_owned())); // an unknown kind drops its id too, so no half pick is sent back
+    let pick = cell.entity().map(|(kind, id)| (kind, id.to_owned()));
     let (entity, entity_server) = pick
         .as_ref()
         .and_then(|(kind, id)| resolver.resolve(*kind, id))
@@ -689,7 +668,6 @@ fn to_summary(row: &GridRow, resolver: &Resolver) -> GridSummary {
     }
 }
 
-/// `len` entries in cell order, cut or padded so the card always draws the grid's shape
 pub fn preview_of(
     cells: &[StoredCell],
     len: usize,
@@ -712,7 +690,6 @@ pub fn preview_of(
     preview
 }
 
-/// Every kind the cells pick, for [`Resolver::new`]
 #[must_use]
 pub fn picked_kinds(cells: &[StoredCell]) -> Vec<EntityKind> {
     cells
@@ -729,12 +706,10 @@ fn rows_kinds(rows: &[GridRow]) -> Vec<EntityKind> {
 }
 
 pub struct Resolver {
-    /// `None` marks the reader's own server
     sources: Vec<(Option<Server>, Arc<Snapshot>, StoryCatalogues)>,
 }
 
 impl Resolver {
-    /// The reader's server then [`fallback_order`], each with the picture catalogues `kinds` read
     pub async fn new(ctx: &AppContext, server: Server, kinds: &[EntityKind]) -> Self {
         let server = server.data_server();
         let snapshots = &ctx.snapshots;
@@ -762,7 +737,6 @@ impl Resolver {
         Self { sources }
     }
 
-    /// The pick's summary and, when it is not the reader's, the server that knew it
     #[must_use]
     pub fn resolve(&self, kind: EntityKind, id: &str) -> Option<(EntitySummary, Option<Server>)> {
         self.sources.iter().find_map(|(server, data, story)| {
@@ -778,7 +752,6 @@ impl Resolver {
     }
 }
 
-/// A CN-only operator read off CN is named by its romanized `appellation`
 #[must_use]
 pub fn romanize_cn_operator(mut entity: EntitySummary, from: Option<Server>) -> EntitySummary {
     if entity.kind == EntityKind::Operator
@@ -791,7 +764,6 @@ pub fn romanize_cn_operator(mut entity: EntitySummary, from: Option<Server>) -> 
     entity
 }
 
-/// CN first, since it releases everything first, then `configured` in order, without `server`
 #[must_use]
 pub fn fallback_order(server: Server, configured: &[Server]) -> Vec<Server> {
     let server = server.data_server();

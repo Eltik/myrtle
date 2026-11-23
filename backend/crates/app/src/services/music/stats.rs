@@ -1,5 +1,3 @@
-//! Community listen and download counts, at most one per caller and track per window, and the rankings read from them.
-
 use std::collections::BTreeMap;
 use std::net::IpAddr;
 use std::time::Duration;
@@ -15,9 +13,7 @@ use serde::{Deserialize, Serialize};
 use super::library::check_track_id;
 use crate::{AppContext, AppError, Subject};
 
-/// A favourite played again after a break counts again; a track on repeat does not
 pub const LISTEN_WINDOW: Duration = Duration::from_mins(30);
-/// Absorbs retries and a second tab while a returning visitor still counts
 pub const DOWNLOAD_WINDOW: Duration = Duration::from_hours(24);
 pub const TOP_TRACKS_DEFAULT: u32 = 50;
 pub const TOP_TRACKS_MAX: u32 = 100;
@@ -140,16 +136,13 @@ pub struct MusicListenerPage {
     pub total: i64,
 }
 
-/// Who a call is counted against
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum StatClient {
     User(UserId),
-    /// `a:` and a hex HMAC of the address
     Anonymous(String),
 }
 
 impl StatClient {
-    /// The `music_stat_dedupe.client` value
     #[must_use]
     pub fn key(&self) -> String {
         match self {
@@ -158,7 +151,6 @@ impl StatClient {
         }
     }
 
-    /// The account, else the HMAC of `addr` under the JWT secret; `None` counts nothing
     #[must_use]
     pub fn of(ctx: &AppContext, subject: &Subject, addr: Option<IpAddr>) -> Option<Self> {
         match subject.user_id() {
@@ -175,7 +167,6 @@ const fn window_of(kind: StatKind) -> Duration {
     }
 }
 
-/// IPv4 as is (a mapped IPv6 read as its IPv4), IPv6 cut to its /64 so one host cannot rotate addresses
 #[must_use]
 pub fn normalize_addr(ip: IpAddr) -> String {
     match ip {
@@ -191,7 +182,6 @@ pub fn normalize_addr(ip: IpAddr) -> String {
     }
 }
 
-/// HMAC-SHA256 of the normalized address only: a user agent is the caller's to forge
 #[must_use]
 pub fn anonymous_client(secret: &str, ip: IpAddr) -> StatClient {
     let message = format!("music-stats:{}", normalize_addr(ip));
@@ -201,7 +191,6 @@ pub fn anonymous_client(secret: &str, ip: IpAddr) -> StatClient {
     ))
 }
 
-/// A `siren:` id with a synced row, or a `game:` id in any loaded server's index, the default first
 pub async fn is_known_track(ctx: &AppContext, track_id: &str) -> Result<bool, AppError> {
     check_track_id(track_id)?;
     if let Some(cid) = track_id.strip_prefix("siren:") {
@@ -221,7 +210,6 @@ pub async fn is_known_track(ctx: &AppContext, track_id: &str) -> Result<bool, Ap
     Ok(false)
 }
 
-/// Counts one event unless `client` already counted for the track inside the window; does not check the id
 pub async fn record_on(
     conn: &mut Conn,
     kind: StatKind,
@@ -241,7 +229,6 @@ pub async fn record_on(
     Ok(counted)
 }
 
-/// The public listen and download calls; a caller with no key still gets a bad id answered as one
 pub async fn record(
     ctx: &AppContext,
     kind: StatKind,
@@ -259,7 +246,6 @@ pub async fn record(
     Ok(MusicStatRecorded { counted })
 }
 
-/// `JobKind::MusicStatDedupeSweep`: a row older than the longest window decides nothing
 pub async fn sweep_dedupe(ctx: &AppContext) -> Result<String, AppError> {
     let before = Utc::now() - DOWNLOAD_WINDOW;
     let mut conn = ctx.db.conn().await?;
@@ -307,7 +293,6 @@ pub fn listeners_key(
     )
 }
 
-/// Every track's all-time counts
 pub async fn catalog(ctx: &AppContext) -> Result<MusicStatsCatalog, AppError> {
     cached(ctx, STATS_KEY, STATS_TTL, || async {
         let mut conn = ctx.db.conn().await?;
@@ -328,7 +313,6 @@ pub async fn catalog(ctx: &AppContext) -> Result<MusicStatsCatalog, AppError> {
     .await
 }
 
-/// `limit` defaults to [`TOP_TRACKS_DEFAULT`] and is clamped to 1..=[`TOP_TRACKS_MAX`]
 pub async fn top_tracks(
     ctx: &AppContext,
     window: MusicStatWindow,
@@ -353,7 +337,6 @@ pub async fn top_tracks(
     .await
 }
 
-/// One page of listeners with a public profile, site-wide or of one track; a hidden level reads `None`
 pub async fn listeners(
     ctx: &AppContext,
     window: MusicStatWindow,

@@ -261,7 +261,6 @@ fn batches(
     out
 }
 
-/// A group's next EN rerun by its EN listing rhythm; `anchor` dates a group with no EN listing
 fn by_cadence(
     pooled: bool,
     en_g: Option<&GroupHistory>,
@@ -284,7 +283,6 @@ fn by_group(groups: &[GroupHistory]) -> HashMap<&str, &GroupHistory> {
         .collect()
 }
 
-/// `cn_kept` drops the CN listings EN has passed; a pending window only those made is never dated from CN
 fn reruns(
     p: &Planner,
     names: &Names<'_>,
@@ -403,7 +401,6 @@ fn reruns(
     out
 }
 
-/// A cadence date yields to any listing-dated forecast of its group, and a group keeps one at most
 pub fn one_guess_per_group(out: &mut Vec<RerunForecast>) {
     let is_guess = |f: &RerunForecast| matches!(f.basis, RerunBasis::Cadence { .. });
     let dated: HashSet<String> = out

@@ -7,15 +7,12 @@ use tokio::sync::Semaphore;
 
 use crate::AppError;
 
-/// A hit older than this has its mtime refreshed, so an age-based sweep keeps it
 const TOUCH_AFTER: Duration = Duration::from_hours(24);
 
-/// Renders at once per kind, each a large PNG decode plus a resize; a slow kind never queues another
 pub(super) static PICTURE_RENDERS: LazyLock<Semaphore> = LazyLock::new(|| Semaphore::new(2));
 pub(super) static THUMB_RENDERS: LazyLock<Semaphore> = LazyLock::new(|| Semaphore::new(2));
 pub(super) static HEAD_RENDERS: LazyLock<Semaphore> = LazyLock::new(|| Semaphore::new(2));
 
-/// Files under `root/rel` relative to it, each directory in name order; an unreadable entry is skipped, not its tree
 #[must_use]
 pub fn list_story_tree(root: &Path, rel: &str) -> Vec<String> {
     let tree = root.join(rel);
@@ -32,11 +29,11 @@ pub fn list_story_tree(root: &Path, rel: &str) -> Vec<String> {
         .collect()
 }
 
+#[must_use]
 pub fn modified(path: &Path) -> Option<SystemTime> {
     std::fs::metadata(path).and_then(|m| m.modified()).ok()
 }
 
-/// Whether `target` exists and is no older than every one of `sources`
 pub(super) fn fresh(target: &Path, sources: &[&Path]) -> bool {
     modified(target).is_some_and(|t| sources.iter().all(|s| modified(s).is_some_and(|m| t >= m)))
 }
@@ -53,7 +50,6 @@ pub fn touch_if_old(path: &Path) {
     }
 }
 
-/// Writes beside `target` under a name no other writer in this process holds, then renames
 pub fn write_atomically(target: &Path, bytes: &[u8]) -> std::io::Result<()> {
     static SEQ: AtomicU64 = AtomicU64::new(0);
     let dir = target

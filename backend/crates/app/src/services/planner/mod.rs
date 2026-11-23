@@ -1,5 +1,3 @@
-//! A player's upgrade targets per operator and what they still cost; the compute is `engine-planner`.
-
 pub mod max_level;
 
 use std::collections::{BTreeMap, HashMap};
@@ -27,10 +25,8 @@ use crate::privacy::{self, layout::ProfileLayout, layout::ProfileTabId};
 use crate::snapshots::Snapshot;
 use crate::{AppContext, AppError};
 
-/// Above the whole operator roster, so "delete every plan" always fits
 const MAX_BULK_DELETE: usize = 1000;
 
-/// Unread by every plan view; the editor fetches the full operator itself
 const PLAN_OPERATOR_EMPTIED_ARRAYS: [&str; 6] = [
     "talents",
     "potentialRanks",
@@ -56,7 +52,6 @@ pub struct OperatorPlanResponse {
     pub updated_at: DateTime<Utc>,
     pub groups: Vec<String>,
     pub operator: Value,
-    /// Owned and every target reached, so it contributes no materials
     pub met: bool,
 }
 
@@ -116,7 +111,6 @@ pub struct UpsertPlanRequest {
     pub target_skills: Value,
     pub target_modules: Value,
     pub display_on_profile: bool,
-    /// Replaces the plan's memberships; `None` keeps them
     pub groups: Option<Vec<String>>,
 }
 
@@ -131,7 +125,6 @@ fn caller(subject: &Subject) -> Result<UserId, AppError> {
     subject.user_id().ok_or(AppError::Unauthorized)
 }
 
-/// Default server first, so CN-only operators still resolve
 fn loaded_snapshots(ctx: &AppContext) -> Vec<(Server, Arc<Snapshot>)> {
     ctx.snapshots
         .loaded()
@@ -175,7 +168,6 @@ fn group_names_by_plan(memberships: Vec<PlanMembershipRow>) -> HashMap<Uuid, Vec
     by_plan
 }
 
-/// LMD from the profile row, EXP as what the owned battle records grant
 fn inventory_map(model: &GameModel, inventory: Vec<ItemRow>, lmd: i32) -> HashMap<String, i32> {
     let mut map: HashMap<String, i32> = inventory
         .into_iter()
@@ -190,7 +182,6 @@ fn inventory_map(model: &GameModel, inventory: Vec<ItemRow>, lmd: i32) -> HashMa
     map
 }
 
-/// Strips an operator to what a plan view reads: a full one is 37 to 98 KB
 pub fn slim_plan_operator(map: &mut Map<String, Value>) {
     for key in PLAN_OPERATOR_EMPTIED_ARRAYS {
         if map.contains_key(key) {
@@ -250,7 +241,6 @@ fn plan_response(
     })
 }
 
-/// `active` is comma-separated ids counted toward the aggregate; absent or empty counts every plan
 pub async fn list_plans(
     ctx: &AppContext,
     subject: &Subject,
@@ -351,7 +341,6 @@ pub async fn list_plans(
         .await?
 }
 
-/// The Plans tab owner behind `uid`, a game uid or else a user id
 async fn plans_owner(ctx: &AppContext, subject: &Subject, uid: &str) -> Result<UserId, AppError> {
     match privacy::resolve_user_id(ctx, subject, Some(uid), &[ProfileTabId::Plans]).await {
         Err(AppError::NotFound(None)) => {
@@ -379,7 +368,6 @@ async fn plans_owner(ctx: &AppContext, subject: &Subject, uid: &str) -> Result<U
     }
 }
 
-/// The plans a player chose to show on their profile
 pub async fn list_public_plans(
     ctx: &AppContext,
     subject: &Subject,
@@ -405,7 +393,6 @@ pub async fn list_public_plans(
     Ok(responses)
 }
 
-/// Creates or replaces the caller's plan; a target below the roster is raised to it first
 pub async fn upsert_plan(
     ctx: &AppContext,
     subject: &Subject,
@@ -447,7 +434,7 @@ pub async fn upsert_plan(
     )
     .await?;
     let met = engine::stored_plan_met(&engine_plan(&plan), entry.as_ref());
-    let groups = repo::group_names(&mut conn, plan.id).await?; // read back: the store sorts and dedups the names
+    let groups = repo::group_names(&mut conn, plan.id).await?;
     drop(conn);
     plan_response(plan, groups, operator, server, met)
 }
@@ -493,7 +480,6 @@ pub async fn create_group(
     Ok(repo::create_group(&mut conn, user, name).await?.into())
 }
 
-/// Renames and/or pins a group; at least one of `name` and `pinned` is required
 pub async fn update_group(
     ctx: &AppContext,
     subject: &Subject,
@@ -532,7 +518,6 @@ pub async fn list_presets(
         .collect()
 }
 
-/// Validated on the way in, so a target that does not parse is a server fault
 fn preset_from_row(row: repo::PlanPresetRow) -> Result<PlanPreset, AppError> {
     Ok(PlanPreset {
         id: row.id,
@@ -543,7 +528,6 @@ fn preset_from_row(row: repo::PlanPresetRow) -> Result<PlanPreset, AppError> {
     })
 }
 
-/// Creates the preset, or replaces the target of the caller's preset by that name
 pub async fn upsert_preset(
     ctx: &AppContext,
     subject: &Subject,

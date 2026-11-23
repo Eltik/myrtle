@@ -1,6 +1,3 @@
-//! Monster Siren Records: the catalogue synced from the label into rows, served from the cache,
-//! with stream URLs and lyrics read on demand.
-
 use std::collections::{HashMap, HashSet};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
@@ -24,11 +21,8 @@ pub const CACHE_PREFIX: &str = "music:siren";
 pub const CATALOG_KEY: &str = "music:siren:catalog";
 const ALBUMS_KEY: &str = "music:siren:albums";
 const CATALOG_TTL: Duration = Duration::from_hours(24);
-/// The label drops connections under a steady crawl
 const DETAIL_SPACING: Duration = Duration::from_millis(250);
-/// Seconds before a signed stream URL expires that it is fetched again
 const STREAM_SAFETY: u64 = 5 * 60;
-/// Seconds to trust a stream URL with no readable expiry
 const STREAM_FALLBACK_TTL: u64 = 30 * 60;
 const INSTRUMENTAL_MARK: &str = "instrumental";
 
@@ -84,7 +78,6 @@ pub struct SirenAlbumDetail {
     pub songs: Vec<SirenSong>,
 }
 
-/// What one sync read from the label: the two lists and the details it asked for
 #[derive(Debug, Clone, Default)]
 pub struct SirenFetch {
     pub albums: Vec<ApiAlbumSummary>,
@@ -107,7 +100,6 @@ pub fn is_instrumental(name: &str) -> bool {
     name.to_lowercase().contains(INSTRUMENTAL_MARK)
 }
 
-/// `name` without a trailing `(Instrumental)` in ASCII or full-width parentheses, unless that is the whole title
 #[must_use]
 pub fn without_instrumental_mark(name: &str) -> String {
     let name = name.trim();
@@ -130,7 +122,6 @@ pub fn without_instrumental_mark(name: &str) -> String {
     strip().unwrap_or_else(|| name.to_owned())
 }
 
-/// Trimmed, blanks and repeats dropped, first spelling kept
 #[must_use]
 pub fn clean_artists(list: &[String]) -> Vec<String> {
     let mut out: Vec<String> = Vec::with_capacity(list.len());
@@ -143,7 +134,6 @@ pub fn clean_artists(list: &[String]) -> Vec<String> {
     out
 }
 
-/// The upload day shared by more than half the releases: the bulk import of the back catalogue
 #[must_use]
 pub fn bulk_import_day(albums: &[SirenAlbum]) -> Option<NaiveDate> {
     let mut counts: HashMap<NaiveDate, usize> = HashMap::new();
@@ -174,7 +164,6 @@ fn song_dto(row: &SongRow) -> SirenSong {
     }
 }
 
-/// The catalogue and each album in full; `synced_at` is the newest album write, since every sync rewrites every listed album
 #[must_use]
 pub fn build_catalog(
     mut album_rows: Vec<AlbumRow>,
@@ -239,7 +228,6 @@ pub fn build_catalog(
     (catalog, details)
 }
 
-/// The rows as a catalogue, caching the album map; 503 with a sync queued while there are none
 async fn load(
     ctx: &AppContext,
 ) -> Result<(SirenCatalog, HashMap<String, SirenAlbumDetail>), AppError> {
@@ -262,7 +250,6 @@ async fn load(
     Ok((catalog, details))
 }
 
-/// Every release and track
 pub async fn catalog(ctx: &AppContext) -> Result<CachedJson, AppError> {
     ctx.cache
         .json(CATALOG_KEY, CATALOG_TTL, || async {
@@ -279,7 +266,6 @@ async fn albums(ctx: &AppContext) -> Result<HashMap<String, SirenAlbumDetail>, A
     Ok(load(ctx).await?.1)
 }
 
-/// One release with its tracks
 pub async fn album(ctx: &AppContext, cid: &str) -> Result<SirenAlbumDetail, AppError> {
     albums(ctx)
         .await?
@@ -297,7 +283,6 @@ fn now_secs() -> u64 {
         .map_or(0, |d| d.as_secs())
 }
 
-/// The signed CDN URL for a track's audio; a cid with no row never reaches the label
 pub async fn stream_url(ctx: &AppContext, cid: &str) -> Result<String, AppError> {
     let mut conn = ctx.db.conn().await?;
     if !siren_song_exists(&mut conn, cid).await? {
@@ -322,7 +307,6 @@ pub async fn stream_url(ctx: &AppContext, cid: &str) -> Result<String, AppError>
     Ok(url)
 }
 
-/// A track's LRC lyrics from the row, else from the label's CDN, written back so it is fetched once
 pub async fn lyrics(ctx: &AppContext, cid: &str) -> Result<String, AppError> {
     let mut conn = ctx.db.conn().await?;
     if let Some(text) = repo::lyric_text(&mut conn, cid).await? {
@@ -344,7 +328,6 @@ pub async fn lyrics(ctx: &AppContext, cid: &str) -> Result<String, AppError> {
     Ok(text)
 }
 
-/// Albums to detail: new ones, and those holding a new track (the track order comes from the album detail)
 #[must_use]
 pub fn albums_to_fetch(
     albums: &[ApiAlbumSummary],
@@ -365,7 +348,6 @@ pub fn albums_to_fetch(
         .collect()
 }
 
-/// Three tries with a growing pause
 async fn with_retry<T, F, Fut>(mut call: F) -> Result<T, UpstreamError>
 where
     F: FnMut() -> Fut,
@@ -383,7 +365,6 @@ where
     }
 }
 
-/// `JobKind::SirenSync`; a failed list call writes nothing, a failed detail waits for the next sync
 pub async fn sync(ctx: &AppContext) -> Result<String, AppError> {
     let started = std::time::Instant::now();
     let client = client(ctx);
@@ -403,7 +384,7 @@ pub async fn sync(ctx: &AppContext) -> Result<String, AppError> {
         .into_iter()
         .map(|r| r.cid)
         .collect();
-    drop(conn); // a first crawl sleeps for minutes and must not pin a pool slot
+    drop(conn);
     let wanted = albums_to_fetch(&fetch.albums, &fetch.songs, &known_albums, &known_songs);
     let mut failed = (0, 0);
     for a in fetch.albums.iter().filter(|a| wanted.contains(&a.cid)) {
@@ -445,7 +426,6 @@ pub async fn sync(ctx: &AppContext) -> Result<String, AppError> {
     ))
 }
 
-/// Writes what `fetch` holds over the rows, prunes what the label stopped listing and drops the cached catalogue
 pub async fn store(ctx: &AppContext, fetch: &SirenFetch) -> Result<SirenStored, AppError> {
     let mut conn = ctx.db.conn().await?;
     let known_albums: HashMap<String, AlbumRow> = repo::list_albums(&mut conn)
@@ -473,7 +453,7 @@ pub async fn store(ctx: &AppContext, fetch: &SirenFetch) -> Result<SirenStored, 
                     k.belong.as_str(),
                     k.cover_de_url.as_deref(),
                 ),
-                (None, None) => ("", "", None), // listed but never detailed: stored so its tracks have an album
+                (None, None) => ("", "", None),
             };
         repo::upsert_album(
             &mut conn,

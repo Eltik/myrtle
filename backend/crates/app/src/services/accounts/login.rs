@@ -1,6 +1,3 @@
-//! Game logins: each flow signs in upstream, then [`complete_login`] caches the
-//! session, finds or creates the account, stores the credential and issues a token.
-
 use myrtle_db::repos::{credentials, users};
 use myrtle_hypergryph::login::bilibili::{OTP_TTL_SECS, OtpChallenge};
 use myrtle_hypergryph::login::passport::{self, PassportCredential};
@@ -14,7 +11,6 @@ use super::sessions::{PORTAL_SESSION_TTL, portal_session_key};
 use crate::privacy::mask_identifier;
 use crate::{AppContext, AppError};
 
-/// The site's Bilibili accounts are mainland numbers
 const BILIBILI_SMS_COUNTRY: &str = "86";
 
 #[derive(Debug, Serialize)]
@@ -24,7 +20,6 @@ pub struct LoginResponse {
     pub server: String,
 }
 
-/// Exact codes only: `EN` and `bilibili` are refused
 pub fn parse_server(s: &str) -> Result<Server, AppError> {
     Server::ALL
         .into_iter()
@@ -89,7 +84,6 @@ pub async fn login_bilibili(
     complete_login(ctx, Server::Bilibili, &session, None, save_credentials).await
 }
 
-/// Texts a code and holds its challenge for [`login_bilibili_sms`] on the same number
 pub async fn send_bilibili_sms(ctx: &AppContext, phone: &str) -> Result<(), AppError> {
     let challenge = session::send_bilibili_sms(&ctx.upstream, phone, BILIBILI_SMS_COUNTRY).await;
     let challenge = logged(challenge, phone, "bilibili send_otp")?;
@@ -124,7 +118,6 @@ pub async fn send_code_cn(ctx: &AppContext, phone: &str) -> Result<(), AppError>
     logged(sent, phone, "hypergryph passport send_phone_code")
 }
 
-/// A password wins over a code when both are given
 pub async fn login_cn(
     ctx: &AppContext,
     phone: &str,
@@ -142,7 +135,6 @@ pub async fn login_cn(
     complete_login(ctx, Server::CN, &session, None, save_credentials).await
 }
 
-/// Everything after the upstream sign-in; `save_credentials` false also drops a stored credential
 pub async fn complete_login(
     ctx: &AppContext,
     server: Server,
@@ -184,7 +176,6 @@ pub async fn complete_login(
     })
 }
 
-/// Best effort: a lost credential costs a re-login later, not this login
 async fn persist_credentials(
     ctx: &AppContext,
     user: UserId,

@@ -1,5 +1,3 @@
-//! One operator's skill slot, keyed `{char_id}:{skill_id}`: generic skills are shared.
-
 use std::cmp::Reverse;
 
 use myrtle_gamedata::assets::AssetIndex;
@@ -18,7 +16,6 @@ pub(super) const SOURCE: KindSource = KindSource {
     catalogue,
 };
 
-/// Every slot of every obtainable playable operator, in operator pool order, then slot
 fn catalogue(m: &GameModel) -> Vec<EntitySummary> {
     let mut skills = Vec::new();
     for (char_id, op) in &m.operators {
@@ -43,7 +40,6 @@ fn operator_skill<'a>(m: &'a GameModel, id: &'a str) -> Option<(&'a str, &'a Ope
     Some((char_id, op, slot))
 }
 
-/// `None` for a passive
 fn sp_type(raw: &str) -> Option<&'static str> {
     match raw {
         "INCREASE_WITH_TIME" => Some("auto"),
@@ -56,7 +52,7 @@ fn sp_type(raw: &str) -> Option<&'static str> {
 fn summary(assets: &AssetIndex, char_id: &str, op: &Operator, slot: usize) -> EntitySummary {
     let skill = &op.skills[slot];
     let static_data = skill.static_data.as_ref();
-    let top = static_data.and_then(|s| s.levels.last()); // carries the display name and type
+    let top = static_data.and_then(|s| s.levels.last());
     let icon = static_data
         .and_then(|s| s.icon_id.as_deref())
         .filter(|s| !s.is_empty())

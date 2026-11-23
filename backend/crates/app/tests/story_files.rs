@@ -14,7 +14,6 @@ use myrtle_engine_story::dto::StorySpriteVariant;
 use myrtle_engine_story::gallery::{GallerySize, cache_rel_path};
 use myrtle_engine_story::thumbs::{FORMAT, ThumbFormat, head_rel_path, variant_rel_path};
 
-/// An 8x4 opaque RGBA PNG
 const PNG: &str = "iVBORw0KGgoAAAANSUhEUgAAAAgAAAAECAYAAACzzX7wAAAAEklEQVR4nGM4kWL0Hx9moL0CAHmxS6FrGgA4AAAAAElFTkSuQmCC";
 
 fn png() -> Vec<u8> {

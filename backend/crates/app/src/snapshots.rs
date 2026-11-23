@@ -1,5 +1,3 @@
-//! The live game data per server, and the swap when a new extract lands.
-
 use std::collections::HashMap;
 use std::fmt::Write as _;
 use std::io::Write as _;
@@ -26,25 +24,20 @@ use crate::AppError;
 use crate::cache::key_hash;
 use crate::config::Config;
 
-/// The wait before a generation that failed to load is tried again
 pub const RELOAD_RETRY: Duration = Duration::from_mins(10);
-
 pub const STORY_RETRY: Duration = Duration::from_secs(30);
-
 const RELEASE_ART: &str = "derived/release-art";
 
-/// One server's compiled model with the engine inputs built from it
 pub struct Snapshot {
     pub model: GameModel,
     pub grade: GradeData,
     pub base: BaseData,
     pub generation: i64,
-    /// The pipeline version stored with `generation` when this loaded
     pub res_version: Option<String>,
+    pub pipeline_seq: i64,
     story: StoryCell,
 }
 
-/// The story library and the asset resolver it was built against
 pub struct Story {
     pub library: StoryLibrary,
     pub assets: StoryAssetIndex,
@@ -53,10 +46,9 @@ pub struct Story {
 
 #[derive(Default)]
 struct StoryCell {
-    /// Art tree then text tree; `None` for a snapshot built from a model alone
     dirs: Option<(PathBuf, PathBuf)>,
     built: OnceLock<Story>,
-    failed: Mutex<Option<(Instant, String)>>, // also serialises builds
+    failed: Mutex<Option<(Instant, String)>>,
     gate: tokio::sync::Mutex<()>,
 }
 
@@ -72,7 +64,6 @@ impl TableSource for NoFiles {
     }
 }
 
-/// Tables and sidecars from the server's own tree, art from `art`
 struct ArtSplit {
     text: DirSource,
     art: DirSource,
@@ -119,18 +110,15 @@ impl TableSource for ArtSplit {
 }
 
 impl Snapshot {
-    /// `text` tagged with this load's generation and fingerprint, for a cache entry built from this snapshot
     #[must_use]
     pub fn key(&self, text: &str) -> String {
         format!("{text}:{}", self.model.meta.game_version.res)
     }
 
-    /// Blocking: seconds of CPU and disk
     pub fn load(root: &Path, options: &CompileOptions) -> Result<Self, AppError> {
         Self::load_with_art(root, root, options, &[])
     }
 
-    /// [`Self::load`] with every asset, story media included, read from `art`
     pub fn load_with_art(
         root: &Path,
         art: &Path,
@@ -176,7 +164,6 @@ impl Snapshot {
         Ok(snapshot)
     }
 
-    /// Built on first call, blocking for seconds: async callers go through `services::story::snapshot`
     pub fn story(&self) -> Result<&Story, AppError> {
         let failure = |e: &str| AppError::Internal(format!("story library: {e}"));
         if let Some(story) = self.story.built.get() {
@@ -198,11 +185,10 @@ impl Snapshot {
         let story = built
             .map(|story| self.story.built.get_or_init(|| story))
             .map_err(|e| failure(&e));
-        drop(failed); // after the store, so a waiter finds the library instead of building again
+        drop(failed);
         story
     }
 
-    /// The art and text trees [`Self::story`] reads, `None` for a snapshot built from a model alone
     #[must_use]
     pub fn story_dirs(&self) -> Option<(&Path, &Path)> {
         self.story
@@ -216,7 +202,6 @@ impl Snapshot {
         self.story.built.get().is_some()
     }
 
-    /// Held while an async caller builds [`Self::story`] off the workers
     pub async fn story_gate(&self) -> tokio::sync::MutexGuard<'_, ()> {
         self.story.gate.lock().await
     }
@@ -273,12 +258,12 @@ impl Snapshot {
             base,
             generation: 0,
             res_version: None,
+            pipeline_seq: 0,
             story: StoryCell::default(),
         }
     }
 }
 
-/// The models a non-default server was aligned on, in order
 fn references_hash(references: &[Arc<Snapshot>]) -> String {
     let mut text = String::new();
     for reference in references {
@@ -288,7 +273,6 @@ fn references_hash(references: &[Arc<Snapshot>]) -> String {
     key_hash(text.as_bytes())
 }
 
-/// `client` is the extract's `VersionControl` line, `res` its [`fingerprint`]
 #[must_use]
 pub fn game_version(root: &Path) -> GameVersion {
     let excel = root.join("gamedata/excel");
@@ -307,7 +291,6 @@ pub fn game_version(root: &Path) -> GameVersion {
     }
 }
 
-/// Hash of the path, size and mtime of every file a load reads; `None` with no `gamedata/`
 #[must_use]
 pub fn fingerprint(root: &Path) -> Option<String> {
     if !root.join("gamedata").is_dir() {
@@ -359,14 +342,13 @@ fn nanos(t: SystemTime) -> u128 {
     t.duration_since(UNIX_EPOCH).map_or(0, |d| d.as_nanos())
 }
 
-/// A synced temp file beside `path` renamed over it, so no reader sees a torn file
 pub(crate) fn write_atomic(path: &Path, bytes: &[u8]) -> std::io::Result<()> {
     static SEQ: AtomicU64 = AtomicU64::new(0);
     let dir = path.parent().unwrap_or_else(|| Path::new("."));
     std::fs::create_dir_all(dir)?;
     let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("file");
     let tmp = dir.join(format!(
-        ".{name}.{}.{}.tmp", // dot first: asset listings skip it
+        ".{name}.{}.{}.tmp",
         std::process::id(),
         SEQ.fetch_add(1, Ordering::Relaxed)
     ));
@@ -396,12 +378,11 @@ pub struct SnapshotRegistry {
     retry: Duration,
     cells: HashMap<Server, ArcSwapOption<Snapshot>>,
     progress: HashMap<Server, Mutex<Progress>>,
-    build: tokio::sync::Mutex<()>, // each build holds a second model resident until its swap
+    build: tokio::sync::Mutex<()>,
     reloading: tokio::sync::Mutex<()>,
 }
 
 impl SnapshotRegistry {
-    /// One empty cell per configured data server; the first server is the default
     #[must_use]
     pub fn new(config: &Config) -> Self {
         let servers: Vec<Server> = config
@@ -438,7 +419,6 @@ impl SnapshotRegistry {
         self.default_server
     }
 
-    /// Each configured data server once, the default first
     #[must_use]
     pub fn servers(&self) -> Vec<Server> {
         let mut servers: Vec<Server> = self.cells.keys().copied().collect();
@@ -451,7 +431,6 @@ impl SnapshotRegistry {
         self.assets_dir.join(server.data_server().as_str())
     }
 
-    /// The default server, or one whose extract carries `portraits/`; a text-only tree reads the default server's art
     #[must_use]
     pub fn has_own_art(&self, server: Server) -> bool {
         server.data_server() == self.default_server
@@ -468,27 +447,23 @@ impl SnapshotRegistry {
         })
     }
 
-    /// The live snapshot for `server`, `None` until one has loaded
     #[must_use]
     pub fn get(&self, server: Server) -> Option<Arc<Snapshot>> {
         self.cells.get(&server.data_server())?.load_full()
     }
 
-    /// [`Self::get`], or 404 naming the server
     pub fn require(&self, server: Server) -> Result<Arc<Snapshot>, AppError> {
         self.get(server).ok_or_else(|| {
             AppError::NotFound(Some(format!("no game data for {}", server.as_str())))
         })
     }
 
-    /// The snapshot for `server`, or the default server's when it is not loaded
     pub fn or_default(&self, server: Server) -> Result<Arc<Snapshot>, AppError> {
         self.get(server)
             .or_else(|| self.get(self.default_server))
             .ok_or(AppError::Unavailable)
     }
 
-    /// Loaded servers a visitor can pick, the default first
     #[must_use]
     pub fn loaded(&self) -> Vec<Server> {
         std::iter::once(self.default_server)
@@ -501,47 +476,28 @@ impl SnapshotRegistry {
             .collect()
     }
 
-    /// Reloads `server` at the generation it already holds
-    pub async fn activate(&self, server: Server) -> Result<(), AppError> {
-        let live = self.get(server);
-        let generation = self
-            .progress(server)?
-            .done
-            .unwrap_or_else(|| live.as_ref().map_or(0, |s| s.generation));
-        let res_version = live.and_then(|s| s.res_version.clone());
-        self.activate_at(server, generation, res_version.as_deref())
-            .await
-    }
-
-    /// Loads `server` as `generation`, counted as fully applied: the boot load
-    pub async fn activate_at(
-        &self,
-        server: Server,
-        generation: i64,
-        res_version: Option<&str>,
-    ) -> Result<(), AppError> {
-        let loaded = self.load_at(server, generation, res_version).await;
+    pub async fn activate_at(&self, server: Server, stored: &Generation) -> Result<(), AppError> {
+        let loaded = self.load_at(server, stored).await;
         match &loaded {
-            Ok(_) => self.done(server, generation),
-            Err(_) => self.failed(server, generation),
+            Ok(_) => self.done(server, stored.generation),
+            Err(_) => self.failed(server, stored.generation),
         }
         loaded.map(drop)
     }
 
-    /// Loads `server`'s extract off the async workers and swaps it in; readers keep their `Arc`
     pub(crate) async fn load_at(
         &self,
         server: Server,
-        generation: i64,
-        res_version: Option<&str>,
+        stored: &Generation,
     ) -> Result<Arc<Snapshot>, AppError> {
         let server = server.data_server();
+        let generation = stored.generation;
         self.progress(server)?;
         let _build = self.build.lock().await;
         let (root, art) = (self.server_dir(server), self.art_dir(server));
         let (profile_align, obtain_channel_align) = (self.profile_align, self.obtain_channel_align);
         let references: Vec<Arc<Snapshot>> = if server == self.default_server {
-            Vec::new() // the default server's own wording is the reference
+            Vec::new()
         } else {
             let others = self.loaded().into_iter().filter(|s| *s != server);
             others.filter_map(|s| self.get(s)).collect()
@@ -565,7 +521,8 @@ impl SnapshotRegistry {
         .map_err(AppError::internal)??;
         let snapshot = Arc::new(Snapshot {
             generation,
-            res_version: res_version.map(str::to_owned),
+            res_version: stored.res_version.clone(),
+            pipeline_seq: stored.pipeline_seq,
             ..snapshot
         });
         self.install_shared(server, Arc::clone(&snapshot));
@@ -576,7 +533,6 @@ impl SnapshotRegistry {
         self.reloading.lock().await
     }
 
-    /// Configured servers whose `stored` generation is not applied yet and not inside a retry wait, the default first
     pub(crate) fn due(&self, stored: &HashMap<Server, Generation>) -> Vec<(Server, Generation)> {
         let mut due: Vec<(Server, Generation)> = self
             .progress

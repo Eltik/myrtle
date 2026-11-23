@@ -1,5 +1,3 @@
-//! The handles a request or a job needs, built once per process.
-
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Duration;
@@ -28,7 +26,6 @@ use crate::services::catalog::release;
 use crate::services::gacha::sidecar;
 use crate::snapshots::{Snapshot, SnapshotRegistry};
 
-/// Secret values, resolved once at boot and kept out of [`Config`]
 pub struct Secrets {
     pub jwt: String,
     pub credentials: Arc<CredentialKey>,
@@ -53,14 +50,10 @@ impl Secrets {
     }
 }
 
-/// The payload of each job [`AppContext::announce_update`] queues
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Announced {
     #[serde(default)]
     pub generation: i64,
-    /// The asset pipeline's version; `None` for a sidecar or boot pass, which links no debuts
-    #[serde(default)]
-    pub res_version: Option<String>,
 }
 
 impl Announced {
@@ -80,9 +73,7 @@ pub struct AppContext {
     pub snapshots: Arc<SnapshotRegistry>,
     pub upstream: Arc<Upstream>,
     pub sessions: Arc<dyn SessionStore>,
-    /// The backend's own game accounts, one per server that has one
     pub accounts: Arc<GameAccounts>,
-    /// `None` when storage is off: every asset is served from disk
     pub store: Option<Arc<dyn ObjectStore>>,
     pub policy: Policy,
     pub audit: Auditor,
@@ -90,7 +81,6 @@ pub struct AppContext {
 }
 
 impl AppContext {
-    /// Fails when the default server's game data does not load
     pub async fn build(config: Config) -> Result<Self, AppError> {
         let secrets = Secrets::resolve(&config).map_err(AppError::internal)?;
         let database_url = config.database.url.resolve().map_err(AppError::internal)?;
@@ -112,9 +102,7 @@ impl AppContext {
                 .collect();
         for server in snapshots.servers() {
             let stored = generations.get(&server).cloned().unwrap_or_default();
-            let activated = snapshots
-                .activate_at(server, stored.generation, stored.res_version.as_deref())
-                .await;
+            let activated = snapshots.activate_at(server, &stored).await;
             match activated {
                 Ok(()) => {}
                 Err(e) if server == snapshots.default_server() => return Err(e),
@@ -178,7 +166,6 @@ impl AppContext {
 }
 
 impl AppContext {
-    /// Announces new sidecar files for `server` to every process, then reloads this one; a newer announcement landing meanwhile counts
     pub async fn reload_game_data(&self, server: Server) -> Result<(), AppError> {
         let generation = self.announce_update(server, None).await?;
         self.reload_if_changed().await?;
@@ -191,7 +178,6 @@ impl AppContext {
         }
     }
 
-    /// Records that `server`'s extract changed and queues the jobs it owes, once for every process; each reloads on its next [`Self::reload_if_changed`]
     pub async fn announce_update(
         &self,
         server: Server,
@@ -202,10 +188,7 @@ impl AppContext {
         let generation = data_generations::bump(&mut tx, server, res_version)
             .await?
             .generation;
-        let announced = Announced {
-            generation,
-            res_version: res_version.map(str::to_owned),
-        };
+        let announced = Announced { generation };
         let mut jobs = release::jobs::follow_ups(self, server, &announced);
         if server == self.snapshots.default_server() {
             jobs.push(JobSpec {
@@ -227,7 +210,6 @@ impl AppContext {
         Ok(generation)
     }
 
-    /// [`Self::announce_update`] for files only the asset index reads: every process reloads, no job is owed
     pub async fn announce_art(&self, server: Server) -> Result<i64, AppError> {
         let server = server.data_server();
         let generation = data_generations::bump(&mut *self.db.conn().await?, server, None)
@@ -241,7 +223,6 @@ impl AppContext {
         Ok(generation)
     }
 
-    /// Call on an interval (a minute) in every process that holds game data; returns the servers reloaded
     pub async fn reload_if_changed(&self) -> Result<Vec<Server>, AppError> {
         let reloaded = {
             let _reloading = self.snapshots.reloading().await;
@@ -255,10 +236,7 @@ impl AppContext {
                 let generation = stored.generation;
                 if self.snapshots.get(server).map(|s| s.generation) != Some(generation) {
                     sidecar::take_pending(server); // before the load reads, so a write during it stays pending
-                    let loaded = self
-                        .snapshots
-                        .load_at(server, generation, stored.res_version.as_deref())
-                        .await;
+                    let loaded = self.snapshots.load_at(server, &stored).await;
                     let snapshot = match loaded {
                         Ok(snapshot) => snapshot,
                         Err(e) => {
@@ -286,14 +264,22 @@ impl AppContext {
         Ok(reloaded)
     }
 
-    /// Off this task, so a slow webhook never holds a reload
     fn alert_degraded(&self, snapshot: &Snapshot) {
         let meta = &snapshot.model.meta;
         if meta.table_warnings.is_empty() {
             return;
         }
         let (ctx, server, warnings) = (self.clone(), meta.server, meta.table_warnings.clone());
+        let sent = format!(
+            "alert:degraded:{}:{}",
+            server.as_str(),
+            meta.game_version.res
+        );
         tokio::spawn(async move {
+            if ctx.cache.get(&sent).await.is_some() {
+                return;
+            }
+            ctx.cache.set(&sent, "1", Duration::from_hours(24)).await;
             alerts::report_degraded_tables(
                 ctx.upstream.client(),
                 ctx.secrets.discord_alert_webhook.as_deref(),
@@ -304,7 +290,6 @@ impl AppContext {
         });
     }
 
-    /// `server`'s snapshot at `generation` or newer, reloading when behind; still behind is an error, so the job retries
     pub async fn snapshot_at(
         &self,
         server: Server,

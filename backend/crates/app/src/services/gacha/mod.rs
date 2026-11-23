@@ -1,5 +1,3 @@
-//! Pull history from the Yostar portal, stored records, banner stats, gacha settings.
-
 pub mod pools;
 pub mod rarity;
 pub mod shops;
@@ -27,12 +25,10 @@ pub use shops::refresh_event_shops;
 pub use stats::{enhanced_stats, flush_shared_stats, global_stats, per_banner_stats};
 
 const PAGE_SIZE: usize = 50;
-/// 20,000 pulls; stops a portal that keeps answering full pages
 const MAX_PAGES: usize = 400;
 const MAX_POOL_FILTER: usize = 64;
 const MAX_POOL_ID_LEN: usize = 64;
 
-/// Shown verbatim in the frontend's error toast
 pub const STORAGE_OFF_MESSAGE: &str = "Gacha history storage is turned off. Turn on \"Store gacha history\" in Settings > Privacy to sync your pulls.";
 
 #[derive(Debug, Deserialize)]
@@ -82,7 +78,6 @@ pub struct FetchResult {
     pub new_records: usize,
 }
 
-/// `v_gacha_stats` for one account
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GachaStats {
     pub user_id: Uuid,
@@ -130,7 +125,6 @@ impl From<GachaRecordRow> for GachaRecordEntryDto {
     }
 }
 
-/// The frontend's `GachaItem`: camelCase, star as a string
 #[derive(Debug, Serialize, Clone)]
 pub struct GachaItemDto {
     #[serde(rename = "charId")]
@@ -241,7 +235,6 @@ fn require_user(subject: &Subject) -> Result<UserId, AppError> {
     subject.user_id().ok_or(AppError::Unauthorized)
 }
 
-/// Stores the caller's whole portal history; refused before any portal call when storage is off
 pub async fn fetch_and_store(ctx: &AppContext, subject: &Subject) -> Result<FetchResult, AppError> {
     let user = require_user(subject)?;
     let uid = subject.uid().ok_or(AppError::Unauthorized)?;
@@ -318,14 +311,13 @@ async fn fetch_history(
     Ok(items)
 }
 
-/// The `sp_insert_gacha_batch` rows, with the char ids whose rarity fell back to the API star
 #[must_use]
 pub fn pull_records(
     items: &[GachaApiItem],
     operators: Option<&HashMap<String, Operator>>,
 ) -> (Value, Vec<String>) {
     let mut missing = Vec::new();
-    let mut batch_counters: HashMap<(i64, &str), i16> = HashMap::new(); // a 10-pull's rows share one `at`; the counter keeps them unique
+    let mut batch_counters: HashMap<(i64, &str), i16> = HashMap::new();
     let rows = items
         .iter()
         .map(|item| {
@@ -406,7 +398,6 @@ pub async fn history(
     })
 }
 
-/// Stored `gacha_type`s behind a history tab; an unknown tab matches nothing
 #[must_use]
 pub fn gacha_types_of_group(group: &str) -> Vec<String> {
     let types: &[&str] = match group {
@@ -418,7 +409,6 @@ pub fn gacha_types_of_group(group: &str) -> Vec<String> {
     types.iter().map(|&t| t.to_owned()).collect()
 }
 
-/// The history tab a stored `gacha_type` is listed under
 #[must_use]
 pub fn classify_gacha_group(gacha_type: &str) -> &'static str {
     match gacha_type {
@@ -447,7 +437,6 @@ pub async fn stored_records(
     Ok(group_records(rows))
 }
 
-/// Another player's stored pulls: the profile must be public and the owner opted in to `public_gacha`
 pub async fn public_records(
     ctx: &AppContext,
     subject: &Subject,
@@ -460,12 +449,11 @@ pub async fn public_records(
     if !own && !gacha::public_history_enabled(&mut conn, owner).await? {
         return Err(AppError::Forbidden);
     }
-    let pools = parse_pool_filter(pools)?; // after the gate, so a private profile never answers 400
+    let pools = parse_pool_filter(pools)?;
     let rows = gacha::list_in_pools(&mut conn, owner, pools.as_deref()).await?;
     Ok(group_records(rows))
 }
 
-/// Distinct pool ids in the order given, `None` for absent or blank; a malformed id is a 400
 pub fn parse_pool_filter(raw: Option<&str>) -> Result<Option<Vec<String>>, AppError> {
     let mut pools: Vec<String> = Vec::new();
     for id in raw.unwrap_or("").split(',').map(str::trim) {
@@ -538,7 +526,6 @@ pub async fn settings(ctx: &AppContext, subject: &Subject) -> Result<GachaSettin
     settings_dto(&mut conn, user, flags.store_gacha, flags.share_stats).await
 }
 
-/// A `share_anonymous_stats` flip drops every cached community aggregate
 pub async fn update_settings(
     ctx: &AppContext,
     subject: &Subject,

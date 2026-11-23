@@ -18,7 +18,6 @@ use super::{Planner, cached, resolved_start};
 use crate::services::story::{modified, with_default_fallback, write_atomically};
 use crate::{AppContext, AppError};
 
-/// Pool id to the operators that debuted with it and EN has not shipped; a failed read is no links
 async fn debut_links(ctx: &AppContext, p: &Planner) -> HashMap<String, Vec<String>> {
     let pairs = match ctx.db.conn().await {
         Ok(mut conn) => release::debut_pairs(&mut conn, Server::CN).await,
@@ -180,10 +179,8 @@ fn build(p: &Planner, mut debut: HashMap<String, Vec<String>>) -> BannersRespons
     }
 }
 
-/// Banner renders at once; a cold pool page asks for dozens, and they wait rather than shed
 static RENDERS: LazyLock<Semaphore> = LazyLock::new(|| Semaphore::new(2));
 
-/// The made banner for `act_id`, rendered when missing or older than its art; 404 sends the caller to the cover
 pub async fn event_banner(
     ctx: &AppContext,
     server: Server,
@@ -200,7 +197,7 @@ pub async fn event_banner(
         else {
             continue;
         };
-        let root = snapshots.art_dir(srv); // a text-only server shares the art tree and its banners
+        let root = snapshots.art_dir(srv);
         let background = root.join(background.trim_start_matches('/'));
         let title = root.join(title.trim_start_matches('/'));
         let target = root.join(event_banner::cache_rel_path(act_id));
@@ -208,7 +205,7 @@ pub async fn event_banner(
             return Ok(target);
         }
         if is_stub(&background) || is_stub(&title) {
-            continue; // evicted to the object store; the cover stands in
+            continue;
         }
         let _permit = RENDERS
             .acquire()

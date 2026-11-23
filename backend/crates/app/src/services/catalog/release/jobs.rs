@@ -1,9 +1,8 @@
-//! Job bodies: the sightings ledger and the release art archive.
-
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::time::Duration;
 
+use myrtle_db::repos::data_generations;
 use myrtle_db::repos::release::{self, Sighting, UpsertStats};
 use myrtle_engine_release::kinds::{
     KIND_ACTIVITY, KIND_CHAR, KIND_POOL, KIND_RETRO, KIND_SKIN, KIND_SKIN_WINDOW,
@@ -42,7 +41,6 @@ pub const DEFAULT_MIRRORS: &[(&str, &str)] = &[
 const ID_PLACEHOLDER: &str = "{id}";
 const MIRROR_MAX_PER_PASS: usize = 1000;
 
-/// `(kind, id, start, end)` per dated thing in `model`, sorted and unique; a zero date is `None`
 #[must_use]
 pub fn sightings(model: &GameModel) -> Vec<(&'static str, String, Option<i64>, Option<i64>)> {
     let nonzero = |t: i64| (t > 0).then_some(t);
@@ -90,22 +88,36 @@ pub fn sightings(model: &GameModel) -> Vec<(&'static str, String, Option<i64>, O
     out
 }
 
-/// `JobKind::ReleaseLedgerRecord` with its payload's [`Announced`]: Bilibili records as CN
 pub async fn record_ledger(
     ctx: &AppContext,
     server: Server,
-    res_version: Option<&str>,
     generation: i64,
 ) -> Result<String, AppError> {
+    ctx.snapshot_at(server.data_server(), generation).await?;
+    Ok(record(ctx, server).await?.unwrap_or_else(|| {
+        format!(
+            "{}: nothing written, the ledger is off or ahead of this data",
+            server.data_server().as_str()
+        )
+    }))
+}
+
+pub async fn record(ctx: &AppContext, server: Server) -> Result<Option<String>, AppError> {
     if !ctx.config.switches.release_ledger.enabled {
-        return Ok("release ledger is off".to_owned());
+        return Ok(None);
     }
     let server = server.data_server();
-    let snapshot = ctx.snapshot_at(server, generation).await?;
+    let snapshot = ctx.snapshots.require(server)?;
     let seen = sightings(&snapshot.model);
-    let res_version = res_version.and_then(|_| snapshot.res_version.clone()); // the data's version: the snapshot may be newer than the job
+    let (seq, res_version) = (snapshot.pipeline_seq, snapshot.res_version.clone());
     drop(snapshot);
-    let mut conn = ctx.db.conn().await?;
+
+    let mut tx = ctx.db.begin().await?;
+    let recorded = data_generations::lock_recorded(&mut tx, server).await?;
+    if seq < recorded {
+        return Ok(None);
+    }
+    let stamp = res_version.as_deref().filter(|_| seq == recorded + 1);
     let mut total = UpsertStats::default();
     for kind in seen.chunk_by(|a, b| a.0 == b.0) {
         let batch: Vec<Sighting<'_>> = kind
@@ -117,23 +129,27 @@ pub async fn record_ledger(
                 end_time: *end_time,
             })
             .collect();
-        let stats =
-            release::upsert_sightings(&mut conn, server, res_version.as_deref(), &batch).await?;
+        let stats = release::upsert_sightings(&mut tx, server, stamp, &batch).await?;
         total.inserted += stats.inserted;
         total.refreshed += stats.refreshed;
     }
-    if total.inserted > 0 {
-        super::revise(ctx).await; // banner bodies embed debut links
+    if seq > recorded {
+        data_generations::set_recorded(&mut tx, server, seq).await?;
     }
-    Ok(format!(
-        "{}: {} inserted, {} refreshed",
+    tx.commit().await?;
+
+    if total.inserted > 0 && server == Server::CN {
+        super::revise(ctx).await;
+    }
+    Ok(Some(format!(
+        "{}: {} inserted, {} refreshed{}",
         server.as_str(),
         total.inserted,
-        total.refreshed
-    ))
+        total.refreshed,
+        stamp.map(|v| format!(" as {v}")).unwrap_or_default()
+    )))
 }
 
-/// `(kind:server, url template)` pairs from `release.art_mirrors`, the defaults when it is empty
 #[must_use]
 pub fn mirrors(configured: &[String]) -> Vec<(String, String)> {
     if configured.is_empty() {
@@ -157,7 +173,6 @@ pub struct ArchiveStats {
     pub failed: u64,
 }
 
-/// The ledger record and the art mirror an announcement for `server` owes
 #[must_use]
 pub fn follow_ups(ctx: &AppContext, server: Server, announced: &Announced) -> Vec<JobSpec> {
     if !ctx.config.switches.release_ledger.enabled {
@@ -165,7 +180,7 @@ pub fn follow_ups(ctx: &AppContext, server: Server, announced: &Announced) -> Ve
     }
     let server = server.data_server();
     let mut kinds = vec![JobKind::ReleaseLedgerRecord];
-    if has_own_art(ctx, server) {
+    if ctx.snapshots.has_own_art(server) {
         kinds.push(JobKind::ReleaseArtMirror);
     }
     kinds
@@ -178,13 +193,11 @@ pub fn follow_ups(ctx: &AppContext, server: Server, announced: &Announced) -> Ve
         .collect()
 }
 
-/// Queues a ledger pass and the art mirror for every loaded server, with no version; the worker calls it once at boot
 pub async fn enqueue_boot_pass(ctx: &AppContext) -> Result<usize, AppError> {
     let mut queued = 0;
     for server in ctx.snapshots.loaded() {
         let announced = Announced {
             generation: ctx.snapshots.get(server).map_or(0, |s| s.generation),
-            res_version: None,
         };
         for job in follow_ups(ctx, server, &announced) {
             let spec = JobSpec {
@@ -198,20 +211,13 @@ pub async fn enqueue_boot_pass(ctx: &AppContext) -> Result<usize, AppError> {
     Ok(queued)
 }
 
-/// A text-only tree is never indexed for art
-#[must_use]
-pub fn has_own_art(ctx: &AppContext, server: Server) -> bool {
-    ctx.snapshots.has_own_art(server)
-}
-
-/// `JobKind::ReleaseArtMirror`: archives local release art, mirrors the rest, announces a copy to every process once
 pub async fn mirror_art(
     ctx: &AppContext,
     server: Server,
     generation: i64,
 ) -> Result<String, AppError> {
     let server = server.data_server();
-    if !has_own_art(ctx, server) {
+    if !ctx.snapshots.has_own_art(server) {
         return Ok(format!("{}: text-only, no art to archive", server.as_str()));
     }
     let snapshot = ctx.snapshot_at(server, generation).await?;
@@ -270,7 +276,7 @@ fn archive_one(assets_dir: &Path, rel: &str, kind: &str, id: &str, stats: &mut A
     }
     let source = assets_dir.join(rel);
     if std::fs::metadata(&source).is_ok_and(|m| m.len() == 0) {
-        stats.failed += 1; // an evicted stub; the archive outlives its source
+        stats.failed += 1;
         return;
     }
     let target = archive_path(assets_dir, kind, id);
@@ -308,7 +314,6 @@ fn same_bytes(a: &Path, b: &Path) -> bool {
     }
 }
 
-/// Marks an id every template answered 404 for, keyed by the template set so new mirrors retry
 fn absent_marker(assets_dir: &Path, kind: &str, templates: &[&str], id: &str) -> PathBuf {
     assets_dir
         .join(ARCHIVE_DIR)
@@ -394,7 +399,7 @@ async fn fill_from_mirrors(
                     all_absent = false;
                 }
             }
-            tokio::time::sleep(Duration::from_millis(50)).await; // stay polite to the mirror hosts
+            tokio::time::sleep(Duration::from_millis(50)).await;
         }
         if all_absent {
             if let Some(dir) = marker.parent() {

@@ -7,7 +7,6 @@ use super::Planner;
 const EN: &str = "en";
 
 impl Planner {
-    /// A route path for the first asset found: EN under its EN id, then CN, then EN under the CN id
     fn image(
         &self,
         route: &str,
@@ -30,7 +29,6 @@ impl Planner {
         None
     }
 
-    /// Both asset trees as `(server, index)`, the one the item ships on first
     fn servers(&self, on_en: bool) -> [(&str, &AssetIndex); 2] {
         let (cn, en) = (("cn", &self.cn().assets), (EN, &self.en().assets));
         if on_en { [en, cn] } else { [cn, en] }
@@ -66,7 +64,6 @@ impl Planner {
         )
     }
 
-    /// Served straight from the texture tree: there is no furniture route
     pub(super) fn furniture_icon(&self, icon_id: &str, on_en: bool) -> Option<String> {
         self.servers(on_en).iter().find_map(|(server, idx)| {
             idx.path(AssetKind::FurnitureIcon, icon_id)
@@ -124,7 +121,6 @@ impl Planner {
         by_side.or_else(by_retro).map(AutoName::memory)
     }
 
-    /// A mainline episode's shipped Latin title, off its first zone; side stories carry none
     pub(super) fn event_zone_name(&self, cn_id: &str) -> Option<AutoName> {
         let zone = self.cn().zones.get(&format!("{cn_id}_zone1"))?;
         let text = zone.zone_name_first.as_deref()?.trim();

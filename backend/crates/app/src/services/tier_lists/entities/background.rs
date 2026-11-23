@@ -1,5 +1,3 @@
-//! Home-screen backgrounds, keyed by `display_meta_table` `BgId`.
-
 use myrtle_gamedata::assets::{AssetIndex, AssetKind};
 use myrtle_gamedata_raw::tables::display_meta::HomeBackground;
 use myrtle_types::EntityKind;

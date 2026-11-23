@@ -1,5 +1,3 @@
-//! Public player search, ranked by score or a roster metric and cut by ownership.
-
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -16,10 +14,8 @@ use crate::{AppContext, AppError};
 
 const TTL: Duration = Duration::from_mins(2);
 
-/// Each id is a bind in two queries and part of the cache key
 pub const MAX_HAS: usize = 20;
 
-/// Tokens, traps and the unknown bucket are not operators a player owns
 const PLAYABLE: [OperatorProfession; 8] = [
     OperatorProfession::Guard,
     OperatorProfession::Sniper,
@@ -31,10 +27,8 @@ const PLAYABLE: [OperatorProfession; 8] = [
     OperatorProfession::Vanguard,
 ];
 
-/// One row: the profile and the active sort's value
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SearchEntry {
-    /// A visitor's view whose layout carries the visible tabs only
     #[serde(flatten)]
     pub profile: UserProfile,
     pub metric: Option<i64>,
@@ -50,18 +44,14 @@ pub struct SearchPage {
 pub struct SearchParams {
     pub q: Option<String>,
     pub sort: Option<String>,
-    /// `asc` or `desc`; absent is the sort's own default
     pub dir: Option<String>,
-    /// Comma-separated operator ids the player must all own
     pub has: Option<String>,
     pub support: Option<String>,
-    /// `class:<PROFESSION>` or `sub:<archetype>`
     pub all: Option<String>,
     pub limit: Option<u32>,
     pub offset: Option<u32>,
 }
 
-/// A class or archetype, resolved per server: CN holds operators EN has not released
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Scope {
     Class(OperatorProfession),
@@ -86,7 +76,6 @@ impl Scope {
         .then(|| Self::Archetype(sub.to_owned()))
     }
 
-    /// Members over every loaded server and each server's "owns all" count; exact, as a user owns only their server's releases
     fn resolve(&self, loaded: &[(Server, Arc<Snapshot>)]) -> (Vec<String>, Vec<(String, i64)>) {
         let mut union = Vec::new();
         let mut required = Vec::new();
@@ -142,7 +131,6 @@ impl SearchSort {
     }
 }
 
-/// The validated request; its `Debug` text is the cache key's input
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SearchRequest {
     pub q: Option<String>,
@@ -224,7 +212,6 @@ impl SearchRequest {
     }
 }
 
-/// An operator id as the game writes them: `char_1035_wisdel`
 #[must_use]
 pub fn is_valid_operator_id(id: &str) -> bool {
     !id.is_empty() && id.len() <= 50 && id.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'_')
@@ -246,7 +233,7 @@ pub async fn search(ctx: &AppContext, params: &SearchParams) -> Result<SearchPag
         Some(cached) => cached,
         None => build(ctx, &request, &loaded, &key).await?,
     };
-    page.entries.iter_mut().for_each(hide_private); // a projected layout would re-normalize on a cache read, so the cache holds the owner's rows
+    page.entries.iter_mut().for_each(hide_private);
     Ok(page)
 }
 
@@ -274,7 +261,7 @@ async fn build(
     };
     let descending = request
         .descending
-        .unwrap_or(!matches!(request.sort, SearchSort::Joined)); // the oldest accounts are the interesting end
+        .unwrap_or(!matches!(request.sort, SearchSort::Joined));
     let query = Search {
         q: request.q.as_deref(),
         rank,
@@ -312,7 +299,6 @@ async fn build(
     Ok(page)
 }
 
-/// A row draws no header and no blocks, so the layout keeps only the visible tabs
 fn hide_private(entry: &mut SearchEntry) {
     entry.profile.hide_private();
     if let Some(layout) = entry.profile.profile_layout.as_mut() {

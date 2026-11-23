@@ -161,7 +161,7 @@ fn alpha_head(img: &RgbaImage) -> Option<(f32, f32)> {
     } else {
         sum as f32 / n as f32
     };
-    Some((x, top as f32 + FACE_BELOW_TOP * h as f32))
+    Some((x, FACE_BELOW_TOP.mul_add(h as f32, top as f32)))
 }
 
 #[must_use]
@@ -173,7 +173,7 @@ pub fn crop_rect(img: &RgbaImage, face: Option<(f32, f32)>) -> (u32, u32, u32) {
         |(x, y)| (x * wf, y * hf),
     );
     let side = (SIDE * wf).min(wf).min(hf).max(1.0);
-    let cy = cy + DROP * side;
+    let cy = DROP.mul_add(side, cy);
     let left = (cx - side / 2.0).clamp(0.0, wf - side);
     let top = (cy - side / 2.0).clamp(0.0, hf - side);
     (left.round() as u32, top.round() as u32, side.round() as u32)
@@ -191,6 +191,7 @@ pub fn render_head(
     encode(&resize(crop, px, px), format)
 }
 
+#[must_use]
 pub fn is_blank(png: &[u8]) -> bool {
     image::load_from_memory(png).is_ok_and(|img| img.to_rgba8().pixels().all(|p| p[3] == 0))
 }

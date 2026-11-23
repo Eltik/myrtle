@@ -1,6 +1,3 @@
-//! One typed configuration, loaded once at boot from `config/myrtle.toml`;
-//! secrets are references, resolved when asked for.
-
 use std::collections::BTreeMap;
 use std::fmt::Write as _;
 use std::path::Path;
@@ -8,7 +5,6 @@ use std::path::Path;
 use myrtle_types::Server;
 use serde::Deserialize;
 
-/// `"env:NAME"` or `"file:/path"`; the value itself never appears in the file
 #[derive(Clone, Deserialize)]
 #[serde(transparent)]
 pub struct SecretRef(pub String);
@@ -20,13 +16,11 @@ impl std::fmt::Debug for SecretRef {
 }
 
 impl SecretRef {
-    /// An unset optional secret reads as absent
     #[must_use]
     pub fn optional(secret: Option<&Self>) -> Option<String> {
         secret?.resolve().ok()
     }
 
-    /// An empty value is an error
     pub fn resolve(&self) -> Result<String, ConfigError> {
         let unresolved = || ConfigError::Secret {
             reference: self.0.clone(),
@@ -46,7 +40,6 @@ impl SecretRef {
     }
 }
 
-/// A kill switch; `owner` and `remove_after` are mandatory so each has a person and a deadline
 #[derive(Debug, Clone, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Switch {
@@ -99,7 +92,6 @@ pub struct DatabaseConfig {
 #[derive(Debug, Clone, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct RedisConfig {
-    /// Empty: the in-memory cache
     pub url: Option<SecretRef>,
 }
 
@@ -108,7 +100,6 @@ pub struct RedisConfig {
 pub struct SecretsConfig {
     pub jwt_secret: SecretRef,
     pub game_credential_key: SecretRef,
-    /// Superseded by scoped `api_keys`
     pub service_key: Option<SecretRef>,
     pub github_token: Option<SecretRef>,
     pub discord_alert_webhook: Option<SecretRef>,
@@ -202,7 +193,6 @@ pub struct DpsConfig {
 
 const OFF_GRID_TTL_DEFAULT: u64 = 3600;
 
-/// Zero warns and reads as the default rather than refusing the boot
 fn off_grid_ttl<'de, D: serde::Deserializer<'de>>(deserializer: D) -> Result<u64, D::Error> {
     let secs = u64::deserialize(deserializer)?;
     if secs == 0 {
@@ -374,7 +364,6 @@ impl Switches {
 pub const DEFAULT_PATH: &str = "config/myrtle.toml";
 
 impl Config {
-    /// Refuses a required secret that does not resolve to a non-empty value
     pub fn load(path: Option<&Path>) -> Result<Self, ConfigError> {
         let path = path.unwrap_or_else(|| Path::new(DEFAULT_PATH));
         let file = |message: String| ConfigError::File {
@@ -418,7 +407,6 @@ impl Config {
         Ok(())
     }
 
-    /// Switches whose `remove_after` is before `today` (`YYYY-MM-DD`)
     #[must_use]
     pub fn expired_switches(&self, today: &str) -> Vec<ExpiredSwitch> {
         self.switches
@@ -433,7 +421,6 @@ impl Config {
             .collect()
     }
 
-    /// The object store `[storage]` describes, `None` when its type is `off` or empty
     pub fn object_storage(&self) -> Result<Option<myrtle_storage::StorageConfig>, ConfigError> {
         let storage = &self.storage;
         let secret = |secret: &Option<SecretRef>| secret.as_ref().and_then(|s| s.resolve().ok());
@@ -489,7 +476,6 @@ impl Config {
         })
     }
 
-    /// How a request for a mirrored asset is answered (`assets.delivery`)
     pub fn delivery_mode(
         &self,
         storage: Option<&myrtle_storage::StorageConfig>,
@@ -507,7 +493,6 @@ impl Config {
     }
 }
 
-/// `None` for zero, which the storage crate reads as "use the default"
 fn positive(n: usize) -> Option<String> {
     (n > 0).then(|| n.to_string())
 }
@@ -533,14 +518,10 @@ fn warn_if_weak(key: &str, value: &str, recommended_len: usize) {
     }
 }
 
-/// How a field renders in the example
 #[derive(Debug, Clone, Copy)]
 pub enum Kind {
-    /// `default` is a TOML literal
     Value,
-    /// `default` is the `"env:NAME"` literal
     Secret,
-    /// A `[switches.<name>]` table; `default` is `true` or `false`
     Switch {
         owner: &'static str,
         remove_after: &'static str,
@@ -549,17 +530,14 @@ pub enum Kind {
 
 #[derive(Debug, Clone, Copy)]
 pub struct Field {
-    /// Dotted path: `section.key`, `section.sub.key` or `switches.<name>`
     pub key: &'static str,
     pub default: &'static str,
     pub kind: Kind,
-    /// The env vars this key replaces; empty for a new key
     pub env: &'static [&'static str],
     pub source: &'static str,
     pub doc: &'static str,
 }
 
-/// An env var with no key, and why
 #[derive(Debug, Clone, Copy)]
 pub struct Retired {
     pub env: &'static str,
@@ -624,7 +602,6 @@ const fn switch(
     }
 }
 
-/// Every key, in file order
 pub const FIELDS: &[Field] = &[
     value(
         "server.bind_host",
@@ -1376,7 +1353,7 @@ pub const RETIRED: &[Retired] = &[
     },
 ];
 
-/// `config/myrtle.example.toml`
+#[must_use]
 pub fn render_example() -> String {
     let mut out = String::new();
     out.push_str(

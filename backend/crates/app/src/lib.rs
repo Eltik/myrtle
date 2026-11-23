@@ -1,6 +1,3 @@
-//! L5, use cases: everything `api` and `worker` do goes through a function here
-//! that takes an [`AppContext`] (or less) and returns values or an [`AppError`].
-
 pub mod alerts;
 pub mod audit;
 pub mod base_planner;

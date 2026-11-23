@@ -1,5 +1,3 @@
-//! Outfits, keyed by `skin_table.CharSkins` id (`char_002_amiya@epoque#4`).
-
 use std::cmp::Reverse;
 
 use myrtle_gamedata::assets::AssetKind;
@@ -15,7 +13,6 @@ pub(super) const SOURCE: KindSource = KindSource {
     catalogue,
 };
 
-/// Newest first, the store's order
 fn catalogue(m: &GameModel) -> Vec<EntitySummary> {
     in_key_order(
         m.skins
@@ -32,17 +29,14 @@ fn catalogue(m: &GameModel) -> Vec<EntitySummary> {
     )
 }
 
-/// An `@` id worn by a known operator; the `#1`/`#2` default arts resolve but are not offered
 fn is_outfit(m: &GameModel, id: &str, skin: &Skin) -> bool {
     id.contains('@') && m.operators.contains_key(wearer(skin))
 }
 
-/// Amiya's forms share `char_id` and name the form in `tmpl_id`
 fn wearer(skin: &Skin) -> &str {
     skin.tmpl_id.as_deref().unwrap_or(&skin.char_id)
 }
 
-/// Collaboration groups (`2021#rainbow6`) have none
 fn brand<'a>(m: &'a GameModel, group_id: &str) -> Option<&'a str> {
     m.skins
         .brand_list

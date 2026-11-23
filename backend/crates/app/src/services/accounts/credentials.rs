@@ -1,5 +1,3 @@
-//! XChaCha20-Poly1305 sealing for game credentials at rest, bound to their owner's id.
-
 use base64::{Engine, engine::general_purpose::STANDARD};
 use chacha20poly1305::aead::{Aead, KeyInit, Payload};
 use chacha20poly1305::{XChaCha20Poly1305, XNonce};
@@ -37,7 +35,6 @@ impl CredentialKey {
         Ok(Self(XChaCha20Poly1305::new(&key.into())))
     }
 
-    /// (nonce, ciphertext); `owner` is authenticated, so a row copied to another owner will not open
     pub fn seal(
         &self,
         owner: Uuid,

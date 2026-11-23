@@ -1,5 +1,3 @@
-//! What a visitor may see of someone else's profile, the owner's privacy settings, and what leaves the system.
-
 pub mod layout;
 
 use myrtle_db::DbError;
@@ -13,7 +11,6 @@ use crate::AppContext;
 use crate::AppError;
 use crate::policy::{Action, Resource, Subject};
 
-/// Denied is 403 for every visitor, signed in or not
 fn allow(
     ctx: &AppContext,
     subject: &Subject,
@@ -52,7 +49,6 @@ const fn policy_tab(tab: ProfileTabId) -> ProfileTab {
     }
 }
 
-/// The profile behind `uid` and whether the subject owns it; gate before any cache read
 pub async fn resolve_public_profile(
     ctx: &AppContext,
     subject: &Subject,
@@ -80,7 +76,6 @@ pub fn ensure_profile_readable(
     Ok((profile, own))
 }
 
-/// A profile that never set a layout hides no tab
 pub fn ensure_tab_visible(
     ctx: &AppContext,
     subject: &Subject,
@@ -96,7 +91,6 @@ pub fn ensure_tab_visible(
     allow(ctx, subject, Action::ReadProfileTab, &resource)
 }
 
-/// [`resolve_public_profile`] with every one of `tabs` visible
 pub async fn resolve_profile_for_tabs(
     ctx: &AppContext,
     subject: &Subject,
@@ -111,7 +105,6 @@ pub async fn resolve_profile_for_tabs(
     Ok((profile, own, layout))
 }
 
-/// The `uid` param's user (readable, every one of `tabs` visible), else the subject's own
 pub async fn resolve_user_id(
     ctx: &AppContext,
     subject: &Subject,
@@ -129,7 +122,6 @@ pub async fn resolve_user_id(
     }
 }
 
-/// [`resolve_user_id`] for the endpoints keyed on the game-account uid; the own case reads the row, 401 once it is gone
 pub async fn resolve_uid(
     ctx: &AppContext,
     subject: &Subject,
@@ -149,7 +141,6 @@ pub async fn resolve_uid(
         .ok_or(AppError::Unauthorized)
 }
 
-/// [`resolve_user_id`] with the layout limiting what a visitor reads; `None` for the owner
 pub async fn resolve_user_id_as_viewer(
     ctx: &AppContext,
     subject: &Subject,
@@ -172,7 +163,6 @@ pub struct UpdateSettingsRequest {
     pub store_gacha: Option<bool>,
     pub share_stats: Option<bool>,
     pub public_gacha: Option<bool>,
-    /// Absent keeps the layout, `null` resets it, an object sets the keys it carries
     #[serde(default, deserialize_with = "present")]
     pub profile_layout: Option<Option<ProfileLayoutPatch>>,
 }
@@ -190,7 +180,6 @@ fn user_key(uid: &str) -> String {
     format!("user:{uid}")
 }
 
-/// The caller's own settings; the showcase and background referents must be validated first
 pub async fn update_settings(
     ctx: &AppContext,
     subject: &Subject,
@@ -225,7 +214,7 @@ pub async fn update_settings(
     };
     let mut conn = ctx.db.conn().await?;
     match users::update_settings(&mut conn, user, &update).await {
-        Ok(()) | Err(DbError::NotFound) => {} // no settings row yet: nothing to change
+        Ok(()) | Err(DbError::NotFound) => {}
         Err(e) => return Err(e.into()),
     }
     drop(conn);
@@ -237,13 +226,12 @@ pub async fn update_settings(
     };
     if ranking_changed {
         for prefix in ["search:", "leaderboard:", "music:stats:listeners:"] {
-            ctx.cache.invalidate_prefix(prefix).await; // search and the leaderboards hide by tab or header number
+            ctx.cache.invalidate_prefix(prefix).await;
         }
     }
     Ok(())
 }
 
-/// An identifier a support report can still be matched against; four characters or fewer are blanked
 #[must_use]
 pub fn mask_identifier(value: &str) -> String {
     let count = value.chars().count();
@@ -262,13 +250,11 @@ pub fn mask_identifier(value: &str) -> String {
 pub struct UserTable {
     pub name: &'static str,
     pub scope: Scope,
-    /// Surrogate keys the target database reassigns
     pub regenerate: &'static [&'static str],
     pub guard: Option<ImportGuard>,
 }
 
 impl UserTable {
-    /// The column rewritten to the target user on import
     #[must_use]
     pub const fn owner_column(&self) -> Option<&'static str> {
         match self.scope {
@@ -287,7 +273,6 @@ const fn owned(name: &'static str) -> UserTable {
     }
 }
 
-/// Parents first; import deletes in reverse. Authored content, grants, telemetry and aggregates stay out
 pub const USER_TABLES: &[UserTable] = &[
     owned("user_status"),
     owned("user_settings"),
@@ -325,9 +310,6 @@ pub const USER_TABLES: &[UserTable] = &[
     },
 ];
 
-/// Sealed with `user_id` as AAD: portable only to the same key and the same `users.id`
 pub const CREDENTIALS_TABLE: UserTable = owned("user_game_credentials");
-
 pub const EXPORT_KIND: &str = "myrtle-user-export";
-
 pub const FORMAT_VERSION: u32 = 1;

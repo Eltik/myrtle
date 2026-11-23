@@ -122,7 +122,6 @@ fn wire_plan(r: PlanRow) -> ReleasePlan {
     }
 }
 
-/// The subject's own plan, `None` before the first save
 pub async fn get_plan(
     ctx: &AppContext,
     subject: &Subject,

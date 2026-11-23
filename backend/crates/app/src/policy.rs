@@ -1,5 +1,3 @@
-//! One authorisation function: `Policy::can(subject, action, resource)`.
-
 use std::sync::Arc;
 
 use myrtle_types::{
@@ -13,14 +11,11 @@ pub enum Subject {
     Anonymous,
     User {
         id: UserId,
-        /// The game account uid
         uid: Arc<str>,
-        /// `None` for a claim no server code matches exactly
         server: Option<Server>,
         role: Role,
         grants: Arc<[Grant]>,
     },
-    /// Allowed exactly the actions its scopes name
     ApiKey {
         id: ApiKeyId,
         scopes: Arc<[String]>,
@@ -29,7 +24,6 @@ pub enum Subject {
     Worker {
         id: WorkerId,
     },
-    /// A job acting on its own
     System,
 }
 
@@ -43,7 +37,6 @@ impl Subject {
         }
     }
 
-    /// The signed-in user's own game account uid
     #[must_use]
     pub fn uid(&self) -> Option<&str> {
         match self {
@@ -60,7 +53,6 @@ impl Subject {
         }
     }
 
-    /// The signed-in user's game server; a claim no server matches is 400, not 401
     pub fn game_server(&self) -> Result<Server, AppError> {
         match self {
             Self::User {
@@ -81,11 +73,9 @@ impl Subject {
     }
 }
 
-/// One `tier_list_permissions` or `translation_permissions` row
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Grant {
     pub action: Action,
-    /// Tier list id or locale code; `None` covers every one
     pub resource_id: Option<String>,
 }
 
@@ -101,7 +91,6 @@ impl Grant {
     }
 }
 
-/// The level stored in a permission row's `permission` column
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Permission {
     View,
@@ -145,7 +134,6 @@ impl Permission {
         }
     }
 
-    /// A view grant writes nothing but still opens the admin panel
     #[must_use]
     pub const fn translation_action(self) -> Action {
         match self {
@@ -163,7 +151,6 @@ pub enum Action {
     ViewTierList,
     EditTierList,
     PublishTierList,
-    /// Delete and manage
     AdministerTierList,
     CreateTierList,
     ManageTierListGrants,
@@ -213,7 +200,6 @@ impl Action {
         Self::ReadAudit,
     ];
 
-    /// The API key scope that allows this action
     #[must_use]
     pub const fn as_str(self) -> &'static str {
         match self {
@@ -249,7 +235,6 @@ impl Action {
         Self::ALL.into_iter().find(|a| a.as_str() == s)
     }
 
-    /// (family, rank) for the actions a higher grant implies
     const fn ladder(self) -> Option<(u8, u8)> {
         match self {
             Self::ViewTierList => Some((0, 0)),
@@ -263,7 +248,6 @@ impl Action {
     }
 }
 
-/// What is acted on, with the facts the decision needs
 #[derive(Debug, Clone)]
 pub enum Resource {
     Profile {
@@ -294,7 +278,6 @@ pub enum Resource {
     OperatorNotes,
     ReleaseData,
     AdminPanel,
-    /// Stats, the user list, the rate limiter
     Site,
     JobQueue,
     ApiKeys,
@@ -318,7 +301,6 @@ const SIGN_IN_REQUIRED: &str = "sign in required";
 
 #[derive(Debug, Clone, Copy)]
 pub struct Policy {
-    /// Re-read `users.role` per request instead of trusting the token's claim
     pub role_recheck: bool,
 }
 
@@ -357,7 +339,6 @@ impl Policy {
         }
     }
 
-    /// [`Self::can`] for `?`: `Unauthorized` where signing in could help, else `Forbidden`
     pub fn require(
         &self,
         subject: &Subject,

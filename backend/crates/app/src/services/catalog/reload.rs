@@ -1,5 +1,3 @@
-//! The asset pipeline's WebSocket: an `update_complete` announces a server's new extract to every process.
-
 use std::collections::BTreeMap;
 use std::time::{Duration, Instant};
 
@@ -9,24 +7,19 @@ use serde_json::Value;
 use tokio_tungstenite::connect_async;
 use tokio_tungstenite::tungstenite::{Error as WsError, Message};
 
-use crate::AppContext;
+use crate::services::catalog::release::jobs::record;
+use crate::{AppContext, AppError};
 
 pub const DEBOUNCE: Duration = Duration::from_secs(5);
 const MAX_BACKOFF: Duration = Duration::from_secs(30);
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum PipelineMessage {
-    UpdateComplete {
-        version: String,
-    },
-    Error {
-        message: String,
-    },
-    /// Progress and status events, by their `type`
+    UpdateComplete { version: String },
+    Error { message: String },
     Other(String),
 }
 
-/// `None` for a frame that is not a JSON object with a string `type`
 #[must_use]
 pub fn parse_message(text: &str) -> Option<PipelineMessage> {
     let value: Value = serde_json::from_str(text).ok()?;
@@ -48,22 +41,35 @@ pub fn parse_message(text: &str) -> Option<PipelineMessage> {
     })
 }
 
-/// `assets.ws_urls` keyed by data server; an unknown name or an empty URL is skipped
 #[must_use]
 pub fn pipeline_urls(configured: &BTreeMap<String, String>) -> Vec<(Server, String)> {
-    configured
-        .iter()
-        .filter_map(|(name, url)| {
-            let server = Server::parse(name.trim()).map(Server::data_server);
-            if server.is_none() {
-                tracing::warn!(name, "assets.ws_urls names no server, skipped");
+    let mut urls: Vec<(Server, String)> = Vec::new();
+    for (name, url) in configured {
+        let Some(named) = Server::parse(name.trim()) else {
+            tracing::warn!(name, "assets.ws_urls names no server, skipped");
+            continue;
+        };
+        let (server, url) = (named.data_server(), url.trim());
+        if url.is_empty() {
+            continue;
+        }
+        match urls.iter_mut().find(|(s, _)| *s == server) {
+            Some(kept) => {
+                tracing::warn!(
+                    name,
+                    server = server.as_str(),
+                    "assets.ws_urls names one data server twice, one listener kept"
+                ); // two listeners bump it twice per update
+                if named == server {
+                    kept.1 = url.to_owned();
+                }
             }
-            Some((server?, url.trim().to_owned())).filter(|(_, url)| !url.is_empty())
-        })
-        .collect()
+            None => urls.push((server, url.to_owned())),
+        }
+    }
+    urls
 }
 
-/// Holds one connection per configured pipeline for the life of the process; run it in ONE process
 pub async fn listen_for_updates(ctx: &AppContext) {
     let urls = pipeline_urls(&ctx.config.assets.ws_urls);
     if urls.is_empty() {
@@ -74,17 +80,16 @@ pub async fn listen_for_updates(ctx: &AppContext) {
         .await;
 }
 
-/// The listener's announcement state: a burst of frames announces once, a failed announcement is kept and retried
 #[derive(Debug, Default)]
 pub struct Announcer {
     pending: Option<String>,
+    absorbed: bool,
     failures: u32,
     retry_at: Option<Instant>,
     finished: Option<Instant>,
 }
 
 impl Announcer {
-    /// Takes an `update_complete` for `version`: a repeat within [`DEBOUNCE`] of the last finished announcement is dropped, a frame meeting a pending one replaces its version
     pub fn receive(&mut self, version: String, now: Instant) -> bool {
         let repeat = self
             .finished
@@ -92,19 +97,19 @@ impl Announcer {
         if repeat && self.pending.is_none() {
             return false;
         }
+        self.absorbed |= self.pending.is_some();
         self.pending = Some(version);
         true
     }
 
-    /// The pending version, when its retry wait is over at `now`
     #[must_use]
-    pub fn due(&self, now: Instant) -> Option<&str> {
-        self.pending
-            .as_deref()
-            .filter(|_| self.retry_at.is_none_or(|at| now >= at))
+    pub fn due(&self, now: Instant) -> Option<Option<&str>> {
+        let pending = self.pending.as_deref()?;
+        self.retry_at
+            .is_none_or(|at| now >= at)
+            .then_some((!self.absorbed).then_some(pending))
     }
 
-    /// How long until the pending announcement is due, `None` with nothing pending
     #[must_use]
     pub fn wait(&self, now: Instant) -> Option<Duration> {
         self.pending.as_ref()?;
@@ -114,7 +119,6 @@ impl Announcer {
         )
     }
 
-    /// Call when the announcement and this process's reload are done
     pub fn finished(&mut self, now: Instant) {
         *self = Self {
             finished: Some(now),
@@ -128,7 +132,6 @@ impl Announcer {
     }
 }
 
-/// 1 s doubling to [`MAX_BACKOFF`], without end: a lost announcement leaves every process on the old data
 #[must_use]
 pub fn retry_delay(failures: u32) -> Duration {
     Duration::from_secs(1 << failures.saturating_sub(1).min(5)).min(MAX_BACKOFF)
@@ -201,19 +204,43 @@ where
 }
 
 async fn announce_due(ctx: &AppContext, server: Server, announcer: &mut Announcer) {
-    let Some(version) = announcer.due(Instant::now()).map(str::to_owned) else {
+    let Some(version) = announcer.due(Instant::now()).map(|v| v.map(str::to_owned)) else {
         return;
     };
-    match ctx.announce_update(server, Some(&version)).await {
-        Ok(_) => {
-            if let Err(e) = ctx.reload_if_changed().await {
-                tracing::error!(error = %e, "game data generation check failed");
-            }
-            announcer.finished(Instant::now());
-        }
+    match announce_and_record(ctx, server, version.as_deref()).await {
+        Ok(()) => announcer.finished(Instant::now()),
         Err(e) => {
             announcer.failed(Instant::now());
-            tracing::error!(server = server.as_str(), version, failures = announcer.failures, error = %e, "update not announced, kept for a retry");
+            tracing::error!(server = server.as_str(), ?version, failures = announcer.failures, error = %e, "update not announced, kept for a retry");
+        }
+    }
+}
+
+pub async fn announce_and_record(
+    ctx: &AppContext,
+    server: Server,
+    version: Option<&str>,
+) -> Result<(), AppError> {
+    reload_logged(ctx).await;
+    record_logged(ctx, server).await;
+    ctx.announce_update(server, version).await?;
+    reload_logged(ctx).await;
+    record_logged(ctx, server).await;
+    Ok(())
+}
+
+async fn reload_logged(ctx: &AppContext) {
+    if let Err(e) = ctx.reload_if_changed().await {
+        tracing::error!(error = %e, "game data generation check failed");
+    }
+}
+
+async fn record_logged(ctx: &AppContext, server: Server) {
+    match record(ctx, server).await {
+        Ok(Some(recorded)) => tracing::info!(recorded, "release ledger recorded"),
+        Ok(None) => {}
+        Err(e) => {
+            tracing::error!(server = server.as_str(), error = %e, "release ledger not recorded");
         }
     }
 }

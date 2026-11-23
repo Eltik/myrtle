@@ -13,9 +13,7 @@ use crate::AppError;
 #[derive(Debug, Clone, Copy, Default, Deserialize, Serialize, PartialEq, Eq, Hash)]
 #[serde(rename_all = "camelCase")]
 pub enum RankPreset {
-    /// Every investment field left to the engine
     Default,
-    /// E2 (or the rarity's highest) max level, trust 100, M3, module level 3, potential 1
     #[default]
     P1Max,
     P6Max,
@@ -40,7 +38,6 @@ pub enum DamageKind {
 #[derive(Debug, Clone, Default, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct RankFilters {
-    /// Game profession codes (`WARRIOR`, `SNIPER`, ...)
     pub professions: Option<Vec<String>>,
     pub rarities: Option<Vec<i32>>,
     pub damage_types: Option<Vec<DamageKind>>,
@@ -60,10 +57,8 @@ pub struct RankRequest {
     pub secondary: Option<RequestSecondary>,
     pub cycle_model: Option<RequestCycleModel>,
     pub preset: Option<RankPreset>,
-    /// Applied to the cached rows, never part of the computation
     pub filters: Option<RankFilters>,
     pub sort_by: Option<RankMetric>,
-    /// At most 5000; absent returns every row
     pub limit: Option<u32>,
 }
 
@@ -101,7 +96,7 @@ impl RankRequest {
         .unwrap_or_default()
     }
 
-    /// Reachable with the rank page's own controls, at most 20,592 contexts, so they keep a day-long entry
+    #[must_use]
     pub fn on_page_grid(&self) -> bool {
         let on_step = |v: Option<f64>, step: f64, max: f64| {
             v.is_none_or(|v| (0.0..=max).contains(&v) && (v / step).fract() == 0.0)
@@ -117,6 +112,7 @@ impl RankRequest {
             && self.secondary.is_none()
     }
 
+    #[must_use]
     pub fn row_request(&self, operator_id: &str, skill: i32, module: i32) -> CalculateRequest {
         let preset = self.preset.unwrap_or_default();
         let maxed = preset != RankPreset::Default;
@@ -176,13 +172,11 @@ pub struct RankRow {
     pub profession: String,
     pub sub_profession_id: String,
     pub damage_type: DamageKind,
-    /// 0 = basic attack, 1-3 = S1-S3
     pub skill_index: i32,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub skill_id: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub skill_name: Option<String>,
-    /// 0 = no module, else the formula's module number
     pub module_index: i32,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub module_id: Option<String>,
@@ -201,12 +195,10 @@ pub struct RankRow {
     pub sp_recovery: Option<SpRecovery>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub startup_time: Option<f64>,
-    /// Absent for a skill with no duration
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub duration: Option<f64>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub cycle_time: Option<f64>,
-    /// At the reference context, never this request's
     #[serde(default)]
     pub retention: Option<f64>,
 }
@@ -230,7 +222,7 @@ pub struct RankResponse {
     pub retention_status: RetentionStatus,
 }
 
-/// Every (operator, skill, module) the DPS table supports, under one context. Blocking
+#[must_use]
 pub fn rank_rows_in(data: &Data, req: &RankRequest) -> RankComputed {
     let formulas = supported_operators();
     let mut ids: Vec<&String> = formulas.keys().collect();
@@ -317,7 +309,7 @@ fn passes<T>(filter: &Option<Vec<T>>, matches: impl Fn(&T) -> bool) -> bool {
     }
 }
 
-/// Filters, sorts descending (ties by operator, skill, module) and limits
+#[must_use]
 pub fn finish_rank(computed: &RankComputed, req: &RankRequest, data: &str) -> RankResponse {
     let sort_by = req.sort_by.unwrap_or_default();
     let f = req.filters.clone().unwrap_or_default();

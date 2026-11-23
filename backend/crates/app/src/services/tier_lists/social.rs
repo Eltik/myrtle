@@ -54,7 +54,6 @@ pub struct CreateFlairRequest {
     pub display_order: Option<i16>,
 }
 
-/// Hex HMAC-SHA256 of the visitor's session id, the dedupe key a view row stores
 #[must_use]
 pub fn session_hash(secret: &str, session_id: &str) -> String {
     hmac_hex(secret.as_bytes(), session_id.as_bytes())
@@ -64,7 +63,6 @@ fn valid_session_id(value: &str) -> bool {
     value.len() == SESSION_ID_LEN && value.bytes().all(|b| b.is_ascii_hexdigit())
 }
 
-/// Ten views a minute per address; idle addresses are swept every thousand calls
 fn check_view_rate(ip: &str) -> bool {
     let now = Instant::now();
     if VIEW_RATE_CALLS
@@ -86,7 +84,6 @@ fn check_view_rate(ip: &str) -> bool {
     }
 }
 
-/// Counts a view; with neither an account nor a valid session id nothing is written
 pub async fn record_view(
     ctx: &AppContext,
     subject: &Subject,
@@ -153,7 +150,6 @@ pub async fn favorite(
     Ok(FavoriteState { favorited })
 }
 
-/// `None` clears the flair; an audit row only when it changed
 pub async fn set_flair(
     ctx: &AppContext,
     subject: &Subject,
@@ -182,7 +178,6 @@ pub async fn set_flair(
     Ok(())
 }
 
-/// Active flairs
 pub async fn flairs(ctx: &AppContext) -> Result<Vec<TierListFlair>, AppError> {
     let rows = repo::list_flairs(&mut *ctx.db.conn().await?, true).await?;
     Ok(rows.into_iter().map(Into::into).collect())
@@ -325,7 +320,6 @@ async fn audit_grant(
     ctx.audit.record(event).await;
 }
 
-/// Every grant on every active list, or one user's
 pub async fn all_grants(
     ctx: &AppContext,
     subject: &Subject,
@@ -337,7 +331,6 @@ pub async fn all_grants(
     Ok(rows.into_iter().map(Into::into).collect())
 }
 
-/// The lists the caller holds a grant on
 pub async fn granted(
     ctx: &AppContext,
     subject: &Subject,

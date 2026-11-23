@@ -8,13 +8,11 @@ use crate::{AppContext, AppError};
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub struct RaritySync {
-    /// Distinct (`char_id`, rarity) pairs in `gacha_records`
     pub distinct_pairs: usize,
     pub fixed_char_ids: usize,
     pub rows_updated: u64,
 }
 
-/// The `RarityReconcile` job with its payload's generation: stored rarities rewritten to the default server's `character_table`
 pub async fn reconcile_rarities(ctx: &AppContext, generation: i64) -> Result<RaritySync, AppError> {
     let default = ctx.snapshots.default_server();
     if ctx.snapshots.get(default).is_none() {

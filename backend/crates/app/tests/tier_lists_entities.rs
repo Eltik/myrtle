@@ -329,7 +329,7 @@ async fn every_catalogue_entry_resolves_to_itself_on_en() {
     for kind in EntityKind::ALL {
         let entries = catalogue(model, &story, kind);
         if !matches!(kind, EntityKind::StoryCg | EntityKind::StoryScene) {
-            assert!(!entries.is_empty(), "{kind:?} offers nothing"); // CG and scene art may be evicted
+            assert!(!entries.is_empty(), "{kind:?} offers nothing");
         }
         for entry in &entries {
             assert_eq!(entry.kind, kind);

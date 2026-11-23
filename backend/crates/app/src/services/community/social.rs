@@ -1,5 +1,3 @@
-//! In-game friends and player search, through the caller's own game session.
-
 use myrtle_hypergryph::fetch::auth_request;
 use myrtle_hypergryph::session::ensure_fresh;
 use myrtle_hypergryph::{AuthSession, SessionKey, UpstreamError};
@@ -12,7 +10,6 @@ use crate::{AppContext, AppError};
 const SORT_LIST: &str = "social/getSortListInfo";
 const FRIEND_LIST: &str = "social/getFriendList";
 
-/// The caller's friends, at most `limit`, as the game's `getFriendList` returns them
 pub async fn friends(
     ctx: &AppContext,
     subject: &Subject,
@@ -21,7 +18,6 @@ pub async fn friends(
     lookup(ctx, subject, &friends_request(), limit).await
 }
 
-/// Players matching `query` (`name` or `name#1234`), at most `limit`
 pub async fn search_players(
     ctx: &AppContext,
     subject: &Subject,
@@ -51,7 +47,6 @@ pub fn friend_info_request(ids: &[String]) -> Value {
     json!({ "idList": ids })
 }
 
-/// The uids a `getSortListInfo` response lists, in order, at most `limit`
 pub fn listed_uids(raw: &Value, limit: Option<usize>) -> Result<Vec<String>, AppError> {
     let entries = raw
         .get("result")
@@ -117,7 +112,6 @@ fn player_key(subject: &Subject) -> Result<SessionKey, AppError> {
     })
 }
 
-/// One signed call; the advanced sequence number is saved for the next one
 async fn request(
     ctx: &AppContext,
     key: &SessionKey,

@@ -53,7 +53,6 @@ fn only_failures_hold_a_run_back() {
     assert!(!backing_off(&waited, 3600, 1_000 + 3_600));
 }
 
-/// Runs `slots` hourly slots, each landing `late(n)` seconds after its slot; returns the slots that checked
 fn checks(slots: i64, late: impl Fn(i64) -> i64) -> Vec<i64> {
     let base = interval_secs();
     let mut memory = WatchMemory::default();
@@ -128,7 +127,6 @@ fn a_failure_counts_and_keeps_what_was_known() {
     assert_eq!(memory.last_commit_sha.as_deref(), Some("abc"));
 }
 
-/// Answers one request with `response`, handing back the request head it read
 async fn stub(response: &'static str) -> (String, tokio::task::JoinHandle<String>) {
     let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
     let url = format!(

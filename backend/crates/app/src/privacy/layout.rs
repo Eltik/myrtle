@@ -1,11 +1,8 @@
-//! `user_settings.profile_layout`: tab order and visibility, showcase, header art and numbers.
-
 use myrtle_types::EntityKind;
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value, json};
 use uuid::Uuid;
 
-/// Declaration order is the canonical tab order
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum ProfileTabId {
@@ -17,7 +14,6 @@ pub enum ProfileTabId {
     Inventory,
     Enemies,
     Optimizer,
-    /// Roster data: its endpoints also need the Roster tab
     Lookback,
 }
 
@@ -61,7 +57,6 @@ pub struct LayoutTab {
     pub visible: bool,
 }
 
-/// Deserializing normalizes, so every value holds each known tab exactly once
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(from = "Value")]
 pub struct ProfileLayout {
@@ -77,7 +72,7 @@ pub struct ProfileLayout {
 pub const SHOWCASE_MAX_BLOCKS: usize = 12;
 pub const SHOWCASE_MAX_IDS: usize = 24;
 pub const SHOWCASE_TITLE_MAX: usize = 40;
-const SHOWCASE_KEY_MAX: usize = 120; // the `grids.slug` width
+const SHOWCASE_KEY_MAX: usize = 120;
 
 fn str_field<'a>(raw: &'a Value, field: &str) -> Option<&'a str> {
     raw.get(field).and_then(Value::as_str)
@@ -135,10 +130,8 @@ pub enum ShowcaseBlock {
     TierList {
         slug: String,
     },
-    /// Shown to a visitor only while the Plans tab is visible
     Plan {
         id: Uuid,
-        /// Lets the block follow the operator to a re-created plan
         #[serde(default, skip_serializing_if = "Option::is_none")]
         operator_id: Option<String>,
     },
@@ -182,7 +175,6 @@ impl ShowcaseBlock {
         }
     }
 
-    /// Favourites never repeat each other: two rows of one kind may carry different titles
     fn same_referent(&self, other: &Self) -> bool {
         match (self, other) {
             (Self::Grid { slug: a }, Self::Grid { slug: b })
@@ -256,7 +248,6 @@ impl ProfileBackgroundKind {
         Self::ALL.into_iter().find(|kind| kind.as_str() == id)
     }
 
-    /// The tier list kind whose lookup decides whether an id exists
     #[must_use]
     pub const fn entity_kind(self) -> Option<EntityKind> {
         match self {
@@ -271,15 +262,12 @@ impl ProfileBackgroundKind {
 pub struct ProfileBackground {
     pub kind: ProfileBackgroundKind,
     pub id: String,
-    /// Crop centre, percent of the art's width
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub focus_x: Option<u8>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub focus_y: Option<u8>,
-    /// Zoom past `cover`, percent
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub scale: Option<u16>,
-    /// Operator kind only: 1 or 2
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub elite: Option<u8>,
 }
@@ -312,7 +300,6 @@ impl ProfileBackground {
     }
 }
 
-/// What an owner may hide from visitors; declaration order is the canonical order
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum ProfileHeaderField {
@@ -344,7 +331,6 @@ impl ProfileHeaderField {
         Self::TenPullPermits,
     ];
 
-    /// The strip a header with no `strip` shows
     pub const DEFAULT_STRIP: [Self; 5] = [
         Self::Operators,
         Self::Skins,
@@ -385,9 +371,7 @@ pub const HEADER_STRIP_MAX: usize = 5;
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ProfileHeader {
-    /// Canonical order, each once
     pub hidden: Vec<ProfileHeaderField>,
-    /// `None` is [`ProfileHeaderField::DEFAULT_STRIP`], empty is no strip
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub strip: Option<Vec<ProfileHeaderField>>,
 }
@@ -436,7 +420,6 @@ impl ProfileHeader {
             .unwrap_or_else(|| ProfileHeaderField::DEFAULT_STRIP.to_vec())
     }
 
-    /// The strip resolved and without hidden cards; `hidden` is kept
     #[must_use]
     pub fn visible_only(&self) -> Self {
         Self {
@@ -451,7 +434,6 @@ impl ProfileHeader {
     }
 }
 
-/// A save: only the keys sent, so no editor wipes another's work
 #[derive(Debug, Clone, Default, PartialEq, Eq, Deserialize)]
 #[serde(from = "Value")]
 pub struct ProfileLayoutPatch {
@@ -484,7 +466,6 @@ impl ProfileLayoutPatch {
         }
     }
 
-    /// The object merged over the stored layout
     #[must_use]
     pub fn merge_json(&self) -> Value {
         let mut out = Map::new();
@@ -515,7 +496,6 @@ impl ProfileLayoutPatch {
         keys
     }
 
-    /// What `stored` becomes under this save, the twin of the SQL in `users::update_settings`
     #[must_use]
     pub fn apply(&self, stored: Option<&Value>) -> Option<Value> {
         let mut out = stored
@@ -545,7 +525,6 @@ impl From<Value> for ProfileLayout {
 }
 
 impl ProfileLayout {
-    /// Total: unknown and repeated tabs dropped, missing ones added visible
     #[must_use]
     pub fn normalize(raw: &Value) -> Self {
         let mut tabs: Vec<LayoutTab> = Vec::with_capacity(ProfileTabId::ALL.len());
@@ -569,7 +548,7 @@ impl ProfileLayout {
                 } else {
                     tabs.len()
                 };
-                tabs.insert(at, LayoutTab { id, visible: true }); // layouts saved before Showcase existed get it first
+                tabs.insert(at, LayoutTab { id, visible: true });
             }
         }
         Self {
@@ -583,13 +562,11 @@ impl ProfileLayout {
         }
     }
 
-    /// A tab absent from the list counts as hidden
     #[must_use]
     pub fn is_visible(&self, tab: ProfileTabId) -> bool {
         self.tabs.iter().any(|t| t.id == tab && t.visible)
     }
 
-    /// What a visitor receives: private tabs absent, the showcase gated on its tab and plans on theirs
     #[must_use]
     pub fn visible_only(&self) -> Self {
         let plans = self.is_visible(ProfileTabId::Plans);

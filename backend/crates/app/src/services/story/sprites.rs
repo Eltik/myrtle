@@ -1,5 +1,3 @@
-//! The character gallery, its expression thumbnails and the head crops tier lists show
-
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
@@ -66,7 +64,6 @@ pub async fn get_story_sprites(
     Ok(sprites_shared(ctx, server).await?.index.clone())
 }
 
-/// One folder's expression sheet, by folder name in any case
 pub async fn get_story_sprite(
     ctx: &AppContext,
     server: Server,
@@ -80,7 +77,6 @@ pub async fn get_story_sprite(
         .ok_or_else(|| AppError::NotFound(Some(format!("no story sprite folder `{base}`"))))
 }
 
-/// One listed expression's thumb as `(art root, path under it)`; `key` is `#N$M` or `@alias` as the sheet lists it
 pub async fn get_variant_thumb(
     ctx: &AppContext,
     server: Server,
@@ -102,7 +98,6 @@ pub async fn get_variant_thumb(
     Ok((root, rel))
 }
 
-/// The expression composed and scaled to [`THUMB_H`], cached under `root` while newer than its plates
 pub async fn ensure_variant_thumb(
     ctx: &AppContext,
     root: &Path,
@@ -150,7 +145,6 @@ pub async fn ensure_variant_thumb(
     Ok(rel)
 }
 
-/// A [`HEAD_PX`] head-and-shoulders crop of the plate at `body_rel`; `face` is the hub's face centre as plate fractions
 pub async fn ensure_head(
     ctx: &AppContext,
     root: &Path,

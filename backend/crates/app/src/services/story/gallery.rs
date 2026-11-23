@@ -1,5 +1,3 @@
-//! The Archives gallery and the story CG and scene galleries, each picture served as JPEG variants
-
 use std::path::PathBuf;
 use std::sync::Arc;
 
@@ -14,7 +12,6 @@ use super::{derived, snapshot};
 use crate::snapshots::Snapshot;
 use crate::{AppContext, AppError};
 
-/// Both story art catalogues with their censuses
 pub struct StoryArt {
     galleries: [(StoryArtGallery, StoryArtCensus); 2],
 }
@@ -46,7 +43,6 @@ impl StoryArt {
     }
 }
 
-/// The tree story media is read from and derived files are written under
 pub(super) fn art_dir(ctx: &AppContext, snapshot: &Snapshot, server: Server) -> PathBuf {
     snapshot.story_dirs().map_or_else(
         || ctx.snapshots.server_dir(server),
@@ -113,7 +109,6 @@ pub async fn story_art_census(
     Ok(story_art_shared(ctx, server).await?.census(kind).clone())
 }
 
-/// Whether any loaded server, the default first, lists `id` in `kind`
 pub async fn story_art_known(ctx: &AppContext, kind: StoryArtKind, id: &str) -> bool {
     for server in ctx.snapshots.loaded() {
         if let Ok(art) = story_art_shared(ctx, server).await
@@ -125,7 +120,6 @@ pub async fn story_art_known(ctx: &AppContext, kind: StoryArtKind, id: &str) -> 
     false
 }
 
-/// `server`, then the default server, then CN unless the switch is off: the order a variant is looked up in
 #[must_use]
 pub fn with_default_fallback(ctx: &AppContext, server: Server) -> Vec<Server> {
     let mut order = vec![server];
@@ -143,7 +137,6 @@ pub fn with_default_fallback(ctx: &AppContext, server: Server) -> Vec<Server> {
     order
 }
 
-/// The file to serve for `size` of gallery picture `id`, as `(art root, path under it)`
 pub async fn ensure_picture(
     ctx: &AppContext,
     server: Server,
@@ -172,7 +165,6 @@ pub async fn ensure_picture(
     Err(AppError::NotFound(None))
 }
 
-/// [`ensure_picture`] for a story CG or scene plate
 pub async fn ensure_story_art(
     ctx: &AppContext,
     server: Server,
@@ -204,7 +196,6 @@ pub async fn ensure_story_art(
     Err(AppError::NotFound(None))
 }
 
-/// The variant at `rel` of the PNG `url` names, rendered when missing or older than its source; a failed render serves the PNG
 pub async fn ensure_variant(
     ctx: &AppContext,
     root: PathBuf,

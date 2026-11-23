@@ -1,5 +1,3 @@
-//! Leaderboards, player search, site stats, Account Lookback, and their job bodies.
-
 pub mod board;
 pub mod items;
 pub mod jobs;
@@ -15,7 +13,6 @@ fn trimmed(value: Option<&str>) -> Option<&str> {
     value.map(str::trim).filter(|s| !s.is_empty())
 }
 
-/// An optional server filter; blank means every server
 fn server_filter(server: Option<&str>) -> Result<Option<Server>, AppError> {
     trimmed(server)
         .map(|s| {

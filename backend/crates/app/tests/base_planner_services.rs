@@ -61,7 +61,6 @@ fn optimize_request() -> OptimizeRequest {
     }
 }
 
-/// The synced `user_building` blob behind [`draft`], one inst id per operator
 fn building_json(now: i64) -> Value {
     let inst = |id: &str| OPERATORS.iter().position(|o| *o == id).unwrap() + 1;
     let chars: serde_json::Map<String, Value> = OPERATORS
@@ -99,7 +98,6 @@ fn building_json(now: i64) -> Value {
     })
 }
 
-/// A synced player `uid` with [`OPERATORS`] at E2 and the [`draft`] base
 async fn seed(ctx: &myrtle_app::AppContext, uid: &str) -> UserId {
     let now = chrono::Utc::now().timestamp();
     let operators: Vec<Value> = OPERATORS

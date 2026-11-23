@@ -1,5 +1,3 @@
-//! Classes (`WARRIOR`) and subclasses (`charger`), read off the roster's classification.
-
 use myrtle_gamedata::assets::AssetKind;
 use myrtle_gamedata::model::GameModel;
 use myrtle_gamedata_raw::tables::operator::OperatorProfession;
@@ -24,7 +22,6 @@ pub(super) const SUBCLASS: KindSource = KindSource {
     catalogue: subclass_catalogue,
 };
 
-/// The game's order; the English name is the fallback when the server's tag list lacks one
 const CLASSES: [(OperatorProfession, &str); 8] = [
     (OperatorProfession::Vanguard, "Vanguard"),
     (OperatorProfession::Guard, "Guard"),
@@ -40,7 +37,6 @@ fn class_of(id: &str) -> Option<&'static (OperatorProfession, &'static str)> {
     CLASSES.iter().find(|(p, _)| p.to_raw_str() == id)
 }
 
-/// `None` for tokens, traps and unknown professions
 pub(super) fn class_order(p: &OperatorProfession) -> Option<usize> {
     CLASSES.iter().position(|(c, _)| c == p)
 }
@@ -66,7 +62,6 @@ fn class_summary(m: &GameModel, id: &str) -> Option<EntitySummary> {
     })
 }
 
-/// Read off the operators that hold it: `SubProfDict` also names `none1`, `notchar1` and the like
 fn subclass_profession<'a>(m: &'a GameModel, id: &str) -> Option<&'a OperatorProfession> {
     if !m.modules.sub_prof_dict.contains_key(id) {
         return None;
@@ -99,7 +94,6 @@ fn subclass_summary(m: &GameModel, id: &str) -> Option<EntitySummary> {
     })
 }
 
-/// Grouped by class in [`CLASSES`] order, then by name
 fn subclass_catalogue(m: &GameModel) -> Vec<EntitySummary> {
     let mut ids: Vec<(usize, &str)> = Vec::new();
     for op in m.operators.values() {

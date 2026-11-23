@@ -24,7 +24,6 @@ pub fn pool_detail_path(ctx: &AppContext, server: Server) -> PathBuf {
     )
 }
 
-/// The `GachaDetailRefresh` job: one server, or every server with a service account
 pub async fn refresh_pool_details(
     ctx: &AppContext,
     server: Option<Server>,
@@ -44,7 +43,6 @@ pub async fn refresh_pool_details(
     Ok(fetched)
 }
 
-/// Pools never fetched, plus any still running; an ended banner never changes
 #[must_use]
 pub fn pools_to_fetch(pools: &[GachaPoolClient], file: &PoolDetailFile, now: i64) -> Vec<String> {
     pools
@@ -79,7 +77,7 @@ async fn refresh_server(ctx: &AppContext, server: Server) -> Result<usize, AppEr
     let always = ctx.config.switches.sidecar_reload_always.enabled;
     let delay = Duration::from_millis(job.call_delay_ms);
     let checkpoint_every = job.checkpoint_every.unwrap_or(0);
-    let loaded = Fingerprint::of(&file.pools); // only a change against the loaded file warrants a reload
+    let loaded = Fingerprint::of(&file.pools);
     let mut on_disk = loaded.clone();
     let (mut fetched, mut since_checkpoint, mut failures) = (0_usize, 0_usize, 0_u32);
 
@@ -118,7 +116,7 @@ async fn refresh_server(ctx: &AppContext, server: Server) -> Result<usize, AppEr
             break;
         }
         if checkpoint_every > 0 && since_checkpoint >= checkpoint_every {
-            let current = Fingerprint::of(&file.pools); // makes a killed cold backfill resumable; a failed one waits for the next
+            let current = Fingerprint::of(&file.pools);
             if always || current.differs(&on_disk) {
                 match commit_pool_details(&path, &mut file, server, now) {
                     Ok(()) => {
@@ -158,14 +156,13 @@ async fn refresh_server(ctx: &AppContext, server: Server) -> Result<usize, AppEr
     Ok(fetched)
 }
 
-/// The sidecar, or an empty one when absent, unreadable or another version
+#[must_use]
 pub fn read_pool_details(path: &Path) -> PoolDetailFile {
     sidecar::read::<PoolDetailFile>(path)
         .filter(|file| file.version == POOL_DETAIL_FILE_VERSION)
         .unwrap_or_default()
 }
 
-/// Stamps the run metadata and writes the file the loader reads
 pub fn commit_pool_details(
     path: &Path,
     file: &mut PoolDetailFile,

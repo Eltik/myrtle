@@ -5,6 +5,7 @@ mod common;
 use std::path::PathBuf;
 
 use myrtle_app::snapshots::{Snapshot, SnapshotRegistry};
+use myrtle_db::repos::data_generations::Generation;
 use myrtle_gamedata_raw::tables::obtain::ObtainChannel;
 use myrtle_types::Server;
 
@@ -47,12 +48,18 @@ async fn the_registry_aligns_a_text_only_server_on_the_servers_loaded_before_it(
 
     let booted = registry(root);
     for server in booted.servers() {
-        booted.activate_at(server, 0, None).await.unwrap();
+        booted
+            .activate_at(server, &Generation::default())
+            .await
+            .unwrap();
     }
     let aligned = booted.require(Server::KR).unwrap();
 
     let without_en = registry(root);
-    without_en.activate_at(Server::KR, 0, None).await.unwrap();
+    without_en
+        .activate_at(Server::KR, &Generation::default())
+        .await
+        .unwrap();
     let alone = without_en.require(Server::KR).unwrap();
 
     assert!(unclassified(&alone) > 0, "KR wording classified everything");

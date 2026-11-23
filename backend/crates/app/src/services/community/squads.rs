@@ -1,6 +1,3 @@
-//! The account's saved squads, the in-game squads from the last roster sync,
-//! and the per-squad analysis.
-
 use std::collections::HashMap;
 
 use chrono::{DateTime, Utc};
@@ -23,7 +20,6 @@ use serde_json::Value;
 use crate::policy::Subject;
 use crate::{AppContext, AppError};
 
-/// `None` on a seat means "follow my roster"
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SquadBuild {
     pub phase: i32,
@@ -87,7 +83,6 @@ pub struct SquadsResponse {
 #[derive(Debug, Clone, Serialize)]
 pub struct SquadRules {
     pub threats: ThreatThresholds,
-    /// Challenge stage id -> its normal stage id
     pub normal_of: HashMap<String, String>,
 }
 
@@ -124,7 +119,6 @@ pub async fn get(ctx: &AppContext, subject: &Subject) -> Result<SquadsResponse, 
     })
 }
 
-/// Writes `input` into `slot`, replacing whatever was there
 pub async fn save(
     ctx: &AppContext,
     subject: &Subject,
@@ -165,7 +159,6 @@ pub async fn delete(ctx: &AppContext, subject: &Subject, slot: i32) -> Result<()
     }
 }
 
-/// Numbers from `server`'s data, text readings from EN's by id
 pub async fn analyze(
     ctx: &AppContext,
     request: SquadAnalyzeRequest,
@@ -218,7 +211,6 @@ pub fn checked_slot(slot: i32) -> Result<i16, AppError> {
     )))
 }
 
-/// `input` trimmed, padded to twelve seats, and every rule checked against `data`
 pub fn checked(
     data: &GameModel,
     slot: i16,
@@ -262,7 +254,6 @@ pub fn checked(
     })
 }
 
-/// At most twelve seats, then `check` on each filled seat and the support
 fn check_seats<T>(
     members: &[Option<T>],
     support: Option<&T>,
@@ -365,7 +356,6 @@ fn check_member(data: &GameModel, field: &str, member: &SquadMember) -> Result<(
     Ok(())
 }
 
-/// Sanity caps only: the analysis clamps each number to the operator's own bounds
 pub fn check_member_build(field: &str, member: &SquadMemberBuild) -> Result<(), AppError> {
     for (name, value) in [
         ("phase", member.phase),
@@ -419,7 +409,7 @@ fn game_squad(row: GameSquadRow) -> GameSquad {
     }
 }
 
-/// Exactly twelve seats: an entry that does not parse becomes an empty seat
+#[must_use]
 pub fn seats<T: DeserializeOwned>(value: Value) -> Vec<Option<T>> {
     let mut out: Vec<Option<T>> = match value {
         Value::Array(items) => items

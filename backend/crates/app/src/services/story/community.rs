@@ -1,6 +1,3 @@
-//! What the community has read: accounts per story, and how far into each group
-//! Counts only, over accounts that turned neither `public_profile` nor `share_stats` off.
-
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use std::time::Duration;
@@ -19,10 +16,8 @@ use crate::{AppContext, AppError};
 
 pub const MAX_AGE: Duration = Duration::from_hours(6);
 
-/// Accounts per blocking hand-off: ~3.4 MB of stage documents in flight
 const BATCH: usize = 128;
 
-/// Carries the extract fingerprint, so a reload retires the body on its own
 #[must_use]
 pub fn cache_key(server: Server, res: &str) -> String {
     format!("story:community:{}:{res}", server.data_server().as_str())
@@ -38,12 +33,9 @@ pub struct StoryReaders {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct StoryGroupReaders {
-    /// A `StoryGroup.id`, or an operator's `charId` for its records
     pub id: String,
     pub readers: u32,
-    /// Read every gated story; 0 on a group with no gated story
     pub finished: u32,
-    /// Readers per story in group order; absent on operator records to stay under the wire limit
     #[serde(skip_serializing_if = "Option::is_none")]
     pub depth: Option<Vec<u32>>,
 }
@@ -51,7 +43,6 @@ pub struct StoryGroupReaders {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct StoryCommunity {
-    /// Admitted accounts carrying at least one source: the denominator for every count
     pub players: u32,
     pub computed_at: i64,
     pub stories: Vec<StoryReaders>,
@@ -62,20 +53,16 @@ pub struct StoryCommunity {
 struct PlanGroup {
     id: String,
     stories: Vec<u32>,
-    /// Scripted stories that carry a gate: what `finished` is measured over
     measurable: Vec<u32>,
     curve: bool,
 }
 
-/// A group's id, its `(story id, has a script)` in group order, and whether it carries a depth curve
 pub type PlanGroupInput = (String, Vec<(String, bool)>, bool);
 
-/// The library with story ids interned to dense indices, so the per-account fold is array indexing
 #[derive(Debug, Clone)]
 pub struct CommunityPlan {
     story_ids: Vec<String>,
     ix: HashMap<String, u32>,
-    /// An empty `RequiredStages` is a story the stages cannot speak for, not a gate that passes
     gated: Vec<(u32, Vec<StoryRequiredStage>)>,
     groups: Vec<PlanGroup>,
 }
@@ -162,7 +149,6 @@ impl CommunityPlan {
     }
 }
 
-/// One account's three sources; the jsonb arrives as text so the parse lands on the blocking pool
 #[derive(Debug, Clone, Default)]
 pub struct AccountRead {
     pub verdict: Vec<String>,
@@ -181,7 +167,6 @@ pub struct CommunityCensus {
     pub scanned: u32,
     pub players: u32,
     pub from_verdict: u32,
-    /// No verdict row, and the stages satisfied at least one gate
     pub from_gates: u32,
     pub from_document: u32,
     pub empty: u32,
@@ -193,7 +178,6 @@ pub struct Tally {
     story_readers: Vec<u32>,
     group_readers: Vec<u32>,
     group_finished: Vec<u32>,
-    /// `seen[i] == epoch` puts story `i` in the current account's set; 0 is never an epoch
     seen: Vec<u32>,
     marks: Vec<u32>,
     epoch: u32,
@@ -222,7 +206,6 @@ impl Tally {
         }
     }
 
-    /// The verdict replaces the gates; the document's `unread` withdraws last, so a hand clear sticks
     pub fn add(&mut self, plan: &CommunityPlan, account: &AccountRead) {
         self.census.scanned += 1;
         if !account.has_source() {
@@ -269,7 +252,6 @@ impl Tally {
         }
     }
 
-    /// No `cowLevel` here: the sync copies a special stage's first-open time onto the record as `cowFirstTs`
     fn add_gates(&mut self, plan: &CommunityPlan, stages: Option<&str>) {
         let Some(raw) = stages else { return };
         let Ok(Value::Object(stages)) = serde_json::from_str::<Value>(raw) else {
@@ -337,7 +319,6 @@ impl Tally {
         c.reads += o.reads;
     }
 
-    /// `depth` is read off the story counters, so a curve and the story rows never disagree
     #[must_use]
     pub fn finish(&self, plan: &CommunityPlan, computed_at: i64) -> StoryCommunity {
         StoryCommunity {
@@ -457,7 +438,6 @@ async fn build_body(ctx: &AppContext, server: Server) -> Result<String, AppError
     serde_json::to_string(&built).map_err(AppError::internal)
 }
 
-/// The aggregate for one server, computed at most every [`MAX_AGE`]; a reader mid-build waits for it
 pub async fn community(ctx: &AppContext, server: Server) -> Result<CachedJson, AppError> {
     let res = ctx
         .snapshots
@@ -475,7 +455,6 @@ pub async fn community(ctx: &AppContext, server: Server) -> Result<CachedJson, A
         .await
 }
 
-/// `StoryCommunityAggregate`: recompute and store, so no reader pays the walk
 pub async fn aggregate(ctx: &AppContext, server: Server) -> Result<(), AppError> {
     let res = ctx
         .snapshots

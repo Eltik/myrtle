@@ -1,5 +1,3 @@
-//! Release planner: when CN content reaches EN, from both extracts and the stored overrides.
-
 mod assets;
 mod banners;
 mod events;
@@ -9,7 +7,7 @@ mod skins;
 
 use std::collections::HashMap;
 use std::future::Future;
-use std::sync::Arc;
+use std::sync::{Arc, OnceLock};
 use std::time::Duration;
 
 use chrono::Utc;
@@ -39,22 +37,28 @@ pub use overrides::{
 };
 pub use skins::{get_skins, one_guess_per_group};
 
-/// Every release body; override writes and art mirrors flush it
-pub const CACHE_PREFIX: &str = "static:cn:release:";
+const CACHE_PREFIX: &str = "static:cn:release:";
 const CACHE_TTL: Duration = Duration::from_hours(24);
-/// Names the ledger and override rows a body was built from, so a build that read older rows lands on a dead key
 const REVISION_KEY: &str = "release:revision";
 const REVISION_TTL: Duration = Duration::from_hours(24 * 30);
 
-/// Retires every release body, in this process and the others
-pub async fn revise(ctx: &AppContext) {
+pub async fn revise(ctx: &AppContext) -> String {
     let revision = uuid::Uuid::new_v4().simple().to_string();
     ctx.cache.set(REVISION_KEY, &revision, REVISION_TTL).await;
-    ctx.cache.invalidate_prefix(CACHE_PREFIX).await;
+    revision
+}
+
+async fn revision(ctx: &AppContext) -> String {
+    static FALLBACK: OnceLock<String> = OnceLock::new();
+    if let Some(revision) = ctx.cache.get(REVISION_KEY).await {
+        return revision;
+    }
+    let fallback = FALLBACK.get_or_init(|| uuid::Uuid::new_v4().simple().to_string());
+    ctx.cache.set(REVISION_KEY, fallback, REVISION_TTL).await;
+    fallback.clone()
 }
 const LOOKBACK_GRACE_SECS: i64 = 60 * 86_400;
 
-/// The lag model folds into the key so a changed window or half-life never serves the other model
 #[must_use]
 pub fn cache_key(resource: &str, switches: &Switches) -> String {
     let hash = switches.lag_window as u64 ^ switches.lag_half_life.to_bits().rotate_left(1);
@@ -91,7 +95,7 @@ where
         .get(Server::CN)
         .ok_or(AppError::NotFound(None))?;
     let en = ctx.snapshots.require(Server::EN)?;
-    let revision = ctx.cache.get(REVISION_KEY).await.unwrap_or_default();
+    let revision = revision(ctx).await;
     let resource = format!("{resource}:{revision}");
     let key = cn.key(&en.key(&cache_key(&resource, &switches(&ctx.config))));
     let owner = ctx.clone();

@@ -1,5 +1,3 @@
-//! EXP and LMD still needed to bring every owned operator to its level target, against what the account holds.
-
 use std::collections::HashMap;
 
 use myrtle_db::repos::items::ItemRow;
@@ -33,7 +31,6 @@ const MINUTES_PER_DAY: f64 = 1440.0;
 pub enum LevelTarget {
     #[default]
     Max,
-    /// Where the operator's modules unlock, else its rarity's; a rarity without modules keeps its cap
     Module,
 }
 
@@ -60,11 +57,9 @@ pub struct MaxLevelCostResponse {
     pub promotion_lmd_needed: i64,
     pub lmd_needed: i64,
     pub exp_owned: i64,
-    /// `None` for a visitor while the owner hides LMD from the header
     pub lmd_owned: Option<i64>,
     pub exp_missing: i64,
     pub lmd_missing: Option<i64>,
-    /// Most expensive first
     pub operators: Vec<MaxLevelOperatorDto>,
     pub income: LmdIncomeDto,
 }
@@ -80,7 +75,6 @@ pub struct LmdIncomeDto {
     pub days_with_farming: Option<i64>,
 }
 
-/// `(elite, level)` of each non-initial module's unlock
 fn module_unlock(operator: &Operator) -> impl Iterator<Item = (i16, i16)> + '_ {
     operator.modules.iter().filter_map(|m| {
         if m.module.module_type == ModuleType::Initial {
@@ -93,7 +87,6 @@ fn module_unlock(operator: &Operator) -> impl Iterator<Item = (i16, i16)> + '_ {
     })
 }
 
-/// The earliest module unlock per star count, over every operator in the data
 #[must_use]
 pub fn module_targets_by_rarity(model: &GameModel) -> HashMap<i16, (i16, i16)> {
     let mut by_rarity: HashMap<i16, (i16, i16)> = HashMap::new();
@@ -109,7 +102,6 @@ pub fn module_targets_by_rarity(model: &GameModel) -> HashMap<i16, (i16, i16)> {
     by_rarity
 }
 
-/// `(elite, level)` the walk stops at, never past the cap
 #[must_use]
 pub fn operator_target(
     operator: &Operator,
@@ -130,7 +122,6 @@ pub fn operator_target(
     Some(module.map_or(cap, |m| m.min(cap)))
 }
 
-/// Gated by the Optimizer tab; a visitor sees the LMD balance only while the header shows it
 pub async fn max_level_cost(
     ctx: &AppContext,
     subject: &Subject,
@@ -169,7 +160,6 @@ pub async fn max_level_cost(
         .await
 }
 
-/// `lmd_owned` is `None` when the balance is hidden, which also hides the shortfall
 #[must_use]
 pub fn costs(
     snapshot: &Snapshot,
@@ -301,7 +291,6 @@ fn lmd_income(
     }
 }
 
-/// Priced as the Score tab prices the base as stationed now; `None` without rooms
 fn current_base_lmd_per_day(
     snapshot: &Snapshot,
     roster: &[RosterEntry],
@@ -341,7 +330,6 @@ fn current_base_lmd_per_day(
     Some(flows.lmd_per_day())
 }
 
-/// `(runs, LMD)` a day's natural sanity buys on the farming stage; zero when the data lacks it
 fn farming_income(model: &GameModel) -> (f64, f64) {
     let regen = model.consts.player_ap_regen_speed;
     let Some(stage) = model
@@ -359,7 +347,6 @@ fn farming_income(model: &GameModel) -> (f64, f64) {
     (runs, runs * f64::from(stage.gold_gain))
 }
 
-/// Whole days until `missing` is earned: 0 when nothing is missing, `None` when nothing is earned
 #[must_use]
 pub fn days_to_earn(missing: i64, per_day: f64) -> Option<i64> {
     if missing <= 0 {

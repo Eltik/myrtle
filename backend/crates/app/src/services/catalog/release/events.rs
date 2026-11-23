@@ -108,7 +108,6 @@ fn farm_stages(p: &Planner, act_id: &str) -> Vec<FarmStage> {
     stages
 }
 
-/// The event's token shop from whichever server has fetched it, CN first
 fn event_shop(p: &Planner, act_id: &str) -> Option<EventShop> {
     let (server, data): (&str, &EventShopData) = p
         .cn()
@@ -139,7 +138,6 @@ fn event_shop(p: &Planner, act_id: &str) -> Option<EventShop> {
     })
 }
 
-/// Name and icon from the table that knows the item type; EN's name when EN has the item
 fn shop_item(p: &Planner, item_type: &str, item_id: &str) -> ShopItem {
     let (cn, en) = (p.cn(), p.en());
     match ShopGoodKind::of(item_type) {

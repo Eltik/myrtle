@@ -1,5 +1,3 @@
-//! The inventory leaderboard: who holds the most of one item or currency.
-
 use std::time::Duration;
 
 use myrtle_db::repos::items::{self, Holding};
@@ -16,7 +14,6 @@ const STANDING_TTL: Duration = Duration::from_mins(1);
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ItemLeaderboardEntry {
-    /// Ties share a rank
     pub rank: i64,
     pub uid: String,
     pub nickname: Option<String>,
@@ -32,7 +29,6 @@ pub struct ItemLeaderboardEntry {
 pub struct ItemLeaderboardPage {
     pub item_id: String,
     pub entries: Vec<ItemLeaderboardEntry>,
-    /// Visible holders of the item
     pub total: i64,
     pub total_quantity: i64,
 }
@@ -47,9 +43,7 @@ pub struct ItemHoldingSummary {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ItemCatalog {
-    /// Visible players under the same filter as `holders`
     pub population: i64,
-    /// Most holders first
     pub items: Vec<ItemHoldingSummary>,
 }
 

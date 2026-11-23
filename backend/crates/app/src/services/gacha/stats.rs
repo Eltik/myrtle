@@ -11,7 +11,6 @@ pub const SHARED_STATS_PREFIX: &str = "gacha:";
 pub const GLOBAL_STATS_TTL: Duration = Duration::from_mins(5);
 pub const ENHANCED_STATS_TTL: Duration = Duration::from_mins(10);
 pub const PER_BANNER_STATS_TTL: Duration = Duration::from_mins(10);
-/// Each size is its own cache entry and every miss runs full aggregations, so the set stays small
 pub const TOP_N_SIZES: [u32; 3] = [10, 20, 50];
 const DAY_NAMES: [&str; 7] = [
     "Sunday",
@@ -28,7 +27,6 @@ pub fn enhanced_stats_key(top_n: u32, include_timing: bool) -> String {
     format!("gacha:enhanced_stats:{top_n}:{include_timing}")
 }
 
-/// Rounds up to the next served size, the largest above it; absent is 20
 #[must_use]
 pub fn snap_top_n(requested: Option<u32>) -> u32 {
     let n = requested.unwrap_or(20);
@@ -38,7 +36,6 @@ pub fn snap_top_n(requested: Option<u32>) -> u32 {
         .unwrap_or(TOP_N_SIZES[TOP_N_SIZES.len() - 1])
 }
 
-/// Drops every cached community aggregate, after a share flag flip or a rarity rewrite
 pub async fn flush_shared_stats(ctx: &AppContext) {
     ctx.cache.invalidate_prefix(SHARED_STATS_PREFIX).await;
 }
@@ -61,7 +58,6 @@ pub struct CollectiveStats {
     pub total_five_stars: i64,
     pub total_four_stars: i64,
     pub total_three_stars: i64,
-    /// Unix seconds, `None` for an empty corpus
     #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub first_pull_at: Option<i64>,
@@ -143,7 +139,6 @@ pub struct BannerPullStat {
     pub user_count: i64,
 }
 
-/// `part / whole`, 0 for an empty whole
 fn share(part: i64, whole: i64) -> f64 {
     if whole > 0 {
         part as f64 / whole as f64
@@ -152,7 +147,6 @@ fn share(part: i64, whole: i64) -> f64 {
     }
 }
 
-/// Pull totals and rates across every `share_stats` account; rates are 0..1 fractions
 pub async fn global_stats(ctx: &AppContext) -> Result<GlobalGachaStats, AppError> {
     if let Some(cached) = ctx.cache.get_json(GLOBAL_STATS_KEY).await {
         return Ok(cached);
@@ -277,7 +271,6 @@ pub fn shape_enhanced(
     }
 }
 
-/// Community pull totals per banner; same TTL as the enhanced stats so the two agree
 pub async fn per_banner_stats(ctx: &AppContext) -> Result<Vec<BannerPullStat>, AppError> {
     if let Some(cached) = ctx.cache.get_json(PER_BANNER_STATS_KEY).await {
         return Ok(cached);

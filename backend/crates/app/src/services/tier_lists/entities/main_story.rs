@@ -1,5 +1,3 @@
-//! Main story episodes, keyed by `story_review_table` group id (`main_14`).
-
 use myrtle_engine_story::index::{MainlineChapter, mainline_chapters};
 use myrtle_types::EntityKind;
 
@@ -31,7 +29,7 @@ fn summary(c: &MainlineChapter) -> EntitySummary {
         id: c.group_id.clone(),
         name: c.name.clone(),
         icon: c.banner_url.as_deref().map(asset_url),
-        href: None, // the library opens a chapter in a dialog, not at a route
+        href: None,
         facets: Facets::default()
             .one_opt("episode", c.number.map(|n| n.to_string()))
             .one_opt("act", c.act.as_ref().map(|(i, _)| i.to_string()))

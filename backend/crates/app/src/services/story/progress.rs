@@ -1,5 +1,3 @@
-//! Reading progress synced to the account, and the game's own read marks re-derived or imported
-
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
@@ -15,16 +13,10 @@ use serde_json::{Map, Value, json};
 
 use crate::{AppContext, AppError, Subject};
 
-/// The largest document accepted, in bytes of compact JSON
 pub const MAX_DOCUMENT_BYTES: usize = 512 * 1024;
-
-/// How long a sync waits for the story library before skipping the flags half
 pub const STORY_INDEX_BUDGET: Duration = Duration::from_secs(30);
-
-/// How long a sync waits for the read-mark store before abandoning it
 pub const GAME_READ_STORE_BUDGET: Duration = Duration::from_secs(10);
 
-/// The browser's document, stored verbatim; its shape belongs to the reader
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(transparent)]
 pub struct StoryProgressDocument(pub Value);
@@ -35,7 +27,6 @@ pub struct StoryProgressResponse {
     pub progress: Option<StoryProgressDocument>,
     pub updated_at: Option<i64>,
     pub game_read: Vec<String>,
-    /// Archived but never played: the ids a v1 document's upgrade withdraws
     pub game_unread: Vec<String>,
     pub game_archived: u32,
     pub game_synced_at: Option<i64>,
@@ -45,7 +36,6 @@ fn signed_in(subject: &Subject) -> Result<UserId, AppError> {
     subject.user_id().ok_or(AppError::Unauthorized)
 }
 
-/// -1 is the reader's "no position" sentinel and must not travel
 fn non_negative(v: &Value) -> bool {
     v.as_f64().is_some_and(|n| n.is_finite() && n >= 0.0)
 }
@@ -54,7 +44,6 @@ fn bad(message: impl Into<String>) -> AppError {
     AppError::BadRequest(message.into())
 }
 
-/// Admission only: is this a story-progress document at all
 pub fn validate(doc: &StoryProgressDocument) -> Result<(), AppError> {
     let Some(root) = doc.0.as_object() else {
         return Err(bad("progress must be an object"));
@@ -137,7 +126,6 @@ async fn respond(
     })
 }
 
-/// The subject's stored document, null fields when it never synced
 pub async fn get(ctx: &AppContext, subject: &Subject) -> Result<StoryProgressResponse, AppError> {
     let user = signed_in(subject)?;
     let mut conn = ctx.db.conn().await?;
@@ -145,7 +133,6 @@ pub async fn get(ctx: &AppContext, subject: &Subject) -> Result<StoryProgressRes
     respond(&mut conn, user, document).await
 }
 
-/// Replaces the stored document whole and answers with it as stored
 pub async fn put(
     ctx: &AppContext,
     subject: &Subject,
@@ -158,7 +145,6 @@ pub async fn put(
     respond(&mut conn, user, Some(stored)).await
 }
 
-/// `server` when it is loaded, else the default server, as a sync reads it
 fn data_server(ctx: &AppContext, server: Server) -> Server {
     if ctx.snapshots.get(server).is_some() {
         server
@@ -167,7 +153,6 @@ fn data_server(ctx: &AppContext, server: Server) -> Server {
     }
 }
 
-/// Re-runs the game verdict over what the database holds, without the game server
 pub async fn import(
     ctx: &AppContext,
     subject: &Subject,
@@ -206,7 +191,6 @@ pub async fn import(
     respond(&mut conn, user, document).await
 }
 
-/// The refresh's payload shape rebuilt from stored rows; a story `lookup` no longer knows drops out of the flags
 #[must_use]
 pub fn stored_payload(
     rows: &[StoredMarkRow],
@@ -238,7 +222,6 @@ pub fn stored_payload(
     } })
 }
 
-/// Replaces the imported marks with `set`; a set carrying neither source is a no-op, never a delete
 pub async fn store_game_read(
     ctx: &AppContext,
     user: UserId,
@@ -272,10 +255,8 @@ pub async fn store_game_read(
         .map_err(|e| failed("delete/insert/commit", e))
 }
 
-/// A read-mark store that did not happen, by the step that failed
 #[derive(Debug, Clone)]
 pub struct StoreFailure {
-    /// `begin` (the pool) or `delete/insert/commit` (the one repo call that runs all three)
     pub stage: &'static str,
     pub elapsed_ms: u128,
     pub message: String,
@@ -293,7 +274,6 @@ impl std::fmt::Display for StoreFailure {
 
 impl std::error::Error for StoreFailure {}
 
-/// Both reading sources of a sync payload; a library that fails or overruns its budget costs only the flags half
 pub async fn game_read_set(
     ctx: &AppContext,
     uid: &str,
@@ -341,7 +321,6 @@ pub async fn game_read_set(
     })
 }
 
-/// Stores the sync's read marks; never fails the sync, the outcome rides back as `gameReadImport`
 pub async fn import_game_read(
     ctx: &AppContext,
     uid: &str,

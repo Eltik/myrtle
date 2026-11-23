@@ -10,6 +10,7 @@ use myrtle_app::AppContext;
 use myrtle_app::alerts::{degraded_tables_embed, report_degraded_tables};
 use myrtle_app::context::Secrets;
 use myrtle_app::snapshots::SnapshotRegistry;
+use myrtle_db::repos::data_generations::Generation;
 use myrtle_types::Server;
 use serde_json::Value;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
@@ -48,7 +49,6 @@ fn client() -> reqwest::Client {
     reqwest::Client::new()
 }
 
-/// A webhook on a local port that answers 204 and forwards each request body
 async fn webhook() -> (String, mpsc::UnboundedReceiver<String>) {
     let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
     let url = format!("http://{}/hook", listener.local_addr().unwrap());
@@ -144,7 +144,7 @@ async fn a_reload_with_degraded_tables_posts_its_alert() {
         ..base.clone()
     };
     ctx.snapshots
-        .activate_at(Server::EN, 0, None)
+        .activate_at(Server::EN, &Generation::default())
         .await
         .unwrap();
     ctx.announce_update(Server::EN, None).await.unwrap();
@@ -159,5 +159,18 @@ async fn a_reload_with_degraded_tables_posts_its_alert() {
         body["embeds"][0],
         degraded_tables_embed("en", &live.model.meta.table_warnings).unwrap()
     );
+
+    let other = AppContext {
+        snapshots: Arc::new(SnapshotRegistry::new(&ctx.config)),
+        ..ctx.clone()
+    };
+    other
+        .snapshots
+        .activate_at(Server::EN, &Generation::default())
+        .await
+        .unwrap();
+    assert_eq!(other.reload_if_changed().await.unwrap(), [Server::EN]);
+    let waited = tokio::time::timeout(Duration::from_millis(300), bodies.recv()).await;
+    assert!(waited.is_err(), "a second process posts the same load once");
     db.close().await;
 }

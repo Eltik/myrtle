@@ -1,5 +1,3 @@
-//! Pull a player's data from the game, store it, and queue the grade; the stored roster's reads.
-
 pub mod payload;
 pub mod roster;
 pub mod sandbox;
@@ -21,7 +19,6 @@ use crate::services::leaderboard::lookback;
 use crate::services::story::progress;
 use crate::{AppContext, AppError, Subject};
 
-/// One queued run takes in every sync that lands before it starts
 const OWNERSHIP_DEDUPE: &str = "sync";
 const OWNERSHIP_DELAY: TimeDelta = TimeDelta::minutes(1);
 
@@ -30,7 +27,6 @@ pub fn user_key(uid: &str) -> String {
     format!("user:{uid}")
 }
 
-/// Improvements bodies are keyed on the sync generation; this clears the superseded ones
 #[must_use]
 pub fn improvements_prefix(uid: &str) -> String {
     format!("improvements:{uid}:")
@@ -41,7 +37,6 @@ async fn invalidate_user(ctx: &AppContext, uid: &str) {
     ctx.cache.invalidate_prefix(&improvements_prefix(uid)).await;
 }
 
-/// Re-syncs the subject's account from the game; the parsed `syncData` payload
 pub async fn refresh(ctx: &AppContext, subject: &Subject) -> Result<Value, AppError> {
     let uid = subject.uid().ok_or(AppError::Unauthorized)?;
     let server = subject.game_server()?;
@@ -73,7 +68,6 @@ pub async fn refresh(ctx: &AppContext, subject: &Subject) -> Result<Value, AppEr
     store(ctx, uid, server, text).await
 }
 
-/// Parses `text`, writes every row and the game's read marks, drops the caches, queues the grade and the ownership refresh
 pub async fn store(
     ctx: &AppContext,
     uid: &str,
@@ -152,7 +146,6 @@ pub async fn store(
     Ok(payload)
 }
 
-/// Called by `RegradeUser` after the grade: the lookback snapshot reads the stored score
 pub async fn after_grade(ctx: &AppContext, user: UserId) {
     let recorded = async {
         let account = users::account(&mut *ctx.db.conn().await?, user)
@@ -167,7 +160,6 @@ pub async fn after_grade(ctx: &AppContext, user: UserId) {
     }
 }
 
-/// `<dir>/<server>_<uid>_<unix>.json`, so a field nothing reads yet can be looked up at the source
 fn dump(dir: &str, uid: &str, server: Server, text: &str) {
     let path = std::path::Path::new(dir).join(format!(
         "{}_{uid}_{}.json",

@@ -1,5 +1,3 @@
-//! DPS and HPS simulation over the default server's game data: calculate, batch, rank, retention, supporters.
-
 mod rank;
 mod request;
 mod retention;
@@ -58,7 +56,6 @@ pub struct ConditionalInfo {
     pub default: bool,
     pub skills: Vec<i32>,
     pub modules: Vec<i32>,
-    /// `name` describes the flag OFF, so the switch reads "on" when it is false
     pub inverted: bool,
 }
 
@@ -69,7 +66,6 @@ pub struct OperatorListEntry {
     pub name: String,
     pub available_skills: Vec<i32>,
     pub available_modules: Vec<i32>,
-    /// `uniEquipId` of each `available_modules` entry, same index
     pub available_module_ids: Vec<String>,
     pub default_skill: i32,
     pub default_module: i32,
@@ -83,7 +79,6 @@ struct Memo {
     retention: OnceCell<Arc<RetentionTable>>,
 }
 
-/// Keyed by `Weak`, so a dropped snapshot's address is not reused while its entry lives
 static MEMOS: Mutex<Vec<Arc<Memo>>> = Mutex::new(Vec::new());
 
 fn memo_of(snapshot: &Arc<Snapshot>) -> Option<Arc<Memo>> {
@@ -102,28 +97,29 @@ pub struct Data {
 }
 
 impl Data {
-    /// Content identity of the game data, for cache keys that outlive the process
+    #[must_use]
     pub fn identity(&self) -> &str {
         &self.memo.identity
     }
 
+    #[must_use]
     pub fn operator(&self, id: &str) -> Option<Arc<OperatorData>> {
         if let Some(hit) = self.memo.operators.get(id) {
             return Some(Arc::clone(&hit));
         }
         let operator = self.snapshot.model.operators.get(id)?;
-        let built = Arc::new(OperatorData::new(operator.clone())); // a racing miss builds twice, harmlessly
+        let built = Arc::new(OperatorData::new(operator.clone()));
         Some(Arc::clone(
             &self.memo.operators.entry(id.to_owned()).or_insert(built),
         ))
     }
 
+    #[must_use]
     pub fn retention_table(&self) -> Option<Arc<RetentionTable>> {
         self.memo.retention.get().cloned()
     }
 }
 
-/// Digest of the operator table, the only one the engines read; `Value` sorts the map keys
 fn identity_of(model: &GameModel) -> Arc<str> {
     let value = serde_json::to_value(&model.operators).unwrap_or_default();
     let table = serde_json::to_vec(&value).unwrap_or_default();
@@ -174,7 +170,6 @@ fn to_json(value: &impl Serialize) -> Result<String, AppError> {
     serde_json::to_string(value).map_err(AppError::internal)
 }
 
-/// The operator's advanced modules in uniequip order, the order `OperatorData` indexes
 fn advanced_modules(operator: &Operator) -> Vec<&OperatorModule> {
     let mut mods: Vec<_> = operator
         .modules
@@ -185,7 +180,6 @@ fn advanced_modules(operator: &Operator) -> Vec<&OperatorModule> {
     mods
 }
 
-/// Physical module for formula module `pos`, resolved as `OperatorUnit::new` does
 fn resolve_module<'a>(
     sorted: &[&'a OperatorModule],
     pos: usize,
@@ -274,12 +268,10 @@ pub async fn list_healers(ctx: &AppContext) -> Result<CachedJson, AppError> {
     list(ctx, "healers").await
 }
 
-/// The operator a clone copies when the request names none: the reference's `Muelsyse` falls back to Ela
 fn default_clone(operator_id: &str) -> Option<&'static str> {
     (operator_id == "char_249_mlyss").then_some("char_4123_ela")
 }
 
-/// A non-finite number would serialize as `null` under a 200
 fn finite(what: &str, values: impl IntoIterator<Item = f64>) -> Result<(), AppError> {
     if values.into_iter().all(f64::is_finite) {
         Ok(())
@@ -353,7 +345,6 @@ fn error_text(operator_id: &str, e: &AppError) -> String {
     }
 }
 
-/// Every request and sweep point through `calculate_in`, so an entry equals the single call. Blocking
 pub fn batch_in(data: &Data, body: BatchRequest) -> BatchResponse {
     let xs = body.sweep.as_ref().map(Sweep::points);
     let results = body
@@ -399,6 +390,7 @@ pub fn batch_in(data: &Data, body: BatchRequest) -> BatchResponse {
     BatchResponse { results }
 }
 
+#[must_use]
 pub fn hps_batch_in(data: &Data, body: BatchRequest) -> HpsBatchResponse {
     let results = body
         .requests
@@ -420,6 +412,7 @@ pub fn hps_batch_in(data: &Data, body: BatchRequest) -> HpsBatchResponse {
     HpsBatchResponse { results }
 }
 
+#[must_use]
 pub fn supporters_in(data: &Data, inv: SupporterInvestment) -> SupportersResponse {
     let mut entries = Vec::new();
     let mut unresolved = Vec::new();
@@ -510,7 +503,6 @@ pub async fn batch_hps(ctx: &AppContext, body: BatchRequest) -> Result<CachedJso
         .await
 }
 
-/// The full ranking is cached per context; filters, sort and limit apply to the cached rows
 pub async fn rank(ctx: &AppContext, req: RankRequest) -> Result<RankResponse, AppError> {
     req.validate()?;
     let data = data(ctx).await?;
@@ -540,7 +532,6 @@ pub async fn rank(ctx: &AppContext, req: RankRequest) -> Result<RankResponse, Ap
     Ok(response)
 }
 
-/// The retention table, computed once per snapshot on its own task, so a dropped request does not abandon it
 pub async fn retention(ctx: &AppContext) -> Result<RetentionResponse, AppError> {
     let data = data(ctx).await?;
     let computed = if let Some(table) = data.retention_table() {

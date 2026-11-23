@@ -1,5 +1,3 @@
-//! Tier lists: lists, tiers, placements, versions, grants, views and favourites.
-
 mod edit;
 pub mod entities;
 mod social;
@@ -48,7 +46,6 @@ pub struct TierList {
     pub is_active: bool,
     pub is_listed: bool,
     pub flair_id: Option<i16>,
-    /// Entries cached before the column read as operator-only
     #[serde(default = "operator_only")]
     pub entity_kinds: Vec<EntityKind>,
     pub created_at: DateTime<Utc>,
@@ -100,7 +97,6 @@ impl From<TierRow> for Tier {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TierPlacement {
     pub tier_id: Uuid,
-    /// Absent from snapshots and cache entries written before kinds, all operators
     #[serde(default = "operator_kind")]
     pub entity_kind: EntityKind,
     #[serde(alias = "operator_id")]
@@ -248,7 +244,6 @@ impl From<PermissionRow> for TierListPermission {
     }
 }
 
-/// One grant with the list, grantee and granter names beside it
 #[derive(Debug, Clone, Serialize)]
 pub struct TierListGrant {
     pub tier_list_id: Uuid,
@@ -282,7 +277,6 @@ impl From<GrantRow> for TierListGrant {
     }
 }
 
-/// A list the caller holds a grant on, at their highest level on it
 #[derive(Debug, Clone, Serialize)]
 pub struct GrantedTierList {
     pub tier_list_id: Uuid,
@@ -325,11 +319,9 @@ pub struct TierDetail {
 pub struct PlacementDetail {
     #[serde(flatten)]
     pub placement: TierPlacement,
-    /// `None` when the served data has no such entity; the placement is still served
     pub entity: Option<EntitySummary>,
 }
 
-/// One tier as a published version stores it: rows, never resolved entities
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TierSnapshot {
     #[serde(flatten)]
@@ -337,7 +329,6 @@ pub struct TierSnapshot {
     pub placements: Vec<TierPlacement>,
 }
 
-/// A stored `tier_list_versions.snapshot`, with or without entity kinds
 pub fn read_snapshot(snapshot: &serde_json::Value) -> Result<Vec<TierSnapshot>, serde_json::Error> {
     Vec::<TierSnapshot>::deserialize(snapshot)
 }
@@ -353,7 +344,6 @@ pub fn snapshot_of(tiers: &[TierDetail]) -> Vec<TierSnapshot> {
         .collect()
 }
 
-/// A snapshot in the live detail's shape, resolved against `model` and `story`
 #[must_use]
 pub fn resolve_snapshot(
     snapshot: Vec<TierSnapshot>,
@@ -404,7 +394,6 @@ fn actor(subject: &Subject) -> Result<UserId, AppError> {
     subject.user_id().ok_or(AppError::Unauthorized)
 }
 
-/// Role and ownership first; the per-list grants are read only when those refuse
 async fn authorize(
     ctx: &AppContext,
     conn: &mut Conn,
@@ -438,7 +427,6 @@ async fn authorize(
     ctx.policy.require(&subject, action, &resource)
 }
 
-/// The list at `slug` and the acting user: 401 without one, 404, then 403
 async fn find_and_authorize(
     ctx: &AppContext,
     conn: &mut Conn,
@@ -479,7 +467,6 @@ fn server_of(ctx: &AppContext, server: Option<Server>) -> Server {
     server.unwrap_or_else(|| ctx.snapshots.default_server())
 }
 
-/// `server`'s data, the default server's when it is not loaded
 fn model_for(
     ctx: &AppContext,
     server: Option<Server>,
@@ -488,7 +475,6 @@ fn model_for(
         .or_default(server.unwrap_or_else(|| ctx.snapshots.default_server()))
 }
 
-/// The list with every placement resolved against `server`'s data
 pub async fn get(
     ctx: &AppContext,
     slug: &str,
@@ -513,7 +499,6 @@ pub async fn get(
     Ok(detail)
 }
 
-/// The stored list, cached unresolved so one entry serves every server and survives a data reload
 pub async fn load_detail(ctx: &AppContext, slug: &str) -> Result<TierListDetail, AppError> {
     let key = detail_key(slug);
     if let Some(cached) = ctx.cache.get_json::<TierListDetail>(&key).await {
@@ -571,7 +556,6 @@ fn group_by<T>(items: Vec<T>, key: impl Fn(&T) -> Uuid) -> HashMap<Uuid, Vec<T>>
     out
 }
 
-/// Listed lists, newest first, resolved; `limit` defaults to 60, clamped to 1..=200
 pub async fn list_details(
     ctx: &AppContext,
     limit: Option<i64>,
@@ -649,7 +633,6 @@ pub async fn list(ctx: &AppContext) -> Result<Vec<TierList>, AppError> {
     Ok(rows.into_iter().map(Into::into).collect())
 }
 
-/// Lists the caller owns
 pub async fn mine(ctx: &AppContext, subject: &Subject) -> Result<Vec<TierList>, AppError> {
     let user = actor(subject)?;
     let rows = repo::find_by_user(&mut *ctx.db.conn().await?, user).await?;
@@ -662,7 +645,6 @@ pub async fn favorites(ctx: &AppContext, subject: &Subject) -> Result<Vec<TierLi
     Ok(rows.into_iter().map(Into::into).collect())
 }
 
-/// Published versions, newest first, each snapshot resolved against `server`'s data
 pub async fn versions(
     ctx: &AppContext,
     slug: &str,
@@ -700,7 +682,6 @@ pub async fn versions(
     Ok(versions)
 }
 
-/// Every entity of `kind` an editor may place, from `server`'s data
 pub async fn catalogue(
     ctx: &AppContext,
     kind: EntityKind,
@@ -711,7 +692,6 @@ pub async fn catalogue(
     Ok(entities::catalogue(&snapshot.model, &story, kind))
 }
 
-/// 400 unless some loaded server knows `(kind, id)`: a CN-locale editor places what EN lacks
 pub async fn validate_entity(ctx: &AppContext, kind: EntityKind, id: &str) -> Result<(), AppError> {
     entities::validate_loaded(ctx, kind, id).await
 }

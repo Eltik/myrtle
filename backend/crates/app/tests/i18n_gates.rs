@@ -22,7 +22,6 @@ struct Cast {
     plain_id: UserId,
 }
 
-/// Locales `fr` and `ja`, one key with a `count` placeholder, and one subject per gate case
 async fn cast(ctx: &AppContext, db: &myrtle_testkit::db::TestDb) -> Cast {
     let mut conn = ctx.db.conn().await.unwrap();
     for (code, order) in [("fr", 10), ("ja", 20)] {

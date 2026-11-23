@@ -26,7 +26,6 @@ async fn settings(ctx: &AppContext, owner: UserId, body: Value) {
         .unwrap();
 }
 
-/// Amiya at E1 40 with 500k LMD and ten Advanced Battle Records, on uid "1"
 async fn sync_roster(ctx: &AppContext) {
     let operators = json!([{
         "operator_id": AMIYA, "elite": 1, "level": 40, "exp": 0, "potential": 0,

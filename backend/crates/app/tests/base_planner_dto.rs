@@ -46,7 +46,6 @@ fn to_dto(rooms: Vec<ShiftRoom>) -> ShiftRotationDto {
     )
 }
 
-/// The current team paired with `slot`, sorted
 fn current(dto: &ShiftRotationDto, slot: &str) -> Vec<String> {
     let room = dto.shifts[0]
         .rooms

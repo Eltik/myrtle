@@ -1,5 +1,3 @@
-//! The account's likes, listening history and playlists, keyed by `siren:<cid>` or `game:<track id>`.
-
 use std::collections::HashMap;
 
 use chrono::{DateTime, Utc};
@@ -19,7 +17,6 @@ pub const PLAYLIST_TRACKS_MAX: usize = 1000;
 pub const HISTORY_LIMIT: i64 = 200;
 pub const TRACK_KINDS: [&str; 2] = ["siren:", "game:"];
 const TRACK_ID_MAX: usize = 120;
-/// Seconds; guards the totals against a stuck tab
 const LISTENED_MAX: f32 = 86_400.0;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -78,7 +75,6 @@ pub struct MusicPlaylistCreate {
     pub track_ids: Vec<String>,
 }
 
-/// `track_ids` is the full new order
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct MusicPlaylistPatch {
@@ -107,7 +103,6 @@ pub struct MusicLibrary {
     pub playlist_tracks_max: i64,
 }
 
-/// Checks the prefix only: a row outlives a track the catalogue later drops
 pub fn check_track_id(id: &str) -> Result<(), AppError> {
     if id.is_empty() || id.len() > TRACK_ID_MAX {
         return Err(AppError::bad_request(format!(
@@ -158,7 +153,6 @@ fn check_name(name: &str) -> Result<String, AppError> {
     Ok(name.to_owned())
 }
 
-/// Clamped to a day
 pub fn check_listened(seconds: f32) -> Result<f32, AppError> {
     if !seconds.is_finite() || seconds < 0.0 {
         return Err(AppError::bad_request("listenedSeconds must be 0 or more"));
@@ -276,7 +270,6 @@ pub async fn unlike(ctx: &AppContext, subject: &Subject, track_id: &str) -> Resu
     found(repo::unset_like(&mut conn, user, track_id).await?)
 }
 
-/// Counts a listen in the public listen call's slot; a track the catalogue lacks is logged but not counted
 pub async fn log_play(
     ctx: &AppContext,
     subject: &Subject,
@@ -307,7 +300,6 @@ pub async fn log_play(
     Ok(play(row))
 }
 
-/// Only ever raises the stored time
 pub async fn update_play(
     ctx: &AppContext,
     subject: &Subject,
@@ -382,7 +374,6 @@ pub async fn delete_playlist(
     found(repo::delete_playlist(&mut conn, user, id).await?)
 }
 
-/// Appends, skipping tracks already in
 pub async fn add_tracks(
     ctx: &AppContext,
     subject: &Subject,

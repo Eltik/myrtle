@@ -7,9 +7,14 @@ use myrtle_types::Server;
 use sqlx::PgPool;
 
 fn at(generation: i64, res_version: Option<&str>) -> Generation {
+    at_seq(generation, res_version, 0)
+}
+
+fn at_seq(generation: i64, res_version: Option<&str>, pipeline_seq: i64) -> Generation {
     Generation {
         generation,
         res_version: res_version.map(str::to_owned),
+        pipeline_seq,
     }
 }
 
@@ -54,12 +59,12 @@ async fn a_bump_without_a_version_keeps_the_last_pipeline_version(pool: PgPool) 
             .await
             .unwrap()
     };
-    assert_eq!(bump(Some("v1")).await, at(1, Some("v1")));
-    assert_eq!(bump(None).await, at(2, Some("v1")), "a sidecar bump");
-    assert_eq!(bump(Some("v2")).await, at(3, Some("v2")));
+    assert_eq!(bump(Some("v1")).await, at_seq(1, Some("v1"), 1));
+    assert_eq!(bump(None).await, at_seq(2, Some("v1"), 1), "a sidecar bump");
+    assert_eq!(bump(Some("v2")).await, at_seq(3, Some("v2"), 2));
     assert_eq!(
         data_generations::all(&mut conn).await.unwrap(),
-        [(Server::CN, at(3, Some("v2")))]
+        [(Server::CN, at_seq(3, Some("v2"), 2))]
     );
 }
 
@@ -108,4 +113,47 @@ async fn a_bump_moves_updated_at(pool: PgPool) {
     .await
     .unwrap();
     assert!(fresh);
+}
+
+#[sqlx::test(migrator = "myrtle_db::migrate::MIGRATOR")]
+async fn the_ledger_cursor_starts_at_zero_and_serialises_its_recorders(pool: PgPool) {
+    let db = common::db(pool).await;
+    let mut first = db.begin().await.unwrap();
+    assert_eq!(
+        data_generations::lock_recorded(&mut first, Server::EN)
+            .await
+            .unwrap(),
+        0,
+        "a missing row is created at zero"
+    );
+    let second = tokio::spawn({
+        let db = db.clone();
+        async move {
+            let mut tx = db.begin().await.unwrap();
+            let seen = data_generations::lock_recorded(&mut tx, Server::EN)
+                .await
+                .unwrap();
+            tx.commit().await.unwrap();
+            seen
+        }
+    });
+    tokio::time::sleep(std::time::Duration::from_millis(300)).await;
+    assert!(
+        !second.is_finished(),
+        "the second recorder waits on the lock"
+    );
+    data_generations::set_recorded(&mut first, Server::EN, 3)
+        .await
+        .unwrap();
+    first.commit().await.unwrap();
+    assert_eq!(second.await.unwrap(), 3);
+
+    let mut conn = db.conn().await.unwrap();
+    assert_eq!(
+        data_generations::bump(&mut conn, Server::EN, Some("v1"))
+            .await
+            .unwrap(),
+        at_seq(1, Some("v1"), 1),
+        "the cursor's row bumps like any other"
+    );
 }

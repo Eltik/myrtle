@@ -26,7 +26,6 @@ fn entry(key: &str, namespace: &str, text: &str, placeholders: &[&str]) -> Sourc
     }
 }
 
-/// Locale `fr` falling back to `en`, three keys over two namespaces, and a super admin
 async fn seed(ctx: &AppContext, db: &myrtle_testkit::db::TestDb) -> (Subject, UserId) {
     let id = db.user(1, Server::EN).await;
     let admin = common::user(ctx, id, Role::SuperAdmin).await;
@@ -119,7 +118,7 @@ async fn an_edit_changes_the_catalog_hash_and_flushes_the_cached_manifest() {
         id,
     )
     .await
-    .unwrap(); // behind the service's back: hidden until the manifest expires
+    .unwrap();
     assert_eq!(
         manifest(&ctx).await.locales[1].namespaces,
         before.locales[1].namespaces

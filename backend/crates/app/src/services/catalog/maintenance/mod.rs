@@ -1,5 +1,3 @@
-//! The next EN game maintenance, read from Yostar's announcement board.
-
 pub mod parse;
 
 use std::time::Duration;
@@ -16,16 +14,12 @@ pub use parse::{NoticeWindow, parse_notice};
 
 const DEFAULT_POLL_SECS: u64 = 5 * 60;
 const ACTIVE_POLL_SECS: u64 = 60;
-/// How long past its planned end a window can stay up on an overrun signal
 pub const OVERRUN_LIMIT_SECS: i64 = 12 * 60 * 60;
-/// A window with no stated end closes this long after its start unless the game still answers as down
 pub const OPEN_ENDED_LIMIT_SECS: i64 = 24 * 60 * 60;
 const UPCOMING_HORIZON_SECS: i64 = 14 * 24 * 60 * 60;
 const SAME_WINDOW_SLACK_SECS: i64 = 60 * 60;
-/// A notice pulled this close to its start, or after it, is the board swapped for the update
 const PULLED_NOTICE_GRACE_SECS: i64 = 60 * 60;
 const MAINTENANCE_GROUP: &str = "SYSTEM";
-/// The login-screen notice's meta, beside the board's meta (the `prean` route answers 404 for it)
 const PREAN_META: &str = "preannouncement.meta.json";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -33,7 +27,6 @@ const PREAN_META: &str = "preannouncement.meta.json";
 pub enum MaintenancePhase {
     Upcoming,
     Ongoing,
-    /// Past the planned end and still down, or moved later by a newer notice
     Extended,
 }
 
@@ -64,7 +57,6 @@ pub struct Notice {
 pub struct MaintenanceState {
     pub notices: Vec<Notice>,
     pub prean_active: bool,
-    /// The last service-account probe: `(down, at)`
     pub probe: Option<(bool, i64)>,
     pub checked_at: Option<i64>,
 }
@@ -72,7 +64,6 @@ pub struct MaintenanceState {
 #[derive(Debug, Default, Clone, Copy)]
 pub struct Signals {
     pub prean_active: bool,
-    /// `Some(true)` the service account was refused, `Some(false)` it got in
     pub game_down: Option<bool>,
 }
 
@@ -101,7 +92,6 @@ pub fn state_key(server: Server) -> String {
     format!("maintenance:{}", server.as_str())
 }
 
-/// Long enough that a missed tick or two keeps the carried notices and the probe
 fn state_ttl(ctx: &AppContext) -> Duration {
     Duration::from_secs(ctx.config.jobs.maintenance.poll_secs.max(DEFAULT_POLL_SECS) * 4)
 }
@@ -117,7 +107,7 @@ fn merge(notices: &[Notice]) -> Vec<Merged> {
                 || (w.starts_at >= m.starts_at && m.ends_at.is_some_and(|e| w.starts_at <= e))
         });
         if let Some(m) = same {
-            let later = matches!((m.ends_at, w.ends_at), (Some(old), Some(new)) if new > old); // a later end from a newer notice is an extension even unsaid
+            let later = matches!((m.ends_at, w.ends_at), (Some(old), Some(new)) if new > old);
             m.extended |= w.extended || later;
             if w.ends_at.is_some() {
                 m.ends_at = w.ends_at;
@@ -139,6 +129,7 @@ fn merge(notices: &[Notice]) -> Vec<Merged> {
     merged
 }
 
+#[must_use]
 pub fn resolve(notices: &[Notice], now: i64, signals: Signals) -> Option<MaintenanceWindow> {
     merge(notices).into_iter().find_map(|m| {
         let phase = if now < m.starts_at {
@@ -171,6 +162,7 @@ pub fn resolve(notices: &[Notice], now: i64, signals: Signals) -> Option<Mainten
     })
 }
 
+#[must_use]
 pub fn wants_probe(notices: &[Notice], now: i64) -> bool {
     merge(notices).iter().any(|m| {
         now >= m.starts_at
@@ -181,7 +173,7 @@ pub fn wants_probe(notices: &[Notice], now: i64) -> bool {
     })
 }
 
-/// Keeps a notice Yostar pulled from the board once its window is about to start or running
+#[must_use]
 pub fn carry_over(previous: &[Notice], mut fresh: Vec<Notice>, now: i64) -> Vec<Notice> {
     let kept: Vec<Notice> = previous
         .iter()
@@ -200,7 +192,7 @@ pub fn carry_over(previous: &[Notice], mut fresh: Vec<Notice>, now: i64) -> Vec<
     fresh
 }
 
-/// The probe is trusted for two default poll intervals
+#[must_use]
 pub fn status_at(state: &MaintenanceState, now: i64) -> MaintenanceStatus {
     let fresh = i64::try_from(DEFAULT_POLL_SECS * 2).unwrap_or(i64::MAX);
     let signals = Signals {
@@ -216,6 +208,7 @@ pub fn status_at(state: &MaintenanceState, now: i64) -> MaintenanceStatus {
     }
 }
 
+#[must_use]
 pub fn may_be_maintenance(item: &MetaItem) -> bool {
     item.group.is_empty() || item.group == MAINTENANCE_GROUP
 }
@@ -228,6 +221,7 @@ pub fn prean_url(meta_url: &str) -> Option<String> {
         .map(String::from)
 }
 
+#[must_use]
 pub fn prean_is_active(raw: &str) -> bool {
     serde_json::from_str::<PreAnnounceMeta>(raw).is_ok_and(|p| p.actived)
 }
@@ -264,7 +258,6 @@ async fn prean_active(ctx: &AppContext, meta_url: &str) -> bool {
     }
 }
 
-/// One EN service-account login: `None` without an account or when a dead token says nothing
 async fn probe_game(ctx: &AppContext) -> Option<(bool, i64)> {
     let account = ctx.accounts.get(Server::EN)?;
     match account.probe(&ctx.upstream).await {
@@ -292,7 +285,6 @@ async fn refresh_board(
     Ok((meta_url, listed))
 }
 
-/// The `MaintenancePoll` job; returns the delay to the next poll, zero when turned off
 pub async fn poll(ctx: &AppContext) -> Result<Duration, AppError> {
     let interval = ctx.config.jobs.maintenance.poll_secs;
     if interval == 0 {

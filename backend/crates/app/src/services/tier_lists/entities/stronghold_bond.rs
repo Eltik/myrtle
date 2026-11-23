@@ -1,5 +1,3 @@
-//! Stronghold Protocol bonds, keyed by bond id.
-
 use myrtle_gamedata::assets::{AssetIndex, AssetKind};
 use myrtle_gamedata_raw::tables::autochess::AutoChessBond;
 use myrtle_types::EntityKind;

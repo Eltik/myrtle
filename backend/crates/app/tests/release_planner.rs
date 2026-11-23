@@ -9,8 +9,7 @@ use std::sync::{Arc, OnceLock};
 use myrtle_app::config::Config;
 use myrtle_app::policy::Subject;
 use myrtle_app::services::catalog::release::{
-    self as rel, CACHE_PREFIX, cache_key, jobs, one_guess_per_group, override_row, switches,
-    wire_override,
+    self as rel, cache_key, jobs, one_guess_per_group, override_row, switches, wire_override,
 };
 use myrtle_app::snapshots::{Snapshot, SnapshotRegistry};
 use myrtle_app::{AppContext, AppError};
@@ -151,30 +150,18 @@ async fn override_validation() {
 }
 
 #[tokio::test]
-async fn override_writes_flush_the_release_bodies() {
+async fn override_writes_retire_the_release_bodies() {
     let (ctx, db) = common::context().await;
     let admin = common::user(&ctx, db.user(1, Server::EN).await, Role::SuperAdmin).await;
-    let ttl = std::time::Duration::from_secs(60);
-    let key = cache_key("skins", &Switches::SHIPPED);
-    let other = "static:en:operators:1:0";
-    ctx.cache.set(&key, "{}", ttl).await;
-    ctx.cache.set(other, "{}", ttl).await;
+    assert_eq!(ctx.cache.get("release:revision").await, None);
     rel::put_override(&ctx, &admin, put_body("skin", "char_1@x#1"))
         .await
         .unwrap();
-    assert_eq!(ctx.cache.get(&key).await, None);
-    assert!(ctx.cache.get(other).await.is_some());
-
-    ctx.cache
-        .set(&format!("{CACHE_PREFIX}events:1:0"), "{}", ttl)
-        .await;
+    let put = ctx.cache.get("release:revision").await.unwrap();
     rel::delete_override(&ctx, &admin, "skin", "char_1@x#1")
         .await
         .unwrap();
-    assert_eq!(
-        ctx.cache.get(&format!("{CACHE_PREFIX}events:1:0")).await,
-        None
-    );
+    assert_ne!(ctx.cache.get("release:revision").await.unwrap(), put);
     assert!(rel::list_overrides(&ctx, &admin).await.unwrap().is_empty());
     db.close().await;
 }
@@ -303,15 +290,16 @@ async fn the_ledger_records_sightings_and_links_debuts() {
     let (mut ctx, db) = common::context().await;
     let mut snapshot = Snapshot::from_model(small_model(), SandboxUniverse::default());
     snapshot.res_version = Some("v1".into());
+    snapshot.pipeline_seq = 1;
     ctx.snapshots.install(Server::EN, snapshot);
-    let first = jobs::record_ledger(&ctx, Server::EN, Some("v1"), 0)
-        .await
-        .unwrap();
-    assert_eq!(first, "en: 5 inserted, 0 refreshed");
-    let again = jobs::record_ledger(&ctx, Server::EN, Some("v1"), 0)
-        .await
-        .unwrap();
-    assert_eq!(again, "en: 0 inserted, 5 refreshed");
+    let first = jobs::record(&ctx, Server::EN).await.unwrap();
+    assert_eq!(first.as_deref(), Some("en: 5 inserted, 0 refreshed as v1"));
+    let again = jobs::record(&ctx, Server::EN).await.unwrap();
+    assert_eq!(
+        again.as_deref(),
+        Some("en: 0 inserted, 5 refreshed"),
+        "a repeat stamps nothing"
+    );
     let mut conn = ctx.db.conn().await.unwrap();
     assert_eq!(
         release::debut_pairs(&mut conn, Server::EN).await.unwrap(),
@@ -329,10 +317,8 @@ async fn the_ledger_records_sightings_and_links_debuts() {
     off.switches.release_ledger.enabled = false;
     ctx.config = Arc::new(off);
     assert_eq!(
-        jobs::record_ledger(&ctx, Server::EN, None, 0)
-            .await
-            .unwrap(),
-        "release ledger is off"
+        jobs::record_ledger(&ctx, Server::EN, 0).await.unwrap(),
+        "en: nothing written, the ledger is off or ahead of this data"
     );
     db.close().await;
 }
@@ -482,7 +468,6 @@ fn an_unlisted_forecast_does_not_drop_the_guess() {
     assert_eq!(kinds(&out), vec![("g", false), ("g", true)]);
 }
 
-/// The CN extract beside the EN one, compiled once; `None` when it is not on disk
 fn cn_snapshot() -> Option<Arc<Snapshot>> {
     static SNAPSHOT: OnceLock<Option<Arc<Snapshot>>> = OnceLock::new();
     SNAPSHOT
@@ -554,7 +539,11 @@ async fn the_release_index_builds_from_both_extracts() {
         ctx.snapshots.get(Server::CN).unwrap(),
         ctx.snapshots.require(Server::EN).unwrap(),
     );
-    let key = cn.key(&en.key(&cache_key("events:", &Switches::SHIPPED)));
+    let revision = ctx.cache.get("release:revision").await.unwrap();
+    let key = cn.key(&en.key(&cache_key(
+        &format!("events:{revision}"),
+        &Switches::SHIPPED,
+    )));
     assert!(ctx.cache.get(&key).await.is_some());
     let cached = rel::get_events(&ctx).await.unwrap();
     assert_eq!(cached, events);
@@ -570,7 +559,11 @@ async fn the_release_index_builds_from_both_extracts() {
     rel::put_override(&ctx, &admin, put_body("activity", &target))
         .await
         .unwrap();
-    assert_eq!(ctx.cache.get(&key).await, None);
+    assert_ne!(
+        ctx.cache.get("release:revision").await.unwrap(),
+        revision,
+        "the override retires every body"
+    );
     let rebuilt = rel::get_events(&ctx).await.unwrap();
     let overridden = rebuilt.events.iter().find(|e| e.cn_id == target).unwrap();
     assert!(matches!(
@@ -610,14 +603,18 @@ async fn a_release_build_raced_by_an_invalidation_is_not_stored() {
     while ctx.cpu.waiting() == 0 {
         tokio::task::yield_now().await;
     }
-    ctx.cache.invalidate_prefix(CACHE_PREFIX).await;
+    ctx.cache.invalidate_prefix("static:cn:").await;
     drop(held);
     building.await.unwrap().unwrap();
     let (cn, en) = (
         ctx.snapshots.get(Server::CN).unwrap(),
         ctx.snapshots.require(Server::EN).unwrap(),
     );
-    let key = cn.key(&en.key(&cache_key("lag:", &switches(&ctx.config))));
+    let revision = ctx.cache.get("release:revision").await.unwrap();
+    let key = cn.key(&en.key(&cache_key(
+        &format!("lag:{revision}"),
+        &switches(&ctx.config),
+    )));
     assert_eq!(
         ctx.cache.get(&key).await,
         None,
@@ -625,21 +622,43 @@ async fn a_release_build_raced_by_an_invalidation_is_not_stored() {
     );
     rel::get_lag(&ctx).await.unwrap();
     assert!(ctx.cache.get(&key).await.is_some());
+
+    rel::revise(&ctx).await;
+    rel::get_lag(&ctx).await.unwrap();
+    let revised = ctx.cache.get("release:revision").await.unwrap();
+    let moved = cn.key(&en.key(&cache_key(
+        &format!("lag:{revised}"),
+        &switches(&ctx.config),
+    )));
+    assert!(
+        ctx.cache.get(&moved).await.is_some(),
+        "readers build on the new revision"
+    );
+    assert!(
+        ctx.cache.get(&key).await.is_some(),
+        "the old body only expires"
+    );
+
+    ctx.cache.invalidate("release:revision").await;
+    rel::get_lag(&ctx).await.unwrap();
+    let fresh = ctx.cache.get("release:revision").await.unwrap();
+    assert_ne!(fresh, revised, "an evicted revision is never read as empty");
+    ctx.cache.invalidate("release:revision").await;
+    rel::get_lag(&ctx).await.unwrap();
+    assert_eq!(
+        ctx.cache.get("release:revision").await.unwrap(),
+        fresh,
+        "reads with the key absent share one revision"
+    );
     db.close().await;
 }
 
 #[tokio::test]
-async fn a_revision_moves_every_release_body_to_a_new_key() {
+async fn a_revision_changes_on_every_revise() {
     let (ctx, db) = common::context().await;
     assert_eq!(ctx.cache.get("release:revision").await, None);
-    rel::revise(&ctx).await;
-    let first = ctx.cache.get("release:revision").await.unwrap();
-    let stale = format!("{CACHE_PREFIX}events:{first}:0");
-    ctx.cache
-        .set(&stale, "{}", std::time::Duration::from_secs(60))
-        .await;
-    rel::revise(&ctx).await;
-    assert_ne!(ctx.cache.get("release:revision").await.unwrap(), first);
-    assert_eq!(ctx.cache.get(&stale).await, None);
+    let first = rel::revise(&ctx).await;
+    assert_eq!(ctx.cache.get("release:revision").await, Some(first.clone()));
+    assert_ne!(rel::revise(&ctx).await, first);
     db.close().await;
 }

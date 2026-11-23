@@ -1,6 +1,3 @@
-//! The game session store: players in the cache with their sealed credential in
-//! `user_game_credentials`, service accounts sealed in `service_account_sessions`.
-
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -52,7 +49,6 @@ fn corrupt(e: impl std::fmt::Display) -> SessionStoreError {
     SessionStoreError::Corrupt(e.to_string())
 }
 
-/// Never serde's message: it can quote a session field
 fn malformed(e: &serde_json::Error) -> SessionStoreError {
     SessionStoreError::Corrupt(format!(
         "{:?} at line {}, column {}",
@@ -62,7 +58,6 @@ fn malformed(e: &serde_json::Error) -> SessionStoreError {
     ))
 }
 
-/// The owner a service account's blob is sealed to
 const fn service_owner(server: Server) -> Uuid {
     Uuid::from_u128(server.index() as u128 + 1)
 }
@@ -80,7 +75,6 @@ impl Sessions {
             .map(|user| UserId(user.id)))
     }
 
-    /// Seals a player's credential under `user`; a session with no durable half is skipped
     pub async fn store_credential(
         &self,
         user: UserId,
@@ -143,7 +137,6 @@ impl Sessions {
             .map_err(corrupt)
     }
 
-    /// A new login: replaces the whole session, or with `replace` false only fills an empty row; false when nothing was written
     pub async fn seed(
         &self,
         server: Server,
@@ -163,7 +156,6 @@ impl Sessions {
             .map_err(unavailable)
     }
 
-    /// A running account's session, dropped when the stored one is another login: a seed landed since it was read
     pub async fn persist_service(
         &self,
         server: Server,
@@ -180,7 +172,6 @@ impl Sessions {
         .await
     }
 
-    /// `merge` runs on the stored session under its row lock, so no write lands between the read and the write; `None` writes nothing
     async fn merge_service(
         &self,
         server: Server,
@@ -213,7 +204,7 @@ impl Sessions {
         } else {
             service_sessions::insert_new(&mut tx, server, &nonce, &ciphertext)
                 .await
-                .map(drop) // a seed that landed after the empty lock is newer
+                .map(drop)
         }
         .map_err(unavailable)?;
         tx.commit().await.map_err(unavailable)

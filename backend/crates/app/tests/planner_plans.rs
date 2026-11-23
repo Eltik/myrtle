@@ -72,7 +72,6 @@ async fn seed_plan(ctx: &AppContext, owner: UserId, operator_id: &str, shown: bo
         .unwrap();
 }
 
-/// Amiya at E2 50, skill level 7, 900k LMD and some EXP cards, on uid "1"
 async fn sync_roster(ctx: &AppContext) {
     let op = json!({
         "operator_id": AMIYA, "elite": 2, "level": 50, "exp": 0, "potential": 0,

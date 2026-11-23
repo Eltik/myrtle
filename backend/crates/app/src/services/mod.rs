@@ -1,6 +1,3 @@
-//! Use cases grouped by area. A service function takes the handles it needs
-//! (`&AppContext` at most) and a `&Subject` when the action is gated.
-
 pub mod accounts;
 pub mod catalog;
 pub mod community;

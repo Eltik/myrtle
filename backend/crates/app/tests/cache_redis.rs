@@ -10,7 +10,6 @@ use myrtle_app::cache::{Cache, CachedJson, strong_etag};
 const URL: &str = "redis://127.0.0.1:6379/15";
 const TTL: Duration = Duration::from_mins(1);
 
-/// The cache and a key prefix of its own, or `None` with a skip note when no Redis answers
 async fn redis(test: &str) -> Option<(Cache, String)> {
     let addr = std::net::SocketAddr::from(([127, 0, 0, 1], 6379));
     if std::net::TcpStream::connect_timeout(&addr, Duration::from_millis(500)).is_err() {

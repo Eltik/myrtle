@@ -1,5 +1,3 @@
-//! Whole game-data tables and the one-record pages cut from them.
-
 use std::borrow::Cow;
 use std::collections::{HashMap, HashSet};
 use std::time::Duration;
@@ -26,7 +24,6 @@ use crate::privacy::{self, layout::ProfileTabId};
 use crate::snapshots::Snapshot;
 use crate::{AppContext, AppError};
 
-/// Dropped on a game-data reload, so the day only bounds an idle entry
 pub const TTL: Duration = Duration::from_hours(24);
 pub const SKIN_POPULARITY_KEY: &str = "skins:popularity";
 pub const SKIN_POPULARITY_TTL: Duration = Duration::from_hours(1);
@@ -57,7 +54,6 @@ pub const RESOURCES: [&str; 21] = [
     "ranges",
 ];
 
-/// `static:{server}:{resource}:{fields}:{res}`, under the prefix a reload flushes
 #[must_use]
 pub fn key(snapshot: &Snapshot, server: Server, resource: &str, fields: &str) -> String {
     snapshot.key(&format!(
@@ -70,7 +66,6 @@ pub(crate) fn to_json(value: &impl Serialize) -> Result<String, AppError> {
     serde_json::to_string(value).map_err(AppError::internal)
 }
 
-/// One body cut from `server`'s model, built inline on a miss
 pub(crate) async fn cached<F>(
     ctx: &AppContext,
     server: Server,
@@ -88,7 +83,6 @@ where
         .await
 }
 
-/// [`cached`] for a large body: serialized once per load on the blocking pool, held in process
 pub(crate) async fn cached_heavy<F>(
     ctx: &AppContext,
     server: Server,
@@ -109,7 +103,6 @@ where
         .await
 }
 
-/// One whole table, by its name in [`RESOURCES`]
 pub async fn resource(
     ctx: &AppContext,
     server: Server,
@@ -160,11 +153,9 @@ struct StageDetailResponse<'a> {
     level_data: Option<Value>,
     enemies: HashMap<&'a str, &'a Enemy>,
     materials: HashMap<&'a str, &'a Item>,
-    /// Built from the stage index for a procedural node, which has no stage record
     synthetic: bool,
 }
 
-/// `enemyDbRefs[].id` plus every non-empty wave action key of a camelCased level
 #[must_use]
 pub fn collect_level_enemy_ids(level: &Value) -> HashSet<String> {
     let refs = level
@@ -210,7 +201,6 @@ fn procedural_stage(entry: &StageIndexEntry) -> (Stage, Zone) {
     (stage, zone)
 }
 
-/// One stage with its zone, level, enemies and drops
 pub async fn stage_detail(
     ctx: &AppContext,
     server: Server,
@@ -282,7 +272,6 @@ struct EnemyDetailResponse<'a> {
     audio: &'a [EnemyAudio],
 }
 
-/// The handbook record, the race table and the enemy's battle sounds
 pub async fn enemy_detail(
     ctx: &AppContext,
     server: Server,
@@ -303,7 +292,6 @@ pub async fn enemy_detail(
     .await
 }
 
-/// The stages one enemy appears in, empty when it spawns nowhere
 pub async fn enemy_stages(
     ctx: &AppContext,
     server: Server,
@@ -379,7 +367,6 @@ struct SlimSkin<'a> {
     obtain_channel: SkinChannel,
 }
 
-/// `skinId -> {charId, displaySkin}` with only the fields the profile Stats tab reads
 pub async fn skins_index(ctx: &AppContext, server: Server) -> Result<CachedJson, AppError> {
     cached(ctx, server, "skins_index", |gd| {
         let slim: HashMap<&str, SlimSkin<'_>> = gd
@@ -431,7 +418,6 @@ pub struct CommunityEnemyAverageResponse {
     pub computed_at: String,
 }
 
-/// Enemies an opted-in player has met on average, against the default server's handbook
 pub async fn community_enemy_average(ctx: &AppContext) -> Result<CachedJson, AppError> {
     let snapshot = ctx.snapshots.or_default(ctx.snapshots.default_server())?;
     ctx.cache
@@ -463,7 +449,6 @@ pub async fn community_enemy_average(ctx: &AppContext) -> Result<CachedJson, App
 #[serde(rename_all = "camelCase")]
 pub struct EncounteredEnemy {
     pub enemy_id: String,
-    /// `None` for an id the handbook does not list
     pub name: Option<String>,
     pub enemy_index: Option<String>,
     pub sort_id: Option<i32>,
@@ -473,13 +458,10 @@ pub struct EncounteredEnemy {
 #[serde(rename_all = "camelCase")]
 pub struct EncounteredEnemiesResponse {
     pub encountered_count: usize,
-    /// Enemies the handbook shows, the completion denominator
     pub handbook_total: usize,
-    /// By handbook `sortId`, unlisted ids last
     pub enemies: Vec<EncounteredEnemy>,
 }
 
-/// The enemies a player has met, against the default server's handbook
 pub async fn encountered_enemies(
     ctx: &AppContext,
     subject: &Subject,

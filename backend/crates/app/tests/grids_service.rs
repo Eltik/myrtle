@@ -287,7 +287,6 @@ fn stored(kind: Option<&str>, id: Option<&str>) -> StoredCell {
     }
 }
 
-/// Knows `amiya` (own art), `aglna2` (CN art) and `noart`
 fn preview_resolve(kind: EntityKind, id: &str) -> Option<(EntitySummary, Option<Server>)> {
     let (icon, server) = match id {
         "amiya" => (Some("/avatar/amiya"), None),

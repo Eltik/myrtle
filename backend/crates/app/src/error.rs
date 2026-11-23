@@ -13,7 +13,6 @@ pub enum AppError {
     Unauthorized,
     #[error("forbidden")]
     Forbidden,
-    /// `Some` says what is missing
     #[error("{}", .0.as_deref().unwrap_or("not found"))]
     NotFound(Option<String>),
     #[error("{0}")]
@@ -41,7 +40,6 @@ impl AppError {
         Self::Internal(e.to_string())
     }
 
-    /// The same error for a second waiter on one cache build
     #[must_use]
     pub fn shared_copy(&self) -> Self {
         match self {

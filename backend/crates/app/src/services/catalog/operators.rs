@@ -1,5 +1,3 @@
-//! Operator list, detail, roster rows, community build stats and the CN preview.
-
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use std::time::Duration;
@@ -25,10 +23,8 @@ use crate::snapshots::Snapshot;
 use crate::{AppContext, AppError};
 
 pub const STATS_TTL: Duration = Duration::from_hours(1);
-/// Below this many samples a distribution is withheld, so it cannot single out accounts
 pub const MIN_SAMPLE: i64 = 50;
 
-/// The `/static/operators` fields the profile Roster and Optimizer tabs read
 pub const ROSTER_FIELDS: [&str; 15] = [
     "id",
     "name",
@@ -86,7 +82,6 @@ pub struct OperatorIndexEntry {
     pub stats: OperatorIndexStats,
     pub has_offensive_recovery: bool,
     pub has_defensive_recovery: bool,
-    /// At least one skill, and every skill's first level manual
     pub all_skills_manual: bool,
     pub voice_actors: Vec<String>,
     pub phase_max_levels: Vec<i32>,
@@ -94,7 +89,6 @@ pub struct OperatorIndexEntry {
     pub potential_rank_count: usize,
     pub modules: Vec<OperatorIndexModule>,
     pub skill_rules: SkillRules,
-    /// Empty when the operator has no profile
     pub date_of_birth: String,
 }
 
@@ -120,7 +114,6 @@ pub struct OperatorIndexStats {
     pub block: i32,
 }
 
-/// Every language's `cvName` for `char_id`, languages in key order, first occurrence wins
 #[must_use]
 pub fn voice_actors(voices: &Voices, char_id: &str) -> Vec<String> {
     let Some(entry) = voices.voice_lang_dict.get(char_id) else {
@@ -214,7 +207,6 @@ fn index_entry(id: &str, op: &Operator, voices: &Voices) -> OperatorIndexEntry {
     }
 }
 
-/// `src`'s operators missing from `base`, or all when `base` is `None`; rarest first, then name
 fn index_entries(src: &GameModel, base: Option<&GameModel>) -> Vec<OperatorIndexEntry> {
     let mut entries: Vec<OperatorIndexEntry> = src
         .operators
@@ -246,7 +238,6 @@ pub fn roster_row(op: &Operator) -> Result<serde_json::Value, AppError> {
     Ok(row)
 }
 
-/// Every roster row in table-key order, so the body and its `ETag` are stable
 pub fn roster_rows(
     operators: &HashMap<String, Operator>,
 ) -> Result<Vec<serde_json::Value>, AppError> {
@@ -257,7 +248,6 @@ pub fn roster_rows(
         .collect()
 }
 
-/// About two thirds of `/static/operators`: no handbook, talents, audio, costs or drones
 pub async fn roster(ctx: &AppContext, server: Server) -> Result<CachedJson, AppError> {
     cached_heavy(ctx, server, "operators_roster", "operators_roster", |gd| {
         to_json(&roster_rows(&gd.operators)?)
@@ -269,11 +259,9 @@ pub async fn roster(ctx: &AppContext, server: Server) -> Result<CachedJson, AppE
 #[serde(rename_all = "camelCase")]
 pub struct OperatorOwnershipCounts {
     pub owners: i64,
-    /// Structurally zero for the operators that cannot reach E2; clients suppress it there
     pub e2_owners: i64,
 }
 
-/// Owners per operator among sharing players; a missing id has none
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct OperatorOwnershipResponse {
@@ -294,7 +282,6 @@ pub struct BuildChoice {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LevelBucket {
-    /// Mastery 0..3, or module level 0..3 with 0 for locked
     pub level: i16,
     pub users: i64,
 }
@@ -316,7 +303,6 @@ pub struct ModuleLevelStats {
     pub total: i64,
 }
 
-/// Skill totals count E2 owners, module totals only owners with an advanced module equipped
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct OperatorBuildStatsResponse {
@@ -331,7 +317,6 @@ pub struct OperatorBuildStatsResponse {
     pub computed_at: String,
 }
 
-/// A sparse histogram as the fixed 0..3 strip; an absent level has zero users
 #[must_use]
 pub fn fill_levels(found: &[LevelBucket]) -> Vec<LevelBucket> {
     (0..=3)
@@ -370,7 +355,6 @@ pub async fn ownership(ctx: &AppContext, server: Server) -> Result<CachedJson, A
         .await
 }
 
-/// An operator nobody has built gets empty distributions, not a 404
 pub async fn build_stats(
     ctx: &AppContext,
     server: Server,
@@ -486,7 +470,6 @@ pub async fn build_stats(
         .await
 }
 
-/// CN's snapshot and `viewer`'s, the default server's standing in for CN or an unloaded one
 fn cn_pair(ctx: &AppContext, viewer: Server) -> Result<(Arc<Snapshot>, Arc<Snapshot>), AppError> {
     let cn = ctx.snapshots.require(Server::CN)?;
     let base = match viewer.data_server() {
@@ -500,14 +483,12 @@ fn cn_pair(ctx: &AppContext, viewer: Server) -> Result<(Arc<Snapshot>, Arc<Snaps
     Ok((cn, base))
 }
 
-/// Keyed on CN's data version too, so a CN reload misses the viewer's entry
 fn cn_key(viewer: Server, resource: &str, cn: &Snapshot, base: &Snapshot) -> String {
     let version = &cn.model.meta.game_version;
     let fields = key_hash(format!("{}:{}", version.client, version.res).as_bytes());
     key(base, viewer, resource, &fields)
 }
 
-/// Operators on CN that `viewer`'s server does not have yet, with CN's text
 pub async fn upcoming(ctx: &AppContext, viewer: Server) -> Result<CachedJson, AppError> {
     let (cn, base) = cn_pair(ctx, viewer)?;
     ctx.cache
@@ -519,7 +500,6 @@ pub async fn upcoming(ctx: &AppContext, viewer: Server) -> Result<CachedJson, Ap
         .await
 }
 
-/// Operators `viewer` already has whose CN data differs, sorted by id; empty for a CN viewer
 pub async fn cn_changes(ctx: &AppContext, viewer: Server) -> Result<CachedJson, AppError> {
     let (cn, base) = cn_pair(ctx, viewer)?;
     if viewer.data_server() == Server::CN {
@@ -562,7 +542,7 @@ pub async fn detail(ctx: &AppContext, server: Server, id: &str) -> Result<Cached
     .await
 }
 
-/// The snapshot holding operator `id`, `preferred` searched first, then every configured server
+#[must_use]
 pub fn resolve_operator(
     ctx: &AppContext,
     preferred: Server,
@@ -574,7 +554,6 @@ pub fn resolve_operator(
         .find(|(snapshot, _)| snapshot.model.operators.contains_key(id))
 }
 
-/// [`detail`] on whichever loaded server has `id`, `preferred` first
 pub async fn resolve_detail(
     ctx: &AppContext,
     preferred: Server,
@@ -618,7 +597,6 @@ pub fn voices(ctx: &AppContext, server: Server, id: &str) -> Result<Voices, AppE
     })
 }
 
-/// One operator's skins, matched by `tmplId` for alternate forms, else `charId`
 pub fn skins(ctx: &AppContext, server: Server, id: &str) -> Result<SkinData, AppError> {
     let snapshot = ctx.snapshots.require(server)?;
     Ok(SkinData {

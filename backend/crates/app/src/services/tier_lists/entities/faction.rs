@@ -1,5 +1,3 @@
-//! Factions, keyed by `handbook_team_table` power id: nations, groups and teams.
-
 use myrtle_gamedata::assets::{AssetIndex, AssetKind};
 use myrtle_gamedata::model::GameModel;
 use myrtle_gamedata_raw::tables::handbook_team::{HandbookTeam, NO_FACTION};
@@ -13,7 +11,6 @@ pub(super) const SOURCE: KindSource = KindSource {
     catalogue,
 };
 
-/// Nations, then groups, then teams, each in the handbook's order
 fn catalogue(m: &GameModel) -> Vec<EntitySummary> {
     in_key_order(
         m.factions
@@ -31,7 +28,6 @@ fn faction<'a>(m: &'a GameModel, id: &str) -> Option<&'a HandbookTeam> {
     m.factions.get(id)
 }
 
-/// The camp logo, matched lowercase (the pack spells `logo_Laterano`), else the tiny team icon
 fn icon(assets: &AssetIndex, id: &str) -> Option<String> {
     let lower = id.to_ascii_lowercase();
     assets

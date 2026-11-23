@@ -27,7 +27,6 @@ fn gate(stage: &str, min_state: &str) -> Vec<StoryRequiredStage> {
     }]
 }
 
-/// `main_0`: three scripted stories behind three gates; `rec_a`: one ungated record
 fn plan() -> CommunityPlan {
     let mut gates = HashMap::new();
     gates.insert("s1".to_owned(), gate("main_00-01", "PLAYED"));
@@ -153,7 +152,6 @@ fn the_wire_shape_keeps_main_field_names() {
     assert!(wire["groups"][1].get("depth").is_none());
 }
 
-/// One event, `act1`: `st01` ungated, `st02` behind stage `act1_01`
 fn install_library(ctx: &AppContext) {
     let mut model = GameModel::default();
     let group = serde_json::from_value(json!({
@@ -172,7 +170,6 @@ fn install_library(ctx: &AppContext) {
     );
 }
 
-/// A synced account whose only reading source is `stages`
 async fn seed(ctx: &AppContext, uid: &str, stages: &Value) -> UserId {
     let (list, map) = (json!([]), json!({}));
     let mut status = json!({});

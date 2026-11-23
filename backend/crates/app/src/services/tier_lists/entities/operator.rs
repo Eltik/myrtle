@@ -1,5 +1,3 @@
-//! Operators, keyed by char id (`char_002_amiya`).
-
 use std::cmp::Reverse;
 
 use myrtle_gamedata::model::GameModel;
@@ -17,7 +15,6 @@ pub(super) const SOURCE: KindSource = KindSource {
     catalogue,
 };
 
-/// Obtainable, rarest first, then name, then id (Amiya's forms share a name and rarity)
 fn catalogue(m: &GameModel) -> Vec<EntitySummary> {
     in_key_order(
         m.operators
@@ -28,7 +25,6 @@ fn catalogue(m: &GameModel) -> Vec<EntitySummary> {
     )
 }
 
-/// The operator index's spelling; `Unknown` sends nothing, as the race filter offers no such value
 fn race(op: &Operator) -> Option<String> {
     op.profile
         .as_ref()

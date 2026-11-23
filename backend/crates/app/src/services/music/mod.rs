@@ -1,5 +1,3 @@
-//! Music pages: the in-game catalogue, the Monster Siren catalogue, the account's library and the listen stats.
-
 pub mod library;
 pub mod siren;
 pub mod stats;
@@ -25,7 +23,6 @@ use crate::{AppContext, AppError};
 
 const INDEX_TTL: Duration = crate::services::catalog::static_data::TTL;
 
-/// One read of the loaded snapshots: the body is built from the same versions its keys name
 struct View {
     snapshot: Arc<Snapshot>,
     trees: Vec<(Option<String>, PathBuf)>,
@@ -67,7 +64,6 @@ fn view(ctx: &AppContext, server: Server) -> Result<View, AppError> {
     })
 }
 
-/// The index key and its track-id key over `loaded`; both change when any loaded server's game version does
 #[must_use]
 pub fn index_keys(server: Server, loaded: &[(Server, Arc<Snapshot>)]) -> (String, String) {
     let mut versions = String::new();
@@ -83,7 +79,6 @@ pub fn index_keys(server: Server, loaded: &[(Server, Arc<Snapshot>)]) -> (String
     )
 }
 
-/// `server`'s in-game music index, built once per game data version
 pub async fn game_index(ctx: &AppContext, server: Server) -> Result<CachedJson, AppError> {
     index_of(ctx, server, view(ctx, server)?).await
 }
@@ -122,7 +117,6 @@ async fn index_of(ctx: &AppContext, server: Server, view: View) -> Result<Cached
         .await
 }
 
-/// Every track id in `server`'s index, the part after `game:`
 pub async fn game_track_ids(ctx: &AppContext, server: Server) -> Result<HashSet<String>, AppError> {
     let view = view(ctx, server)?;
     let ids_key = view.ids_key.clone();
@@ -145,7 +139,6 @@ pub async fn game_track_ids(ctx: &AppContext, server: Server) -> Result<HashSet<
     Ok(ids)
 }
 
-/// The first tree is the asked server's; the rest hold levels and clips it no longer ships
 fn sources(model: &GameModel, trees: &[(Option<String>, PathBuf)]) -> MusicSources {
     let dirs: Vec<DirSource> = trees
         .iter()

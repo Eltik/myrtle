@@ -16,7 +16,6 @@ pub struct TranslationGrant {
     pub user_uid: Option<String>,
     pub user_nickname: Option<String>,
     pub permission: String,
-    /// `None` for a CLI grant or a deleted granter
     pub granted_by: Option<Uuid>,
     pub granted_by_nickname: Option<String>,
     pub granted_at: DateTime<Utc>,
@@ -44,7 +43,6 @@ pub struct TranslationGrantRequest {
     pub permission: String,
 }
 
-/// Every grant for tier-list admins and up, else only the caller's own: the list names grantees
 pub async fn list_grants(
     ctx: &AppContext,
     subject: &Subject,
@@ -64,7 +62,6 @@ pub async fn list_grants(
     Ok(rows.into_iter().map(TranslationGrant::from).collect())
 }
 
-/// The caller's own grants, whatever its role
 pub async fn my_grants(
     ctx: &AppContext,
     subject: &Subject,
@@ -74,7 +71,6 @@ pub async fn my_grants(
     Ok(rows.into_iter().map(TranslationGrant::from).collect())
 }
 
-/// Grants a permission on a locale; an unknown locale or account is a 404, not a foreign-key 500
 pub async fn grant(
     ctx: &AppContext,
     subject: &Subject,
@@ -99,7 +95,6 @@ pub async fn grant(
     Ok(())
 }
 
-/// Idempotent
 pub async fn revoke(
     ctx: &AppContext,
     subject: &Subject,

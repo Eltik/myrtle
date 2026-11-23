@@ -1,5 +1,3 @@
-//! The stored roster, behind the profile gates.
-
 use myrtle_db::repos::{items, roster};
 use myrtle_types::roster::{RosterEntry, SupportUnit};
 use serde::Serialize;
@@ -41,7 +39,6 @@ pub async fn operator(
         .ok_or(AppError::NotFound(None))
 }
 
-/// Gated by no tab: support units are public in game, where anyone can borrow them
 pub async fn supports(
     ctx: &AppContext,
     subject: &Subject,
@@ -51,7 +48,6 @@ pub async fn supports(
     Ok(roster::supports(&mut *ctx.db.conn().await?, user).await?)
 }
 
-/// Non-default skins; roster data the Stats tab draws, so both tabs must be visible
 pub async fn owned_skins(
     ctx: &AppContext,
     subject: &Subject,
@@ -69,7 +65,6 @@ pub async fn owned_skins(
         .collect())
 }
 
-/// Every held item; a visitor gets no row for a currency the owner hid from the header
 pub async fn inventory(
     ctx: &AppContext,
     subject: &Subject,
@@ -93,7 +88,6 @@ pub async fn inventory(
         .collect())
 }
 
-/// The profile header number an item id is, for the five currencies the header shows
 #[must_use]
 pub fn currency_header_field(item_id: &str) -> Option<ProfileHeaderField> {
     match item_id {

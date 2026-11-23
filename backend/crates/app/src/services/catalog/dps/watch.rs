@@ -1,5 +1,3 @@
-//! `JobKind::DpsUpstreamWatch`: logs a new upstream DPS reference commit once, never acts on it.
-
 use chrono::Utc;
 use myrtle_jobs::JobKind;
 use myrtle_jobs::schedule;
@@ -8,10 +6,8 @@ use serde::{Deserialize, Serialize};
 use crate::config::SecretRef;
 use crate::{AppContext, AppError};
 
-/// A GitHub outage degrades to four polls a day
 pub const MAX_BACKOFF_SECS: u64 = 6 * 3600;
 
-/// Kept on the schedule row between runs
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct WatchMemory {
     pub last_commit_sha: Option<String>,
@@ -21,19 +17,16 @@ pub struct WatchMemory {
     pub etag: Option<String>,
     #[serde(default)]
     pub last_checked_at: i64,
-    /// Runs held back since the last check
     #[serde(default)]
     pub skipped_runs: u32,
 }
 
-/// The branch head when the response carried one, and the `ETag` to send next time
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Head {
     pub sha: Option<String>,
     pub etag: Option<String>,
 }
 
-/// Seconds between runs: the job's schedule row, whatever `every_secs` says
 #[must_use]
 pub fn interval_secs() -> u64 {
     schedule::DEFAULTS
@@ -48,7 +41,6 @@ pub fn backoff_secs(base: u64, failures: u32) -> u64 {
         .min(MAX_BACKOFF_SECS)
 }
 
-/// Whether a run at `now` still falls inside the backoff the last failures earned, runs `base` apart: the run that completes it checks, however late the last one landed
 #[must_use]
 pub fn backing_off(memory: &WatchMemory, base: u64, now: i64) -> bool {
     let backoff = backoff_secs(base, memory.consecutive_failures);
@@ -56,10 +48,9 @@ pub fn backing_off(memory: &WatchMemory, base: u64, now: i64) -> bool {
     let waited = now.saturating_sub(memory.last_checked_at);
     memory.consecutive_failures > 0
         && u64::from(memory.skipped_runs) + 1 < runs
-        && u64::try_from(waited).unwrap_or(0) < backoff // a missed run never stretches the wait
+        && u64::try_from(waited).unwrap_or(0) < backoff
 }
 
-/// The memory after one check, and the sha to report when it was not reported before
 #[must_use]
 pub fn observe(
     mut memory: WatchMemory,
@@ -83,7 +74,6 @@ pub fn observe(
     (memory, fresh)
 }
 
-/// One conditional request for the newest commit; `None` for a failure, a refusal or rate limit included
 pub async fn check(
     client: &reqwest::Client,
     url: &str,
@@ -149,7 +139,6 @@ async fn request(
     Ok(Some(Head { sha, etag }))
 }
 
-/// The job body: report-only, regenerating the formulas stays a reviewed CI change
 pub async fn watch_upstream(ctx: &AppContext) -> Result<String, AppError> {
     let watch = &ctx.config.jobs.dps_watch;
     if watch.every_secs == 0 {

@@ -203,7 +203,12 @@ async fn sidecars_land_where_the_loader_reads_them_and_round_trip() {
         (POOL_DETAIL_FILE_VERSION, 1234, "en")
     );
     assert!(back.pools["LIMITED_1"].has_rate_up);
-    assert!(!pool_path.with_extension("json.tmp").exists());
+    let leftovers: Vec<_> = std::fs::read_dir(pool_path.parent().unwrap())
+        .unwrap()
+        .filter_map(|e| e.unwrap().file_name().into_string().ok())
+        .filter(|name| name.contains(".tmp"))
+        .collect();
+    assert!(leftovers.is_empty(), "{leftovers:?}");
 
     let shop_path = event_shop_path(&ctx, Server::EN);
     let mut shops = EventShopFile::default();

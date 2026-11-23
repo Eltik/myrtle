@@ -1,5 +1,3 @@
-//! Seeding the backend's own game accounts: a human logs one in once per server, the backend renews it.
-
 use std::io::Read;
 use std::path::Path;
 use std::sync::Arc;
@@ -12,7 +10,6 @@ use myrtle_types::Server;
 use super::sessions::Sessions;
 use crate::{AppContext, AppError};
 
-/// How the account signs in; a Bilibili login needs the `bili` server, a Yostar one any other
 pub enum ServiceLogin<'a> {
     Yostar {
         email: &'a str,
@@ -22,12 +19,10 @@ pub enum ServiceLogin<'a> {
         username: &'a str,
         password: &'a str,
     },
-    /// The challenge [`send_service_sms`] returned, within its five minutes
     BilibiliSms {
         challenge: &'a OtpChallenge,
         code: &'a str,
     },
-    /// A session produced elsewhere; it must still refresh
     Import(AuthSession),
 }
 
@@ -37,17 +32,13 @@ pub struct ServiceSessionStatus {
     pub seqnum: u32,
 }
 
-/// What became of one server's session file
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ImportOutcome {
     Imported,
-    /// A stored session was kept; `force` replaces it
     Existing,
-    /// The reason names a class, never the file's text
     Failed(String),
 }
 
-/// A session file is a few hundred bytes
 const MAX_SESSION_FILE: u64 = 64 * 1024;
 
 fn sessions(ctx: &AppContext) -> Sessions {
@@ -72,7 +63,6 @@ fn has_credential(session: &AuthSession) -> bool {
     !session.yostar_uid.is_empty() && !session.yostar_token.is_empty()
 }
 
-/// Emails the login code for [`ServiceLogin::Yostar`]
 pub async fn send_service_code(
     ctx: &AppContext,
     server: Server,
@@ -87,7 +77,6 @@ pub async fn send_service_code(
     Ok(())
 }
 
-/// Texts the code for [`ServiceLogin::BilibiliSms`]; the caller keeps the challenge
 pub async fn send_service_sms(
     ctx: &AppContext,
     phone: &str,
@@ -96,7 +85,6 @@ pub async fn send_service_sms(
     Ok(session::send_bilibili_sms(&ctx.upstream, phone, country_code).await?)
 }
 
-/// Signs the account in and replaces the server's stored session
 pub async fn set_service_session(
     ctx: &AppContext,
     server: Server,
@@ -140,7 +128,6 @@ pub async fn set_service_session(
         .map_err(|e| store_error(&e))
 }
 
-/// Hypergryph's CN config may be out of reach from the box; the token is then stored unproven
 async fn sms_session(
     ctx: &AppContext,
     challenge: &OtpChallenge,
@@ -169,7 +156,6 @@ async fn sms_session(
     }
 }
 
-/// Proves the stored session still refreshes and keeps the fresh secret, unless a seed landed meanwhile
 pub async fn service_session_status(
     ctx: &AppContext,
     server: Server,
@@ -191,7 +177,6 @@ pub async fn service_session_status(
     })
 }
 
-/// Seals each `{server}.json` session file in `dir`, a stored session kept unless `force`; a bad file costs only its server
 pub async fn import_service_sessions(
     ctx: &AppContext,
     dir: &Path,
@@ -218,7 +203,6 @@ pub async fn import_service_sessions(
     outcomes
 }
 
-/// `None` when absent; a symlink, an oversized file or one without a durable token is refused
 fn read_session_file(path: &Path) -> Result<Option<AuthSession>, String> {
     let unreadable = |e: std::io::Error| format!("unreadable ({:?})", e.kind());
     let meta = match std::fs::symlink_metadata(path) {

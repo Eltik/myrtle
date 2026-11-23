@@ -1,10 +1,7 @@
-//! Discord alerts for failures nothing else surfaces; with no webhook configured they only log.
-
 use serde_json::{Value, json};
 
-const MAX_LISTED: usize = 15; // Discord caps an embed description at 4096 characters
+const MAX_LISTED: usize = 15;
 
-/// `None` when nothing is degraded
 #[must_use]
 pub fn degraded_tables_embed(server: &str, warnings: &[String]) -> Option<Value> {
     if warnings.is_empty() {
@@ -43,7 +40,6 @@ pub async fn report_degraded_tables(
     post(client, webhook, embed).await;
 }
 
-/// A failed post is logged and swallowed, so alerting never fails its caller
 pub async fn post(client: &reqwest::Client, webhook: Option<&str>, embed: Value) {
     let Some(webhook) = webhook.filter(|w| !w.trim().is_empty()) else {
         return;
