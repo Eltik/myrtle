@@ -116,20 +116,22 @@ pub async fn rescore_sandbox(ctx: &AppContext, user: UserId) -> Result<Option<St
     };
     let progress = progress::sandbox(&mut conn, user).await?;
     let sandbox = grade_sandbox(&snapshot.grade, progress.as_ref());
-    let total = SECTION_WEIGHT_SANDBOX.mul_add(sandbox, SECTION_WEIGHT_STAGE.mul_add(
-        stored.stage_score,
-        SECTION_WEIGHT_MEDAL.mul_add(
-            stored.medal_score,
-            SECTION_WEIGHT_ROGUELIKE.mul_add(
-                stored.roguelike_score,
-                SECTION_WEIGHT_BASE.mul_add(
-                    stored.base_score,
-                    SECTION_WEIGHT_OPERATOR * stored.operator_score,
+    let total = SECTION_WEIGHT_SANDBOX.mul_add(
+        sandbox,
+        SECTION_WEIGHT_STAGE.mul_add(
+            stored.stage_score,
+            SECTION_WEIGHT_MEDAL.mul_add(
+                stored.medal_score,
+                SECTION_WEIGHT_ROGUELIKE.mul_add(
+                    stored.roguelike_score,
+                    SECTION_WEIGHT_BASE.mul_add(
+                        stored.base_score,
+                        SECTION_WEIGHT_OPERATOR * stored.operator_score,
+                    ),
                 ),
             ),
         ),
-    ))
-        / SECTION_WEIGHT_TOTAL;
+    ) / SECTION_WEIGHT_TOTAL;
     let overall = score_to_grade(total);
     scores::write_sandbox(&mut conn, user, sandbox, total, &overall).await?;
     Ok(Some(overall))

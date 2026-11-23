@@ -1,5 +1,8 @@
-use myrtle_db::repos::{items, roster};
+use std::collections::HashMap;
+
+use myrtle_db::repos::{items, progress, roster};
 use myrtle_types::roster::{RosterEntry, SupportUnit};
+use myrtle_types::stage_clear::StageClear;
 use serde::Serialize;
 
 use crate::privacy::layout::{ProfileHeaderField, ProfileTabId};
@@ -10,6 +13,28 @@ use crate::{AppContext, AppError, Subject};
 pub struct OwnedSkin {
     pub skin_id: String,
     pub obtained_at: Option<i64>,
+}
+
+#[derive(Debug, Clone, Copy, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct StageClearEntry {
+    pub state: i16,
+    pub state_max: i16,
+    pub inferred: bool,
+    pub complete_times: i32,
+    pub practice_times: i32,
+}
+
+impl From<StageClear> for StageClearEntry {
+    fn from(clear: StageClear) -> Self {
+        Self {
+            state: clear.state,
+            state_max: clear.state_max,
+            inferred: clear.inferred,
+            complete_times: clear.complete_times,
+            practice_times: clear.practice_times,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -62,6 +87,20 @@ pub async fn owned_skins(
             skin_id: r.skin_id,
             obtained_at: r.obtained_at,
         })
+        .collect())
+}
+
+pub async fn stage_clears(
+    ctx: &AppContext,
+    subject: &Subject,
+    uid: Option<&str>,
+) -> Result<HashMap<String, StageClearEntry>, AppError> {
+    let user = resolve_user_id(ctx, subject, uid, &[]).await?;
+    let clears = progress::stage_clears(&mut *ctx.db.conn().await?, user).await?;
+    Ok(clears
+        .clears
+        .into_iter()
+        .map(|(id, clear)| (id, clear.into()))
         .collect())
 }
 

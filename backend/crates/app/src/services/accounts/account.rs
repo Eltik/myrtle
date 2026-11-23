@@ -1,9 +1,10 @@
 use std::time::Duration;
 
 use chrono::{DateTime, Utc};
-use myrtle_db::repos::users::{self, ProfileRow};
+use myrtle_db::repos::scores::{self, ScoreRow};
+use myrtle_db::repos::users::{self, AdminFilter, AdminUserRow, CheckinRow, ProfileRow};
 use myrtle_db::repos::{gacha, i18n};
-use myrtle_types::{Role, UserId};
+use myrtle_types::{PageRequest, Role, Server, UserId};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -12,9 +13,11 @@ use super::sessions::{portal_session_key, session_key};
 use crate::privacy::layout::{ProfileHeaderField, ProfileLayout, ProfileTabId};
 use crate::privacy::{self, mask_identifier};
 use crate::services::community::showcase;
-use crate::{AppContext, AppError, Subject};
+use crate::{Action, AppContext, AppError, Resource, Subject};
 
 const USER_TTL: Duration = Duration::from_mins(10);
+const ADMIN_USERS_DEFAULT_LIMIT: u32 = 50;
+const ADMIN_USERS_MAX_LIMIT: u32 = 200;
 
 #[must_use]
 pub fn user_key(uid: &str) -> String {
@@ -155,6 +158,148 @@ impl UserProfile {
     }
 }
 
+#[derive(Debug, Clone, Serialize)]
+pub struct UserScore {
+    pub user_id: Uuid,
+    pub total_score: f64,
+    pub operator_score: f64,
+    pub stage_score: f64,
+    pub roguelike_score: f64,
+    pub sandbox_score: f64,
+    pub medal_score: f64,
+    pub base_score: f64,
+    pub base_utilization: Option<f64>,
+    pub base_infrastructure: Option<f64>,
+    pub skin_score: f64,
+    pub grade: Option<String>,
+    pub calculated_at: DateTime<Utc>,
+}
+
+impl From<ScoreRow> for UserScore {
+    fn from(row: ScoreRow) -> Self {
+        Self {
+            user_id: row.user_id,
+            total_score: row.total_score,
+            operator_score: row.operator_score,
+            stage_score: row.stage_score,
+            roguelike_score: row.roguelike_score,
+            sandbox_score: row.sandbox_score,
+            medal_score: row.medal_score,
+            base_score: row.base_score,
+            base_utilization: row.base_utilization,
+            base_infrastructure: row.base_infrastructure,
+            skin_score: row.skin_score,
+            grade: row.grade,
+            calculated_at: row.calculated_at,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct UserCheckin {
+    pub monthly_card_flags: Vec<i16>,
+    pub claimed_this_month: i32,
+    pub cumulative_signin: Option<i32>,
+    pub checkin_group_id: Option<String>,
+    pub reward_index: i16,
+    pub can_check_in: bool,
+    pub register_ts: Option<i64>,
+    pub last_online_ts: Option<i64>,
+    pub updated_at: DateTime<Utc>,
+}
+
+impl From<CheckinRow> for UserCheckin {
+    fn from(row: CheckinRow) -> Self {
+        Self {
+            monthly_card_flags: row.history,
+            claimed_this_month: row.claimed_this_month,
+            cumulative_signin: Some(row.cumulative_signin),
+            checkin_group_id: row.checkin_group_id,
+            reward_index: row.reward_index,
+            can_check_in: row.can_check_in,
+            register_ts: row.register_ts,
+            last_online_ts: row.last_online_ts,
+            updated_at: row.updated_at,
+        }
+    }
+}
+
+impl UserCheckin {
+    pub fn hide_private(&mut self, layout: &ProfileLayout) {
+        if !layout.header_shows(ProfileHeaderField::SignIn) {
+            self.cumulative_signin = None;
+        }
+        if !layout.header_shows(ProfileHeaderField::Registered) {
+            self.register_ts = None;
+        }
+    }
+}
+
+#[derive(Debug, Deserialize)]
+pub struct SetRoleRequest {
+    pub role: String,
+}
+
+#[derive(Debug, Default, Deserialize)]
+pub struct AdminUsersQuery {
+    pub q: Option<String>,
+    pub role: Option<String>,
+    pub server: Option<Server>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct AdminUserEntry {
+    pub id: Uuid,
+    pub uid: String,
+    pub server: String,
+    pub nickname: Option<String>,
+    pub nick_number: Option<String>,
+    pub level: Option<i16>,
+    pub role: String,
+    pub avatar_id: Option<String>,
+    pub secretary: Option<String>,
+    pub secretary_skin_id: Option<String>,
+    pub public_profile: bool,
+    pub total_score: Option<f64>,
+    pub grade: Option<String>,
+    pub operator_count: i64,
+    pub item_count: i64,
+    pub skin_count: i64,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
+impl From<AdminUserRow> for AdminUserEntry {
+    fn from(row: AdminUserRow) -> Self {
+        Self {
+            id: row.id,
+            uid: row.uid,
+            server: row.server,
+            nickname: row.nickname,
+            nick_number: row.nick_number,
+            level: row.level,
+            role: row.role,
+            avatar_id: row.avatar_id,
+            secretary: row.secretary,
+            secretary_skin_id: row.secretary_skin_id,
+            public_profile: row.public_profile,
+            total_score: row.total_score,
+            grade: row.grade,
+            operator_count: row.operator_count,
+            item_count: row.item_count,
+            skin_count: row.skin_count,
+            created_at: row.created_at,
+            updated_at: row.updated_at,
+        }
+    }
+}
+
+#[derive(Debug, Serialize)]
+pub struct AdminUsersPage {
+    pub users: Vec<AdminUserEntry>,
+    pub total: i64,
+}
+
 pub async fn get_user(
     ctx: &AppContext,
     subject: &Subject,
@@ -186,6 +331,31 @@ async fn cached_profile(ctx: &AppContext, uid: &str) -> Result<UserProfile, AppE
         .into();
     ctx.cache.set_json(&key, &profile, USER_TTL).await;
     Ok(profile)
+}
+
+pub async fn get_user_score(
+    ctx: &AppContext,
+    subject: &Subject,
+    uid: &str,
+) -> Result<Option<UserScore>, AppError> {
+    let uid = privacy::resolve_uid(ctx, subject, Some(uid), ProfileTabId::Score).await?;
+    let row = scores::get_by_uid(&mut *ctx.db.conn().await?, &uid, None).await?;
+    Ok(row.map(UserScore::from))
+}
+
+pub async fn get_user_checkin(
+    ctx: &AppContext,
+    subject: &Subject,
+    uid: &str,
+) -> Result<Option<UserCheckin>, AppError> {
+    let (profile, own, layout) =
+        privacy::resolve_profile_for_tabs(ctx, subject, uid, &[ProfileTabId::Stats]).await?;
+    let row = users::checkin_by_uid(&mut *ctx.db.conn().await?, &profile.uid, None).await?;
+    let mut checkin = row.map(UserCheckin::from);
+    if let (false, Some(layout), Some(checkin)) = (own, &layout, &mut checkin) {
+        checkin.hide_private(layout);
+    }
+    Ok(checkin)
 }
 
 pub async fn verify(ctx: &AppContext, claims: &Claims) -> Result<VerifySession, AppError> {
@@ -243,4 +413,86 @@ pub async fn delete_account(ctx: &AppContext, subject: &Subject) -> Result<(), A
         "account deleted"
     );
     Ok(())
+}
+
+pub async fn set_user_role(
+    ctx: &AppContext,
+    subject: &Subject,
+    target: UserId,
+    role: &str,
+) -> Result<(), AppError> {
+    ctx.policy
+        .require(subject, Action::SetUserRole, &Resource::User { id: target })?;
+    let to = role_name(parse_role(role));
+    if to != role {
+        return Err(AppError::BadRequest(format!("Unknown role: {role}")));
+    }
+    let mut conn = ctx.db.conn().await?;
+    let account = users::account(&mut conn, target)
+        .await?
+        .ok_or(AppError::NotFound(None))?;
+    if subject.user_id() == Some(target) {
+        return Err(AppError::BadRequest(
+            "refusing to change your own role; use the manage_permissions CLI".to_owned(),
+        ));
+    }
+    if account.role == to {
+        return Ok(());
+    }
+    users::set_role(&mut conn, target, to).await?;
+    drop(conn);
+    ctx.cache.invalidate(&user_key(&account.uid)).await;
+    tracing::info!(
+        actor = ?subject.user_id(),
+        target = %target.0,
+        from = %account.role,
+        to,
+        "role changed"
+    );
+    Ok(())
+}
+
+pub async fn list_users(
+    ctx: &AppContext,
+    subject: &Subject,
+    query: &AdminUsersQuery,
+    page: PageRequest,
+) -> Result<AdminUsersPage, AppError> {
+    ctx.policy
+        .require(subject, Action::ListUsers, &Resource::Site)?;
+    let roles: Option<&[Role]> = match query.role.as_deref().map(str::trim) {
+        None | Some("" | "all") => None,
+        Some("staff") => Some(&[Role::SuperAdmin, Role::TierListAdmin, Role::TierListEditor]),
+        Some("translators") => Some(&[Role::Translator]),
+        Some("players") => Some(&[Role::User]),
+        Some(token) => {
+            return Err(AppError::BadRequest(format!(
+                "role must be `all`, `staff`, `translators` or `players`, got `{token}`"
+            )));
+        }
+    };
+    let roles: Option<Vec<String>> =
+        roles.map(|r| r.iter().map(|&role| role_name(role).to_owned()).collect());
+    let filter = AdminFilter {
+        q: query.q.as_deref().map(str::trim).filter(|q| !q.is_empty()),
+        roles: roles.as_deref(),
+        server: query.server,
+    };
+    let limit = page
+        .limit
+        .unwrap_or(ADMIN_USERS_DEFAULT_LIMIT)
+        .clamp(1, ADMIN_USERS_MAX_LIMIT);
+    let mut conn = ctx.db.conn().await?;
+    let rows = users::admin_page(
+        &mut conn,
+        &filter,
+        i64::from(limit),
+        i64::from(page.offset()),
+    )
+    .await?;
+    let total = users::admin_count(&mut conn, &filter).await?;
+    Ok(AdminUsersPage {
+        users: rows.into_iter().map(AdminUserEntry::from).collect(),
+        total,
+    })
 }
