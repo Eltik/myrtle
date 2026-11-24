@@ -8,6 +8,7 @@ use myrtle_dps_formulas::operator_unit::{
 };
 use myrtle_dps_formulas::tables::load_formulas;
 use myrtle_engine_dps::{DpsRequest, calculate_dps};
+use myrtle_types::Server;
 
 #[allow(clippy::too_many_arguments)]
 fn make_test_key(
@@ -49,12 +50,11 @@ fn parity_dump() {
         println!("DPS_DUMP unset, skipping");
         return;
     };
-    let excel = myrtle_testkit::real_data::excel_dir();
-    if !excel.join("character_table.json").exists() {
-        println!("no game data at {}, skipping", excel.display());
+    let Some(model) = myrtle_testkit::fixtures::character_model(Server::EN) else {
+        println!("no EN game data, skipping");
         return;
-    }
-    let operators = myrtle_testkit::real_data::dps_operators(&excel).unwrap();
+    };
+    let operators = &model.operators;
 
     let fixture = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/expected_dps.json");
     let expected: HashMap<String, f64> =

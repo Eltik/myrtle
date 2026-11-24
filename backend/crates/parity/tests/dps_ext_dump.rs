@@ -8,6 +8,7 @@ use myrtle_dps_formulas::operator_unit::{EnemyStats, OperatorParams};
 use myrtle_dps_formulas::tables::supported_operators;
 use myrtle_engine_dps::zones::BuffZones;
 use myrtle_engine_dps::{CycleModel, DpsRequest, SecondaryTarget, calculate_dps_with};
+use myrtle_types::Server;
 use serde_json::Value;
 
 #[test]
@@ -20,8 +21,9 @@ fn dps_ext_dump() {
         &std::fs::read(std::env::var("DPS_EXT_SCENARIOS").unwrap()).unwrap(),
     )
     .unwrap();
-    let excel = myrtle_testkit::real_data::excel_dir();
-    let operators = myrtle_testkit::real_data::dps_operators(&excel).unwrap();
+    let operators = &myrtle_testkit::fixtures::character_model(Server::EN)
+        .unwrap()
+        .operators;
     let zones: Vec<Option<BuffZones>> = sc["zones"]
         .as_array()
         .unwrap()

@@ -4,7 +4,7 @@ mod common;
 
 use std::time::Duration;
 
-use common::{MemoryStore, Recorded, Reply, ValidTokens, durable, game_server, serve, upstream};
+use common::{Recorded, Reply, ValidTokens, durable, game_server, serve, upstream};
 use myrtle_hypergryph::fetch::{
     FetchRequest, auth_request, auth_request_with_timeout, fetch_domain, read_body,
     read_body_tolerating,
@@ -13,6 +13,7 @@ use myrtle_hypergryph::session::{ensure_fresh, refresh_secret, refresh_secret_by
 use myrtle_hypergryph::{
     AuthSession, Domain, RefreshStep, SessionKey, UpstreamError, VersionInfo, envelope_code,
 };
+use myrtle_testkit::sessions::MemorySessions;
 use myrtle_types::{GameUid, Server};
 use serde_json::json;
 
@@ -256,7 +257,7 @@ async fn ensure_fresh_prefers_the_cache_then_the_credential() {
     ))
     .await;
     let up = upstream(&server.base);
-    let store = MemoryStore::default();
+    let store = MemorySessions::default();
     let key = SessionKey::Player {
         server: Server::EN,
         uid: GameUid("12345".into()),

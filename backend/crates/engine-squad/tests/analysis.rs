@@ -1,6 +1,6 @@
 #![allow(clippy::unwrap_used, clippy::expect_used)]
 
-use std::{fmt::Write as _, sync::LazyLock};
+use std::fmt::Write as _;
 
 use myrtle_engine_squad::{
     SquadData,
@@ -12,29 +12,13 @@ use myrtle_engine_squad::{
         SynergyReason, SynergyTargetKind, ThemeKind, Unlock,
     },
 };
-use myrtle_gamedata::{
-    compile::{CompileOptions, compile},
-    model::GameModel,
-};
-use myrtle_gamedata_raw::{DirSource, load, tables::module::ModuleType};
-use myrtle_testkit::real_data::excel_dir;
+use myrtle_gamedata::model::GameModel;
+use myrtle_gamedata_raw::tables::module::ModuleType;
+use myrtle_testkit::fixtures::model;
 use myrtle_types::Server;
 
-/// `None` when the server's tree is not on disk, which is CI for anything but EN
-fn server_model(server: Server, dir: &str) -> Option<GameModel> {
-    let root = excel_dir().join("../../..").join(dir);
-    if !root.join("gamedata/excel").is_dir() {
-        return None;
-    }
-    let raw = load(&DirSource { root }, server).ok()?;
-    Some(compile(raw, &CompileOptions::new(server)).ok()?.model)
-}
-
-static EN: LazyLock<GameModel> =
-    LazyLock::new(|| server_model(Server::EN, "en").expect("EN game data"));
-
 fn en() -> &'static GameModel {
-    &EN
+    model(Server::EN).expect("EN game data")
 }
 
 fn analyze(data: &GameModel, request: &SquadAnalyzeRequest) -> SquadAnalysis {
@@ -922,7 +906,7 @@ fn faction_targets_are_power_ids() {
 /// is not on disk (CI carries EN only).
 #[test]
 fn cn_server_reads_through_en_text() {
-    let Some(cn) = server_model(Server::CN, "cn") else {
+    let Some(cn) = model(Server::CN) else {
         eprintln!("no CN tree on disk, skipped");
         return;
     };
@@ -938,7 +922,7 @@ fn cn_server_reads_through_en_text() {
             ]),
         )
     };
-    let (a_en, a_cn) = (zima(en), zima(&cn));
+    let (a_en, a_cn) = (zima(en), zima(cn));
     assert!(a_cn.unread_seats.is_empty());
     // Zima's squad cut reaches Myrtle on CN exactly as on EN.
     for a in [&a_en, &a_cn] {
@@ -999,7 +983,7 @@ fn cn_server_reads_through_en_text() {
     }
     let (mut with_synergy, mut with_structural_row) = (false, false);
     for id in cn_only {
-        let a = analyze_with(&cn, Some(en), &req(vec![m(id, 2, 80, 0, 0, 7, 3, None, 1)]));
+        let a = analyze_with(cn, Some(en), &req(vec![m(id, 2, 80, 0, 0, 7, 3, None, 1)]));
         assert_eq!(a.unread_seats, vec![0], "{id}");
         with_synergy |= !a.synergy.items.is_empty();
         with_structural_row |= a

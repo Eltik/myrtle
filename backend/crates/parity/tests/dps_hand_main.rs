@@ -2,10 +2,10 @@
 #![allow(clippy::doc_markdown, clippy::float_cmp)]
 
 use std::collections::HashMap;
-use std::path::Path;
 
 use myrtle_dps_formulas::operator_unit::{EnemyStats, OperatorConditionals, OperatorParams};
 use myrtle_gamedata_raw::tables::operator::Operator;
+use myrtle_types::Server;
 
 mod engine {
     use myrtle_dps_formulas::HpsResult;
@@ -27,13 +27,14 @@ mod engine {
 }
 
 pub struct GameData {
-    pub operators: HashMap<String, Operator>,
+    pub operators: &'static HashMap<String, Operator>,
 }
 
-fn load(data_dir: &str, _assets_dir: &str) -> GameData {
+fn load(server: Server) -> GameData {
     GameData {
-        operators: myrtle_testkit::real_data::dps_operators(Path::new(data_dir))
-            .expect("Failed to load game data"),
+        operators: &myrtle_testkit::fixtures::character_model(server)
+            .expect("game data")
+            .operators,
     }
 }
 
@@ -61,9 +62,7 @@ fn assert_hand_check(case: &str, engine_value: f64, from_text: f64) {
 }
 
 fn en() -> GameData {
-    let data = myrtle_testkit::real_data::excel_dir();
-    let assets = std::env::var("ASSETS_DIR").unwrap_or_else(|_| "../assets/output/en".into());
-    load(&data.to_string_lossy(), &assets)
+    load(Server::EN)
 }
 
 fn params(skill: i32, module: i32, targets: i32) -> OperatorParams {
@@ -107,11 +106,7 @@ fn hps(gd: &GameData, id: &str, p: OperatorParams) -> Metrics {
 #[test]
 #[ignore = "needs CN game data: Angelina the Mellow Wish is not in EN"]
 fn angelina_the_mellow_wish_snapshot() {
-    let cn = concat!(env!("CARGO_MANIFEST_DIR"), "/../../../assets/output/cn");
-    let data =
-        std::env::var("DPS_HAND_CN_DATA_DIR").unwrap_or_else(|_| format!("{cn}/gamedata/excel"));
-    let assets = std::env::var("DPS_HAND_CN_ASSETS_DIR").unwrap_or_else(|_| cn.into());
-    let gd = load(&data, &assets);
+    let gd = load(Server::CN);
     let id = "char_1015_aglna2";
 
     assert_eq!(

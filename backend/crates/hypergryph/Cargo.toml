@@ -30,6 +30,7 @@ urlencoding.workspace = true
 zip.workspace = true
 
 [dev-dependencies]
+myrtle-testkit.workspace = true
 http = "1.5.0"
 tokio = { workspace = true, features = ["net", "io-util"] }
 rustls = { version = "0.23.46", default-features = false, features = ["ring", "std", "tls12"] }

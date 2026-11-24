@@ -450,15 +450,13 @@ mod tests {
         );
     }
 
-    /// The EN table: `GAME_DATA_DIR`, else `../assets/output/en/gamedata/excel`.
+    /// The EN table under `MYRTLE_TEST_ASSETS`, else the repo's `assets/output`
     fn load_en() -> Option<RoguelikeGameData> {
-        let dir = std::env::var("GAME_DATA_DIR").map_or_else(
-            |_| {
-                std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-                    .join("../assets/output/en/gamedata/excel")
-            },
+        let assets = std::env::var_os("MYRTLE_TEST_ASSETS").map_or_else(
+            || std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../../assets/output"),
             std::path::PathBuf::from,
         );
+        let dir = assets.join("en/gamedata/excel");
         if !dir.join("roguelike_topic_table.json").exists() {
             return None;
         }

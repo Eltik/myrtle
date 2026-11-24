@@ -10,24 +10,20 @@
 
 use std::collections::HashMap;
 use std::path::PathBuf;
-use std::sync::LazyLock;
 
 use myrtle_engine_archives::build::{card_faction, file_ids};
 use myrtle_engine_archives::profile::{
     ArchiveGender, InfectionState, Lang, bracketed, parse_archive_profile,
 };
 use myrtle_engine_archives::{Archive, SceneIndex, build_archive};
-use myrtle_gamedata::{
-    compile::{CompileOptions, compile},
-    model::GameModel,
-};
+use myrtle_gamedata::model::GameModel;
 use myrtle_gamedata_raw::tables::handbook_network::RawNetwork;
-use myrtle_gamedata_raw::{DirSource, TableSource, load as load_raw};
-use myrtle_testkit::real_data::excel_dir;
+use myrtle_gamedata_raw::{DirSource, TableSource};
+use myrtle_testkit::fixtures;
 use myrtle_types::Server;
 
 fn server_root(server: &str) -> PathBuf {
-    excel_dir().join("../../..").join(server)
+    fixtures::root(server_of(server))
 }
 
 fn root() -> PathBuf {
@@ -44,34 +40,8 @@ fn server_of(server: &str) -> Server {
     }
 }
 
-/// `None` when the server's tree is not on disk, which is CI for anything but EN
-fn compile_server(server: &str) -> Option<GameModel> {
-    let root = server_root(server);
-    if !root.join("gamedata/excel").is_dir() {
-        return None;
-    }
-    let raw = load_raw(&DirSource { root }, server_of(server)).ok()?;
-    Some(
-        compile(raw, &CompileOptions::new(server_of(server)))
-            .ok()?
-            .model,
-    )
-}
-
-static EN: LazyLock<Option<GameModel>> = LazyLock::new(|| compile_server("en"));
-static CN: LazyLock<Option<GameModel>> = LazyLock::new(|| compile_server("cn"));
-static JP: LazyLock<Option<GameModel>> = LazyLock::new(|| compile_server("jp"));
-static KR: LazyLock<Option<GameModel>> = LazyLock::new(|| compile_server("kr"));
-
-/// Each server's model, compiled once per test binary
 fn load(server: &str) -> Option<&'static GameModel> {
-    match server {
-        "en" => EN.as_ref(),
-        "cn" => CN.as_ref(),
-        "jp" => JP.as_ref(),
-        "kr" => KR.as_ref(),
-        other => panic!("no server {other}"),
-    }
+    fixtures::model(server_of(server))
 }
 
 fn lang(server: &str) -> Lang {

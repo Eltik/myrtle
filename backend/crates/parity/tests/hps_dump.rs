@@ -6,6 +6,7 @@ use std::path::Path;
 use myrtle_dps_formulas::operator_unit::OperatorParams;
 use myrtle_dps_formulas::tables::load_heal_formulas;
 use myrtle_engine_dps::calculate_hps;
+use myrtle_types::Server;
 
 #[test]
 fn hps_dump() {
@@ -13,12 +14,11 @@ fn hps_dump() {
         println!("HPS_DUMP unset, skipping");
         return;
     };
-    let excel = myrtle_testkit::real_data::excel_dir();
-    if !excel.join("character_table.json").exists() {
-        println!("no game data at {}, skipping", excel.display());
+    let Some(model) = myrtle_testkit::fixtures::character_model(Server::EN) else {
+        println!("no EN game data, skipping");
         return;
-    }
-    let operators = myrtle_testkit::real_data::dps_operators(&excel).unwrap();
+    };
+    let operators = &model.operators;
     let fixture = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/expected_hps.json");
     let expected: HashMap<String, serde_json::Value> =
         serde_json::from_str(&std::fs::read_to_string(fixture).unwrap()).unwrap();

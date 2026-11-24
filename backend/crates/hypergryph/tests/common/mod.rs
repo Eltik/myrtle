@@ -1,17 +1,13 @@
-//! A scripted HTTP server on localhost, an in-memory `SessionStore`, and an `Upstream` aimed at both.
+//! A scripted HTTP server on localhost and an `Upstream` aimed at it.
 
 #![allow(dead_code, clippy::unwrap_used)]
 
-use std::collections::HashMap;
 use std::fmt::Write;
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex, Once};
 use std::time::Duration;
 
-use async_trait::async_trait;
 use myrtle_hypergryph::{
-    AuthSession, DeviceIds, Domain, DurableCredential, NetworkConfig, SessionKey, SessionStore,
-    SessionStoreError, Upstream, VersionInfo,
+    AuthSession, DeviceIds, Domain, DurableCredential, NetworkConfig, Upstream, VersionInfo,
 };
 use myrtle_types::Server;
 use serde_json::Value;
@@ -295,80 +291,6 @@ pub fn durable(uid: &str, token: &str) -> DurableCredential {
 
 pub fn session_with(credential: &DurableCredential) -> AuthSession {
     AuthSession::from_durable("", credential)
-}
-
-#[derive(Default)]
-pub struct MemoryStore {
-    sessions: Mutex<HashMap<SessionKey, AuthSession>>,
-    durable: Mutex<HashMap<SessionKey, DurableCredential>>,
-    saves: Mutex<Vec<AuthSession>>,
-    pub fail_load: AtomicBool,
-    pub fail_save: AtomicBool,
-    pub fail_load_durable: AtomicBool,
-}
-
-fn fails(flag: &AtomicBool) -> Result<(), SessionStoreError> {
-    if flag.load(Ordering::SeqCst) {
-        Err(SessionStoreError::Unavailable("injected".into()))
-    } else {
-        Ok(())
-    }
-}
-
-impl MemoryStore {
-    pub fn put_session(&self, key: &SessionKey, session: AuthSession) {
-        self.sessions.lock().unwrap().insert(key.clone(), session);
-    }
-
-    pub fn put_durable(&self, key: &SessionKey, credential: DurableCredential) {
-        self.durable.lock().unwrap().insert(key.clone(), credential);
-    }
-
-    pub fn session(&self, key: &SessionKey) -> Option<AuthSession> {
-        self.sessions.lock().unwrap().get(key).cloned()
-    }
-
-    pub fn saves(&self) -> Vec<AuthSession> {
-        self.saves.lock().unwrap().clone()
-    }
-}
-
-#[async_trait]
-impl SessionStore for MemoryStore {
-    async fn load(&self, key: &SessionKey) -> Result<Option<AuthSession>, SessionStoreError> {
-        fails(&self.fail_load)?;
-        Ok(self.session(key))
-    }
-
-    async fn save(&self, key: &SessionKey, session: &AuthSession) -> Result<(), SessionStoreError> {
-        fails(&self.fail_save)?;
-        self.saves.lock().unwrap().push(session.clone());
-        self.put_session(key, session.clone());
-        Ok(())
-    }
-
-    async fn load_durable(
-        &self,
-        key: &SessionKey,
-    ) -> Result<Option<DurableCredential>, SessionStoreError> {
-        fails(&self.fail_load_durable)?;
-        Ok(self.durable.lock().unwrap().get(key).cloned())
-    }
-
-    async fn save_durable(
-        &self,
-        key: &SessionKey,
-        credential: &DurableCredential,
-    ) -> Result<(), SessionStoreError> {
-        self.put_durable(key, credential.clone());
-        Ok(())
-    }
-
-    async fn forget(&self, key: &SessionKey) -> Result<bool, SessionStoreError> {
-        let a = self.sessions.lock().unwrap().remove(key).is_some();
-        let b = self.durable.lock().unwrap().remove(key).is_some();
-        Ok(a || b)
-    }
 }
 
 /// Yostar tokens `getToken` accepts; anything else is refused with `result: 1`

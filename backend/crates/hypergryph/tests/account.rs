@@ -7,25 +7,25 @@ use std::sync::atomic::Ordering;
 use std::time::Duration;
 
 use common::{
-    MemoryStore, Reply, ValidTokens, durable, extension_token, game_server, serve, session_with,
-    upstream,
+    Reply, ValidTokens, durable, extension_token, game_server, serve, session_with, upstream,
 };
 use myrtle_hypergryph::{
     AccountOptions, AccountState, Domain, GameAccount, GameAccounts, SessionKey, SessionStore,
     UpstreamError, envelope_code,
 };
+use myrtle_testkit::sessions::MemorySessions;
 use myrtle_types::Server;
 use serde_json::json;
 
 const EN: SessionKey = SessionKey::ServiceAccount { server: Server::EN };
 
-fn store_with(token: &str) -> Arc<MemoryStore> {
-    let store = Arc::new(MemoryStore::default());
+fn store_with(token: &str) -> Arc<MemorySessions> {
+    let store = Arc::new(MemorySessions::default());
     store.put_session(&EN, session_with(&durable("yostar-uid", token)));
     store
 }
 
-async fn account(store: &Arc<MemoryStore>, options: AccountOptions) -> Arc<GameAccount> {
+async fn account(store: &Arc<MemorySessions>, options: AccountOptions) -> Arc<GameAccount> {
     let dyn_store: Arc<dyn SessionStore> = store.clone();
     GameAccount::load(Server::EN, dyn_store, options)
         .await
@@ -438,7 +438,7 @@ async fn sync_player_posts_platform_one() {
 
 #[tokio::test]
 async fn accounts_load_what_the_store_holds_and_cn_brings_bilibili() {
-    let store = Arc::new(MemoryStore::default());
+    let store = Arc::new(MemorySessions::default());
     store.put_durable(
         &SessionKey::ServiceAccount { server: Server::CN },
         durable("c", "t"),
@@ -657,7 +657,7 @@ async fn a_stored_credential_differing_only_in_uid_is_adopted() {
     })
     .await;
     let up = upstream(&server.base);
-    let store = Arc::new(MemoryStore::default());
+    let store = Arc::new(MemorySessions::default());
     store.put_session(&EN, session_with(&durable("old-uid", "tok")));
     store.put_durable(&EN, durable("new-uid", "tok"));
     let acct = account(&store, AccountOptions::default()).await;

@@ -120,7 +120,7 @@ async fn sync_data_and_the_portal_outlast_the_handle_timeout() {
     .await;
     let up = short(&server);
 
-    let store = Arc::new(common::MemoryStore::default());
+    let store = Arc::new(myrtle_testkit::sessions::MemorySessions::default());
     let key = SessionKey::ServiceAccount { server: Server::EN };
     store.put_durable(&key, common::durable("y", "tok"));
     let dyn_store: Arc<dyn SessionStore> = store;

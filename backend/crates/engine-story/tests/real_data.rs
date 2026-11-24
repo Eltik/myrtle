@@ -9,25 +9,22 @@ use myrtle_engine_story::index::mainline_chapters;
 use myrtle_engine_story::sprites::build_sprite_index;
 use myrtle_engine_story::story_art::{MIN_BYTES_PER_PX, build_story_art};
 use myrtle_engine_story::{StoryAssetIndex, build_index};
-use myrtle_gamedata::compile::{CompileOptions, compile};
-use myrtle_gamedata_raw::{DirSource, TableSource, load};
-use myrtle_testkit::real_data::excel_dir;
+use myrtle_gamedata_raw::{DirSource, TableSource};
+use myrtle_testkit::fixtures;
 use myrtle_types::Server;
 
 #[test]
 fn the_en_library_galleries_and_reader() {
-    let root = excel_dir().join("../..");
-    if !root.join("gamedata/excel").is_dir() || !root.join("textures/avg").is_dir() {
+    let root = fixtures::root(Server::EN);
+    if !root.join("textures/avg").is_dir() {
         eprintln!("skip: no EN extract at {}", root.display());
         return;
     }
+    let Some(model) = fixtures::model(Server::EN) else {
+        eprintln!("skip: no EN extract at {}", root.display());
+        return;
+    };
     let src = DirSource { root: root.clone() };
-    let model = compile(
-        load(&src, Server::EN).unwrap(),
-        &CompileOptions::new(Server::EN),
-    )
-    .unwrap()
-    .model;
     #[allow(clippy::disallowed_methods)] // the build time is the measurement
     let started = std::time::Instant::now();
     let assets = StoryAssetIndex::build(&src, &src, &|tree| {
@@ -46,7 +43,7 @@ fn the_en_library_galleries_and_reader() {
     assert!(assets.resolve_character("char_002_amiya_1").is_some());
     assert!(assets.resolve_avatar("$avatar_amiya").is_some());
 
-    let lib = build_index(&model, &model.assets, &assets, &src);
+    let lib = build_index(model, &model.assets, &assets, &src);
     let groups = &lib.index.groups;
     assert!(groups.len() > 400, "{} groups", groups.len());
     assert!(lib.index.records.len() > 300);
@@ -70,7 +67,7 @@ fn the_en_library_galleries_and_reader() {
     assert!(lib.by_txt.len() > 1500);
     assert!(lib.gates.values().any(|g| !g.is_empty()));
 
-    let chapters = mainline_chapters(&model, &model.assets);
+    let chapters = mainline_chapters(model, &model.assets);
     assert_eq!(chapters.len(), mains.len());
     assert_eq!(chapters[0].number, Some(0));
 
@@ -95,7 +92,7 @@ fn the_en_library_galleries_and_reader() {
     let ill = lib.illustrations(&assets, &groups[0].id).unwrap();
     assert!(ill.backgrounds.iter().any(|b| b.url.is_some()));
 
-    let gallery = build_gallery(&model, &assets);
+    let gallery = build_gallery(model, &assets);
     assert!(
         gallery
             .groups
@@ -114,7 +111,7 @@ fn the_en_library_galleries_and_reader() {
     assert!(cg_census.passed > 1000, "{cg_census:?}");
     assert!(!cg.groups.is_empty() && !scene.groups.is_empty());
 
-    let sprites = build_sprite_index(&model, &lib, &assets, &src, &src, &file_len);
+    let sprites = build_sprite_index(model, &lib, &assets, &src, &src, &file_len);
     assert!(sprites.index.sprites.len() > 1000);
     assert!(sprites.census.hidden.iter().any(|f| f == "char_empty"));
     let amiya = &sprites.details["char_002_amiya_1"];

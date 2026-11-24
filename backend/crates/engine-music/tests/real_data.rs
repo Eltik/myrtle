@@ -8,31 +8,27 @@ use std::path::PathBuf;
 use myrtle_engine_music::{
     CLIP_ROOTS, ClipTree, MusicIndex, MusicPlaceKind, MusicSources, TABLES, build_music_index,
 };
-use myrtle_gamedata::compile::{CompileOptions, compile};
 use myrtle_gamedata::model::GameModel;
-use myrtle_gamedata_raw::{DirSource, load};
-use myrtle_testkit::real_data::excel_dir;
+use myrtle_gamedata_raw::DirSource;
+use myrtle_testkit::fixtures;
 use myrtle_types::Server;
 
 fn root() -> PathBuf {
-    excel_dir().join("../..")
+    fixtures::root(Server::EN)
 }
 
-fn en() -> Option<(GameModel, MusicSources)> {
+fn en() -> Option<(&'static GameModel, MusicSources)> {
     let root = root();
-    if !root.join("gamedata/excel").is_dir() || !root.join(CLIP_ROOTS[0]).is_dir() {
+    if !root.join(CLIP_ROOTS[0]).is_dir() {
         return None;
     }
+    let gd = fixtures::model(Server::EN)?;
     let source = DirSource { root };
-    let raw = load(&source, Server::EN).unwrap();
-    let gd = compile(raw, &CompileOptions::new(Server::EN))
-        .unwrap()
-        .model;
     let clips = vec![ClipTree {
         server: None,
         paths: common::clip_paths(&source),
     }];
-    let (src, warnings) = common::music_sources(&gd, &source, &[&source], clips);
+    let (src, warnings) = common::music_sources(gd, &source, &[&source], clips);
     assert!(warnings.is_empty(), "{warnings:?}");
     Some((gd, src))
 }
@@ -71,7 +67,7 @@ fn the_en_index_is_whole_and_stable() {
     let Some((gd, src)) = en() else {
         return;
     };
-    let index = build_music_index(&gd, &src);
+    let index = build_music_index(gd, &src);
     census(&index);
     let t = &index.totals;
     assert_eq!(t.tracks as usize, index.tracks.len());
@@ -101,6 +97,6 @@ fn the_en_index_is_whole_and_stable() {
     assert!(with_origin * 10 > index.tracks.len() * 9, "{with_origin}");
     assert_eq!(
         serde_json::to_vec(&index).unwrap(),
-        serde_json::to_vec(&build_music_index(&gd, &src)).unwrap()
+        serde_json::to_vec(&build_music_index(gd, &src)).unwrap()
     );
 }
