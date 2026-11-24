@@ -71,6 +71,13 @@ pub enum BootStep {
     Accounts,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum GameData {
+    All,
+    Default,
+    None,
+}
+
 #[derive(Clone)]
 pub struct AppContext {
     pub config: Arc<Config>,
@@ -97,6 +104,14 @@ impl AppContext {
         config: Config,
         step: impl Fn(BootStep) + Send + Sync,
     ) -> Result<Self, AppError> {
+        Self::open(config, GameData::All, step).await
+    }
+
+    pub async fn open(
+        config: Config,
+        game_data: GameData,
+        step: impl Fn(BootStep) + Send + Sync,
+    ) -> Result<Self, AppError> {
         step(BootStep::Database);
         let secrets = Secrets::resolve(&config).map_err(AppError::internal)?;
         let database_url = config.database.url.resolve().map_err(AppError::internal)?;
@@ -116,7 +131,12 @@ impl AppContext {
                 .await?
                 .into_iter()
                 .collect();
-        for server in snapshots.servers() {
+        let wanted = match game_data {
+            GameData::All => snapshots.servers(),
+            GameData::Default => vec![snapshots.default_server()],
+            GameData::None => Vec::new(),
+        };
+        for server in wanted {
             step(BootStep::GameData(server));
             let stored = generations.get(&server).cloned().unwrap_or_default();
             let activated = snapshots.activate_at(server, &stored).await;

@@ -5,7 +5,7 @@ use std::time::{Duration, Instant};
 use crate::cache::hmac_hex;
 use dashmap::DashMap;
 use myrtle_db::repos::{tier_lists as repo, users};
-use myrtle_types::{ContentAuditAction, UserId};
+use myrtle_types::{ContentAuditAction, TierListType, UserId};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -229,6 +229,35 @@ pub async fn set_visibility(
             .await;
     }
     Ok(VisibilityState { is_listed })
+}
+
+pub async fn set_list_type(
+    ctx: &AppContext,
+    subject: &Subject,
+    slug: &str,
+    list_type: TierListType,
+) -> Result<bool, AppError> {
+    ctx.policy
+        .require(subject, Action::ManageTierListGrants, &Resource::Site)?;
+    let user = actor(subject)?;
+    let mut conn = ctx.db.conn().await?;
+    let list = find(&mut conn, slug).await?;
+    if list.list_type == list_type.as_str() {
+        return Ok(false);
+    }
+    repo::set_list_type(&mut conn, list_id(&list), list_type)
+        .await?
+        .ok_or(AppError::NotFound(None))?;
+    drop(conn);
+    invalidate_detail(ctx, slug).await;
+    let details = ContentAuditDetails {
+        list_type: Some(list_type.as_str().to_owned()),
+        ..Default::default()
+    };
+    ctx.audit
+        .record(audit_event(&list, user, ContentAuditAction::Edit, details))
+        .await;
+    Ok(true)
 }
 
 pub async fn permissions(

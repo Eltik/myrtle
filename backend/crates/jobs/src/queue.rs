@@ -7,7 +7,7 @@ use serde_json::Value;
 use sqlx::postgres::PgQueryResult;
 use thiserror::Error;
 
-use crate::model::{Job, JobKind, JobSpec};
+use crate::model::{Job, JobKind, JobSpec, JobState};
 
 const ENQUEUE: &str = "
 INSERT INTO jobs (kind, server_id, payload, dedupe_key, priority, run_at, max_attempts, lease_secs)
@@ -72,6 +72,27 @@ UPDATE jobs
  WHERE state = 'running' AND lease_expires_at < now()";
 
 const PRUNE: &str = "DELETE FROM jobs WHERE finished_at < now() - make_interval(secs => $1)";
+
+const RECENT: &str = "
+SELECT id, kind, server_id, payload, state, priority, attempts, max_attempts, lease_secs,
+       run_at, leased_by, lease_expires_at, last_error, created_at, finished_at
+  FROM jobs
+ WHERE ($1::text IS NULL OR state = $1) AND ($2::text IS NULL OR kind = $2)
+ ORDER BY id DESC
+ LIMIT $3";
+
+const COUNTS: &str = "
+SELECT state, count(*)
+  FROM jobs
+ WHERE $1::text IS NULL OR kind = $1
+ GROUP BY state";
+
+#[derive(Debug, Clone, Copy)]
+pub struct JobFilter {
+    pub state: Option<JobState>,
+    pub kind: Option<JobKind>,
+    pub limit: u32,
+}
 
 #[derive(Debug, Error)]
 pub enum QueueError {
@@ -158,6 +179,31 @@ impl PgQueue {
             .execute(&mut *conn)
             .await?;
         Ok(pruned.rows_affected())
+    }
+
+    pub async fn recent(&self, filter: JobFilter) -> Result<Vec<Job>, QueueError> {
+        let mut conn = self.db.conn().await?;
+        Ok(sqlx::query_as(RECENT)
+            .bind(filter.state.map(JobState::as_str))
+            .bind(filter.kind.map(JobKind::as_str))
+            .bind(i64::from(filter.limit))
+            .fetch_all(&mut *conn)
+            .await?)
+    }
+
+    pub async fn counts(&self, kind: Option<JobKind>) -> Result<Vec<(JobState, i64)>, QueueError> {
+        let mut conn = self.db.conn().await?;
+        let rows: Vec<(String, i64)> = sqlx::query_as(COUNTS)
+            .bind(kind.map(JobKind::as_str))
+            .fetch_all(&mut *conn)
+            .await?;
+        Ok(JobState::ALL
+            .into_iter()
+            .map(|state| {
+                let n = rows.iter().find(|(s, _)| s == state.as_str());
+                (state, n.map_or(0, |(_, n)| *n))
+            })
+            .collect())
     }
 }
 

@@ -4,6 +4,7 @@ pub mod base_planner;
 pub mod cache;
 pub mod config;
 pub mod context;
+pub mod dump;
 pub mod error;
 pub mod limits;
 pub mod policy;

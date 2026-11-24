@@ -1,3 +1,5 @@
+mod pass;
+
 use myrtle_db::repos::scores::ScoreWrite;
 use myrtle_db::repos::{progress, roster, scores, users};
 use myrtle_engine_base::score::grade_base;
@@ -15,6 +17,7 @@ use std::sync::Arc;
 
 use crate::snapshots::Snapshot;
 use crate::{AppContext, AppError};
+pub use pass::*;
 
 fn snapshot_of(ctx: &AppContext) -> Result<Arc<Snapshot>, AppError> {
     ctx.snapshots.or_default(ctx.snapshots.default_server())
@@ -82,15 +85,18 @@ pub async fn load_inputs(
     })
 }
 
-pub async fn regrade(ctx: &AppContext, user: UserId) -> Result<UserGrade, AppError> {
+pub async fn compute_grade(ctx: &AppContext, user: UserId) -> Result<UserGrade, AppError> {
     let snapshot = snapshot_of(ctx)?;
     let inputs = load_inputs(ctx, user, &snapshot).await?;
-    let grade = ctx
-        .cpu
+    ctx.cpu
         .offload("user_grade", move || {
             calculate_user_grade(&snapshot.grade, &inputs)
         })
-        .await?;
+        .await
+}
+
+pub async fn regrade(ctx: &AppContext, user: UserId) -> Result<UserGrade, AppError> {
+    let grade = compute_grade(ctx, user).await?;
     let write = ScoreWrite {
         total_score: grade.total_score,
         operator_score: grade.operator_grade,
@@ -108,7 +114,17 @@ pub async fn regrade(ctx: &AppContext, user: UserId) -> Result<UserGrade, AppErr
     Ok(grade)
 }
 
-pub async fn rescore_sandbox(ctx: &AppContext, user: UserId) -> Result<Option<String>, AppError> {
+#[derive(Debug, Clone, PartialEq)]
+pub struct SandboxRescore {
+    pub sandbox: f64,
+    pub total: f64,
+    pub grade: String,
+}
+
+pub async fn compute_sandbox(
+    ctx: &AppContext,
+    user: UserId,
+) -> Result<Option<SandboxRescore>, AppError> {
     let snapshot = snapshot_of(ctx)?;
     let mut conn = ctx.db.conn().await?;
     let Some(stored) = scores::stored_sections(&mut conn, user).await? else {
@@ -132,9 +148,26 @@ pub async fn rescore_sandbox(ctx: &AppContext, user: UserId) -> Result<Option<St
             ),
         ),
     ) / SECTION_WEIGHT_TOTAL;
-    let overall = score_to_grade(total);
-    scores::write_sandbox(&mut conn, user, sandbox, total, &overall).await?;
-    Ok(Some(overall))
+    Ok(Some(SandboxRescore {
+        sandbox,
+        total,
+        grade: score_to_grade(total),
+    }))
+}
+
+pub async fn rescore_sandbox(ctx: &AppContext, user: UserId) -> Result<Option<String>, AppError> {
+    let Some(r) = compute_sandbox(ctx, user).await? else {
+        return Ok(None);
+    };
+    scores::write_sandbox(
+        &mut *ctx.db.conn().await?,
+        user,
+        r.sandbox,
+        r.total,
+        &r.grade,
+    )
+    .await?;
+    Ok(Some(r.grade))
 }
 
 pub async fn enqueue_regrade(ctx: &AppContext, user: UserId) -> Result<(), AppError> {

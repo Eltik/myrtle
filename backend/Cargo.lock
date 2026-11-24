@@ -2200,6 +2200,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2 0.10.9",
+ "sqlx",
  "tempfile",
  "thiserror",
  "tokio",
@@ -2209,6 +2210,28 @@ dependencies = [
  "urlencoding",
  "uuid",
  "walkdir",
+]
+
+[[package]]
+name = "myrtle-cli"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "clap",
+ "myrtle-app",
+ "myrtle-db",
+ "myrtle-hypergryph",
+ "myrtle-jobs",
+ "myrtle-testkit",
+ "myrtle-types",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "tokio",
+ "toml",
+ "tracing",
+ "tracing-subscriber",
 ]
 
 [[package]]

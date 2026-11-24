@@ -1,6 +1,6 @@
 [package]
 name = "myrtle-app"
-description = "L5: use cases, Policy, audit, privacy, cache, config, game data registry"
+description = "Core app of the backend"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -56,6 +56,7 @@ walkdir.workspace = true
 
 [dev-dependencies]
 myrtle-testkit.workspace = true
+sqlx.workspace = true
 tempfile.workspace = true
 tokio = { workspace = true, features = ["test-util"] }
 

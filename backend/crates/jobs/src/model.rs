@@ -110,6 +110,8 @@ pub enum JobState {
 }
 
 impl JobState {
+    pub const ALL: [Self; 4] = [Self::Queued, Self::Running, Self::Succeeded, Self::Dead];
+
     #[must_use]
     pub const fn as_str(self) -> &'static str {
         match self {
@@ -122,9 +124,7 @@ impl JobState {
 
     #[must_use]
     pub fn parse(s: &str) -> Option<Self> {
-        [Self::Queued, Self::Running, Self::Succeeded, Self::Dead]
-            .into_iter()
-            .find(|state| state.as_str() == s)
+        Self::ALL.into_iter().find(|state| state.as_str() == s)
     }
 }
 
