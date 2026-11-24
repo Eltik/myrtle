@@ -614,3 +614,49 @@ async fn every_sequence_an_exported_table_owns_is_reset() {
     assert!(SEEDED_TABLES.iter().all(|t| TABLES.contains(t)));
     test.close().await;
 }
+
+#[tokio::test]
+async fn a_gzipped_table_file_is_read_in_place() {
+    let dir = tempfile::tempdir().unwrap();
+    let manifest = json!({
+        "format_version": 1, "exported_at": "x", "database_version": "y",
+        "tables": [
+            {"name": "servers", "rows": 0, "file": "servers.jsonl"},
+            {"name": "users", "rows": 2, "file": "users.jsonl"}
+        ]
+    });
+    std::fs::write(dir.path().join(MANIFEST_FILE), manifest.to_string()).unwrap();
+    std::fs::write(dir.path().join("servers.jsonl"), "").unwrap();
+    let users: String = [
+        "6f1d0c52-6f43-4a39-9d0e-6b8f0f6c1a10",
+        "6f1d0c52-6f43-4a39-9d0e-6b8f0f6c1a11",
+    ]
+    .iter()
+    .enumerate()
+    .map(|(n, id)| {
+        json!({"id": id, "uid": n.to_string(), "server_id": 0, "nickname": "Doc",
+                   "level": 1, "role": "user", "created_at": "2026-01-02T03:04:05Z",
+                   "updated_at": "2026-01-02T03:04:05Z"})
+        .to_string()
+            + "\n"
+    })
+    .collect();
+    let file = std::fs::File::create(dir.path().join("users.jsonl.gz")).unwrap();
+    let mut gz = flate2::write::GzEncoder::new(file, flate2::Compression::default());
+    std::io::Write::write_all(&mut gz, users.as_bytes()).unwrap();
+    gz.finish().unwrap();
+
+    let target = database().await;
+    let report = dump::import(&target.db, dir.path(), ImportOptions::default())
+        .await
+        .unwrap();
+    assert!(report.mismatches.is_empty(), "{:?}", report.mismatches);
+    assert_eq!(count(&target.db, "users").await, 2);
+
+    std::fs::remove_file(dir.path().join("users.jsonl.gz")).unwrap();
+    let missing = dump::import(&target.db, dir.path(), ImportOptions::default())
+        .await
+        .unwrap_err();
+    assert!(missing.to_string().contains("missing file"), "{missing}");
+    target.close().await;
+}

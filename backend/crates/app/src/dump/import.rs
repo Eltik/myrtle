@@ -1,9 +1,10 @@
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::num::NonZeroUsize;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
 
+use flate2::read::MultiGzDecoder;
 use myrtle_db::tools::{self, Column, Table};
 use myrtle_db::{Conn, Db, migrate};
 use serde_json::Value;
@@ -65,13 +66,7 @@ pub async fn import(
     let manifest = read_manifest(dir)?;
     check_manifest(&manifest)?;
     for entry in &manifest.tables {
-        let path = dir.join(&entry.file);
-        if !path.is_file() {
-            return Err(DumpError::Invalid(format!(
-                "missing file {}",
-                path.display()
-            )));
-        }
+        data_file(dir, &entry.file)?;
     }
     let plan = Plan::new(&manifest);
 
@@ -148,7 +143,7 @@ pub async fn import(
         let rows = load(
             &mut tx,
             &table,
-            &dir.join(file_name(name)),
+            &data_file(dir, &file_name(name))?,
             options.batch_size,
         )
         .await?;
@@ -236,6 +231,21 @@ impl Plan {
     }
 }
 
+fn data_file(dir: &Path, file: &str) -> Result<PathBuf, DumpError> {
+    let plain = dir.join(file);
+    let gzipped = dir.join(format!("{file}.gz"));
+    if plain.is_file() {
+        Ok(plain)
+    } else if gzipped.is_file() {
+        Ok(gzipped)
+    } else {
+        Err(DumpError::Invalid(format!(
+            "missing file {}",
+            plain.display()
+        )))
+    }
+}
+
 async fn live(conn: &mut Conn, name: &str) -> Result<Table, DumpError> {
     tools::table(conn, name)
         .await?
@@ -262,7 +272,11 @@ async fn load(
 ) -> Result<u64, DumpError> {
     let columns = tools::columns(conn, table).await?;
     let file = File::open(path).map_err(DumpError::io(path))?;
-    let reader = BufReader::with_capacity(1 << 20, file);
+    let reader: Box<dyn BufRead + Send> = if path.extension().is_some_and(|e| e == "gz") {
+        Box::new(BufReader::with_capacity(1 << 20, MultiGzDecoder::new(file)))
+    } else {
+        Box::new(BufReader::with_capacity(1 << 20, file))
+    };
     let mut batch: Vec<Value> = Vec::with_capacity(batch_size.get().min(1 << 16));
     let mut batch_bytes = 0;
     let mut rows = 0;

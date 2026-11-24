@@ -168,14 +168,14 @@ impl TableEntry {
 pub enum DumpError {
     #[error(transparent)]
     Db(#[from] DbError),
-    #[error("{table}: {source}")]
+    #[error("{table}")]
     Table { table: String, source: DbError },
-    #[error("{}: {source}", path.display())]
+    #[error("{}", path.display())]
     Io {
         path: PathBuf,
         source: std::io::Error,
     },
-    #[error("{}: {source}", path.display())]
+    #[error("{}", path.display())]
     Json {
         path: PathBuf,
         source: serde_json::Error,

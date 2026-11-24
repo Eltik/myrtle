@@ -14,7 +14,7 @@ members = [
     "crates/parity",
     "xtask",
     "crates/engine-music",
-    "crates/hypergryph", "crates/db", "crates/jobs", "crates/app", "crates/api", "crates/cli",
+    "crates/hypergryph", "crates/db", "crates/jobs", "crates/app", "crates/api", "crates/cli", "crates/worker",
 ]
 # default-members = ["crates/api", "crates/worker", "crates/cli"]
 
@@ -97,6 +97,7 @@ uuid = { version = "1.27.0", features = ["serde", "v4"] }
 validator = { version = "0.20.0", features = ["derive"] }
 walkdir = "2.5.0"
 zip = "8.6.0"
+flate2 = "1.1.11"
 toml = "0.8.19"
 
 [workspace.lints.rust]

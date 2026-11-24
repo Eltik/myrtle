@@ -33,6 +33,7 @@ chacha20poly1305.workspace = true
 chrono.workspace = true
 dashmap.workspace = true
 dotenvy.workspace = true
+flate2.workspace = true
 futures-util.workspace = true
 hex.workspace = true
 hmac.workspace = true
