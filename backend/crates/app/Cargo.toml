@@ -46,6 +46,7 @@ rustls = { version = "0.23.46", default-features = false, features = ["ring", "s
 serde = { workspace = true, features = ["rc"] }
 serde_json.workspace = true
 sha2.workspace = true
+subtle.workspace = true
 thiserror.workspace = true
 tokio.workspace = true
 tokio-tungstenite.workspace = true

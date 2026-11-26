@@ -170,10 +170,11 @@ pub enum Action {
     LeaseJobs,
     ManageApiKeys,
     ReadAudit,
+    TakeDownOAuthApp,
 }
 
 impl Action {
-    pub const ALL: [Self; 24] = [
+    pub const ALL: [Self; 25] = [
         Self::ReadProfile,
         Self::ReadProfileTab,
         Self::ViewTierList,
@@ -198,6 +199,7 @@ impl Action {
         Self::LeaseJobs,
         Self::ManageApiKeys,
         Self::ReadAudit,
+        Self::TakeDownOAuthApp,
     ];
 
     #[must_use]
@@ -227,6 +229,7 @@ impl Action {
             Self::LeaseJobs => "lease_jobs",
             Self::ManageApiKeys => "manage_api_keys",
             Self::ReadAudit => "read_audit",
+            Self::TakeDownOAuthApp => "take_down_oauth_app",
         }
     }
 
@@ -407,9 +410,14 @@ fn user_can(id: UserId, role: Role, grants: &[Grant], action: Action, resource: 
             | A::ReadAudit,
             _,
         ) => list_admin,
-        (A::SetUserRole | A::ManageLocales | A::EditReleaseData | A::ManageApiKeys, _) => {
-            super_admin
-        }
+        (
+            A::SetUserRole
+            | A::ManageLocales
+            | A::EditReleaseData
+            | A::ManageApiKeys
+            | A::TakeDownOAuthApp,
+            _,
+        ) => super_admin,
         _ => false,
     }
 }

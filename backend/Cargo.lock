@@ -2128,6 +2128,7 @@ name = "myrtle-api"
 version = "0.1.0"
 dependencies = [
  "axum",
+ "base64 0.22.1",
  "chrono",
  "dashmap",
  "indicatif",
@@ -2148,6 +2149,7 @@ dependencies = [
  "rustls",
  "serde",
  "serde_json",
+ "sqlx",
  "subtle",
  "tikv-jemallocator",
  "tokio",
@@ -2158,6 +2160,7 @@ dependencies = [
  "tracing",
  "tracing-subscriber",
  "ts-rs",
+ "urlencoding",
  "uuid",
 ]
 
@@ -2205,6 +2208,7 @@ dependencies = [
  "serde_json",
  "sha2 0.10.9",
  "sqlx",
+ "subtle",
  "tempfile",
  "thiserror",
  "tokio",

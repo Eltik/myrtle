@@ -19,6 +19,7 @@ pub mod level;
 pub mod lookback;
 pub mod maintenance;
 pub mod music;
+pub mod oauth;
 pub mod operator_notes;
 pub mod operators;
 pub mod planner;
@@ -62,6 +63,7 @@ pub fn routes() -> ApiRouter {
         .merge(level::routes())
         .merge(maintenance::routes())
         .merge(music::routes())
+        .merge(oauth::routes())
         .merge(operator_notes::routes())
         .merge(operators::routes())
         .merge(planner::routes())

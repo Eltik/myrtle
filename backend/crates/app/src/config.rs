@@ -89,6 +89,8 @@ pub struct ServerConfig {
     pub metrics_bind: String,
     pub trusted_proxy_hops: u8,
     pub servers: Vec<Server>,
+    #[serde(default)]
+    pub public_api_url: String,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -647,6 +649,13 @@ pub const FIELDS: &[Field] = &[
         &["SERVERS"],
         "backend/src/app/state.rs:244",
         "Servers served; the first is the default.",
+    ),
+    value(
+        "server.public_api_url",
+        "\"\"",
+        &["PUBLIC_API_URL"],
+        "backend/src/app/services/oauth.rs:35",
+        "Public base of this API for the absolute avatar_url in /oauth/userinfo; empty = scheme and Host of the request.",
     ),
     secret(
         "database.url",

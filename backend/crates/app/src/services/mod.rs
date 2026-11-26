@@ -7,6 +7,7 @@ pub mod i18n;
 pub mod improvements;
 pub mod leaderboard;
 pub mod music;
+pub mod oauth;
 pub mod planner;
 pub mod story;
 pub mod sync;

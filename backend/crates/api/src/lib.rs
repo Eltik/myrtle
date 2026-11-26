@@ -4,6 +4,7 @@ pub mod extract;
 pub mod health;
 pub mod metrics;
 pub mod middleware;
+pub mod oauth_error;
 pub mod respond;
 pub mod router;
 pub mod routes;

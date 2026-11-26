@@ -121,6 +121,7 @@ fn role_gates_match_the_role_predicates() {
             Action::ManageLocales,
             Action::EditReleaseData,
             Action::ManageApiKeys,
+            Action::TakeDownOAuthApp,
         ] {
             expect(action, Resource::Site, super_admin);
         }

@@ -43,12 +43,15 @@ ts-rs.workspace = true
 tikv-jemallocator.workspace = true
 
 [dev-dependencies]
+base64.workspace = true
 myrtle-gamedata.workspace = true
 myrtle-jobs.workspace = true
 myrtle-testkit.workspace = true
 reqwest.workspace = true
 rustls = { version = "0.23.46", default-features = false, features = ["ring", "std", "tls12"] }
+sqlx.workspace = true
 toml.workspace = true
+urlencoding.workspace = true
 
 [lints]
 workspace = true

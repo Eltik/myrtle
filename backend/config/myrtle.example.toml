@@ -20,6 +20,9 @@ trusted_proxy_hops = 0
 # Servers served; the first is the default.
 # was: SERVERS (backend/src/app/state.rs:244)
 servers = ["en"]
+# Public base of this API for the absolute avatar_url in /oauth/userinfo; empty = scheme and Host of the request.
+# was: PUBLIC_API_URL (backend/src/app/services/oauth.rs:35)
+public_api_url = ""
 
 [database]
 # Postgres URL. Also read by 10 of the 13 bins today.
