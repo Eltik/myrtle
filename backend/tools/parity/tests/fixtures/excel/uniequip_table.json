@@ -1,0 +1,18 @@
+{
+ "EquipDict": [
+  {
+   "Key": "uniequip_001_amiya",
+   "Value": {
+    "UniEquipId": "uniequip_001_amiya",
+    "UniEquipIcon": "original"
+   }
+  },
+  {
+   "Key": "uniequip_002_amiya",
+   "Value": {
+    "UniEquipId": "uniequip_002_amiya",
+    "UniEquipIcon": "uniequip_002_amiya"
+   }
+  }
+ ]
+}

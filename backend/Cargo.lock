@@ -2260,6 +2260,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "myrtle-dps-transpile"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "regex",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "toml",
+]
+
+[[package]]
 name = "myrtle-engine-archives"
 version = "0.1.0"
 dependencies = [
@@ -2449,6 +2462,10 @@ dependencies = [
 name = "myrtle-parity"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
+ "clap",
+ "futures-util",
+ "hex",
  "myrtle-dps-formulas",
  "myrtle-engine-archives",
  "myrtle-engine-base",
@@ -2463,8 +2480,13 @@ dependencies = [
  "myrtle-gamedata-raw",
  "myrtle-testkit",
  "myrtle-types",
+ "regex",
+ "reqwest",
+ "rustls",
  "serde",
  "serde_json",
+ "sha2 0.10.9",
+ "tokio",
  "uuid",
 ]
 

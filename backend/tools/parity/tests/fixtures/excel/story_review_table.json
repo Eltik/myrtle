@@ -1,0 +1,39 @@
+{
+ "Story_reviews": [
+  {
+   "Key": "1stact",
+   "Value": {
+    "Id": "1stact",
+    "EntryType": "ACTIVITY",
+    "InfoUnlockDatas": [
+     {
+      "StoryId": "1stact_level_a001_01_beg"
+     },
+     {
+      "StoryId": "1stact_level_a001_01_end"
+     }
+    ]
+   }
+  },
+  {
+   "Key": "act13mini",
+   "Value": {
+    "Id": "act13mini",
+    "EntryType": "MINI_ACTIVITY",
+    "InfoUnlockDatas": []
+   }
+  },
+  {
+   "Key": "main_0",
+   "Value": {
+    "Id": "main_0",
+    "EntryType": "MAINLINE",
+    "InfoUnlockDatas": [
+     {
+      "StoryId": "main_00-01_beg"
+     }
+    ]
+   }
+  }
+ ]
+}

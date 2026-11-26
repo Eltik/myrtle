@@ -2,7 +2,7 @@
 
 #![allow(clippy::unwrap_used)]
 
-#[path = "../../engine-music/tests/common/mod.rs"]
+#[path = "../../../crates/engine-music/tests/common/mod.rs"]
 mod common;
 
 use std::collections::HashMap;
