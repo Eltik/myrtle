@@ -4,8 +4,8 @@ import { ChevronLeftIcon, ChevronRightIcon, SearchIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "#/components/ui/button";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "#/components/ui/input-group";
-import { Kicker } from "#/components/ui/kicker";
 import { Skeleton } from "#/components/ui/skeleton";
+import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import { useAuth } from "#/hooks/use-auth";
 import { useDebounce } from "#/hooks/use-debounce";
 import { browseGridsQueryOptions, type GridSort } from "#/lib/api/grids";
@@ -40,11 +40,10 @@ export function GridsBrowse({ search }: { search: IGridsSearch }) {
     const setPage = (page: number) => navigate({ search: (prev) => ({ ...prev, page }), resetScroll: true });
 
     return (
-        <main className="min-h-dvh pb-24">
+        <div className="min-h-dvh pb-24">
             <section className="page-gutter pt-10 pb-6 [--page-max:1080px] sm:pt-14 sm:pb-8">
                 <div className="flex flex-wrap items-end justify-between gap-4">
                     <div className="min-w-0">
-                        <Kicker>{t("browse.kicker")}</Kicker>
                         <h1 className="m-0 font-bold font-sans text-3xl text-foreground leading-tight tracking-tight sm:text-4xl">{t("browse.title")}</h1>
                         <p className="mt-2 max-w-130 font-sans text-muted-foreground text-sm leading-relaxed">{t("browse.blurb")}</p>
                     </div>
@@ -67,30 +66,20 @@ export function GridsBrowse({ search }: { search: IGridsSearch }) {
                         </InputGroupAddon>
                         <InputGroupInput value={input} onChange={(e) => setInput((e.target as HTMLInputElement).value)} placeholder={t("browse.searchPlaceholder")} type="search" aria-label={t("browse.searchLabel")} />
                     </InputGroup>
-                    <fieldset className="m-0 inline-flex rounded-lg border-0 bg-muted p-0.5">
-                        <legend className="sr-only">{t("browse.sortLabel")}</legend>
+                    <ToggleGroup aria-label={t("browse.sortLabel")} value={[search.sort]} onValueChange={(next) => next[0] && setSort(next[0] as (typeof SORTS)[number])} variant="outline">
                         {SORTS.map((s) => (
-                            <button
-                                key={s}
-                                type="button"
-                                aria-pressed={search.sort === s}
-                                onClick={() => setSort(s)}
-                                className={cn(
-                                    "relative inline-flex h-8 cursor-pointer items-center justify-center rounded-md px-3 font-medium font-sans text-sm transition-colors pointer-coarse:after:absolute pointer-coarse:after:size-full pointer-coarse:after:min-h-11",
-                                    search.sort === s ? "bg-background text-foreground shadow-sm/5" : "text-muted-foreground hover:text-foreground",
-                                )}
-                            >
+                            <ToggleGroupItem key={s} value={s} className="px-3">
                                 {s === "recent" ? t("browse.sort.recent") : t("browse.sort.popular")}
-                            </button>
+                            </ToggleGroupItem>
                         ))}
-                    </fieldset>
+                    </ToggleGroup>
                 </div>
 
                 <div className="mt-5">
                     {isPending ? (
                         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                             {["s1", "s2", "s3", "s4", "s5", "s6"].map((k) => (
-                                <Skeleton key={k} className="h-56 rounded-xl" />
+                                <Skeleton key={k} className="h-56 rounded-2xl" />
                             ))}
                         </div>
                     ) : isError ? (
@@ -129,6 +118,6 @@ export function GridsBrowse({ search }: { search: IGridsSearch }) {
                     )}
                 </div>
             </div>
-        </main>
+        </div>
     );
 }

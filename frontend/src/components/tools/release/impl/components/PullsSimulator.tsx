@@ -200,7 +200,7 @@ export function PullsSimulator({ budget, pity }: IPullsSimulatorProps): React.Re
                                 key={o.index}
                                 className={cn(
                                     "relative inline-flex size-6 items-center justify-center rounded font-mono text-[11px] tabular-nums",
-                                    o.rarity >= 5 ? "font-bold text-zinc-950" : "text-zinc-950/70",
+                                    o.rarity >= 5 ? "font-bold text-zinc-950" : "text-zinc-950",
                                     // A rate-up is marked with a shape, not only a
                                     // colour: the ring alone carried the whole
                                     // meaning and did not clear the 3:1 minimum for

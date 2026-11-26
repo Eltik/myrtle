@@ -17,7 +17,8 @@ pub struct RosterPair {
     pub spawns: u64,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct RetentionExclusion {
     pub reason: String,
@@ -25,12 +26,14 @@ pub struct RetentionExclusion {
     pub appearances: usize,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct RetentionRoster {
     pub enemies: usize,
     pub appearances: usize,
     pub distinct_pairs: usize,
+    #[ts(type = "number")]
     pub total_spawns: u64,
     pub nonzero_level: usize,
     pub overridden: usize,
@@ -135,7 +138,8 @@ pub fn reference_context(def: f64, res: f64) -> RankRequest {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct RetentionRow {
     pub operator_id: String,
@@ -231,7 +235,8 @@ pub fn compute_retention(data: &Data) -> RetentionTable {
     }
 }
 
-#[derive(Debug, Clone, Copy, Default, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Default, Serialize, Deserialize, PartialEq, Eq, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub enum RetentionStatus {
     #[default]
@@ -261,7 +266,8 @@ pub fn attach(data: &Data, response: &mut RankResponse) {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct RetentionResponse {
     pub status: RetentionStatus,

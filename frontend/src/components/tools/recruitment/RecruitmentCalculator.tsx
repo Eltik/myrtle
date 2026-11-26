@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import * as React from "react";
 import { Card, CardHeader, CardPanel, CardTitle } from "#/components/ui/card";
+import { LoadFailed } from "#/components/ui/load-failed";
 import { PageHeader } from "#/components/ui/page-header";
 import { recruitmentDataQueryOptions } from "#/lib/api/recruitment";
 import { useGamedataServer, useT } from "#/lib/i18n";
@@ -21,7 +22,7 @@ import type { messages } from "./RecruitmentCalculator.messages";
 
 export function RecruitmentCalculator(): React.ReactElement {
     const t: TypedT<typeof messages> = useT("tools");
-    const { data } = useQuery(recruitmentDataQueryOptions(useGamedataServer()));
+    const { data, isError, refetch } = useQuery(recruitmentDataQueryOptions(useGamedataServer()));
     const { tags: selectedIds } = Route.useSearch();
     const navigate = useNavigate({ from: Route.fullPath });
 
@@ -33,13 +34,16 @@ export function RecruitmentCalculator(): React.ReactElement {
         dispatch,
     } = useRecruitOptions();
     const roster = useRecruitRoster();
+    // A failed roster is treated as no roster: the potential sort, the badges and the new-operator
+    // figures all read ownership, and an empty map would say "unowned" for every operator.
+    const rosterReady = roster.signedIn && !roster.failed;
 
     // The potential sort is only offered while signed in; a session that ends
     // mid-visit falls back to the default rather than sorting on an empty map.
     const activeSettings: ICalculatorSettings = React.useMemo(() => {
-        if (roster.signedIn || settings.operatorSortMode !== "potential-asc") return settings;
+        if (rosterReady || settings.operatorSortMode !== "potential-asc") return settings;
         return { ...settings, operatorSortMode: DEFAULT_SETTINGS.operatorSortMode };
-    }, [settings, roster.signedIn]);
+    }, [settings, rosterReady]);
 
     const allTags: IRecruitmentTag[] = React.useMemo(() => transformTags(tags), [tags]);
     const tagGroups = React.useMemo(() => groupTagsByType(allTags), [allTags]);
@@ -55,17 +59,17 @@ export function RecruitmentCalculator(): React.ReactElement {
     }, [selectedIds, tagById]);
 
     const results = React.useMemo(() => {
-        const potentialByOperator = roster.signedIn ? roster.potentialByOperator : undefined;
+        const potentialByOperator = rosterReady ? roster.potentialByOperator : undefined;
         return calculateResults(selectedTags, operators, { ...activeSettings, potentialByOperator });
-    }, [selectedTags, operators, activeSettings, roster.signedIn, roster.potentialByOperator]);
+    }, [selectedTags, operators, activeSettings, rosterReady, roster.potentialByOperator]);
 
     // Cards get the overlay only once the roster has landed: an empty map would
     // paint every operator as unowned for the length of the request.
     const rosterOverlay: IRosterOverlay | null = React.useMemo(() => {
-        if (!roster.signedIn || roster.loading) return null;
-        if (!rosterView.showPotentials && !rosterView.showNextUpgrade) return null;
+        if (!rosterReady || roster.loading) return null;
+        if (!rosterView.showPotentials && !rosterView.showNextUpgrade && !rosterView.showNewOdds) return null;
         return { potentialByOperator: roster.potentialByOperator, ...rosterView };
-    }, [roster.signedIn, roster.loading, roster.potentialByOperator, rosterView]);
+    }, [rosterReady, roster.loading, roster.potentialByOperator, rosterView]);
 
     const setSelectedIds = React.useCallback(
         (updater: (prev: ReadonlyArray<number>) => ReadonlyArray<number>) => {
@@ -114,6 +118,9 @@ export function RecruitmentCalculator(): React.ReactElement {
         <div className="page-shell [--page-max:1400px]">
             <PageHeader breadcrumbLabel="breadcrumb" breadcrumb={[t("recruit.breadcrumb.tools"), t("recruit.title")]} title={t("recruit.title")} description={t("recruit.intro", { max: MAX_SELECTED_TAGS })} />
 
+            {isError && !data && <LoadFailed className="mt-5 sm:mt-6" message={t("recruit.loadFailed")} onRetry={() => void refetch()} />}
+            {roster.failed && <LoadFailed className="mt-5 sm:mt-6" message={t("recruit.rosterLoadFailed")} onRetry={roster.refetch} />}
+
             <div className="mt-5 grid grid-cols-1 items-start gap-3 sm:mt-6 sm:gap-4 lg:grid-cols-[330px_1fr] xl:grid-cols-[400px_1fr]">
                 <aside className="flex min-w-0 flex-col gap-3 sm:gap-4">
                     <Card>
@@ -133,15 +140,16 @@ export function RecruitmentCalculator(): React.ReactElement {
                             <CardTitle className="text-[15px]">{t("recruit.options")}</CardTitle>
                         </CardHeader>
                         <CardPanel className="px-4 pt-0 pb-4 sm:px-6 sm:pb-6">
-                            <CalculatorOptionsPanel settings={activeSettings} rosterView={rosterView} rosterAvailable={roster.signedIn} layout={layout} onChangeSettings={onChangeSettings} onChangeRosterView={onChangeRosterView} onChangeLayout={onChangeLayout} />
+                            <CalculatorOptionsPanel settings={activeSettings} rosterView={rosterView} rosterAvailable={rosterReady} layout={layout} onChangeSettings={onChangeSettings} onChangeRosterView={onChangeRosterView} onChangeLayout={onChangeLayout} />
                         </CardPanel>
                     </Card>
                 </aside>
 
-                <main className="flex min-w-0 flex-col gap-3 sm:gap-4">
+                {/* Sticky on lg+ so the results stay beside the tag column while it scrolls; a list taller than the aside makes the grid that tall and it simply scrolls. */}
+                <div className="flex min-w-0 flex-col gap-3 sm:gap-4 lg:sticky lg:top-[calc(var(--site-header-height)+1rem)]">
                     <SelectedTagsBar selectedTags={selectedTags} resultCount={results.length} onRemove={onRemove} onReset={onReset} />
                     <ResultsList results={results} hasSelection={selectedTags.length > 0} roster={rosterOverlay} layout={layout} />
-                </main>
+                </div>
             </div>
         </div>
     );

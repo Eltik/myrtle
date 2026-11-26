@@ -1,19 +1,24 @@
 import type * as React from "react";
 import { potentialIcon } from "#/components/operators/detail/impl/assets";
 import { Badge } from "#/components/ui/badge";
+import { Kicker } from "#/components/ui/kicker";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { Popover, PopoverPopup, PopoverTrigger } from "#/components/ui/popover";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import { cn, RARITY_HEX_MUTED } from "#/lib/utils";
+import { cn, RARITY_HEX_MUTED, rarityInk } from "#/lib/utils";
 import { guaranteedFloorRarity } from "../calculator";
-import { RARITY_COLORS } from "../constants";
+import { SENIOR_OPERATOR_TAG_ID, TOP_OPERATOR_TAG_ID } from "../constants";
 import { getStarsDisplay } from "../helpers";
+import { type IRarityNewOdds, newOddsPercent, newOperatorOdds } from "../newOperatorOdds";
 import type { IRecruitableOperator, IRosterOverlay, ITagCombinationResult, ResultLayout } from "../types";
 import type { messages } from "./ResultCard.messages";
 
 export type ResultT = TypedT<typeof messages>;
+
+/** A 44px-tall tap area on a coarse pointer for the inline hint buttons, without moving the row. */
+const INLINE_HIT = "relative rounded-sm focus-visible:outline-2 focus-visible:outline-ring pointer-coarse:after:absolute pointer-coarse:after:inset-x-0 pointer-coarse:after:top-1/2 pointer-coarse:after:h-11 pointer-coarse:after:-translate-y-1/2";
 
 interface IResultCardProps {
     result: ITagCombinationResult;
@@ -30,13 +35,15 @@ export function ResultCard({ result, roster }: IResultCardProps): React.ReactEle
     return (
         <div className="grid grid-cols-1 gap-2 px-3 py-2.5 sm:grid-cols-[12rem_1fr] sm:gap-3 sm:px-4">
             <div className="flex min-w-0 flex-wrap content-start items-center gap-1">
-                {result.tagNames.map((name) => (
-                    <Badge key={name} variant="outline" size="default">
-                        {name}
-                    </Badge>
-                ))}
+                <ResultTagBadges result={result} />
                 <span className="basis-full max-sm:hidden" aria-hidden="true" />
                 <GuaranteedBadge result={result} layout="compact" />
+                {roster?.showNewOdds ? (
+                    <>
+                        <span className="basis-full" aria-hidden="true" />
+                        <NewOddsLabel result={result} roster={roster} />
+                    </>
+                ) : null}
             </div>
             <ul className="flex min-w-0 flex-wrap content-start gap-1">
                 {result.operators.map((op) => (
@@ -44,6 +51,29 @@ export function ResultCard({ result, roster }: IResultCardProps): React.ReactEle
                 ))}
             </ul>
         </div>
+    );
+}
+
+/** The two qualification tags that guarantee a rarity carry that rarity's tone, as they do in the tag picker. */
+const TAG_RARITY: Partial<Record<number, number>> = { [TOP_OPERATOR_TAG_ID]: 6, [SENIOR_OPERATOR_TAG_ID]: 5 };
+
+/** A combination's tags; foreground on a 12% rarity tint measures 17.73 / 14.94 (6★) and 18.92 / 13.70 (5★), light / dark. */
+export function ResultTagBadges({ result }: { result: ITagCombinationResult }): React.ReactElement {
+    return (
+        <>
+            {result.tagNames.map((name, i) => {
+                const rarity = TAG_RARITY[result.tags[i] ?? -1];
+                return rarity ? (
+                    <Badge key={name} variant="tint" size="default" style={{ "--tone": `var(--rarity-${rarity})` } as React.CSSProperties}>
+                        {name}
+                    </Badge>
+                ) : (
+                    <Badge key={name} variant="outline" size="default">
+                        {name}
+                    </Badge>
+                );
+            })}
+        </>
     );
 }
 
@@ -65,20 +95,89 @@ function floorLabel(rarity: number, t: ResultT): string {
 export function GuaranteedBadge({ result, layout }: { result: ITagCombinationResult; layout: ResultLayout }): React.ReactElement {
     const t: ResultT = useT("tools");
     const floor = guaranteedFloorRarity(result);
-    const colors = RARITY_COLORS[floor];
 
     if (floor >= 5) {
-        return <span className={cn("inline-flex h-5.5 shrink-0 items-center whitespace-nowrap rounded-sm border px-1.5 font-medium text-sm sm:h-4.5 sm:text-xs", layout === "compact" && "max-sm:ml-auto", colors?.border, colors?.bg, colors?.text)}>{t("recruit.result.guaranteed", { rarity: floor })}</span>;
+        return (
+            <Badge className={cn("px-1.5", layout === "compact" && "max-sm:ml-auto")} style={{ "--tone": `var(--rarity-${floor})` } as React.CSSProperties} variant="tint">
+                {t("recruit.result.guaranteed", { rarity: floor })}
+            </Badge>
+        );
     }
 
+    // A button with no action of its own, so the kit Tooltip opens on a tap and a keyboard reaches it.
     return (
         <Tooltip>
-            <TooltipTrigger render={<span className={cn("inline-flex h-5.5 shrink-0 items-center gap-1 whitespace-nowrap px-0.5 font-medium text-xs sm:h-4.5 sm:text-[11px]", layout === "compact" ? "max-sm:ml-auto" : "ml-auto")} />}>
+            <TooltipTrigger render={<button type="button" className={cn("inline-flex h-5.5 shrink-0 cursor-help items-center gap-1 whitespace-nowrap px-0.5 font-medium text-xs sm:h-4.5 sm:text-[11px]", INLINE_HIT, layout === "compact" ? "max-sm:ml-auto" : "ml-auto")} />}>
                 <span className="text-muted-foreground">{t("recruit.result.min")}</span>
-                <span className={cn("font-mono", colors?.text)}>{floorLabel(floor, t)}</span>
+                <span className="font-mono" style={{ color: rarityInk(floor) }}>
+                    {floorLabel(floor, t)}
+                </span>
             </TooltipTrigger>
             <TooltipPopup>{t("recruit.result.minTitle", { floor: floorLabel(floor, t) })}</TooltipPopup>
         </Tooltip>
+    );
+}
+
+/** "50% new", or the two certainties in words, so a reader never has to decode 100% or 0%. */
+function oddsText(odds: IRarityNewOdds, withRarity: boolean, t: ResultT): string {
+    const pct = newOddsPercent(odds);
+    if (!withRarity) {
+        if (pct === 100) return t("recruit.result.newOdds.allNew");
+        if (pct === 0) return t("recruit.result.newOdds.allOwned");
+        return t("recruit.result.newOdds.pct", { pct });
+    }
+    const rarity = floorLabel(odds.rarity, t);
+    if (pct === 100) return t("recruit.result.newOdds.rarityAllNew", { rarity });
+    if (pct === 0) return t("recruit.result.newOdds.rarityAllOwned", { rarity });
+    return t("recruit.result.newOdds.rarityPct", { rarity, pct });
+}
+
+/**
+ * The chance the recruit is an operator the roster does not hold. The game rolls rarity first at unpublished rates, so
+ * each rarity the pool can produce gets its own exact figure and they are never added up. A pool of one rarity reads as
+ * a single figure, the floor badge beside it already names the rarity.
+ */
+export function NewOddsLabel({ result, roster }: { result: ITagCombinationResult; roster: IRosterOverlay }): React.ReactElement | null {
+    const t: ResultT = useT("tools");
+    const odds = newOperatorOdds(result.operators, roster.potentialByOperator);
+    if (!odds || odds.length === 0) return null;
+    const multi = odds.length > 1;
+    const lines = odds.map((o) => t("recruit.result.newOdds.title", { rarity: floorLabel(o.rarity, t), unowned: o.unowned, total: o.total }));
+    const summary = multi ? [...lines, t("recruit.result.newOdds.unpublished")].join(" ") : lines.join(" ");
+
+    return (
+        <Tooltip>
+            <TooltipTrigger render={<button type="button" data-slot="recruit-new-odds" aria-label={summary} className={cn("inline-flex min-h-5.5 min-w-0 max-w-full cursor-help flex-wrap items-center gap-x-1 px-0.5 text-left font-medium text-xs sm:min-h-4.5 sm:text-[11px]", INLINE_HIT)} />}>
+                {odds.map((o, i) => (
+                    <span key={o.rarity} className="inline-flex items-center gap-1 whitespace-nowrap">
+                        {i > 0 ? (
+                            <span aria-hidden="true" className="text-muted-foreground">
+                                ·
+                            </span>
+                        ) : null}
+                        <OddsSegment odds={o} withRarity={multi} t={t} />
+                    </span>
+                ))}
+            </TooltipTrigger>
+            <TooltipPopup>
+                <div className="flex max-w-64 flex-col gap-1">
+                    {lines.map((line) => (
+                        <span key={line}>{line}</span>
+                    ))}
+                    {multi ? <span className="text-muted-foreground">{t("recruit.result.newOdds.unpublished")}</span> : null}
+                </div>
+            </TooltipPopup>
+        </Tooltip>
+    );
+}
+
+function OddsSegment({ odds, withRarity, t }: { odds: IRarityNewOdds; withRarity: boolean; t: ResultT }): React.ReactElement {
+    const pct = newOddsPercent(odds);
+    const text = oddsText(odds, withRarity, t);
+    return (
+        <span className={cn("font-mono", pct === 0 ? "text-muted-foreground" : !withRarity && "text-foreground")} style={pct !== 0 && withRarity ? { color: rarityInk(odds.rarity) } : undefined}>
+            {text}
+        </span>
     );
 }
 
@@ -117,7 +216,7 @@ function signed(value: number): string {
 type UpgradeTone = "gain" | "unowned" | "maxed";
 
 export const UPGRADE_TONE_CLASS: Record<UpgradeTone, string> = {
-    gain: "text-foreground/80",
+    gain: "text-foreground",
     unowned: "text-foreground",
     maxed: "text-muted-foreground",
 };
@@ -158,7 +257,6 @@ function rarityHex(rarity: number): string {
 function OperatorTile({ operator, roster }: { operator: IRecruitableOperator; roster: IRosterOverlay | null }): React.ReactElement {
     const t: ResultT = useT("tools");
     const hex = rarityHex(operator.rarity);
-    const colors = RARITY_COLORS[operator.rarity];
     const profession = operator.professionName;
 
     const potential = roster?.potentialByOperator.get(operator.id);
@@ -174,7 +272,7 @@ function OperatorTile({ operator, roster }: { operator: IRecruitableOperator; ro
                     openOnHover
                     delay={150}
                     render={(props) => (
-                        <button {...props} type="button" className="flex w-full cursor-pointer flex-col items-center gap-0.5 rounded-md p-0.5 text-center transition-colors hover:bg-accent focus-visible:outline-2 focus-visible:outline-ring data-popup-open:bg-accent">
+                        <button {...props} type="button" className="flex w-full cursor-pointer flex-col items-center gap-0.5 rounded-md p-0.5 text-center transition-colors hover:bg-accent/40 focus-visible:outline-2 focus-visible:outline-ring data-popup-open:bg-accent/40">
                             <span className="relative block size-11 shrink-0 overflow-hidden rounded-md font-semibold text-[13px] leading-11" style={{ backgroundColor: `${hex}33`, boxShadow: `inset 0 0 0 1px ${hex}73` }}>
                                 <span aria-hidden="true" className={cn("block size-full", showPotential && !owned && "opacity-50 grayscale")}>
                                     <OperatorAvatar charId={operator.id} name={operator.name} />
@@ -182,7 +280,11 @@ function OperatorTile({ operator, roster }: { operator: IRecruitableOperator; ro
                                 <span aria-hidden="true" className="absolute inset-x-0 bottom-0 h-0.75" style={{ backgroundColor: hex }} />
                                 {potentialLabel && potential !== undefined && potential > 0 && <img alt={potentialLabel} className="icon-theme-aware absolute bottom-0.5 left-0 h-4 w-3.5 object-contain drop-shadow-sm" decoding="async" height={16} loading="lazy" src={potentialIcon(potential)} width={14} />}
                             </span>
-                            <span className="w-full truncate font-medium text-[10.5px] text-foreground leading-tight">{operator.name}</span>
+                            {/* The name in its rarity ink, so a row reads by rarity at a glance. The hover and open fill is accent/40
+                                because the inks measure 4.06 to 4.17 on full accent; on accent/40 4.52 to 4.65 (light), 6.86+ dark. */}
+                            <span className="w-full truncate font-medium text-[10.5px] leading-tight" style={{ color: rarityInk(operator.rarity) }}>
+                                {operator.name}
+                            </span>
                             {upgrade && (
                                 <span data-slot="recruit-next-potential" title={upgrade.text} className={cn("w-full truncate text-[9.5px] leading-tight tracking-tight", UPGRADE_TONE_CLASS[upgrade.tone])}>
                                     {upgrade.text}
@@ -196,7 +298,9 @@ function OperatorTile({ operator, roster }: { operator: IRecruitableOperator; ro
                         <div className="flex flex-col gap-0.5">
                             <div className="font-medium text-[13px] text-foreground leading-tight">{operator.name}</div>
                             <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-muted-foreground">
-                                <span className={cn("font-mono", colors?.text)}>{getStarsDisplay(operator.rarity)}</span>
+                                <span className="font-mono" style={{ color: rarityInk(operator.rarity) }}>
+                                    {getStarsDisplay(operator.rarity)}
+                                </span>
                                 <span>·</span>
                                 <span>{profession}</span>
                                 {potentialLabel && (
@@ -213,7 +317,7 @@ function OperatorTile({ operator, roster }: { operator: IRecruitableOperator; ro
                             )}
                         </div>
                         <div className="flex flex-col gap-1.5 border-border/60 border-t pt-2">
-                            <div className="font-medium text-[10.5px] text-muted-foreground uppercase tracking-wider">{t("recruit.result.tags")}</div>
+                            <Kicker>{t("recruit.result.tags")}</Kicker>
                             <OperatorTagList tags={operator.tagList} />
                         </div>
                     </div>

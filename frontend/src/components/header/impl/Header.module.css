@@ -19,7 +19,7 @@
     background: oklch(0.22 0.005 285 / 0.3);
 }
 .headerSearch:not(*:is(:global(.dark) *)) {
-    background: rgb(130 129 129 / 0.2);
+    background: var(--muted);
 }
 .headerSearch svg {
     width: 14px;

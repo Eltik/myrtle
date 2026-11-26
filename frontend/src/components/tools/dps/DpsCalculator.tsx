@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Calculator, ChevronsDownUp, ChevronsUpDown, Diamond, Download, HelpCircle, RefreshCw } from "lucide-react";
+import { ChevronsDownUp, ChevronsUpDown, Diamond, Download, HelpCircle, RefreshCw } from "lucide-react";
 import * as React from "react";
 import { AxisControls } from "#/components/tools/shared/AxisControls";
 import { CalcChart } from "#/components/tools/shared/CalcChart";
@@ -14,9 +14,11 @@ import type { messages as detailMessages } from "#/components/tools/shared/useOp
 import { AlertDialog, AlertDialogClose, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogPopup, AlertDialogTitle, AlertDialogTrigger } from "#/components/ui/alert-dialog";
 import { Button } from "#/components/ui/button";
 import { Card, CardHeader, CardPanel, CardTitle } from "#/components/ui/card";
+import { LoadFailed } from "#/components/ui/load-failed";
 import { PageHeader } from "#/components/ui/page-header";
 import { Popover, PopoverPopup, PopoverTrigger } from "#/components/ui/popover";
 import { Tabs, TabsList, TabsTab } from "#/components/ui/tabs";
+import { toastManager } from "#/components/ui/toast";
 import { Toggle } from "#/components/ui/toggle";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { dpsOperatorsQueryOptions } from "#/lib/api/dps";
@@ -141,7 +143,7 @@ export function DpsCalculator({ importParam, onImportConsumed, shareParam, onSha
             await exportSvgAsPng(svg, { filename, title, legend, snapshot });
         } catch (err) {
             console.error("DPS chart export failed:", err);
-            if (typeof window !== "undefined") window.alert(t("dps.export.failed", { error: err instanceof Error ? err.message : String(err) }));
+            toastManager.add({ title: t("dps.export.failed", { error: err instanceof Error ? err.message : String(err) }), type: "error" });
         } finally {
             setIsExporting(false);
         }
@@ -195,7 +197,7 @@ export function DpsCalculator({ importParam, onImportConsumed, shareParam, onSha
                         {t("dps.intro")} <b>{t("dps.note.label")}</b>{" "}
                         {rt("dps.note.credit", {
                             link: (
-                                <a className="text-blue-500 hover:underline" href="https://github.com/WhoAteMyCQQkie/ArknightsDpsCompare" target="_blank" rel="noopener">
+                                <a className="text-primary hover:underline" href="https://github.com/WhoAteMyCQQkie/ArknightsDpsCompare" target="_blank" rel="noopener">
                                     {t("dps.note.creditLink")}
                                 </a>
                             ),
@@ -281,11 +283,11 @@ export function DpsCalculator({ importParam, onImportConsumed, shareParam, onSha
                 </aside>
 
                 {isRank ? (
-                    <main className="flex min-w-0 flex-col gap-4 xl:col-start-2 xl:row-span-2 xl:row-start-1">
+                    <div className="flex min-w-0 flex-col gap-4 xl:col-start-2 xl:row-span-2 xl:row-start-1">
                         <RankingView state={state} dispatch={dispatch} ctx={teamCtx} />
-                    </main>
+                    </div>
                 ) : (
-                    <main className="flex min-w-0 flex-col gap-4 xl:sticky xl:top-20 xl:col-start-2 xl:row-span-2 xl:row-start-1 xl:max-h-[calc(100vh-6rem)] xl:overflow-y-auto xl:pr-1">
+                    <div className="flex min-w-0 flex-col gap-4 xl:sticky xl:top-20 xl:col-start-2 xl:row-span-2 xl:row-start-1 xl:max-h-[calc(100vh-6rem)] xl:overflow-y-auto xl:pr-1">
                         <Card>
                             <CardHeader className="pb-3">
                                 <AxisControls
@@ -330,6 +332,7 @@ export function DpsCalculator({ importParam, onImportConsumed, shareParam, onSha
                                 />
                             </CardHeader>
                             <CardPanel className="pt-0">
+                                {curves.isError && <LoadFailed layout="inline" className="mb-3" message={t("dps.chart.loadFailed")} onRetry={curves.refetch} />}
                                 <CalcChart
                                     instances={state.instances}
                                     rows={curves.rows}
@@ -342,7 +345,6 @@ export function DpsCalculator({ importParam, onImportConsumed, shareParam, onSha
                                     showMarkers={state.markers}
                                     onLegendClick={(uid) => dispatch({ type: "TOGGLE_VISIBILITY", uid })}
                                     containerRef={chartContainerRef}
-                                    emptyIcon={<Calculator />}
                                     emptyTitle={t("dps.empty.title")}
                                     emptyDescription={rt("dps.empty.desc", { axis: <span className="font-medium text-foreground">{t(X_AXIS_LABEL_KEYS[state.xAxis])}</span> })}
                                 />
@@ -350,7 +352,7 @@ export function DpsCalculator({ importParam, onImportConsumed, shareParam, onSha
                         </Card>
 
                         <KpiPanel instances={state.instances} snapshots={snapshots} leaderKey={state.yMetric} leaderLabel={t(Y_METRIC_LABEL_KEYS[state.yMetric])} columns={columns} renderDetail={renderDetail} />
-                    </main>
+                    </div>
                 )}
 
                 {!isRank && (

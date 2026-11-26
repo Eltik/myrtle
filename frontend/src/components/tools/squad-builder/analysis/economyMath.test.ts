@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Cut } from "#/types/generated/Cut";
 import type { EconomySeat } from "#/types/generated/EconomySeat";
-import { baseDpFromLine, clampStartDp, countOpeners, cutAmountText, cutLabelInput, dpFromPointer, fractionOf, ladderScale, respawnRange, squadRespawnCut, startBonusTotal } from "./economyMath";
+import { baseDpFromLine, clampStartDp, countOpeners, cutAmountText, cutLabelInput, dpFromPointer, fractionOf, ladderScale, noteChangeText, respawnRange, squadRespawnCut, startBonusTotal } from "./economyMath";
 
 const potentialCut: Cut = { kind: "potential", name: null, from_seat: null, amount: -3, ratio: null };
 const talentCut: Cut = { kind: "talent", name: "Lightweight", from_seat: null, amount: -1, ratio: null };
@@ -10,7 +10,7 @@ const squadCostCut: Cut = { kind: "squad", name: "Spearheader", from_seat: 3, am
 const silverAsh: Cut = { kind: "squad", name: "Tactical Coordination", from_seat: 5, amount: 0, ratio: -0.12 };
 
 function seat(seatIndex: number, cost: number, respawn: number, respawn_cuts: Cut[] = []): EconomySeat {
-    return { seat: seatIndex, char_id: `char_${seatIndex}`, support: false, cost, base_cost: cost + 2, cuts: [], respawn, base_respawn: respawn, respawn_cuts };
+    return { seat: seatIndex, char_id: `char_${seatIndex}`, support: false, cost, base_cost: cost + 2, cuts: [], respawn, base_respawn: respawn, respawn_cuts, first_respawn: null, first_respawn_cuts: [] };
 }
 
 // Texas, Myrtle, Saria, Exusiai, SilverAsh, Eyjafjalla at E2 after potential.
@@ -71,6 +71,13 @@ describe("openers", () => {
         expect(countOpeners(costs, 8)).toBe(0);
         expect(countOpeners(costs, 99)).toBe(6);
     });
+    it("lets a DP floor below zero open dearer seats", () => {
+        const costs = seats.map((s) => s.cost);
+        // Closure's "DP lower limit reduced by 4": a 10-cost seat deploys from 6.
+        expect(countOpeners(costs, 6, -4)).toBe(2);
+        expect(countOpeners([3], 0, -4)).toBe(1);
+        expect(countOpeners([3], 0, 0)).toBe(0);
+    });
 });
 
 describe("redeploy", () => {
@@ -98,5 +105,13 @@ describe("cut labels", () => {
         expect(cutLabelInput(talentCut, null)).toEqual({ key: "talent", name: "Lightweight", giver: "", amount: "-1" });
         expect(cutLabelInput(moduleCut, null).key).toBe("module");
         expect(cutLabelInput(squadCostCut, "Zima")).toEqual({ key: "squad", name: "Spearheader", giver: "Zima", amount: "-1" });
+    });
+});
+
+describe("note changes", () => {
+    it("signs the cost or redeploy change a note carries", () => {
+        expect(noteChangeText({ stat: "cost", amount: -1, ratio: null })).toEqual({ stat: "cost", amount: "-1" });
+        expect(noteChangeText({ stat: "respawn", amount: 0, ratio: -0.1 })).toEqual({ stat: "respawn", amount: "-10%" });
+        expect(noteChangeText({ stat: null, amount: 2, ratio: null })).toBeNull();
     });
 });

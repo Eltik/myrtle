@@ -7,6 +7,7 @@ import { Button } from "#/components/ui/button";
 import { Dialog, DialogClose, DialogFooter, DialogHeader, DialogPanel, DialogPopup, DialogTitle } from "#/components/ui/dialog";
 import { Sheet, SheetClose, SheetFooter, SheetHeader, SheetPanel, SheetPopup, SheetTitle } from "#/components/ui/sheet";
 import { Skeleton } from "#/components/ui/skeleton";
+import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import { useMediaQuery } from "#/hooks/use-media-query";
 import { storyIllustrationsQueryOptions } from "#/lib/api/story";
 import { useFormatters, useGamedataServer, useT } from "#/lib/i18n";
@@ -65,26 +66,20 @@ export function IllustrationPanel({ group, kind, onClose }: IIllustrationPanelPr
     );
 
     const panes = (
-        <fieldset className="msv-scroll mb-2.5 flex max-w-full gap-0.5 overflow-x-auto rounded-[9px] border border-border bg-secondary/45 p-0.75" aria-label={t("illustrations.pane.aria")}>
+        <ToggleGroup aria-label={t("illustrations.pane.aria")} value={[pane]} onValueChange={(next) => next[0] && setPane(next[0] as (typeof ART_PANES)[number])} variant="outline" className="msv-scroll mb-2.5 max-w-full overflow-x-auto">
             {ART_PANES.map((key) => (
-                <button
-                    key={key}
-                    type="button"
-                    onClick={() => setPane(key)}
-                    aria-pressed={pane === key}
-                    className={cn("h-11 shrink-0 cursor-pointer rounded-md px-2.5 font-sans font-semibold text-[11.5px] transition-colors sm:h-7", pane === key ? "bg-background text-foreground shadow-sm/5" : "text-muted-foreground hover:text-foreground")}
-                >
+                <ToggleGroupItem key={key} value={key} className="px-2.5 font-semibold text-[11.5px] sm:text-[11.5px]">
                     {t(`illustrations.pane.${key}`)}
                     <span className="ms-1.5 font-mono text-[10px] text-muted-foreground tabular-nums">{counts[key]}</span>
-                </button>
+                </ToggleGroupItem>
             ))}
-        </fieldset>
+        </ToggleGroup>
     );
 
     const body = (
         <>
             {panes}
-            <p className="mt-0 mb-2.5 font-sans text-[11px] text-muted-foreground/85 leading-relaxed">{t("illustrations.panel.split", { total: counts.backgrounds + counts.cgs, backgrounds: counts.backgrounds, cgs: counts.cgs })}</p>
+            <p className="mt-0 mb-2.5 font-sans text-[11px] text-subtle-foreground leading-relaxed">{t("illustrations.panel.split", { total: counts.backgrounds + counts.cgs, backgrounds: counts.backgrounds, cgs: counts.cgs })}</p>
             <Body loading={query.isLoading} failed={query.isError} unavailable={query.isSuccess && query.data === null} pane={pane} rows={rows} summary={summary} onView={setViewer} />
         </>
     );
@@ -152,7 +147,8 @@ export function ArtLightbox({ view, onClose }: { view: IArtView | null; onClose:
                     <DialogTitle className="truncate font-mono text-[12.5px]">{view.name}</DialogTitle>
                 </DialogHeader>
                 <DialogPanel className="flex max-h-[72dvh] items-center justify-center overflow-auto bg-secondary/35">
-                    <img src={view.url} alt={view.name} decoding="async" className="max-h-[70dvh] w-auto max-w-full object-contain" />
+                    {/* The table carries no CG size, so a 16:9 box (the story CG frame) holds the dialog still while the file loads; other shapes letterbox. */}
+                    <img src={view.url} alt={view.name} decoding="async" className="aspect-video w-[min(100%,calc(70dvh*16/9))] object-contain" />
                 </DialogPanel>
                 <DialogFooter>
                     <DialogClose render={<Button variant="outline" className="max-sm:min-h-11" />}>{t("illustrations.viewer.close")}</DialogClose>
@@ -185,9 +181,9 @@ function Body({
 
     if (unavailable) {
         return (
-            <div className="rounded-xl border border-border border-dashed p-8 text-center">
+            <div className="rounded-2xl border border-border border-dashed p-8 text-center">
                 <p className="m-0 font-sans text-[13px] text-muted-foreground">{t("illustrations.panel.unavailable")}</p>
-                <p className="mt-1.5 mb-0 font-mono text-[11px] text-muted-foreground/80">{t("illustrations.panel.unavailableNote")}</p>
+                <p className="mt-1.5 mb-0 font-mono text-[11px] text-subtle-foreground">{t("illustrations.panel.unavailableNote")}</p>
             </div>
         );
     }
@@ -196,12 +192,12 @@ function Body({
         return (
             <output className="grid grid-cols-2 gap-2.5 sm:grid-cols-3" aria-label={t("illustrations.panel.loading")}>
                 {[0, 1, 2, 3, 4, 5].map((i) => (
-                    <Skeleton key={i} className="aspect-16/9 w-full rounded-[10px]" />
+                    <Skeleton key={i} className="aspect-16/9 w-full rounded-2xl" />
                 ))}
             </output>
         );
     }
-    if (summary.rows === 0) return <div className="rounded-xl border border-border border-dashed p-8 text-center font-sans text-[13px] text-muted-foreground">{t("illustrations.panel.empty")}</div>;
+    if (summary.rows === 0) return <div className="rounded-2xl border border-border border-dashed p-8 text-center font-sans text-[13px] text-muted-foreground">{t("illustrations.panel.empty")}</div>;
 
     return (
         <>
@@ -243,12 +239,12 @@ function Tile({ name, url, aspect, storyIds, extra, onView }: { name: string; ur
                     type="button"
                     onClick={() => onView({ name, url })}
                     aria-label={t("illustrations.item.view", { name })}
-                    className={cn(aspect, "block w-full cursor-pointer overflow-hidden rounded-[10px] border border-border bg-secondary/55 ring-inset transition-colors hover:border-primary/45 focus-visible:ring-2 focus-visible:ring-ring/60")}
+                    className={cn(aspect, "block w-full cursor-pointer overflow-hidden rounded-2xl border border-border bg-secondary/55 ring-inset transition-colors hover:border-primary/45 focus-visible:ring-2 focus-visible:ring-ring")}
                 >
                     <img src={url} alt="" aria-hidden="true" loading="lazy" decoding="async" className={cn("h-full w-full", aspect === "aspect-square" ? "object-contain" : "object-cover")} />
                 </button>
             ) : (
-                <div className={cn(aspect, "flex w-full items-center justify-center rounded-[10px] border border-border border-dashed bg-secondary/25 px-2 text-center font-sans text-[10.5px] text-muted-foreground/70")}>{t("illustrations.item.notExtracted")}</div>
+                <div className={cn(aspect, "flex w-full items-center justify-center rounded-2xl border border-border border-dashed bg-secondary/25 px-2 text-center font-sans text-[10.5px] text-subtle-foreground")}>{t("illustrations.item.notExtracted")}</div>
             )}
             <span className="truncate font-mono text-[10.5px] text-foreground" title={name}>
                 {name}

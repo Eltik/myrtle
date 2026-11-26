@@ -6,6 +6,7 @@ import type * as React from "react";
 import { useMemo, useState } from "react";
 import { PolarAngleAxis, PolarGrid, PolarRadiusAxis, Radar, RadarChart } from "recharts";
 import { Button } from "#/components/ui/button";
+import { Kicker } from "#/components/ui/kicker";
 import { Sheet, SheetDescription, SheetHeader, SheetPanel, SheetPopup, SheetTitle } from "#/components/ui/sheet";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { archiveOperatorQueryOptions } from "#/lib/api/archives";
@@ -55,7 +56,7 @@ function Fact({ label, value, children }: { label: string; value?: React.ReactNo
     if (shown === undefined || shown === null || shown === "") return null;
     return (
         <div className="flex items-baseline gap-2 py-1">
-            <dt className="shrink-0 font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.12em]">{label}</dt>
+            <dt className="kicker shrink-0">{label}</dt>
             <span aria-hidden className="min-w-4 flex-1 translate-y-[-3px] border-border border-b border-dotted" />
             <dd className="m-0 text-right text-[13px] text-foreground">{shown}</dd>
         </div>
@@ -63,7 +64,11 @@ function Fact({ label, value, children }: { label: string; value?: React.ReactNo
 }
 
 function SectionTitle({ children }: { children: React.ReactNode }): React.ReactElement {
-    return <h3 className="m-0 mt-6 mb-2 font-bold font-sans text-[0.69rem] text-primary uppercase tracking-[0.22em]">{children}</h3>;
+    return (
+        <h3 className="m-0 mt-6 mb-2 leading-none">
+            <Kicker tone="accent">{children}</Kicker>
+        </h3>
+    );
 }
 
 function FileBody({ op, t, server, onOpenFile, onOpenChart, fromDossiers }: { op: ArchiveOperator; t: ArchivesT; server: string; onOpenFile: (id: string) => void; onOpenChart: (groupId: string) => void; fromDossiers: boolean }): React.ReactElement {
@@ -91,11 +96,11 @@ function FileBody({ op, t, server, onOpenFile, onOpenChart, fromDossiers }: { op
         <>
             <SheetHeader className="relative overflow-hidden">
                 {home ? <FactionLogo id={home.id} className="pointer-events-none absolute -top-2 right-10 size-28 text-foreground opacity-[0.08]" /> : null}
-                <p className="m-0 font-bold font-mono text-[10.5px] text-primary uppercase tracking-[0.2em]">
+                <Kicker tone="accent" className="block">
                     {op.number ? `${op.number.display} · ` : ""}
                     {t("file.kicker")}
-                </p>
-                <SheetTitle className="font-bold text-[26px] uppercase leading-tight tracking-tight">{op.name}</SheetTitle>
+                </Kicker>
+                <SheetTitle className="font-bold text-[26px] leading-tight tracking-tight">{op.name}</SheetTitle>
                 <SheetDescription>{t("file.subtitle", { profession: formatProfession(op.profession), branch: op.subProfessionName ?? op.subProfessionId })}</SheetDescription>
             </SheetHeader>
             <SheetPanel className="pb-8">
@@ -111,7 +116,7 @@ function FileBody({ op, t, server, onOpenFile, onOpenChart, fromDossiers }: { op
                     <Fact label={t("file.assimilation")} value={p?.assimilation} />
                     <Fact label={t("file.manufacturer")} value={p?.manufacturer} />
                     <Fact label={t("file.faction")} value={op.factions.map((x) => x.name).join(" · ")} />
-                    {spoilers ? op.hiddenFactions.map((h) => <Fact key={h.id} label={t("file.hiddenFaction")} value={<span className="text-amber-700 dark:text-amber-300">{h.name ?? h.id}</span>} />) : null}
+                    {spoilers ? op.hiddenFactions.map((h) => <Fact key={h.id} label={t("file.hiddenFaction")} value={<span className="text-warning-foreground">{h.name ?? h.id}</span>} />) : null}
                 </dl>
 
                 {p?.infection ? (
@@ -128,7 +133,7 @@ function FileBody({ op, t, server, onOpenFile, onOpenChart, fromDossiers }: { op
 
                 {homeChart ? (
                     <div className="mt-4 flex flex-col gap-2">
-                        <span className="font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.12em]">{fromDossiers || otherCharts.length === 0 ? t("file.showOnNetwork") : t("file.alsoOn")}</span>
+                        <Kicker>{fromDossiers || otherCharts.length === 0 ? t("file.showOnNetwork") : t("file.alsoOn")}</Kicker>
                         <div className="flex flex-wrap gap-1.5">
                             {(fromDossiers || otherCharts.length === 0 ? [homeChart] : otherCharts).map((c) => (
                                 <Button key={c.groupId} size="sm" variant="outline" onClick={() => onOpenChart(c.groupId)}>

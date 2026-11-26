@@ -8,7 +8,7 @@ export const messages = {
         description: "Kicker over the map's layer toggles.",
     },
     "mapSettings.showRoutes": {
-        text: "Route Lines",
+        text: "Route lines",
         description: "Map layer toggle: draw the enemy route lines.",
     },
     "mapSettings.showRoutes.desc": {
@@ -16,7 +16,7 @@ export const messages = {
         description: "Caption under the Route Lines toggle.",
     },
     "mapSettings.showEnemyIcons": {
-        text: "Enemy Icons",
+        text: "Enemy icons",
         description: "Map layer toggle: show each spawning enemy's icon on its route.",
     },
     "mapSettings.showEnemyIcons.desc": {
@@ -24,7 +24,7 @@ export const messages = {
         description: "Caption under the Enemy Icons toggle.",
     },
     "mapSettings.showMovement": {
-        text: "Enemy Movement",
+        text: "Enemy movement",
         description: "Map layer toggle: animate the enemy icon along its route.",
     },
     "mapSettings.showMovement.desc": {
@@ -32,7 +32,7 @@ export const messages = {
         description: "Caption under the Enemy Movement toggle.",
     },
     "mapSettings.showTimers": {
-        text: "Wait Timers",
+        text: "Wait timers",
         description: "Map layer toggle: show the wait-duration badges on routes.",
     },
     "mapSettings.showTimers.desc": {
@@ -40,7 +40,7 @@ export const messages = {
         description: "Caption under the Wait Timers toggle.",
     },
     "mapSettings.walkingChibis": {
-        text: "Walking Chibis",
+        text: "Walking chibis",
         description: "Map layer toggle: render the enemy's animated chibi walking its route. 'Chibi' is the game's small animated sprite.",
     },
     "mapSettings.walkingChibis.desc": {

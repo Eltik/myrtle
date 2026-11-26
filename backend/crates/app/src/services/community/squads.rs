@@ -20,7 +20,8 @@ use serde_json::Value;
 use crate::policy::Subject;
 use crate::{AppContext, AppError};
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct SquadBuild {
     pub phase: i32,
     pub level: i32,
@@ -30,7 +31,8 @@ pub struct SquadBuild {
     pub module_level: i32,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct SquadMember {
     pub char_id: String,
     pub skill_index: i32,
@@ -38,7 +40,8 @@ pub struct SquadMember {
     pub build: Option<SquadBuild>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct SavedSquadInput {
     pub name: String,
     pub members: Vec<Option<SquadMember>>,
@@ -46,7 +49,8 @@ pub struct SavedSquadInput {
     pub stage_id: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct SavedSquad {
     pub slot: i32,
     pub name: String,
@@ -57,14 +61,16 @@ pub struct SavedSquad {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct GameSquadSlot {
     pub char_id: String,
     pub skill_index: i32,
     pub module_id: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct GameSquad {
     pub index: i32,
     pub name: String,
@@ -72,7 +78,8 @@ pub struct GameSquad {
     pub synced_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct SquadsResponse {
     pub saved: Vec<Option<SavedSquad>>,
     pub synced: Vec<GameSquad>,
@@ -80,7 +87,8 @@ pub struct SquadsResponse {
     pub squad_size: i32,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct SquadRules {
     pub threats: ThreatThresholds,
     pub normal_of: HashMap<String, String>,

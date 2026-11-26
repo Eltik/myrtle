@@ -30,7 +30,7 @@ export function TierListBoard({ detail }: ITierListBoardProps) {
                     <TierRow key={tier.id} tier={tier} index={i} />
                 ))}
             </ul>
-            <p className="px-1 font-mono text-[10.5px] text-muted-foreground uppercase tracking-wider">
+            <p className="px-1 font-mono text-[10.5px] text-muted-foreground">
                 <span className="text-foreground tabular-nums">{detail.tiers.length}</span> {t("detail.board.tierCount", { count: detail.tiers.length })} · <span className="text-foreground tabular-nums">{totalOps}</span> {t("detail.board.operatorCount", { count: totalOps })}
             </p>
         </div>

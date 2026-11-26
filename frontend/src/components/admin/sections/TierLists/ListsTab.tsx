@@ -32,7 +32,7 @@ function scopeLabel(t: TierListsT, scope: ListTypeScope): string {
 }
 
 function Dash(): React.ReactElement {
-    return <span className="text-muted-foreground">—</span>;
+    return <span className="text-muted-foreground">-</span>;
 }
 
 export function ListsTab({ search, staff }: { search: IAdminTierListsSearch; staff: boolean }): React.ReactElement {

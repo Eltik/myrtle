@@ -26,14 +26,16 @@ use crate::{AppContext, AppError};
 
 pub use story_pictures::{ArtRef, StoryCatalogues};
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(untagged)]
 pub enum FacetValue {
     One(String),
     Many(Vec<String>),
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct EntitySummary {
     pub kind: EntityKind,
     pub id: String,

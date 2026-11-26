@@ -20,6 +20,8 @@ interface ISaveContext {
     current: IEditState;
     t: EditSaveT;
     onProgress?: ProgressFn;
+    /** Each draft tier as it is created, so a caller can carry the real id past a save that fails or is overtaken by edits. */
+    onTierCreated?: (draftId: string, realId: string) => void;
 }
 
 /**
@@ -50,7 +52,7 @@ interface IExistingChange {
  *   7. Reconcile placements (remove -> move -> add). Draft tier ids are
  *      resolved as tiers are created so placement calls target real ids.
  */
-export async function saveEdits({ slug, original, current, t, onProgress }: ISaveContext): Promise<void> {
+export async function saveEdits({ slug, original, current, t, onProgress, onTierCreated }: ISaveContext): Promise<void> {
     const operations: Array<{ label: string; run: () => Promise<void> }> = [];
 
     const metaChanged = original.title !== current.title || original.description !== current.description;
@@ -128,6 +130,7 @@ export async function saveEdits({ slug, original, current, t, onProgress }: ISav
                     },
                 });
                 draftIdToReal.set(tier.id, created.id);
+                onTierCreated?.(tier.id, created.id);
             },
         });
     });

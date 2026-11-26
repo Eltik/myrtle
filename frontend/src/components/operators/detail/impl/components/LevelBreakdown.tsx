@@ -81,6 +81,9 @@ export const LevelBreakdown = memo(function LevelBreakdown({ buckets, total, tit
                                         <span className="h-1.5 w-full overflow-hidden rounded-full bg-border/70">
                                             {bucket.users > 0 && (
                                                 <span
+                                                    // Accent for unlocked levels, full strength at the top
+                                                    // level; the label and percentage beside the bar carry
+                                                    // the value, so the colour is emphasis only.
                                                     className={cn("block h-full rounded-full", isNone ? "bg-muted-foreground/45" : bucket.level === 3 ? "bg-primary" : "bg-primary/55")}
                                                     // Share of the WHOLE cohort, the same
                                                     // quantity as the percentage beside it,

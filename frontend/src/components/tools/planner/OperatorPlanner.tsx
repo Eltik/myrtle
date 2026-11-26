@@ -1,8 +1,8 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CircleCheck, Lock, Plus } from "lucide-react";
 import * as React from "react";
-
 import { Button } from "#/components/ui/button";
+import { LoadFailed } from "#/components/ui/load-failed";
 import { PageHeader } from "#/components/ui/page-header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "#/components/ui/tabs";
 import { useAuth } from "#/hooks/use-auth";
@@ -16,6 +16,7 @@ import type { TypedT } from "#/lib/i18n/messages";
 import { BulkPlanButton } from "./BulkPlanDialog";
 import { CompletedPlansDialog } from "./CompletedPlansDialog";
 import { DeletePlansDialog, type IDeletePlansTarget } from "./DeletePlansDialog";
+import { DeleteGroupDialog, RenameGroupDialog } from "./GroupDialogs";
 import { GroupList } from "./GroupList";
 import type { messages } from "./OperatorPlanner.messages";
 import { OperatorPlannerDialog } from "./OperatorPlannerDialog";
@@ -31,7 +32,7 @@ type PlannerT = TypedT<typeof messages>;
 function UnauthenticatedState() {
     const t: PlannerT = useT("tools");
     return (
-        <div className="mt-8 flex flex-col items-center justify-center gap-6 rounded-[14px] border border-border bg-card px-8 py-16 text-center">
+        <div className="mt-8 flex flex-col items-center justify-center gap-6 rounded-2xl border border-border bg-card px-8 py-16 text-center">
             <div className="flex flex-col items-center gap-3">
                 <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-border bg-muted text-2xl">
                     <Lock />
@@ -41,9 +42,7 @@ function UnauthenticatedState() {
                     <p className="mt-1.5 max-w-[42ch] font-sans text-muted-foreground text-sm">{t("planner.signIn.desc")}</p>
                 </div>
             </div>
-            <button type="button" onClick={() => authActions.openLoginDialog()} className="inline-flex h-9 cursor-pointer items-center rounded-lg bg-primary px-5 font-medium font-sans text-primary-foreground text-sm transition-opacity hover:opacity-90">
-                {t("planner.signIn.action")}
-            </button>
+            <Button onClick={() => authActions.openLoginDialog()}>{t("planner.signIn.action")}</Button>
         </div>
     );
 }
@@ -67,21 +66,36 @@ export function OperatorPlanner(): React.ReactElement {
     const [maxTier, setMaxTier] = useLocalStorageState<MaxTierFilter>(MAX_TIER_STORAGE_KEY, 0, { parse: parseMaxTier, serialize: String });
 
     // The unfiltered list decides which ids the filtered requirements query asks for.
-    const { data: initialPlannerData, isLoading: initialPlansLoading } = useQuery({
+    const {
+        data: initialPlannerData,
+        isLoading: initialPlansLoading,
+        isError: plansFailed,
+        refetch: refetchPlans,
+    } = useQuery({
         ...plansQueryOptions(),
         enabled: isAuthenticated,
     });
 
     const activeIds = React.useMemo(() => (initialPlannerData?.plans ? activePlanIds(initialPlannerData.plans, selection.activePlans, selection.groupFilter) : undefined), [initialPlannerData?.plans, selection.activePlans, selection.groupFilter]);
 
-    const { data: roster = [], isLoading: rosterLoading } = useQuery({
+    const {
+        data: roster = [],
+        isLoading: rosterLoading,
+        isError: rosterFailed,
+        refetch: refetchRoster,
+    } = useQuery({
         ...userRosterQueryOptions(user?.uid ?? ""),
         enabled: !!user?.uid,
     });
 
     const isPlansListLoading = initialPlansLoading || rosterLoading;
 
-    const { data: plannerData, isLoading: requirementsLoading } = useQuery({
+    const {
+        data: plannerData,
+        isLoading: requirementsLoading,
+        isError: requirementsFailed,
+        refetch: refetchRequirements,
+    } = useQuery({
         ...plansQueryOptions(activeIds, maxTier || undefined),
         enabled: isAuthenticated && !isPlansListLoading,
     });
@@ -159,29 +173,19 @@ export function OperatorPlanner(): React.ReactElement {
         }
     };
 
-    const handleRenameGroup = async (oldName: string) => {
-        const newName = window.prompt(t("planner.group.renamePrompt"), oldName);
-        if (newName === null) return;
-        const trimmed = newName.trim();
-        if (!trimmed || trimmed === oldName) return;
-        try {
-            await upsertGroupFn({ data: { oldName, name: trimmed } });
-            selection.renameGroup(oldName, trimmed);
-            invalidatePlans();
-        } catch (err) {
-            console.error(err);
-        }
+    const [renamingGroup, setRenamingGroup] = React.useState<string | null>(null);
+    const [deletingGroup, setDeletingGroup] = React.useState<string | null>(null);
+
+    const renameGroup = async (oldName: string, name: string) => {
+        await upsertGroupFn({ data: { oldName, name } });
+        selection.renameGroup(oldName, name);
+        invalidatePlans();
     };
 
-    const handleDeleteGroup = async (name: string) => {
-        if (!window.confirm(t("planner.group.deleteConfirm", { name }))) return;
-        try {
-            await deleteGroupFn({ data: { name } });
-            selection.dropGroup(plans, name);
-            invalidatePlans();
-        } catch (err) {
-            console.error(err);
-        }
+    const deleteGroup = async (name: string) => {
+        await deleteGroupFn({ data: { name } });
+        selection.dropGroup(plans, name);
+        invalidatePlans();
     };
 
     const entryContext: IPlanEntryContext = {
@@ -223,6 +227,8 @@ export function OperatorPlanner(): React.ReactElement {
 
             {!isAuthenticated ? (
                 <UnauthenticatedState />
+            ) : plansFailed && !initialPlannerData ? (
+                <LoadFailed className="mt-8" message={t("planner.plansLoadFailed")} onRetry={() => void refetchPlans()} />
             ) : !isPlansListLoading && plans.length === 0 ? (
                 <div className="mt-16 flex flex-col items-center justify-center gap-4 py-20 text-center sm:mt-24 sm:py-28">
                     <Button size="xl" className="shadow-lg" onClick={() => setOpen(true)}>
@@ -234,7 +240,8 @@ export function OperatorPlanner(): React.ReactElement {
             ) : (
                 <div className="mt-8 flex flex-col gap-6 min-[720px]:flex-row">
                     <div className="w-full shrink-0 min-[720px]:w-90">
-                        <div className="rounded-xl border border-border bg-card p-4">
+                        {rosterFailed && <LoadFailed className="mb-4" message={t("planner.rosterLoadFailed")} onRetry={() => void refetchRoster()} />}
+                        <div className="rounded-2xl border border-border bg-card p-4">
                             <Tabs defaultValue="plans">
                                 <TabsList className="w-full">
                                     <TabsTrigger value="plans" className="flex-1">
@@ -260,15 +267,19 @@ export function OperatorPlanner(): React.ReactElement {
                                         expandedGroups={expandedGroups}
                                         onExpandedGroupsChange={setExpandedGroups}
                                         onTogglePin={handleTogglePin}
-                                        onRename={handleRenameGroup}
-                                        onDelete={handleDeleteGroup}
+                                        onRename={setRenamingGroup}
+                                        onDelete={setDeletingGroup}
                                     />
                                 </TabsContent>
                             </Tabs>
                         </div>
                     </div>
                     <div className="flex-1">
-                        <RequirementsPanel aggregatedRequirements={plannerData?.aggregatedRequirements ?? []} isLoading={isRequirementsLoading} activePlans={activePlansList} maxTier={maxTier} onMaxTierChange={setMaxTier} lastSyncedAt={plannerData?.lastSyncedAt ?? initialPlannerData?.lastSyncedAt ?? null} />
+                        {requirementsFailed && !plannerData ? (
+                            <LoadFailed message={t("planner.requirementsLoadFailed")} onRetry={() => void refetchRequirements()} />
+                        ) : (
+                            <RequirementsPanel aggregatedRequirements={plannerData?.aggregatedRequirements ?? []} isLoading={isRequirementsLoading} activePlans={activePlansList} maxTier={maxTier} onMaxTierChange={setMaxTier} lastSyncedAt={plannerData?.lastSyncedAt ?? initialPlannerData?.lastSyncedAt ?? null} />
+                        )}
                     </div>
                 </div>
             )}
@@ -282,6 +293,9 @@ export function OperatorPlanner(): React.ReactElement {
                 isSubmitting={isDeleting}
                 errorMessage={deleteError}
             />
+
+            <RenameGroupDialog name={renamingGroup} onClose={() => setRenamingGroup(null)} onRename={renameGroup} />
+            <DeleteGroupDialog name={deletingGroup} onClose={() => setDeletingGroup(null)} onDelete={deleteGroup} />
 
             <CompletedPlansDialog
                 plans={reviewPlans}

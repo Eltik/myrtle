@@ -5,12 +5,9 @@ import type { ArchiveHexLink } from "./ArchiveHexLink";
 import type { ArchivePair } from "./ArchivePair";
 import type { ArchivePerson } from "./ArchivePerson";
 
-/**
- * The network: territories, every chart and everyone on them.
- */
 export type ArchiveNetwork = {
     /**
-     * False when this server ships no network tables.
+     * False when this server ships no network tables
      */
     imported: boolean;
     forces: Array<ArchiveForce>;

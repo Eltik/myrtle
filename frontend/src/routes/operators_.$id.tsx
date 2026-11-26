@@ -1,5 +1,6 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { OperatorDetail } from "#/components/operators/detail/Operators";
+import { RouteError } from "#/components/ui/route-error";
 import { operatorBuildStatsQueryOptions, operatorQueryOptions, operatorsIndexQueryOptions } from "#/lib/api/operators";
 import { metaT } from "#/lib/meta";
 import { ogURL, warmOg } from "#/lib/og/impl/url";
@@ -24,7 +25,7 @@ function buildOgData(operator: IOperatorListItem) {
 
 export const Route = createFileRoute("/operators_/$id")({
     component: RouteComponent,
-    errorComponent: RootErrorComponent,
+    errorComponent: RouteError,
     loader: async ({ context, params }) => {
         const server = context.i18n.gamedataServer;
         // Community build stats decide which skill and module the tabs open
@@ -63,21 +64,6 @@ export const Route = createFileRoute("/operators_/$id")({
         });
     },
 });
-
-function RootErrorComponent({ error }: { error: unknown }) {
-    console.error("Router error:", error);
-    if (error instanceof Error) {
-        console.error(error.stack);
-    }
-
-    return (
-        <div style={{ padding: 20 }}>
-            <h1>Something went wrong</h1>
-            <pre style={{ color: "red" }}>{error instanceof Error ? error.message : JSON.stringify(error, null, 2)}</pre>
-            <pre>{error instanceof Error ? error.stack : null}</pre>
-        </div>
-    );
-}
 
 function RouteComponent() {
     return <OperatorDetail />;

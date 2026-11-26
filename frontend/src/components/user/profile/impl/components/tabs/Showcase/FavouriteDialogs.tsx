@@ -120,7 +120,7 @@ function BuildSkeleton({ name }: { name: string }) {
         <DialogContent className="max-h-[90vh] max-w-2xl overflow-hidden p-0">
             <DialogTitle className="sr-only">{name}</DialogTitle>
             <output aria-label={t("profile.showcase.operator.loading", { name })} className="flex flex-col gap-4 p-6">
-                <Skeleton className="h-64 w-full rounded-xl" />
+                <Skeleton className="h-64 w-full rounded-2xl" />
                 <Skeleton className="h-5 w-1/2" />
                 <Skeleton className="h-24 w-full" />
             </output>
@@ -134,7 +134,7 @@ function OperatorNote({ operator, icon, children }: { operator: IOperatorTarget;
     return (
         <DialogContent className="max-w-sm">
             <DialogHeader className="flex-row items-center gap-4">
-                <span aria-hidden="true" className="relative size-16 shrink-0 overflow-hidden rounded-xl border border-border bg-muted">
+                <span aria-hidden="true" className="relative size-16 shrink-0 overflow-hidden rounded-2xl border border-border bg-muted">
                     <OperatorAvatar charId={operator.id} name={operator.name} server={operator.server} />
                 </span>
                 <div className="flex min-w-0 flex-col gap-1.5 pr-6">
@@ -193,7 +193,7 @@ function FactionBody({ faction }: { faction: ITierEntityOf<"faction"> }) {
                     <EntityAvatar entity={faction} face="tile" tone="dark" />
                 </span>
                 <div className="flex min-w-0 flex-col gap-1 pr-6">
-                    {level && <span className="font-mono text-[11px] text-muted-foreground uppercase tracking-widest">{level}</span>}
+                    {level && <span className="text-muted-foreground text-xs">{level}</span>}
                     <DialogTitle className="truncate text-lg">{faction.name}</DialogTitle>
                     <DialogDescription className="tabular-nums">
                         {index.isPending ? " " : t("profile.showcase.faction.count", { count: members.length })}
@@ -237,7 +237,7 @@ function FactionBody({ faction }: { faction: ITierEntityOf<"faction"> }) {
                 )}
                 {!ownedOnly && upcomingMembers.length > 0 && (
                     <section className="flex flex-col gap-2">
-                        <h3 className="m-0 font-mono text-[11px] text-muted-foreground uppercase tracking-widest">{t("profile.showcase.faction.upcoming", { count: upcomingMembers.length })}</h3>
+                        <h3 className="kicker m-0">{t("profile.showcase.faction.upcoming", { count: upcomingMembers.length })}</h3>
                         <ul className={cn(GRID, "m-0 list-none p-0")}>
                             {upcomingMembers.map((op) => (
                                 <li key={op.id}>
@@ -258,13 +258,13 @@ function FactionBody({ faction }: { faction: ITierEntityOf<"faction"> }) {
 const GRID = "grid grid-cols-3 gap-2 sm:grid-cols-5 sm:gap-2.5";
 
 /** The showcase operator tile's frame, at the grid's width. */
-const CARD_CLASS = "group relative block aspect-2/3 w-full cursor-pointer overflow-hidden rounded-md border border-muted/50 bg-card text-left text-foreground no-underline outline-none transition-[border-radius,border-color] duration-150 hover:rounded-lg hover:border-muted focus-visible:ring-2 focus-visible:ring-ring";
+const CARD_CLASS = "group relative block aspect-2/3 w-full cursor-pointer overflow-hidden rounded-md border border-muted/50 bg-card text-left text-foreground no-underline outline-none transition-colors duration-150 hover:border-muted focus-visible:ring-2 focus-visible:ring-ring";
 
 function MemberCard({ op, owned, playerName, onBuild, t }: { op: IOperatorIndexEntry; owned: boolean; playerName: string; onBuild: () => void; t: FavT }) {
     const badge = owned ? (
-        <span className="absolute top-1 left-1 z-20 rounded-sm bg-primary px-1 py-px font-medium font-mono text-[9px] text-primary-foreground uppercase leading-tight tracking-wide">{t("profile.showcase.faction.owned")}</span>
+        <span className="absolute top-1 left-1 z-20 rounded-sm bg-primary px-1 py-px font-medium text-[10px] text-primary-foreground leading-tight">{t("profile.showcase.faction.owned")}</span>
     ) : op.isNotObtainable ? (
-        <span className="absolute top-1 left-1 z-20 rounded-sm bg-background/80 px-1 py-px font-mono text-[9px] text-muted-foreground uppercase leading-tight tracking-wide">{t("profile.showcase.faction.unobtainable")}</span>
+        <span className="absolute top-1 left-1 z-20 rounded-sm bg-background/80 px-1 py-px text-[10px] text-muted-foreground leading-tight">{t("profile.showcase.faction.unobtainable")}</span>
     ) : null;
     if (owned) {
         return (

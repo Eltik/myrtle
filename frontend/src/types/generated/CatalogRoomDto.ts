@@ -6,13 +6,10 @@ export type CatalogRoomDto = {
     name: string;
     category: string;
     /**
-     * -1 in game data means unlimited.
+     * -1 is unlimited
      */
     max_count: number;
     size_col: number;
     size_row: number;
-    /**
-     * Index = level - 1.
-     */
     phases: Array<CatalogPhaseDto>;
 };

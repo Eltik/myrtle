@@ -1,6 +1,6 @@
 import { type UseQueryResult, useMutation, useQueries, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { useCallback, useMemo, useReducer, useState } from "react";
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { Button } from "#/components/ui/button";
 import { useErrorMessage } from "#/components/ui/error-message";
 import { toastManager } from "#/components/ui/toast";
@@ -10,8 +10,10 @@ import { type ITierListDetail, publishTierListVersionFn, setTierListFlairFn, set
 import { useGamedataServer, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import type { EntitySummary } from "#/types/generated/EntitySummary";
+import { autosaveDelay, clearDraft, DRAFT_WRITE_DELAY_MS, draftOfferKind, editStateFingerprint, type IStoredDraft, readAutosavePreference, readDraft, remapDraftTierIds, restorableDraftState, writeAutosavePreference, writeDraft } from "./autosave";
+import { DraftRestoreBanner } from "./DraftRestoreBanner";
 import { DragControllerProvider } from "./drag-controller";
-import { EditHero } from "./EditHero";
+import { type AutosaveStatus, EditHero } from "./EditHero";
 import styles from "./Editor.module.css";
 import { EditTierRow } from "./EditTierRow";
 import { EntityPool, type IKindCatalogue } from "./EntityPool";
@@ -52,6 +54,14 @@ export function TierListEditor({ slug }: ITierListEditorProps) {
     return <EditorContent slug={slug} detail={detail} queryClient={queryClient} />;
 }
 
+/** Auto-save found the list changed on the server since this editor loaded it, and wrote nothing. */
+class AutosaveConflictError extends Error {
+    constructor() {
+        super("The tier list changed since it was loaded");
+        this.name = "AutosaveConflictError";
+    }
+}
+
 interface IEditorContentProps {
     slug: string;
     detail: ITierListDetail;
@@ -74,6 +84,25 @@ function EditorContent({ slug, detail, queryClient }: IEditorContentProps) {
     const [publishOpen, setPublishOpen] = useState(false);
     const [publishError, setPublishError] = useState<string | null>(null);
     const [kindsOpen, setKindsOpen] = useState(false);
+    // Off until the browser's stored choice is read after mount, so the server render and hydration agree.
+    const [autosaveOn, setAutosaveOn] = useState(false);
+    const [autosaveStatus, setAutosaveStatus] = useState<AutosaveStatus>("idle");
+    const [nextSaveAt, setNextSaveAt] = useState<number | null>(null);
+    const [draftOffer, setDraftOffer] = useState<IStoredDraft | null>(null);
+    const [draftChecked, setDraftChecked] = useState(false);
+
+    // The latest of each, for the save and the page-hide flush, which run outside a render.
+    const stateRef = useRef(state);
+    stateRef.current = state;
+    const originalRef = useRef(originalState);
+    originalRef.current = originalState;
+    const saveInFlight = useRef(false);
+    const lastSaveEndedAt = useRef<number | null>(null);
+    /** Draft tiers the running save created, by draft id. */
+    const createdTiers = useRef(new Map<string, string>());
+    /** Whether the running save reached its first write, after which the server may hold part of it. */
+    const wroteAny = useRef(false);
+    const listId = detail.id;
 
     const { data: flairCatalog } = useQuery(tierListFlairsQueryOptions());
     const { data: versions } = useQuery(tierListVersionsQueryOptions(slug, gamedataServer));
@@ -126,28 +155,49 @@ function EditorContent({ slug, detail, queryClient }: IEditorContentProps) {
         [picker],
     );
 
+    /** The list as the server holds it now, read past the cache. */
+    const fetchFreshDetail = useCallback(() => queryClient.fetchQuery({ ...tierListDetailQueryOptions(slug, gamedataServer), staleTime: 0 }), [queryClient, slug, gamedataServer]);
+
     const saveMutation = useMutation({
-        mutationFn: async () => {
+        mutationFn: async ({ auto }: { auto: boolean }) => {
             setSaveError(null);
+            const original = originalRef.current;
+            const current = stateRef.current;
+            createdTiers.current = new Map();
+            wroteAny.current = false;
+            if (auto) {
+                // The backend has no version check, so auto-save looks first: a list that changed
+                // since this editor loaded it (another tab, another editor) is left alone.
+                const fresh = await fetchFreshDetail();
+                if (!fresh || editStateFingerprint(detailToEditState(fresh)) !== editStateFingerprint(original)) throw new AutosaveConflictError();
+            }
             await saveEdits({
                 slug,
-                original: originalState,
-                current: state,
+                original,
+                current,
                 t,
-                onProgress: setSaveProgress,
+                onProgress: (progress) => {
+                    wroteAny.current = true;
+                    if (!auto) setSaveProgress(progress);
+                },
+                onTierCreated: (draftId, realId) => createdTiers.current.set(draftId, realId),
             });
+            return current;
         },
-        onSuccess: async () => {
+        onMutate: ({ auto }) => {
+            if (auto) setAutosaveStatus("saving");
+        },
+        onSuccess: async (saved, { auto }) => {
             setSaveProgress(null);
             await queryClient.invalidateQueries({ queryKey: ["tier-lists"] });
             const fresh = queryClient.getQueryData<ITierListDetail | null>(tierListDetailQueryOptions(slug, gamedataServer).queryKey);
-            if (fresh) {
-                const next = detailToEditState(fresh);
-                setOriginalState(next);
-                dispatch({ type: "RESET", state: next });
-            } else {
-                setOriginalState(state);
-            }
+            const savedNow = fresh ? detailToEditState(fresh) : remapDraftTierIds(saved, createdTiers.current);
+            const latest = stateRef.current;
+            setOriginalState(savedNow);
+            // Edits made while the save ran stay, on top of what it wrote; its new tiers keep their real ids.
+            dispatch({ type: "RESET", state: latest === saved ? savedNow : remapDraftTierIds(latest, createdTiers.current) });
+            setAutosaveStatus(auto ? "saved" : "idle");
+            if (auto) return;
             toastManager.add({
                 id: `tl-edit-save-${Date.now()}`,
                 title: t("edit.toast.savedTitle"),
@@ -155,23 +205,144 @@ function EditorContent({ slug, detail, queryClient }: IEditorContentProps) {
                 type: "success",
             });
         },
-        onError: (err: unknown) => {
+        onError: async (err: unknown, { auto }) => {
             setSaveProgress(null);
+            if (err instanceof AutosaveConflictError) {
+                setAutosaveStatus("conflict");
+                toastManager.add({ id: `tl-edit-autosave-conflict-${Date.now()}`, title: t("edit.toast.autosaveConflictTitle"), description: t("edit.toast.autosaveConflictBody"), type: "warning" });
+                return;
+            }
             const message = describeError(err);
             setSaveError(message);
+            if (auto) setAutosaveStatus("failed");
             toastManager.add({
                 id: `tl-edit-save-err-${Date.now()}`,
-                title: t("edit.toast.saveFailedTitle"),
+                title: auto ? t("edit.toast.autosaveFailedTitle") : t("edit.toast.saveFailedTitle"),
                 description: message,
                 type: "error",
             });
+            if (!wroteAny.current) return;
+            // Part of the save may have landed. Diff the next attempt against what the server
+            // holds now, or it would create the same tiers again.
+            try {
+                const fresh = await fetchFreshDetail();
+                if (!fresh) return;
+                setOriginalState(detailToEditState(fresh));
+                dispatch({ type: "RESET", state: remapDraftTierIds(stateRef.current, createdTiers.current) });
+            } catch {
+                // Still unreachable: the retry diffs against the old state, as before.
+            }
+        },
+        onSettled: () => {
+            saveInFlight.current = false;
+            lastSaveEndedAt.current = Date.now();
         },
     });
+    const { mutate: runSave } = saveMutation;
+
+    /** One save at a time: the timer, the page-hide flush and the button can all ask at once. */
+    const startSave = useCallback(
+        (auto: boolean) => {
+            if (saveInFlight.current) return;
+            saveInFlight.current = true;
+            runSave({ auto });
+        },
+        [runSave],
+    );
 
     const handleSave = useCallback(() => {
-        if (!pendingChanges.length || saveMutation.isPending) return;
-        saveMutation.mutate();
-    }, [pendingChanges.length, saveMutation]);
+        if (!pendingChanges.length) return;
+        startSave(false);
+    }, [pendingChanges.length, startSave]);
+
+    const isDirty = pendingChanges.length > 0;
+    const autosaveArmed = autosaveOn && isDirty && state.title.trim().length > 0 && !saveMutation.isPending && autosaveStatus !== "failed" && autosaveStatus !== "conflict";
+    const autosaveArmedRef = useRef(autosaveArmed);
+    autosaveArmedRef.current = autosaveArmed;
+    // A pending offer keeps its stored draft untouched until it is answered.
+    const draftWritable = draftChecked && draftOffer === null;
+    const draftWritableRef = useRef(draftWritable);
+    draftWritableRef.current = draftWritable;
+
+    // After mount, since storage does not exist in the server render: this browser's
+    // auto-save choice, and any draft a previous session left unsaved. A draft is only
+    // ever offered; it never replaces what the server sent on its own.
+    useEffect(() => {
+        setAutosaveOn(readAutosavePreference());
+        const stored = readDraft(listId, Date.now());
+        if (stored && draftOfferKind(stored, originalRef.current) !== "none") setDraftOffer(stored);
+        else if (stored) clearDraft(listId);
+        setDraftChecked(true);
+    }, [listId]);
+
+    useEffect(() => {
+        if (!draftWritable) return;
+        if (!isDirty) {
+            clearDraft(listId);
+            return;
+        }
+        const timer = window.setTimeout(() => writeDraft(listId, state, originalState, Date.now()), DRAFT_WRITE_DELAY_MS);
+        return () => window.clearTimeout(timer);
+    }, [draftWritable, isDirty, listId, state, originalState]);
+
+    // biome-ignore lint/correctness/useExhaustiveDependencies: `state` is the trigger, every edit restarts the countdown
+    useEffect(() => {
+        if (!autosaveArmed) return;
+        const now = Date.now();
+        const delay = autosaveDelay({ now, lastEditAt: now, lastSaveEndedAt: lastSaveEndedAt.current });
+        setNextSaveAt(now + delay);
+        const timer = window.setTimeout(() => {
+            setNextSaveAt(null);
+            if (autosaveArmedRef.current) startSave(true);
+        }, delay);
+        return () => {
+            window.clearTimeout(timer);
+            setNextSaveAt(null);
+        };
+    }, [autosaveArmed, state, startSave]);
+
+    // Leaving the tab or the page: keep the draft now rather than after its delay, and
+    // with auto-save on, save now rather than after the debounce. The request may not
+    // finish if the page is closing; the draft is what survives that.
+    useEffect(() => {
+        const flush = () => {
+            if (draftWritableRef.current && editStateFingerprint(stateRef.current) !== editStateFingerprint(originalRef.current)) writeDraft(listId, stateRef.current, originalRef.current, Date.now());
+            if (autosaveArmedRef.current) startSave(true);
+        };
+        const onVisibility = () => {
+            if (document.visibilityState === "hidden") flush();
+        };
+        document.addEventListener("visibilitychange", onVisibility);
+        window.addEventListener("pagehide", flush);
+        return () => {
+            document.removeEventListener("visibilitychange", onVisibility);
+            window.removeEventListener("pagehide", flush);
+            flush();
+        };
+    }, [listId, startSave]);
+
+    const handleAutosaveToggle = useCallback((next: boolean) => {
+        setAutosaveOn(next);
+        setAutosaveStatus("idle");
+        writeAutosavePreference(next);
+    }, []);
+
+    const handleAutosaveRetry = useCallback(() => {
+        setAutosaveStatus("idle");
+        startSave(true);
+    }, [startSave]);
+
+    const handleRestoreDraft = useCallback(() => {
+        if (!draftOffer) return;
+        dispatch({ type: "RESET", state: restorableDraftState(draftOffer, originalState) });
+        setDraftOffer(null);
+        setSaveError(null);
+    }, [draftOffer, originalState]);
+
+    const handleDiscardDraft = useCallback(() => {
+        clearDraft(listId);
+        setDraftOffer(null);
+    }, [listId]);
 
     const flairMutation = useMutation({
         mutationFn: (flairId: number | null) => setTierListFlairFn({ data: { slug, flairId } }),
@@ -255,6 +426,7 @@ function EditorContent({ slug, detail, queryClient }: IEditorContentProps) {
         if (!pendingChanges.length) return;
         dispatch({ type: "RESET", state: originalState });
         setSaveError(null);
+        setAutosaveStatus("idle");
     }, [pendingChanges.length, originalState]);
 
     const handleSaveTierSettings = useCallback(
@@ -288,7 +460,7 @@ function EditorContent({ slug, detail, queryClient }: IEditorContentProps) {
 
     return (
         <DragControllerProvider entityByKey={entityByKey} onPlace={handlePlace} onUnplace={handleUnplace}>
-            <main className="min-h-dvh pb-24">
+            <div className="min-h-dvh pb-24">
                 <EditHero
                     slug={slug}
                     title={state.title}
@@ -302,7 +474,14 @@ function EditorContent({ slug, detail, queryClient }: IEditorContentProps) {
                     saving={saveMutation.isPending}
                     saveError={saveError}
                     saveProgress={saveProgress}
+                    autosave={{ enabled: autosaveOn, status: autosaveStatus, nextSaveAt, onToggle: handleAutosaveToggle, onRetry: handleAutosaveRetry }}
                 />
+
+                {draftOffer && (
+                    <div className="page-gutter mt-4 [--page-max:1280px] sm:mt-6">
+                        <DraftRestoreBanner savedAt={draftOffer.savedAt} diverged={draftOfferKind(draftOffer, originalState) === "diverged"} onRestore={handleRestoreDraft} onDiscard={handleDiscardDraft} />
+                    </div>
+                )}
 
                 <div className="page-gutter mt-4 grid gap-4 [--page-max:1280px] sm:mt-6 sm:gap-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
                     <div className="min-w-0">
@@ -325,7 +504,7 @@ function EditorContent({ slug, detail, queryClient }: IEditorContentProps) {
                             ))}
                         </section>
                         {state.tiers.length === 0 && (
-                            <div className="mt-3 rounded-xl border border-border border-dashed bg-muted/20 px-5 py-10 text-center">
+                            <div className="mt-3 rounded-2xl border border-border border-dashed bg-muted/20 px-5 py-10 text-center">
                                 <p className="m-0 font-medium font-sans text-foreground text-sm">{t("edit.board.emptyTitle")}</p>
                                 <p className="mt-1 font-sans text-[12.5px] text-muted-foreground">{t("edit.board.emptyBody")}</p>
                                 <Button onClick={handleAddTier} size="sm" className="mt-3">
@@ -368,7 +547,7 @@ function EditorContent({ slug, detail, queryClient }: IEditorContentProps) {
                 />
 
                 <PublishVersionDialog open={publishOpen} publishing={publishMutation.isPending} latestVersion={latestVersion} nextVersion={nextVersion} publishError={publishError} onClose={handleClosePublishDialog} onPublish={handlePublish} />
-            </main>
+            </div>
         </DragControllerProvider>
     );
 }
@@ -419,13 +598,13 @@ function EditorMissing() {
     const t: TypedT<typeof messages> = useT("tierLists");
 
     return (
-        <main className="mx-auto w-[min(720px,calc(100%-2rem))] py-20 text-center">
+        <div className="mx-auto w-[min(720px,calc(100%-2rem))] py-20 text-center">
             <h1 className="m-0 font-bold font-sans text-2xl text-foreground tracking-tight">{t("edit.missing.title")}</h1>
             <p className="mt-3 font-sans text-muted-foreground text-sm">{t("edit.missing.body")}</p>
             <Button render={<Link to="/tier-lists/my" search={{ sort: "recent", type: "all", view: "grid", q: "" }} />} variant="outline" className="mt-6">
                 {t("edit.missing.action")}
             </Button>
-        </main>
+        </div>
     );
 }
 
@@ -433,12 +612,12 @@ function EditorForbidden({ slug }: { slug: string }) {
     const t: TypedT<typeof messages> = useT("tierLists");
 
     return (
-        <main className="mx-auto w-[min(720px,calc(100%-2rem))] py-20 text-center">
+        <div className="mx-auto w-[min(720px,calc(100%-2rem))] py-20 text-center">
             <h1 className="m-0 font-bold font-sans text-2xl text-foreground tracking-tight">{t("edit.forbidden.title")}</h1>
             <p className="mt-3 font-sans text-muted-foreground text-sm">{t("edit.forbidden.body")}</p>
             <Button render={<Link to="/tier-lists/$id" params={{ id: slug }} />} variant="outline" className="mt-6">
                 {t("edit.forbidden.action")}
             </Button>
-        </main>
+        </div>
     );
 }

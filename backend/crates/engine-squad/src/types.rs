@@ -4,7 +4,8 @@ pub use myrtle_gamedata::index::squad::types::{SynergyCond, SynergyTargetKind};
 
 pub use crate::policy::{SQUAD_SIZE, SUPPORT_SEAT};
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct SquadMemberBuild {
     pub char_id: String,
     pub phase: i32,
@@ -17,7 +18,8 @@ pub struct SquadMemberBuild {
     pub module_level: i32,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct SquadAnalyzeRequest {
     pub members: Vec<Option<SquadMemberBuild>>,
     pub support: Option<SquadMemberBuild>,
@@ -26,7 +28,8 @@ pub struct SquadAnalyzeRequest {
     pub dub: Option<String>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct SquadAnalysis {
     pub coverage: Vec<CoverageGroup>,
     pub economy: Economy,
@@ -38,7 +41,8 @@ pub struct SquadAnalysis {
     pub unread_seats: Vec<i32>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "snake_case")]
 pub enum CoverageGroupKey {
     GettingOnTheField,
@@ -48,7 +52,8 @@ pub enum CoverageGroupKey {
     Utility,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "snake_case")]
 pub enum CoverageRowKey {
     DpGen,
@@ -70,19 +75,22 @@ pub enum CoverageRowKey {
     Summons,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct CoverageGroup {
     pub key: CoverageGroupKey,
     pub rows: Vec<CoverageRow>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct CoverageRow {
     pub key: CoverageRowKey,
     pub ops: Vec<CoverageOp>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct CoverageOp {
     pub seat: i32,
     pub char_id: String,
@@ -90,7 +98,8 @@ pub struct CoverageOp {
     pub why: SourceRef,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "snake_case")]
 pub enum SourceKind {
     Trait,
@@ -101,7 +110,8 @@ pub enum SourceKind {
     Tag,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct SourceRef {
     pub kind: SourceKind,
     pub name: Option<String>,
@@ -119,7 +129,8 @@ impl SourceRef {
     }
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct Economy {
     pub start_dp: i32,
     pub start_base: i32,
@@ -138,7 +149,8 @@ pub struct Economy {
     pub notes: Vec<EconomyNote>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct EconomyBonus {
     pub seat: i32,
     pub char_id: String,
@@ -146,7 +158,8 @@ pub struct EconomyBonus {
     pub amount: i32,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct EconomySeat {
     pub seat: i32,
     pub char_id: String,
@@ -161,7 +174,8 @@ pub struct EconomySeat {
     pub first_respawn_cuts: Vec<Cut>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "snake_case")]
 pub enum CutKind {
     Potential,
@@ -171,7 +185,8 @@ pub enum CutKind {
     Squad,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct Cut {
     pub kind: CutKind,
     pub name: Option<String>,
@@ -180,7 +195,8 @@ pub struct Cut {
     pub ratio: Option<f64>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct DpSource {
     pub seat: i32,
     pub char_id: String,
@@ -201,7 +217,8 @@ pub struct DpSource {
     pub auto: bool,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "snake_case")]
 pub enum EconomyNoteKind {
     OnceDeployed,
@@ -216,7 +233,8 @@ pub enum EconomyNoteKind {
     DpFloor,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "snake_case")]
 pub enum NoteStat {
     /// DP Cost
@@ -225,7 +243,8 @@ pub enum NoteStat {
     Respawn,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct EconomyNote {
     pub kind: EconomyNoteKind,
     pub seat: i32,
@@ -236,13 +255,15 @@ pub struct EconomyNote {
     pub ratio: Option<f64>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct Synergy {
     pub items: Vec<SynergyItem>,
     pub counts: SynergyCounts,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct SynergyCounts {
     pub check: i32,
     pub squad: i32,
@@ -250,7 +271,8 @@ pub struct SynergyCounts {
     pub place: i32,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "snake_case")]
 pub enum SynergyGroup {
     Check,
@@ -259,14 +281,16 @@ pub enum SynergyGroup {
     Place,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct SynergyTarget {
     pub kind: SynergyTargetKind,
     pub value: Option<String>,
     pub label: String,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "snake_case")]
 pub enum SynergyReason {
     Nobody,
@@ -276,13 +300,15 @@ pub enum SynergyReason {
     Unread,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct SynergyNeed {
     pub count: i32,
     pub have: i32,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct SynergyItem {
     pub seat: i32,
     pub char_id: String,
@@ -300,13 +326,15 @@ pub struct SynergyItem {
     pub highest_only: bool,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct Readiness {
     pub stats: ReadinessStats,
     pub rows: Vec<ReadinessRow>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct ReadinessStats {
     pub seats: i32,
     pub usual_phase: i32,
@@ -318,13 +346,15 @@ pub struct ReadinessStats {
     pub modules_possible: i32,
 }
 
-#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct Unlock {
     pub phase: i32,
     pub level: i32,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "snake_case")]
 pub enum ReadinessFlagKind {
     Promotion,
@@ -335,14 +365,16 @@ pub enum ReadinessFlagKind {
     SupportLeftOut,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct ReadinessFlag {
     pub kind: ReadinessFlagKind,
     pub value: Option<i32>,
     pub reference: Option<i32>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct ReadinessRow {
     pub seat: i32,
     pub char_id: String,
@@ -364,7 +396,8 @@ pub struct ReadinessRow {
     pub flags: Vec<ReadinessFlag>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct Themes {
     pub stats: ThemeStats,
     pub labels: Vec<ThemeShare>,
@@ -373,7 +406,8 @@ pub struct Themes {
     pub dub: String,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct ThemeStats {
     pub seats: i32,
     pub total_rarity: i32,
@@ -385,7 +419,8 @@ pub struct ThemeStats {
     pub missing: Vec<String>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "snake_case")]
 pub enum ThemeKind {
     Gender,
@@ -401,14 +436,16 @@ pub enum ThemeKind {
     Birthday,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct ThemeShare {
     pub kind: ThemeKind,
     pub value: String,
     pub seats: Vec<i32>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct SeatHandoff {
     pub seat: i32,
     pub char_id: String,
@@ -417,14 +454,16 @@ pub struct SeatHandoff {
     pub left_out: Vec<HandoffLeftOut>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct HandoffBuffs {
     pub atk: f64,
     pub flat_atk: i32,
     pub aspd: i32,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct HandoffSource {
     pub from_seat: i32,
     pub char_id: String,
@@ -435,7 +474,8 @@ pub struct HandoffSource {
     pub aspd: i32,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "snake_case")]
 pub enum HandoffLeftOutReason {
     Placement,
@@ -444,7 +484,8 @@ pub enum HandoffLeftOutReason {
     Conditional,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct HandoffLeftOut {
     pub from_seat: i32,
     pub char_id: String,

@@ -13,14 +13,14 @@ export function OperatorRow({ birthday }: { birthday: IOperatorBirthday }): Reac
     const t: TypedT<typeof messages> = useT("tools");
     const { displayName, subtitle } = parseOperatorName(birthday.operator.name);
     return (
-        <div className="grid grid-cols-[auto_1fr_auto] items-center gap-3.5 rounded-[10px] px-3 py-2.5 transition-colors hover:bg-accent">
+        <div className="grid grid-cols-[auto_1fr_auto] items-center gap-3.5 rounded-lg px-3 py-2.5 transition-colors hover:bg-accent">
             <OpChip operator={birthday.operator} size="lg" />
             <div className="min-w-0">
                 <div className="truncate font-sans font-semibold text-[14.5px] text-foreground tracking-[-0.005em]">
                     {displayName}
                     {subtitle && <span className="ml-1.5 font-normal text-[12px] text-muted-foreground">{subtitle}</span>}
                 </div>
-                <div className="truncate font-medium font-mono text-[11.5px] text-muted-foreground uppercase tracking-[0.06em]">{t("birthdays.row.classNation", { class: professionLabel(birthday.operator), nation: nationLabel(birthday.operator) ?? "" })}</div>
+                <div className="truncate text-[12px] text-muted-foreground">{t("birthdays.row.classNation", { class: professionLabel(birthday.operator), nation: nationLabel(birthday.operator) ?? "" })}</div>
             </div>
             <Stars rarity={operatorRarity(birthday.operator)} />
         </div>

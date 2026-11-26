@@ -1,10 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
-import { CornerDownRightIcon, SearchIcon } from "lucide-react";
+import { CornerDownRightIcon } from "lucide-react";
 import type * as React from "react";
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
+import { SearchField } from "#/components/SearchField";
 import { Button } from "#/components/ui/button";
-import { Input } from "#/components/ui/input";
 import { Kicker } from "#/components/ui/kicker";
+import { LoadFailed } from "#/components/ui/load-failed";
+import { Toggle } from "#/components/ui/toggle";
 import { archiveHiddenFactionsQueryOptions } from "#/lib/api/archives";
 import { useFormatters, useGamedataServer } from "#/lib/i18n";
 import { searchAndRank } from "#/lib/search/fuzzy";
@@ -36,8 +38,8 @@ const bandKey = (shown: string, hidden: string) => `${shown}\u0000${hidden}`;
 export function HiddenTab({ onOpenFile }: { onOpenFile: (id: string) => void }): React.ReactElement {
     const t = useArchivesT();
     const server = useGamedataServer();
-    const { data, isLoading, isError } = useQuery(archiveHiddenFactionsQueryOptions(server));
-    if (isError) return <TabMessage>{t("page.error")}</TabMessage>;
+    const { data, isLoading, isError, refetch } = useQuery(archiveHiddenFactionsQueryOptions(server));
+    if (isError) return <LoadFailed message={t("page.error")} onRetry={() => void refetch()} />;
     if (isLoading || !data) return <TabMessage>{t("page.loading")}</TabMessage>;
     return <Hidden data={data} onOpenFile={onOpenFile} server={server} />;
 }
@@ -72,7 +74,7 @@ function Hidden({ data, onOpenFile, server }: { data: ArchiveHiddenFactions; onO
     return (
         <div className="flex flex-col gap-6">
             <header className="flex flex-col gap-3">
-                <Kicker className="mb-0">{t("hidden.kicker")}</Kicker>
+                <Kicker>{t("hidden.kicker")}</Kicker>
                 <p className="m-0 max-w-3xl text-[13.5px] text-muted-foreground leading-normal">{t("hidden.lede")}</p>
                 <StatStrip>
                     <BigStat label={t("hidden.stat.factions")} value={f.number(hiddenFactions)} />
@@ -84,11 +86,10 @@ function Hidden({ data, onOpenFile, server }: { data: ArchiveHiddenFactions; onO
 
             <section className="flex flex-col gap-3">
                 <SectionHead index="01" title={t("hidden.s1.title")} blurb={t("hidden.s1.blurb")} />
-                <div className="flex flex-wrap items-center gap-2 rounded-[14px] border border-border bg-card p-2">
-                    <div className="relative min-w-0 flex-1 basis-56">
-                        <SearchIcon aria-hidden className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
-                        <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t("hidden.search")} aria-label={t("hidden.search")} className="pl-8" />
-                    </div>
+                <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-border bg-card p-2">
+                    {/* SearchField, not an icon absolutely placed behind an Input: the Input paints its own
+                        background over the icon, so the magnifier vanished on the light page. */}
+                    <SearchField value={query} onChange={setQuery} placeholder={t("hidden.search")} label={t("hidden.search")} className="min-w-0 flex-1 basis-56" />
                     {deferred ? <span className="font-mono text-[11px] text-muted-foreground tabular-nums">{t("hidden.searchCount", { shown: f.number(matches.length), total: f.number(data.secret.length) })}</span> : null}
                 </div>
                 <Panel>
@@ -116,7 +117,7 @@ function Hidden({ data, onOpenFile, server }: { data: ArchiveHiddenFactions; onO
                                 </div>
                                 {[...groups.entries()].map(([gid, g]) => (
                                     <div key={gid} className="flex flex-col gap-1.5">
-                                        <span className="font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.12em]">{t("hidden.cardShowsGroup", { name: g.name })}</span>
+                                        <Kicker>{t("hidden.cardShowsGroup", { name: g.name })}</Kicker>
                                         <div className="flex flex-wrap gap-1.5">
                                             {g.ids.map((id) => (
                                                 <PersonChip key={id} person={people.get(id)} onOpen={onOpenFile} server={server} />
@@ -182,26 +183,23 @@ function FlowChart({ secret, shownName, hiddenName, pick, onPick, lit }: { secre
         const isPicked = samePick(pick, p);
         const isRelated = related.has(`${side}:${node.id}`);
         const left = side === "shown";
+        // Unrelated nodes dim the logo only; the text drops to muted, never below it (opacity-40 put 12px text at 2.71 / 3.60).
+        const dim = pick !== null && !isPicked && !isRelated;
         return (
             <div key={node.id} className={cn("flex items-center", left ? "justify-end" : "justify-start")} style={{ height: node.slot, marginBottom: FLOW_GAP }}>
-                <button
-                    type="button"
-                    aria-pressed={isPicked}
+                <Toggle
+                    size="sm"
+                    pressed={isPicked}
                     aria-label={t("hidden.nodeLabel", { name, count: node.count })}
                     title={t("hidden.nodeLabel", { name, count: node.count })}
-                    onClick={() => onPick(p)}
+                    onPressedChange={() => onPick(p)}
                     {...hoverProps(setHover, p)}
-                    className={cn(
-                        "inline-flex h-6 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-md px-2 text-[12px] outline-none transition-[opacity,color,background-color] focus-visible:ring-2 focus-visible:ring-ring",
-                        left ? "flex-row" : "flex-row-reverse",
-                        isPicked ? "bg-primary font-semibold text-primary-foreground" : "text-foreground hover:text-primary",
-                        pick && !isPicked && !isRelated ? "opacity-40" : "",
-                    )}
+                    className={cn("h-6 min-w-0 gap-1.5 rounded-md px-2 text-[12px] sm:h-6 sm:min-w-0 sm:text-[12px]", left ? "flex-row" : "flex-row-reverse", isPicked ? "font-semibold" : dim ? "text-muted-foreground hover:text-foreground" : "text-foreground hover:text-primary")}
                 >
                     <span className={cn("font-mono tabular-nums", isPicked ? "" : "text-muted-foreground")}>{f.number(node.count)}</span>
-                    <FactionLogo id={node.id} className="size-3.5" />
+                    <FactionLogo id={node.id} className={cn("size-3.5", dim && "opacity-40")} />
                     <span className="font-medium">{name}</span>
-                </button>
+                </Toggle>
             </div>
         );
     };
@@ -213,7 +211,7 @@ function FlowChart({ secret, shownName, hiddenName, pick, onPick, lit }: { secre
     const bandsFrom = (id: string) => layout.bands.filter((b) => b.shown === id);
     const list = (
         <ul className="m-0 flex list-none flex-col p-0 sm:hidden">
-            <li className="flex justify-between pb-1 font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.12em]">
+            <li className="kicker flex justify-between pb-1">
                 <span>{t("hidden.cardShows")}</span>
                 <span>{t("hidden.secretlyAlso")}</span>
             </li>
@@ -226,25 +224,23 @@ function FlowChart({ secret, shownName, hiddenName, pick, onPick, lit }: { secre
                             const isPicked = samePick(pick, p);
                             const on = lit.has(bandKey(b.shown, b.hidden));
                             const text = t("hidden.bandLabel", { count: b.count, shown: shownName(b.shown), hidden: hiddenName(b.hidden) });
+                            const dimBand = pick !== null && !isPicked && !covers(pick, b.shown, b.hidden);
                             return (
-                                <button
+                                <Toggle
                                     key={bandKey(b.shown, b.hidden)}
-                                    type="button"
-                                    aria-pressed={isPicked}
+                                    variant="outline"
+                                    size="sm"
+                                    pressed={isPicked}
                                     aria-label={text}
                                     title={text}
-                                    onClick={() => onPick(p)}
-                                    className={cn(
-                                        "inline-flex min-h-11 cursor-pointer items-center gap-1.5 rounded-md border px-2.5 text-[12px] outline-none transition-[opacity,color,background-color] focus-visible:ring-2 focus-visible:ring-ring",
-                                        isPicked ? "border-primary bg-primary font-semibold text-primary-foreground" : on ? "border-primary text-primary" : "border-border text-foreground",
-                                        pick && !isPicked && !covers(pick, b.shown, b.hidden) ? "opacity-40" : "",
-                                    )}
+                                    onPressedChange={() => onPick(p)}
+                                    className={cn("min-h-11 gap-1.5 px-2.5 text-[12px] sm:text-[12px]", isPicked ? "font-semibold" : on ? "border-primary text-primary" : dimBand ? "text-muted-foreground" : "")}
                                 >
                                     <CornerDownRightIcon aria-hidden className="size-3.5 opacity-60" />
-                                    <FactionLogo id={b.hidden} className="size-3.5" />
+                                    <FactionLogo id={b.hidden} className={cn("size-3.5", dimBand && "opacity-40")} />
                                     <span className="font-medium">{hiddenName(b.hidden)}</span>
                                     <span className={cn("font-mono tabular-nums", isPicked ? "" : "text-muted-foreground")}>{f.number(b.count)}</span>
-                                </button>
+                                </Toggle>
                             );
                         })}
                     </div>
@@ -263,9 +259,9 @@ function FlowChart({ secret, shownName, hiddenName, pick, onPick, lit }: { secre
             {list}
             <div className="overflow-x-auto max-sm:hidden">
                 <div className="grid min-w-[520px] grid-cols-[max-content_minmax(120px,1fr)_max-content] gap-x-2">
-                    <span className="pb-2 text-right font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.12em]">{t("hidden.cardShows")}</span>
+                    <Kicker className="pb-2 text-right">{t("hidden.cardShows")}</Kicker>
                     <span />
-                    <span className="pb-2 font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.12em]">{t("hidden.secretlyAlso")}</span>
+                    <Kicker className="pb-2">{t("hidden.secretlyAlso")}</Kicker>
 
                     <div style={{ paddingTop: layout.left[0]?.top ?? 0 }}>{layout.left.map((n) => label("shown", n))}</div>
                     <div ref={midRef} className="min-w-0">
@@ -290,7 +286,7 @@ function FlowChart({ secret, shownName, hiddenName, pick, onPick, lit }: { secre
                                                 tabIndex={0}
                                                 aria-label={text}
                                                 aria-pressed={samePick(pick, p)}
-                                                className="cursor-pointer outline-none transition-[stroke-opacity]"
+                                                className="cursor-pointer outline-none transition-[stroke-opacity] focus-visible:stroke-(--ring) focus-visible:[stroke-opacity:1]"
                                                 style={{ pointerEvents: "stroke" }}
                                                 onClick={() => onPick(p)}
                                                 {...hoverProps(setHover, p)}
@@ -377,11 +373,11 @@ function PickList({
     );
     const sub = (title: string, id: string, rows: readonly ArchiveSecret[]) => (
         <div key={id} className="flex flex-col gap-1.5">
-            <span className="inline-flex items-center gap-1.5 font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.12em]">
+            <Kicker className="inline-flex items-center gap-1.5">
                 <FactionLogo id={id} className="size-3.5" />
                 {title}
                 <span className="tabular-nums">{f.number(rows.length)}</span>
-            </span>
+            </Kicker>
             {chips(rows)}
         </div>
     );
@@ -392,7 +388,7 @@ function PickList({
             <>
                 <div className="flex items-center gap-2">
                     {pick.kind === "band" ? null : <FactionLogo id={pick.id} className="size-5" />}
-                    <h4 className="m-0 font-semibold text-[13px] text-foreground uppercase tracking-[0.08em]">{head}</h4>
+                    <h4 className="m-0 font-semibold text-[13px] text-foreground">{head}</h4>
                     <span className="font-mono text-[12px] text-muted-foreground tabular-nums">{f.number(picked.length)}</span>
                     <Button size="xs" variant="ghost" className="ml-auto" onClick={onClear}>
                         {t("hidden.clear")}
@@ -411,7 +407,7 @@ function PickList({
                 <p className="m-0 text-[12px] text-muted-foreground">{t("hidden.noMatch")}</p>
             ) : (
                 <>
-                    <h4 className="m-0 font-semibold text-[13px] text-foreground uppercase tracking-[0.08em]">{t("hidden.found", { count: f.number(matches.length) })}</h4>
+                    <h4 className="m-0 font-semibold text-[13px] text-foreground">{t("hidden.found", { count: f.number(matches.length) })}</h4>
                     {groupBy(matches, (s) => s.hidden.id).map(([id, rows]) => sub(t("hidden.secretlyGroup", { name: hiddenName(id) }), id, rows))}
                 </>
             );

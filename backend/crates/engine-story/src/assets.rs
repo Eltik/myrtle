@@ -7,7 +7,8 @@ use myrtle_gamedata_raw::{DirSource, TableSource};
 use serde::{Deserialize, Serialize};
 
 /// Face patch placement in body texture pixels
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct FacePos {
     pub x: f32,
@@ -16,14 +17,16 @@ pub struct FacePos {
     pub h: f32,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct BodySize {
     pub w: f32,
     pub h: f32,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct PlateRect {
     pub x: f32,
@@ -32,50 +35,64 @@ pub struct PlateRect {
     pub h: f32,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct ImageSize {
     pub w: f32,
     pub h: f32,
     pub ppu: f32,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub ppu_assumed: Option<bool>,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct CharacterSprite {
     pub body_url: String,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub face_url: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub face_pos: Option<FacePos>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub body_size: Option<BodySize>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub plate: Option<PlateRect>,
 }
 
-#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct MusicCue {
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub intro: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub r#loop: Option<String>,
 }
 
-#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct VideoSources {
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub webm_url: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub mp4_url: Option<String>,
 }
 
 /// Resolved assets of one script
-#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct StoryAssets {
     pub backgrounds: BTreeMap<String, String>,

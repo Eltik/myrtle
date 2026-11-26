@@ -202,7 +202,7 @@
     z-index: 2;
     overflow: hidden;
     text-align: center;
-    /* The rarity's star colour (`rarityStarColor`), set inline as --star-color. */
+    /* The rarity's star ink (`rarityInk`), set inline as --star-color. */
     color: var(--star-color);
     font-size: max(8px, calc(13 * var(--u)));
     letter-spacing: -1px;
@@ -433,6 +433,16 @@
     aspect-ratio: 177 / 268;
 }
 
+/* Below sm an empty seat is square: twelve card-tall empty cells ran the grid
+   to about 1200px on a phone. In a row beside a filled card it stretches to the
+   card's height (the li is a stretched grid item), so the row stays even. */
+@media (max-width: 639.98px) {
+    .empty {
+        aspect-ratio: 1;
+        height: 100%;
+    }
+}
+
 @media (prefers-reduced-motion: reduce) {
     .card,
     .shine,
@@ -444,4 +454,9 @@
     .card[data-drop="true"] {
         transform: none;
     }
+}
+
+/* The in-game card's uppercase role tag and name strip keep their Latin tracking; a CJK page drops it, as `.kicker` does. */
+:is(:lang(ko), :lang(ja), :lang(zh), :lang(th)) :is(.role, .name) {
+    letter-spacing: normal;
 }

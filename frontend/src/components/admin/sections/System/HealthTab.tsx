@@ -122,9 +122,7 @@ export function HealthTab({ enabled }: { enabled: boolean }): React.ReactElement
         <div className="flex flex-col gap-3">
             <div className="flex flex-col gap-1">
                 <div className="flex flex-wrap items-center gap-3">
-                    <StatusDot state={healthDot(summary)} pulse={summary !== "unreachable"}>
-                        {copy.status(summary)}
-                    </StatusDot>
+                    <StatusDot state={healthDot(summary)}>{copy.status(summary)}</StatusDot>
                     {healthQuery.dataUpdatedAt > 0 ? <span className="whitespace-nowrap text-[12.5px] text-muted-foreground">{t("system.health.checked", { when: f.relativeShort(healthQuery.dataUpdatedAt) })}</span> : null}
                 </div>
                 {detail ? <p className="text-[12.5px] text-muted-foreground">{detail}</p> : null}

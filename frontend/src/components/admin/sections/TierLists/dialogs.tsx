@@ -9,12 +9,13 @@ import { Dialog, DialogClose, DialogDescription, DialogFooter, DialogHeader, Dia
 import { useErrorMessage } from "#/components/ui/error-message";
 import { Field, FieldLabel } from "#/components/ui/field";
 import { Input } from "#/components/ui/input";
+import { LoadFailed } from "#/components/ui/load-failed";
 import { Skeleton } from "#/components/ui/skeleton";
 import { Textarea } from "#/components/ui/textarea";
+import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import { useLastDefined } from "#/hooks/use-last-defined";
 import { createTierListFn, deleteTierListFn, setTierListFlairFn, tierListFlairsQueryOptions } from "#/lib/api/tier-lists";
 import { useT } from "#/lib/i18n";
-import { cn } from "#/lib/utils";
 import type { TierListsT } from "./labels";
 import type { ITierListRow } from "./model";
 
@@ -75,6 +76,8 @@ export function NewListDialog({ open, onOpenChange }: { open: boolean; onOpenCha
     );
 }
 
+const NO_FLAIR = "none";
+
 export function FlairDialog({ list, onClose }: { list: ITierListRow | null; onClose: () => void }): React.ReactElement {
     const t: TierListsT = useT("admin");
     const describeError = useErrorMessage();
@@ -100,8 +103,6 @@ export function FlairDialog({ list, onClose }: { list: ITierListRow | null; onCl
         onError: (err: unknown) => toastError("tier-lists-flair-failed", t("tierLists.flair.failed"), describeError(err)),
     });
 
-    const chip = "inline-flex h-8 pointer-coarse:h-10 cursor-pointer items-center gap-1.5 rounded-md border border-border bg-card px-2.5 font-medium text-[13px] transition-shadow hover:bg-accent";
-
     return (
         <Dialog open={list !== null} onOpenChange={(open) => !open && onClose()}>
             <DialogPopup className="max-w-md">
@@ -110,21 +111,24 @@ export function FlairDialog({ list, onClose }: { list: ITierListRow | null; onCl
                     <DialogDescription>{t("tierLists.flair.desc", { title: shown?.title ?? "" })}</DialogDescription>
                 </DialogHeader>
                 <DialogPanel>
-                    {flairsQuery.isPending ? (
+                    {flairsQuery.isError ? (
+                        <LoadFailed layout="inline" message={t("tierLists.flair.loadError")} onRetry={() => void flairsQuery.refetch()} />
+                    ) : flairsQuery.isPending ? (
                         <Skeleton className="h-8" />
                     ) : (
-                        <div className="flex flex-wrap items-center gap-2">
-                            <button type="button" aria-pressed={selected === null} onClick={() => setSelected(null)} className={cn(chip, selected === null && "ring-2 ring-ring")}>
-                                <span className="size-2 rounded-full bg-muted-foreground/40" />
+                        // A flair's colour is user-picked, so it stays on the dot; the label is foreground text.
+                        <ToggleGroup aria-label={t("tierLists.flair.title")} variant="outline" value={[selected === null ? NO_FLAIR : String(selected)]} onValueChange={(v) => v[0] && setSelected(v[0] === NO_FLAIR ? null : Number(v[0]))} className="flex-wrap">
+                            <ToggleGroupItem value={NO_FLAIR}>
+                                <span aria-hidden className="size-2 rounded-full bg-muted-foreground" />
                                 {t("tierLists.flair.none")}
-                            </button>
+                            </ToggleGroupItem>
                             {flairs.map((fl) => (
-                                <button key={fl.code} type="button" aria-pressed={selected === fl.id} onClick={() => setSelected(fl.id)} className={cn(chip, selected === fl.id && "ring-2 ring-ring")} style={{ color: fl.color ?? undefined }}>
-                                    <span className="size-2 rounded-full" style={{ background: fl.color ?? "var(--muted-foreground)" }} />
+                                <ToggleGroupItem key={fl.code} value={String(fl.id)}>
+                                    <span aria-hidden className="size-2 rounded-full" style={{ background: fl.color ?? "var(--muted-foreground)" }} />
                                     {fl.label}
-                                </button>
+                                </ToggleGroupItem>
                             ))}
-                        </div>
+                        </ToggleGroup>
                     )}
                 </DialogPanel>
                 <DialogFooter>

@@ -3,31 +3,38 @@ use serde::{Deserialize, Serialize};
 use super::profile::{ArchiveGender, ArchiveProfile, ExamAxis, ExamStep, InfectionState};
 use myrtle_gamedata_raw::tables::operator::HiddenFaction;
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct ArchivePerson {
     pub id: String,
     pub name: String,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub number: Option<String>,
     /// 1..=6, `None` for an NPC
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub rarity: Option<u8>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub profession: Option<String>,
     pub npc: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub faction_id: Option<String>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct ArchivePoint {
     pub x: f64,
     pub y: f64,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct ArchiveHex {
     pub index: u32,
@@ -35,7 +42,8 @@ pub struct ArchiveHex {
     pub y: f64,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct ArchiveForce {
     pub id: String,
@@ -54,18 +62,22 @@ pub struct ArchiveForce {
     pub member_count: u32,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct ArchiveEdge {
     /// 0..=5
     pub direction: u8,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub char_id: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub force_id: Option<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct ArchiveCell {
     pub char_id: String,
@@ -75,10 +87,12 @@ pub struct ArchiveCell {
     pub outline: bool,
     pub edges: Vec<ArchiveEdge>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub force_id: Option<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct ArchiveBlock {
     pub force_id: String,
@@ -90,7 +104,8 @@ pub struct ArchiveBlock {
     pub members: Vec<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct ArchiveFiller {
     pub id: String,
@@ -100,14 +115,16 @@ pub struct ArchiveFiller {
     pub edges: Vec<ArchiveEdge>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct ArchiveLine {
     pub a: String,
     pub b: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct ArchiveGroup {
     pub id: String,
@@ -120,21 +137,24 @@ pub struct ArchiveGroup {
     pub lines: Vec<ArchiveLine>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct ArchivePair {
     pub a: String,
     pub b: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct ArchiveHexLink {
     pub from: u32,
     pub to: u32,
 }
 
-#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct ArchiveNetwork {
     /// False when this server ships no network tables
@@ -146,7 +166,8 @@ pub struct ArchiveNetwork {
     pub people: Vec<ArchivePerson>,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct ArchiveDossier {
     pub id: String,
@@ -155,32 +176,45 @@ pub struct ArchiveDossier {
     pub profession: String,
     pub sub_profession_id: String,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub sub_profession_name: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub faction_id: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub nation: Option<ArchiveFactionRef>,
     pub affiliations: Vec<ArchiveFactionRef>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub gender: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub gender_key: Option<ArchiveGender>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub race: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub birthplace: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub height: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub height_cm: Option<f64>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub combat_experience: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub combat_years: Option<f64>,
     pub infection_state: InfectionState,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub assimilation: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub assimilation_pct: Option<f64>,
     /// Stories the operator speaks in
     pub story_count: u32,
@@ -190,31 +224,36 @@ pub struct ArchiveDossier {
     pub link_count: u32,
 }
 
-#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct ArchiveDossiers {
     pub dossiers: Vec<ArchiveDossier>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct ArchiveFactionRef {
     pub id: String,
     pub name: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct ArchiveNumber {
     pub display: String,
     pub prefix: String,
     pub holders: u32,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub faction: Option<ArchiveFactionRef>,
     pub faction_holders: u32,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct ArchiveRecord {
     pub id: String,
@@ -222,38 +261,45 @@ pub struct ArchiveRecord {
 }
 
 /// One story an operator speaks in
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct ArchiveAppearance {
     pub story_id: String,
     pub name: String,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub code: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub tag: Option<String>,
     pub group_id: String,
     pub group_name: String,
     pub lines: f64,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct ArchiveSceneMate {
     pub char_id: String,
     pub stories: u32,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct ArchiveChartRef {
     pub group_id: String,
     pub group_name: String,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub force_id: Option<String>,
     pub home: bool,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct ArchiveOperator {
     pub id: String,
@@ -262,12 +308,15 @@ pub struct ArchiveOperator {
     pub profession: String,
     pub sub_profession_id: String,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub sub_profession_name: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub number: Option<ArchiveNumber>,
     pub factions: Vec<ArchiveFactionRef>,
     pub hidden_factions: Vec<HiddenFaction>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub profile: Option<ArchiveProfile>,
     pub records: Vec<ArchiveRecord>,
     pub appearances: Vec<ArchiveAppearance>,
@@ -278,14 +327,16 @@ pub struct ArchiveOperator {
     pub exam_steps: u32,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct ArchiveCount {
     pub value: String,
     pub count: u32,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct ArchiveBucket {
     pub from: f64,
@@ -294,7 +345,8 @@ pub struct ArchiveBucket {
 }
 
 /// One numeric field over every file that states it.
-#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct ArchiveDistribution {
     pub counted: u32,
@@ -308,7 +360,8 @@ pub struct ArchiveDistribution {
     pub buckets: Vec<ArchiveBucket>,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct ArchiveGroupMean {
     pub value: String,
@@ -316,7 +369,8 @@ pub struct ArchiveGroupMean {
     pub mean: f64,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct ArchiveInfectionRow {
     pub value: String,
@@ -325,24 +379,29 @@ pub struct ArchiveInfectionRow {
     pub clear: u32,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct ArchiveScaleStep {
     pub key: ExamStep,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub word: Option<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct ArchiveGenderCount {
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub key: Option<ArchiveGender>,
     pub value: String,
     pub count: u32,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct ArchiveExamColumn {
     pub axis: ExamAxis,
@@ -350,7 +409,8 @@ pub struct ArchiveExamColumn {
     pub unrecorded: u32,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct ArchiveDayCount {
     pub month: u8,
@@ -358,24 +418,28 @@ pub struct ArchiveDayCount {
     pub count: u32,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct ArchiveHolder {
     pub char_id: String,
     pub number: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct ArchivePrefix {
     pub prefix: String,
     pub holders: Vec<ArchiveHolder>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub faction: Option<ArchiveFactionRef>,
     pub faction_holders: u32,
 }
 
-#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct ArchiveDemographics {
     /// # of operator files
@@ -403,7 +467,8 @@ pub struct ArchiveDemographics {
     pub people: Vec<ArchivePerson>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct ArchiveSecret {
     pub char_id: String,
@@ -411,21 +476,24 @@ pub struct ArchiveSecret {
     pub hidden: ArchiveFactionRef,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct ArchiveShownMember {
     pub char_id: String,
     pub shown: ArchiveFactionRef,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct ArchiveNationBehind {
     pub nation: ArchiveFactionRef,
     pub members: Vec<ArchiveShownMember>,
 }
 
-#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct ArchiveHiddenFactions {
     pub secret: Vec<ArchiveSecret>,

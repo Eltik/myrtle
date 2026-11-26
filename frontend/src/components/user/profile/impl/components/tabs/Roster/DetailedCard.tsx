@@ -8,13 +8,14 @@ import { Dialog } from "#/components/ui/dialog";
 import { Progress } from "#/components/ui/progress";
 import { ScrollArea } from "#/components/ui/scroll-area";
 import { Separator } from "#/components/ui/separator";
-import { useT } from "#/lib/i18n";
+import { useDataSaver } from "#/hooks/use-data-saver";
+import { useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { professionLabel } from "#/lib/utils";
 import type { IEnrichedSkill, IModule } from "#/types/operators";
 import { DynamicArtOverlay } from "../../../DynamicArtOverlay";
 import type { messages } from "./DetailedCard.messages";
-import { getAttributeStats, getTrustPercent, isMaxed, MAX_LEVEL_BY_RARITY, moduleIconURL, moduleTypeLabel, ownedHeroURL, rarityIcon, skillIconURL, specializedIcon } from "./helpers.card";
+import { getAttributeStats, getTrustPercent, isMaxed, MAX_LEVEL_BY_RARITY, moduleIconURL, moduleTypeLabel, OBTAINED_DATE, obtainedDate, ownedAvatar, ownedHeroURL, rarityIcon, skillIconURL, specializedIcon } from "./helpers.card";
 import type { messages as cardMessages } from "./helpers.card.messages";
 import { OperatorDialog } from "./OperatorDialog";
 import type { IOwnedEntry } from "./types";
@@ -29,8 +30,10 @@ interface IDetailedCardProps {
 
 export function DetailedCard({ entry, lastRef }: IDetailedCardProps) {
     const t: DetailedT = useT("user");
+    const f = useFormatters();
     const op = entry.static;
     const star = entry.rarity;
+    const obtained = obtainedDate(entry);
     const rarityColor = RARITY_COLORS[star] ?? "#ffffff";
     const maxed = isMaxed(entry);
     const trustPct = getTrustPercent(entry.favor_point);
@@ -44,6 +47,8 @@ export function DetailedCard({ entry, lastRef }: IDetailedCardProps) {
     const [trustProgress, setTrustProgress] = useState(0);
     const [dialogOpen, setDialogOpen] = useState(false);
     const [dynActive, setDynActive] = useState(false);
+    // Data saver keeps the multi-MB art and its animation for the dialog a press opens.
+    const dataSaver = useDataSaver();
     const cardRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -91,34 +96,33 @@ export function DetailedCard({ entry, lastRef }: IDetailedCardProps) {
     return (
         <div ref={lastRef ?? undefined} className="w-full">
             <Dialog onOpenChange={setDialogOpen} open={dialogOpen}>
+                {/* The card is not a role=button: it holds the Potential, Skills and Modules accordion
+                    triggers, which made each one a control nested inside another. The open button laid
+                    over the art is the keyboard and screen-reader path; the card's own click only widens
+                    the mouse target, and still skips the accordion. */}
                 <Card
                     ref={cardRef}
-                    aria-label={t("profile.roster.detailed.openAria", { name: entry.name })}
-                    className="fade-in slide-in-from-bottom-4 flex w-full animate-in cursor-pointer flex-col gap-0 overflow-hidden border-2 border-muted/30 py-0 pb-1 text-left transition-all duration-300 hover:border-muted hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="fade-in slide-in-from-bottom-4 flex w-full animate-in cursor-pointer flex-col gap-0 overflow-hidden border-2 border-muted/30 py-0 pb-1 text-left transition-all duration-300 hover:border-muted hover:shadow-lg"
                     onClick={(e) => {
                         if ((e.target as HTMLElement).closest("[data-roster-card-accordion]")) return;
                         setDialogOpen(true);
                     }}
-                    onKeyDown={(e) => {
-                        if (e.target !== e.currentTarget) return;
-                        if (e.key === "Enter" || e.key === " ") {
-                            e.preventDefault();
-                            setDialogOpen(true);
-                        }
-                    }}
                     onMouseEnter={() => setHovered(true)}
                     onMouseLeave={() => setHovered(false)}
-                    role="button"
                     style={maxed ? { boxShadow: `0 0 20px ${rarityColor}60, 0 0 40px ${rarityColor}40` } : undefined}
-                    tabIndex={0}
                 >
                     <div className="relative">
                         <div className="relative aspect-5/4 w-full cursor-pointer overflow-hidden">
                             {/* `scale-105` sets the CSS `scale` property (Tailwind v4), so the transition must name `scale`, not `transform`. */}
-                            <img alt={entry.name} src={ownedHeroURL(entry)} className={`h-full w-full object-cover object-top transition-[scale,opacity] duration-300 ${hovered ? "scale-105" : "scale-100"} ${dynActive ? "opacity-0" : "opacity-100"}`} decoding="async" loading="lazy" />
+                            {dataSaver ? (
+                                <img alt={entry.name} src={ownedAvatar(entry.operator_id, entry.skin_id)} className={`h-full w-full object-contain object-top px-6 pt-4 pb-26 transition-[scale] duration-300 ${hovered ? "scale-105" : "scale-100"}`} decoding="async" loading="lazy" />
+                            ) : (
+                                <img alt={entry.name} src={ownedHeroURL(entry)} className={`h-full w-full object-cover object-top transition-[scale,opacity] duration-300 ${hovered ? "scale-105" : "scale-100"} ${dynActive ? "opacity-0" : "opacity-100"}`} decoding="async" loading="lazy" />
+                            )}
                             {/* The L2D is composited over the same hero art at the game's authored frame and cropped exactly as the image above (cover, top). */}
-                            <DynamicArtOverlay elite={entry.elite} operatorCode={entry.operator_id} skinId={entry.skin_id} viewportGated fit={{ mode: "cover", align: "top" }} framing="authored" surface="panel" backdrop={ownedHeroURL(entry)} onActiveChange={setDynActive} />
+                            {!dataSaver && <DynamicArtOverlay elite={entry.elite} operatorCode={entry.operator_id} skinId={entry.skin_id} viewportGated fit={{ mode: "cover", align: "top" }} framing="authored" surface="panel" backdrop={ownedHeroURL(entry)} onActiveChange={setDynActive} />}
                             <div className={`absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent transition-opacity duration-300 ${hovered ? "opacity-100" : "opacity-90"}`} />
+                            <button type="button" aria-label={t("profile.roster.detailed.openAria", { name: entry.name })} onClick={() => setDialogOpen(true)} className="absolute inset-0 z-1 cursor-pointer focus-visible:-outline-offset-2" />
                             <div className="absolute right-0 bottom-0 left-0 p-4">
                                 <h3 className={`mt-2 max-w-3/4 text-left font-bold text-white text-xl transition-all duration-300 ${hovered ? "translate-y-0" : "translate-y-1"}`}>{entry.name}</h3>
                                 <div className={`flex items-center justify-between transition-all duration-300 ${hovered ? "translate-y-0" : "translate-y-1"}`}>
@@ -167,6 +171,12 @@ export function DetailedCard({ entry, lastRef }: IDetailedCardProps) {
                             <Stat label={t("profile.roster.card.stat.cost")} value={stats?.cost} />
                             <Stat label={t("profile.roster.card.stat.block")} value={stats?.blockCnt} />
                         </div>
+                        {obtained && (
+                            <div className="mt-1 flex items-center justify-between text-xs">
+                                <span className="text-muted-foreground">{t("profile.roster.card.obtained")}</span>
+                                <span className="font-medium tabular-nums">{f.date(obtained, OBTAINED_DATE)}</span>
+                            </div>
+                        )}
                         <Separator className="my-3" />
                         <div data-roster-card-accordion>
                             <Accordion className="w-full" multiple>

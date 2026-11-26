@@ -13,7 +13,7 @@ import { glyphIndexFor, type IChipModel, sectionChapters } from "./chapters";
 import { groupSearchTarget, type IReadFraction, keepEqualFractions, LIBRARY_SORTS, type LibGroup, type LibIndex, type LibRecord, type LibrarySort, matchesReadState, prepareSearch, READ_FILTERS, type ReadFilter, readFraction, readsFractions, recordSearchTarget, searchList, sortLibrary } from "./derive";
 import { GroupCard, GroupGrid, GroupRow, GroupRowList } from "./GroupCard";
 import { OperatorsTab } from "./OperatorsTab";
-import { browseOrder, chapterNeighbours, type FilterKey, RECORDS_ID, sectionFilterKey, sectionGroups, sectionLibrary, type ViewMode } from "./sections";
+import { browseOrder, chapterNeighbours, type FilterKey, kindOf, RECORDS_ID, sectionFilterKey, sectionGroups, sectionLibrary, type ViewMode } from "./sections";
 import { TOOLBAR_DEFAULTS } from "./toolbar";
 
 type BrowseT = TypedT<typeof messages>;
@@ -144,6 +144,7 @@ export function Browse({ index, progress, gameRead, openGroup, onOpenHandled }: 
     const recordsForced = searched.trim() !== "" || shownFilter === "records";
     const showRecords = recordsOpen || recordsForced;
 
+    const storyGroupCount = useMemo(() => index.groups.filter((g) => g.category !== "record").length, [index.groups]);
     const openGroupObject = useMemo(() => (openId ? (index.groups.find((g) => g.id === openId) ?? null) : null), [openId, index.groups]);
     // The sheet's left and right are the page's own order: the shelves as the
     // sections and the jump bar lay them out, or the one list a sort made. A
@@ -205,27 +206,40 @@ export function Browse({ index, progress, gameRead, openGroup, onOpenHandled }: 
     // components of the head's controls twice over.
     const toolbar: IBrowseToolbarState = useMemo(() => ({ query, setQuery, filter, setFilter, readFilter, setReadFilter, sort, setSort, view, setView }), [query, filter, readFilter, setReadFilter, sort, setSort, view, setView]);
     const tools = useMemo(() => <ToolbarButton state={toolbar} />, [toolbar]);
+    // The pinned bar's search button shows only once the inline toolbar has
+    // gone under the site header, so the page never offers two at once.
+    const toolbarRef = useRef<HTMLDivElement | null>(null);
+    const [toolbarInView, setToolbarInView] = useState(true);
+    useEffect(() => {
+        const node = toolbarRef.current;
+        if (!node || typeof IntersectionObserver === "undefined") return;
+        // 65 px is the tallest site header (4rem + 1px); the phone's 57 px one shows the button 8 px early.
+        const observer = new IntersectionObserver(([entry]) => setToolbarInView(entry?.isIntersecting ?? true), { rootMargin: "-65px 0px 0px 0px" });
+        observer.observe(node);
+        return () => observer.disconnect();
+    }, []);
     const closeSheet = useCallback(() => setOpenId(null), []);
 
     return (
         <>
-            <div className="flex flex-col gap-3">
+            <div ref={toolbarRef} className="flex flex-col gap-3">
                 <BrowseToolbar state={toolbar} />
 
-                {library.fallback ? <p className="m-0 rounded-[10px] border border-warning/40 bg-warning/8 px-3 py-2 font-sans text-[12px] text-muted-foreground">{t("browse.fallback")}</p> : null}
+                {library.fallback ? <p className="m-0 rounded-2xl border border-warning/40 bg-warning/8 px-3 py-2 font-sans text-[12px] text-muted-foreground">{t("browse.fallback")}</p> : null}
             </div>
 
             {/* The bar is pinned under a sort too, with no chips in it: it is the only
                 search and filter a scrolled reader has, and a sorted page is the one
                 most likely to want its sort changed back. */}
-            <JumpBar chips={flat === null ? chips : NO_CHIPS} tools={tools} />
+            <JumpBar chips={flat === null ? chips : NO_CHIPS} tools={tools} toolsShown={!toolbarInView} />
 
-            {(flat === null ? library.sections.length === 0 : flat.length === 0) && library.records.length === 0 ? <div className="mt-6 rounded-[14px] border border-border border-dashed p-14 text-center font-sans text-[14px] text-muted-foreground">{t("browse.empty")}</div> : null}
+            {(flat === null ? library.sections.length === 0 : flat.length === 0) && library.records.length === 0 ? <div className="mt-6 rounded-2xl border border-border border-dashed p-14 text-center font-sans text-[14px] text-muted-foreground">{t("browse.empty")}</div> : null}
 
             {flat !== null ? (
                 flat.length > 0 ? (
                     <section className="mt-7">
-                        <FlatHead title={t("browse.section.sorted")} count={t("browse.section.count", { count: flat.length })} />
+                        {/* The page head already counts every chapter; the flat head repeats a count only when a filter has narrowed it. */}
+                        <FlatHead title={t("browse.section.sorted")} count={flat.length === storyGroupCount ? undefined : t("browse.section.count", { count: flat.length })} />
                         <Cards groups={flat} view={shownView} fractionOf={fractionOf} onOpen={setOpenId} />
                     </section>
                 ) : null
@@ -233,7 +247,7 @@ export function Browse({ index, progress, gameRead, openGroup, onOpenHandled }: 
                 library.sections.map((section) => (
                     <section key={section.id} id={section.id} className="mt-7 scroll-mt-32 sm:scroll-mt-36">
                         <SectionHead chip={chipById.get(section.id)} count={t("browse.section.count", { count: section.groups.length })} />
-                        <Cards groups={section.groups} view={shownView} fractionOf={fractionOf} onOpen={setOpenId} />
+                        <Cards groups={section.groups} view={shownView} fractionOf={fractionOf} onOpen={setOpenId} inSection />
                     </section>
                 ))
             )}
@@ -255,6 +269,8 @@ interface ICardsProps {
     view: ViewMode;
     fractionOf: (group: LibGroup) => IReadFraction;
     onOpen: (id: string) => void;
+    /** A library section, whose heading already names its kind: when every card shares that kind, the cards drop their kind badge. */
+    inSection?: boolean;
 }
 
 /**
@@ -270,19 +286,20 @@ interface ICardsProps {
  * hands every grid a new `fractionOf`, so the comparison asks it for this
  * section's own fractions and the grid renders only when one of them moved.
  */
-const Cards = memo(function Cards({ groups, view, fractionOf, onOpen }: ICardsProps): React.ReactElement {
+const Cards = memo(function Cards({ groups, view, fractionOf, onOpen, inSection = false }: ICardsProps): React.ReactElement {
+    const hideKind = inSection && groups.length > 0 && groups.every((group) => kindOf(group) === kindOf(groups[0]));
     if (view === "grid")
         return (
             <GroupGrid>
-                {groups.map((group, at) => (
-                    <GroupCard key={group.id} group={group} fraction={fractionOf(group)} onOpen={onOpen} index={at} />
+                {groups.map((group) => (
+                    <GroupCard key={group.id} group={group} fraction={fractionOf(group)} onOpen={onOpen} hideKind={hideKind} />
                 ))}
             </GroupGrid>
         );
     return (
         <GroupRowList>
-            {groups.map((group, at) => (
-                <GroupRow key={group.id} group={group} fraction={fractionOf(group)} onOpen={onOpen} index={at} />
+            {groups.map((group) => (
+                <GroupRow key={group.id} group={group} fraction={fractionOf(group)} onOpen={onOpen} hideKind={hideKind} />
             ))}
         </GroupRowList>
     );
@@ -290,7 +307,7 @@ const Cards = memo(function Cards({ groups, view, fractionOf, onOpen }: ICardsPr
 
 /** Equal when the grid would draw the same cards: same list, layout and handler, and the same fraction object for each of its groups (`keepEqualFractions` keeps the object of a group whose numbers did not move). */
 function sameCards(a: ICardsProps, b: ICardsProps): boolean {
-    if (a.groups !== b.groups || a.view !== b.view || a.onOpen !== b.onOpen) return false;
+    if (a.groups !== b.groups || a.view !== b.view || a.onOpen !== b.onOpen || a.inSection !== b.inSection) return false;
     if (a.fractionOf === b.fractionOf) return true;
     return a.groups.every((group) => a.fractionOf(group) === b.fractionOf(group));
 }

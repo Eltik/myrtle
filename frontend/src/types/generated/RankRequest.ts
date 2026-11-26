@@ -8,11 +8,6 @@ import type { RequestCycleModel } from "./RequestCycleModel";
 import type { RequestSecondary } from "./RequestSecondary";
 import type { RequestShred } from "./RequestShred";
 
-/**
- * The shared context every ranked row is computed under. Every field has the
- * meaning it has on `CalculateRequest`; `operatorId`, the investment fields,
- * `skillIndex` and `moduleIndex` are set per row.
- */
 export type RankRequest = {
     defense?: number;
     res?: number;
@@ -24,21 +19,8 @@ export type RankRequest = {
     zones?: BuffZones;
     secondary?: RequestSecondary;
     cycleModel?: RequestCycleModel;
-    /**
-     * Absent: `p1Max`.
-     */
     preset?: RankPreset;
-    /**
-     * Applied after the ranking is computed (and cached); they never change
-     * a row.
-     */
     filters?: RankFilters;
-    /**
-     * Absent: `skillDps`. Descending.
-     */
     sortBy?: RankMetric;
-    /**
-     * Rows returned after filtering and sorting, at most 5000. Absent: all.
-     */
     limit?: number;
 };

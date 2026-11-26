@@ -2,6 +2,8 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import type React from "react";
 import { useMemo, useState } from "react";
+import { Kicker } from "#/components/ui/kicker";
+import { LoadFailed } from "#/components/ui/load-failed";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
 import { Skeleton } from "#/components/ui/skeleton";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
@@ -40,7 +42,7 @@ export function CommunityTab({ index, onViewChapter }: ICommunityTabProps): Reac
     const t: CommunityT = useT("story");
     const f = useFormatters();
     const server = useGamedataServer();
-    const { data, isPending } = useQuery(storyCommunityQueryOptions(server));
+    const { data, isPending, isError, refetch } = useQuery(storyCommunityQueryOptions(server));
     const ranked = useMemo(() => rankCommunity(index, data), [index, data]);
 
     if (isPending) {
@@ -53,9 +55,14 @@ export function CommunityTab({ index, onViewChapter }: ICommunityTabProps): Reac
         );
     }
 
+    // A failed request is not "nothing computed yet": it gets its own line and a retry instead of the empty copy.
+    if (isError && data === undefined) {
+        return <LoadFailed className="mt-4" message={t("community.error")} onRetry={() => void refetch()} />;
+    }
+
     if (!ranked) {
         return (
-            <div className="mt-4 rounded-[14px] border border-border bg-card p-5 text-center">
+            <div className="mt-4 rounded-2xl border border-border bg-card p-5 text-center">
                 <h3 className="m-0 font-sans font-semibold text-[14px] text-foreground">{t("community.empty.title")}</h3>
                 <p className="mx-auto mt-1.5 mb-0 max-w-prose font-sans text-[12.5px] text-muted-foreground">{t("community.empty.body")}</p>
             </div>
@@ -86,7 +93,7 @@ export function CommunityTab({ index, onViewChapter }: ICommunityTabProps): Reac
 
 function Section({ heading, blurb, children }: { heading: string; blurb: string; children: React.ReactNode }): React.ReactElement {
     return (
-        <section className="rounded-[14px] border border-border bg-card p-4 sm:p-5">
+        <section className="rounded-2xl border border-border bg-card p-4 sm:p-5">
             <h3 className="m-0 font-sans font-semibold text-[14px] text-foreground">{heading}</h3>
             <p className="mt-1 mb-3 max-w-prose font-sans text-[12.5px] text-muted-foreground">{blurb}</p>
             <div className="flex flex-col">{children}</div>
@@ -120,7 +127,7 @@ function Rank({ rank }: { rank: number }): React.ReactElement {
 function Readers({ readers, readerShare, label, className, t, f }: { readers: number; readerShare: number; label: string; className?: string; t: CommunityT; f: ReturnType<typeof useFormatters> }): React.ReactElement {
     return (
         <span className={cn("flex shrink-0 flex-col items-end", className)}>
-            <span className="font-mono text-[10px] text-muted-foreground uppercase tracking-[0.12em]">{label}</span>
+            <Kicker>{label}</Kicker>
             <span className="font-mono text-[14px] text-foreground tabular-nums">{f.number(readers)}</span>
             <span className="font-mono text-[10px] text-muted-foreground tabular-nums">{t("community.ofPlayers", { share: f.percent(readerShare) })}</span>
         </span>
@@ -138,7 +145,7 @@ function GroupRankRow({ row, rank, onOpen, t, f }: { row: ICommunityGroupRow; ra
             <span className={cn("flex items-start gap-4 sm:gap-6", ROW_FIGURES)}>
                 <Readers readers={row.readers} readerShare={row.readerShare} label={t("community.readers")} t={t} f={f} />
                 <span className="flex w-24 shrink-0 flex-col items-end sm:w-28">
-                    <span className="font-mono text-[10px] text-muted-foreground uppercase tracking-[0.12em]">{t("community.finished")}</span>
+                    <Kicker>{t("community.finished")}</Kicker>
                     {row.finished === null || row.finishedShare === null ? (
                         <Tooltip>
                             <TooltipTrigger render={<span className="mt-0.5 text-right font-sans text-[11px] text-muted-foreground" />}>{t("community.notMeasurable")}</TooltipTrigger>
@@ -197,7 +204,7 @@ function DepthStrip({ groups, initial, t, f }: { groups: ICommunityDepthGroup[];
     const group = groups.find((g) => g.id === pick) ?? groups[0] ?? null;
 
     return (
-        <section className="rounded-[14px] border border-border bg-card p-4 sm:p-5">
+        <section className="rounded-2xl border border-border bg-card p-4 sm:p-5">
             <h3 className="m-0 font-sans font-semibold text-[14px] text-foreground">{t("community.section.depth")}</h3>
             <p className="mt-1 mb-3 max-w-prose font-sans text-[12.5px] text-muted-foreground">{t("community.section.depth.blurb")}</p>
             {group === null ? (

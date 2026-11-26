@@ -27,12 +27,12 @@ export const messages = {
         description: "Headline on the landing page's social card.",
     },
     "og.home.subtitle": {
-        text: "Track your roster, scout community pulls, and explore every operator.",
+        text: "Track your roster, scout community pulls, and look up every operator.",
         description: "Subtitle under the headline on the landing page's social card.",
     },
 
     "og.login.title": {
-        text: "Log in to Myrtle",
+        text: "Sign in to Myrtle",
         description: "Headline on the sign-in social card.",
     },
     "og.login.subtitle": {
@@ -63,7 +63,7 @@ export const messages = {
         description: "Headline on the enemy index social card.",
     },
     "og.enemies.subtitle": {
-        text: "Every enemy catalogued in Arknights.",
+        text: "Every enemy cataloged in Arknights.",
         description: "Subtitle on the enemy index social card.",
     },
 

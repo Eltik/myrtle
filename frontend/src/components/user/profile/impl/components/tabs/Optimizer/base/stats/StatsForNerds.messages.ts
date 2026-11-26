@@ -4,7 +4,7 @@ export const namespace = "user";
 
 export const messages = {
     "profile.base.nerds.title": {
-        text: "Stats for Nerds",
+        text: "Stats for nerds",
         description: "Label on the collapsed panel of raw numbers. A knowing nod to the same phrase in video players.",
     },
     "profile.base.nerds.noChange": {
@@ -152,7 +152,7 @@ export const messages = {
         description: "Row label: how many operators cannot get a bed at the busiest moment. 'Dorm' is short for dormitory.",
     },
     "profile.base.nerds.dormList": {
-        text: "Dormitories - best first, game rates",
+        text: "Dormitories (best first, game rates)",
         description: "Section heading over the per-dormitory list. 'Game rates' means the figures use the game's own recovery numbers. Rendered uppercase by CSS.",
     },
     "profile.base.nerds.dormLevel": {

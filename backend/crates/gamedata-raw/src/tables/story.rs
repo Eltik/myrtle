@@ -91,7 +91,8 @@ impl StoryVariables {
 }
 
 /// Stage gate on a story (`RequiredStages[]`)
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct StoryRequiredStage {
     #[serde(alias = "StageId", default)]
@@ -103,7 +104,8 @@ pub struct StoryRequiredStage {
 }
 
 /// Story under a group (`InfoUnlockDatas[]`)
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct StoryUnlockData {
     #[serde(alias = "StoryId", default)]
@@ -137,7 +139,8 @@ pub struct StoryUnlockData {
 }
 
 /// Archives group: main chapter, event or operator record set
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct StoryReviewGroup {
     #[serde(alias = "Id", default)]
@@ -154,6 +157,7 @@ pub struct StoryReviewGroup {
     #[serde(alias = "StoryEntryPicId", default)]
     pub story_entry_pic_id: Option<String>,
     #[serde(alias = "StartTime", default)]
+    #[ts(type = "number")]
     pub start_time: i64,
     #[serde(alias = "InfoUnlockDatas", default)]
     pub info_unlock_datas: Vec<StoryUnlockData>,

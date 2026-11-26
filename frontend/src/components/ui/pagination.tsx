@@ -78,8 +78,8 @@ export function PaginationEllipsis({ className, ...props }: React.ComponentProps
     const t: TypedT<typeof messages> = useT("common");
 
     return (
-        <span aria-hidden className={cn("flex min-w-7 justify-center", className)} data-slot="pagination-ellipsis" {...props}>
-            <MoreHorizontalIcon className="size-5 sm:size-4" />
+        <span className={cn("flex min-w-7 justify-center", className)} data-slot="pagination-ellipsis" {...props}>
+            <MoreHorizontalIcon aria-hidden="true" className="size-5 sm:size-4" />
             <span className="sr-only">{t("pagination.morePages")}</span>
         </span>
     );

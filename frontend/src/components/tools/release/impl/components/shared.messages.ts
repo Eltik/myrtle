@@ -41,12 +41,8 @@ export const messages = {
         description: "Row count after a section heading, e.g. '· 12'. Keep the leading middle dot.",
     },
     "release.loadFailed": {
-        text: "Failed to load.",
-        description: "Fallback error line when the request failed with no message of its own.",
-    },
-    "release.retry": {
-        text: "Retry",
-        description: "Button that tries the failed request again.",
+        text: "Couldn't load this tab.",
+        description: "Error line in place of a release tab (or the overrides list) whose request failed. A Try again button follows.",
     },
 } satisfies MessageMap;
 

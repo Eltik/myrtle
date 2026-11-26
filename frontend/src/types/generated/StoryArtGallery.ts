@@ -2,15 +2,4 @@
 import type { StoryArtGroup } from "./StoryArtGroup";
 import type { StoryArtKind } from "./StoryArtKind";
 
-/**
- * `GET /story/art-gallery/{kind}`: every story CG or scene wide enough for
- * a profile header, each once, under the first library group whose
- * scripts draw it.
- */
-export type StoryArtGallery = {
-    kind: StoryArtKind;
-    /**
-     * In library order.
-     */
-    groups: Array<StoryArtGroup>;
-};
+export type StoryArtGallery = { kind: StoryArtKind; groups: Array<StoryArtGroup> };

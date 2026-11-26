@@ -24,6 +24,8 @@ export interface ISquadToolbarProps {
     readOnly: boolean;
     signedIn: boolean;
     saving: boolean;
+    /** The saved slots have not loaded, so a save could land on a squad the player has not seen. */
+    saveBlocked: boolean;
     onName: (name: string) => void;
     onToggleCompact: () => void;
     onRevert: () => void;
@@ -35,7 +37,7 @@ export interface ISquadToolbarProps {
 
 export function SquadToolbar(props: ISquadToolbarProps): React.ReactElement {
     const t: ToolbarT = useT("tools");
-    const { name, filled, hasSupport, slot, slotSaved, dirty, compact, readOnly, signedIn, saving } = props;
+    const { name, filled, hasSupport, slot, slotSaved, dirty, compact, readOnly, signedIn, saving, saveBlocked } = props;
     const [confirmOpen, setConfirmOpen] = React.useState(false);
     // Kept after close so the dialog does not swap its text while it animates out.
     const [confirm, setConfirmKind] = React.useState<"clear" | "delete">("clear");
@@ -46,27 +48,29 @@ export function SquadToolbar(props: ISquadToolbarProps): React.ReactElement {
     const empty = filled === 0 && !hasSupport;
 
     return (
-        <div className="flex flex-col gap-3 rounded-xl border border-border bg-card p-3 md:flex-row md:items-center">
+        <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-3 md:flex-row md:items-center">
             <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-1.5">
-                <Input value={name} maxLength={NAME_MAX_CHARS} disabled={readOnly} onChange={(e) => props.onName(e.target.value)} placeholder={t("squad.toolbar.name")} aria-label={t("squad.toolbar.name")} className="w-full max-w-72 font-semibold" />
+                <Input value={name} maxLength={NAME_MAX_CHARS} disabled={readOnly} onChange={(e) => props.onName(e.target.value)} placeholder={t("squad.toolbar.name")} aria-label={t("squad.toolbar.name")} className="w-full font-semibold md:max-w-72" />
                 <span className="font-mono text-[12px] text-muted-foreground tabular-nums">
                     {t("squad.toolbar.count", { count: filled, total: SQUAD_SIZE })}
                     {hasSupport && <> {t("squad.toolbar.plusSupport")}</>}
                 </span>
                 {!readOnly && <Badge variant="outline">{slot === null ? t("squad.toolbar.scratch") : t("squad.toolbar.inSlot", { slot })}</Badge>}
             </div>
-            <div className="flex flex-wrap items-center gap-1.5">
-                <Button variant="ghost" size="sm" onClick={props.onToggleCompact}>
+            {/* Below sm a two-column grid: wrapped as a flex row the five actions broke into three
+                ragged rows. Every secondary action is outline so the grid reads as one set. */}
+            <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center sm:gap-1.5">
+                <Button variant="outline" size="sm" onClick={props.onToggleCompact}>
                     {compact ? <Maximize2 /> : <Minimize2 />}
                     {compact ? t("squad.toolbar.expand") : t("squad.toolbar.minimize")}
                 </Button>
                 {!readOnly && (
                     <>
-                        <Button variant="ghost" size="sm" disabled={!dirty} onClick={props.onRevert}>
+                        <Button variant="outline" size="sm" disabled={!dirty} onClick={props.onRevert}>
                             <Undo2 />
                             {t("squad.toolbar.revert")}
                         </Button>
-                        <Button variant="ghost" size="sm" disabled={empty} onClick={() => setConfirm("clear")}>
+                        <Button variant="outline" size="sm" disabled={empty} onClick={() => setConfirm("clear")}>
                             <Eraser />
                             {t("squad.toolbar.clear")}
                         </Button>
@@ -77,23 +81,25 @@ export function SquadToolbar(props: ISquadToolbarProps): React.ReactElement {
                     {t("squad.toolbar.share")}
                 </Button>
                 {!readOnly && (
-                    <Button size="sm" disabled={signedIn && !dirty} loading={saving} onClick={props.onSave}>
-                        <Save />
-                        {signedIn ? t("squad.toolbar.save") : t("squad.toolbar.signInToSave")}
-                    </Button>
-                )}
-                {!readOnly && slot !== null && slotSaved && (
-                    <Menu>
-                        <MenuTrigger render={(p) => <Button {...p} variant="ghost" size="icon-sm" aria-label={t("squad.toolbar.more")} />}>
-                            <MoreHorizontal />
-                        </MenuTrigger>
-                        <MenuPopup align="end">
-                            <MenuItem variant="destructive" onClick={() => setConfirm("delete")}>
-                                <Trash2 />
-                                {t("squad.toolbar.delete", { slot })}
-                            </MenuItem>
-                        </MenuPopup>
-                    </Menu>
+                    <div className="col-span-2 flex gap-2 sm:contents">
+                        <Button size="sm" className="flex-1 sm:flex-none" disabled={signedIn && (!dirty || saveBlocked)} loading={saving} onClick={props.onSave}>
+                            <Save />
+                            {signedIn ? t("squad.toolbar.save") : t("squad.toolbar.signInToSave")}
+                        </Button>
+                        {slot !== null && slotSaved && (
+                            <Menu>
+                                <MenuTrigger render={(p) => <Button {...p} variant="outline" size="icon-sm" aria-label={t("squad.toolbar.more")} />}>
+                                    <MoreHorizontal />
+                                </MenuTrigger>
+                                <MenuPopup align="end">
+                                    <MenuItem variant="destructive" onClick={() => setConfirm("delete")}>
+                                        <Trash2 />
+                                        {t("squad.toolbar.delete", { slot })}
+                                    </MenuItem>
+                                </MenuPopup>
+                            </Menu>
+                        )}
+                    </div>
                 )}
             </div>
 

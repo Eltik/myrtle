@@ -168,7 +168,7 @@ export const messages = {
         description: "Status line after the file was saved. {file} is its file name.",
     },
     "export.doneMissing": {
-        text: "{count, plural, one {# picture} other {# pictures}} could not be loaded and were left out.",
+        text: "Couldn't load {count, plural, one {# picture} other {# pictures}}, so {count, plural, one {it was} other {they were}} left out.",
         description: "Second sentence of the status line after saving when some pictures failed to download.",
     },
     "export.doneDisk": {
@@ -264,7 +264,7 @@ export const messages = {
         description: "Label of the last-group picker of a reading-order range.",
     },
     "export.cancelled": {
-        text: "Export cancelled.",
+        text: "Export canceled.",
         description: "Status line after the reader cancelled an export.",
     },
     "export.error": {

@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { PlusIcon } from "lucide-react";
+import { CheckIcon, PlusIcon } from "lucide-react";
 import { useEffect, useId, useState } from "react";
 import { Button } from "#/components/ui/button";
 import { Dialog, DialogClose, DialogDescription, DialogFooter, DialogHeader, DialogPanel, DialogPopup, DialogTitle } from "#/components/ui/dialog";
@@ -106,8 +106,14 @@ function CreateGridDialog({ open, onOpenChange }: { open: boolean; onOpenChange:
                             <legend className="mb-2 font-medium font-sans text-foreground text-sm">{t("create.starter")}</legend>
                             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                                 {STARTERS.map((s) => (
-                                    <label key={s} className={cn("flex cursor-pointer flex-col gap-0.5 rounded-lg border px-3 py-2.5 transition-colors has-focus-visible:ring-2 has-focus-visible:ring-ring", starter === s ? "border-primary bg-primary/8" : "border-border hover:bg-accent")}>
+                                    <label key={s} className={cn("relative flex cursor-pointer flex-col gap-0.5 rounded-lg border px-3 py-2.5 pe-9 transition-colors has-focus-visible:ring-2 has-focus-visible:ring-ring", starter === s ? "border-primary bg-primary/8" : "border-border hover:bg-accent")}>
                                         <input type="radio" name="grid-starter" value={s} checked={starter === s} onChange={() => pickStarter(s)} className="sr-only" />
+                                        {/* R-39: the pick reads by a mark, not only the border tint. */}
+                                        {starter === s && (
+                                            <span className="absolute top-2.5 right-3 inline-flex size-4.5 items-center justify-center rounded-full bg-primary text-primary-foreground" aria-hidden="true">
+                                                <CheckIcon className="size-3" strokeWidth={3} />
+                                            </span>
+                                        )}
                                         <span className="font-medium font-sans text-foreground text-sm">{s === "blank" ? t("create.starter.blank") : t("create.starter.aboutMe")}</span>
                                         <span className="font-sans text-muted-foreground text-xs">{s === "blank" ? t("create.starter.blankHint") : t("create.starter.aboutMeHint", { size: ABOUT_ME_SIZE })}</span>
                                     </label>

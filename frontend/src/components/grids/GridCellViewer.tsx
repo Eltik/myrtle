@@ -137,7 +137,7 @@ function ViewerContent({ t, cell, index, cols, order, prev, next, onGo, onPointe
     return (
         <>
             <div className="flex items-center gap-3 px-4 pt-[max(0.75rem,env(safe-area-inset-top,0px))] pb-2 sm:px-6 sm:pt-4">
-                <div className="flex min-w-0 flex-1 items-baseline gap-2.5 font-mono text-[11px] text-white/60 uppercase tracking-[0.14em]">
+                <div className="flex min-w-0 flex-1 items-baseline gap-2.5 font-mono text-[11px] text-white/60">
                     <span className="truncate">{t("viewer.position", position)}</span>
                     {place !== -1 && (
                         <>
@@ -177,7 +177,7 @@ function ViewerContent({ t, cell, index, cols, order, prev, next, onGo, onPointe
                     <div className="flex flex-col items-center gap-1">
                         {entity.resolved ? (
                             <>
-                                <span className="font-bold font-mono text-[10.5px] text-white/55 uppercase tracking-[0.16em]">{[labels.singular(entity.kind), ...detail].join(" · ")}</span>
+                                <span className="font-bold font-mono text-[10.5px] text-white/55">{[labels.singular(entity.kind), ...detail].join(" · ")}</span>
                                 {label && <span className="font-sans font-semibold text-base text-white/90 leading-snug sm:text-lg">{entity.name}</span>}
                             </>
                         ) : (

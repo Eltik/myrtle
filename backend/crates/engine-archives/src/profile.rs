@@ -3,7 +3,8 @@ use serde::{Deserialize, Serialize};
 use myrtle_gamedata_raw::tables::handbook::HandbookStoryTextAudio;
 use myrtle_types::Server;
 
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub enum InfectionState {
     Infected,
@@ -14,7 +15,8 @@ pub enum InfectionState {
     Unstated,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub enum ExamAxis {
     Strength,
@@ -36,7 +38,8 @@ impl ExamAxis {
     ];
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub enum ExamStep {
     Flawed,
@@ -341,7 +344,8 @@ pub static KO: Vocab = Vocab {
     date_marks: Some(('월', '일')),
 };
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub enum ArchiveGender {
     Female,
@@ -362,66 +366,87 @@ impl ArchiveGender {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct ExamRating {
     pub axis: ExamAxis,
     pub raw: String,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub step: Option<u8>,
     /// Has `■■` where rating would be
     pub redacted: bool,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct ProfileField {
     pub label: String,
     pub value: String,
 }
 
-#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct ArchiveProfile {
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub code_name: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub gender: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub race: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub birthplace: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub birthday: Option<String>,
     /// 1..=12.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub birth_month: Option<u8>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub birth_day: Option<u8>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub height: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub height_cm: Option<f64>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub combat_experience: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub combat_years: Option<f64>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub infection: Option<String>,
     pub infection_state: InfectionState,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub blood_density: Option<String>,
     /// Blood Originium-Crystal Density in u/L
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub blood_density_ul: Option<f64>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub assimilation: Option<String>,
     /// Cell-Originium Assimilation in percent
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub assimilation_pct: Option<f64>,
     pub exam: Vec<ExamRating>,
     /// `[Manufacturer]` for robots and such
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub manufacturer: Option<String>,
     pub extra: Vec<ProfileField>,
 }

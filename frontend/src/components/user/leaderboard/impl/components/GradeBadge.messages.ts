@@ -8,8 +8,16 @@ export const messages = {
         description: "Hover explanation on a grade badge. {grade} is the letter (S+, S, A, B, C, D, F); {from} and {to} are the percentage bounds of that band, already formatted. 'Integrated Strategies' and 'Reclamation Algorithm' are in-game modes.",
     },
     "leaderboard.grade.unknown": {
-        text: "Not graded yet - this account has not been scored.",
+        text: "Not graded yet: this account has not been scored.",
         description: "Hover explanation on the placeholder shown in place of a grade badge when a user has no grade.",
+    },
+    "leaderboard.grade.band": {
+        text: "Grade {grade}, score {from}-{to}%",
+        description: "Screen-reader text for a grade badge, read inside the player row in place of the hover explanation. {grade} is the letter (S+, S, A, B, C, D, F); {from} and {to} are the percentage bounds of that band.",
+    },
+    "leaderboard.grade.none": {
+        text: "Not graded yet",
+        description: "Screen-reader text for the placeholder shown in place of a grade badge when a user has no grade.",
     },
 } satisfies MessageMap;
 

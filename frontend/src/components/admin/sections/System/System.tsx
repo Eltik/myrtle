@@ -86,7 +86,7 @@ export default function System({ search }: ISystemProps): React.ReactElement {
                     </TabsList>
                 </Tabs>
                 {tab === "health" ? <HealthTab enabled={enabled} /> : null}
-                {tab === "audit" ? <AuditTab enabled={enabled} /> : null}
+                {tab === "audit" ? <AuditTab enabled={enabled} filters={search} onFiltersChange={(next) => void navigate({ to: "/admin/system", search: { tab: "audit", ...next }, replace: true })} /> : null}
                 {tab === "languages" ? <LanguagesTab enabled={enabled} canEdit={access.isSuper} /> : null}
             </div>
         </>

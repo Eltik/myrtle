@@ -71,25 +71,34 @@ impl GachaApiItem {
     }
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct FetchResult {
     pub total_fetched: usize,
     pub new_records: usize,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct GachaStats {
     pub user_id: Uuid,
+    #[ts(type = "number | null")]
     pub total_pulls: i64,
+    #[ts(type = "number | null")]
     pub six_star_count: i64,
+    #[ts(type = "number | null")]
     pub five_star_count: i64,
+    #[ts(type = "number | null")]
     pub four_star_count: i64,
+    #[ts(type = "number | null")]
     pub first_pull: i64,
+    #[ts(type = "number | null")]
     pub last_pull: i64,
 }
 
-#[derive(Debug, Serialize, Clone)]
+#[derive(Debug, Serialize, Clone, ts_rs::TS)]
+#[ts(export)]
 pub struct GachaRecordEntryDto {
     pub id: String,
     #[serde(rename = "charId")]
@@ -104,6 +113,7 @@ pub struct GachaRecordEntryDto {
     #[serde(rename = "gachaType")]
     pub gacha_type: String,
     #[serde(rename = "pullTimestamp")]
+    #[ts(type = "number")]
     pub pull_timestamp: i64,
     #[serde(rename = "pullTimestampStr")]
     pub pull_timestamp_str: Option<String>,
@@ -125,7 +135,8 @@ impl From<GachaRecordRow> for GachaRecordEntryDto {
     }
 }
 
-#[derive(Debug, Serialize, Clone)]
+#[derive(Debug, Serialize, Clone, ts_rs::TS)]
+#[ts(export)]
 pub struct GachaItemDto {
     #[serde(rename = "charId")]
     pub char_id: String,
@@ -139,6 +150,7 @@ pub struct GachaItemDto {
     pub pool_name: String,
     #[serde(rename = "typeName")]
     pub type_name: String,
+    #[ts(type = "number")]
     pub at: i64,
     #[serde(rename = "atStr")]
     pub at_str: String,
@@ -160,30 +172,35 @@ impl From<GachaRecordRow> for GachaItemDto {
     }
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct GachaTypeRecordsDto {
     pub gacha_type: &'static str,
     pub records: Vec<GachaItemDto>,
     pub total: usize,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct GachaRecordsDto {
     pub limited: GachaTypeRecordsDto,
     pub regular: GachaTypeRecordsDto,
     pub special: GachaTypeRecordsDto,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct GachaPaginationInfoDto {
     pub limit: u32,
     pub offset: u32,
+    #[ts(type = "number")]
     pub total: i64,
     #[serde(rename = "hasMore")]
     pub has_more: bool,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct HistoryFiltersAppliedDto {
     pub rarity: Option<i16>,
     #[serde(rename = "gachaType")]
@@ -194,13 +211,17 @@ pub struct HistoryFiltersAppliedDto {
     pub date_range: Option<DateRangeDto>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct DateRangeDto {
+    #[ts(type = "number | null")]
     pub from: Option<i64>,
+    #[ts(type = "number | null")]
     pub to: Option<i64>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct GachaHistoryEnvelopeDto {
     pub records: Vec<GachaRecordEntryDto>,
     pub pagination: GachaPaginationInfoDto,
@@ -220,13 +241,17 @@ pub struct HistoryQuery {
     pub offset: u32,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct GachaSettingsDto {
     pub user_id: String,
     pub store_records: bool,
     pub share_anonymous_stats: bool,
+    #[ts(type = "number")]
     pub total_pulls: i64,
+    #[ts(type = "number")]
     pub six_star_count: i64,
+    #[ts(type = "number")]
     pub five_star_count: i64,
     pub last_sync_at: Option<String>,
 }

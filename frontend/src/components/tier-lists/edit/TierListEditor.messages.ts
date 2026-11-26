@@ -31,6 +31,18 @@ export const messages = {
         text: "Save failed",
         description: "Toast title when writing the editor's changes failed.",
     },
+    "edit.toast.autosaveFailedTitle": {
+        text: "Auto-save failed",
+        description: "Toast title when an automatic save failed. Auto-save then waits until the author retries or saves.",
+    },
+    "edit.toast.autosaveConflictTitle": {
+        text: "Auto-save paused",
+        description: "Toast title when auto-save stopped because the list changed somewhere else.",
+    },
+    "edit.toast.autosaveConflictBody": {
+        text: "This list changed in another tab or by another editor. Nothing was overwritten.",
+        description: "Toast body when auto-save stopped instead of writing over a newer version of the list.",
+    },
     "edit.toast.flairSetTitle": {
         text: "Flair updated",
         description: "Toast title after the list's topic tag was changed.",
@@ -48,7 +60,7 @@ export const messages = {
         description: "Toast body after the list's topic tag was removed.",
     },
     "edit.toast.flairFailedTitle": {
-        text: "Flair failed",
+        text: "Couldn't change the flair",
         description: "Toast title when changing the topic tag failed.",
     },
     "edit.toast.publicTitle": {
@@ -56,7 +68,7 @@ export const messages = {
         description: "Toast title after the list was made visible on the browse page.",
     },
     "edit.toast.publicBody": {
-        text: "This list appears on /tier-lists.",
+        text: "This list now shows in the tier list browser.",
         description: "Toast body after the list was made public. '/tier-lists' is the site's own path and stays as-is.",
     },
     "edit.toast.hiddenTitle": {
@@ -68,7 +80,7 @@ export const messages = {
         description: "Toast body after the list was hidden from the browse page.",
     },
     "edit.toast.visibilityFailedTitle": {
-        text: "Visibility failed",
+        text: "Couldn't change who can see this list",
         description: "Toast title when changing the list's visibility failed.",
     },
     "edit.toast.publishedTitle": {

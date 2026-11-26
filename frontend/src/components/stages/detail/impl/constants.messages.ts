@@ -65,6 +65,22 @@ export const messages = {
         text: "Unknown",
         description: "Stage difficulty badge when the game data ships a difficulty this site does not name.",
     },
+    "enemyLevel.NORMAL": {
+        text: "Normal",
+        description: "Enemy threat level under an enemy's name on a stage page (enemy cards, spawn schedule, stats card): a regular enemy.",
+    },
+    "enemyLevel.ELITE": {
+        text: "Elite",
+        description: "Enemy threat level under an enemy's name on a stage page: an elite enemy. Use the game's own word in this language.",
+    },
+    "enemyLevel.BOSS": {
+        text: "Boss",
+        description: "Enemy threat level under an enemy's name on a stage page: a boss (leader) enemy. Use the game's own word in this language.",
+    },
+    "enemyLevel.UNKNOWN": {
+        text: "Unknown",
+        description: "Enemy threat level on a stage page when the game data has no entry for that enemy.",
+    },
     "dropType.ONCE": {
         text: "First Clear",
         description: "Heading over the drops awarded only the first time a stage is cleared.",

@@ -24,8 +24,8 @@ export const messages = {
         description: "Visible label of the button that draws a new squad.",
     },
     "randomizer.squad.empty": {
-        text: "No matching operators - relax your filters.",
-        description: "Shown in place of the squad when the filters leave nothing to draw. The dash is a plain hyphen.",
+        text: "No matching operators. Relax your filters.",
+        description: "Shown in place of the squad when the filters leave nothing to draw.",
     },
     "randomizer.squad.viewOperator": {
         text: "View {name}",

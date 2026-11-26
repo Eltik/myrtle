@@ -2,6 +2,7 @@ import { ChartColumnIcon, DiscIcon, Gamepad2Icon, HeartIcon, HistoryIcon, Librar
 import type React from "react";
 import { useState } from "react";
 import { Button } from "#/components/ui/button";
+import { Kicker } from "#/components/ui/kicker";
 import { Select, SelectContent, SelectGroup, SelectGroupLabel, SelectItem, SelectSeparator, SelectTrigger, SelectValue } from "#/components/ui/select";
 import { toastManager } from "#/components/ui/toast";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
@@ -104,7 +105,7 @@ export function Rail({ selection }: { selection: LibrarySelection }): React.Reac
                 {newButton}
             </div>
 
-            <nav aria-label={t("music.rail.aria")} className="hidden self-start rounded-xl border border-border bg-card/55 p-2 md:sticky md:top-20 md:block">
+            <nav aria-label={t("music.rail.aria")} className="hidden self-start rounded-2xl border border-border bg-card/55 p-2 md:sticky md:top-20 md:block">
                 <ul className="m-0 flex list-none flex-col gap-0.5 p-0">
                     {LIBRARY_VIEWS.map((v) => {
                         const Icon = ICONS[v];
@@ -120,10 +121,10 @@ export function Rail({ selection }: { selection: LibrarySelection }): React.Reac
                     })}
                 </ul>
                 <div className="mt-3 flex items-center justify-between border-border border-t px-1.5 pt-2.5">
-                    <span className="flex items-center gap-1.5 font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.12em]">
+                    <Kicker className="flex items-center gap-1.5">
                         <ListMusicIcon className="size-3.5" aria-hidden="true" />
                         {t("music.rail.playlists")}
-                    </span>
+                    </Kicker>
                     {newButton}
                 </div>
                 {playlists.length === 0 ? (

@@ -19,45 +19,53 @@ pub const TRACK_KINDS: [&str; 2] = ["siren:", "game:"];
 const TRACK_ID_MAX: usize = 120;
 const LISTENED_MAX: f32 = 86_400.0;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct MusicLike {
     pub track_id: String,
     pub liked_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct MusicPlay {
+    #[ts(type = "number")]
     pub id: i64,
     pub track_id: String,
     pub listened_seconds: f32,
     pub played_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct MusicPlayInput {
     pub track_id: String,
     pub listened_seconds: f32,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct MusicPlayUpdate {
     pub listened_seconds: f32,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct MusicPlayTotal {
     pub track_id: String,
+    #[ts(type = "number")]
     pub plays: i64,
     pub seconds: f64,
     pub last_played_at: Option<DateTime<Utc>>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct MusicPlaylist {
     pub id: Uuid,
@@ -67,7 +75,8 @@ pub struct MusicPlaylist {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct MusicPlaylistCreate {
     pub name: String,
@@ -75,7 +84,8 @@ pub struct MusicPlaylistCreate {
     pub track_ids: Vec<String>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct MusicPlaylistPatch {
     #[serde(default)]
@@ -84,22 +94,27 @@ pub struct MusicPlaylistPatch {
     pub track_ids: Option<Vec<String>>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct MusicPlaylistAdd {
     pub track_ids: Vec<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct MusicLibrary {
     pub likes: Vec<MusicLike>,
     pub history: Vec<MusicPlay>,
+    #[ts(type = "number")]
     pub history_limit: i64,
     pub totals: Vec<MusicPlayTotal>,
     pub first_played_at: Option<DateTime<Utc>>,
     pub playlists: Vec<MusicPlaylist>,
+    #[ts(type = "number")]
     pub playlist_limit: i64,
+    #[ts(type = "number")]
     pub playlist_tracks_max: i64,
 }
 

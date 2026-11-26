@@ -202,7 +202,8 @@ fn average_dimensions(dims: &[(DimensionKind, Dimension)]) -> f64 {
     weighted_average(&unlabeled)
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "snake_case")]
 pub enum DimensionKind {
     Elite,
@@ -283,7 +284,8 @@ fn build_dimensions(
     dimensions
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct ScoreDimension {
     pub kind: DimensionKind,
     pub weight_share: f64,
@@ -495,7 +497,8 @@ fn log_curve_ratio(t: f64) -> f64 {
     t.ln_1p() / 2.0_f64.ln()
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct UpgradeDelta {
     /// Tag from `OperatorGap.missing`, e.g. "ELITE", "M3", "MOD3", "TRUST"
     pub tag: &'static str,

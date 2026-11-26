@@ -198,7 +198,7 @@ export function PullsPlannerTab({ today }: IPullsPlannerTabProps): React.ReactEl
     const spend = React.useMemo(() => plan.rows.filter((r) => r.spent > 0).map((r) => ({ at: r.enStart, pulls: r.spent })), [plan.rows]);
 
     if (!ready) return <ReleaseLoading />;
-    if (banners.isError) return <ReleaseError error={banners.error} onRetry={() => banners.refetch()} />;
+    if (banners.isError) return <ReleaseError onRetry={() => banners.refetch()} />;
 
     return (
         <div className="flex flex-col gap-3">

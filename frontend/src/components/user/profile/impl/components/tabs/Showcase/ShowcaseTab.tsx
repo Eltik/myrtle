@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { ArrowUpRightIcon, EyeOffIcon, HeartIcon, LayoutGridIcon, ListOrderedIcon, PencilIcon, RotateCwIcon, SparklesIcon, TargetIcon } from "lucide-react";
+import { ArrowUpRightIcon, EyeOffIcon, HeartIcon, LayoutGridIcon, ListOrderedIcon, PencilIcon, SparklesIcon, TargetIcon } from "lucide-react";
 import { type CSSProperties, lazy, type ReactNode, Suspense, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { compactGridSize } from "#/components/grids/compact";
 import { GridBoard } from "#/components/grids/GridBoard";
@@ -9,6 +9,7 @@ import { TierListBoard } from "#/components/tier-lists/detail/TierListBoard";
 import { EntityAvatar, entityAccent, entityShape } from "#/components/tier-lists/entities";
 import { entityPage, useEntityLabels } from "#/components/tier-lists/kinds";
 import { Button } from "#/components/ui/button";
+import { LoadFailed } from "#/components/ui/load-failed";
 import { Skeleton } from "#/components/ui/skeleton";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useAuth } from "#/hooks/use-auth";
@@ -25,7 +26,7 @@ import type { ShowcaseBlockView } from "#/types/generated/ShowcaseBlockView";
 import type { IUserProfile } from "#/types/user";
 import { draftFromView, type IShowcaseEntity, type ShowcaseDraftBlock, shownBlocks } from "../../../showcase";
 import { PlanCard } from "../Plans/PlansTab";
-import { CARD_PADDING, Kicker, StatCard } from "../Stats/primitives";
+import { CARD_PADDING, KICKER_TEXT, Kicker, StatCard } from "../Stats/primitives";
 import { FactionFavouriteDialog, type IShowcasePlayer, OperatorFavouriteDialog, operatorTarget, ShowcasePlayerContext, useShowcasePlayer } from "./FavouriteDialogs";
 import type { messages as favMessages } from "./FavouriteDialogs.messages";
 import type { RosterAccess } from "./favourites";
@@ -73,15 +74,7 @@ export function ShowcaseTab({ uid, profile, isOwner, roster, rosterAccess }: ISh
 
     if (query.isPending) return <ShowcaseSkeleton />;
     if (query.isError) {
-        return (
-            <div className="flex flex-col items-center gap-3 rounded-3xl border border-border bg-card px-8 py-12 text-center">
-                <p className="text-muted-foreground text-sm">{t("profile.showcase.error")}</p>
-                <Button type="button" variant="outline" size="sm" onClick={() => void query.refetch()}>
-                    <RotateCwIcon />
-                    {t("profile.showcase.retry")}
-                </Button>
-            </div>
-        );
+        return <LoadFailed message={t("profile.showcase.error")} onRetry={() => void query.refetch()} />;
     }
 
     const view = query.data;
@@ -187,7 +180,7 @@ function ShowcaseEmpty({ onStart }: { onStart: () => void }) {
             <span aria-hidden="true" className="flex size-11 items-center justify-center rounded-2xl border border-border bg-muted/50 text-primary">
                 <SparklesIcon className="size-5" />
             </span>
-            <span className="font-mono text-[11px] text-muted-foreground uppercase tracking-widest">{t("profile.showcase.empty.kicker")}</span>
+            <span className={KICKER_TEXT}>{t("profile.showcase.empty.kicker")}</span>
             <h3 className="font-semibold text-lg tracking-tight">{t("profile.showcase.empty.title")}</h3>
             <p className="max-w-md text-muted-foreground text-sm">{t("profile.showcase.empty.desc")}</p>
             <Button type="button" className="mt-2" onClick={onStart}>
@@ -397,9 +390,11 @@ function GridBlock({ slug, isOwner }: { slug: string; isOwner: boolean }) {
     const t: TypedT<typeof messages> = useT("user");
     const server = useGamedataServer();
     const { user } = useAuth();
-    const { data: grid, isPending } = useQuery(gridQueryOptions(slug, user?.id ?? null, server));
+    const { data: grid, isPending, isError, refetch } = useQuery(gridQueryOptions(slug, user?.id ?? null, server));
     const cells = useMemo(() => (grid ? gridToState(grid).cells : []), [grid]);
     if (isPending) return <Skeleton className="h-[44rem] w-full rounded-2xl lg:w-[30rem]" />;
+    // A failed fetch is not a deleted grid: `gridQueryOptions` returns null only for a 404.
+    if (isError) return <LoadFailed message={t("profile.showcase.blockFailed.grid")} onRetry={() => void refetch()} />;
     if (!grid) return isOwner ? <RemovedBlock type="grid" /> : null;
     const description = grid.description?.trim();
     // One surface: the card is the board's panel (the compact board draws no panel of its own), and at lg
@@ -421,8 +416,9 @@ function GridBlock({ slug, isOwner }: { slug: string; isOwner: boolean }) {
 function TierListBlock({ slug, isOwner }: { slug: string; isOwner: boolean }) {
     const t: TypedT<typeof messages> = useT("user");
     const server = useGamedataServer();
-    const { data: detail, isPending } = useQuery(tierListDetailQueryOptions(slug, server));
+    const { data: detail, isPending, isError, refetch } = useQuery(tierListDetailQueryOptions(slug, server));
     if (isPending) return <Skeleton className="h-72 rounded-2xl" />;
+    if (isError) return <LoadFailed message={t("profile.showcase.blockFailed.tierList")} onRetry={() => void refetch()} />;
     if (!detail) return isOwner ? <RemovedBlock type="tier_list" /> : null;
     return (
         <StatCard color={BLOCK_ACCENT.tier_list}>
@@ -475,8 +471,9 @@ function TierListPeek({ slug, children }: { slug: string; children: ReactNode })
 
 function PlanBlock({ id, uid, roster, isOwner, plansHidden }: { id: string; uid: string; roster: IRosterEntry[]; isOwner: boolean; plansHidden: boolean }) {
     const t: TypedT<typeof messages> = useT("user");
-    const { data: plans, isPending } = useQuery(publicPlansQueryOptions(uid));
+    const { data: plans, isPending, isError, refetch } = useQuery(publicPlansQueryOptions(uid));
     if (isPending) return <Skeleton className="h-40 rounded-2xl" />;
+    if (isError) return <LoadFailed message={t("profile.showcase.blockFailed.plan")} onRetry={() => void refetch()} />;
     const plan = plans?.find((p) => p.id === id);
     if (!plan) return isOwner ? <RemovedBlock type="plan" /> : null;
     return (

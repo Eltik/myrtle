@@ -3,7 +3,7 @@ import type { messages as gamedataServerMessages } from "#/components/GamedataSe
 import { LocaleOptionLabel, useLocaleSwitch } from "#/components/LocaleSwitcher";
 import type { messages as localeSwitcherMessages } from "#/components/LocaleSwitcher.messages";
 import { Button } from "#/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuLabel, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuTrigger } from "#/components/ui/menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuLabel, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuTrigger } from "#/components/ui/menu";
 import { useI18n, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import type { messages } from "./LanguageToggle.messages";
@@ -48,38 +48,35 @@ export default function LanguageToggle(): React.ReactElement | null {
             <DropdownMenuContent align="end" className="w-52">
                 {/* `DropdownMenuLabel` is a GROUP label in this primitive set,
                     so it must sit inside a group or base-ui throws for a
-                    missing MenuGroupRootContext. */}
+                    missing MenuGroupRootContext. A radio group is one: with the
+                    label inside it, the radios are named by it. In a group of
+                    its own, the label named an empty group and the radios
+                    were an unnamed set. */}
                 {hasLocales ? (
-                    <>
-                        <DropdownMenuGroup>
-                            <DropdownMenuLabel>{tCommon("localeSwitcher.language")}</DropdownMenuLabel>
-                        </DropdownMenuGroup>
-                        <DropdownMenuRadioGroup
-                            value={locale}
-                            onValueChange={(next) => {
-                                if (next && next !== locale) switchLocale(next);
-                            }}
-                        >
-                            {available.map((entry) => (
-                                <DropdownMenuRadioItem key={entry.code} value={entry.code} lang={entry.code} className="cursor-pointer">
-                                    <LocaleOptionLabel entry={entry} />
-                                </DropdownMenuRadioItem>
-                            ))}
-                        </DropdownMenuRadioGroup>
-                    </>
+                    <DropdownMenuRadioGroup
+                        value={locale}
+                        onValueChange={(next) => {
+                            if (next && next !== locale) switchLocale(next);
+                        }}
+                    >
+                        <DropdownMenuLabel>{tCommon("localeSwitcher.language")}</DropdownMenuLabel>
+                        {available.map((entry) => (
+                            <DropdownMenuRadioItem key={entry.code} value={entry.code} lang={entry.code} className="cursor-pointer">
+                                <LocaleOptionLabel entry={entry} />
+                            </DropdownMenuRadioItem>
+                        ))}
+                    </DropdownMenuRadioGroup>
                 ) : null}
                 {serverOptions.length > 0 ? (
                     <>
                         {hasLocales ? <DropdownMenuSeparator /> : null}
-                        <DropdownMenuGroup>
-                            <DropdownMenuLabel>{tCommon("gamedataServer.label")}</DropdownMenuLabel>
-                        </DropdownMenuGroup>
                         <DropdownMenuRadioGroup
                             value={serverChoice}
                             onValueChange={(next) => {
                                 if (next && next !== serverChoice) switchServer(next);
                             }}
                         >
+                            <DropdownMenuLabel>{tCommon("gamedataServer.label")}</DropdownMenuLabel>
                             {serverOptions.map((option) => (
                                 <DropdownMenuRadioItem key={option.value} value={option.value} className="cursor-pointer">
                                     {option.label}

@@ -1,5 +1,5 @@
 import { type IStageIndexEntry, type StageVariantKind, stageVariantKind } from "#/lib/api/stages";
-import { STAGE_GROUP_LABEL, STAGE_GROUP_TONE, type StageGroupKey, stageGroupOrder } from "#/lib/registry/stage-groups";
+import { STAGE_GROUP_TONE, type StageGroupKey, stageGroupOrder } from "#/lib/registry/stage-groups";
 import type { StageDifficulty } from "#/types/stages";
 
 /** A harder variant folded into a stage card. */
@@ -35,7 +35,6 @@ export interface IEventVM {
     /** Zone/event banner key-art (asset-relative path), or null. */
     banner: string | null;
     codeRange: string;
-    statusLabel: string;
     bossCount: number;
     stageCount: number;
     /** Originite Prime from first clears of every stage in the zone, CM and Adverse included. */
@@ -51,7 +50,6 @@ export interface IEventVM {
 /** A category section on the timeline spine. */
 export interface IGroupVM {
     key: StageGroupKey;
-    label: string;
     tone: string;
     zoneCount: number;
     stageCount: number;
@@ -210,7 +208,6 @@ export function buildStageTree(entries: IStageIndexEntry[]): IStageTree {
             kicker,
             banner: zone.banner,
             codeRange,
-            statusLabel: STAGE_GROUP_LABEL[zone.group],
             bossCount,
             stageCount: cards.length,
             originitePrime: zone.originitePrime,
@@ -235,7 +232,7 @@ export function buildStageTree(entries: IStageIndexEntry[]): IStageTree {
         const stageCount = events.reduce((n, e) => n + e.stageCount, 0);
         totalStages += stageCount;
         totalZones += events.length;
-        groups.push({ key, label: STAGE_GROUP_LABEL[key], tone: STAGE_GROUP_TONE[key], zoneCount: events.length, stageCount, events });
+        groups.push({ key, tone: STAGE_GROUP_TONE[key], zoneCount: events.length, stageCount, events });
     }
     groups.sort((a, b) => stageGroupOrder(a.key) - stageGroupOrder(b.key));
 

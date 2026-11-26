@@ -2,7 +2,4 @@
 import type { ArchiveEdge } from "./ArchiveEdge";
 import type { ArchivePoint } from "./ArchivePoint";
 
-/**
- * A coloured hex with no portrait, which fills out a block's shape.
- */
 export type ArchiveFiller = { id: string; forceId: string; color: string; pos: ArchivePoint; edges: Array<ArchiveEdge> };

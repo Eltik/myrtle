@@ -1,3 +1,5 @@
+import type { AcquisitionFilter } from "#/lib/operators/acquisition";
+import type { ObtainChannel } from "#/types/generated/ObtainChannel";
 import type { OperatorPosition, OperatorProfession, OperatorRarity } from "#/types/operators";
 import type { IStage } from "#/types/stages";
 import type { ChallengeMessageKey } from "./challenges";
@@ -17,6 +19,8 @@ export interface IRandomizerOperator {
     hasDefensiveRecovery: boolean;
     /** Every skill is manually activated (no auto-trigger). */
     allSkillsManual: boolean;
+    /** Language-neutral acquisition category; absent in an old cached index. */
+    obtainChannel?: ObtainChannel | null;
 }
 
 export interface IRandomizerSettings {
@@ -30,6 +34,8 @@ export interface IRandomizerSettings {
     onlyCompletedStages: boolean;
     onlyAvailableStages: boolean;
     onlyE2Operators: boolean;
+    /** How the pool's operators must be obtainable; "gachaless" and "recruitment" read the recruitment pool. */
+    acquisition: AcquisitionFilter;
     /** Narrows the E2 rule to 6★; an owned operator of a lower rarity then passes it at any promotion. */
     e2SixStarOnly: boolean;
     /** Official tier list the pool is filtered by; `null` = no tier filter. */

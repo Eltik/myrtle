@@ -1,8 +1,10 @@
-import { ChevronDown, Search, TrendingUp, X } from "lucide-react";
+import { Search, TrendingUp, X } from "lucide-react";
 import type React from "react";
 import { Button } from "#/components/ui/button";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "#/components/ui/input-group";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "#/components/ui/menu";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
+import { Toggle } from "#/components/ui/toggle";
+import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import type { IMaterials } from "#/lib/api/materials";
 import { useT } from "#/lib/i18n";
@@ -22,6 +24,8 @@ interface IToolbarProps {
     onRanking: (next: Ranking) => void;
     catalog: ICatalog;
     materials: IMaterials | undefined;
+    catalogError: boolean;
+    onRetryCatalog: () => void;
     scope: LeaderboardScope;
     onScope: (next: LeaderboardScope) => void;
     server: ServerCode | "All";
@@ -34,10 +38,12 @@ interface IToolbarProps {
     onQuery: (next: string) => void;
 }
 
-/** Filter trigger: a 36px tap target on touch widths, the site's 32px on desktop. */
-const FILTER = "inline-flex h-9 cursor-pointer items-center gap-2 rounded-lg border border-input bg-card px-2.5 font-medium font-sans text-foreground text-xs leading-none transition-colors hover:border-foreground/20 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-input sm:h-8";
+/** One control height for the row: 44px under a coarse pointer, 36px on narrow screens, the site's 32px on desktop. */
+const CONTROL_HEIGHT = "h-9 pointer-coarse:h-11 sm:h-8";
+/** A kit Select trigger sized to the row; the label inside is plain muted sans, the value foreground. */
+const FILTER = cn(CONTROL_HEIGHT, "w-full min-w-0 justify-start sm:w-auto");
 
-export function Toolbar({ ranking, onRanking, catalog, materials, scope, onScope, server, onServer, interval, onInterval, movementOnly, onMovementOnly, query, onQuery }: IToolbarProps) {
+export function Toolbar({ ranking, onRanking, catalog, materials, catalogError, onRetryCatalog, scope, onScope, server, onServer, interval, onInterval, movementOnly, onMovementOnly, query, onQuery }: IToolbarProps) {
     const t: ToolbarT = useT("user");
     const intervalShortKey = INTERVALS.find((i) => i.value === interval)?.shortKey ?? "leaderboard.interval.day.short";
     // Rank movement comes from score snapshots; item holdings are not
@@ -49,7 +55,7 @@ export function Toolbar({ ranking, onRanking, catalog, materials, scope, onScope
     return (
         <div className="flex flex-col gap-2.5">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                <RankByPicker ranking={ranking} onRanking={onRanking} catalog={catalog} materials={materials} variant="toolbar" className="w-full sm:w-auto sm:max-w-80" />
+                <RankByPicker ranking={ranking} onRanking={onRanking} catalog={catalog} materials={materials} catalogError={catalogError} onRetryCatalog={onRetryCatalog} variant="toolbar" className="w-full sm:w-auto sm:max-w-80" />
                 <InputGroup className="w-full sm:ml-auto sm:w-72">
                     <InputGroupAddon>
                         <Search aria-hidden="true" />
@@ -65,8 +71,11 @@ export function Toolbar({ ranking, onRanking, catalog, materials, scope, onScope
                 </InputGroup>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2">
+            {/* Below sm a two-column grid of equal-height controls: wrapped as a flex row, the
+                segment, the two menus and the switch broke into ragged rows of mixed heights. */}
+            <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
                 <Segmented
+                    label={t("leaderboard.toolbar.scope.label")}
                     value={scope}
                     onChange={onScope}
                     options={[
@@ -74,54 +83,40 @@ export function Toolbar({ ranking, onRanking, catalog, materials, scope, onScope
                         { value: "friends", label: t("leaderboard.toolbar.scope.friends"), disabled: true, hint: t("leaderboard.toolbar.comingSoon") },
                     ]}
                 />
-                <DropdownMenu>
-                    <DropdownMenuTrigger className={FILTER} aria-label={t("leaderboard.toolbar.serverLabel")}>
-                        <span className="font-medium font-mono text-[10.5px] text-muted-foreground uppercase leading-none tracking-[0.14em]">{t("leaderboard.toolbar.server")}</span>
-                        <span className="font-semibold text-foreground">{server === "All" ? t("leaderboard.toolbar.all") : server}</span>
-                        <ChevronDown className="size-3 opacity-70" />
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start" className="min-w-40">
-                        <DropdownMenuItem onClick={() => onServer("All")} className={cn("cursor-pointer", server === "All" && "font-semibold text-primary")}>
-                            {t("leaderboard.toolbar.allServers")}
-                        </DropdownMenuItem>
+                <Select value={server} onValueChange={(next: ServerCode | "All" | null) => next && onServer(next)}>
+                    <SelectTrigger className={FILTER} aria-label={t("leaderboard.toolbar.serverLabel")}>
+                        <span className="text-muted-foreground">{t("leaderboard.toolbar.server")}</span>
+                        <SelectValue className="font-semibold">{(value: ServerCode | "All") => (value === "All" ? t("leaderboard.toolbar.all") : value)}</SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="All">{t("leaderboard.toolbar.allServers")}</SelectItem>
                         {SERVERS.map((code) => (
-                            <DropdownMenuItem key={code} onClick={() => onServer(code)} className={cn("cursor-pointer", server === code && "font-semibold text-primary")}>
+                            <SelectItem key={code} value={code}>
                                 {code}
-                            </DropdownMenuItem>
+                            </SelectItem>
                         ))}
-                    </DropdownMenuContent>
-                </DropdownMenu>
-                <DropdownMenu>
-                    <HintWrap hint={movementHint}>
-                        <DropdownMenuTrigger className={FILTER} aria-label={t("leaderboard.toolbar.intervalLabel")} disabled={!movementAvailable}>
-                            <span className="font-medium font-mono text-[10.5px] text-muted-foreground uppercase leading-none tracking-[0.14em]">{t("leaderboard.toolbar.interval")}</span>
-                            <span className="font-semibold text-foreground tabular-nums">{t(intervalShortKey)}</span>
-                            <ChevronDown className="size-3 opacity-70" />
-                        </DropdownMenuTrigger>
+                    </SelectContent>
+                </Select>
+                <Select value={interval} onValueChange={(next: LeaderboardInterval | null) => next && onInterval(next)} disabled={!movementAvailable}>
+                    <HintWrap hint={movementHint} className="w-full sm:w-auto">
+                        <SelectTrigger className={FILTER} aria-label={t("leaderboard.toolbar.intervalLabel")}>
+                            <span className="text-muted-foreground">{t("leaderboard.toolbar.interval")}</span>
+                            <SelectValue className="font-semibold tabular-nums">{() => t(intervalShortKey)}</SelectValue>
+                        </SelectTrigger>
                     </HintWrap>
-                    <DropdownMenuContent align="start" className="min-w-44">
+                    <SelectContent>
                         {INTERVALS.map((opt) => (
-                            <DropdownMenuItem key={opt.value} onClick={() => onInterval(opt.value)} className={cn("cursor-pointer", interval === opt.value && "font-semibold text-primary")}>
+                            <SelectItem key={opt.value} value={opt.value}>
                                 {t(opt.labelKey)}
-                            </DropdownMenuItem>
+                            </SelectItem>
                         ))}
-                    </DropdownMenuContent>
-                </DropdownMenu>
-                <HintWrap hint={movementHint ?? (movementOnly ? t("leaderboard.toolbar.movementOnly.on") : t("leaderboard.toolbar.movementOnly.off"))}>
-                    <button
-                        type="button"
-                        role="switch"
-                        aria-checked={movementOnly}
-                        disabled={!movementAvailable}
-                        onClick={() => onMovementOnly(!movementOnly)}
-                        className={cn(
-                            "inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-lg border px-2.5 font-medium font-sans text-xs leading-none transition-colors disabled:cursor-not-allowed disabled:opacity-50 sm:h-8",
-                            movementOnly && movementAvailable ? "border-primary/40 bg-[color-mix(in_srgb,var(--primary)_10%,transparent)] text-primary hover:bg-[color-mix(in_srgb,var(--primary)_14%,transparent)]" : "border-input bg-card text-foreground hover:border-foreground/20 disabled:hover:border-input",
-                        )}
-                    >
-                        <TrendingUp className={cn("size-3.5", movementOnly && movementAvailable ? "opacity-100" : "opacity-70")} aria-hidden />
+                    </SelectContent>
+                </Select>
+                <HintWrap hint={movementHint ?? (movementOnly ? t("leaderboard.toolbar.movementOnly.on") : t("leaderboard.toolbar.movementOnly.off"))} className="col-span-2 w-full sm:w-auto">
+                    <Toggle variant="outline" pressed={movementOnly && movementAvailable} disabled={!movementAvailable} onPressedChange={(next) => onMovementOnly(next)} className={cn(CONTROL_HEIGHT, "w-full gap-1.5 px-2.5 sm:w-auto")}>
+                        <TrendingUp className="size-3.5" aria-hidden />
                         <span>{t("leaderboard.toolbar.movementOnly")}</span>
-                    </button>
+                    </Toggle>
                 </HintWrap>
             </div>
         </div>
@@ -135,31 +130,18 @@ interface ISegmentedOption<T extends string> {
     hint?: string;
 }
 
-function Segmented<T extends string>({ value, onChange, options }: { value: T; onChange: (next: T) => void; options: ISegmentedOption<T>[] }) {
+/** Single-choice filter: a kit ToggleGroup, so it carries pressed state and a 44px coarse target, not tab roles without panels. */
+function Segmented<T extends string>({ label, value, onChange, options }: { label: string; value: T; onChange: (next: T) => void; options: ISegmentedOption<T>[] }) {
     return (
-        <div role="tablist" className="inline-flex h-9 items-center rounded-lg border border-border bg-muted p-0.75 sm:h-8">
-            {options.map((opt) => {
-                const isActive = opt.value === value;
-                return (
-                    <HintWrap key={opt.value} hint={opt.hint} className="h-full">
-                        <button
-                            type="button"
-                            role="tab"
-                            aria-selected={isActive}
-                            disabled={opt.disabled}
-                            onClick={() => !opt.disabled && onChange(opt.value)}
-                            className={cn(
-                                "inline-flex h-full items-center rounded-md px-3 font-medium font-sans text-xs leading-none transition-colors",
-                                isActive ? "bg-card text-foreground shadow-[0_1px_2px_rgb(0_0_0/0.06)]" : "text-muted-foreground hover:text-foreground",
-                                opt.disabled && "cursor-not-allowed opacity-60",
-                            )}
-                        >
-                            {opt.label}
-                        </button>
-                    </HintWrap>
-                );
-            })}
-        </div>
+        <ToggleGroup aria-label={label} variant="outline" value={[value]} onValueChange={(next) => next[0] && onChange(next[0] as T)} className="col-span-2 grid w-full auto-cols-fr grid-flow-col sm:flex sm:w-fit">
+            {options.map((opt) => (
+                <HintWrap key={opt.value} hint={opt.hint} className="w-full sm:w-auto">
+                    <ToggleGroupItem value={opt.value} disabled={opt.disabled} className={cn(CONTROL_HEIGHT, "w-full px-3 sm:w-auto")}>
+                        {opt.label}
+                    </ToggleGroupItem>
+                </HintWrap>
+            ))}
+        </ToggleGroup>
     );
 }
 

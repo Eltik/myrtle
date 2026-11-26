@@ -65,7 +65,7 @@ function FacetMenu({ facet, value, onChange }: { facet: IPoolFacet; value: strin
     const selected = useMemo(() => value.map((v) => byValue.get(v)).filter((o): o is IFacetOption => o !== undefined), [value, byValue]);
     return (
         <Field className="min-w-0 max-w-full gap-1.5 sm:flex-row sm:items-center sm:gap-2">
-            <FieldLabel htmlFor={id} className="whitespace-nowrap font-bold font-mono text-[10.5px] text-muted-foreground uppercase leading-none tracking-[0.16em]">
+            <FieldLabel htmlFor={id} className="whitespace-nowrap font-bold font-mono text-[10.5px] text-muted-foreground leading-none">
                 {facet.label}
             </FieldLabel>
             <Combobox<IFacetOption, true> multiple items={facet.options} value={selected} onValueChange={(next) => onChange(next.map((o) => o.value))} itemToStringLabel={(o) => o.label} itemToStringValue={(o) => o.value} isItemEqualToValue={(a, b) => a.value === b.value}>
@@ -111,7 +111,7 @@ function FacetToggles({ facet, value, onChange }: { facet: IPoolFacet; value: st
         // min-w-0: a long facet (24 skin brands) has to shrink to the dialog so its row scrolls instead of overflowing.
         // The row's vertical padding, cancelled by its margin, is room for a toggle's 44 px touch area: the scroller clips it otherwise.
         <Field className="min-w-0 max-w-full gap-1.5 sm:flex-row sm:items-center sm:gap-2">
-            <FieldLabel className="whitespace-nowrap font-bold font-mono text-[10.5px] text-muted-foreground uppercase leading-none tracking-[0.16em]">{facet.label}</FieldLabel>
+            <FieldLabel className="whitespace-nowrap font-bold font-mono text-[10.5px] text-muted-foreground leading-none">{facet.label}</FieldLabel>
             <div ref={fade.ref} style={fade.style} className="-mx-1 -my-1.5 flex min-w-0 overflow-x-auto px-1 py-1.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 <ToggleGroup value={value} onValueChange={(v) => onChange(v as string[])} aria-label={facet.groupLabel} multiple variant="outline" size="sm" className="flex-nowrap">
                     {facet.options.map((option) =>

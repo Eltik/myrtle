@@ -255,64 +255,82 @@ pub async fn roster(ctx: &AppContext, server: Server) -> Result<CachedJson, AppE
     .await
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct OperatorOwnershipCounts {
+    #[ts(type = "number")]
     pub owners: i64,
+    #[ts(type = "number")]
     pub e2_owners: i64,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct OperatorOwnershipResponse {
+    #[ts(type = "number")]
     pub total_users: i64,
     pub counts: HashMap<String, OperatorOwnershipCounts>,
     pub computed_at: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct BuildChoice {
     pub id: String,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(type = "number | null")]
     pub skill_index: Option<i16>,
+    #[ts(type = "number")]
     pub users: i64,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct LevelBucket {
     pub level: i16,
+    #[ts(type = "number")]
     pub users: i64,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct SkillMasteryStats {
     pub skill_id: String,
     pub skill_index: i16,
     pub buckets: Vec<LevelBucket>,
+    #[ts(type = "number")]
     pub total: i64,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct ModuleLevelStats {
     pub uni_equip_id: String,
     pub buckets: Vec<LevelBucket>,
+    #[ts(type = "number")]
     pub total: i64,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct OperatorBuildStatsResponse {
     pub operator_id: String,
     pub default_skills: Vec<BuildChoice>,
+    #[ts(type = "number")]
     pub skill_total: i64,
     pub default_modules: Vec<BuildChoice>,
+    #[ts(type = "number")]
     pub module_total: i64,
     pub masteries: Vec<SkillMasteryStats>,
     pub module_levels: Vec<ModuleLevelStats>,
+    #[ts(type = "number")]
     pub min_sample: i64,
     pub computed_at: String,
 }

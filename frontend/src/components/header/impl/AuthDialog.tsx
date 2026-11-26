@@ -187,11 +187,13 @@ export function AuthDialog({ trigger, onOpenChange, open: openProp }: IAuthDialo
         authActions.resetLoginForm();
     };
     // A 400 from a login endpoint is the credentials being turned down: the
-    // backend forwards the publisher's reason when it can read one and says
-    // "invalid upstream response" when it cannot (a wrong Yostar code today,
-    // see backend core::hypergryph::fetch::parse_json). Either way the action
+    // backend forwards the publisher's reason when it can read one (a wrong
+    // Yostar code arrives as "The code is wrong, has expired, or was already
+    // used (100303)") and says "invalid upstream response" when it cannot
+    // (see backend core::hypergryph::fetch::parse_json). Either way the action
     // for the visitor is the same, so lead with that and keep the detail under.
-    // Everything else (server down, rate limited, 5xx) reads as itself.
+    // Everything else (server down, rate limited, 5xx) reads as itself: a
+    // server whose addresses have not loaded is a 503, not a rejected code.
     const onLoginError = (err: unknown) => {
         const failure = classifyFailure(err);
         const detail = describeError(err);
@@ -401,6 +403,7 @@ export function AuthDialog({ trigger, onOpenChange, open: openProp }: IAuthDialo
                             </>
                         ) : null}
                         <Field>
+                            <FieldLabel>{t("authDialog.server")}</FieldLabel>
                             <Select
                                 items={SERVER_OPTIONS}
                                 aria-label={t("authDialog.selectServer")}
@@ -438,7 +441,7 @@ export function AuthDialog({ trigger, onOpenChange, open: openProp }: IAuthDialo
                     <DialogFooter>
                         <DialogClose render={<Button variant="ghost" />}>{t("authDialog.cancel")}</DialogClose>
                         <div className="flex flex-col gap-2">
-                            <Button type="submit" variant="outline" disabled={submitDisabled}>
+                            <Button type="submit" disabled={submitDisabled}>
                                 {submitPending ? (
                                     <>
                                         <Spinner className="mr-2 h-4 w-4" />
@@ -453,11 +456,11 @@ export function AuthDialog({ trigger, onOpenChange, open: openProp }: IAuthDialo
                                     {cooldown > 0 ? (
                                         <p className="text-muted-foreground text-xs">{t("authDialog.resendIn", { seconds: cooldown })}</p>
                                     ) : (
-                                        <Button type="button" variant="ghost" className="h-auto p-0 text-xs" disabled={sendOTP.isPending} onClick={() => sendOTP.mutate({ email, server })}>
+                                        <Button type="button" variant="ghost" size="sm" disabled={sendOTP.isPending} onClick={() => sendOTP.mutate({ email, server })}>
                                             {t("authDialog.resendCode")}
                                         </Button>
                                     )}
-                                    <Button type="button" variant="ghost" className="h-auto p-0 text-xs" onClick={authActions.resetLoginOTP}>
+                                    <Button type="button" variant="ghost" size="sm" onClick={authActions.resetLoginOTP}>
                                         {t("authDialog.changeEmail")}
                                     </Button>
                                 </div>
@@ -467,11 +470,11 @@ export function AuthDialog({ trigger, onOpenChange, open: openProp }: IAuthDialo
                                     {cnCooldown > 0 ? (
                                         <p className="text-muted-foreground text-xs">{t("authDialog.resendIn", { seconds: cnCooldown })}</p>
                                     ) : (
-                                        <Button type="button" variant="ghost" className="h-auto p-0 text-xs" disabled={sendCnSms.isPending} onClick={() => sendCnSms.mutate({ phone: cnPhone })}>
+                                        <Button type="button" variant="ghost" size="sm" disabled={sendCnSms.isPending} onClick={() => sendCnSms.mutate({ phone: cnPhone })}>
                                             {t("authDialog.resendCode")}
                                         </Button>
                                     )}
-                                    <Button type="button" variant="ghost" className="h-auto p-0 text-xs" onClick={authActions.resetCnCode}>
+                                    <Button type="button" variant="ghost" size="sm" onClick={authActions.resetCnCode}>
                                         {t("authDialog.changePhone")}
                                     </Button>
                                 </div>
@@ -481,11 +484,11 @@ export function AuthDialog({ trigger, onOpenChange, open: openProp }: IAuthDialo
                                     {biliCooldown > 0 ? (
                                         <p className="text-muted-foreground text-xs">{t("authDialog.resendIn", { seconds: biliCooldown })}</p>
                                     ) : (
-                                        <Button type="button" variant="ghost" className="h-auto p-0 text-xs" disabled={sendBiliSms.isPending} onClick={() => sendBiliSms.mutate({ phone: biliPhone })}>
+                                        <Button type="button" variant="ghost" size="sm" disabled={sendBiliSms.isPending} onClick={() => sendBiliSms.mutate({ phone: biliPhone })}>
                                             {t("authDialog.resendCode")}
                                         </Button>
                                     )}
-                                    <Button type="button" variant="ghost" className="h-auto p-0 text-xs" onClick={authActions.resetBiliCode}>
+                                    <Button type="button" variant="ghost" size="sm" onClick={authActions.resetBiliCode}>
                                         {t("authDialog.changePhone")}
                                     </Button>
                                 </div>

@@ -6,14 +6,16 @@ use myrtle_gamedata_raw::tables::operator::{
 
 use crate::types::Unlock;
 
-#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct SkillRule {
     pub unlock: Unlock,
     pub mastery_unlocks: Vec<Unlock>,
 }
 
-#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct SkillRules {
     pub rank_unlocks: Vec<Unlock>,

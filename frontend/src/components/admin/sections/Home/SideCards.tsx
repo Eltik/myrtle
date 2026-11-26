@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
+import { skeletons } from "#/components/admin/Primitives";
 import { roleVariant, useLevelLabel } from "#/components/admin/sections/Users/labels";
 import type { IAdminAccess } from "#/components/admin/shell/access";
 import { useAdminLocales } from "#/components/admin/shell/locales";
@@ -7,6 +8,7 @@ import { levelVariant } from "#/components/admin/shell/model";
 import { useRoleLabel } from "#/components/admin/shell/nav";
 import { Badge, type IBadgeProps } from "#/components/ui/badge";
 import { Card, CardDescription, CardHeader, CardPanel, CardTitle } from "#/components/ui/card";
+import { LoadFailed } from "#/components/ui/load-failed";
 import { useAuth } from "#/hooks/use-auth";
 import { globalAuditLogQueryOptions, translationAuditLogQueryOptions } from "#/lib/api/admin";
 import { operatorsIndexQueryOptions } from "#/lib/api/operators";
@@ -91,6 +93,14 @@ export function RecentCard({ access }: { access: IAdminAccess }): React.ReactEle
         return (id: string) => names.get(id) ?? id;
     }, [opsQuery.data]);
 
+    // An operator-name miss falls back to the id, so only the two feeds decide loading and failure.
+    const failed = (wantNotes && notesQuery.isError) || (wantTranslations && i18nQuery.isError);
+    const pending = (wantNotes && notesQuery.isPending) || (wantTranslations && i18nQuery.isPending);
+    const retry = (): void => {
+        if (notesQuery.isError) void notesQuery.refetch();
+        if (i18nQuery.isError) void i18nQuery.refetch();
+    };
+
     const recent = mergeRecentChanges(notesQuery.data?.entries ?? [], i18nQuery.data?.entries ?? [], { onlyActorId: access.staff ? undefined : (me?.id ?? ""), limit: RECENT_LIMIT });
 
     const text = (r: (typeof recent)[number]) => {
@@ -108,20 +118,26 @@ export function RecentCard({ access }: { access: IAdminAccess }): React.ReactEle
                 <CardTitle>{access.staff ? t("home.recent.titleStaff") : t("home.recent.titleOwn")}</CardTitle>
             </CardHeader>
             <CardPanel>
-                <div className="flex flex-col">
-                    {recent.map((r) => {
-                        const line = text(r);
-                        return (
-                            <div key={r.id} className="flex items-center gap-2.5 border-border border-t py-[9px]">
-                                <span className="min-w-0 flex-1 truncate text-[13.5px]" title={line}>
-                                    {line}
-                                </span>
-                                <span className="whitespace-nowrap text-[12.5px] text-muted-foreground">{f.relative(r.at)}</span>
-                            </div>
-                        );
-                    })}
-                    {recent.length === 0 ? <span className="text-[13px] text-muted-foreground">{t("home.recent.empty")}</span> : null}
-                </div>
+                {failed ? (
+                    <LoadFailed layout="inline" message={t("home.recent.loadFailed")} onRetry={retry} />
+                ) : pending ? (
+                    <div className="flex flex-col gap-2">{skeletons(3, "h-6")}</div>
+                ) : (
+                    <div className="flex flex-col">
+                        {recent.map((r) => {
+                            const line = text(r);
+                            return (
+                                <div key={r.id} className="flex items-center gap-2.5 border-border border-t py-[9px]">
+                                    <span className="min-w-0 flex-1 truncate text-[13.5px]" title={line}>
+                                        {line}
+                                    </span>
+                                    <span className="whitespace-nowrap text-[12.5px] text-muted-foreground">{f.relative(r.at)}</span>
+                                </div>
+                            );
+                        })}
+                        {recent.length === 0 ? <span className="text-[13px] text-muted-foreground">{t("home.recent.empty")}</span> : null}
+                    </div>
+                )}
             </CardPanel>
         </Card>
     );

@@ -2,6 +2,7 @@ import type { FilterSets } from "#/components/operators/list/impl/shared-filters
 import { hasAnySharedFilter, matchesSharedFilters } from "#/components/operators/list/impl/shared-filters";
 import type { IOperatorRosterItem } from "#/lib/api/operators";
 import type { IRosterEntry } from "#/lib/api/user";
+import { sourceOfChannel } from "#/lib/operators/acquisition";
 import { compactForSearch } from "#/lib/search/fuzzy";
 import type { ObtainChannel } from "#/types/generated/ObtainChannel";
 import type { IOperatorIndexEntry } from "#/types/operators";
@@ -40,7 +41,7 @@ export function toOwnedEntry(r: IRosterEntry, meta: IOperatorIndexEntry | null, 
  */
 export function operatorSource(approach: string | null | undefined, channel?: ObtainChannel | null): Exclude<SourceFilter, "any"> | null {
     // A present `null` channel is an operator with no approach, the same as an empty approach string.
-    if (channel !== undefined) return channel === null ? null : channel === "headhunting" ? "headhunting" : "welfare";
+    if (channel !== undefined) return sourceOfChannel(channel);
     if (!approach) return null;
     return approach.includes("Headhunting") ? "headhunting" : "welfare";
 }

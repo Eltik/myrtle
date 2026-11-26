@@ -6,6 +6,7 @@ import { AlertDialog, AlertDialogClose, AlertDialogDescription, AlertDialogFoote
 import { Button } from "#/components/ui/button";
 import { useErrorMessage } from "#/components/ui/error-message";
 import { PageHeader } from "#/components/ui/page-header";
+import type { messages as routeErrorMessages } from "#/components/ui/route-error.messages";
 import { toastManager } from "#/components/ui/toast";
 import { useAuth } from "#/hooks/use-auth";
 import { operatorsIndexQueryOptions } from "#/lib/api/operators";
@@ -55,6 +56,7 @@ export interface ISquadBuilderProps {
 
 export function SquadBuilder({ share, onShareConsumed }: ISquadBuilderProps): React.ReactElement {
     const t: PageT = useT("tools");
+    const tc: TypedT<typeof routeErrorMessages> = useT("common");
     const server = useGamedataServer();
     const queryClient = useQueryClient();
     const navigate = useNavigate();
@@ -91,12 +93,15 @@ export function SquadBuilder({ share, onShareConsumed }: ISquadBuilderProps): Re
         if (ready) safeWrite(COMPACT_KEY, state.compact);
     }, [ready, state.compact]);
 
-    const { data: operatorList } = useQuery(operatorsIndexQueryOptions(server));
+    const { data: operatorList, isError: operatorsFailed, refetch: refetchOperators } = useQuery(operatorsIndexQueryOptions(server));
     const operators = React.useMemo(() => new Map((operatorList ?? []).map((o) => [o.id, o])), [operatorList]);
     const { data: rosterRows } = useQuery({ ...userRosterQueryOptions(uid ?? ""), enabled: uid !== null });
     const roster = React.useMemo(() => rosterBuildsOf((rosterRows ?? []) as unknown as RosterEntry[]), [rosterRows]);
-    const { data: squads, isLoading: squadsLoading } = useQuery(squadsQueryOptions(uid));
+    const { data: squads, isLoading: squadsLoading, isError: squadsFailed, refetch: refetchSquads } = useQuery(squadsQueryOptions(uid));
     const saved = squads?.saved ?? [];
+    // Until the saved slots have loaded, `saved` is empty and every slot reads as free: a save
+    // then could replace a squad the player never saw. Saves wait for the list.
+    const slotsUnknown = signedIn && squads === undefined;
 
     const { draft, readOnlyShare } = state;
     const seats = React.useMemo(
@@ -285,11 +290,19 @@ export function SquadBuilder({ share, onShareConsumed }: ISquadBuilderProps): Re
         onError: (err) => toastManager.add({ id: `squad-delete-err-${Date.now()}`, title: t("squad.toast.deleteFailed"), description: describeError(err), type: "error" }),
     });
 
+    const slotsReady = (): boolean => {
+        if (!slotsUnknown) return true;
+        // The toast carries the retry: in share mode the SlotBar, the only other retry, is not rendered.
+        toastManager.add({ id: `squad-slots-unknown-${Date.now()}`, title: t("squad.toast.slotsUnavailable"), type: "error", actionProps: { children: tc("routeError.retry"), onClick: () => void refetchSquads() } });
+        return false;
+    };
+
     const onSave = () => {
         if (!signedIn) {
             authActions.openLoginDialog();
             return;
         }
+        if (!slotsReady()) return;
         if (state.slot === null) setChooser("save");
         else saveMutation.mutate({ slot: state.slot, squad: draft });
     };
@@ -302,7 +315,7 @@ export function SquadBuilder({ share, onShareConsumed }: ISquadBuilderProps): Re
                 {readOnlyShare ? (
                     <SharedBanner
                         signedIn={signedIn}
-                        onCopy={() => setChooser("share")}
+                        onCopy={() => slotsReady() && setChooser("share")}
                         onEditCopy={() => dispatch({ type: "KEEP_SHARE" })}
                         onClose={() => {
                             dispatch({ type: "CLOSE_SHARE" });
@@ -310,9 +323,9 @@ export function SquadBuilder({ share, onShareConsumed }: ISquadBuilderProps): Re
                         }}
                         t={t}
                     />
-                ) : (
-                    <SlotBar signedIn={signedIn} isLoading={squadsLoading} saved={saved} synced={squads?.synced ?? []} activeSlot={state.slot} dirty={dirty} onLoadSlot={loadSlot} onLoadGame={loadGame} onSignIn={() => authActions.openLoginDialog()} />
-                )}
+                ) : signedIn ? (
+                    <SlotBar isLoading={squadsLoading} isError={squadsFailed} onRetry={() => void refetchSquads()} saved={saved} synced={squads?.synced ?? []} activeSlot={state.slot} dirty={dirty} onLoadSlot={loadSlot} onLoadGame={loadGame} />
+                ) : null}
 
                 <SquadToolbar
                     name={draft.name}
@@ -325,6 +338,7 @@ export function SquadBuilder({ share, onShareConsumed }: ISquadBuilderProps): Re
                     readOnly={readOnlyShare}
                     signedIn={signedIn}
                     saving={saveMutation.isPending}
+                    saveBlocked={slotsUnknown}
                     onName={(name) => dispatch({ type: "SET_NAME", name })}
                     onToggleCompact={() => dispatch({ type: "SET_COMPACT", compact: !state.compact })}
                     onRevert={() => {
@@ -345,6 +359,8 @@ export function SquadBuilder({ share, onShareConsumed }: ISquadBuilderProps): Re
                     detail={stageQuery.data}
                     context={stageContext}
                     isLoading={stageId !== null && stageQuery.isLoading}
+                    isError={stageId !== null && stageQuery.isError}
+                    onRetry={() => void stageQuery.refetch()}
                     challengeId={challengeId}
                     normalId={challengeId ? normalId : null}
                     readOnly={readOnlyShare}
@@ -373,7 +389,7 @@ export function SquadBuilder({ share, onShareConsumed }: ISquadBuilderProps): Re
                             onClose={() => setFocus(null)}
                         />
                     ) : focus !== null && !focusedMember && !readOnlyShare ? (
-                        <OperatorPicker key={focus === SUPPORT_SEAT ? "support" : "seat"} seat={focus} operators={operatorList ?? []} roster={roster} seated={seated} onPick={onPick} onClose={() => setFocus(null)} />
+                        <OperatorPicker key={focus === SUPPORT_SEAT ? "support" : "seat"} seat={focus} operators={operatorList ?? []} operatorsFailed={operatorsFailed} onRetryOperators={() => void refetchOperators()} roster={roster} seated={seated} onPick={onPick} onClose={() => setFocus(null)} />
                     ) : null}
                 </div>
 
@@ -399,7 +415,7 @@ export function SquadBuilder({ share, onShareConsumed }: ISquadBuilderProps): Re
                 onOpenChange={(open) => !open && setChooser(null)}
                 saved={saved}
                 busy={saveMutation.isPending}
-                onPick={(slot) => saveMutation.mutate({ slot, squad: draft })}
+                onPick={(slot) => slotsReady() && saveMutation.mutate({ slot, squad: draft })}
                 onEditCopy={
                     chooser === "share"
                         ? () => {
@@ -426,7 +442,7 @@ export function SquadBuilder({ share, onShareConsumed }: ISquadBuilderProps): Re
 /** Over a shared squad, read only: keep a copy (saved or not) or go back to the working copy. */
 function SharedBanner({ signedIn, onCopy, onEditCopy, onClose, t }: { signedIn: boolean; onCopy: () => void; onEditCopy: () => void; onClose: () => void; t: PageT }): React.ReactElement {
     return (
-        <section className="flex flex-col gap-3 rounded-xl border border-primary/40 bg-primary/5 p-4 sm:flex-row sm:items-center">
+        <section className="flex flex-col gap-3 rounded-2xl border border-primary/40 bg-primary/5 p-4 sm:flex-row sm:items-center">
             <Share2 className="size-5 shrink-0 text-primary" aria-hidden="true" />
             <div className="min-w-0 flex-1">
                 <h2 className="font-semibold text-[14px]">{t("squad.shared.title")}</h2>

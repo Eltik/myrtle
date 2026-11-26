@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { useAuth } from "#/hooks/use-auth";
 import { healthQueryOptions, localesQueryOptions, translationPermissionsQueryOptions, translationProgressQueryOptions } from "#/lib/api/admin";
 import { noteHasContent, operatorNotesListQueryOptions } from "#/lib/api/operator-notes";
@@ -11,16 +11,30 @@ import { buildInboxQueue, emptyOperators, type InboxItem, type IQueueOperator, o
 
 /**
  * Operators with no note content, by name, for a role that can open notes.
- * `undefined` while loading or when `enabled` is false.
+ * `data` is `undefined` while loading, on failure, or when `enabled` is false;
+ * `failed` and `retry` let a caller tell the last two apart from loading.
  */
-export function useEmptyOperators(enabled: boolean): { empty: IQueueOperator[]; total: number } | undefined {
+export function useEmptyOperatorsQuery(enabled: boolean): { data: { empty: IQueueOperator[]; total: number } | undefined; failed: boolean; retry: () => void } {
     const opsQuery = useQuery({ ...operatorsIndexQueryOptions(useGamedataServer()), enabled });
     const notesQuery = useQuery({ ...operatorNotesListQueryOptions(), enabled });
-    return useMemo(() => {
+    const data = useMemo(() => {
         if (!enabled || !opsQuery.data || !notesQuery.data) return undefined;
         const filled = new Set(notesQuery.data.filter(noteHasContent).map((n) => n.operator_id));
         return { empty: emptyOperators(opsQuery.data, filled), total: opsQuery.data.length };
     }, [enabled, opsQuery.data, notesQuery.data]);
+    const { refetch: refetchOps } = opsQuery;
+    const { refetch: refetchNotes } = notesQuery;
+    const failed = enabled && (opsQuery.isError || notesQuery.isError);
+    const retry = useCallback(() => {
+        void refetchOps();
+        void refetchNotes();
+    }, [refetchOps, refetchNotes]);
+    return { data, failed, retry };
+}
+
+/** `useEmptyOperatorsQuery(enabled).data`: `undefined` while loading or when `enabled` is false. */
+export function useEmptyOperators(enabled: boolean): { empty: IQueueOperator[]; total: number } | undefined {
+    return useEmptyOperatorsQuery(enabled).data;
 }
 
 /**

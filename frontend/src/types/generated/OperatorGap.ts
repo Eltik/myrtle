@@ -9,44 +9,20 @@ export type OperatorGap = {
     current_level: number;
     current_skill_level: number;
     /**
-     * Highest mastery the user has on any of this operator's skills (-1 if no skills).
+     * -1 without skills
      */
     max_mastery: number;
     /**
-     * Highest module level the user has on any advanced module (-1 if no module).
+     * -1 without a module
      */
     max_module_level: number;
-    /**
-     * Current trust percent (0-200), resolved from `favor_point` via the
-     * favor table. Surfaced so the client can show "Trust 87 / 200".
-     */
     current_trust: number;
-    /**
-     * True if this operator is currently published as one of the user's
-     * support units. Support ops are held to the favor table's max trust
-     * (typically 200%) - ordinary ops are "complete" at 100%.
-     */
     is_support: boolean;
-    /**
-     * Short tags for what's still left, e.g. ["E2", "`MAX_LEVEL`", "M3", "MOD3", "TRUST"].
-     */
     missing: Array<string>;
     /**
-     * Projected gain per tag in `missing`, same order: the operator-local delta
-     * and its contribution to the subscore and `total_score` (see `UpgradeDelta`).
+     * One per `missing` tag
      */
     deltas: Array<UpgradeDelta>;
-    /**
-     * Combined `operator_grade_delta` if the user did every available upgrade
-     * path on this operator. ELITE (promote + max level at new phase) and
-     * `MAX_LEVEL` (max level at current phase) overlap - only the larger of
-     * the two is counted. All other tags (M3, MOD3, SL7, POT6, TRUST) are
-     * independent and added directly.
-     */
     subscore_potential_gain: number;
-    /**
-     * Same combination as `subscore_potential_gain` but in `total_score`
-     * units - overall grade points the user could still pull from this op.
-     */
     total_potential_gain: number;
 };

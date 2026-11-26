@@ -9,7 +9,8 @@ use serde::Serialize;
 
 pub const GAMEDATA_CACHE: &str = "public, max-age=300";
 
-#[derive(Debug, Clone, Copy, Serialize)]
+#[derive(Debug, Clone, Copy, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct StatusOk {
     status: &'static str,
 }

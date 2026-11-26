@@ -1,10 +1,11 @@
 import { useMemo, useState } from "react";
-import { Kicker } from "#/components/ui/kicker";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
+import { Skeleton } from "#/components/ui/skeleton";
+import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import type { IOperatorPopularity } from "#/lib/api/gacha";
 import { useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import { professionLabel, rarityGradient, rarityStarColor } from "#/lib/utils";
+import { professionLabel, rarityGradient, rarityInk } from "#/lib/utils";
 import type { IOperatorIndexEntry } from "#/types/operators";
 import { fmtPct } from "./format";
 import type { messages } from "./Leaderboard.messages";
@@ -24,24 +25,28 @@ export function Leaderboard({ ops, operatorsById, isLoading }: ILeaderboardProps
     const filtered = useMemo(() => ops.filter((o) => o.rarity === rarity), [ops, rarity]);
 
     return (
-        <section className="flex flex-col gap-4 rounded-[14px] border border-border bg-card p-[18px_18px] sm:p-[22px_24px] lg:absolute lg:inset-0">
+        <section className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-[18px_18px] sm:p-[22px_24px] lg:absolute lg:inset-0">
             <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                 <div>
-                    <Kicker className="mb-1.5">{t("community.leaderboard.kicker")}</Kicker>
-                    <h2 className="m-0 text-balance font-sans font-semibold text-[20px] text-foreground leading-[1.15] tracking-[-0.02em] sm:text-[22px]">{t("community.leaderboard.title")}</h2>
+                    <h2 className="m-0 font-sans font-semibold text-[15px] text-foreground leading-tight">{t("community.leaderboard.kicker")}</h2>
                 </div>
-                <div className="inline-flex self-start rounded-[9px] border border-border bg-muted p-0.75 sm:self-auto">
+                <ToggleGroup
+                    aria-label={t("community.leaderboard.rarityFilter")}
+                    className="self-start sm:self-auto"
+                    onValueChange={(next) => {
+                        const picked = RARITIES.find((r) => String(r) === next[0]);
+                        if (picked) setRarity(picked);
+                    }}
+                    size="sm"
+                    value={[String(rarity)]}
+                    variant="outline"
+                >
                     {RARITIES.map((r) => (
-                        <button
-                            key={r}
-                            type="button"
-                            onClick={() => setRarity(r)}
-                            className={`h-6.5 cursor-pointer rounded-md px-3 font-medium font-sans text-xs transition-colors ${rarity === r ? "bg-card text-foreground shadow-[0_1px_2px_oklch(0_0_0/0.4)]" : "bg-transparent text-muted-foreground hover:text-foreground"}`}
-                        >
+                        <ToggleGroupItem key={r} className="px-3" value={String(r)}>
                             {r}★
-                        </button>
+                        </ToggleGroupItem>
                     ))}
-                </div>
+                </ToggleGroup>
             </header>
 
             <LeaderTable ops={filtered} operatorsById={operatorsById} isLoading={isLoading} />
@@ -59,12 +64,12 @@ function LeaderTable({ ops, operatorsById, isLoading }: { ops: IOperatorPopulari
                 {Array.from({ length: 6 }).map((_, i) => (
                     // biome-ignore lint/suspicious/noArrayIndexKey: loading skeleton
                     <div key={i} className="flex items-center gap-3">
-                        <div className="h-9 w-9 shrink-0 animate-pulse rounded-lg bg-muted" />
+                        <Skeleton className="h-9 w-9 shrink-0 rounded-lg" />
                         <div className="flex flex-1 flex-col gap-1.5">
-                            <div className="h-3 w-32 animate-pulse rounded bg-muted" />
-                            <div className="h-2 w-20 animate-pulse rounded bg-muted" />
+                            <Skeleton className="h-3 w-32 rounded" />
+                            <Skeleton className="h-2 w-20 rounded" />
                         </div>
-                        <div className="h-3 w-16 animate-pulse rounded bg-muted" />
+                        <Skeleton className="h-3 w-16 rounded" />
                     </div>
                 ))}
             </div>
@@ -82,10 +87,10 @@ function LeaderTable({ ops, operatorsById, isLoading }: { ops: IOperatorPopulari
             <table className="w-full border-collapse">
                 <thead className="sticky top-0 z-10 bg-card">
                     <tr>
-                        <th className="w-8 border-border border-b bg-card px-1.5 py-2 text-left font-medium font-mono text-[9.5px] text-muted-foreground uppercase tracking-[0.14em] sm:w-10 sm:px-2">#</th>
-                        <th className="border-border border-b bg-card px-1.5 py-2 text-left font-medium font-mono text-[9.5px] text-muted-foreground uppercase tracking-[0.14em] sm:px-2">{t("community.leaderboard.col.operator")}</th>
-                        <th className="border-border border-b bg-card px-1.5 py-2 text-right font-medium font-mono text-[9.5px] text-muted-foreground uppercase tracking-[0.14em] sm:px-2 sm:text-left">{t("community.leaderboard.col.pulls")}</th>
-                        <th className="hidden border-border border-b bg-card px-2 py-2 text-left font-medium font-mono text-[9.5px] text-muted-foreground uppercase tracking-[0.14em] sm:table-cell">{t("community.leaderboard.col.share")}</th>
+                        <th className="kicker w-8 border-border border-b bg-card px-1.5 py-2 text-left sm:w-10 sm:px-2">#</th>
+                        <th className="kicker border-border border-b bg-card px-1.5 py-2 text-left sm:px-2">{t("community.leaderboard.col.operator")}</th>
+                        <th className="kicker border-border border-b bg-card px-1.5 py-2 text-right sm:px-2 sm:text-left">{t("community.leaderboard.col.pulls")}</th>
+                        <th className="kicker hidden border-border border-b bg-card px-2 py-2 text-left sm:table-cell">{t("community.leaderboard.col.share")}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -108,11 +113,10 @@ function LeaderTable({ ops, operatorsById, isLoading }: { ops: IOperatorPopulari
                                         <div className="min-w-0 flex-1">
                                             <div className="truncate font-sans font-semibold text-[13px] text-foreground sm:text-sm">{name}</div>
                                             <div className="mt-0.5 flex flex-wrap items-center gap-1.5 font-mono text-[10.5px] text-muted-foreground sm:gap-2">
-                                                <span style={{ color: rarityStarColor(op.rarity) }} className="text-[11px] tracking-wider">
+                                                <span style={{ color: rarityInk(op.rarity) }} className="text-[11px] tracking-wider">
                                                     {"★".repeat(op.rarity)}
                                                 </span>
                                                 {role ? <span className="hidden sm:inline">· {role}</span> : null}
-                                                <span className="hidden text-[9.5px] opacity-60 sm:inline">{op.charId}</span>
                                                 <span className="font-mono text-[10px] text-muted-foreground tabular-nums sm:hidden">· {fmtPct(op.percentage, 2)}</span>
                                             </div>
                                         </div>

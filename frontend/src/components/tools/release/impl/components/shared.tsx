@@ -1,10 +1,11 @@
 import { Link } from "@tanstack/react-router";
 import { SearchX } from "lucide-react";
 import * as React from "react";
-import { Button } from "#/components/ui/button";
+import { Badge } from "#/components/ui/badge";
 import { Card } from "#/components/ui/card";
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "#/components/ui/empty";
 import { Label } from "#/components/ui/label";
+import { LoadFailed } from "#/components/ui/load-failed";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { Skeleton } from "#/components/ui/skeleton";
 import { Switch } from "#/components/ui/switch";
@@ -21,8 +22,17 @@ import type { messages } from "./shared.messages";
 
 type SharedT = TypedT<typeof messages>;
 
-export function Tag({ children, className }: { children: React.ReactNode; className?: string }): React.ReactElement {
-    return <span className={cn("inline-flex shrink-0 items-center rounded-sm bg-muted px-1.5 py-px font-medium font-mono text-[10px] text-muted-foreground uppercase tracking-[0.06em]", className)}>{children}</span>;
+/**
+ * A kind or type tag. With `tone` (a CSS colour) the hue tints the fill and border and the text
+ * stays foreground: the kind colours as text on the muted tag measured 2.46 (yellow-600) to 3.81
+ * (pink-600). Without a tone it is a plain outline tag.
+ */
+export function Tag({ children, className, tone }: { children: React.ReactNode; className?: string; tone?: string }): React.ReactElement {
+    return (
+        <Badge variant={tone ? "tint" : "outline"} size="sm" className={cn("font-mono", className)} style={tone ? ({ "--tone": tone } as React.CSSProperties) : undefined}>
+            {children}
+        </Badge>
+    );
 }
 
 const AUTO_TAG_KEYS: Record<AutoNameSource, { label: keyof typeof messages & string; title: keyof typeof messages & string }> = {
@@ -35,9 +45,11 @@ export function AutoTag({ source, className }: { source: AutoNameSource; classNa
     const t: SharedT = useT("tools");
     const label = t(AUTO_TAG_KEYS[source].label);
     const title = t(AUTO_TAG_KEYS[source].title);
+    // biome-ignore lint/a11y/noNoninteractiveTabindex: focusable so a keyboard reader can bring up the explanation, as a hover does
+    const trigger = <span tabIndex={0} className={cn("inline-flex shrink-0 cursor-help items-center rounded-sm border border-border/60 px-1 py-px font-sans text-[9.5px] text-subtle-foreground leading-[1.3]", className)} translate="no" />;
     return (
         <Tooltip>
-            <TooltipTrigger render={<span className={cn("inline-flex shrink-0 cursor-help items-center rounded-sm border border-border/60 px-1 py-px font-sans text-[9.5px] text-muted-foreground/80 leading-[1.3]", className)} translate="no" />}>{label}</TooltipTrigger>
+            <TooltipTrigger render={trigger}>{label}</TooltipTrigger>
             <TooltipPopup className="max-w-xs">{title}</TooltipPopup>
         </Tooltip>
     );
@@ -80,6 +92,7 @@ export function CnName({ cn: cnText, en, auto, className, primaryClassName, comp
         const row = (
             <span className={cn("flex min-w-0 items-center gap-1", className)}>
                 {primary}
+                {tip && <span className="sr-only">{` (${tip})`}</span>}
                 {children}
             </span>
         );
@@ -164,17 +177,10 @@ export function ReleaseLoading(): React.ReactElement {
     );
 }
 
-export function ReleaseError({ error, onRetry }: { error: unknown; onRetry: () => void }): React.ReactElement {
+/** A release tab's failed fetch: the kit shape with the release copy, never the server's text. */
+export function ReleaseError({ onRetry }: { onRetry: () => void }): React.ReactElement {
     const t: SharedT = useT("tools");
-    const message = error instanceof Error ? error.message : String(error);
-    return (
-        <Card className="items-start gap-2 p-4">
-            <p className="m-0 font-sans text-[13px] text-destructive-foreground">{message || t("release.loadFailed")}</p>
-            <Button size="sm" variant="outline" onClick={onRetry}>
-                {t("release.retry")}
-            </Button>
-        </Card>
-    );
+    return <LoadFailed message={t("release.loadFailed")} onRetry={onRetry} />;
 }
 
 export type OperatorLookup = Map<string, IOperatorIndexEntry>;
@@ -209,7 +215,12 @@ export function OpRef({ id, lookup, name }: { id: string; lookup: OperatorLookup
     const { displayName } = parseOperatorName(entry.name);
     const rarity = rarityToNumber(entry.rarity);
     return (
-        <Link to="/operators/$id" params={{ id }} className="inline-flex items-center gap-1.5 rounded-md border border-border/60 bg-secondary/40 py-0.5 pr-2 pl-0.5 font-medium font-sans text-[12px] text-foreground hover:bg-accent/50" title={entry.name}>
+        <Link
+            to="/operators/$id"
+            params={{ id }}
+            className="relative inline-flex items-center gap-1.5 rounded-md border border-border/60 bg-secondary/40 py-0.5 pr-2 pl-0.5 font-medium font-sans text-[12px] text-foreground pointer-coarse:after:absolute pointer-coarse:after:inset-x-0 pointer-coarse:after:top-1/2 pointer-coarse:after:h-11 pointer-coarse:after:-translate-y-1/2 hover:bg-accent/50"
+            title={entry.name}
+        >
             <span className="inline-flex size-5 shrink-0 items-center justify-center overflow-hidden rounded font-bold font-sans text-[10px] text-white" style={{ backgroundColor: `var(--rarity-${rarity})` }}>
                 <OperatorAvatar charId={id} name={entry.name} />
             </span>
@@ -253,7 +264,8 @@ export function ListRow({ visual, wide = false, badge, children }: IListRowProps
 }
 
 export function RowImage({ src, alt, title, onError, wide = false }: { src: string; alt: string; title?: string; onError: () => void; wide?: boolean }): React.ReactElement {
-    const img = <img src={src} alt={alt} loading="lazy" onError={onError} className={cn("w-full rounded-md bg-muted object-cover", wide ? "aspect-[5/2] sm:w-60" : "aspect-video sm:w-40")} />;
+    // The tooltip names where borrowed art came from; the alt says it too, since a hover is the only way to the tooltip.
+    const img = <img src={src} alt={title ?? alt} loading="lazy" onError={onError} className={cn("w-full rounded-md bg-muted object-cover", wide ? "aspect-[5/2] sm:w-60" : "aspect-video sm:w-40")} />;
     if (!title) return img;
     return (
         <Tooltip>

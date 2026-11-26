@@ -1,10 +1,9 @@
 import { useMemo, useRef, useState } from "react";
-import { Kicker } from "#/components/ui/kicker";
 import { useMediaQuery } from "#/hooks/use-media-query";
 import { type ClientGachaGroup, classifyBannerGroup, type IBanner, type IDatePullData, type IDayOfWeekPullData, type IHourlyPullData, type IPullTimingData } from "#/lib/api/gacha";
 import { useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import { BANNER_GROUP_LABEL_KEYS } from "../../constants";
+import { BANNER_GROUP_COLOR, BANNER_GROUP_LABEL_KEYS } from "../../constants";
 import type { messages as gachaConstantsMessages } from "../../constants.messages";
 import styles from "./CommunityPage.module.css";
 import { fmtPct } from "./format";
@@ -20,14 +19,6 @@ interface ITimingPanelProps {
     banners: IBanner[];
 }
 
-const TYPE_COLORS: Record<ClientGachaGroup, string> = {
-    limited: "oklch(0.85 0.18 80)",
-    linkage: "oklch(0.78 0.16 320)",
-    regular: "#bcabdb",
-    special: "#88c8e3",
-    boot: "oklch(0.8 0.12 160)",
-};
-
 // Top row down, same order as the rest of the UI.
 const TRACK_ORDER: ClientGachaGroup[] = ["limited", "linkage", "special", "regular"];
 
@@ -39,20 +30,19 @@ export function TimingPanel({ timing, firstPullAt, banners }: ITimingPanelProps)
     const dayCount = firstPullAt ? Math.floor((Date.now() / 1000 - firstPullAt) / 86_400) + 1 : 0;
 
     return (
-        <section className="flex flex-col gap-4 rounded-[14px] border border-border bg-card p-[18px_18px] sm:p-[22px_24px]">
+        <section className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-[18px_18px] sm:p-[22px_24px]">
             <header className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                 <div>
-                    <Kicker className="mb-1.5">{t("community.timing.kicker")}</Kicker>
-                    <h2 className="m-0 text-balance font-sans font-semibold text-[20px] text-foreground leading-[1.15] tracking-[-0.02em] sm:text-[22px]">{t("community.timing.title")}</h2>
+                    <h2 className="m-0 font-sans font-semibold text-[15px] text-foreground leading-tight">{t("community.timing.kicker")}</h2>
                 </div>
-                <div className="inline-flex flex-wrap items-center gap-x-3.5 gap-y-1 font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.12em]">
+                <div className="inline-flex flex-wrap items-center gap-x-3.5 gap-y-1 font-mono text-[11px] text-muted-foreground">
                     <span className="inline-flex items-center">
                         <span aria-hidden className="mr-1.5 inline-block h-2 w-2 rounded-sm bg-primary align-middle" />
                         {t("community.timing.legend.totalPulls")}
                     </span>
                     {TRACK_ORDER.map((g) => (
                         <span key={g} className="inline-flex items-center">
-                            <span aria-hidden className="mr-1.5 inline-block h-2 w-2 rounded-sm align-middle" style={{ background: TYPE_COLORS[g] }} />
+                            <span aria-hidden className="mr-1.5 inline-block h-2 w-2 rounded-sm align-middle" style={{ background: BANNER_GROUP_COLOR[g].fill }} />
                             {t(BANNER_GROUP_LABEL_KEYS[g])}
                         </span>
                     ))}
@@ -62,18 +52,18 @@ export function TimingPanel({ timing, firstPullAt, banners }: ITimingPanelProps)
             <div className="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2">
                 {byDate.length > 0 ? (
                     <div className="md:col-span-2">
-                        <div className="mb-2.5 font-medium font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.14em]">{t("community.timing.byDate", { count: dayCount })}</div>
+                        <div className="kicker mb-2.5">{t("community.timing.byDate", { count: dayCount })}</div>
                         <TimingByDate rows={byDate} banners={banners} />
                     </div>
                 ) : null}
 
                 <div className="flex flex-col">
-                    <div className="mb-2.5 font-medium font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.14em]">{t("community.timing.byHour")}</div>
+                    <div className="kicker mb-2.5">{t("community.timing.byHour")}</div>
                     <TimingByHour rows={timing.byHour} />
                 </div>
 
                 <div>
-                    <div className="mb-2.5 font-medium font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.14em]">{t("community.timing.byDayOfWeek")}</div>
+                    <div className="kicker mb-2.5">{t("community.timing.byDayOfWeek")}</div>
                     <TimingByDow rows={timing.byDayOfWeek} />
                 </div>
             </div>
@@ -289,13 +279,13 @@ function ActivityChart({ data, days, color, height, bands }: { data: number[]; d
                             <div className={styles.acHoverCardValue}>
                                 <span aria-hidden className={styles.acHoverCardSwatch} style={{ background: color }} />
                                 {f.number(data[hoverIdx])}
-                                <span className={styles.acHoverCardLabel}>{t("community.timing.hover.pulls")}</span>
+                                <span className={`text-muted-foreground ${styles.acHoverCardLabel}`}>{t("community.timing.hover.pulls")}</span>
                             </div>
                             {activeBands.length > 0 ? (
                                 <div className={styles.acHoverCardBanners}>
                                     {activeBands.slice(0, 5).map((b) => (
                                         <div key={b.poolId} className={styles.acHoverCardBannerRow}>
-                                            <span aria-hidden className={styles.acHoverCardSwatch} style={{ background: TYPE_COLORS[b.group] }} />
+                                            <span aria-hidden className={styles.acHoverCardSwatch} style={{ background: BANNER_GROUP_COLOR[b.group].fill }} />
                                             <span className={styles.acHoverCardBannerName}>{b.name}</span>
                                         </div>
                                     ))}
@@ -329,7 +319,7 @@ function ActivityChart({ data, days, color, height, bands }: { data: number[]; d
                                             style={{
                                                 left: `${leftPct}%`,
                                                 width: `${widthPct}%`,
-                                                background: TYPE_COLORS[b.group],
+                                                background: BANNER_GROUP_COLOR[b.group].fill,
                                             }}
                                             title={t("community.timing.band", { name: b.name, type: t(BANNER_GROUP_LABEL_KEYS[b.group]) })}
                                         />

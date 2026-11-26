@@ -3,29 +3,26 @@ import type { AudioCategory } from "./AudioCategory";
 import type { AudioSound } from "./AudioSound";
 import type { LangType } from "./LangType";
 
-/**
- * A single operator-linked `SoundFX` bank, resolved to playable URLs.
- */
 export type OperatorAudio = {
     /**
-     * Full bank name, e.g. `battle.ON_UNIT_BORN.char_101_sora`.
+     * e.g. `battle.ON_UNIT_BORN.char_101_sora`
      */
     bankName: string;
     /**
-     * Event segment of the bank name, e.g. `ON_UNIT_BORN`.
+     * e.g. `ON_UNIT_BORN`
      */
     event: string;
     category: AudioCategory;
     /**
-     * Skill id when the bank is keyed by `skchr_`/`tachr_`, e.g. `skchr_sora_2`.
+     * e.g. `skchr_sora_2`
      */
     skillId?: string | null;
     /**
-     * Skill slot (1/2/3) parsed from the skill id, when present.
+     * Skill slot (1/2/3) parsed from skill id
      */
     skillSlot?: number | null;
     /**
-     * Language of a voice bark, from the `@LANG` suffix or the `Voice_XX` dir.
+     * Language of a voice line from `@LANG` suffix or `Voice_XX` dir
      */
     language?: LangType | null;
     sounds: Array<AudioSound>;

@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { Button } from "#/components/ui/button";
 import { Skeleton } from "#/components/ui/skeleton";
 import { useAuth } from "#/hooks/use-auth";
 import { useDebounce } from "#/hooks/use-debounce";
@@ -8,6 +9,7 @@ import { browseTierListsQueryOptions, favoritedTierListsQueryOptions, type ITier
 import { useGamedataServer, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { Route } from "#/routes/tier-lists";
+import { AuthorFilter } from "./AuthorFilter";
 import type { messages } from "./Browse.messages";
 import BrowseCard from "./BrowseCard";
 import { FilterToolbar, type IFlairOption } from "./FilterToolbar";
@@ -36,10 +38,14 @@ export function Browse() {
 
     const gamedataServer = useGamedataServer();
     const browseQuery = useQuery(browseTierListsQueryOptions(gamedataServer));
+    // One author's lists come from the server, so an author past the index's
+    // newest 200 still shows in full. The index stays loaded for the picker.
+    const authorQuery = useQuery({ ...browseTierListsQueryOptions(gamedataServer, search.author), enabled: Boolean(search.author) });
     const favoritesQuery = useQuery(favoritedTierListsQueryOptions(authed, gamedataServer));
     const viewingFavorites = authed && search.type === "favorites";
+    const byAuthor = Boolean(search.author);
 
-    const { data, isLoading, isError, refetch, isFetching } = viewingFavorites ? favoritesQuery : browseQuery;
+    const { data, isLoading, isError, refetch, isFetching } = viewingFavorites ? favoritesQuery : byAuthor ? authorQuery : browseQuery;
     const { data: flairCatalog } = useQuery(tierListFlairsQueryOptions());
     const allLists = useMemo<ITierListBrowseItem[]>(() => data ?? [], [data]);
 
@@ -107,12 +113,13 @@ export function Browse() {
 
     const filtered = useMemo(() => {
         return allLists.filter((list) => {
+            if (byAuthor && list.author.id !== search.author) return false;
             if (!viewingFavorites && search.type !== "all" && list.listType !== search.type) return false;
             if (search.flair.length > 0 && (!list.flairCode || !search.flair.includes(list.flairCode))) return false;
             if (!matchesBrowseQuery(list, debouncedQuery)) return false;
             return true;
         });
-    }, [allLists, search.type, search.flair, debouncedQuery, viewingFavorites]);
+    }, [allLists, search.type, search.flair, search.author, byAuthor, debouncedQuery, viewingFavorites]);
 
     const sorted = useMemo(() => sortBrowseItems(filtered, search.sort), [filtered, search.sort]);
     const visible = useMemo(() => sorted.slice(0, visibleCount), [sorted, visibleCount]);
@@ -128,6 +135,13 @@ export function Browse() {
 
     const clearFlairs = () => navigate({ search: { ...search, flair: [] }, replace: true, resetScroll: false });
 
+    // Pushes rather than replaces: picking an author is a place the back button should return from.
+    const setAuthor = (author: { id: string } | null) => navigate({ search: { ...search, author: author?.id }, resetScroll: false });
+    const showAuthor = (author: { id: string }) => {
+        setAuthor(author);
+        scrollToGrid();
+    };
+
     const clearAllFilters = () => {
         setInputQuery("");
         navigate({ search: { type: "all", sort: "recent", q: "", flair: [] }, replace: true, resetScroll: false });
@@ -142,13 +156,14 @@ export function Browse() {
     };
 
     return (
-        <main className="min-h-dvh pb-24">
+        <div className="min-h-dvh pb-24">
             <Hero total={allLists.length} canCreate={Boolean(user)} />
 
-            {!isLoading && !isError && !viewingFavorites && (
+            {!isLoading && !isError && !viewingFavorites && !byAuthor && (
                 <OfficialRail
                     lists={officialFeatured}
                     onOpen={handleOpen}
+                    onAuthorClick={showAuthor}
                     onViewAll={() => {
                         setType("official");
                         scrollToGrid();
@@ -174,6 +189,8 @@ export function Browse() {
                     onQueryChange={setInputQuery}
                     onFlairToggle={toggleFlair}
                     onClearFlairs={clearFlairs}
+                    authorFilter={<AuthorFilter lists={browseQuery.data ?? []} value={search.author ?? ""} onChange={setAuthor} />}
+                    authorActive={byAuthor}
                 />
 
                 <div className="mt-5">
@@ -186,63 +203,54 @@ export function Browse() {
                     ) : isError ? (
                         <div className="rounded-lg border border-border border-dashed bg-muted/20 px-5 py-10 text-center">
                             <p className="m-0 font-sans text-muted-foreground text-sm">{t("browse.error")}</p>
-                            <button
-                                type="button"
-                                onClick={() => refetch()}
-                                disabled={isFetching}
-                                className="mt-3 inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-lg border border-border bg-popover px-3 font-medium font-sans text-foreground text-xs leading-none transition-colors hover:bg-accent disabled:opacity-60"
-                            >
+                            <Button variant="outline" size="sm" className="mt-3" onClick={() => refetch()} disabled={isFetching}>
                                 {isFetching ? t("browse.retrying") : t("browse.retry")}
-                            </button>
+                            </Button>
                         </div>
                     ) : sorted.length === 0 ? (
                         viewingFavorites && allLists.length === 0 ? (
                             <div className="rounded-lg border border-border border-dashed bg-muted/20 px-5 py-12 text-center">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mx-auto h-7 w-7 text-muted-foreground/70" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mx-auto h-7 w-7 text-subtle-foreground" aria-hidden="true">
                                     <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
                                 </svg>
                                 <p className="mt-3 mb-0 font-medium font-sans text-foreground text-sm">{t("browse.favorites.emptyTitle")}</p>
                                 <p className="mt-1 font-sans text-[12.5px] text-muted-foreground">{t("browse.favorites.emptyBody")}</p>
-                                <button type="button" onClick={() => setType("all")} className="mt-4 inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-lg border border-border bg-popover px-3 font-medium font-sans text-foreground text-xs leading-none transition-colors hover:bg-accent">
+                                <Button variant="outline" size="sm" className="mt-4" onClick={() => setType("all")}>
                                     {t("browse.favorites.emptyAction")}
-                                </button>
+                                </Button>
                             </div>
                         ) : (
                             <div className="rounded-lg border border-border border-dashed bg-muted/20 px-5 py-12 text-center">
                                 <p className="m-0 font-medium font-sans text-foreground text-sm">{t("browse.filtered.emptyTitle")}</p>
                                 <p className="mt-1 font-sans text-[12.5px] text-muted-foreground">{t("browse.filtered.emptyBody")}</p>
-                                <button type="button" onClick={clearAllFilters} className="mt-4 inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-lg border border-border bg-popover px-3 font-medium font-sans text-foreground text-xs leading-none transition-colors hover:bg-accent">
+                                <Button variant="outline" size="sm" className="mt-4" onClick={clearAllFilters}>
                                     {t("browse.filtered.clear")}
-                                </button>
+                                </Button>
                             </div>
                         )
                     ) : (
                         <>
                             <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
                                 {visible.map((tl) => (
-                                    <BrowseCard key={tl.id} tl={tl} onOpen={handleOpen} />
+                                    <BrowseCard key={tl.id} tl={tl} onOpen={handleOpen} onAuthorClick={showAuthor} />
                                 ))}
                             </div>
 
                             {hasMore && (
                                 <div className="mt-6 flex justify-center">
-                                    <button
-                                        type="button"
-                                        onClick={() => setVisibleCount((n) => n + PAGE_INCREMENT)}
-                                        className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-border border-dashed bg-transparent px-4 py-2.5 font-medium font-sans text-[12.5px] text-muted-foreground leading-none transition-colors hover:border-primary hover:bg-[color-mix(in_srgb,var(--primary)_5%,transparent)] hover:text-foreground"
-                                    >
+                                    <Button variant="outline" className="border-dashed hover:border-primary hover:bg-[color-mix(in_srgb,var(--primary)_5%,transparent)]" onClick={() => setVisibleCount((n) => n + PAGE_INCREMENT)}>
                                         <span className="h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_8px_color-mix(in_srgb,var(--primary)_50%,transparent)]" aria-hidden="true" />
                                         <span>{t("browse.loadMore", { count: Math.min(PAGE_INCREMENT, sorted.length - visibleCount) })}</span>
-                                        <span className="font-mono text-[10.5px] text-muted-foreground/70 tabular-nums">
+                                        <span className="font-mono text-[10.5px] text-muted-foreground tabular-nums">
                                             {visibleCount} / {sorted.length}
                                         </span>
-                                    </button>
+                                    </Button>
                                 </div>
                             )}
                         </>
                     )}
                 </div>
             </div>
-        </main>
+        </div>
     );
 }

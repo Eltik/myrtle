@@ -14,7 +14,7 @@ export default function Home() {
     const { open: openCmd } = useCommand();
 
     return (
-        <main className="relative flex flex-1 flex-col">
+        <div className="relative flex flex-1 flex-col">
             <Hero onOpenCommand={openCmd} scrollTargetId={LIVE_SECTION_ID} />
             {/* Renders nothing unless a maintenance is announced or running. */}
             <MaintenanceBanner className={`${shared.container} mb-4`} />
@@ -23,6 +23,6 @@ export default function Home() {
                 <TopPlayers />
                 <LatestUpdates />
             </section>
-        </main>
+        </div>
     );
 }

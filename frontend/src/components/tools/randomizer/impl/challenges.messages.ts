@@ -241,7 +241,7 @@ export const messages = {
         description: "Challenge name for the Annihilation game mode: one operator at a time. 'Annihilation' is the mode's own name; '1P' means one player unit.",
     },
     "randomizer.challenge.annihilationOneOperator.desc": {
-        text: "You must do a 1 operator relay (eg. only one operator deployed at a time).",
+        text: "Relay with one operator: only one operator deployed at a time.",
         description: "A 'relay' means retreating one operator before deploying the next. Keep 'eg.' as the abbreviation it is.",
     },
 } satisfies MessageMap;

@@ -72,7 +72,7 @@ function renderHeading(block: Extract<BlockNode, { type: "heading" }>, key: numb
         );
     }
     return (
-        <h5 key={key} className="mt-2 mb-1 font-semibold text-[13px] uppercase tracking-[0.06em] first:mt-0 last:mb-0">
+        <h5 key={key} className="mt-2 mb-1 font-semibold text-[13px] first:mt-0 last:mb-0">
             {children}
         </h5>
     );

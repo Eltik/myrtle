@@ -1,8 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { AlertTriangle } from "lucide-react";
 import { Randomizer } from "#/components/tools/randomizer/Randomizer";
-import { Button } from "#/components/ui/button";
-import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "#/components/ui/empty";
+import { RouteError } from "#/components/ui/route-error";
 import { operatorsIndexQueryOptions } from "#/lib/api/operators";
 import { stagesQueryOptions, zonesQueryOptions } from "#/lib/api/stages";
 import { metaT } from "#/lib/meta";
@@ -11,7 +9,7 @@ import { seo } from "#/lib/seo";
 
 export const Route = createFileRoute("/tools/randomizer")({
     component: RouteComponent,
-    errorComponent: RandomizerErrorComponent,
+    errorComponent: RouteError,
     loader: ({ context: { queryClient, i18n } }) => Promise.all([queryClient.prefetchQuery(operatorsIndexQueryOptions(i18n.gamedataServer)), queryClient.prefetchQuery(stagesQueryOptions(i18n.gamedataServer)), queryClient.prefetchQuery(zonesQueryOptions(i18n.gamedataServer))]),
     head: ({ match }) => {
         const t = metaT(match.context.i18n);
@@ -31,24 +29,4 @@ export const Route = createFileRoute("/tools/randomizer")({
 
 function RouteComponent() {
     return <Randomizer />;
-}
-
-function RandomizerErrorComponent({ error, reset }: { error: unknown; reset: () => void }) {
-    const message = error instanceof Error ? error.message : String(error);
-    return (
-        <div className="relative z-1 mx-auto w-[min(640px,calc(100%-2rem))] py-20">
-            <Empty>
-                <EmptyHeader>
-                    <EmptyMedia variant="icon">
-                        <AlertTriangle className="text-destructive" />
-                    </EmptyMedia>
-                    <EmptyTitle>Randomizer failed to load</EmptyTitle>
-                    <EmptyDescription>{message || "An unexpected error occurred while loading randomizer data."}</EmptyDescription>
-                </EmptyHeader>
-                <Button onClick={reset} variant="outline">
-                    Retry
-                </Button>
-            </Empty>
-        </div>
-    );
 }

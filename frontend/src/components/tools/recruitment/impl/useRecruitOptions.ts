@@ -16,8 +16,8 @@ export const DEFAULT_SETTINGS: ICalculatorSettings = {
     operatorSortMode: "rarity-desc",
 };
 
-// Both overlays on by default: a signed-in reader opened the tool to see them.
-const DEFAULT_ROSTER_VIEW: IRosterViewOptions = { showPotentials: true, showNextUpgrade: true };
+// The potential overlays on by default: a signed-in reader opened the tool to see them. The odds are opt-in.
+const DEFAULT_ROSTER_VIEW: IRosterViewOptions = { showPotentials: true, showNextUpgrade: true, showNewOdds: false };
 
 const DEFAULT_LAYOUT: ResultLayout = "compact";
 
@@ -62,6 +62,7 @@ function merge(raw: unknown): IRecruitOptions | null {
         rosterView: {
             showPotentials: pickBool(r.rosterView, "showPotentials", DEFAULT_ROSTER_VIEW.showPotentials),
             showNextUpgrade: pickBool(r.rosterView, "showNextUpgrade", DEFAULT_ROSTER_VIEW.showNextUpgrade),
+            showNewOdds: pickBool(r.rosterView, "showNewOdds", DEFAULT_ROSTER_VIEW.showNewOdds),
         },
         layout: typeof layout === "string" && LAYOUTS.has(layout as ResultLayout) ? (layout as ResultLayout) : DEFAULT_LAYOUT,
     };

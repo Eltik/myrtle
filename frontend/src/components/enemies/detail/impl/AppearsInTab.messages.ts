@@ -4,7 +4,7 @@ export const namespace = "enemies";
 
 export const messages = {
     "appears.category.stages": {
-        text: "Story Stages",
+        text: "Story stages",
         description: "Heading of the bucket holding mainline campaign operations.",
     },
     "appears.category.events": {
@@ -12,7 +12,7 @@ export const messages = {
         description: "Heading of the bucket holding limited-time events and their reruns.",
     },
     "appears.category.modes": {
-        text: "Permanent Game Modes",
+        text: "Permanent game modes",
         description: "Heading of the bucket holding the game's always-available modes (Annihilation, Integrated Strategies and so on).",
     },
     "appears.sub.story": {
@@ -68,7 +68,7 @@ export const messages = {
         description: "Empty-state heading in the Appears In tab when no level file mentions this enemy.",
     },
     "appears.empty.body": {
-        text: "This enemy isn't listed in any of the currently extracted level files. Coverage grows as more content is processed.",
+        text: "This enemy isn't in any stage we have data for yet.",
         description: "Empty-state paragraph in the Appears In tab, explaining the gap is this site's coverage rather than the game's.",
     },
     "appears.found": {
@@ -77,11 +77,19 @@ export const messages = {
     },
     "appears.chip.spawns": {
         text: "{count, plural, one {# spawn} other {# spawns}}",
-        description: "Part of a stage chip's hover text: how many of this enemy the operation sends. Joined to the stage name with ' · '.",
+        description: "Read by screen readers on a stage chip (sighted users see '×N'): how many of this enemy the operation sends.",
     },
     "appears.chip.conditional": {
         text: "summoned / conditional",
-        description: "Part of a stage chip's hover text, in place of a spawn count, when the enemy only appears if something summons it or a condition is met.",
+        description: "Shown on a stage chip in place of a spawn count, when the enemy only appears if something summons it or a condition is met.",
+    },
+    "appears.chip.adverse": {
+        text: "Adverse",
+        description: "Small badge on a stage chip marking the stage's harder variant. Use the game's own word for 'Adverse' (the Adverse Environment variant) in this language.",
+    },
+    "appears.failed": {
+        text: "Couldn't load where this enemy appears.",
+        description: "Error line in an enemy's Appears In tab when the stage list for that enemy fails to load.",
     },
 } satisfies MessageMap;
 

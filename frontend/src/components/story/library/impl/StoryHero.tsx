@@ -34,7 +34,7 @@ export function StoryHero({ pick, progress, gameRead, onViewChapter }: IStoryHer
     const chapterLine = recordName ?? [group.zone?.nameThird, group.name].filter(Boolean).join(": ");
 
     return (
-        <section className="relative isolate mb-6 overflow-hidden rounded-[14px] border border-border bg-card sm:mb-7">
+        <section className="relative isolate mb-6 overflow-hidden rounded-2xl border border-border bg-card sm:mb-7">
             {cover ? (
                 <img src={cover} alt="" aria-hidden="true" loading="eager" decoding="async" className="pointer-events-none absolute inset-0 h-full w-full object-cover object-center opacity-45" />
             ) : (

@@ -22,7 +22,8 @@ const PULLED_NOTICE_GRACE_SECS: i64 = 60 * 60;
 const MAINTENANCE_GROUP: &str = "SYSTEM";
 const PREAN_META: &str = "preannouncement.meta.json";
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "snake_case")]
 pub enum MaintenancePhase {
     Upcoming,
@@ -30,19 +31,24 @@ pub enum MaintenancePhase {
     Extended,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct MaintenanceWindow {
     pub server: String,
     pub phase: MaintenancePhase,
+    #[ts(type = "number")]
     pub starts_at: i64,
+    #[ts(type = "number | null")]
     pub ends_at: Option<i64>,
     pub notice_url: String,
     pub title: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct MaintenanceStatus {
     pub window: Option<MaintenanceWindow>,
+    #[ts(type = "number | null")]
     pub checked_at: Option<i64>,
 }
 

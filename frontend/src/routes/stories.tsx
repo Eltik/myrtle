@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { StoryLibrary } from "#/components/story/library/StoryLibrary";
 import { isLibraryTab, type LibraryTab } from "#/components/story/library/StoryLibrary.constants";
+import { RouteError } from "#/components/ui/route-error";
 import { storyIndexQueryOptions, storySpriteQueryOptions } from "#/lib/api/story";
 import { metaT } from "#/lib/meta";
 import { defaultOgURL } from "#/lib/og";
@@ -8,7 +9,7 @@ import { seo } from "#/lib/seo";
 
 export const Route = createFileRoute("/stories")({
     component: RouteComponent,
-    errorComponent: RootErrorComponent,
+    errorComponent: RouteError,
     // `?tab=` picks a library tab (absent is Browse) and `?sprite=<base>` opens
     // one character's sheet over the Characters tab. Both are read as MISSING
     // rather than falsy, and an unknown tab value is dropped.
@@ -40,16 +41,6 @@ export const Route = createFileRoute("/stories")({
         };
     },
 });
-
-function RootErrorComponent({ error }: { error: unknown }) {
-    console.error("Router error:", error);
-    return (
-        <div style={{ padding: 20 }}>
-            <h1>Something went wrong</h1>
-            <pre style={{ color: "red" }}>{error instanceof Error ? error.message : JSON.stringify(error, null, 2)}</pre>
-        </div>
-    );
-}
 
 function RouteComponent() {
     return <StoryLibrary />;

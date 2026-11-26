@@ -37,7 +37,7 @@ export function OperatorFormSwitcher({ operator }: IOperatorFormSwitcherProps) {
                             className={cn(
                                 "group flex min-h-11 min-w-0 items-center justify-center gap-1.5 rounded-full px-3.5 font-medium text-sm transition-colors duration-200 sm:min-h-0 sm:py-1.5",
                                 "motion-reduce:transition-none",
-                                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
+                                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                                 isActive ? "bg-card text-foreground shadow-sm ring-1 ring-border/50" : "text-muted-foreground hover:bg-card/50 hover:text-foreground",
                             )}
                         >

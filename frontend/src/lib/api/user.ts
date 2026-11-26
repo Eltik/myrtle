@@ -50,6 +50,7 @@ import type { RotationSetRoomDto } from "#/types/generated/RotationSetRoomDto";
 import type { SandboxCategory } from "#/types/generated/SandboxCategory";
 import type { SandboxImprovements } from "#/types/generated/SandboxImprovements";
 import type { SandboxPart } from "#/types/generated/SandboxPart";
+import type { SandboxTopic } from "#/types/generated/SandboxTopic";
 import type { ScoreDimension } from "#/types/generated/ScoreDimension";
 import type { ScoreHistoryPoint } from "#/types/generated/ScoreHistoryPoint";
 import type { SearchEntry } from "#/types/generated/SearchEntry";
@@ -314,6 +315,8 @@ export type IRoguelikeThemeImprovement = RoguelikeThemeImprovement;
 export type ISandboxPart = SandboxPart;
 
 export type ISandboxCategory = SandboxCategory;
+
+export type ISandboxTopic = SandboxTopic;
 
 export type ISandboxImprovements = SandboxImprovements;
 

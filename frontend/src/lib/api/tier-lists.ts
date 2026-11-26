@@ -59,7 +59,8 @@ export interface ITierList {
     title: string;
     tag: string;
     stage: string;
-    author: { name: string; avatarId: string | null };
+    /** `id` is the account id the browse page filters by; null for a list whose author is gone. */
+    author: { id: string | null; name: string; avatarId: string | null };
     updated: string;
     votes: number;
     views: number;
@@ -187,6 +188,7 @@ function mapDetail(detail: IBackendTierListDetail, index: number): ITierList {
         tag: tagFromDetail(detail),
         stage: detail.description ?? "",
         author: {
+            id: detail.author?.id ?? null,
             name: detail.author?.nickname?.trim() || "Community",
             avatarId: detail.author?.avatar_id ?? null,
         },
@@ -216,10 +218,11 @@ export const recordTierListViewFn = createServerFn({ method: "POST" })
         return (await res.json()) as { unique: boolean };
     });
 
-async function fetchTierListDetails(limit: number, server?: string): Promise<IBackendTierListDetail[]> {
+async function fetchTierListDetails(limit: number, server?: string, author?: string): Promise<IBackendTierListDetail[]> {
     // The tier list itself is ours; the names on its cards are game data, so
     // the backend resolves them against the locale's server.
-    const detailsRes = await backendFetch(`/tier-lists/details?limit=${limit}&${serverQuery(server)}`);
+    const authorQuery = author ? `&author=${encodeURIComponent(author)}` : "";
+    const detailsRes = await backendFetch(`/tier-lists/details?limit=${limit}${authorQuery}&${serverQuery(server)}`);
     if (!detailsRes.ok) throw new Error(`Failed to load tier lists: ${detailsRes.status}`);
     return (await detailsRes.json()) as IBackendTierListDetail[];
 }
@@ -265,17 +268,26 @@ function mapBrowseItem(detail: IBackendTierListDetail, index: number): ITierList
     };
 }
 
+/** An account id (UUID), the only shape the backend's `author` filter takes. */
+const ACCOUNT_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export function isAccountId(value: string): boolean {
+    return ACCOUNT_ID.test(value);
+}
+
 export const getBrowseTierListsFn = createServerFn({ method: "GET" })
-    .inputValidator((server: string | undefined) => server)
-    .handler(async ({ data: server }): Promise<ITierListBrowseItem[]> => {
-        const details = await fetchTierListDetails(BROWSE_TIER_LIST_LIMIT, server);
+    .inputValidator((data: { server?: string; author?: string }) => data)
+    .handler(async ({ data: { server, author } }): Promise<ITierListBrowseItem[]> => {
+        // Listed lists only, an author's included: unlisted ones never reach the index.
+        const details = await fetchTierListDetails(BROWSE_TIER_LIST_LIMIT, server, author && isAccountId(author) ? author : undefined);
         return details.map((detail, i) => mapBrowseItem(detail, i));
     });
 
-export function browseTierListsQueryOptions(server: string = DEFAULT_GAMEDATA_SERVER) {
+/** The index, or one author's listed lists when `author` (an account id) is given. */
+export function browseTierListsQueryOptions(server: string = DEFAULT_GAMEDATA_SERVER, author?: string) {
     return queryOptions({
-        queryKey: ["tier-lists", "browse", ...gamedataKey(server)],
-        queryFn: () => getBrowseTierListsFn({ data: resolveGamedataServer(server) }),
+        queryKey: ["tier-lists", "browse", ...gamedataKey(server), author ?? null],
+        queryFn: () => getBrowseTierListsFn({ data: { server: resolveGamedataServer(server), author } }),
         staleTime: 5 * 60 * 1000,
         gcTime: 60 * 60 * 1000,
     });

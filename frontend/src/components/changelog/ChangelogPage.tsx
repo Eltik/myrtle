@@ -3,7 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { CalendarClock, ExternalLink, GitBranch, ScrollText, Users } from "lucide-react";
 import { useMemo, useState } from "react";
 import { ReleaseNotesList } from "#/components/changelog/ReleaseNotesList";
-import { Kicker } from "#/components/ui/kicker";
+import { Skeleton } from "#/components/ui/skeleton";
 import { Tabs, TabsList, TabsTab } from "#/components/ui/tabs";
 import { CHANGELOG_RANGES, type ChangelogRangeId, changelogQueryOptions, commitsWithinDays, type IChangelogCommit } from "#/lib/api/changelog";
 import { type IFormatters, useFormatters, useT } from "#/lib/i18n";
@@ -111,16 +111,13 @@ export function ChangelogPage() {
     const repoURL = data?.repoURL ?? "https://github.com";
 
     return (
-        <main className="relative overflow-x-clip">
+        <div className="relative overflow-x-clip">
             <div className={styles.pageAmbient} aria-hidden="true" />
             <div className="page-gutter py-12 [--page-max:820px] sm:py-14">
                 <header className="relative mb-8">
                     <div className={styles.heroGlow} aria-hidden="true" />
                     <div className="relative flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                         <div className="min-w-0">
-                            <Kicker className="mb-2 flex items-center gap-1.5">
-                                <ScrollText className="size-3.5" strokeWidth={2.2} /> {t("page.kicker")}
-                            </Kicker>
                             <h1 className="m-0 text-balance font-extrabold text-[clamp(30px,5vw,42px)] text-foreground leading-[1.05] tracking-[-0.02em]">{t("page.title")}</h1>
                             <p className="m-0 mt-2.5 max-w-[52ch] font-sans text-[15.5px] text-muted-foreground leading-[1.55]">{t("page.blurb")}</p>
                         </div>
@@ -209,7 +206,7 @@ export function ChangelogPage() {
                     </Link>
                 </div>
             </div>
-        </main>
+        </div>
     );
 }
 
@@ -232,7 +229,7 @@ function TimelineSkeleton() {
             {["a", "b"].map((g) => (
                 <section key={g}>
                     <div className="mb-3.5 flex items-center gap-3">
-                        <div className="h-3.5 w-20 animate-pulse rounded bg-muted" />
+                        <Skeleton className="h-3.5 w-20 rounded" />
                         <span className="h-px flex-1 bg-border" />
                     </div>
                     <ul className="m-0 flex list-none flex-col gap-5 p-0">
@@ -241,10 +238,10 @@ function TimelineSkeleton() {
                                 <div className="flex justify-center pt-1">
                                     <span className="size-3.5 rounded-full bg-muted" />
                                 </div>
-                                <div className="rounded-xl border border-border bg-card px-4 py-3">
-                                    <div className="h-4 w-16 animate-pulse rounded bg-muted" />
-                                    <div className="mt-2.5 h-4 w-3/4 animate-pulse rounded bg-muted" />
-                                    <div className="mt-3 h-3 w-1/3 animate-pulse rounded bg-muted" />
+                                <div className="rounded-2xl border border-border bg-card px-4 py-3">
+                                    <Skeleton className="h-4 w-16 rounded" />
+                                    <Skeleton className="mt-2.5 h-4 w-3/4 rounded" />
+                                    <Skeleton className="mt-3 h-3 w-1/3 rounded" />
                                 </div>
                             </li>
                         ))}

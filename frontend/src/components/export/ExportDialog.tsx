@@ -1,7 +1,8 @@
 "use client";
 
-import { CheckIcon, CopyIcon, DownloadIcon, FileTextIcon } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { CheckIcon, CircleAlertIcon, CopyIcon, DownloadIcon, FileTextIcon } from "lucide-react";
+import { useEffect, useId, useMemo, useState } from "react";
+import { Alert, AlertDescription, AlertTitle } from "#/components/ui/alert";
 import { Button } from "#/components/ui/button";
 import { Checkbox } from "#/components/ui/checkbox";
 import { Dialog, DialogClose, DialogDescription, DialogFooter, DialogHeader, DialogPopup, DialogTitle } from "#/components/ui/dialog";
@@ -77,6 +78,7 @@ export function ExportDialog<T>({ open, onOpenChange, schema, allRows, filteredR
     const [scope, setScope] = useState<ExportScope>(filteredRows && allRows.length !== filteredRows.length ? "filtered" : "all");
     const [filename, setFilename] = useState<string>(schema.pluralName);
     const [copied, setCopied] = useState(false);
+    const formatHeadingId = useId();
 
     // Re-sync the default scope when the dialog reopens.
     useEffect(() => {
@@ -90,13 +92,15 @@ export function ExportDialog<T>({ open, onOpenChange, schema, allRows, filteredR
         return pageRows ?? filteredRows ?? allRows;
     }, [scope, allRows, filteredRows, pageRows]);
 
-    const result = useMemo(() => {
-        if (options.fieldIds.length === 0) return null;
+    // A build that throws is kept as `failed`, so the preview says so instead of
+    // falling through to the "no fields picked" empty state.
+    const { result, failed } = useMemo(() => {
+        if (options.fieldIds.length === 0) return { result: null, failed: false };
         try {
-            return buildExport(sourceRows, schema, options);
+            return { result: buildExport(sourceRows, schema, options), failed: false };
         } catch (err) {
             console.error("Export failed", err);
-            return null;
+            return { result: null, failed: true };
         }
     }, [sourceRows, schema, options]);
 
@@ -184,10 +188,10 @@ export function ExportDialog<T>({ open, onOpenChange, schema, allRows, filteredR
             <DialogPopup className="flex h-[min(820px,92vh)] w-full max-w-260 flex-col overflow-hidden p-0">
                 <DialogHeader className="border-b px-6 py-4">
                     <div className="flex items-center gap-3">
-                        <div className="grid size-9 place-items-center rounded-md bg-primary/10 text-primary">
+                        <div aria-hidden="true" className="grid size-9 shrink-0 place-items-center rounded-md bg-primary/10 text-primary">
                             <FileTextIcon className="size-4.5" />
                         </div>
-                        <div className="flex-1">
+                        <div className="min-w-0 flex-1">
                             <DialogTitle>{t("export.title", { name: headline })}</DialogTitle>
                             <DialogDescription>{t("export.description")}</DialogDescription>
                         </div>
@@ -197,29 +201,28 @@ export function ExportDialog<T>({ open, onOpenChange, schema, allRows, filteredR
                 <div className="grid min-h-0 flex-1 grid-cols-1 overflow-hidden lg:grid-cols-[1fr_minmax(0,1.1fr)]">
                     <div className="flex min-h-0 flex-col overflow-y-auto px-6 py-5">
                         <section className="flex flex-col gap-3">
-                            <h3 className="font-sans font-semibold text-[13px] text-foreground uppercase tracking-[0.08em]">{t("export.section.format")}</h3>
-                            <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
+                            <h3 id={formatHeadingId} className="font-sans font-semibold text-[13px] text-foreground">
+                                {t("export.section.format")}
+                            </h3>
+                            <RadioGroup aria-labelledby={formatHeadingId} className="grid grid-cols-2 gap-1.5 sm:grid-cols-3" value={options.format} onValueChange={(v) => setOption("format", v as ExportFormat)}>
                                 {FORMAT_ORDER.map((fmt) => {
                                     const meta = FORMAT_LABELS[fmt];
-                                    const selected = options.format === fmt;
                                     return (
-                                        <button
-                                            key={fmt}
-                                            type="button"
-                                            onClick={() => setOption("format", fmt)}
-                                            className={cn("flex cursor-pointer flex-col items-start gap-0.5 rounded-md border border-border bg-background px-3 py-2 text-left transition-colors hover:border-primary/50 hover:bg-accent/50", selected && "border-primary bg-primary/5 ring-1 ring-primary/30")}
-                                            aria-pressed={selected}
-                                        >
-                                            <span className="font-medium font-sans text-[13px] text-foreground leading-tight">{t(meta.labelKey)}</span>
-                                            <span className="font-sans text-[11px] text-muted-foreground leading-snug">{t(meta.descKey)}</span>
-                                        </button>
+                                        // biome-ignore lint/a11y/noLabelWithoutControl: RadioGroupItem renders the input
+                                        <label key={fmt} className="flex cursor-pointer items-start gap-2.5 rounded-lg border border-border bg-background px-3 py-2 transition-colors hover:bg-accent/50 has-[[data-checked]]:border-primary">
+                                            <RadioGroupItem value={fmt} className="mt-px" />
+                                            <span className="flex min-w-0 flex-col gap-0.5">
+                                                <span className="font-medium font-sans text-[13px] text-foreground leading-tight">{t(meta.labelKey)}</span>
+                                                <span className="font-sans text-[11px] text-muted-foreground leading-snug">{t(meta.descKey)}</span>
+                                            </span>
+                                        </label>
                                     );
                                 })}
-                            </div>
+                            </RadioGroup>
                         </section>
 
                         <section className="mt-6 flex flex-col gap-3">
-                            <h3 className="font-sans font-semibold text-[13px] text-foreground uppercase tracking-[0.08em]">{t("export.section.scope")}</h3>
+                            <h3 className="font-sans font-semibold text-[13px] text-foreground">{t("export.section.scope")}</h3>
                             <RadioGroup className="flex flex-col gap-1.5" value={scope} onValueChange={(v) => setScope(v as ExportScope)}>
                                 {(Object.keys(SCOPE_LABEL_KEYS) as ExportScope[]).map((s) => {
                                     const count = s === "all" ? allRows.length : s === "filtered" ? (filteredRows ?? allRows).length : (pageRows?.length ?? 0);
@@ -242,24 +245,22 @@ export function ExportDialog<T>({ open, onOpenChange, schema, allRows, filteredR
 
                         <section className="mt-6 flex flex-col gap-3">
                             <div className="flex items-center justify-between gap-2">
-                                <h3 className="font-sans font-semibold text-[13px] text-foreground uppercase tracking-[0.08em]">
+                                <h3 className="font-sans font-semibold text-[13px] text-foreground">
                                     {t("export.section.fields")}{" "}
-                                    <span className="ml-1 font-mono text-[11px] text-muted-foreground tracking-normal">
+                                    <span className="ml-1 font-mono text-[11px] text-muted-foreground">
                                         ({options.fieldIds.length}/{schema.fields.length})
                                     </span>
                                 </h3>
-                                <div className="inline-flex items-center gap-1 font-medium font-sans text-[11.5px] text-muted-foreground leading-none">
-                                    <button type="button" onClick={selectAllFields} className="cursor-pointer rounded px-1.5 py-1 hover:bg-accent hover:text-foreground">
+                                <div className="inline-flex items-center gap-1">
+                                    <Button type="button" size="xs" variant="ghost" onClick={selectAllFields}>
                                         {t("export.fields.all")}
-                                    </button>
-                                    <span aria-hidden>·</span>
-                                    <button type="button" onClick={selectDefaultFields} className="cursor-pointer rounded px-1.5 py-1 hover:bg-accent hover:text-foreground">
+                                    </Button>
+                                    <Button type="button" size="xs" variant="ghost" onClick={selectDefaultFields}>
                                         {t("export.fields.default")}
-                                    </button>
-                                    <span aria-hidden>·</span>
-                                    <button type="button" onClick={clearAllFields} className="cursor-pointer rounded px-1.5 py-1 hover:bg-accent hover:text-foreground">
+                                    </Button>
+                                    <Button type="button" size="xs" variant="ghost" onClick={clearAllFields}>
                                         {t("export.fields.none")}
-                                    </button>
+                                    </Button>
                                 </div>
                             </div>
 
@@ -282,13 +283,18 @@ export function ExportDialog<T>({ open, onOpenChange, schema, allRows, filteredR
                                     };
                                     return (
                                         <div key={group} className="flex flex-col gap-1.5">
-                                            <button type="button" onClick={toggleGroup} className="flex cursor-pointer items-center gap-2 font-medium font-sans text-[11px] text-muted-foreground uppercase leading-none tracking-widest hover:text-foreground">
+                                            {/* One control: the Checkbox with its label. It used to sit inside a <button> with the
+                                                same handler; a click on the box ran toggleGroup from the Checkbox and again from the
+                                                bubbling button click, so it toggled twice (a no-op). The Checkbox root cancels the
+                                                label's own activation and clicks its input once. */}
+                                            {/* biome-ignore lint/a11y/noLabelWithoutControl: Checkbox renders the input */}
+                                            <label className="flex w-fit cursor-pointer items-center gap-2 rounded px-1.5 py-1 font-medium font-sans text-[12.5px] text-foreground leading-none hover:bg-accent/50">
                                                 <Checkbox checked={allSelected} indeterminate={!allSelected && someSelected} onCheckedChange={toggleGroup} aria-label={t("export.fields.toggleGroup", { group })} />
                                                 <span>{group}</span>
-                                                <span className="font-mono text-[10px] tracking-normal">
+                                                <span className="font-mono text-[11px] text-muted-foreground">
                                                     {fields.filter((f) => enabledSet.has(f.id)).length}/{fields.length}
                                                 </span>
-                                            </button>
+                                            </label>
                                             <div className="grid grid-cols-2 gap-x-3 gap-y-1 pl-6">
                                                 {fields.map((f) => (
                                                     // biome-ignore lint/a11y/noLabelWithoutControl: Checkbox renders the input
@@ -305,7 +311,7 @@ export function ExportDialog<T>({ open, onOpenChange, schema, allRows, filteredR
                         </section>
 
                         <section className="mt-6 flex flex-col gap-3">
-                            <h3 className="font-sans font-semibold text-[13px] text-foreground uppercase tracking-[0.08em]">{t("export.section.options")}</h3>
+                            <h3 className="font-sans font-semibold text-[13px] text-foreground">{t("export.section.options")}</h3>
                             <div className="flex flex-col gap-2.5 rounded-lg border border-border bg-card/50 p-3.5">
                                 {supportsPretty && (
                                     <OptionRow label={t("export.option.pretty.label")} description={t("export.option.pretty.desc")}>
@@ -401,19 +407,20 @@ export function ExportDialog<T>({ open, onOpenChange, schema, allRows, filteredR
                         </section>
 
                         <section className="mt-6 flex flex-col gap-2">
-                            <h3 className="font-sans font-semibold text-[13px] text-foreground uppercase tracking-[0.08em]">{t("export.section.filename")}</h3>
+                            <h3 className="font-sans font-semibold text-[13px] text-foreground">{t("export.section.filename")}</h3>
                             <div className="flex items-center gap-2">
                                 <Input value={filename} onChange={(e) => setFilename(e.target.value)} placeholder={schema.pluralName} className="flex-1" size="sm" />
                                 <span className="font-mono text-[12px] text-muted-foreground">.{result?.extension ?? options.format}</span>
                             </div>
                             <p className="font-sans text-[11px] text-muted-foreground leading-snug">{t("export.filename.hint")}</p>
                         </section>
+                        {failed ? <BuildFailed t={t} className="mt-6 lg:hidden" /> : null}
                     </div>
 
                     <div className="hidden min-h-0 flex-col border-border bg-muted/30 lg:flex lg:border-l">
                         <div className="flex items-center justify-between gap-2 border-b px-5 py-3">
                             <div className="flex flex-col gap-0.5">
-                                <span className="font-sans font-semibold text-[12px] text-foreground uppercase tracking-[0.08em]">{t("export.preview.title")}</span>
+                                <span className="font-sans font-semibold text-[12px] text-foreground">{t("export.preview.title")}</span>
                                 <span className="font-mono text-[11px] text-muted-foreground">
                                     {fmt.number(sourceRows.length)} {sourceRows.length === 1 ? schema.itemName : schema.pluralName} · {t("export.preview.fields", { count: options.fieldIds.length })} · ~{formatBytes(bytes)}
                                 </span>
@@ -424,7 +431,11 @@ export function ExportDialog<T>({ open, onOpenChange, schema, allRows, filteredR
                             </Button>
                         </div>
                         <div className="min-h-0 flex-1 overflow-auto">
-                            {options.fieldIds.length === 0 ? (
+                            {failed ? (
+                                <div className="p-4">
+                                    <BuildFailed t={t} />
+                                </div>
+                            ) : options.fieldIds.length === 0 ? (
                                 <div className="grid h-full place-items-center p-6">
                                     <p className="text-center font-sans text-[13px] text-muted-foreground">{t("export.preview.empty")}</p>
                                 </div>
@@ -445,6 +456,16 @@ export function ExportDialog<T>({ open, onOpenChange, schema, allRows, filteredR
                 </DialogFooter>
             </DialogPopup>
         </Dialog>
+    );
+}
+
+function BuildFailed({ t, className }: { t: ExportT; className?: string }): React.ReactElement {
+    return (
+        <Alert variant="error" className={className}>
+            <CircleAlertIcon />
+            <AlertTitle>{t("export.failed.title")}</AlertTitle>
+            <AlertDescription>{t("export.failed.body")}</AlertDescription>
+        </Alert>
     );
 }
 

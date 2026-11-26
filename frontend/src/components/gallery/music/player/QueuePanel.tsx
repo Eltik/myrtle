@@ -232,7 +232,7 @@ const QueueRow = memo(function QueueRow({
         >
             <span
                 aria-hidden="true"
-                className="flex h-full w-6 shrink-0 cursor-grab touch-none items-center justify-center text-muted-foreground/60 hover:text-foreground active:cursor-grabbing"
+                className="flex h-full w-6 shrink-0 cursor-grab touch-none items-center justify-center text-subtle-foreground hover:text-foreground active:cursor-grabbing"
                 onPointerCancel={onGripUp}
                 onPointerDown={(e) => onGripDown(e, index)}
                 onPointerMove={onGripMove}
@@ -241,7 +241,7 @@ const QueueRow = memo(function QueueRow({
             >
                 <GripVerticalIcon className="size-4" />
             </span>
-            <button aria-label={label} className="flex min-w-0 flex-1 cursor-pointer items-center gap-2.5 rounded-md py-1 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring/40" data-row-main="" onClick={() => playAt(index)} onKeyDown={(e) => onKey(e, index)} type="button">
+            <button aria-label={label} className="flex min-w-0 flex-1 cursor-pointer items-center gap-2.5 rounded-md py-1 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring" data-row-main="" onClick={() => playAt(index)} onKeyDown={(e) => onKey(e, index)} type="button">
                 <span className="relative size-10 shrink-0 overflow-hidden rounded border border-border bg-secondary/50">
                     {track.coverUrl ? <img referrerPolicy="no-referrer" alt="" className="size-full object-cover" decoding="async" loading="lazy" src={sizedCover(track.coverUrl, 40)} /> : <Disc3Icon aria-hidden="true" className="absolute inset-0 m-auto size-5 text-muted-foreground" />}
                 </span>
@@ -252,7 +252,7 @@ const QueueRow = memo(function QueueRow({
             </button>
             <button
                 aria-label={t("music.queue.remove", { title })}
-                className="inline-flex pointer-coarse:size-11 size-8 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted-foreground opacity-70 outline-none hover:bg-secondary hover:text-foreground focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-ring/40 group-hover:opacity-100 max-sm:min-h-11 max-sm:min-w-11"
+                className="inline-flex pointer-coarse:size-11 size-8 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted-foreground opacity-70 outline-none hover:bg-secondary hover:text-foreground focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-ring group-hover:opacity-100 max-sm:min-h-11 max-sm:min-w-11"
                 onClick={() => removeFromQueue(index)}
                 type="button"
             >

@@ -3,6 +3,7 @@ import { Fragment, type ReactNode, useId, useMemo } from "react";
 import { Combobox, ComboboxCollection, ComboboxEmpty, ComboboxGroup, ComboboxGroupLabel, ComboboxInput, ComboboxItem, ComboboxList, ComboboxPopup, ComboboxSeparator } from "#/components/ui/combobox";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
+import type { messages as chipMessages } from "./ActiveFilterChips.messages";
 import type { messages } from "./FilterDropdown.messages";
 
 interface IGroup {
@@ -129,11 +130,12 @@ export function FilterDropdown({ label, placeholder, options, selected, onChange
 }
 
 function FilterTag({ label, onRemove }: { label: string; onRemove: () => void }) {
+    const t: TypedT<typeof chipMessages> = useT("operators");
     return (
         <span className="inline-flex items-center gap-1 rounded-md bg-primary/20 px-2 py-0.5 text-foreground text-xs">
             {label}
-            <button type="button" className="hover:text-destructive" onClick={onRemove}>
-                <X className="h-3 w-3" />
+            <button type="button" aria-label={t("chips.remove", { label })} className="relative inline-flex items-center justify-center pointer-coarse:after:absolute pointer-coarse:after:min-h-11 pointer-coarse:after:min-w-11 hover:text-destructive" onClick={onRemove}>
+                <X aria-hidden="true" className="h-3 w-3" />
             </button>
         </span>
     );

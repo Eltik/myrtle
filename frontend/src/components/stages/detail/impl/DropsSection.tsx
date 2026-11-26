@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import { RARITY_HEX_MUTED } from "#/lib/utils";
+import { RARITY_HEX_MUTED, rarityInk } from "#/lib/utils";
 import type { StageDetailMessageKey } from "./constants";
 import type { messages as detailConstantsMessages } from "./constants.messages";
 import type { messages } from "./DropsSection.messages";
@@ -23,9 +23,7 @@ function RateMeter({ occ }: { occ: { labelKey: StageDetailMessageKey; level: num
                         <span key={i} className="h-2.5 w-1 rounded-[1px]" style={{ background: i < occ.level ? occ.tone : "color-mix(in oklch, var(--muted-foreground) 28%, transparent)" }} />
                     ))}
                 </span>
-                <span className="font-medium font-mono text-[10px] uppercase leading-none tracking-[0.08em]" style={{ color: occ.tone }}>
-                    {label}
-                </span>
+                <span className="font-medium font-mono text-[10px] text-muted-foreground leading-none">{label}</span>
             </TooltipTrigger>
             <TooltipPopup>{t("drops.rateTitle", { rate: label })}</TooltipPopup>
         </Tooltip>
@@ -45,7 +43,7 @@ function DropCard({ drop }: { drop: IResolvedDrop }) {
             .toUpperCase() || "?";
 
     const inner = (
-        <div className="group flex h-full items-center gap-3 rounded-[10px] border border-border bg-card p-2.5 transition-colors hover:border-[color-mix(in_oklch,var(--primary)_50%,transparent)]">
+        <div className="group flex h-full items-center gap-3 rounded-2xl border border-border bg-card p-2.5 transition-colors hover:border-[color-mix(in_oklch,var(--primary)_50%,transparent)]">
             <span
                 className="relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-md border"
                 style={{
@@ -54,9 +52,21 @@ function DropCard({ drop }: { drop: IResolvedDrop }) {
                 }}
             >
                 {!errored ? (
-                    <img src={drop.iconURL} alt={drop.name} loading="lazy" decoding="async" className="h-full w-full object-contain" onError={() => setErrored(true)} />
+                    <img
+                        ref={(el) => {
+                            // An error that fires before hydration never reaches onError, which left a blank box (Pure Gold on main_01-07).
+                            if (el?.complete && el.naturalWidth === 0) setErrored(true);
+                        }}
+                        src={drop.iconURL}
+                        alt={drop.name}
+                        loading="lazy"
+                        decoding="async"
+                        className="h-full w-full object-contain"
+                        onLoad={(e) => e.currentTarget.naturalWidth === 0 && setErrored(true)}
+                        onError={() => setErrored(true)}
+                    />
                 ) : (
-                    <span className="font-bold font-mono text-[12px]" style={{ color }}>
+                    <span className="font-bold font-mono text-[12px]" style={{ color: rarityInk(drop.rarity) }}>
                         {initials}
                     </span>
                 )}
@@ -95,7 +105,7 @@ export function DropsSection({ groups }: { groups: IDropGroup[] }) {
             </SectionHead>
             {groups.map((group) => (
                 <div key={group.type} className="flex flex-col gap-2">
-                    <span className="font-medium font-mono text-[9.5px] text-muted-foreground uppercase leading-none tracking-[0.12em]">{group.labelKey ? tConst(group.labelKey) : group.type}</span>
+                    <h3 className="m-0 font-medium font-sans text-[12.5px] text-muted-foreground leading-none">{group.labelKey ? tConst(group.labelKey) : group.type}</h3>
                     <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
                         {group.drops.map((drop) => (
                             <DropCard key={`${group.type}-${drop.reward.id}`} drop={drop} />

@@ -1,7 +1,6 @@
-import { EyeOff } from "lucide-react";
 import * as React from "react";
 import { CartesianGrid, Legend, Line, LineChart, ReferenceDot, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "#/components/ui/empty";
+import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "#/components/ui/empty";
 import { Spinner } from "#/components/ui/spinner";
 import { useLocale, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -23,8 +22,7 @@ interface ICalcChartProps {
     snapshotX: number;
     isLoading: boolean;
     onLegendClick: (uid: string) => void;
-    /** Empty state shown when no instances exist yet. */
-    emptyIcon: React.ReactNode;
+    /** Empty state shown when no instances exist yet: plain text, no icon tile. */
     emptyTitle: string;
     emptyDescription: React.ReactNode;
     containerRef?: React.RefObject<HTMLDivElement | null>;
@@ -32,7 +30,7 @@ interface ICalcChartProps {
     showMarkers?: boolean;
 }
 
-export function CalcChart({ instances, rows, xLabel, yLabel, allowDecimals, formatTooltipX, snapshotX, isLoading, onLegendClick, emptyIcon, emptyTitle, emptyDescription, containerRef, showMarkers = false }: ICalcChartProps): React.ReactElement {
+export function CalcChart({ instances, rows, xLabel, yLabel, allowDecimals, formatTooltipX, snapshotX, isLoading, onLegendClick, emptyTitle, emptyDescription, containerRef, showMarkers = false }: ICalcChartProps): React.ReactElement {
     const t: TypedT<typeof messages> = useT("tools");
     const locale = useLocale();
     const visible = React.useMemo(() => instances.filter((i) => i.visible), [instances]);
@@ -52,8 +50,7 @@ export function CalcChart({ instances, rows, xLabel, yLabel, allowDecimals, form
         return (
             <Empty>
                 <EmptyHeader>
-                    <EmptyMedia variant="icon">{emptyIcon}</EmptyMedia>
-                    <EmptyTitle>{emptyTitle}</EmptyTitle>
+                    <EmptyTitle className="text-base">{emptyTitle}</EmptyTitle>
                     <EmptyDescription>{emptyDescription}</EmptyDescription>
                 </EmptyHeader>
             </Empty>
@@ -64,10 +61,7 @@ export function CalcChart({ instances, rows, xLabel, yLabel, allowDecimals, form
         return (
             <Empty>
                 <EmptyHeader>
-                    <EmptyMedia variant="icon">
-                        <EyeOff />
-                    </EmptyMedia>
-                    <EmptyTitle>{t("calc.chart.allHidden.title")}</EmptyTitle>
+                    <EmptyTitle className="text-base">{t("calc.chart.allHidden.title")}</EmptyTitle>
                     <EmptyDescription>{t("calc.chart.allHidden.desc")}</EmptyDescription>
                 </EmptyHeader>
             </Empty>

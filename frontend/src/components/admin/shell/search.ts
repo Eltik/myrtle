@@ -96,10 +96,29 @@ export function parseTranslationsSearch(search: Raw): IAdminTranslationsSearch {
 export const SYSTEM_TABS = ["health", "audit", "languages"] as const;
 export type AdminSystemTab = (typeof SYSTEM_TABS)[number];
 
+export const AUDIT_SOURCE_FILTERS = ["notes", "translations", "content"] as const;
+export type AdminAuditSource = (typeof AUDIT_SOURCE_FILTERS)[number];
+export const AUDIT_TARGET_KINDS = ["tier_list", "grid"] as const;
+export type AdminAuditTargetKind = (typeof AUDIT_TARGET_KINDS)[number];
+
 export interface IAdminSystemSearch {
     tab?: AdminSystemTab;
+    /** Edit history: one log instead of all of them. */
+    source?: AdminAuditSource;
+    /** Edit history: one account's edits (its id). */
+    actor?: string;
+    /** Edit history, tier lists and grids: one type. */
+    kind?: AdminAuditTargetKind;
+    /** Edit history, tier lists and grids: one list or grid (its id). */
+    target?: string;
 }
 
 export function parseSystemSearch(search: Raw): IAdminSystemSearch {
-    return compact({ tab: oneOf(search.tab, SYSTEM_TABS) });
+    return compact({
+        tab: oneOf(search.tab, SYSTEM_TABS),
+        source: oneOf(search.source, AUDIT_SOURCE_FILTERS),
+        actor: str(search.actor),
+        kind: oneOf(search.kind, AUDIT_TARGET_KINDS),
+        target: str(search.target),
+    });
 }

@@ -12,7 +12,7 @@ export const namespace = "tools";
  */
 export const messages = {
     "release.pulls.modelNote": {
-        text: "Rates come from the game's own banner data: a 2% base 6★ rate, +2% per roll after 50 without one, and the rate-up split declared for each banner type. Recurring income is modelled; one-off event Orundum is not, so add it under Extra per day.",
+        text: "Rates come from the game's own banner data: a 2% base 6★ rate, +2% per roll after 50 without one, and the rate-up split declared for each banner type. Recurring income is modeled; one-off event Orundum is not, so add it under Extra per day.",
         description: "Explains where the numbers come from and what the model leaves out. '6★' means a six-star operator; 'rate-up' is the boosted-chance operator on a banner.",
     },
 
@@ -264,10 +264,6 @@ export const messages = {
         text: "Pulls to spend",
         description: "Input label for how many pulls to commit to a banner.",
     },
-    "release.pulls.plan.max": {
-        text: "Spend everything",
-        description: "Accessible name for the control committing every remaining pull to this banner.",
-    },
     "release.pulls.plan.potMore": {
         text: "One more copy of {operator}",
         description: "Accessible name for the control raising how many copies of an operator to pull for.",
@@ -443,6 +439,10 @@ export const messages = {
     "release.pulls.plan.overrun": {
         text: "{count, plural, one {# banner} other {# banners}} over budget",
         description: "Warning summarising how many banners the plan cannot pay for in full.",
+    },
+    "release.pulls.plan.eventsError": {
+        text: "Couldn't load event names and art, so some banners show without them.",
+        description: "Notice above the banner plan when the events list fails to load; the banners still plan, but those that borrow their name and picture from an event show without them.",
     },
     "release.pulls.plan.untouched": {
         text: "Nothing committed yet. Use Max or Spark on a banner to start planning.",
@@ -670,6 +670,10 @@ export const messages = {
     "release.pulls.rule.spark": {
         text: "At {count, plural, one {# pull} other {# pulls}} the limited operator comes once more as a free bonus copy, without touching pity",
         description: "Describes the Limited banner's one-time gift: after that many total pulls the player receives an extra copy of the limited operator, which does not reset or advance the six-star pity counter.",
+    },
+    "release.pulls.resources.loadFailed": {
+        text: "Couldn't load your account, so the fill button is off.",
+        description: "Shown in the resources card, beside a Try again button, when the signed-in player's profile failed to load.",
     },
 } satisfies MessageMap;
 

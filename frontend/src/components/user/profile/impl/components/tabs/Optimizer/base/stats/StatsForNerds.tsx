@@ -23,7 +23,7 @@ function Delta({ from, to, suffix = "" }: { from: number; to: number; suffix?: s
     const change = Math.round(to) - Math.round(from);
     if (change === 0) return <span className="text-muted-foreground">{t("profile.base.nerds.noChange")}</span>;
     return (
-        <span className={cn("font-semibold", change > 0 ? "text-emerald-400" : "text-destructive")}>
+        <span className={cn("font-semibold", change > 0 ? "text-success-foreground" : "text-destructive-foreground")}>
             {change > 0 ? "+" : "-"}
             {num(Math.abs(change), f)}
             {suffix}
@@ -43,7 +43,7 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
     return (
         <section className="flex flex-col">
-            <h3 className="mb-1 font-medium text-[10px] text-muted-foreground uppercase tracking-wider">{title}</h3>
+            <h3 className="kicker mb-1">{title}</h3>
             <div className="divide-y divide-border/60">{children}</div>
         </section>
     );
@@ -73,13 +73,13 @@ export function StatsForNerds() {
 
     return (
         <Collapsible onOpenChange={setOpen} open={open}>
-            <CollapsibleTrigger className="flex w-full items-center justify-between rounded-xl border border-border bg-card px-4 py-2.5 transition-colors hover:bg-muted/40">
+            <CollapsibleTrigger className="flex pointer-coarse:min-h-11 w-full items-center justify-between rounded-2xl border border-border bg-card px-4 py-2.5 transition-colors hover:bg-muted/40">
                 <span className="font-medium text-[13px]">{t("profile.base.nerds.title")}</span>
                 <ChevronDown className={cn("size-4 text-muted-foreground transition-transform", open && "rotate-180")} />
             </CollapsibleTrigger>
 
             <CollapsibleContent>
-                <div className="mt-2 grid gap-x-8 gap-y-5 rounded-xl border border-border bg-card px-4 py-3 md:grid-cols-2">
+                <div className="mt-2 grid gap-x-8 gap-y-5 rounded-2xl border border-border bg-card px-4 py-3 md:grid-cols-2">
                     <Section title={t("profile.base.nerds.output")}>
                         <Row label={t("profile.base.nerds.productionEfficiency")}>{Math.round(assignment.total_production_efficiency)}%</Row>
                         <Row label={t("profile.base.headline.lmd")}>{num(assignment.yield_lmd_per_day, f)}</Row>
@@ -91,7 +91,7 @@ export function StatsForNerds() {
                         <Row label={t("profile.base.nerds.generated")}>{num(power.generated, f)}</Row>
                         <Row label={t("profile.base.nerds.consumed")}>{num(power.consumed, f)}</Row>
                         <Row label={t("profile.base.nerds.net")}>
-                            <span className={cn("font-semibold", power.net < 0 && "text-destructive")}>
+                            <span className={cn("font-semibold", power.net < 0 && "text-destructive-foreground")}>
                                 {power.net > 0 ? "+" : ""}
                                 {num(power.net, f)}
                             </span>
@@ -130,7 +130,7 @@ export function StatsForNerds() {
                                 {comparison.matching_cells} / {comparison.production_cells}
                             </Row>
                             {comparison.preset_legs_hours.length > 0 && <Row label={t("profile.base.nerds.presetLegs")}>{comparison.preset_legs_hours.map((h) => t("profile.base.nerds.hours", { hours: Math.round(h) })).join(" / ")}</Row>}
-                            {comparison.matching_cells === comparison.production_cells && comparison.production_cells > 0 && <p className="text-[11px] text-emerald-400">{t("profile.base.nerds.presetsMatch")}</p>}
+                            {comparison.matching_cells === comparison.production_cells && comparison.production_cells > 0 && <p className="text-[11px] text-success-foreground">{t("profile.base.nerds.presetsMatch")}</p>}
                         </Section>
                     )}
 
@@ -216,7 +216,7 @@ export function StatsForNerds() {
                     {timeline.length > 0 && (
                         <div className="md:col-span-2">
                             <Section title={t("profile.base.nerds.moraleOverTime")}>
-                                <MoraleTimeline catalog={api.catalog} timeline={timeline} />
+                                <MoraleTimeline catalog={api.catalog} label={t("profile.base.nerds.moraleOverTime")} timeline={timeline} />
                             </Section>
                         </div>
                     )}

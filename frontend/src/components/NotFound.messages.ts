@@ -13,7 +13,11 @@ export const messages = {
     },
     "notFound.returnHome": {
         text: "Take me home",
-        description: "The only 404 action: navigates to the site root.",
+        description: "First 404 action: navigates to the site root.",
+    },
+    "notFound.search": {
+        text: "Search the site",
+        description: "Second 404 action: opens the site-wide search palette (operators, stages, pages), for a visitor who followed an old link.",
     },
     "notFound.imageAlt": {
         text: "Myrtle, face-down after dropping her snacks",

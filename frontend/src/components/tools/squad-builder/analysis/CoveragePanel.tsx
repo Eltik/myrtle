@@ -42,7 +42,7 @@ export function CoveragePanel({ state, stale, collapsed, onToggle, coverage, sta
                     groups.map((g) => (
                         <section key={g.key}>
                             <h3 className="mb-1.5 font-semibold text-[13px] text-foreground">{groupLabel(g.key, t)}</h3>
-                            <ul className="divide-y divide-border/60 rounded-xl border border-border bg-card">
+                            <ul className="divide-y divide-border/60 rounded-2xl border border-border bg-card">
                                 {g.rows.map((row) => {
                                     const threats = needed.get(row.key) ?? [];
                                     const text = rowText(row.key, t);

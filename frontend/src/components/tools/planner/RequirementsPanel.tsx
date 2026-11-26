@@ -5,6 +5,7 @@ import * as React from "react";
 
 import { itemIcon } from "#/components/operators/detail/impl/assets";
 import { Input } from "#/components/ui/input";
+import { LoadFailed } from "#/components/ui/load-failed";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { Popover, PopoverPopup, PopoverTrigger } from "#/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
@@ -63,34 +64,43 @@ function PlannerRequirementRow({ item, depth, path, expandedPaths, onToggleExpan
     const { status, shortfall } = requirementStatus(item);
     const needsCrafting = status === "craft";
 
-    const handleClick = () => {
-        if (hasRecipe) {
-            onToggleExpand(path);
-        }
-    };
+    const icon = (
+        <img
+            src={itemIcon(item.id, item.iconId, item.image)}
+            alt={hasRecipe ? "" : item.name}
+            className="size-8 shrink-0 rounded-md object-contain"
+            onError={(e) => {
+                (e.currentTarget as HTMLImageElement).style.display = "none";
+            }}
+        />
+    );
+    const name = <span className="font-medium text-foreground text-xs leading-tight">{item.name}</span>;
 
     return (
         <>
-            <tr className={cn("group transition-colors hover:bg-muted/20", hasRecipe && "cursor-pointer")} onClick={handleClick}>
+            <tr className="group transition-colors hover:bg-muted/20">
                 <td className="py-2.5 pr-4">
-                    <div className="flex items-center gap-2" style={{ paddingLeft: `${depth * 1.25}rem` }}>
-                        {hasRecipe ? isExpanded ? <ChevronDown className="size-3.5 shrink-0 text-muted-foreground" /> : <ChevronRight className="size-3.5 shrink-0 text-muted-foreground" /> : <div className="size-3.5 shrink-0" />}
-                        <img
-                            src={itemIcon(item.id, item.iconId, item.image)}
-                            alt={item.name}
-                            className="size-8 shrink-0 rounded-md object-contain"
-                            onError={(e) => {
-                                (e.currentTarget as HTMLImageElement).style.display = "none";
-                            }}
-                        />
-                        <span className="font-medium text-foreground text-xs leading-tight">{item.name}</span>
-                    </div>
+                    {/* The expand control is a real button in the first cell, not a click on the row, so a
+                        keyboard reaches it and a screen reader hears its expanded state. */}
+                    {hasRecipe ? (
+                        <button type="button" aria-expanded={isExpanded} onClick={() => onToggleExpand(path)} className="flex cursor-pointer items-center gap-2 rounded-md text-left" style={{ paddingLeft: `${depth * 1.25}rem` }}>
+                            {isExpanded ? <ChevronDown aria-hidden="true" className="size-3.5 shrink-0 text-muted-foreground" /> : <ChevronRight aria-hidden="true" className="size-3.5 shrink-0 text-muted-foreground" />}
+                            {icon}
+                            {name}
+                        </button>
+                    ) : (
+                        <div className="flex items-center gap-2" style={{ paddingLeft: `${depth * 1.25}rem` }}>
+                            <div className="size-3.5 shrink-0" />
+                            {icon}
+                            {name}
+                        </div>
+                    )}
                 </td>
                 <td className="py-2.5 pr-2 text-right text-foreground text-xs tabular-nums">{f.number(item.requiredCount)}</td>
-                <td className={cn("px-2 py-2.5 text-right text-xs tabular-nums", status === "complete" ? "text-emerald-400" : needsCrafting ? "text-amber-400" : "text-muted-foreground")}>{f.number(item.inventoryCount)}</td>
+                <td className={cn("px-2 py-2.5 text-right text-xs tabular-nums", status === "complete" ? "text-success-foreground" : needsCrafting ? "text-warning-foreground" : "text-muted-foreground")}>{f.number(item.inventoryCount)}</td>
                 <td className="px-2 py-2.5 text-right text-xs tabular-nums">
                     {item.canCraft ? (
-                        <span className="text-sky-400">{f.number(item.craftableCount)}</span>
+                        <span className="text-info-foreground">{f.number(item.craftableCount)}</span>
                     ) : isMissingRequirements && (item.unmetStages?.length ?? 0) > 0 ? (
                         <div className="flex justify-end">
                             <UnmetStagesPopover item={item} t={t} />
@@ -100,7 +110,7 @@ function PlannerRequirementRow({ item, depth, path, expandedPaths, onToggleExpan
                             <Tooltip>
                                 <TooltipTrigger
                                     render={(props) => (
-                                        <span {...props} className="inline-flex cursor-help items-center text-muted-foreground/60 hover:text-foreground">
+                                        <span {...props} className="inline-flex cursor-help items-center text-subtle-foreground hover:text-foreground">
                                             <Info className="size-3.5" />
                                         </span>
                                     )}
@@ -110,23 +120,23 @@ function PlannerRequirementRow({ item, depth, path, expandedPaths, onToggleExpan
                         </div>
                     ) : item.craftReason ? (
                         <Tooltip>
-                            <TooltipTrigger render={<span className="cursor-help text-muted-foreground/50" />}>-</TooltipTrigger>
+                            <TooltipTrigger render={<span className="cursor-help text-subtle-foreground" />}>-</TooltipTrigger>
                             <TooltipPopup className="max-w-xs">{item.craftReason}</TooltipPopup>
                         </Tooltip>
                     ) : (
-                        <span className="text-muted-foreground/50">-</span>
+                        <span className="text-subtle-foreground">-</span>
                     )}
                 </td>
                 <td className="py-2.5 pl-2 text-right text-xs tabular-nums">
                     {status === "missing" ? (
-                        <span className="font-semibold text-red-400 text-xs">{f.number(item.missingCount)}</span>
+                        <span className="font-semibold text-destructive-foreground text-xs">{f.number(item.missingCount)}</span>
                     ) : needsCrafting ? (
                         <Tooltip>
-                            <TooltipTrigger render={<span className="font-semibold text-amber-400 text-xs" />}>{t("planner.req.craft", { count: f.number(shortfall) })}</TooltipTrigger>
+                            <TooltipTrigger render={<span className="font-semibold text-warning-foreground text-xs" />}>{t("planner.req.craft", { count: f.number(shortfall) })}</TooltipTrigger>
                             <TooltipPopup>{t("planner.req.craftTitle", { have: f.number(item.inventoryCount), required: f.number(item.requiredCount), shortfall: f.number(shortfall) })}</TooltipPopup>
                         </Tooltip>
                     ) : (
-                        <span className="font-semibold text-emerald-400">✓</span>
+                        <span className="font-semibold text-success-foreground">✓</span>
                     )}
                 </td>
             </tr>
@@ -155,7 +165,7 @@ function UnmetStagesPopover({ item, t }: { item: IPlanRequirementItem; t: ReqT }
                 delay={120}
                 onClick={stop}
                 render={(props) => (
-                    <button {...props} type="button" aria-label={t("planner.req.craftGate.aria", { name: item.name })} className="inline-flex cursor-help items-center text-muted-foreground/60 hover:text-foreground focus-visible:text-foreground">
+                    <button {...props} type="button" aria-label={t("planner.req.craftGate.aria", { name: item.name })} className="inline-flex cursor-help items-center text-subtle-foreground hover:text-foreground focus-visible:text-foreground">
                         <Info className="size-3.5" aria-hidden="true" />
                     </button>
                 )}
@@ -322,10 +332,15 @@ function ByOperatorView({ plans, maxTier, predicate, collapsedSections, onToggle
     // per active plan, each carrying every plan: 193 plans meant 193 copies of the
     // whole list, all refetched after any edit or delete.
     const activeIds = React.useMemo(() => plans.map((p) => p.operator_id), [plans]);
-    const { data, isLoading } = useQuery({ ...plansQueryOptions(activeIds, maxTier || undefined, true), enabled: activeIds.length > 0 });
+    const { data, isLoading, isError, refetch } = useQuery({ ...plansQueryOptions(activeIds, maxTier || undefined, true), enabled: activeIds.length > 0 });
 
     if (plans.length === 0) {
         return <p className="mt-6 text-center text-muted-foreground text-sm">{t("planner.req.noActivePlans")}</p>;
+    }
+
+    // Without this every section read "No matching requirements." when the request failed.
+    if (isError && !data) {
+        return <LoadFailed layout="inline" className="mt-3" message={t("planner.req.loadFailed")} onRetry={() => void refetch()} />;
     }
 
     return (
@@ -403,7 +418,7 @@ export function RequirementsPanel({ aggregatedRequirements, isLoading, activePla
     const hasRequirements = !isLoading && aggregatedRequirements.length > 0;
 
     return (
-        <div className="rounded-xl border border-border bg-card p-4">
+        <div className="rounded-2xl border border-border bg-card p-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
                     <h2 className="font-semibold text-foreground text-sm">{t("planner.req.title")}</h2>

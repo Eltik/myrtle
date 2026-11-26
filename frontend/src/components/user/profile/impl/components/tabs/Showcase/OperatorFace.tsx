@@ -21,8 +21,8 @@ export function OperatorFace({ entity, server }: { entity: IFaceOperator; server
         <>
             {entity.nationId && <CampIcon groupId={entity.nationId} size={240} className="pointer-events-none absolute -top-3 -left-8 max-w-none opacity-5 transition-opacity group-hover:opacity-10" />}
             <PortraitArt entity={entity} server={server} />
-            <span aria-hidden="true" className="absolute inset-x-0 bottom-0 z-10 flex h-9 items-end gap-1 bg-background/80 px-1.5 pb-1.5 backdrop-blur-sm">
-                <span className="line-clamp-2 min-w-0 flex-1 font-bold text-[10px] uppercase leading-tight opacity-70 transition-opacity group-hover:opacity-100 sm:text-[11px]">{entity.name}</span>
+            <span aria-hidden="true" className="absolute inset-x-0 bottom-0 z-10 flex h-9 items-end gap-1 bg-background/95 px-1.5 pb-1.5">
+                <span className="line-clamp-2 min-w-0 flex-1 font-semibold text-[10px] text-foreground leading-tight sm:text-[11px]">{entity.name}</span>
                 <ClassIcon profession={entity.profession} size={160} className="size-4 shrink-0" />
             </span>
             <span aria-hidden="true" className="absolute inset-x-0 bottom-0 z-10 h-0.5" style={{ backgroundColor: RARITY_COLORS[rarity] }} />

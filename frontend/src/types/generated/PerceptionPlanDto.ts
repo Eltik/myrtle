@@ -3,27 +3,4 @@ import type { AssignedOperator } from "./AssignedOperator";
 import type { PerceptionConsumerDto } from "./PerceptionConsumerDto";
 import type { PerceptionSupportDto } from "./PerceptionSupportDto";
 
-/**
- * The base-wide resource economy plan: which support operators to station (and where) to
- * feed the shared resource pool, and which production operators the economy boosts.
- */
-export type PerceptionPlanDto = {
-    /**
-     * Support generators to station outside production (e.g. Mulberry in the HR Office).
-     */
-    support: Array<PerceptionSupportDto>;
-    /**
-     * Production operators the economy powers, with the productivity bonus they gain.
-     */
-    consumers: Array<PerceptionConsumerDto>;
-    /**
-     * The morale-swap operator (Fiammetta) that sustains the Ling/Dusk morale rotation, when
-     * the plan uses morale-conditional operators and the roster has one.
-     */
-    rotation_manager: AssignedOperator | null;
-    /**
-     * True when the plan needs a morale-swap manager (it uses Ling/Dusk) but the roster has
-     * none - a "you also need a Fiammetta-type operator" flag.
-     */
-    needs_rotation_manager: boolean;
-};
+export type PerceptionPlanDto = { support: Array<PerceptionSupportDto>; consumers: Array<PerceptionConsumerDto>; rotation_manager: AssignedOperator | null; needs_rotation_manager: boolean };

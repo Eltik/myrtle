@@ -15,20 +15,23 @@ use crate::policy::{Action, Policy, Resource, Subject};
 pub const EDIT_RUN_SECS: f64 = 15.0 * 60.0;
 pub const AUDIT_SET_MAX: usize = 500;
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct AuditTierRef {
     pub id: Uuid,
     pub name: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct AuditTierRename {
     pub id: Uuid,
     pub from: String,
     pub to: String,
 }
 
-#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export, optional_fields)]
 pub struct ContentAuditDetails {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub list_type: Option<String>,
@@ -192,21 +195,25 @@ pub struct AuditActor {
     pub secretary_skin_id: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export, rename = "ContentAuditPerson")]
 pub struct AuditPerson {
     pub user_id: Uuid,
     pub uid: Option<String>,
     pub nickname: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct ContentAuditEntry {
+    #[ts(type = "number")]
     pub id: i64,
     pub action: ContentAuditAction,
     pub target_kind: ContentTargetKind,
     pub target_id: Uuid,
     pub target_name: String,
     pub target_slug: Option<String>,
+    #[ts(as = "crate::services::community::operator_notes::AuditLogActor")]
     pub actor: AuditActor,
     pub owner: Option<AuditPerson>,
     pub subject: Option<AuditPerson>,
@@ -216,9 +223,11 @@ pub struct ContentAuditEntry {
     pub changed_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export, rename = "ContentAuditResponse")]
 pub struct ContentAuditFeed {
     pub entries: Vec<ContentAuditEntry>,
+    #[ts(type = "number")]
     pub total: i64,
 }
 

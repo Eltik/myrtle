@@ -37,7 +37,11 @@ export function CardStat({ kind, value, title }: ICardStatProps) {
         <Tooltip>
             <TooltipTrigger render={<span className={trend ? "inline-flex items-center gap-0.5 text-primary" : "inline-flex items-center gap-1"} />}>
                 {ICONS[kind]}
-                <span className={trend ? "font-bold" : "font-semibold text-foreground"}>{value}</span>
+                <span aria-hidden="true" className={trend ? "font-bold" : "font-semibold text-foreground"}>
+                    {value}
+                </span>
+                {/* R-39: the span is not focusable, so the tooltip never reaches keyboard or screen-reader users; the full count is read from here. */}
+                <span className="sr-only">{title}</span>
             </TooltipTrigger>
             <TooltipPopup>{title}</TooltipPopup>
         </Tooltip>

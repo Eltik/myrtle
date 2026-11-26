@@ -5,6 +5,7 @@ import * as React from "react";
 import { StagePreview } from "#/components/stages/list/impl/StagePreview";
 import { Dialog, DialogDescription, DialogHeader, DialogPanel, DialogPopup, DialogTitle } from "#/components/ui/dialog";
 import { Input } from "#/components/ui/input";
+import { LoadFailed } from "#/components/ui/load-failed";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
 import { useMediaQuery } from "#/hooks/use-media-query";
 import { type IStageIndexEntry, stageIndexQueryOptions, stagePreviewCandidates } from "#/lib/api/stages";
@@ -35,7 +36,7 @@ export function StagePicker({ open, onOpenChange, onPick }: IStagePickerProps): 
     const t: PickerT = useT("tools");
     const tNav = useT("nav");
     const server = useGamedataServer();
-    const { data: index, isLoading } = useQuery({ ...stageIndexQueryOptions(server), enabled: open });
+    const { data: index, isLoading, isError, refetch } = useQuery({ ...stageIndexQueryOptions(server), enabled: open });
     const [group, setGroup] = React.useState<StageGroupKey>("story");
     const [zone, setZone] = React.useState<string>("all");
     const [query, setQuery] = React.useState("");
@@ -121,6 +122,8 @@ export function StagePicker({ open, onOpenChange, onPick }: IStagePickerProps): 
 
                         {isLoading ? (
                             <p className="py-8 text-center text-[13px] text-muted-foreground">{t("squad.stagePicker.loading")}</p>
+                        ) : isError ? (
+                            <LoadFailed layout="inline" className="justify-center py-8" message={t("squad.stagePicker.error")} onRetry={() => void refetch()} />
                         ) : shown.length === 0 ? (
                             <p className="py-8 text-center text-[13px] text-muted-foreground">{t("squad.stagePicker.empty")}</p>
                         ) : (
@@ -192,7 +195,7 @@ const StageTile = React.memo(function StageTile({ stage, preview, hardLabel, onP
         >
             <span className="relative block aspect-[16/9] w-full overflow-hidden bg-muted">
                 {/* Sits under the map, so it shows where a stage has no preview or the image fails. */}
-                <span aria-hidden="true" className="absolute inset-0 flex items-center justify-center text-muted-foreground/40">
+                <span aria-hidden="true" className="absolute inset-0 flex items-center justify-center text-subtle-foreground">
                     <MapIcon className="size-7" strokeWidth={1.5} />
                 </span>
                 {preview && <StagePreview src={preview} className="opacity-90 transition-opacity group-hover:opacity-100" />}

@@ -20,7 +20,7 @@ export const messages = {
         description: "Shown when the URL names a stage id the backend has no stage for. {id} is that id, rendered in a monospace box, and may move wherever the sentence needs it.",
     },
     "detail.notFound.back": {
-        text: "Back to Stages",
+        text: "Back to stages",
         description: "Link out of the stage-not-found page, back to the stage list.",
     },
     "detail.noMap": {

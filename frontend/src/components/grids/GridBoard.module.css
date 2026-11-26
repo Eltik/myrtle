@@ -14,7 +14,7 @@
     --cell-max: 180px;
     --label-size: 13px;
 
-    border-radius: 16px;
+    border-radius: var(--radius-2xl);
     background: var(--board-bg);
     color: white;
     padding: clamp(14px, 3vw, 28px) clamp(10px, 2.5vw, 28px) clamp(14px, 3vw, 28px);

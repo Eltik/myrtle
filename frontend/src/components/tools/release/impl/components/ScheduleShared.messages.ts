@@ -31,10 +31,6 @@ export const messages = {
         text: "CN",
         description: "Small heading before the Chinese-server dates of a row. The game server's usual abbreviation.",
     },
-    "release.farm.stageTitle": {
-        text: "{code}: {ap} sanity",
-        description: "Tooltip on a farming stage: its code and what it costs to run. 'Sanity' is the game's own name for the energy a stage spends.",
-    },
     "release.farm.ap": {
         text: "{ap} AP",
         description: "A stage's energy cost, e.g. '21 AP'. 'AP' is the game's own abbreviation for sanity.",

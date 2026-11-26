@@ -8,7 +8,7 @@
  * running while this is written: the shape it must survive is exactly that.
  */
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { I18nProvider } from "#/lib/i18n/context";
 import type { StoryArchive } from "#/types/generated/StoryArchive";
@@ -233,8 +233,9 @@ describe("ArchivePanel", () => {
     it("names the operator a clip belongs to and offers its languages", () => {
         mount(<ArchivePanel sections={[recordings]} audio={{ playing: null, toggle: () => undefined, stop: () => undefined }} />);
         expect(screen.getByText("Amiya")).toBeTruthy();
-        const picker = screen.getByLabelText(t("archive.clip.language")) as HTMLSelectElement;
-        expect(picker.value).toBe("JP");
-        expect([...picker.options].map((option) => option.value)).toEqual(["JP", "EN"]);
+        const picker = screen.getByRole("combobox", { name: t("archive.clip.language") });
+        expect(picker.textContent).toContain("Japanese");
+        fireEvent.click(picker);
+        expect(screen.getAllByRole("option").map((option) => option.textContent)).toEqual(["Japanese", "English"]);
     });
 });

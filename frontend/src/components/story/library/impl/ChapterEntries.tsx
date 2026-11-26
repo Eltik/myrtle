@@ -127,7 +127,7 @@ const OperationRow = memo(function OperationRow({ row, progress, gameRead, curre
                 <Link
                     to="/stories/$storyId"
                     params={{ storyId: solo.entry.id }}
-                    className="-mx-2 -my-1 flex pointer-coarse:min-h-11 min-w-0 flex-1 basis-32 items-center gap-2.5 rounded-[7px] px-2 py-1 transition-colors hover:bg-secondary/45 focus-visible:bg-secondary/45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:ring-inset max-sm:min-h-11"
+                    className="-mx-2 -my-1 flex pointer-coarse:min-h-11 min-w-0 flex-1 basis-32 items-center gap-2.5 rounded-[7px] px-2 py-1 transition-colors hover:bg-secondary/45 focus-visible:bg-secondary/45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset max-sm:min-h-11"
                 >
                     {face}
                 </Link>
@@ -171,7 +171,7 @@ function PhaseSegment({ segment, title, progress, gameRead, current }: { segment
     if (!segment.entry.hasScript)
         return (
             <Tooltip>
-                <TooltipTrigger render={<span className={cn(shell, "border-border border-dashed text-muted-foreground/70")} />}>{label}</TooltipTrigger>
+                <TooltipTrigger render={<span className={cn(shell, "border-border border-dashed text-subtle-foreground")} />}>{label}</TooltipTrigger>
                 <TooltipPopup>{ts("stories.panel.notExtracted")}</TooltipPopup>
             </Tooltip>
         );
@@ -184,7 +184,7 @@ function PhaseSegment({ segment, title, progress, gameRead, current }: { segment
                 aria-label={t("chapter.segment.aria", { title, phase: label })}
                 className={cn(
                     shell,
-                    "cursor-pointer rounded-e-none border-e-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60",
+                    "cursor-pointer rounded-e-none border-e-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                     read ? "border-primary/55 bg-primary/12 text-foreground hover:bg-primary/18" : "border-border bg-transparent text-muted-foreground hover:border-primary/45 hover:text-foreground",
                 )}
             >

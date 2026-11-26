@@ -20,7 +20,7 @@ export interface IPlanProgressLabels {
     skillFallback: (n: number) => string;
     /** A one-axis skill target: 1-7, then 8-10 for M1-M3. */
     skillTarget: (value: number) => string;
-    moduleStage: (stage: number) => string;
+    moduleStage: (stage: number) => React.ReactNode;
 }
 
 interface IPlanProgressRowsProps {
@@ -108,7 +108,7 @@ function upgradedTone(isUpgraded: boolean): string {
 }
 
 function Arrow(): React.ReactElement {
-    return <span className="text-muted-foreground/50">➔</span>;
+    return <span className="text-subtle-foreground">➔</span>;
 }
 
 function ProgressSection({ title, children }: { title: string; children: React.ReactNode }): React.ReactElement {
@@ -123,8 +123,8 @@ function ProgressSection({ title, children }: { title: string; children: React.R
 interface IProgressRowProps {
     icon: React.ReactNode;
     name: string;
-    current: string;
-    target: string;
+    current: React.ReactNode;
+    target: React.ReactNode;
     isUpgraded: boolean;
 }
 

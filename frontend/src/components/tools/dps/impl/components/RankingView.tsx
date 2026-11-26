@@ -17,7 +17,7 @@ import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { dpsOperatorsQueryOptions, dpsRankQueryOptions, type IDpsRankRow } from "#/lib/api/dps";
 import { useLocale, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import { cn, formatProfession } from "#/lib/utils";
+import { cn, formatProfession, rarityInk } from "#/lib/utils";
 import type { DamageKind } from "#/types/generated/DamageKind";
 import type { RankPreset } from "#/types/generated/RankPreset";
 import type { messages as dpsConstantsMessages } from "../constants.messages";
@@ -36,6 +36,8 @@ const PRESETS: readonly RankPreset[] = ["p1Max", "p6Max", "default"];
 /** The share link carries at most 32 cards (`decodeInstances`). */
 const MAX_CARDS = 32;
 const ROW_HEIGHT = 44;
+/** The operator column, pinned to the scroller's left edge on a narrow screen. */
+const STICKY_CELL = "sticky left-0 z-1 bg-card";
 
 interface IRankingViewProps {
     state: IDpsState;
@@ -102,19 +104,22 @@ export function RankingView({ state, dispatch, ctx }: IRankingViewProps): React.
                 <div className="flex flex-wrap items-end gap-3">
                     <div className="space-y-1">
                         <Tooltip>
-                            <TooltipTrigger render={<Label className="block cursor-help font-medium text-[11px] text-muted-foreground leading-none" />}>{t("dps.rank.preset")}</TooltipTrigger>
+                            <TooltipTrigger render={<Label className="block cursor-help text-subtle-foreground text-xs leading-none" />}>{t("dps.rank.preset")}</TooltipTrigger>
                             <TooltipPopup className="max-w-64">{t("dps.rank.preset.hint")}</TooltipPopup>
                         </Tooltip>
-                        <ToggleGroup aria-label={t("dps.rank.preset")} variant="outline" size="sm" value={[rank.preset]} onValueChange={(v) => v[0] && dispatch({ type: "SET_RANK", patch: { preset: v[0] as RankPreset } })}>
+                        {/* One framed group with borderless items inside, so all three presets share one
+                            outline: as joined outline items the pressed fill swallowed its own border and
+                            "Calculator default" read as sitting outside the pill. */}
+                        <ToggleGroup aria-label={t("dps.rank.preset")} size="sm" className="max-w-full flex-wrap rounded-lg border border-input bg-background p-0.5" value={[rank.preset]} onValueChange={(v) => v[0] && dispatch({ type: "SET_RANK", patch: { preset: v[0] as RankPreset } })}>
                             {PRESETS.map((p) => (
-                                <ToggleGroupItem key={p} value={p} className="text-[12px]">
+                                <ToggleGroupItem key={p} value={p} className="px-2.5 text-[12px] sm:text-[12px]">
                                     {presetLabel(p)}
                                 </ToggleGroupItem>
                             ))}
                         </ToggleGroup>
                     </div>
                     <div className="space-y-1">
-                        <Label className="block font-medium text-[11px] text-muted-foreground leading-none">{t("dps.rank.sort")}</Label>
+                        <Label className="block text-subtle-foreground text-xs leading-none">{t("dps.rank.sort")}</Label>
                         <Select value={sortBy} onValueChange={(v) => v !== null && dispatch({ type: "SET_RANK", patch: { sortBy: v as RankSortKey } })}>
                             <SelectTrigger size="sm" className="w-40" aria-label={t("dps.rank.sort")}>
                                 <SelectValue>{() => sortOptions.find((o) => o.value === sortBy)?.label}</SelectValue>
@@ -237,7 +242,9 @@ function RankTable({ rows, columns, sortBy, top, withRetention, withSplit, inCom
         { id: "add", label: "" },
     ];
     return (
-        <div ref={scrollRef} className="max-h-[70vh] overflow-auto rounded-lg border border-border">
+        // 68rem of columns in a 343px phone viewport: the scroller shows edge shadows while more
+        // sits past either side, and the operator column stays pinned so a row keeps its name.
+        <div ref={scrollRef} className="scroll-shadows-x max-h-[70vh] overflow-auto rounded-lg border border-border bg-card [--scroll-shadow-bg:var(--card)]">
             <div className="min-w-[68rem]">
                 <div className="sticky top-0 z-1 grid items-center gap-x-2 border-border border-b bg-card px-2 py-2 font-medium text-[10.5px] text-muted-foreground" style={{ gridTemplateColumns: columns }}>
                     {heads.map((h) =>
@@ -247,7 +254,7 @@ function RankTable({ rows, columns, sortBy, top, withRetention, withSplit, inCom
                                 <TooltipPopup className="max-w-72">{h.hint}</TooltipPopup>
                             </Tooltip>
                         ) : (
-                            <span key={h.id} className={cn("truncate", h.numeric && "text-right", h.active && "text-foreground")}>
+                            <span key={h.id} className={cn("truncate", h.numeric && "text-right", h.active && "text-foreground", h.id === "operator" && STICKY_CELL)}>
                                 {h.label}
                             </span>
                         ),
@@ -289,16 +296,18 @@ export function RankRowView({ row, index, columns, sortBy, top, withRetention, w
     const num = (v: number | undefined) => <span className="text-right font-mono tabular-nums">{v === undefined ? "-" : formatLargeNumber(v, locale)}</span>;
     const secs = (v: number | undefined) => <span className="text-right font-mono text-muted-foreground tabular-nums">{v === undefined ? "-" : formatSeconds(v)}</span>;
     return (
-        <div className={cn("grid h-full items-center gap-x-2 border-border/60 border-b px-2 text-[12px]", added && "bg-primary/6")} style={{ gridTemplateColumns: columns }}>
+        <div className={cn("grid h-full items-center gap-x-2 border-border/60 border-b px-2 text-[12px]", added && "bg-primary/4")} style={{ gridTemplateColumns: columns }}>
             <span className="text-right font-mono text-[11px] text-muted-foreground tabular-nums">{index + 1}</span>
-            <span className="flex min-w-0 items-center gap-2">
+            <span className={cn("flex min-w-0 items-center gap-2 self-stretch", STICKY_CELL, added && "bg-[color-mix(in_oklch,var(--primary)_4%,var(--card))]")}>
                 <span aria-hidden="true" className="inline-flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-md bg-muted text-[9px]">
                     <OperatorAvatar charId={row.operatorId} name={row.name} />
                 </span>
                 <span className="min-w-0">
                     <span className="block truncate font-medium">{row.name}</span>
+                    {/* Rarity in its ink: 4.85 to 4.98 on the card and 4.56 to 4.68 on the added row's primary/4
+                        (primary/6 measured 4.41 for 5★), light; 6.86+ dark. */}
                     <span className="block truncate text-[10.5px] text-muted-foreground">
-                        {row.rarity}★ {formatProfession(row.profession)}
+                        <span style={{ color: rarityInk(row.rarity) }}>{row.rarity}★</span> {formatProfession(row.profession)}
                     </span>
                 </span>
             </span>

@@ -7,7 +7,8 @@ pub use custom::{dispatch, dispatch_hps, skill_duration_override, skill_duration
 
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct HpsResult {
     pub skill_hps: f64,
     pub base_hps: f64,

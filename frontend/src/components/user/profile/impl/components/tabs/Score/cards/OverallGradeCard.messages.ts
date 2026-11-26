@@ -4,7 +4,7 @@ export const namespace = "user";
 
 export const messages = {
     "score.overall.title": {
-        text: "Overall Grade",
+        text: "Overall grade",
         description: "Card title over the account's composite letter grade.",
     },
     "score.overall.composite": {
@@ -32,7 +32,7 @@ export const messages = {
         description: "Label over the track showing every grade threshold and where the account sits.",
     },
     "score.ladder.top": {
-        text: "Top of the ladder - nothing left to climb.",
+        text: "Top of the ladder. Nothing left to climb.",
         description: "Shown in place of the next-grade hint when the account already holds the highest grade.",
     },
     "score.next.points": {

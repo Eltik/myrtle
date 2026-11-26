@@ -22,12 +22,15 @@ import { LazyAuthDialog } from "./LazyAuthDialog";
 import type { INavItem } from "./MainNav";
 import type { messages } from "./MobileNav.messages";
 import type { messages as themeMessages } from "./ThemeToggle.messages";
+import { usePlayerName } from "./use-player-name";
 
 interface IMobileNavProps {
     items: INavItem[];
+    /** The desktop nav did not fit, so the hamburger shows at every width. */
+    forceVisible?: boolean;
 }
 
-export function MobileNav({ items }: IMobileNavProps) {
+export function MobileNav({ items, forceVisible = false }: IMobileNavProps) {
     const { user, loading, logout } = useAuth();
     const router = useRouterState();
     const pathname = router.location.pathname;
@@ -41,9 +44,10 @@ export function MobileNav({ items }: IMobileNavProps) {
     const { mode, setMode } = useTheme();
     const tTheme: TypedT<typeof themeMessages> = useT("nav");
     const groupIdBase = useId();
+    const playerName = usePlayerName();
 
     const renderSubItem = (subItem: INavItem) => (
-        <DrawerMenuItem key={subItem.href} className="h-9 text-muted-foreground text-sm hover:text-foreground" render={<DrawerClose nativeButton={false} render={<Link to={subItem.href} />}></DrawerClose>}>
+        <DrawerMenuItem key={subItem.href} className="h-11 text-muted-foreground text-sm hover:text-foreground" render={<DrawerClose nativeButton={false} render={<Link to={subItem.href} />}></DrawerClose>}>
             {subItem.label}
         </DrawerMenuItem>
     );
@@ -90,7 +94,7 @@ export function MobileNav({ items }: IMobileNavProps) {
 
     return (
         <Drawer position="left">
-            <DrawerTrigger render={<Button variant="ghost" size="icon" className="lg:hidden" aria-label={t("mobileNav.openMenu")} />}>
+            <DrawerTrigger render={<Button variant="ghost" size="icon" className={cn(!forceVisible && "lg:hidden")} aria-label={t("mobileNav.openMenu")} />}>
                 <MenuIcon className="h-5 w-5" />
             </DrawerTrigger>
             <DrawerPopup showCloseButton className="w-70 max-w-[calc(100vw-3rem)]">
@@ -118,7 +122,7 @@ export function MobileNav({ items }: IMobileNavProps) {
                                     </a>
                                 }
                             />
-                            <DrawerMenuItem render={<DrawerClose nativeButton={false} render={<Link to="/donate" target="_blank" />} />}>
+                            <DrawerMenuItem render={<DrawerClose nativeButton={false} render={<Link to="/donate" />} />}>
                                 {t("mobileNav.donate")}
                                 <Heart className="mr-2 h-4 w-4" />
                                 <ExternalLinkIcon className="ml-auto h-3 w-3 opacity-50" />
@@ -199,10 +203,10 @@ export function MobileNav({ items }: IMobileNavProps) {
                                     <div className="mb-2 flex items-center gap-3 px-2 py-2">
                                         <Avatar className="h-8 w-8">
                                             <AvatarImage alt={t("mobileNav.userAvatar")} src={getAvatarSkinId(user)} />
-                                            <AvatarFallback className="text-[0.625rem]">{(user.nickname ?? "Player").slice(0, 1)}</AvatarFallback>
+                                            <AvatarFallback className="text-[0.625rem]">{playerName(user.nickname).slice(0, 1)}</AvatarFallback>
                                         </Avatar>
                                         <div className="flex flex-col">
-                                            <span className="font-medium text-sm">{user.nickname ?? "Player"}</span>
+                                            <span className="font-medium text-sm">{playerName(user.nickname)}</span>
                                             <span className="text-muted-foreground text-xs">{t("mobileNav.level", { level: user.level })}</span>
                                         </div>
                                     </div>

@@ -64,7 +64,7 @@ export function IconButton({ label, onClick, children, pressed, className, disab
             aria-label={label}
             aria-pressed={pressed}
             className={cn(
-                "relative inline-flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted-foreground outline-none transition-colors pointer-coarse:after:absolute pointer-coarse:after:size-11 hover:bg-secondary/60 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/40 disabled:pointer-events-none disabled:opacity-50 max-sm:min-h-11 max-sm:min-w-11 [&_svg]:size-4",
+                "relative inline-flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted-foreground outline-none transition-colors pointer-coarse:after:absolute pointer-coarse:after:size-11 hover:bg-secondary/60 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 max-sm:min-h-11 max-sm:min-w-11 [&_svg]:size-4",
                 pressed && "text-primary hover:text-primary",
                 className,
             )}

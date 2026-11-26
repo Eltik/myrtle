@@ -1,7 +1,5 @@
-import { Search, SearchX } from "lucide-react";
 import type * as React from "react";
 import { Card } from "#/components/ui/card";
-import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "#/components/ui/empty";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import type { IRosterOverlay, ITagCombinationResult, ResultLayout } from "../types";
@@ -16,35 +14,15 @@ interface IResultsListProps {
     layout: ResultLayout;
 }
 
+const EMPTY = "m-0 flex min-h-40 items-center justify-center rounded-2xl border border-border border-dashed px-6 py-10 text-balance text-center text-muted-foreground text-sm";
+
 export function ResultsList({ results, hasSelection, roster, layout }: IResultsListProps): React.ReactElement {
     const t: TypedT<typeof messages> = useT("tools");
-    if (!hasSelection) {
-        return (
-            <Empty>
-                <EmptyHeader>
-                    <EmptyMedia variant="icon">
-                        <Search />
-                    </EmptyMedia>
-                    <EmptyTitle>{t("recruit.empty.noSelection.title")}</EmptyTitle>
-                    <EmptyDescription>{t("recruit.empty.noSelection.desc")}</EmptyDescription>
-                </EmptyHeader>
-            </Empty>
-        );
-    }
-
-    if (results.length === 0) {
-        return (
-            <Empty>
-                <EmptyHeader>
-                    <EmptyMedia variant="icon">
-                        <SearchX />
-                    </EmptyMedia>
-                    <EmptyTitle>{t("recruit.empty.noResults.title")}</EmptyTitle>
-                    <EmptyDescription>{t("recruit.empty.noResults.desc")}</EmptyDescription>
-                </EmptyHeader>
-            </Empty>
-        );
-    }
+    // A plain sentence, not the kit Empty: an icon in a tinted square read as decoration beside a column of chips.
+    // It sits in a dashed frame where the results will land, level with the tag card's top, rather than
+    // as one line floating in the empty column.
+    if (!hasSelection) return <p className={EMPTY}>{t("recruit.empty.noSelection.desc")}</p>;
+    if (results.length === 0) return <p className={EMPTY}>{t("recruit.empty.noResults.desc")}</p>;
 
     if (layout === "detailed") {
         return (

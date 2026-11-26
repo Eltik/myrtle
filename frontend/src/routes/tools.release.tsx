@@ -1,8 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { AlertTriangle } from "lucide-react";
 import { ReleasePlanner } from "#/components/tools/release/ReleasePlanner";
-import { Button } from "#/components/ui/button";
-import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "#/components/ui/empty";
+import { RouteError } from "#/components/ui/route-error";
 import { releaseEventsQueryOptions } from "#/lib/api/release";
 import { metaT } from "#/lib/meta";
 import { defaultOgURL } from "#/lib/og";
@@ -10,7 +8,7 @@ import { seo } from "#/lib/seo";
 
 export const Route = createFileRoute("/tools/release")({
     component: RouteComponent,
-    errorComponent: ReleaseErrorComponent,
+    errorComponent: RouteError,
     loader: ({ context: { queryClient } }) => queryClient.ensureQueryData(releaseEventsQueryOptions()),
     head: ({ match }) => {
         const t = metaT(match.context.i18n);
@@ -30,24 +28,4 @@ export const Route = createFileRoute("/tools/release")({
 
 function RouteComponent() {
     return <ReleasePlanner />;
-}
-
-function ReleaseErrorComponent({ error, reset }: { error: unknown; reset: () => void }) {
-    const message = error instanceof Error ? error.message : String(error);
-    return (
-        <div className="relative z-1 mx-auto w-[min(640px,calc(100%-2rem))] py-20">
-            <Empty>
-                <EmptyHeader>
-                    <EmptyMedia variant="icon">
-                        <AlertTriangle className="text-destructive" />
-                    </EmptyMedia>
-                    <EmptyTitle>Release Planner failed to load</EmptyTitle>
-                    <EmptyDescription>{message || "An unexpected error occurred while loading release data."}</EmptyDescription>
-                </EmptyHeader>
-                <Button onClick={reset} variant="outline">
-                    Retry
-                </Button>
-            </Empty>
-        </div>
-    );
 }

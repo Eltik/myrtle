@@ -68,7 +68,7 @@ export const messages = {
         description: "Read fraction on a chapter card: stories read over stories that have a script.",
     },
     "stories.card.noneExtracted": {
-        text: "{count} not extracted",
+        text: "{count} not available yet",
         description: "Stands in for the read fraction on a chapter whose stories all lack a script, so none of them can be read.",
     },
     "stories.card.words": {
@@ -88,7 +88,7 @@ export const messages = {
         description: "Note on a story row whose reading position was saved partway through.",
     },
     "stories.panel.notExtracted": {
-        text: "Not extracted",
+        text: "Not available yet",
         description: "Badge on a story whose script file is missing from the served data.",
     },
     "stories.panel.close": {

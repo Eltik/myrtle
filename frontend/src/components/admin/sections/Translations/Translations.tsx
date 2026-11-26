@@ -6,6 +6,7 @@ import { atLeast } from "#/components/admin/shell/model";
 import { PageHead } from "#/components/admin/shell/PageHead";
 import type { IAdminTranslationsSearch } from "#/components/admin/shell/search";
 import { Card } from "#/components/ui/card";
+import { LoadFailed } from "#/components/ui/load-failed";
 import { Skeleton } from "#/components/ui/skeleton";
 import { useAuth } from "#/hooks/use-auth";
 import { useIsMac } from "#/hooks/use-is-mac";
@@ -90,6 +91,10 @@ function Workspace({ search, grants, grantsLoading, enabled: canOpen }: IWorkspa
                 <Skeleton className={cn("h-[110px] rounded-2xl", LOCALE_PICKER_ITEM)} />
             </div>
         );
+    }
+
+    if (localesQuery.isError) {
+        return <LoadFailed message={t("translations.locale.loadFailed")} onRetry={() => void localesQuery.refetch()} />;
     }
 
     if (!locale) {

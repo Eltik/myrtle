@@ -8,7 +8,8 @@ use uuid::Uuid;
 use crate::policy::{Action, Resource, Subject};
 use crate::{AppContext, AppError};
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct OperatorNote {
     pub id: Uuid,
     pub operator_id: String,
@@ -22,8 +23,10 @@ pub struct OperatorNote {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct OperatorNoteAuditEntry {
+    #[ts(type = "number")]
     pub id: i64,
     pub note_id: Uuid,
     pub field_name: String,
@@ -34,13 +37,15 @@ pub struct OperatorNoteAuditEntry {
     pub actor: OperatorNoteAuditActor,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct OperatorNoteAuditActor {
     pub id: Uuid,
     pub nickname: Option<String>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct AuditLogActor {
     pub user_id: Uuid,
     pub uid: Option<String>,
@@ -49,8 +54,11 @@ pub struct AuditLogActor {
     pub secretary_skin_id: Option<String>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ts_rs::TS)]
+#[ts(export)]
+#[ts(rename = "OperatorNoteAuditLogEntry")]
 pub struct AuditLogEntry {
+    #[ts(type = "number")]
     pub id: i64,
     pub note_id: Uuid,
     pub operator_id: String,
@@ -61,9 +69,11 @@ pub struct AuditLogEntry {
     pub actor: AuditLogActor,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct GlobalAuditLogResponse {
     pub entries: Vec<AuditLogEntry>,
+    #[ts(type = "number")]
     pub total: i64,
 }
 

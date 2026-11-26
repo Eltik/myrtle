@@ -10,11 +10,11 @@ export type ArchiveDistribution = {
     max: number;
     mean: number;
     /**
-     * Everyone at `min`, by name.
+     * Everyone at `min` by name
      */
     low: Array<string>;
     /**
-     * Everyone at `max`, by name.
+     * Everyone at `max` by name
      */
     high: Array<string>;
     buckets: Array<ArchiveBucket>;

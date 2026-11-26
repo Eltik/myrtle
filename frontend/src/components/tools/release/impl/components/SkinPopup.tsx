@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import * as React from "react";
 import { SkinDetailContent } from "#/components/skins/SkinDetailDialog";
 import { Dialog, DialogContent, DialogTitle } from "#/components/ui/dialog";
+import { LoadFailed } from "#/components/ui/load-failed";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { DynamicArtProvider } from "#/components/user/profile/impl/dynamic-art";
 import { operatorsIndexQueryOptions } from "#/lib/api/operators";
@@ -61,10 +62,16 @@ function SkinPopup({ selection, lookup }: { selection: ISkinSelection; lookup: O
     const opName = operatorLabel(selection.charId, lookup.get(selection.charId), selection.charName, autoOn).text;
     if (!entry) {
         const pending = en.isPending || cn.isPending;
+        // A failed index used to read as "missing", which is a claim about the outfit, not the request.
+        const failed = (en.isError && !en.data) || (cn.isError && !cn.data);
+        const retry = () => {
+            if (en.isError) void en.refetch();
+            if (cn.isError) void cn.refetch();
+        };
         return (
             <DialogContent bottomStickOnMobile={false} className="w-full max-w-120 p-6" showCloseButton>
                 <DialogTitle className="font-heading font-semibold text-base">{selection.skinName}</DialogTitle>
-                <p className="font-sans text-[13px] text-muted-foreground">{pending ? t("release.popup.loading") : t("release.popup.missing")}</p>
+                {pending ? <p className="font-sans text-[13px] text-muted-foreground">{t("release.popup.loading")}</p> : failed ? <LoadFailed layout="inline" message={t("release.popup.loadFailed")} onRetry={retry} /> : <p className="font-sans text-[13px] text-muted-foreground">{t("release.popup.missing")}</p>}
             </DialogContent>
         );
     }
@@ -97,11 +104,11 @@ export function SkinTileView({ skinId, charId, charName, skinName, skinNameEn, s
     const initial = (entry ? op.text : op.text.replace(/^char_\d+_/, "")).trim().charAt(0).toUpperCase() || "?";
     const body = (
         <>
-            <span className="relative block aspect-[3/5] w-full overflow-hidden rounded-md bg-zinc-900">
+            <span className="relative block aspect-[3/5] w-full overflow-hidden rounded-md bg-muted">
                 {art.src ? (
                     <img src={art.src} alt={t("release.popup.tileAlt", { operator: op.text, skin: skinName })} loading="lazy" onError={art.onError} className="absolute inset-0 h-full w-full object-cover object-top" />
                 ) : (
-                    <span className="absolute inset-0 flex items-center justify-center font-bold font-sans text-[28px] text-zinc-600">{initial}</span>
+                    <span className="absolute inset-0 flex items-center justify-center font-bold font-sans text-[28px] text-muted-foreground">{initial}</span>
                 )}
             </span>
             <span className={cn("mt-1 block truncate font-medium font-sans text-[12px] leading-tight", entry ? "text-foreground" : "text-muted-foreground")}>{op.text}</span>

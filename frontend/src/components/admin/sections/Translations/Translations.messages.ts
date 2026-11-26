@@ -36,6 +36,10 @@ export const messages = {
         text: "Complete",
         description: "Line under a language's progress bar when nothing is out of date or missing.",
     },
+    "translations.locale.loadFailed": {
+        text: "Couldn't load the languages.",
+        description: "Shown in place of the language cards when the language list failed to load.",
+    },
     "translations.locale.none": {
         text: "There are no languages to translate yet.",
         description: "Shown in place of the language cards when the site has no languages besides English.",
@@ -171,6 +175,14 @@ export const messages = {
     "translations.editor.placeholderReadOnly": {
         text: "You have View access on this language, so this is read-only.",
         description: "Placeholder in the translation box when you may only read this language.",
+    },
+    "translations.editor.insertArgMissing": {
+        text: "Insert {placeholder} at the cursor. The translation is missing it.",
+        description: "Tooltip and screen-reader name of a placeholder chip whose placeholder the translation has dropped. {placeholder} is the placeholder itself in braces, for example {count}.",
+    },
+    "translations.editor.argMissing": {
+        text: "missing",
+        description: "Screen-reader text after a placeholder chip whose placeholder the translation has dropped (read-only view).",
     },
     "translations.editor.missing": {
         text: "{count, plural, one {Add {names}, including both braces, before saving. The site fills it in with a real value.} other {Add {names}, including the braces, before saving. The site fills them in with real values.}}",

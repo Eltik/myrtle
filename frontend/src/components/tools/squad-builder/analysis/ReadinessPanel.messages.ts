@@ -3,6 +3,10 @@ import { defineMessages, type MessageMap } from "#/lib/i18n/messages";
 export const namespace = "tools";
 
 export const messages = {
+    "squad.analysis.readiness.detailFailed": {
+        text: "Couldn't load some operators' skill and module icons.",
+        description: "Shown over the readiness list when one or more operators' details failed to load; the rows then show S1/S2/S3 in place of the icons. A retry button follows.",
+    },
     "squad.analysis.readiness.title": { text: "Readiness", description: "Title of the Squad Builder panel comparing how built each operator is." },
     "squad.analysis.readiness.question": { text: "Is it built evenly?", description: "One-line question under the Readiness panel's title." },
     "squad.analysis.readiness.usual": { text: "Usual promotion", description: "Stat cell label: the promotion most of the squad is at." },

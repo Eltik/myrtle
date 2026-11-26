@@ -9,6 +9,7 @@ import type { TypedT } from "#/lib/i18n/messages";
 import { createStoryAudio, type MusicRequest, type StoryAudio } from "#/lib/story/audio";
 import { audioContextConstructor } from "#/lib/story/audioContext";
 import { clamp, clamp01 } from "#/lib/story/num";
+import { themeStore } from "#/lib/theme/store";
 import { logPlay, toggleLike, updatePlay } from "../impl/library/store";
 import { displayArtists, type ICatalog, type ITrack, radioFor, trackSource } from "../impl/model";
 import { parseLrc } from "./lrc";
@@ -571,6 +572,8 @@ function preloadEnabled(choice: PreloadChoice): boolean {
     if (choice === "on") return true;
     if (choice === "off") return false;
     if (typeof window === "undefined") return false;
+    // The site's own data saver (Settings, Appearance) counts like the browser's.
+    if (themeStore.state.dataSaver) return false;
     try {
         if (window.matchMedia?.("(pointer: coarse)").matches) return false;
     } catch {

@@ -12,12 +12,12 @@ export const messages = {
         description: "Hover text on the community badge in ownership mode. {owners} is a formatted count, {exact} the share to two decimals.",
     },
     "ownership.e2.aria": {
-        text: "E2''d by {pct} of owners",
-        description: "Accessible name of the community badge in E2 mode. {pct} is an already-formatted percentage. The doubled apostrophe is ICU escaping and renders as one.",
+        text: "E2''d by {pct} of owners ({e2Owners} of {owners})",
+        description: "Accessible name of the community badge in E2 mode. {pct} is an already-formatted percentage; {e2Owners} and {owners} are formatted counts, the same ones the hover text gives mouse users. The doubled apostrophe is ICU escaping and renders as one.",
     },
     "ownership.owned.aria": {
-        text: "Owned by {pct} of players",
-        description: "Accessible name of the community badge in ownership mode. {pct} is an already-formatted percentage.",
+        text: "Owned by {pct} of players ({owners} owners)",
+        description: "Accessible name of the community badge in ownership mode. {pct} is an already-formatted percentage; {owners} is a formatted count, the same one the hover text gives mouse users.",
     },
 } satisfies MessageMap;
 

@@ -3,8 +3,9 @@ import * as PIXI from "pixi.js";
 import type { Spine } from "pixi-spine";
 import { CHIBI_OFFSET_X, CHIBI_OFFSET_Y, DEFAULT_EXPORT_SETTINGS, EXPORT_BG_COLOR, EXPORT_PADDING, type IExportSettings } from "./constants";
 import { computeExportLayout, gifFrameDelayMs, measureAnimationBounds } from "./helpers";
+import { type IWebmFrame, muxWebm, type WebmCodec } from "./webm-mux";
 
-export type ExportFormat = "gif" | "mp4";
+export type ExportFormat = "gif" | "mp4" | "webm";
 
 export interface IRecordingOptions {
     liveApp: PIXI.Application;
@@ -14,6 +15,8 @@ export interface IRecordingOptions {
     settings?: Partial<IExportSettings>;
     onProgress?: (progress: number) => void;
     signal?: AbortSignal;
+    /** File name without its extension; the animation name when unset. */
+    filename?: string;
 }
 
 export interface IRecordingResult {
@@ -115,13 +118,13 @@ function createRenderContext(spine: Spine, animationName: string, settings: IExp
     spine.autoUpdate = false;
     spine.state.timeScale = 1;
 
-    const bounds = measureAnimationBounds(spine, animationName);
+    const bounds = measureAnimationBounds(spine, animationName, undefined, { wholeClip: true });
     const { width, height, chibiScale } = computeExportLayout(bounds, settings.scale);
 
     const app = new PIXI.Application({
         width,
         height,
-        backgroundColor: transparent ? 0x000000 : EXPORT_BG_COLOR,
+        backgroundColor: transparent ? 0x000000 : (settings.backgroundColor ?? EXPORT_BG_COLOR),
         backgroundAlpha: transparent ? 0 : 1,
         antialias: true,
         preserveDrawingBuffer: true,
@@ -129,9 +132,11 @@ function createRenderContext(spine: Spine, animationName: string, settings: IExp
         autoDensity: false,
     });
 
-    spine.scale.set(chibiScale);
+    // A mirrored skeleton keeps its box centred: the centre maps to the same x either way.
+    const flip = settings.flipX ? -1 : 1;
+    spine.scale.set(chibiScale * flip, chibiScale);
     if (bounds) {
-        spine.x = width / 2 - (bounds.x + bounds.width / 2) * chibiScale;
+        spine.x = width / 2 - (bounds.x + bounds.width / 2) * chibiScale * flip;
         spine.y = height - EXPORT_PADDING - (bounds.y + bounds.height) * chibiScale;
     } else {
         spine.x = width * CHIBI_OFFSET_X;
@@ -261,7 +266,7 @@ export async function recordAsGif(options: IRecordingOptions): Promise<IRecordin
             encoder.on("finished", (blob) => {
                 resolve({
                     blob,
-                    filename: `${animationName}.gif`,
+                    filename: `${options.filename ?? animationName}.gif`,
                     mimeType: "image/gif",
                 });
             });
@@ -294,8 +299,22 @@ function pickAvcLevel(width: number, height: number): string {
     return "1f"; // 3.1
 }
 
+/** VP9 where the browser encodes it, else VP8; `null` when neither (no WebM export). */
+async function pickWebmCodec(width: number, height: number, fps: number): Promise<{ codec: string; container: WebmCodec } | null> {
+    for (const [codec, container] of [
+        ["vp09.00.10.08", "V_VP9"],
+        ["vp8", "V_VP8"],
+    ] as const) {
+        const { supported } = await VideoEncoder.isConfigSupported({ codec, width, height, bitrate: 5_000_000, framerate: fps });
+        if (supported) return { codec, container };
+    }
+    return null;
+}
+
+/** H.264 in MP4 for `mp4`, VP9 (or VP8) in WebM for `webm`; one frame loop for both. */
 export async function recordAsVideo(options: IRecordingOptions): Promise<IRecordingResult> {
     const { spine, animationName, onProgress, signal, liveApp } = options;
+    const webm = options.format === "webm";
     const settings: IExportSettings = { ...DEFAULT_EXPORT_SETTINGS, ...options.settings };
 
     const loopDuration = getAnimationDuration(spine, animationName);
@@ -308,7 +327,6 @@ export async function recordAsVideo(options: IRecordingOptions): Promise<IRecord
     const snapshot = snapshotSpine(spine);
     let ctx: IRenderContext | null = null;
     let videoEncoder: VideoEncoder | null = null;
-    let muxer: Muxer<ArrayBufferTarget> | null = null;
     let encoderError: Error | null = null;
 
     try {
@@ -316,24 +334,39 @@ export async function recordAsVideo(options: IRecordingOptions): Promise<IRecord
         ctx = createRenderContext(spine, animationName, settings, false);
         primeAnimation(spine, animationName);
 
-        muxer = new Muxer({
-            target: new ArrayBufferTarget(),
-            video: { codec: "avc", width: ctx.width, height: ctx.height },
-            fastStart: "in-memory",
-        });
+        let muxer: Muxer<ArrayBufferTarget> | null = null;
+        let webmCodec: { codec: string; container: WebmCodec } | null = null;
+        const webmFrames: IWebmFrame[] = [];
+        let output: EncodedVideoChunkOutputCallback;
+        if (webm) {
+            webmCodec = await pickWebmCodec(ctx.width, ctx.height, settings.fps);
+            if (!webmCodec) throw new Error("This browser cannot encode VP8 or VP9 video");
+            output = (chunk) => {
+                const data = new Uint8Array(chunk.byteLength);
+                chunk.copyTo(data);
+                webmFrames.push({ data, timestamp: chunk.timestamp, key: chunk.type === "key" });
+            };
+        } else {
+            // Stream encoded chunks straight into the muxer instead of buffering
+            // the entire encoded video in a temporary array.
+            const activeMuxer = new Muxer({
+                target: new ArrayBufferTarget(),
+                video: { codec: "avc", width: ctx.width, height: ctx.height },
+                fastStart: "in-memory",
+            });
+            muxer = activeMuxer;
+            output = (chunk, meta) => activeMuxer.addVideoChunk(chunk, meta);
+        }
 
-        // Stream encoded chunks straight into the muxer instead of buffering
-        // the entire encoded video in a temporary array.
-        const activeMuxer = muxer;
         videoEncoder = new VideoEncoder({
-            output: (chunk, meta) => activeMuxer.addVideoChunk(chunk, meta),
+            output,
             error: (e) => {
                 encoderError = e;
             },
         });
 
         videoEncoder.configure({
-            codec: `avc1.4200${pickAvcLevel(ctx.width, ctx.height)}`,
+            codec: webmCodec ? webmCodec.codec : `avc1.4200${pickAvcLevel(ctx.width, ctx.height)}`,
             width: ctx.width,
             height: ctx.height,
             bitrate: 5_000_000,
@@ -372,15 +405,19 @@ export async function recordAsVideo(options: IRecordingOptions): Promise<IRecord
         await videoEncoder.flush();
         if (encoderError) throw encoderError;
 
-        muxer.finalize();
+        const filename = options.filename ?? animationName;
+        let result: IRecordingResult;
+        if (webmCodec) {
+            const bytes = muxWebm({ codec: webmCodec.container, width: ctx.width, height: ctx.height, duration: totalFrames * microsecondsPerFrame, frames: webmFrames });
+            result = { blob: new Blob([bytes], { type: "video/webm" }), filename: `${filename}.webm`, mimeType: "video/webm" };
+        } else if (muxer) {
+            muxer.finalize();
+            result = { blob: new Blob([muxer.target.buffer], { type: "video/mp4" }), filename: `${filename}.mp4`, mimeType: "video/mp4" };
+        } else {
+            throw new Error("Video muxer was not initialized");
+        }
         onProgress?.(100);
-
-        const blob = new Blob([muxer.target.buffer], { type: "video/mp4" });
-        return {
-            blob,
-            filename: `${animationName}.mp4`,
-            mimeType: "video/mp4",
-        };
+        return result;
     } finally {
         if (videoEncoder && videoEncoder.state !== "closed") {
             videoEncoder.close();

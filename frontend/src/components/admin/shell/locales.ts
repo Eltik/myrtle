@@ -13,13 +13,15 @@ export interface IAdminLocale {
 /**
  * The locale table, for language names. Pass the role check: any panel role
  * may read it, but only the roles whose screen shows a language should fetch.
- * `name` falls back to the code for a locale the table does not list.
+ * `name` falls back to the code for a locale the table does not list;
+ * `failed` is the fetch error, so a caller can show a retry instead of waiting on `loaded`.
  */
-export function useAdminLocales(enabled: boolean): { list: IAdminLocale[]; name: (code: string) => string; loaded: boolean } {
+export function useAdminLocales(enabled: boolean): { list: IAdminLocale[]; name: (code: string) => string; loaded: boolean; failed: boolean; retry: () => void } {
     const { isAuthenticated } = useAuth();
     const query = useQuery({ ...localesQueryOptions(isAuthenticated), enabled: enabled && isAuthenticated });
+    const { refetch, isError } = query;
     return useMemo(() => {
         const list = (query.data ?? []).map((l) => ({ code: l.code, englishName: l.english_name, nativeName: l.native_name, isSource: l.is_source }));
-        return { list, name: (code: string) => list.find((l) => l.code === code)?.englishName ?? code, loaded: query.data !== undefined };
-    }, [query.data]);
+        return { list, name: (code: string) => list.find((l) => l.code === code)?.englishName ?? code, loaded: query.data !== undefined, failed: isError, retry: () => void refetch() };
+    }, [query.data, isError, refetch]);
 }

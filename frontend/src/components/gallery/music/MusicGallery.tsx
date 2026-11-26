@@ -6,11 +6,11 @@ import { useCallback, useEffect, useMemo } from "react";
 import { Button } from "#/components/ui/button";
 import { PageHeader } from "#/components/ui/page-header";
 import { Skeleton } from "#/components/ui/skeleton";
+import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { musicIndexQueryOptions, sirenCatalogQueryOptions } from "#/lib/api/music";
 import { useGamedataServer, useLocale, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import { cn } from "#/lib/utils";
 import { AlbumModal } from "./album/AlbumModal";
 import { Coverflow } from "./discovery/Coverflow";
 import { MusicKeyframes } from "./impl/Equalizer";
@@ -87,7 +87,7 @@ export function MusicGallery(): React.ReactElement {
     return (
         <MusicNavContext.Provider value={nav}>
             <MusicKeyframes />
-            <div className="page-shell pb-28 [--page-max:1200px]">
+            <div className="page-shell [--page-max:1200px]">
                 <PageHeader
                     className="mb-4 border-primary/70 border-b-2 pb-3"
                     breadcrumbLabel={t("music.breadcrumb")}
@@ -102,7 +102,7 @@ export function MusicGallery(): React.ReactElement {
                     sirenStatus === "ready" && catalog.albums.length > 0 ? (
                         <Coverflow albums={catalog.albums} onOpen={openAlbum} />
                     ) : sirenStatus === "loading" ? (
-                        <Skeleton className="h-75 w-full rounded-xl" />
+                        <Skeleton className="h-75 w-full rounded-2xl" />
                     ) : (
                         <div className="flex flex-col items-center gap-3">
                             <div className="w-full">
@@ -140,19 +140,13 @@ function Toolbar({ tab, onTab }: { tab: MusicTab; onTab: (tab: MusicTab) => void
     const tabs: readonly MusicTab[] = ["discovery", "library"];
     return (
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-            <fieldset className="flex gap-0.5 rounded-[9px] border border-border bg-secondary/45 p-0.75" aria-label={t("music.tab.aria")}>
+            <ToggleGroup aria-label={t("music.tab.aria")} value={[tab]} onValueChange={(next) => next[0] && onTab(next[0] as (typeof tabs)[number])} variant="outline">
                 {tabs.map((v) => (
-                    <button
-                        key={v}
-                        type="button"
-                        onClick={() => onTab(v)}
-                        aria-pressed={tab === v}
-                        className={cn("h-11 cursor-pointer rounded-md px-3.5 font-sans font-semibold text-[12.5px] transition-colors sm:h-8", tab === v ? "bg-primary text-primary-foreground shadow-sm/5" : "text-muted-foreground hover:text-foreground")}
-                    >
+                    <ToggleGroupItem key={v} value={v} className="px-3.5 font-semibold text-[12.5px] sm:text-[12.5px]">
                         {t(`music.tab.${v}`)}
-                    </button>
+                    </ToggleGroupItem>
                 ))}
-            </fieldset>
+            </ToggleGroup>
             <div className="flex gap-1.5">
                 <Tooltip>
                     <TooltipTrigger render={<Button variant={panel === "lyrics" ? "default" : "outline"} className="max-sm:min-h-11" aria-pressed={panel === "lyrics"} onClick={() => togglePanel("lyrics")} />}>

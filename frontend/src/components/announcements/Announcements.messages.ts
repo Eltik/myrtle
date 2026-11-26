@@ -85,7 +85,7 @@ export const messages = {
         description: "Error state when the game news list or one notice fails to load.",
     },
     "error.body": {
-        text: "Something went wrong reaching the server. Give it another try.",
+        text: "The server didn't answer. Try again in a moment.",
         description: "Body of the game news error state.",
     },
     "error.retry": {

@@ -4,7 +4,8 @@ use uuid::Uuid;
 
 use crate::ids::ItemId;
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct SupportUnit {
     pub slot: i16,
     pub operator_id: String,
@@ -24,7 +25,8 @@ pub struct Inventory {
     pub items: Vec<(ItemId, i64)>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct RosterEntry {
     pub user_id: Uuid,
     pub operator_id: String,
@@ -39,6 +41,7 @@ pub struct RosterEntry {
     pub voice_lan: Option<String>,
     pub current_equip: Option<String>,
     pub current_tmpl: Option<String>,
+    #[ts(type = "number | null")]
     pub obtained_at: Option<i64>,
     pub masteries: Value,
     pub modules: Value,

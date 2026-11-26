@@ -1,8 +1,9 @@
-import { MonitorIcon, MoonIcon, PaletteIcon, RotateCcwIcon, SparklesIcon, SunIcon } from "lucide-react";
+import { ClapperboardIcon, MonitorIcon, MoonIcon, PaletteIcon, RotateCcwIcon, SunIcon } from "lucide-react";
 import { useId } from "react";
 import { Button } from "#/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "#/components/ui/popover";
 import { Switch } from "#/components/ui/switch";
+import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useTheme } from "#/hooks/use-theme";
 import { useT } from "#/lib/i18n";
@@ -53,11 +54,11 @@ export default function ThemeToggle() {
                         content-sized with the slack shared out, so each
                         button is at least as wide as its own word and the labels
                         never wrap. */}
-                    <div className="flex gap-1">
-                        <ModeButton active={mode === "light"} icon={<SunIcon className="h-3.5 w-3.5 shrink-0" />} label={t("themeToggle.light")} onClick={() => setMode("light")} />
-                        <ModeButton active={mode === "dark"} icon={<MoonIcon className="h-3.5 w-3.5 shrink-0" />} label={t("themeToggle.dark")} onClick={() => setMode("dark")} />
-                        <ModeButton active={mode === "auto"} icon={<MonitorIcon className="h-3.5 w-3.5 shrink-0" />} label={t("themeToggle.auto")} onClick={() => setMode("auto")} />
-                    </div>
+                    <ToggleGroup aria-label={t("themeToggle.appearance")} className="w-full gap-1" value={[mode]} onValueChange={(next) => next[0] && setMode(next[0] as typeof mode)}>
+                        <ModeItem value="light" icon={<SunIcon className="h-3.5 w-3.5 shrink-0" />} label={t("themeToggle.light")} />
+                        <ModeItem value="dark" icon={<MoonIcon className="h-3.5 w-3.5 shrink-0" />} label={t("themeToggle.dark")} />
+                        <ModeItem value="auto" icon={<MonitorIcon className="h-3.5 w-3.5 shrink-0" />} label={t("themeToggle.auto")} />
+                    </ToggleGroup>
 
                     <div className="-mx-1 h-px bg-border" />
 
@@ -71,7 +72,12 @@ export default function ThemeToggle() {
                             {t("themeToggle.accent")}
                         </span>
                         {!isDefaultAccent && (
-                            <button type="button" onClick={resetAccent} className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded px-1.5 py-0.5 text-[10px] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground" aria-label={t("themeToggle.resetAccentAria")}>
+                            <button
+                                type="button"
+                                onClick={resetAccent}
+                                className="pointer-coarse:after:-translate-1/2 relative inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded px-1.5 py-0.5 text-muted-foreground text-xs transition-colors pointer-coarse:after:absolute pointer-coarse:after:top-1/2 pointer-coarse:after:left-1/2 pointer-coarse:after:size-11 hover:bg-accent hover:text-foreground"
+                                aria-label={t("themeToggle.resetAccentAria")}
+                            >
                                 <RotateCcwIcon className="h-3 w-3 shrink-0" />
                                 {t("themeToggle.reset")}
                             </button>
@@ -102,14 +108,19 @@ export default function ThemeToggle() {
                         })}
                     </div>
 
-                    <label htmlFor={customInputId} className={cn("group flex cursor-pointer items-center justify-between rounded-md border bg-popover px-2 py-1.5 text-xs transition-colors hover:bg-accent/40", accent?.type === "custom" ? "border-foreground/40" : "border-border")}>
+                    {/* The colour input is `sr-only`, so keyboard focus lands on something invisible;
+                        the ring goes on the label that wraps it. */}
+                    <label
+                        htmlFor={customInputId}
+                        className={cn("group flex cursor-pointer items-center justify-between rounded-md border bg-popover px-2 py-1.5 text-xs transition-colors hover:bg-accent/40 has-focus-visible:ring-2 has-focus-visible:ring-ring", accent?.type === "custom" ? "border-foreground/40" : "border-border")}
+                    >
                         <span className="flex min-w-0 items-center gap-2 text-foreground">
                             <span className="relative inline-block size-5 shrink-0 overflow-hidden rounded-full border border-border" aria-hidden="true">
                                 <span className="absolute inset-0" style={{ backgroundColor: renderedHex }} />
                             </span>
                             {t("themeToggle.customColor")}
                         </span>
-                        <span className="shrink-0 font-mono text-[10px] text-muted-foreground/70 tabular-nums">{customLabel}</span>
+                        <span className="shrink-0 font-mono text-[10.5px] text-muted-foreground tabular-nums">{customLabel}</span>
                         <input id={customInputId} type="color" value={renderedHex} onChange={onPickCustom} className="sr-only" aria-label={t("themeToggle.chooseCustomColor")} />
                     </label>
 
@@ -117,35 +128,26 @@ export default function ThemeToggle() {
 
                     <label htmlFor={dynamicArtId} className="flex cursor-pointer items-center justify-between gap-2">
                         <span className="flex min-w-0 items-center gap-1.5 font-medium text-muted-foreground text-xs">
-                            <SparklesIcon className="h-3.5 w-3.5 shrink-0" />
+                            <ClapperboardIcon className="h-3.5 w-3.5 shrink-0" />
                             {t("themeToggle.dynamicArt")}
                         </span>
                         <Switch id={dynamicArtId} checked={dynamicArtwork} onCheckedChange={setDynamicArtwork} aria-label={t("themeToggle.dynamicArtAria")} className="shrink-0" />
                     </label>
-                    <p className="text-[10px] text-muted-foreground/70 leading-snug">{t("themeToggle.dynamicArtNote")}</p>
+                    <p className="text-muted-foreground text-xs leading-snug">{t("themeToggle.dynamicArtNote")}</p>
                 </div>
             </PopoverContent>
         </Popover>
     );
 }
 
-function ModeButton({ active, icon, label, lang, onClick }: { active: boolean; icon?: React.ReactNode; label: string; lang?: string; onClick: () => void }) {
+function ModeItem({ value, icon, label }: { value: string; icon: React.ReactNode; label: string }) {
     return (
-        <button
-            type="button"
-            onClick={onClick}
-            aria-pressed={active}
-            lang={lang}
-            className={cn(
-                "inline-flex h-8 min-w-0 grow items-center justify-center gap-1.5 rounded-md border border-transparent px-1.5 font-medium text-foreground text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                active ? "border-border bg-accent" : "hover:bg-accent/60",
-            )}
-        >
+        <ToggleGroupItem value={value} className="h-8 min-w-0 grow gap-1.5 px-1.5 text-xs sm:h-8 sm:min-w-0 sm:text-xs">
             {icon}
             {/* A language whose three words genuinely cannot fit clips with an
                 ellipsis, which is still readable; wrapping inside a fixed-height
                 button is not. */}
             <span className="truncate">{label}</span>
-        </button>
+        </ToggleGroupItem>
     );
 }

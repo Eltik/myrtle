@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
+import { LoadFailed } from "#/components/ui/load-failed";
 import { skinsIndexQueryOptions, userSkinsQueryOptions } from "#/lib/api/skins";
 import { type IRosterEntry, userCheckinQueryOptions } from "#/lib/api/user";
 import { useGamedataServer, useT } from "#/lib/i18n";
@@ -34,7 +35,7 @@ const EMPTY_OWNED_SKINS = new Set<string>();
 
 export function StatsTab({ uid, server, roster, operatorsIndex, nonDefaultSkinCount, rosterPrivate = false }: IStatsTabProps) {
     const t: TypedT<typeof messages> = useT("user");
-    const { data: charSkins } = useQuery(skinsIndexQueryOptions(useGamedataServer()));
+    const { data: charSkins, isError: charSkinsFailed, refetch: refetchCharSkins } = useQuery(skinsIndexQueryOptions(useGamedataServer()));
     const { data: ownedSkins } = useQuery({ ...userSkinsQueryOptions(uid), enabled: !rosterPrivate });
     const { data: checkin } = useQuery(userCheckinQueryOptions(uid));
 
@@ -54,6 +55,7 @@ export function StatsTab({ uid, server, roster, operatorsIndex, nonDefaultSkinCo
         );
     }
 
+    if (charSkinsFailed && !charSkins) return <LoadFailed message={t("profile.stats.error")} onRetry={() => void refetchCharSkins()} />;
     if (!charSkins) return <StatsTabSkeleton />;
 
     return (

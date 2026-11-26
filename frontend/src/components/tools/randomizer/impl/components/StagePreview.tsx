@@ -108,12 +108,10 @@ export function StagePreview({ stage, className }: IStagePreviewProps): React.Re
 
 function PreviewFallback({ code, t }: { code: string; t: PreviewT }): React.ReactElement {
     return (
-        <div className="absolute inset-0 flex items-center justify-center bg-[radial-gradient(circle_at_30%_20%,var(--lagoon,#4fb8b2)/20,transparent_60%),radial-gradient(circle_at_70%_80%,var(--palm,#2f6a4a)/15,transparent_60%)] text-foreground/40">
-            <svg aria-hidden="true" viewBox="0 0 64 64" className="h-10 w-10" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <rect x="6" y="14" width="52" height="36" rx="4" />
-                <path d="M6 36 L20 28 L32 38 L46 26 L58 34" />
-                <circle cx="22" cy="22" r="3" />
-            </svg>
+        <div className="absolute inset-0 flex items-center justify-center bg-muted">
+            <span aria-hidden="true" className="font-mono font-semibold text-lg text-muted-foreground">
+                {code}
+            </span>
             <span className="sr-only">{t("randomizer.preview.none", { code })}</span>
         </div>
     );

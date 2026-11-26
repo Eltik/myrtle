@@ -3,10 +3,6 @@ import type { ExamRating } from "./ExamRating";
 import type { InfectionState } from "./InfectionState";
 import type { ProfileField } from "./ProfileField";
 
-/**
- * One operator's file. Every `*_raw`-style string is the file's own text;
- * each parsed sibling is `None` when the text does not read as one.
- */
 export type ArchiveProfile = {
     codeName?: string;
     gender?: string;
@@ -26,20 +22,17 @@ export type ArchiveProfile = {
     infectionState: InfectionState;
     bloodDensity?: string;
     /**
-     * Blood Originium-Crystal Density in u/L.
+     * Blood Originium-Crystal Density in u/L
      */
     bloodDensityUl?: number;
     assimilation?: string;
     /**
-     * Cell-Originium Assimilation in percent.
+     * Cell-Originium Assimilation in percent
      */
     assimilationPct?: number;
-    /**
-     * The six exam columns the file has, in [`ExamAxis::ALL`] order.
-     */
     exam: Array<ExamRating>;
     /**
-     * `[Manufacturer]`: present only on a unit that was built.
+     * `[Manufacturer]` for robots and such
      */
     manufacturer?: string;
     extra: Array<ProfileField>;

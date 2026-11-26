@@ -7,7 +7,7 @@
     --op-pad-x: 10px;
     --op-pad-y: 10px;
     --op-radius: 8px;
-    border-radius: 12px;
+    border-radius: var(--radius-2xl);
     overflow: hidden;
     background: var(--card);
     border: 1px solid var(--border);
@@ -76,13 +76,19 @@
     overflow: hidden;
     font-family: var(--font-sans);
     font-weight: 800;
-    font-size: clamp(15px, 1.4vw, 18px);
     line-height: 1.15;
     letter-spacing: -0.005em;
     text-wrap: balance;
     word-break: normal;
-    overflow-wrap: break-word;
     transition: filter 160ms ease;
+}
+
+.labelText {
+    min-width: 0;
+    max-width: 100%;
+    font-size: calc(clamp(15px, 1.4vw, 18px) * var(--fit-scale, 1));
+    text-align: center;
+    overflow-wrap: anywhere;
 }
 
 @media (min-width: 640px) {
@@ -245,6 +251,19 @@
     filter: brightness(1.1);
 }
 
+/* R-03: the 18px cross keeps its size and gains a centred 44px hit area on touch. */
+@media (pointer: coarse) {
+    .chipRemove::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 44px;
+        height: 44px;
+        transform: translate(-50%, -50%);
+    }
+}
+
 .chipRemove:focus-visible {
     outline: 2px solid var(--ring);
     outline-offset: 1px;
@@ -332,6 +351,9 @@
 }
 
 .swatch {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     width: 100%;
     aspect-ratio: 1;
     border-radius: 8px;

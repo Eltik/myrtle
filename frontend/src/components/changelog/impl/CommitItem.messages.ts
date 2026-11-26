@@ -5,7 +5,7 @@ export const namespace = "changelog";
 export const messages = {
     "commit.breaking": {
         text: "Breaking",
-        description: "Badge on a commit that changes behaviour incompatibly. Short for 'breaking change'. Rendered uppercase in a small pill.",
+        description: "Badge on a commit that changes behaviour incompatibly. Short for 'breaking change'.",
     },
     "commit.details": {
         text: "Details",

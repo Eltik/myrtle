@@ -21,8 +21,13 @@ export const messages = {
         description: "Accessible name and tooltip of the button that steps a paused animation forward by one frame. The full stop in brackets is the keyboard shortcut and stays as-is.",
     },
     "frameStepper.readout": {
-        text: "Frame {frame}/{total} · {seconds}s",
-        description: "Live position readout beside the playback buttons. {frame} is the current frame counting from 1, {total} the frames in the clip, {seconds} the time into the clip with two decimals. 's' is seconds.",
+        text: "{frame} / {total} F · {seconds} / {duration} s",
+        description:
+            "Live position readout beside the playback buttons, e.g. '55 / 180 F · 1.83 / 6.00 s'. {frame} is the current frame counting from 1, {total} the frames in the clip, {seconds} the time into the clip and {duration} its length, both with two decimals. 'F' abbreviates frames and 's' seconds; use this language's short forms.",
+    },
+    "frameStepper.scrub": {
+        text: "Frame",
+        description: "Accessible name of the slider under the animation that drags playback to any frame of the clip.",
     },
 } satisfies MessageMap;
 

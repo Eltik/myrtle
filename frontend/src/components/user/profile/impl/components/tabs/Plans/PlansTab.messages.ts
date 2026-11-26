@@ -3,6 +3,10 @@ import { defineMessages, type MessageMap } from "#/lib/i18n/messages";
 export const namespace = "user";
 
 export const messages = {
+    "profile.plans.loading": {
+        text: "Loading plans…",
+        description: "Screen-reader status while the profile's public plans load; the skeleton cards are hidden from assistive tech.",
+    },
     "profile.plans.kicker": {
         text: "Plans",
         description: "Kicker over the empty state of the profile's plans tab. Rendered uppercase by CSS.",
@@ -14,6 +18,10 @@ export const messages = {
     "profile.plans.empty.desc": {
         text: "This player hasn't pinned any plans to their profile yet.",
         description: "Empty-state body of the plans tab. 'Doctor' is what Arknights calls the player; keep the apostrophe.",
+    },
+    "profile.plans.error": {
+        text: "Couldn't load the plans.",
+        description: "Shown on the Plans tab when the player's public plans fail to load.",
     },
     "profile.plans.aria": {
         text: "Operator plans",

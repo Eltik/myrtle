@@ -5,10 +5,10 @@ import { Button } from "#/components/ui/button";
 import { Card, CardAction, CardDescription, CardHeader, CardPanel, CardTitle } from "#/components/ui/card";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { Skeleton } from "#/components/ui/skeleton";
+import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import { segmentedControlItemVariants, segmentedControlRootClassName } from "#/lib/segmented-control";
 import { cn, rarityStarColor } from "#/lib/utils";
 import type { SourceRef } from "#/types/generated/SourceRef";
 import type { IOperatorIndexEntry } from "#/types/operators";
@@ -70,16 +70,16 @@ export function PanelShell({ title, question, state, collapsed, onToggle, stale 
             {!collapsed && (
                 <CardPanel id={bodyId} className={cn("pt-0 transition-opacity", stale && state === "ready" && "opacity-70")}>
                     {state === "empty" ? (
-                        <p className="rounded-xl border border-border border-dashed px-4 py-6 text-center text-[13px] text-muted-foreground">{t("squad.analysis.empty")}</p>
+                        <p className="rounded-2xl border border-border border-dashed px-4 py-6 text-center text-[13px] text-muted-foreground">{t("squad.analysis.empty")}</p>
                     ) : state === "loading" ? (
                         <div className="space-y-2" aria-busy="true">
                             <p className="text-[12px] text-muted-foreground">{t("squad.analysis.loading")}</p>
-                            <Skeleton className="h-14 w-full rounded-xl" />
+                            <Skeleton className="h-14 w-full rounded-2xl" />
                             <Skeleton className="h-6 w-4/5 rounded-md" />
                             <Skeleton className="h-6 w-3/5 rounded-md" />
                         </div>
                     ) : state === "error" ? (
-                        <p className="rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-[13px] text-destructive-foreground">{t("squad.analysis.error", { panel: title })}</p>
+                        <p className="rounded-2xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-[13px] text-destructive-foreground">{t("squad.analysis.error", { panel: title })}</p>
                     ) : (
                         children
                     )}
@@ -134,7 +134,13 @@ export function OpChip({ charId, seat, ctx, why, support = false, className }: I
 export type PillTone = "muted" | "accent" | "outline";
 
 export function Pill({ tone = "muted", className, children, title }: { tone?: PillTone; className?: string; children: React.ReactNode; title?: string }): React.ReactElement {
-    const pillClassName = cn("inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 font-medium text-[11px] leading-tight", tone === "muted" && "bg-muted text-muted-foreground", tone === "accent" && "bg-primary/12 text-primary", tone === "outline" && "border border-border text-muted-foreground", className);
+    const pillClassName = cn(
+        "inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 font-medium text-[11px] leading-tight",
+        tone === "muted" && "bg-muted text-muted-foreground",
+        tone === "accent" && "bg-primary/12 text-foreground",
+        tone === "outline" && "border border-border text-muted-foreground",
+        className,
+    );
     if (!title) return <span className={pillClassName}>{children}</span>;
     return (
         <Tooltip>
@@ -147,7 +153,7 @@ export function Pill({ tone = "muted", className, children, title }: { tone?: Pi
 /** One cell of a panel's stat strip. */
 export function StatCell({ label, value, caption, extra }: { label: string; value: React.ReactNode; caption?: React.ReactNode; extra?: React.ReactNode }): React.ReactElement {
     return (
-        <div className="min-w-0 rounded-xl border border-border bg-card px-3 py-2.5">
+        <div className="min-w-0 rounded-2xl border border-border bg-card px-3 py-2.5">
             <div className="truncate text-[11px] text-muted-foreground">{label}</div>
             <div className="mt-0.5 flex items-center gap-2 font-mono font-semibold text-[18px] text-foreground tabular-nums">{value}</div>
             {caption && <div className="mt-0.5 text-[11px] text-muted-foreground leading-snug">{caption}</div>}
@@ -172,17 +178,13 @@ export function SectionHeading({ title, hint }: { title: string; hint?: string }
 /** A small segmented control for a panel's filter or view. */
 export function Segmented<T extends string>({ label, value, options, onChange }: { label: string; value: T; options: ReadonlyArray<{ value: T; label: string }>; onChange: (value: T) => void }): React.ReactElement {
     return (
-        <fieldset className={cn(segmentedControlRootClassName, "m-0 min-w-0 max-w-full flex-wrap justify-start border-0")}>
-            <legend className="sr-only">{label}</legend>
-            {options.map((o) => {
-                const on = o.value === value;
-                return (
-                    <button key={o.value} type="button" aria-pressed={on} data-pressed={on ? "" : undefined} onClick={() => onChange(o.value)} className={cn(segmentedControlItemVariants({ size: "sm", state: "pressed" }), "pointer-coarse:min-h-11 pointer-coarse:min-w-11")}>
-                        {o.label}
-                    </button>
-                );
-            })}
-        </fieldset>
+        <ToggleGroup aria-label={label} variant="outline" size="sm" className="max-w-full flex-wrap" value={[value]} onValueChange={(next) => next[0] && onChange(next[0] as T)}>
+            {options.map((o) => (
+                <ToggleGroupItem key={o.value} value={o.value}>
+                    {o.label}
+                </ToggleGroupItem>
+            ))}
+        </ToggleGroup>
     );
 }
 

@@ -4,7 +4,7 @@ import type { SupporterTarget } from "./SupporterTarget";
 export type SupporterScope = {
     target: SupporterTarget;
     /**
-     * Game profession codes (`SUPPORT`, `CASTER`, ...); empty = every class.
+     * Game profession codes (`SUPPORT`, `CASTER`, ...); empty = every class
      */
     professions: Array<string>;
     condition?: string;

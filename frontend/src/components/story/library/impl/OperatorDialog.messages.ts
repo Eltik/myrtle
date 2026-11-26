@@ -16,7 +16,7 @@ export const messages = {
         description: "Tab in the operator dialog holding the module texts.",
     },
     "operators.dialog.tab.voices": {
-        text: "Voice Lines",
+        text: "Voice lines",
         description: "Tab in the operator dialog holding the operator's voice lines.",
     },
     "operators.dialog.words": {
@@ -32,7 +32,7 @@ export const messages = {
         description: "Placeholder while a shelf's query is in flight in the operator dialog.",
     },
     "operators.dialog.failed": {
-        text: "This shelf did not load. Close the dialog and open it again.",
+        text: "Couldn't load this shelf. Close the dialog and open it again.",
         description: "Message shown in the operator dialog when a shelf's query failed.",
     },
     "operators.dialog.files.empty": {
@@ -44,7 +44,7 @@ export const messages = {
         description: "Empty state of the Modules tab in the operator dialog when the operator has no module text on the wire.",
     },
     "operators.dialog.modules.emptyNote": {
-        text: "This operator's modules carry no story text on the wire, or they have none yet.",
+        text: "This operator's modules have no story text yet.",
         description: "Explanation under the Modules tab's empty state in the operator dialog.",
     },
     "operators.dialog.voices.empty": {

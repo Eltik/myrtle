@@ -453,7 +453,7 @@ export function Coverflow({ albums, onOpen }: { albums: readonly IAlbum[]; onOpe
                 onPointerMove={onPointerMove}
                 onPointerUp={onPointerUp}
                 onPointerCancel={onPointerCancel}
-                className="relative h-[calc(var(--cf-cover)*1.58)] w-full touch-pan-y select-none overflow-hidden rounded-xl outline-none [--cf-cover:190px] focus-visible:ring-2 focus-visible:ring-ring/40 max-sm:[--cf-cover:128px]"
+                className="relative h-[calc(var(--cf-cover)*1.58)] w-full touch-pan-y select-none overflow-hidden rounded-2xl outline-none [--cf-cover:190px] focus-visible:ring-2 focus-visible:ring-ring max-sm:[--cf-cover:128px]"
                 style={{
                     perspective: "1200px",
                     perspectiveOrigin: "50% 42%",
@@ -471,20 +471,27 @@ export function Coverflow({ albums, onOpen }: { albums: readonly IAlbum[]; onOpe
             </div>
             <div className="mt-1 flex min-h-11 flex-col items-center px-4 text-center" aria-live="polite">
                 <span className="max-w-full truncate font-sans font-semibold text-[15px] text-foreground">{current?.name ?? ""}</span>
-                {current ? <span className="font-mono text-[10.5px] text-primary/80 uppercase tracking-[0.14em]">{t("music.list.trackCount", { count: current.trackCount })}</span> : null}
+                {current ? <span className="font-sans text-[12px] text-muted-foreground tabular-nums">{t("music.list.trackCount", { count: current.trackCount })}</span> : null}
             </div>
             <p className="mt-2 mb-0 text-center font-sans text-[11.5px] text-muted-foreground">
-                <span className="pointer-coarse:hidden">
-                    {t("music.discovery.hint.browse")}
+                {/* Each separator rides with the item after it, so a wrap never strands one at a
+                    line end. The key hints only show to a fine pointer from sm up; touch and
+                    phone widths get the drag hint alone. */}
+                <span className="whitespace-nowrap">{t("music.discovery.hint.browse")}</span>
+                <span className="hidden whitespace-nowrap pointer-fine:sm:inline">
                     <span aria-hidden="true"> · </span>
                     {t("music.discovery.hint.step")}
+                </span>
+                <span className="hidden whitespace-nowrap pointer-fine:sm:inline">
                     <span aria-hidden="true"> · </span>
                     {t("music.discovery.hint.open")}
-                    <span aria-hidden="true"> · </span>
+                </span>{" "}
+                <span className="whitespace-nowrap">
+                    <span aria-hidden="true">· </span>
+                    <button type="button" onClick={() => setPaletteOpen(true)} className="cursor-pointer text-primary underline-offset-2 hover:underline max-sm:min-h-11">
+                        {t("music.discovery.jump")}
+                    </button>
                 </span>
-                <button type="button" onClick={() => setPaletteOpen(true)} className="cursor-pointer text-primary underline-offset-2 hover:underline max-sm:min-h-11">
-                    {t("music.discovery.jump")}
-                </button>
             </p>
             <JumpPalette
                 open={paletteOpen}
@@ -516,7 +523,7 @@ const Cover = memo(function Cover({ index, album, playing, register }: { index: 
         <div ref={(el) => register(index, el)} data-cf-index={index} className="group/cf absolute top-[46%] left-1/2 size-(--cf-cover) cursor-pointer" style={{ display: "none" }}>
             <div className="relative size-full transition-transform duration-200 ease-out not-in-data-dragging:group-hover/cf:-translate-y-2 motion-reduce:transition-none">
                 <div className={cn("relative size-full overflow-hidden rounded-[6px] bg-muted shadow-lg/20", playing && "ring-2 ring-primary")}>
-                    <DiscIcon aria-hidden="true" className="absolute inset-0 m-auto size-1/3 text-muted-foreground/40" />
+                    <DiscIcon aria-hidden="true" className="absolute inset-0 m-auto size-1/3 text-subtle-foreground" />
                     <img
                         referrerPolicy="no-referrer"
                         ref={markLoaded}

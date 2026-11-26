@@ -26,14 +26,16 @@ pub const PER_PAGE_MAX: i32 = 60;
 pub const MAX_GRIDS_PER_USER: i64 = 50;
 pub const SLUG_BASE_MAX: usize = 60;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct GridCellInput {
     pub label: String,
     pub entity_kind: Option<EntityKind>,
     pub entity_id: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct GridInput {
     pub title: String,
     pub description: Option<String>,
@@ -44,35 +46,42 @@ pub struct GridInput {
     pub entity_kinds: Vec<EntityKind>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct GridCell {
     pub label: String,
     pub entity_kind: Option<EntityKind>,
     pub entity_id: Option<String>,
     pub entity: Option<EntitySummary>,
+    #[ts(type = "string | null")]
     pub entity_server: Option<Server>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct GridPreviewIcon {
     pub kind: EntityKind,
     pub icon: String,
+    #[ts(type = "string | null")]
     pub server: Option<Server>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct GridOwner {
     pub id: Uuid,
     pub name: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct GridTemplateRef {
     pub slug: String,
     pub title: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct Grid {
     pub id: Uuid,
     pub slug: String,
@@ -86,19 +95,22 @@ pub struct Grid {
     pub kinds_locked: bool,
     pub owner: GridOwner,
     pub template_of: Option<GridTemplateRef>,
+    #[ts(type = "number")]
     pub fork_count: i64,
     pub can_edit: bool,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct GridSummary {
     pub slug: String,
     pub title: String,
     pub rows: i32,
     pub cols: i32,
     pub owner: GridOwner,
+    #[ts(type = "number")]
     pub fork_count: i64,
     pub is_listed: bool,
     pub entity_kinds: Vec<EntityKind>,
@@ -106,9 +118,11 @@ pub struct GridSummary {
     pub preview: Vec<Option<GridPreviewIcon>>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct GridListResponse {
     pub items: Vec<GridSummary>,
+    #[ts(type = "number")]
     pub total: i64,
     pub page: i32,
     pub per_page: i32,

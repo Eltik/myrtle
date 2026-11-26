@@ -4,7 +4,7 @@ export const namespace = "user";
 
 export const messages = {
     "profile.stats.top.title": {
-        text: "Top Operators",
+        text: "Top operators",
         description: "Heading of the card showing the account's best-invested operators.",
     },
     "profile.stats.top.level": {

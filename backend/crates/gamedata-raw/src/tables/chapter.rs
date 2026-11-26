@@ -4,7 +4,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::serde_helpers::deserialize_fb_map_or_default;
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct Chapter {
     #[serde(alias = "ChapterId", default)]

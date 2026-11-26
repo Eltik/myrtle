@@ -4,7 +4,7 @@ export const namespace = "user";
 
 export const messages = {
     "profile.stats.collection.title": {
-        text: "Operator Collection",
+        text: "Operator collection",
         description: "Heading of the card counting how many operators the account owns.",
     },
     "profile.stats.collection.caption": {

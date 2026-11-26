@@ -35,7 +35,8 @@ const fn operator_kind() -> EntityKind {
     EntityKind::Operator
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct TierList {
     pub id: Uuid,
     pub name: String,
@@ -71,7 +72,8 @@ impl From<TierListRow> for TierList {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct Tier {
     pub id: Uuid,
     pub tier_list_id: Uuid,
@@ -94,7 +96,8 @@ impl From<TierRow> for Tier {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct TierPlacement {
     pub tier_id: Uuid,
     #[serde(default = "operator_kind")]
@@ -119,10 +122,13 @@ impl From<PlacementRow> for TierPlacement {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct TierListStats {
     pub tier_list_id: Uuid,
+    #[ts(type = "number")]
     pub view_count: i64,
+    #[ts(type = "number")]
     pub unique_view_count: i64,
     pub favorite_count: i32,
     pub share_count: i32,
@@ -152,7 +158,8 @@ impl From<StatsRow> for TierListStats {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct TierListFlair {
     pub id: i16,
     pub code: String,
@@ -179,7 +186,8 @@ impl From<FlairRow> for TierListFlair {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct TierListAuthor {
     pub id: Uuid,
     pub uid: String,
@@ -198,7 +206,8 @@ impl From<AuthorRow> for TierListAuthor {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct TierListVersion {
     pub id: Uuid,
     pub tier_list_id: Uuid,
@@ -223,7 +232,8 @@ impl From<VersionRow> for TierListVersion {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct TierListPermission {
     pub tier_list_id: Uuid,
     pub user_id: Uuid,
@@ -244,7 +254,8 @@ impl From<PermissionRow> for TierListPermission {
     }
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct TierListGrant {
     pub tier_list_id: Uuid,
     pub slug: String,
@@ -277,7 +288,8 @@ impl From<GrantRow> for TierListGrant {
     }
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct GrantedTierList {
     pub tier_list_id: Uuid,
     pub slug: String,
@@ -298,7 +310,8 @@ impl From<GrantedListRow> for GrantedTierList {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct TierListDetail {
     #[serde(flatten)]
     pub list: TierList,
@@ -308,14 +321,16 @@ pub struct TierListDetail {
     pub author: Option<TierListAuthor>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct TierDetail {
     #[serde(flatten)]
     pub tier: Tier,
     pub placements: Vec<PlacementDetail>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct PlacementDetail {
     #[serde(flatten)]
     pub placement: TierPlacement,

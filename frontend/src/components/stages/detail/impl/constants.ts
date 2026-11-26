@@ -31,6 +31,20 @@ export const ENEMY_LEVEL_ACCENT: Record<IEnemy["enemyLevel"], string> = {
     BOSS: "var(--destructive)",
 };
 
+/** The level as text. The accents above measured 2.13 (ELITE, light card) and 1.91 (BOSS, dark card); the inks clear 4.5 in both themes. */
+export const ENEMY_LEVEL_INK: Record<IEnemy["enemyLevel"], string> = {
+    NORMAL: "var(--muted-foreground)",
+    ELITE: "var(--enemy-elite-ink)",
+    BOSS: "var(--enemy-boss-ink)",
+};
+
+/** The level as words, so the raw NORMAL / ELITE / BOSS enum never renders. */
+export const ENEMY_LEVEL_LABEL_KEY: Record<IEnemy["enemyLevel"], StageDetailMessageKey> = {
+    NORMAL: "enemyLevel.NORMAL",
+    ELITE: "enemyLevel.ELITE",
+    BOSS: "enemyLevel.BOSS",
+};
+
 export const DROP_TYPE_META: Record<string, { labelKey: StageDetailMessageKey; order: number }> = {
     ONCE: { labelKey: "dropType.ONCE", order: 0 },
     COMPLETE: { labelKey: "dropType.COMPLETE", order: 1 },

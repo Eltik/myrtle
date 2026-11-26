@@ -2,7 +2,8 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "lowercase")]
 pub enum AnimationType {
     Front,
@@ -27,7 +28,8 @@ impl AnimationType {
     }
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct SpineFiles {
     pub atlas: Option<String>,
@@ -42,7 +44,8 @@ impl SpineFiles {
     }
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct ChibiSkin {
     pub name: String,
@@ -51,7 +54,8 @@ pub struct ChibiSkin {
     pub animation_types: HashMap<String, SpineFiles>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct ChibiCharacter {
     pub operator_code: String,
@@ -106,14 +110,17 @@ pub struct CachedChibiData {
     pub version: u32,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct ChibiData {
     #[serde(skip)]
+    #[ts(skip)]
     pub raw_items: Vec<RepoItem>,
     #[serde(serialize_with = "serialize_arc_vec", skip_deserializing)]
     pub characters: Vec<Arc<ChibiCharacter>>,
     #[serde(skip)]
+    #[ts(skip)]
     pub by_operator: HashMap<String, Arc<ChibiCharacter>>,
 }
 

@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { ChevronDown, ChevronUp, Minus } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "#/components/ui/avatar";
+import { Kicker } from "#/components/ui/kicker";
 import type { IMaterials } from "#/lib/api/materials";
 import { useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -24,6 +25,8 @@ interface ILeaderboardTableProps {
     onRanking: (next: Ranking) => void;
     catalog: ICatalog;
     materials: IMaterials | undefined;
+    catalogError?: boolean;
+    onRetryCatalog?: () => void;
     /** For an item ranking, the largest holding; every row's bar is drawn against it. */
     topValue: number | null;
     isLoading?: boolean;
@@ -42,14 +45,14 @@ function fill(ranking: Ranking, value: number | null, topValue: number | null): 
     return Math.max(0, Math.min(100, (value / topValue) * 100));
 }
 
-export function LeaderboardTable({ rows, ranking, onRanking, catalog, materials, topValue, isLoading, intervalKey = "leaderboard.interval.day.since" }: ILeaderboardTableProps) {
+export function LeaderboardTable({ rows, ranking, onRanking, catalog, materials, catalogError, onRetryCatalog, topValue, isLoading, intervalKey = "leaderboard.interval.day.since" }: ILeaderboardTableProps) {
     const t: TableT = useT("user");
 
     if (!isLoading && rows.length === 0) {
         return <div className="px-6 py-12 text-center font-sans text-muted-foreground text-sm">{ranking.kind === "item" ? t("leaderboard.table.empty.item") : t("leaderboard.table.empty")}</div>;
     }
 
-    const picker = <RankByPicker ranking={ranking} onRanking={onRanking} catalog={catalog} materials={materials} variant="header" />;
+    const picker = <RankByPicker ranking={ranking} onRanking={onRanking} catalog={catalog} materials={materials} catalogError={catalogError} onRetryCatalog={onRetryCatalog} variant="header" />;
 
     return (
         <>
@@ -72,8 +75,10 @@ export function LeaderboardTable({ rows, ranking, onRanking, catalog, materials,
             </div>
             {/* No header row on phones: the toolbar's "Rank by" control sits
                 directly above the cards, so a second one here was a duplicate. */}
-            <div className="block p-3 md:hidden">
-                <div className="flex flex-col gap-2">
+            {/* Below sm the rows are a divided list, not cards inside the list card: the second
+                border and padding left a phone row about 50px narrower than the screen. */}
+            <div className="block sm:p-3 md:hidden">
+                <div className="flex flex-col sm:gap-2">
                     {rows.map((row) => (
                         <MobileRow key={`${row.server}:${row.uid}`} row={row} ranking={ranking} topValue={topValue} intervalKey={intervalKey} />
                     ))}
@@ -89,8 +94,9 @@ function RankMovement({ delta, intervalKey = "leaderboard.interval.day.since" }:
     if (delta == null) return null;
     if (delta === 0) {
         return (
-            <span className="inline-flex items-center gap-0.5 font-mono font-semibold text-[10px] text-muted-foreground tabular-nums leading-none" title={t("leaderboard.table.movement.none", { interval: t(intervalKey) })}>
-                <Minus className="size-2.5" aria-hidden /> 0
+            <span className="inline-flex items-center gap-0.5 font-mono font-semibold text-[10px] text-muted-foreground tabular-nums leading-none">
+                <Minus className="size-2.5" aria-hidden /> <span aria-hidden>0</span>
+                <span className="sr-only">{t("leaderboard.table.movement.none", { interval: t(intervalKey) })}</span>
             </span>
         );
     }
@@ -99,14 +105,15 @@ function RankMovement({ delta, intervalKey = "leaderboard.interval.day.since" }:
     const color = isUp ? "text-success-foreground" : "text-destructive-foreground";
     const label = t(isUp ? "leaderboard.table.movement.up" : "leaderboard.table.movement.down", { count: Math.abs(delta), interval: t(intervalKey) });
     return (
-        <span className={cn("inline-flex items-center gap-0.5 font-mono font-semibold text-[10px] tabular-nums leading-none", color)} title={label}>
-            <Icon className="size-2.5" aria-hidden /> {Math.abs(delta)}
+        <span className={cn("inline-flex items-center gap-0.5 font-mono font-semibold text-[10px] tabular-nums leading-none", color)}>
+            <Icon className="size-2.5" aria-hidden /> <span aria-hidden>{Math.abs(delta)}</span>
+            <span className="sr-only">{label}</span>
         </span>
     );
 }
 
 function Th({ children, align }: { children: React.ReactNode; align?: "right" }) {
-    return <span className={cn("whitespace-nowrap font-medium font-mono text-[11px] text-muted-foreground uppercase leading-none tracking-[0.16em]", align === "right" ? "text-right" : "text-left")}>{children}</span>;
+    return <Kicker className={cn("whitespace-nowrap", align === "right" ? "text-right" : "text-left")}>{children}</Kicker>;
 }
 
 /** The ranked value with its bar: a percentage for a score, a count for an item. */
@@ -115,10 +122,13 @@ function ValueCell({ row, ranking, topValue, className }: { row: IRankedRow; ran
     const f = useFormatters();
     const pct = fill(ranking, row.value, topValue);
     const text = row.value == null ? "-" : ranking.kind === "score" ? formatPct(row.value) : f.number(row.value);
-    const title = ranking.kind === "item" && row.value != null ? t("leaderboard.table.share", { pct: Math.round(pct) }) : undefined;
+    const share = ranking.kind === "item" && row.value != null ? t("leaderboard.table.share", { pct: Math.round(pct) }) : undefined;
     return (
-        <span className={cn("inline-flex min-w-24 flex-col items-end gap-1.5", className)} title={title}>
-            <span className="font-mono font-semibold text-[13px] text-foreground tabular-nums leading-none">{text}</span>
+        <span className={cn("inline-flex min-w-24 flex-col items-end gap-1.5", className)}>
+            <span className="font-mono font-semibold text-[13px] text-foreground tabular-nums leading-none">
+                {text}
+                {share ? <span className="sr-only"> {share}</span> : null}
+            </span>
             <span className="relative block h-0.75 w-full overflow-hidden rounded-full bg-muted">
                 <span className="absolute inset-y-0 left-0 rounded-full bg-linear-to-r from-primary/70 to-primary transition-[width] duration-300 motion-reduce:transition-none" style={{ width: `${pct}%` }} />
             </span>
@@ -144,12 +154,12 @@ function DesktopRow({ row, ranking, topValue, intervalKey }: { row: IRankedRow; 
                 <RankMovement delta={row.delta} intervalKey={intervalKey} />
             </span>
             <span className="inline-flex min-w-0 max-w-80 items-center gap-3">
-                <Avatar className="size-9 rounded-[10px]">
+                <Avatar className="size-9 rounded-lg">
                     <AvatarImage src={avatarSrc} alt={nickname} />
-                    <AvatarFallback className="rounded-[10px] text-xs">{initials}</AvatarFallback>
+                    <AvatarFallback className="rounded-lg text-xs">{initials}</AvatarFallback>
                 </Avatar>
                 <span className="flex min-w-0 flex-col gap-0.5">
-                    <span className="truncate font-sans font-semibold text-[13.5px] text-foreground leading-tight tracking-tight transition-colors group-hover:text-primary">{nickname}</span>
+                    <span className="truncate font-sans font-semibold text-[13.5px] text-foreground leading-tight tracking-tight">{nickname}</span>
                     <span className="truncate font-mono text-[11px] text-muted-foreground tabular-nums leading-none before:opacity-50 before:content-['#']">{row.uid}</span>
                 </span>
             </span>
@@ -172,9 +182,16 @@ function MobileRow({ row, ranking, topValue, intervalKey }: { row: IRankedRow; r
     const { nickname, initials, avatarSrc } = playerIdentity(row);
 
     return (
-        <Link to="/user/$id" params={{ id: row.uid }} className={cn("grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-xl border border-border bg-card px-3 py-3 no-underline transition-colors hover:border-foreground/15", row.isSelf && "bg-[color-mix(in_srgb,var(--primary)_6%,transparent)]")}>
+        <Link
+            to="/user/$id"
+            params={{ id: row.uid }}
+            className={cn(
+                "grid grid-cols-[auto_1fr_auto] items-center gap-3 border-border border-b px-4 py-3 no-underline transition-colors last:border-b-0 hover:bg-muted/40 sm:rounded-2xl sm:border sm:bg-card sm:px-3 sm:hover:border-foreground/15 sm:hover:bg-card sm:last:border-b",
+                row.isSelf && "bg-[color-mix(in_srgb,var(--primary)_6%,transparent)]",
+            )}
+        >
             <span className="inline-flex flex-col items-center gap-1">
-                <span className="inline-flex size-9 items-center justify-center rounded-[10px] bg-muted font-mono font-semibold text-[13px] text-foreground tabular-nums leading-none">#{row.rank ?? "-"}</span>
+                <span className="inline-flex size-9 items-center justify-center rounded-lg bg-muted font-mono font-semibold text-[13px] text-foreground tabular-nums leading-none">#{row.rank ?? "-"}</span>
                 <RankMovement delta={row.delta} intervalKey={intervalKey} />
             </span>
             <div className="flex min-w-0 flex-col gap-1">
@@ -210,7 +227,7 @@ export function LeaderboardTableSkeleton({ rows = 8 }: { rows?: number }) {
                         <div key={key} className={cn("grid items-center gap-4 px-4 py-3", DESKTOP_GRID)}>
                             <span className="h-4 w-12 rounded bg-muted" />
                             <div className="flex items-center gap-3">
-                                <span className="size-9 rounded-[10px] bg-muted" />
+                                <span className="size-9 rounded-lg bg-muted" />
                                 <div className="flex flex-col gap-1.5">
                                     <span className="h-3 w-32 rounded bg-muted" />
                                     <span className="h-2.5 w-20 rounded bg-muted/70" />
@@ -224,11 +241,11 @@ export function LeaderboardTableSkeleton({ rows = 8 }: { rows?: number }) {
                     ))}
                 </div>
             </div>
-            <div className="block p-3 md:hidden">
-                <div className="flex flex-col gap-2">
+            <div className="block sm:p-3 md:hidden">
+                <div className="flex flex-col sm:gap-2">
                     {Array.from({ length: Math.min(rows, 6) }, (_, i) => `mobile-skeleton-${i}`).map((key) => (
-                        <div key={key} className="grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-xl border border-border bg-card px-3 py-3">
-                            <span className="size-9 rounded-[10px] bg-muted" />
+                        <div key={key} className="grid grid-cols-[auto_1fr_auto] items-center gap-3 border-border border-b px-4 py-3 last:border-b-0 sm:rounded-2xl sm:border sm:bg-card sm:px-3 sm:last:border-b">
+                            <span className="size-9 rounded-lg bg-muted" />
                             <div className="flex flex-col gap-1.5">
                                 <span className="h-3 w-32 rounded bg-muted" />
                                 <span className="h-2.5 w-20 rounded bg-muted/70" />

@@ -40,7 +40,8 @@ use crate::{AppContext, AppError, Subject};
 
 const TTL: Duration = Duration::from_mins(5);
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct ImprovementsResponse {
     pub uid: String,
     pub stages: StageImprovements,
@@ -51,7 +52,8 @@ pub struct ImprovementsResponse {
     pub base: BaseImprovements,
 }
 
-#[derive(Debug, Clone, Serialize, Default)]
+#[derive(Debug, Clone, Serialize, Default, ts_rs::TS)]
+#[ts(export)]
 pub struct BaseImprovements {
     pub current: Option<BaseAssignmentDto>,
     pub optimal: Option<BaseAssignmentDto>,
@@ -67,7 +69,8 @@ pub struct BaseImprovements {
     pub unrotated: Option<SustainabilityDto>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct PerceptionPlanDto {
     pub support: Vec<PerceptionSupportDto>,
     pub consumers: Vec<PerceptionConsumerDto>,
@@ -75,13 +78,15 @@ pub struct PerceptionPlanDto {
     pub needs_rotation_manager: bool,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct PerceptionSupportDto {
     pub operator: AssignedOperator,
     pub room_type: String,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct PerceptionConsumerDto {
     pub operator: AssignedOperator,
     pub room_type: String,
@@ -89,7 +94,8 @@ pub struct PerceptionConsumerDto {
     pub sustained_pct: f64,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct RotationDto {
     pub rooms: Vec<RoomRotationDto>,
     pub shared_bench: Vec<AssignedOperator>,
@@ -97,12 +103,14 @@ pub struct RotationDto {
     pub sustained_efficiency: f64,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct RotationSetDto {
     pub rooms: Vec<RotationSetRoomDto>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct RotationSetRoomDto {
     pub slot_id: String,
     pub room_type: String,
@@ -110,7 +118,8 @@ pub struct RotationSetRoomDto {
     pub resting: Option<AssignedOperator>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct RoomRotationDto {
     pub slot_id: String,
     pub room_type: String,
@@ -118,13 +127,15 @@ pub struct RoomRotationDto {
     pub backup: Option<AssignedOperator>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct RotationMemberDto {
     pub operator: AssignedOperator,
     pub lasts_hours: f64,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct RoomLayoutEntry {
     pub room_type: String,
     pub count: usize,

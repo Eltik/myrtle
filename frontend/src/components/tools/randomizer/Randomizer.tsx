@@ -1,13 +1,16 @@
 import { useQuery } from "@tanstack/react-query";
 import * as React from "react";
+import { LoadFailed } from "#/components/ui/load-failed";
 import { useAuth } from "#/hooks/use-auth";
 import { useLocalStorageState } from "#/hooks/use-local-storage-state";
 import { operatorsIndexQueryOptions } from "#/lib/api/operators";
+import { recruitmentDataQueryOptions } from "#/lib/api/recruitment";
 import { activitiesQueryOptions, retroActsQueryOptions, stagesQueryOptions, userStageClearsQueryOptions, zonesQueryOptions } from "#/lib/api/stages";
 import { browseTierListsQueryOptions, tierListDetailQueryOptions } from "#/lib/api/tier-lists";
 import { userRosterQueryOptions } from "#/lib/api/user";
 import { useGamedataServer, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
+import { ACQUISITION_FILTERS, needsRecruitPool } from "#/lib/operators/acquisition";
 import type { IStage } from "#/types/stages";
 import { buildActivityLookup } from "./impl/activity-lookup";
 import { BriefingHero } from "./impl/components/BriefingHero";
@@ -31,7 +34,9 @@ interface IPersistedSettings extends IRandomizerSettings {
 /** Fills any setting added since the save with its default, and drops the version stamp. */
 function migrateSettings(saved: IPersistedSettings): IRandomizerSettings {
     const { _version: _, ...rest } = saved;
-    return { ...DEFAULT_SETTINGS, ...rest } satisfies IRandomizerSettings;
+    const merged = { ...DEFAULT_SETTINGS, ...rest } satisfies IRandomizerSettings;
+    // A source this build does not offer reads as no source filter, not as an empty pool.
+    return ACQUISITION_FILTERS.includes(merged.acquisition) ? merged : { ...merged, acquisition: "any" };
 }
 
 /**
@@ -52,13 +57,20 @@ export function Randomizer(): React.ReactElement {
     const uid = user?.uid ?? null;
 
     const server = useGamedataServer();
-    const { data: operatorsIndex = [] } = useQuery(operatorsIndexQueryOptions(server));
-    const { data: stages = [] } = useQuery(stagesQueryOptions(server));
-    const { data: zones = [] } = useQuery(zonesQueryOptions(server));
-    const { data: activities = [] } = useQuery(activitiesQueryOptions(server));
-    const { data: retroActs = [] } = useQuery(retroActsQueryOptions(server));
-    const { data: rosterEntries } = useQuery({ ...userRosterQueryOptions(uid ?? ""), enabled: !!uid });
-    const { data: stageClears } = useQuery(userStageClearsQueryOptions(uid));
+    const operatorsQuery = useQuery(operatorsIndexQueryOptions(server));
+    const stagesQuery = useQuery(stagesQueryOptions(server));
+    const zonesQuery = useQuery(zonesQueryOptions(server));
+    const activitiesQuery = useQuery(activitiesQueryOptions(server));
+    const retroActsQuery = useQuery(retroActsQueryOptions(server));
+    const rosterQuery = useQuery({ ...userRosterQueryOptions(uid ?? ""), enabled: !!uid });
+    const stageClearsQuery = useQuery(userStageClearsQueryOptions(uid));
+    const operatorsIndex = operatorsQuery.data ?? [];
+    const stages = stagesQuery.data ?? [];
+    const zones = zonesQuery.data ?? [];
+    const activities = activitiesQuery.data ?? [];
+    const retroActs = retroActsQuery.data ?? [];
+    const rosterEntries = rosterQuery.data;
+    const stageClears = stageClearsQuery.data;
 
     const activityLookup = React.useMemo(() => buildActivityLookup(activities, retroActs), [activities, retroActs]);
 
@@ -108,8 +120,22 @@ export function Randomizer(): React.ReactElement {
         [tierChoices, tierListSlug, tierIndex, tierListQuery.isLoading, settings.deselectedTierIds, tierListDetail],
     );
 
+    // The recruitment pool loads only once the source filter reads it.
+    const recruitmentQuery = useQuery({ ...recruitmentDataQueryOptions(server), enabled: needsRecruitPool(settings.acquisition) });
+    const recruitment = recruitmentQuery.data;
+
+    // Every query here defaults to an empty list, so a failure would otherwise read as an empty
+    // pool ("0 operators available") with nothing saying why. The tier-list queries are left out:
+    // a failure there already turns the tier filter off, which widens the pool instead.
+    const poolQueries = [operatorsQuery, stagesQuery, zonesQuery, activitiesQuery, retroActsQuery, rosterQuery, stageClearsQuery, recruitmentQuery];
+    const failedPoolQueries = poolQueries.filter((q) => q.isError);
+    const retryPool = () => {
+        for (const q of failedPoolQueries) void q.refetch();
+    };
+    const recruitable = React.useMemo(() => new Set((recruitment?.operators ?? []).map((op) => op.id)), [recruitment]);
+
     // Mirrors every operator-tab constraint, so the roster picker only lists what can be drawn.
-    const rosterPickerOperators = React.useMemo(() => selectAvailableOperators(randomizerOperators, settings, rosterIndex, tierIndex), [randomizerOperators, settings, rosterIndex, tierIndex]);
+    const rosterPickerOperators = React.useMemo(() => selectAvailableOperators(randomizerOperators, settings, rosterIndex, tierIndex, recruitable), [randomizerOperators, settings, rosterIndex, tierIndex, recruitable]);
     const availableOperators = React.useMemo(() => rosterPickerOperators.filter((op) => effectiveRosterSet.has(op.id)), [rosterPickerOperators, effectiveRosterSet]);
 
     const availableStages = React.useMemo(() => selectAvailableStages(playableStages, zones, settings, stageClears ?? null, activityLookup), [playableStages, zones, settings, stageClears, activityLookup]);
@@ -179,7 +205,7 @@ export function Randomizer(): React.ReactElement {
             />
 
             <div className="mt-6 flex flex-col gap-3 sm:gap-4" key={rollSeq}>
-                {!hasResult && <EmptyState />}
+                {failedPoolQueries.length > 0 ? <LoadFailed message={t("randomizer.loadError")} onRetry={retryPool} /> : !hasResult && <EmptyState />}
                 {rolledStage && <StageSlab stage={rolledStage} zone={zoneById.get(rolledStage.zoneId)} lookup={activityLookup} onReroll={rollStage} />}
                 {rolledSquad.length > 0 && <SquadSlab operators={rolledSquad} squadSize={settings.squadSize} onReroll={rollSquad} />}
                 {rolledChallenge && <ModifierSlab challenge={rolledChallenge} onReroll={rollChallenge} />}

@@ -47,6 +47,10 @@ export const messages = {
         text: "Pick custom hex",
         description: "Label on the custom-colour button before a custom colour has been chosen. 'Hex' is a hexadecimal colour code.",
     },
+    "appearance.accent.customActive": {
+        text: "Custom",
+        description: "Label on the custom-colour button once a custom colour is the accent. The colour's hex code shows beside it, so the label does not repeat it.",
+    },
     "appearance.accent.chooseCustom": {
         text: "Choose custom accent color",
         description: "Accessible name of the hidden colour input behind the custom-colour button.",
@@ -123,8 +127,24 @@ export const messages = {
         text: "Shows the hidden factions the game never puts on an operator's card. Off by default.",
         description: "Caption under the spoilers switch. 'Faction' is the game's word for a nation, group or team an operator belongs to.",
     },
+    "appearance.cnUpdates.title": {
+        text: "CN updates",
+        description: "Card title over the option that shows CN-server changes on operator pages. 'CN' is the Chinese game server, which receives content months before the others.",
+    },
+    "appearance.cnUpdates.desc": {
+        text: "The CN server runs months ahead, and operators you already have can gain new modules or changed values there before they arrive here.",
+        description: "Card description under the CN Updates title. 'Modules' is the game's word for an operator's equipment upgrades.",
+    },
+    "appearance.cnUpdates.rowTitle": {
+        text: "Show CN updates",
+        description: "Label of the switch that shows CN-server changes on operator pages, and the switch's accessible name.",
+    },
+    "appearance.cnUpdates.rowDesc": {
+        text: "Marks CN's values on an operator's page, adds CN-only modules to its module choices in CN's own text, and lists updated operators under Upcoming. On by default.",
+        description: "Caption under the CN updates switch. 'Modules' is the game's word for an operator's equipment upgrades. 'CN's own text' means Chinese game text, untranslated. 'Upcoming' is the name of the operator list's view of CN-server operators.",
+    },
     "appearance.topBar.title": {
-        text: "Top Bar",
+        text: "Top bar",
         description: "Card title over the options for what shows up in the bar at the top of every page.",
     },
     "appearance.topBar.desc": {
@@ -138,6 +158,22 @@ export const messages = {
     "appearance.topBar.maintenance.rowDesc": {
         text: "Shows when the game is about to go down for maintenance, or is down right now, straight from Yostar's notices. Home still shows it either way. On by default.",
         description: "Caption under the maintenance countdown switch. 'Yostar' is the game's publisher; 'Home' is the site's landing page.",
+    },
+    "appearance.dataSaver.title": {
+        text: "Data saver",
+        description: "Card title over the option that cuts how much artwork the site downloads.",
+    },
+    "appearance.dataSaver.desc": {
+        text: "Operator art is the heaviest thing the site loads. Turn this on for a slow or metered connection.",
+        description: "Card description under the Data Saver title.",
+    },
+    "appearance.dataSaver.rowTitle": {
+        text: "Data saver mode",
+        description: "Label of the switch that turns data saver on, and the switch's accessible name.",
+    },
+    "appearance.dataSaver.rowDesc": {
+        text: "Operator lists and rosters show small avatars, and splash art and animated art wait until you tap Load artwork or open the Skins tab. Off by default.",
+        description: "Caption under the data saver switch. 'Load artwork' is the button shown in place of the art; 'Skins' is the operator page tab with the outfits.",
     },
 } satisfies MessageMap;
 

@@ -1,4 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { formatBannerParam, parseBannerParam } from "#/components/gacha/history/impl/banner-filter";
+import { isTabId, type TabId } from "#/components/user/profile/impl/types";
 import { UserProfile } from "#/components/user/profile/UserProfile";
 import { userQueryOptions, userRosterQueryOptions, userSupportsQueryOptions } from "#/lib/api/user";
 import { metaT } from "#/lib/meta";
@@ -6,8 +8,25 @@ import { ogURL, warmOg } from "#/lib/og/impl/url";
 import { buildUserOgData } from "#/lib/og/impl/user";
 import { seo } from "#/lib/seo";
 
+/**
+ * A link may open a tab (`tab`), and the Pulls tab on some banners (`banners`, pool ids
+ * joined by commas): the history page's Share button builds such links. Both optional, so
+ * a bare `/user/$id` opens as it always did.
+ */
+export interface IUserProfileSearch {
+    tab?: TabId;
+    banners?: string;
+}
+
 export const Route = createFileRoute("/user/$id")({
     component: RouteComponent,
+    validateSearch: (search: Record<string, unknown>): IUserProfileSearch => {
+        const out: IUserProfileSearch = {};
+        if (isTabId(search.tab)) out.tab = search.tab;
+        const banners = formatBannerParam(parseBannerParam(search.banners));
+        if (banners) out.banners = banners;
+        return out;
+    },
     loader: async ({ context, params }) => {
         // Warm only what the header + default (Stats) tab need for SSR: the profile
         // record and the roster. Per-tab data (score, inventory, plans, enemies,

@@ -69,7 +69,7 @@ export function SupporterPicker({ selected, investment, onToggle, onInvestment }
                     <Button {...p} variant="outline" size="sm">
                         <Users />
                         {t("dps.supporters.add")}
-                        {selected.length > 0 && <span className="rounded bg-primary/15 px-1.5 font-mono text-[10px] text-primary">{selected.length}</span>}
+                        {selected.length > 0 && <span className="rounded bg-primary/15 px-1.5 font-mono text-[10px] text-foreground">{selected.length}</span>}
                     </Button>
                 )}
             />
@@ -158,7 +158,7 @@ function SupporterRow({ entry, on, onToggle }: { entry: SupporterEntry; on: bool
 function InvestmentSelect({ label, value, options, format, onChange }: { label: string; value: number; options: readonly number[]; format: (v: number) => string; onChange: (v: number) => void }): React.ReactElement {
     return (
         <div className="space-y-1">
-            <Label className="block font-medium text-[11px] text-muted-foreground leading-none">{label}</Label>
+            <Label className="block text-subtle-foreground text-xs leading-none">{label}</Label>
             <Select value={String(value)} onValueChange={(v) => v !== null && onChange(Number(v))}>
                 <SelectTrigger size="sm" aria-label={label}>
                     <SelectValue>{() => format(value)}</SelectValue>

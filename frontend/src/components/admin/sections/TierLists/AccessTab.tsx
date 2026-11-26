@@ -10,6 +10,7 @@ import { Badge, badgeVariants } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import { Card, CardAction, CardDescription, CardHeader, CardTitle } from "#/components/ui/card";
 import { useErrorMessage } from "#/components/ui/error-message";
+import { LoadFailed } from "#/components/ui/load-failed";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from "#/components/ui/menu";
 import { Skeleton } from "#/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "#/components/ui/table";
@@ -51,7 +52,7 @@ export function AccessTab({ query }: { query: UseQueryResult<ITierListGrant[]> }
                 </CardAction>
             </CardHeader>
             {query.isError ? (
-                <PanelMessage className="p-8">{t("tierLists.access.loadError")}</PanelMessage>
+                <LoadFailed layout="inline" className="px-6 pb-6" message={t("tierLists.access.loadError")} onRetry={() => void query.refetch()} />
             ) : (
                 <Table>
                     <TableHeader>
@@ -141,7 +142,11 @@ function GrantRow({ grant }: { grant: ITierListGrant }): React.ReactElement {
             </TableCell>
             <TableCell>
                 <DropdownMenu>
-                    <DropdownMenuTrigger disabled={busy} aria-label={t("tierLists.access.changeLevel", { name, title: grant.title })} className={cn(badgeVariants({ variant: levelVariant(grant.permission, "default") }), "pointer-coarse:min-h-9 cursor-pointer gap-0.5 pointer-coarse:px-2.5 pe-0.5")}>
+                    <DropdownMenuTrigger
+                        disabled={busy}
+                        aria-label={t("tierLists.access.changeLevel", { name, title: grant.title })}
+                        className={cn(badgeVariants({ variant: levelVariant(grant.permission, "default") }), "pointer-coarse:after:-translate-1/2 relative cursor-pointer gap-0.5 pe-0.5 pointer-coarse:after:absolute pointer-coarse:after:top-1/2 pointer-coarse:after:left-1/2 pointer-coarse:after:size-11")}
+                    >
                         {levelLabel(grant.permission)}
                         <ChevronDownIcon className="size-3!" />
                     </DropdownMenuTrigger>

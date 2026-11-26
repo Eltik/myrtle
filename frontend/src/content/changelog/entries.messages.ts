@@ -10,6 +10,126 @@ import { defineMessages, type MessageMap } from "#/lib/i18n/messages";
 export const namespace = "changelog";
 
 export const messages = {
+    "note.2026-11-04.title": {
+        text: "Improved: Easier to read across the site",
+        description: "Title of the 2026-11-04 release note.",
+    },
+    "note.2026-11-04.lead": {
+        text: "**Text, focus outlines and data colours are easier to read across the site, in light and dark themes and with a custom accent colour.** When something fails to load, the page now says what and offers Try again.",
+        description: "Lead paragraph of the 2026-11-04 release note, rendered as Markdown. 'Try again' is the label of a button.",
+    },
+    "note.2026-11-04.item.1": {
+        text: "Operators CN has updated also list the outfits only CN has, with their chibi and animated art.",
+        description: "Release note item. CN is the Chinese game server; a chibi is the small animated in-game sprite of an operator.",
+    },
+    "note.2026-11-04.item.2": {
+        text: "Recruitment results colour operator names by rarity, and the DPS calculator shows each operator's rarity.",
+        description: "Release note item. DPS is the damage calculator tool.",
+    },
+    "note.2026-11-04.item.3": {
+        text: "Enemy stat bars are scaled so most enemies no longer read as nearly empty.",
+        description: "Release note item.",
+    },
+    "note.2026-11-04.item.4": {
+        text: "On phones, the tier list and enemy filters fold away, and tabs that run off the edge show that they scroll.",
+        description: "Release note item.",
+    },
+    "note.2026-11-04.item.5": {
+        text: "Ten-roll permits, Recruitment Permits and story items no longer land in Other in your inventory, and currencies and tickets each have their own section.",
+        description: "Release note item. Recruitment Permit keeps the game's item name.",
+    },
+    "note.2026-11-04.item.6": {
+        text: "Collapsing groups on the stage list no longer leaves a blank gap.",
+        description: "Release note item.",
+    },
+    "note.2026-11-04.item.7": {
+        text: 'Enemy stats no longer run together, such as "550ATK".',
+        description: "Release note item. 550ATK shows a number and a stat label printed with no space between them; keep it as is.",
+    },
+    "note.2026-11-04.item.8": {
+        text: "A failed refresh no longer replaces a loaded profile with an error page.",
+        description: "Release note item.",
+    },
+    "note.2026-11-02.title": {
+        text: "New: See what CN has changed on every operator page",
+        description: "Title of the 2026-11-02 release note. CN is the Chinese game server, which receives updates before the others.",
+    },
+    "note.2026-11-02.lead": {
+        text: "**Operator pages now show what CN has already changed.** New modules join the module picker with a CN tag, changed numbers sit beside this server's with a CN label, and the Upcoming list includes operators CN has updated. Most of the new text reads in English, though some module text is still in Chinese. You can turn this off with Show CN updates in Settings.",
+        description: "Lead paragraph of the 2026-11-02 release note, rendered as Markdown. CN is the Chinese game server. 'Show CN updates' is the name of a setting.",
+    },
+    "note.2026-11-02.item.1": {
+        text: "Recruitment can show the chance of getting an operator you don't own yet, for each rarity. Turn on Show new-operator odds beside the roster options.",
+        description: "Release note item. 'Show new-operator odds' is the name of a toggle.",
+    },
+    "note.2026-11-02.item.2": {
+        text: "Data Saver Mode in Settings shows small avatars instead of full artwork on roster cards, the operator list and operator pages, and loads the artwork only when you ask.",
+        description: "Release note item. 'Data Saver Mode' is the name of a setting.",
+    },
+    "note.2026-11-02.item.3": {
+        text: "With auto-save on, the tier list editor counts down to the next save.",
+        description: "Release note item.",
+    },
+    "note.2026-11-02.item.4": {
+        text: "The Reclamation Algorithm panel on the Score tab shows your completion of each topic and how much of the score it carries.",
+        description: "Release note item. Reclamation Algorithm is a game mode; a topic is one of its seasons.",
+    },
+    "note.2026-11-02.item.5": {
+        text: "Modules now add all of their stat bonuses. HP, attack speed, RES, redeploy time and block bonuses were missing from operator stats, and only ATK, DEF and cost applied.",
+        description: "Release note item. Modules are operator upgrades; ATK, DEF, RES and HP keep the game's stat names.",
+    },
+    "note.2026-11-02.item.6": {
+        text: "Since the 10/28 game update, Reclamation Algorithm topics you didn't have loaded in game scored 0. They count again.",
+        description: "Release note item. Reclamation Algorithm is a game mode; a topic is one of its seasons. 10/28 is a date.",
+    },
+    "note.2026-11-02.hrefLabel": {
+        text: "Browse operators",
+        description: "Link label on the 2026-11-02 release note, pointing to the operators page.",
+    },
+    "note.2026-10-28.title": {
+        text: "New: Share your pull history and look back on your roster",
+        description: "Title of the 2026-10-28 release note.",
+    },
+    "note.2026-10-28.lead": {
+        text: "**You can now make your pull history public and share a link to it.** Public pulls appear in a new Pulls tab on your profile, and a Lookback tab shows how your roster has grown from one event to the next.",
+        description: "Lead paragraph of the 2026-10-28 release note, rendered as Markdown. Pulls are gacha pulls; Lookback is the name of a profile tab.",
+    },
+    "note.2026-10-28.item.1": {
+        text: "The operator chibi viewer can flip, zoom, pan, show a grid and change its background, plays animations in a chain or on a loop at any speed, and saves PNG, WebM or GIF.",
+        description: "Release note item. A chibi is the small animated in-game sprite of an operator.",
+    },
+    "note.2026-10-28.item.2": {
+        text: "Tier lists can rank story CGs, story scenes and Archives pictures.",
+        description: "Release note item. Story CGs are illustrations shown during the story; Archives is the in-game art gallery.",
+    },
+    "note.2026-10-28.item.3": {
+        text: "The squad builder and randomizer can filter operators by source: gachaless, welfare or recruitment.",
+        description: "Release note item. Gachaless, welfare and recruitment are ways an operator is obtained without the gacha.",
+    },
+    "note.2026-10-28.item.4": {
+        text: "Tier list browsing can filter by author.",
+        description: "Release note item.",
+    },
+    "note.2026-10-28.item.5": {
+        text: "The tier list editor can save as you go, with auto-save off by default, and offers to restore unsaved changes after a crash.",
+        description: "Release note item.",
+    },
+    "note.2026-10-28.item.6": {
+        text: "Roster cards show the date you got each operator.",
+        description: "Release note item.",
+    },
+    "note.2026-10-28.item.7": {
+        text: "The header menu folds away when it runs out of room in any language.",
+        description: "Release note item.",
+    },
+    "note.2026-10-28.item.8": {
+        text: "The squad builder reads Closure's talent, redeployment times and faction synergies correctly, so Gravel, Mlynar and Nearl the Radiant Knight now count as a team.",
+        description: "Release note item. The named characters are operators and keep the game's names.",
+    },
+    "note.2026-10-28.hrefLabel": {
+        text: "Open your pull history",
+        description: "Link label on the 2026-10-28 release note, pointing to the pull history page.",
+    },
     "note.2026-10-25.title": {
         text: "New: The DPS calculator covers every 6★",
         description: "Title of the 2026-10-25 release note. DPS is the damage calculator tool; 6★ is the top operator rarity.",

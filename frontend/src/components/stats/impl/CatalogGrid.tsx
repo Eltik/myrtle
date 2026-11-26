@@ -1,9 +1,11 @@
-import type { IGameDataStats, IRostersStats, ITierListStats } from "#/lib/api/stats";
+import { Kicker } from "#/components/ui/kicker";
+import type { IGameDataStats, IRostersStats } from "#/lib/api/stats";
 import { useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
+import { cn } from "#/lib/utils";
 import type { messages } from "./CatalogGrid.messages";
 
-type IconName = "users" | "skill" | "module" | "skin" | "zone" | "enemy" | "tiers" | "sync";
+type IconName = "users" | "skill" | "module" | "skin" | "zone" | "enemy" | "sync";
 
 function CatalogIcon({ name }: { name: IconName }) {
     const p = { fill: "none", stroke: "currentColor", strokeWidth: 1.9, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
@@ -50,14 +52,6 @@ function CatalogIcon({ name }: { name: IconName }) {
                     <path d="M9 14v5M15 14v5" />
                 </svg>
             );
-        case "tiers":
-            return (
-                <svg viewBox="0 0 24 24" {...p} aria-hidden="true">
-                    <rect x="3" y="3.5" width="18" height="5" rx="1.2" />
-                    <rect x="3" y="9.5" width="13" height="5" rx="1.2" />
-                    <rect x="3" y="15.5" width="8" height="5" rx="1.2" />
-                </svg>
-            );
         case "sync":
             return (
                 <svg viewBox="0 0 24 24" {...p} aria-hidden="true">
@@ -71,51 +65,53 @@ function CatalogIcon({ name }: { name: IconName }) {
 }
 
 interface ICatalogTile {
-    icon: IconName;
+    id: IconName;
     label: string;
     value: string;
     meta?: string;
+    className?: string;
 }
 
-function CatalogCell({ icon, label, value, meta }: ICatalogTile) {
+function CatalogCell({ id, label, value, meta, className }: ICatalogTile) {
     return (
-        <div className="relative flex flex-col gap-2 rounded-xl border border-border bg-card px-4 py-3.5">
-            <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-border bg-muted/70 text-primary [&>svg]:h-4 [&>svg]:w-4">
-                <CatalogIcon name={icon} />
-            </span>
-            <span className="font-medium font-mono text-[10.5px] text-muted-foreground uppercase leading-none tracking-[0.14em]">{label}</span>
-            <span className="font-bold font-sans text-[24px] text-foreground tabular-nums leading-none tracking-tight">{value}</span>
-            {meta ? <span className="font-medium font-mono text-[11px] text-muted-foreground leading-[1.2]">{meta}</span> : null}
+        <div className={cn("flex flex-col gap-2 bg-card px-4 py-3.5", className)}>
+            <dt className="flex flex-col gap-2">
+                <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-border bg-muted/70 text-primary [&>svg]:h-4 [&>svg]:w-4" aria-hidden="true">
+                    <CatalogIcon name={id} />
+                </span>
+                <Kicker>{label}</Kicker>
+            </dt>
+            <dd className="m-0 font-bold font-sans text-[24px] text-foreground tabular-nums leading-none tracking-tight">{value}</dd>
+            {meta ? <dd className="m-0 font-medium font-mono text-[11px] text-muted-foreground leading-[1.2]">{meta}</dd> : null}
         </div>
     );
 }
 
 interface ICatalogGridProps {
     gameData: IGameDataStats;
-    tierLists: ITierListStats;
     rosters: IRostersStats;
 }
 
-export function CatalogGrid({ gameData, tierLists, rosters }: ICatalogGridProps) {
+export function CatalogGrid({ gameData, rosters }: ICatalogGridProps) {
     const t: TypedT<typeof messages> = useT("stats");
     const f = useFormatters();
 
     const tiles: ICatalogTile[] = [
-        { icon: "users", label: t("catalog.operators"), value: f.number(gameData.operators), meta: t("catalog.operators.meta") },
-        { icon: "skill", label: t("catalog.skills"), value: f.number(gameData.skills), meta: t("catalog.skills.meta") },
-        { icon: "module", label: t("catalog.modules"), value: f.number(gameData.modules), meta: t("catalog.modules.meta") },
-        { icon: "skin", label: t("catalog.skins"), value: f.number(gameData.skins), meta: t("catalog.skins.meta") },
-        { icon: "zone", label: t("catalog.stages"), value: f.number(gameData.stages), meta: t("catalog.stages.meta", { count: f.number(gameData.zones) }) },
-        { icon: "enemy", label: t("catalog.enemies"), value: f.number(gameData.enemies), meta: t("catalog.enemies.meta") },
-        { icon: "tiers", label: t("catalog.tierLists"), value: `${f.number(tierLists.active)}/${f.number(tierLists.total)}`, meta: t("catalog.tierLists.meta", { count: f.compact(tierLists.totalPlacements) }) },
-        { icon: "sync", label: t("catalog.rosters"), value: f.compact(rosters.total), meta: t("catalog.rosters.meta") },
+        { id: "users", label: t("catalog.operators"), value: f.number(gameData.operators), meta: t("catalog.operators.meta") },
+        { id: "skill", label: t("catalog.skills"), value: f.number(gameData.skills), meta: t("catalog.skills.meta") },
+        { id: "module", label: t("catalog.modules"), value: f.number(gameData.modules), meta: t("catalog.modules.meta") },
+        { id: "skin", label: t("catalog.skins"), value: f.number(gameData.skins), meta: t("catalog.skins.meta") },
+        { id: "zone", label: t("catalog.stages"), value: f.number(gameData.stages), meta: t("catalog.stages.meta", { count: f.number(gameData.zones) }) },
+        { id: "enemy", label: t("catalog.enemies"), value: f.number(gameData.enemies), meta: t("catalog.enemies.meta") },
+        // Tier lists have their own section below; Rosters takes the freed slot so the seventh tile closes the row.
+        { id: "sync", label: t("catalog.rosters"), value: f.compact(rosters.total), meta: t("catalog.rosters.meta"), className: "col-span-2" },
     ];
 
     return (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+        <dl className="m-0 grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-border bg-border lg:grid-cols-4">
             {tiles.map((tile) => (
-                <CatalogCell key={tile.icon} {...tile} />
+                <CatalogCell key={tile.id} {...tile} />
             ))}
-        </div>
+        </dl>
     );
 }

@@ -1,6 +1,7 @@
 import { ChevronDownIcon, ChevronUpIcon, SettingsIcon, XIcon } from "lucide-react";
 import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "#/components/ui/button";
+import { useFitText } from "#/hooks/use-fit-text";
 import type { ITierEntity } from "#/lib/api/tier-entities";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -32,6 +33,8 @@ export function EditTierRow({ tier, entities, notedKeys, canMoveUp, canMoveDown,
     const touchDropIndex = useTierDropIndex(tier.id);
     const [mouseDropIndex, setMouseDropIndex] = useState<number | null>(null);
     const dropAreaRef = useRef<HTMLUListElement | null>(null);
+    const labelTextRef = useRef<HTMLSpanElement>(null);
+    useFitText(labelTextRef, tier.name);
 
     const lastIndex = tier.entityKeys.length;
     const dropIndex = touchDropIndex ?? mouseDropIndex;
@@ -107,7 +110,9 @@ export function EditTierRow({ tier, entities, notedKeys, canMoveUp, canMoveDown,
             aria-labelledby={labelledById}
         >
             <button id={labelledById} type="button" className={styles.label} onClick={onOpenSettings} aria-label={t("edit.row.editTier", { name: tier.name })}>
-                <span>{tier.name}</span>
+                <span ref={labelTextRef} className={styles.labelText}>
+                    {tier.name}
+                </span>
             </button>
 
             <ul ref={dropAreaRef} data-tl-drop-tier={tier.id} className={styles.dropArea} data-empty={isEmpty || undefined} data-over={dropIndex !== null || undefined} onDragOver={handleOver} onDragLeave={handleLeave} onDrop={handleDrop} aria-label={t("edit.row.dropArea", { name: tier.name })}>

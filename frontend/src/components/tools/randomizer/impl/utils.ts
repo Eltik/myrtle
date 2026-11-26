@@ -1,6 +1,7 @@
 import type { IRosterEntry } from "#/lib/api/user";
 import { DEFAULT_LOCALE, formatMessage, sourceMessage } from "#/lib/i18n";
 import { fullMessageKey, type TypedT } from "#/lib/i18n/messages";
+import { matchesAcquisition } from "#/lib/operators/acquisition";
 import { rarityToNumber } from "#/lib/utils";
 import type { IOperatorIndexEntry } from "#/types/operators";
 import type { IStage, IZone, StageClearsMap } from "#/types/stages";
@@ -83,6 +84,7 @@ export function toRandomizerOperator(op: IOperatorIndexEntry): IRandomizerOperat
         hasOffensiveRecovery: op.hasOffensiveRecovery,
         hasDefensiveRecovery: op.hasDefensiveRecovery,
         allSkillsManual: op.allSkillsManual,
+        obtainChannel: op.obtainChannel,
     };
 }
 
@@ -98,8 +100,13 @@ export function applyProfileGate(settings: IRandomizerSettings, { hasProfile, ha
     return settings;
 }
 
-/** `tierIndex` is the chosen official list, or `null` when none is chosen or it has not loaded (filter off). */
-export function selectAvailableOperators(operators: IRandomizerOperator[], settings: IRandomizerSettings, rosterIndex: IRosterIndex, tierIndex: ITierIndex | null = null): IRandomizerOperator[] {
+const NO_RECRUITS: ReadonlySet<string> = new Set();
+
+/**
+ * `tierIndex` is the chosen official list, or `null` when none is chosen or it has not loaded (filter off).
+ * `recruitable` is the recruitment pool's operator ids, read by the "gachaless" and "recruitment" sources.
+ */
+export function selectAvailableOperators(operators: IRandomizerOperator[], settings: IRandomizerSettings, rosterIndex: IRosterIndex, tierIndex: ITierIndex | null = null, recruitable: ReadonlySet<string> = NO_RECRUITS): IRandomizerOperator[] {
     return operators.filter((op) => {
         if (!settings.allowedRarities.includes(op.rarity)) return false;
         if (!settings.allowedClasses.includes(op.profession)) return false;
@@ -107,6 +114,7 @@ export function selectAvailableOperators(operators: IRandomizerOperator[], setti
         if (settings.onlyOwnedOperators && !rosterIndex.owned.has(op.id)) return false;
         if (settings.onlyE2Operators && (!settings.e2SixStarOnly || op.rarity === 6) && !rosterIndex.e2.has(op.id)) return false;
         if (!passesTierFilter(op.id, tierIndex, settings.deselectedTierIds)) return false;
+        if (!matchesAcquisition(op, settings.acquisition, recruitable)) return false;
         return true;
     });
 }

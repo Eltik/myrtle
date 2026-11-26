@@ -1,6 +1,6 @@
 import type { ProfileLayout } from "#/types/generated/ProfileLayout";
 import type { ProfileTab } from "#/types/generated/ProfileTab";
-import { isTabId, TAB_IDS, type TabId } from "./types";
+import { isLayoutTabId, type LayoutTabId, PULLS_TAB, TAB_IDS, type TabId } from "./types";
 
 /**
  * Which tab-memory rule the page runs. `stored`: the last tab opened, remembered per
@@ -32,7 +32,7 @@ export function showcaseBlockCount(layout: ProfileLayout | null): number {
 function knownTabs(tabs: readonly { id: string; visible: boolean }[] | null | undefined): ProfileTab[] {
     const out: ProfileTab[] = [];
     for (const tab of tabs ?? []) {
-        if (!isTabId(tab.id) || out.some((t) => t.id === tab.id)) continue;
+        if (!isLayoutTabId(tab.id) || out.some((t) => t.id === tab.id)) continue;
         out.push({ id: tab.id, visible: tab.visible });
     }
     return out;
@@ -67,7 +67,7 @@ export function normalizeLayout(tabs: readonly { id: string; visible: boolean }[
  * with no layout (the kill switch) a visitor's bar has no Showcase, and the owner's has
  * Showcase first, where they set it up.
  */
-export function shownTabs(layout: ProfileLayout | null, isOwner: boolean): TabId[] {
+export function shownTabs(layout: ProfileLayout | null, isOwner: boolean): LayoutTabId[] {
     const tabs = layout === null ? defaultLayout() : knownTabs(layout.tabs);
     const visible = isOwner ? tabs : tabs.filter((t) => t.visible && (t.id !== "showcase" || showcaseBlockCount(layout) > 0));
     return visible.map((t) => t.id);
@@ -77,12 +77,17 @@ export function shownTabs(layout: ProfileLayout | null, isOwner: boolean): TabId
  * The tab to show. Under the `stored` rule that is the remembered tab.
  * A visitor gets their pick from this visit, or the owner's first visible tab when
  * they have not picked yet or their pick is not a tab this profile shows. `null`
- * when the profile shows no tab at all.
+ * when the profile shows no tab at all. The page's `shown` may end in the Pulls tab,
+ * which is not part of the layout.
  */
-export function resolveActiveTab(shown: readonly TabId[], memory: TabMemory, stored: TabId, picked: TabId | null): TabId | null {
+export function resolveActiveTab<T extends TabId>(shown: readonly T[], memory: TabMemory, stored: TabId, picked: TabId | null): T | null {
     const first = shown[0] ?? null;
     const remembered = memory === "stored" ? stored : picked;
-    return remembered !== null && shown.includes(remembered) ? remembered : first;
+    return remembered !== null && isShown(shown, remembered) ? remembered : first;
+}
+
+function isShown<T extends TabId>(shown: readonly T[], tab: TabId): tab is T {
+    return (shown as readonly TabId[]).includes(tab);
 }
 
 /** Whether `tabs` is the canonical layout, which saving stores as "no layout". */
@@ -121,6 +126,16 @@ export function moveTab<T>(tabs: readonly T[], index: number, delta: number): T[
     return moveEntry(tabs, index, delta)?.next ?? [...tabs];
 }
 
-export function toggleTab(tabs: readonly ProfileTab[], id: TabId): ProfileTab[] {
+export function toggleTab(tabs: readonly ProfileTab[], id: LayoutTabId): ProfileTab[] {
     return tabs.map((t) => (t.id === id ? { ...t, visible: !t.visible } : t));
+}
+
+/**
+ * The bar's tabs: the layout's (`shownTabs`), then the Pulls tab, which is not part of
+ * the layout. The owner always has it, so they can reach the switch; a visitor only
+ * while the owner made their pull history public (`public_gacha`, opt-in). Only an
+ * explicit `true` shows it: `undefined` is a profile read from before the switch existed.
+ */
+export function withPullsTab(shown: readonly LayoutTabId[], isOwner: boolean, publicGacha: boolean | null | undefined): TabId[] {
+    return isOwner || publicGacha === true ? [...shown, PULLS_TAB] : [...shown];
 }

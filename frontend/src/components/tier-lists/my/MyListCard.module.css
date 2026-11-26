@@ -2,7 +2,7 @@
     position: relative;
     display: flex;
     flex-direction: column;
-    border-radius: 12px;
+    border-radius: var(--radius-2xl);
     background: var(--card);
     border: 1px solid var(--border);
     box-shadow: 0 1px 2px oklch(0 0 0 / 0.04);
@@ -98,20 +98,21 @@
 
 .tierPill {
     flex: 0 0 auto;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
+    /* Block, not a centred flex box: a long label overflowed both edges and clipped its start, with no ellipsis. */
+    display: inline-block;
+    text-align: center;
     height: var(--pill-size);
     padding: 0 calc(var(--pill-size) * 0.32);
     border-radius: 4px;
     background: var(--row-color);
-    color: white;
+    /* Set by ThumbTierRow from readableTextColor: always-white measured 1.98 to 2.83 on the light default tiers. */
+    color: var(--tier-fg, white);
     font-family: var(--font-mono);
     font-size: var(--pill-text);
     font-weight: 700;
-    line-height: 1;
+    line-height: var(--pill-size);
     letter-spacing: 0.02em;
-    text-shadow: 0 1px 0 oklch(0 0 0 / 0.25);
+    text-shadow: var(--tier-shadow, 0 1px 0 oklch(0 0 0 / 0.25));
     max-width: 55%;
     min-width: calc(var(--pill-size) + 2px);
     overflow: hidden;
@@ -134,7 +135,7 @@
     border-radius: calc(var(--op-size) * 0.14);
     overflow: hidden;
     flex-shrink: 0;
-    background: oklch(0.25 0.005 285);
+    background: color-mix(in srgb, var(--row-color) 30%, oklch(0.25 0.005 285));
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -149,7 +150,8 @@
     padding: 0 calc(var(--op-size) * 0.22);
     margin-left: 2px;
     border-radius: calc(var(--op-size) * 0.18);
-    background: color-mix(in srgb, var(--row-color) 30%, oklch(0 0 0 / 0.22));
+    /* The tier tint over the dark op-tile fill, not over translucent black: white stays above AA on the light tiers. */
+    background: color-mix(in srgb, var(--row-color) 30%, oklch(0.25 0.005 285));
     color: white;
     font-family: var(--font-mono);
     font-size: calc(var(--op-size) * 0.42);
@@ -157,7 +159,6 @@
     line-height: 1;
     font-variant-numeric: tabular-nums;
     flex-shrink: 0;
-    text-shadow: 0 1px 0 oklch(0 0 0 / 0.3);
 }
 
 .emptyThumb {
@@ -187,10 +188,6 @@
     font-size: 9.5px;
     font-weight: 800;
     line-height: 1;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
 }
 .cornerBadgeOfficial {
     background: oklch(0.92 0.13 85);

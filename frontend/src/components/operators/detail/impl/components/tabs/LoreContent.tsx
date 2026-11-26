@@ -68,7 +68,7 @@ export const LoreContent = memo(function LoreContent({ operator }: ILoreContentP
             {hasStories ? (
                 <div className="space-y-4">
                     <div className="flex items-center gap-2">
-                        <BookMarked className="h-5 w-5 text-primary" />
+                        <BookMarked aria-hidden="true" className="h-5 w-5 text-primary" />
                         <h3 className="font-semibold text-foreground text-lg">{t("lore.archives")}</h3>
                     </div>
                     {stories.map((section, idx) => (
@@ -81,7 +81,7 @@ export const LoreContent = memo(function LoreContent({ operator }: ILoreContentP
                 </div>
             ) : (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <FileText className="mb-4 h-12 w-12 text-muted-foreground/50" />
+                    <FileText className="mb-4 h-12 w-12 text-subtle-foreground" />
                     <h3 className="mb-2 font-medium text-foreground">{t("lore.empty.title")}</h3>
                     <p className="text-muted-foreground text-sm">{t("lore.empty.body")}</p>
                 </div>
@@ -96,7 +96,7 @@ function LoreSection({ title, icon: Icon, children, defaultOpen = false }: { tit
         <Collapsible open={open} onOpenChange={setOpen}>
             <CollapsibleTrigger className="flex w-full items-center justify-between rounded-lg border border-border bg-secondary/30 px-4 py-3 transition-colors hover:bg-secondary/50">
                 <span className="flex items-center gap-3">
-                    <Icon className="h-4 w-4 text-primary" />
+                    <Icon aria-hidden="true" className="h-4 w-4 text-primary" />
                     <span className="font-medium text-sm">{title}</span>
                 </span>
                 <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", open && "rotate-180")} />
@@ -136,7 +136,9 @@ function renderParagraph(paragraph: string, idx: number) {
     if (/^[-•·]/.test(trimmed)) {
         return (
             <div className="flex gap-3 py-1 pl-2" key={`bul-${idx}`}>
-                <span className="mt-1 text-primary">•</span>
+                <span aria-hidden="true" className="mt-1 text-primary">
+                    •
+                </span>
                 <span className="flex-1 text-muted-foreground text-sm leading-relaxed">
                     <GameText text={trimmed.substring(1).trim()} />
                 </span>

@@ -3,10 +3,6 @@ import { defineMessages, type MessageMap } from "#/lib/i18n/messages";
 export const namespace = "grids";
 
 export const messages = {
-    "my.kicker": {
-        text: "Your grids",
-        description: "Small uppercase label above the heading of the signed-in user's grids.",
-    },
     "my.title": {
         text: "My Grids",
         description: "Heading of the signed-in user's grids.",
@@ -28,7 +24,7 @@ export const messages = {
         description: "Opens the grid in the editor.",
     },
     "my.error": {
-        text: "Your grids could not be loaded.",
+        text: "Couldn't load your grids.",
         description: "Shown when the user's grids failed to load.",
     },
     "my.retry": {

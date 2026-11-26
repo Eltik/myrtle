@@ -15,9 +15,25 @@ export const messages = {
         text: "Privacy",
         description: "Settings section for profile visibility and leaderboard opt-in.",
     },
+    "nav.apps": {
+        text: "Applications",
+        description: "Settings section listing the other sites the visitor signed in to with their myrtle.moe account, and the OAuth applications they registered as a developer.",
+    },
     "nav.danger": {
         text: "Danger zone",
         description: "Settings section holding account deletion. Deliberately alarming.",
+    },
+    "signedOut.title": {
+        text: "Sign in to manage your account",
+        description: "Card title shown above the appearance settings to a signed-out visitor, the only section they can reach.",
+    },
+    "signedOut.desc": {
+        text: "Appearance works without an account. Sign in to sync your game data, choose who can see your profile, or delete your account.",
+        description: "Card description under that title: what the account sections offer once signed in.",
+    },
+    "signedOut.action": {
+        text: "Sign in",
+        description: "Button in that card that opens the sign-in dialog.",
     },
     "toast.saved.title": {
         text: "Settings saved",

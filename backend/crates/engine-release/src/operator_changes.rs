@@ -12,7 +12,8 @@ use myrtle_gamedata_raw::tables::skill::{SkillBlackboard, SkillLevel};
 
 const EPSILON: f64 = 1e-6;
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(
     tag = "kind",
     rename_all = "snake_case",
@@ -63,7 +64,8 @@ impl OperatorChange {
 
 /// A CN text and the trailing server's text at the same place, both raw
 /// templates (`{key}` placeholders and rich-text tags left in).
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct CnTranslation {
     pub cn: String,
@@ -71,7 +73,8 @@ pub struct CnTranslation {
 }
 
 /// Every difference found on one operator
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct OperatorCnChanges {
     pub id: String,

@@ -14,17 +14,30 @@ export const STAGE_GROUP_ICON: Record<StageGroupKey, LucideIcon> = {
     other: Boxes,
 };
 
+/** The zone prefix of a code range: "1-1 ~ 1-12" -> "1", "GT-1 ~ GT-6" -> "GT". */
+export function zoneCodeOf(codeRange: string): string | null {
+    const first = codeRange.split(" ~ ")[0]?.trim() ?? "";
+    const cut = first.lastIndexOf("-");
+    return (cut > 0 ? first.slice(0, cut) : first) || null;
+}
+
 /**
- * Stand-in for missing stage art: a tone-tinted wash, a faint hatch and the
- * category glyph. Rendered *under* `StagePreview`, so it only shows when there
- * is no image (or the image 404s and hides itself).
+ * Stand-in for missing stage art: a tone-tinted wash, a faint hatch and the zone code (or, without
+ * one, the category glyph). Rendered *under* `StagePreview`, so it only shows when there is no
+ * image (or the image 404s and hides itself).
  */
-export function PreviewFallback({ tone, group, iconClassName = "h-4.5 w-4.5" }: { tone: string; group: StageGroupKey; iconClassName?: string }) {
+export function PreviewFallback({ tone, group, label, labelClassName = "text-[11px]", iconClassName = "h-4.5 w-4.5" }: { tone: string; group: StageGroupKey; label?: string | null; labelClassName?: string; iconClassName?: string }) {
     const Icon = STAGE_GROUP_ICON[group];
     return (
         <div aria-hidden="true" className="absolute inset-0 flex items-center justify-center" style={{ background: `linear-gradient(135deg, color-mix(in oklch, ${tone} 11%, var(--card)) 0%, color-mix(in oklch, var(--muted) 40%, var(--card)) 75%)` }}>
             <div className="absolute inset-0 opacity-40" style={{ backgroundImage: `repeating-linear-gradient(135deg, color-mix(in oklch, ${tone} 16%, transparent) 0 1px, transparent 1px 8px)` }} />
-            <Icon className={iconClassName} style={{ color: `color-mix(in oklch, ${tone} 60%, var(--muted-foreground))`, opacity: 0.75 }} />
+            {label ? (
+                <span className={`relative font-mono font-semibold leading-none ${labelClassName}`} style={{ color: `color-mix(in oklch, ${tone} 45%, var(--muted-foreground))` }}>
+                    {label}
+                </span>
+            ) : (
+                <Icon className={iconClassName} style={{ color: `color-mix(in oklch, ${tone} 60%, var(--muted-foreground))`, opacity: 0.75 }} />
+            )}
         </div>
     );
 }

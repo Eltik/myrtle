@@ -24,7 +24,7 @@ export const messages = {
         description: "Shown when the URL names an enemy id the backend has no enemy for. {id} is that id, rendered in a monospace box, and may move wherever the sentence needs it. 'Handbook' is the game's own enemy reference screen.",
     },
     "detail.notFound.back": {
-        text: "Back to Enemy Database",
+        text: "Back to enemies",
         description: "Link out of the enemy-not-found page, back to the enemy list.",
     },
     "detail.tab.overview": {

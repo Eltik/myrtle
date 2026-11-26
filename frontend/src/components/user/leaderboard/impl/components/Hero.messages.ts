@@ -3,20 +3,16 @@ import { defineMessages, type MessageMap } from "#/lib/i18n/messages";
 export const namespace = "user";
 
 export const messages = {
-    "leaderboard.hero.eyebrow": {
-        text: "Players · Leaderboard",
-        description: "Small uppercase label above the leaderboard heading, naming the section.",
-    },
     "leaderboard.hero.title": {
         text: "Top Players",
         description: "Leaderboard page heading. 'Player' is the site's term; the game itself says 'Doctor'.",
     },
     "leaderboard.hero.allTime": {
         text: "All-time",
-        description: "Pill beside the leaderboard heading saying the ranking covers a player's whole history rather than a season.",
+        description: "Muted text after the leaderboard heading saying the ranking covers a player's whole history rather than a season.",
     },
     "leaderboard.hero.blurb": {
-        text: "A composite ranking across roster depth, base efficiency, and combat scoring. Pulled from public profiles only.",
+        text: "A composite score across operators, base, Integrated Strategies, medals, stages and Reclamation Algorithm. Public profiles only.",
         description: "Paragraph under the leaderboard heading explaining what the ranking measures.",
     },
     "leaderboard.hero.stat.ranked": {
@@ -47,13 +43,13 @@ export const messages = {
         text: "{count}d ago",
         description: "How long ago the leaderboard was recomputed, in days. 'd' abbreviates days; the tile is narrow.",
     },
-    "leaderboard.hero.notice.lead": {
-        text: "Heads up",
-        description: "Bold opening of the development-status notice under the leaderboard heading.",
-    },
     "leaderboard.hero.notice": {
-        text: "{lead} - the leaderboard is in active development and the ranking formula is subject to change.",
-        description: "Development-status notice under the leaderboard heading. {lead} is the bold opening labelled by leaderboard.hero.notice.lead and may move wherever the sentence needs it.",
+        text: "The leaderboard is in active development, and the ranking formula may change.",
+        description: "Muted line at the foot of the leaderboard header saying the ranking is still being worked on.",
+    },
+    "leaderboard.hero.stat.failed": {
+        text: "Couldn't load. Try again",
+        description: "Small link under a leaderboard header figure (player count or top value) that failed to load, shown in place of the figure with a dash; clicking it fetches again. Keep it short, the tile is narrow.",
     },
     "leaderboard.hero.blurb.item": {
         text: "Every player with a public profile, ranked by how much {item} they held when they last synced.",

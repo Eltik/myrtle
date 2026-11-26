@@ -1,8 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { BookView } from "#/components/story/export/BookView";
+import type { messages as libraryMessages } from "#/components/story/library/StoryLibrary.messages";
 import type { messages as readerMessages } from "#/components/story/reader/reader.messages";
 import { StoryReader } from "#/components/story/reader/StoryReader";
+import { LoadFailed } from "#/components/ui/load-failed";
+import { RouteError } from "#/components/ui/route-error";
 import { storyIndexQueryOptions, storyQueryOptions } from "#/lib/api/story";
 import { useGamedataServer, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -54,7 +57,7 @@ export function exportGroupOf(index: StoryIndex, storyId: string): BookGroup | n
 
 export const Route = createFileRoute("/stories_/$storyId")({
     component: RouteComponent,
-    errorComponent: RootErrorComponent,
+    errorComponent: RouteError,
     // `?halt=N` resumes at halt N (0-based); absent means the title card, or the
     // resume prompt. It is read as MISSING rather than falsy: `Number(null)` is
     // 0 and finite, which would pin every visit to halt 0.
@@ -100,16 +103,6 @@ export const Route = createFileRoute("/stories_/$storyId")({
     },
 });
 
-function RootErrorComponent({ error }: { error: unknown }) {
-    console.error("Router error:", error);
-    return (
-        <div style={{ padding: 20 }}>
-            <h1>Something went wrong</h1>
-            <pre style={{ color: "red" }}>{error instanceof Error ? error.message : JSON.stringify(error, null, 2)}</pre>
-        </div>
-    );
-}
-
 function RouteComponent() {
     const { storyId } = Route.useParams();
     const { halt, line, view } = Route.useSearch();
@@ -120,9 +113,30 @@ function RouteComponent() {
     // still a mount.
     useStoryProgressSync();
     const tr: TypedT<typeof readerMessages> = useT("story");
-    const { data: index } = useQuery(storyIndexQueryOptions(server));
-    const { data: script, isPending } = useQuery(storyQueryOptions(storyId, server));
-    if (isPending || !index) return <p className="p-8 text-center text-muted-foreground">{tr("reader.loading")}</p>;
+    const tl: TypedT<typeof libraryMessages> = useT("story");
+    const indexQuery = useQuery(storyIndexQueryOptions(server));
+    const scriptQuery = useQuery(storyQueryOptions(storyId, server));
+    const index = indexQuery.data;
+    const script = scriptQuery.data;
+    // The loader covers the first visit only. After a client-side server switch a failed
+    // index query held "Loading" forever and a failed script read as "not found", so the
+    // error is read before the pending and empty branches.
+    const indexFailed = indexQuery.isError && !index;
+    const scriptFailed = scriptQuery.isError && script === undefined;
+    if (indexFailed || scriptFailed) {
+        return (
+            <div className="mx-auto max-w-xl p-8">
+                <LoadFailed
+                    message={tl("route.loadFailed")}
+                    onRetry={() => {
+                        if (indexFailed) void indexQuery.refetch();
+                        if (scriptFailed) void scriptQuery.refetch();
+                    }}
+                />
+            </div>
+        );
+    }
+    if (scriptQuery.isPending || !index) return <p className="p-8 text-center text-muted-foreground">{tr("reader.loading")}</p>;
     const placement = placeStory(index, storyId);
     if (script === null || script === undefined) {
         return <p className="p-8 text-center text-muted-foreground">{placement.entry ? tr("reader.error.noScript") : tr("reader.error.notFound")}</p>;

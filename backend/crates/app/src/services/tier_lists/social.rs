@@ -25,17 +25,20 @@ const VIEW_RATE_SWEEP_EVERY: u64 = 1_000;
 static VIEW_RATE_BUCKETS: LazyLock<DashMap<String, (Instant, u32)>> = LazyLock::new(DashMap::new);
 static VIEW_RATE_CALLS: AtomicU64 = AtomicU64::new(0);
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct ViewRecorded {
     pub unique: bool,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct FavoriteState {
     pub favorited: bool,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct VisibilityState {
     pub is_listed: bool,
 }

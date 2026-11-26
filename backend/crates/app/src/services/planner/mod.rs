@@ -37,7 +37,8 @@ const PLAN_OPERATOR_EMPTIED_ARRAYS: [&str; 6] = [
 ];
 const PLAN_OPERATOR_NULLED: [&str; 2] = ["handbook", "profile"];
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct OperatorPlanResponse {
     pub id: Uuid,
     pub user_id: Uuid,
@@ -55,7 +56,8 @@ pub struct OperatorPlanResponse {
     pub met: bool,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct PlanGroup {
     pub id: Uuid,
     pub user_id: Uuid,
@@ -78,23 +80,28 @@ impl From<PlanGroupRow> for PlanGroup {
     }
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct PlannerResponse {
     pub plans: Vec<OperatorPlanResponse>,
     pub aggregated_requirements: Vec<PlanRequirementItem>,
     pub groups: Vec<PlanGroup>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub operator_requirements: Option<BTreeMap<String, Vec<PlanRequirementItem>>>,
     pub last_synced_at: Option<DateTime<Utc>>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct DeletePlansResponse {
+    #[ts(type = "number")]
     pub deleted: i64,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct PlanPreset {
     pub id: Uuid,
     pub name: String,

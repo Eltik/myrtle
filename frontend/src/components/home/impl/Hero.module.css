@@ -20,9 +20,9 @@
     position: absolute;
     left: 0;
     right: 0;
+    /* Taller than the clip and raised 8%: this sets the crop the copy and Myrtle sit against. */
     top: -8%;
     height: 116%;
-    will-change: transform;
 }
 .artLayer img {
     display: block;
@@ -69,14 +69,6 @@
     display: flex;
     justify-content: center;
 }
-.myrtleGlow {
-    position: absolute;
-    inset: 12% 10%;
-    border-radius: 999px;
-    background: radial-gradient(closest-side, var(--glow-primary), transparent);
-    filter: blur(24px);
-    opacity: 0.55;
-}
 .myrtleImg {
     position: relative;
     display: block;
@@ -84,7 +76,6 @@
     width: clamp(120px, min(26vw, 40svh), 300px);
     height: auto;
     filter: drop-shadow(0 18px 22px oklch(0 0 0 / 0.18));
-    animation: float 7s ease-in-out infinite;
 }
 
 .copy {
@@ -177,15 +168,15 @@
     outline: 2px solid var(--primary);
     outline-offset: 4px;
 }
-/* A coarse pointer means no physical keyboard, where a key hint is meaningless. */
-@media (pointer: coarse) {
+/* A coarse pointer means no physical keyboard, where a key hint is meaningless. `hover: none`
+   also catches touch devices that report a fine primary pointer (a stylus, some tablets). */
+@media (pointer: coarse), (hover: none) {
     .hint {
         display: none;
     }
 }
 
 .cue {
-    all: unset;
     /* Positioned so it paints above the absolutely placed art, which reaches this far down on narrow screens. */
     position: relative;
     cursor: pointer;
@@ -198,10 +189,12 @@
     padding: 4px;
     border-radius: 8px;
     color: var(--muted-foreground);
+    text-decoration: none;
     transition: color 0.15s;
 }
 .cue:hover {
     color: var(--foreground);
+    text-decoration: none;
 }
 .cue:focus-visible {
     outline: 2px solid var(--primary);
@@ -230,9 +223,6 @@
     align-items: center;
     gap: 4px;
     font-size: 13px;
-}
-.cueChevron {
-    animation: bob 1.6s ease-in-out infinite;
 }
 
 /* One column: Myrtle tucks in beside the headline, off the art's subject and onto the
@@ -280,31 +270,11 @@
     }
 }
 
-@keyframes float {
-    0%,
-    100% {
-        transform: translateY(0);
-    }
-    50% {
-        transform: translateY(-5px);
-    }
-}
-@keyframes bob {
-    0%,
-    100% {
-        transform: translateY(0);
-    }
-    50% {
-        transform: translateY(6px);
-    }
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .myrtleImg,
-    .cueChevron {
-        animation: none;
-    }
-    .artLayer {
-        will-change: auto;
-    }
+.myrtleGlow {
+    position: absolute;
+    inset: 12% 10%;
+    border-radius: 999px;
+    background: radial-gradient(closest-side, var(--glow-primary), transparent);
+    filter: blur(24px);
+    opacity: 0.55;
 }

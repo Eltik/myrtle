@@ -3,6 +3,8 @@ import { Gamepad2Icon, PlayIcon, UsersIcon } from "lucide-react";
 import type React from "react";
 import { memo, useMemo, useState } from "react";
 import { Button } from "#/components/ui/button";
+import { Kicker } from "#/components/ui/kicker";
+import { Skeleton } from "#/components/ui/skeleton";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { musicListenersQueryOptions, musicTopTracksQueryOptions } from "#/lib/api/music";
 import { useFormatters, useT } from "#/lib/i18n";
@@ -50,7 +52,9 @@ export function ChartsView({ catalog, waiting }: { catalog: ICatalog; waiting: I
 function SectionTitle({ children, aside }: { children: React.ReactNode; aside?: React.ReactNode }): React.ReactElement {
     return (
         <div className="mb-2 flex min-h-8 flex-wrap items-center justify-between gap-2">
-            <h3 className="m-0 font-mono font-normal text-[10.5px] text-muted-foreground uppercase tracking-[0.12em]">{children}</h3>
+            <h3 className="m-0 font-normal">
+                <Kicker>{children}</Kicker>
+            </h3>
             {aside}
         </div>
     );
@@ -126,8 +130,8 @@ const ChartTrack = memo(function ChartTrack({ row, tracks, source, houseArtist }
         return (
             <li className="flex min-h-12 items-center gap-2.5 px-1.5" aria-hidden="true">
                 <span className="w-6 shrink-0 text-right font-mono text-[11px] text-muted-foreground tabular-nums">{row.rank}</span>
-                <span className="size-8 shrink-0 animate-pulse rounded-[4px] bg-muted" />
-                <span className="h-3 w-40 animate-pulse rounded bg-muted" />
+                <Skeleton className="size-8 shrink-0 rounded-[4px]" />
+                <Skeleton className="h-3 w-40 rounded" />
             </li>
         );
     }
@@ -139,7 +143,7 @@ const ChartTrack = memo(function ChartTrack({ row, tracks, source, houseArtist }
                 type="button"
                 onClick={() => playFrom(tracks, track, source)}
                 aria-label={t("music.charts.trackAria", { rank: row.rank, name, listens })}
-                className="flex min-h-12 min-w-0 flex-1 cursor-pointer items-center gap-2.5 rounded-md px-1.5 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+                className="flex min-h-12 min-w-0 flex-1 cursor-pointer items-center gap-2.5 rounded-md px-1.5 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
                 <span className="flex w-6 shrink-0 items-center justify-end font-mono text-[11px] text-muted-foreground tabular-nums">
                     {current ? (
@@ -159,7 +163,7 @@ const ChartTrack = memo(function ChartTrack({ row, tracks, source, houseArtist }
                     {track.coverUrl ? <img referrerPolicy="no-referrer" src={sizedCover(track.coverUrl, 32)} alt="" loading="lazy" decoding="async" className="size-full object-cover" /> : <Gamepad2Icon className="absolute inset-0 m-auto size-4 text-muted-foreground" aria-hidden="true" />}
                 </span>
                 <span className="flex min-w-0 flex-1 flex-col leading-tight">
-                    <span className={cn("truncate font-medium font-sans text-[13px]", current ? "text-primary" : "text-foreground")} title={name}>
+                    <span className={cn("truncate font-sans text-[13px]", current ? "font-semibold text-primary" : "font-medium text-foreground")} title={name}>
                         {name}
                     </span>
                     {sub ? (

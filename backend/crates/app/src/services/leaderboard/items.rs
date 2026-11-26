@@ -12,8 +12,10 @@ const PAGE_TTL: Duration = Duration::from_mins(5);
 const CATALOG_TTL: Duration = Duration::from_mins(10);
 const STANDING_TTL: Duration = Duration::from_mins(1);
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct ItemLeaderboardEntry {
+    #[ts(type = "number")]
     pub rank: i64,
     pub uid: String,
     pub nickname: Option<String>,
@@ -22,38 +24,54 @@ pub struct ItemLeaderboardEntry {
     pub avatar_id: Option<String>,
     pub server: String,
     pub grade: Option<String>,
+    #[ts(type = "number")]
     pub quantity: i64,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct ItemLeaderboardPage {
     pub item_id: String,
     pub entries: Vec<ItemLeaderboardEntry>,
+    #[ts(type = "number")]
     pub total: i64,
+    #[ts(type = "number")]
     pub total_quantity: i64,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct ItemHoldingSummary {
     pub item_id: String,
+    #[ts(type = "number")]
     pub holders: i64,
+    #[ts(type = "number")]
     pub top: i64,
+    #[ts(type = "number")]
     pub total_quantity: i64,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct ItemCatalog {
+    #[ts(type = "number")]
     pub population: i64,
     pub items: Vec<ItemHoldingSummary>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct ItemStanding {
     pub item_id: String,
+    #[ts(type = "number")]
     pub quantity: i64,
+    #[ts(type = "number")]
     pub rank_global: i64,
+    #[ts(type = "number")]
     pub holders_global: i64,
+    #[ts(type = "number")]
     pub rank_server: i64,
+    #[ts(type = "number")]
     pub holders_server: i64,
 }
 

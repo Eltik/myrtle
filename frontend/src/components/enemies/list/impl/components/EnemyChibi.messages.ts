@@ -4,7 +4,7 @@ export const namespace = "enemies";
 
 export const messages = {
     "chibi.error": {
-        text: "Failed to load chibi data.",
+        text: "Couldn't load the chibi.",
         description: "Shown in the Chibi tab when the chibi index request fails. 'Chibi' is the game's small animated sprite.",
     },
     "chibi.none": {

@@ -13,7 +13,7 @@ export const messages = {
         description: "Accessible name of the roster section of a profile.",
     },
     "profile.roster.search.placeholder": {
-        text: "Search operators...",
+        text: "Search operators…",
         description: "Prompt inside the empty roster search box. Keep the three dots as written.",
     },
     "profile.roster.sort.placeholder": {
@@ -21,31 +21,31 @@ export const messages = {
         description: "Shown in the sort select before anything is chosen.",
     },
     "profile.roster.sort.investment": {
-        text: "Sort by Investment",
+        text: "Sort by investment",
         description: "Sort option: how far each operator is along its own ceiling (promotion, level, skill, masteries, modules, potential), so a finished lower-rarity operator outranks an untouched higher-rarity one.",
     },
     "profile.roster.sort.level": {
-        text: "Sort by Level",
+        text: "Sort by level",
         description: "Sort option: by operator level.",
     },
     "profile.roster.sort.rarity": {
-        text: "Sort by Rarity",
+        text: "Sort by rarity",
         description: "Sort option: by star rating.",
     },
     "profile.roster.sort.obtained": {
-        text: "Sort by Obtained",
+        text: "Sort by obtained",
         description: "Sort option: by when the operator was obtained.",
     },
     "profile.roster.sort.potential": {
-        text: "Sort by Potential",
+        text: "Sort by potential",
         description: "Sort option: by potential rank. 'Potential' is the game's duplicate-operator system.",
     },
     "profile.roster.sort.trust": {
-        text: "Sort by Trust",
+        text: "Sort by trust",
         description: "Sort option: by trust percentage. 'Trust' is the game's own affinity stat.",
     },
     "profile.roster.sort.maxed": {
-        text: "Sort by Maxed",
+        text: "Sort by maxed",
         description: "Sort option: fully invested operators first.",
     },
     "profile.roster.sort.asc": {

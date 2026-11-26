@@ -5,8 +5,7 @@ import type { MusicCue } from "./MusicCue";
 import type { VideoSources } from "./VideoSources";
 
 /**
- * The assets one script references, keyed by the raw name as written in the
- * script (`avg_225_haak_1#3$1`, `$escape_loop`). Only resolved names appear.
+ * Resolved assets of one script
  */
 export type StoryAssets = {
     backgrounds: { [key in string]?: string };
@@ -14,22 +13,7 @@ export type StoryAssets = {
     characters: { [key in string]?: CharacterSprite };
     music: { [key in string]?: MusicCue };
     sounds: { [key in string]?: string };
-    /**
-     * `[popupdialog]` head portraits, keyed by the raw `dialoghead` value
-     * (`$avatar_amiya`). 163 distinct values over EN, all 163 resolve.
-     */
     avatars: { [key in string]?: string };
-    /**
-     * Every name in `backgrounds` and `images`, under the SAME key, with the
-     * plate metrics that size it when the command carries no `screenadapt`.
-     */
     imageSizes: { [key in string]?: ImageSize };
-    /**
-     * Cutscene clips, keyed by the `[Video]` command's own `res` argument
-     * (`video/act38side/PV01.mp4`) so the engine looks a halt up by the
-     * string it already holds. Only resolved references appear: 12 of the 25
-     * distinct names the EN scripts reference have a file, the other 13 are
-     * clips EN retired and the reader skips them.
-     */
     videos: { [key in string]?: VideoSources };
 };

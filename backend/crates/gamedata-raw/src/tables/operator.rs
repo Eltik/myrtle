@@ -14,7 +14,8 @@ use crate::serde_helpers::{
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "UPPERCASE")]
-#[derive(Default)]
+#[derive(Default, ts_rs::TS)]
+#[ts(export)]
 pub enum OperatorPosition {
     Ranged,
     #[default]
@@ -26,7 +27,8 @@ pub enum OperatorPosition {
     Unknown,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default, ts_rs::TS)]
+#[ts(export)]
 pub enum OperatorPhase {
     #[serde(rename = "PHASE_0")]
     #[default]
@@ -37,7 +39,8 @@ pub enum OperatorPhase {
     Elite2,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default, ts_rs::TS)]
+#[ts(export)]
 pub enum OperatorRarity {
     #[serde(rename = "TIER_6")]
     SixStar,
@@ -68,7 +71,8 @@ impl OperatorRarity {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash, Default, ts_rs::TS)]
+#[ts(export)]
 pub enum OperatorProfession {
     #[serde(rename = "MEDIC")]
     Medic,
@@ -115,14 +119,16 @@ impl OperatorProfession {
     }
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "PascalCase")]
 pub struct UnlockCondition {
     pub phase: OperatorPhase,
     pub level: i32,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "PascalCase")]
 pub struct Blackboard {
     #[serde(alias = "key")]
@@ -133,7 +139,8 @@ pub struct Blackboard {
     pub value_str: Option<String>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "PascalCase")]
 pub struct TraitCandidate {
     pub unlock_condition: UnlockCondition,
@@ -144,13 +151,15 @@ pub struct TraitCandidate {
     pub range_id: Option<String>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "PascalCase")]
 pub struct Trait {
     pub candidates: Vec<TraitCandidate>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "PascalCase")]
 pub struct AttributeData {
     pub max_hp: i32,
@@ -178,14 +187,16 @@ pub struct AttributeData {
     pub disarmed_combat_immune: bool,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "PascalCase")]
 pub struct AttributeKeyFrame {
     pub level: i32,
     pub data: AttributeData,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "PascalCase")]
 pub struct EvolveCost {
     pub id: String,
@@ -198,7 +209,8 @@ pub struct EvolveCost {
     pub image: Option<String>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "PascalCase")]
 pub struct Phase {
     pub character_prefab_key: String,
@@ -213,7 +225,8 @@ pub struct Phase {
     pub level_up_cost: Option<Vec<LevelUpCostItem>>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "PascalCase")]
 pub struct LevelUpCostItem {
     pub id: String,
@@ -226,7 +239,8 @@ pub struct LevelUpCostItem {
     pub image: Option<String>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "PascalCase")]
 pub struct LevelUpCostCond {
     pub unlock_cond: UnlockCondition,
@@ -235,7 +249,8 @@ pub struct LevelUpCostCond {
     pub level_up_cost: Vec<LevelUpCostItem>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "PascalCase")]
 pub struct SpData {
     pub sp_type: String,
@@ -247,7 +262,8 @@ pub struct SpData {
     pub increment: f64,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "PascalCase")]
 pub struct SkillStatic {
     pub levels: Vec<SkillLevel>,
@@ -257,7 +273,8 @@ pub struct SkillStatic {
     pub image: Option<String>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "PascalCase")]
 pub struct OperatorSkillRef {
     #[serde(default)]
@@ -272,7 +289,8 @@ pub struct OperatorSkillRef {
     pub unlock_cond: Option<UnlockCondition>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "PascalCase")]
 pub struct TalentCandidate {
     pub unlock_condition: UnlockCondition,
@@ -294,14 +312,16 @@ pub struct TalentCandidate {
     pub is_hide_talent: Option<bool>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "PascalCase")]
 pub struct Talent {
     #[serde(default)]
     pub candidates: Vec<TalentCandidate>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "PascalCase")]
 pub struct AttributeModifier {
     pub attribute_type: String,
@@ -312,7 +332,8 @@ pub struct AttributeModifier {
     pub fetch_base_value_from_source_entity: bool,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "PascalCase")]
 pub struct PotentialBuffAttributes {
     pub abnormal_flags: Option<()>,
@@ -323,13 +344,15 @@ pub struct PotentialBuffAttributes {
     pub attribute_modifiers: Option<Vec<AttributeModifier>>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "PascalCase")]
 pub struct PotentialBuff {
     pub attributes: PotentialBuffAttributes,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "PascalCase")]
 pub struct PotentialRank {
     #[serde(rename = "Type_")]
@@ -339,7 +362,8 @@ pub struct PotentialRank {
     pub buff: Option<PotentialBuff>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "PascalCase")]
 pub struct AllSkillLevelUp {
     pub unlock_cond: UnlockCondition,
@@ -444,7 +468,8 @@ pub struct RawOperator {
     pub sp_target_type: Option<String>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct OperatorModule {
     #[serde(flatten)]
@@ -452,7 +477,8 @@ pub struct OperatorModule {
     pub data: ModuleData,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct EnrichedSkill {
     pub skill_id: String,
@@ -467,7 +493,8 @@ pub struct EnrichedSkill {
 }
 
 /// Power/faction affiliation (`MainPower`/`SubPower`), aliases both casings
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct PowerAffiliation {
     #[serde(default, alias = "NationId")]
@@ -479,7 +506,8 @@ pub struct PowerAffiliation {
 }
 
 /// `SubPower` id that is not a `MainPower` id, e.g. Texas the Omertosa's `siracusa`
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct HiddenFaction {
     /// `handbook_team_table` power id, also the `logo_{id}` camp logo name
@@ -488,7 +516,8 @@ pub struct HiddenFaction {
     pub name: Option<String>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct Operator {
     pub id: Option<String>,
@@ -609,21 +638,24 @@ impl Operator {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub enum Elite {
     E0,
     E1,
     E2,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct EliteCostItem {
     pub quantity: i32,
     pub material: Item,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct LevelCost {
     pub level: i32,
@@ -633,21 +665,24 @@ pub struct LevelCost {
 
 pub type LevelUpCost = Vec<LevelCost>;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub enum MasteryLevel {
     M1,
     M2,
     M3,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct SkillCostItem {
     pub quantity: i32,
     pub material: Item,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct SkillCost {
     pub unlock_condition: UnlockCondition,
@@ -656,7 +691,8 @@ pub struct SkillCost {
     pub level: MasteryLevel,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct SkillLevelCost {
     pub skill_id: String,
@@ -665,7 +701,8 @@ pub struct SkillLevelCost {
 
 pub type SkillLevelUpCost = Vec<SkillLevelCost>;
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct OperatorBaseSkill {
     pub buff_id: String,
@@ -685,7 +722,8 @@ pub struct OperatorBaseSkill {
     pub slot: usize,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct Drone {
     pub id: Option<String>,

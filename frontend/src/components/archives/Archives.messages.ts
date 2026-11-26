@@ -41,6 +41,7 @@ export const messages = {
         text: "{name}: {people, plural, one {# person} other {# people}}, {hexes, plural, one {# hex} other {# hexes}}",
         description: "Accessible name of a faction on the territories map. {name} is the faction name from game data.",
     },
+    "network.legend": { text: "Factions", description: "Accessible name of the faction list shown under the territories map on phone widths, where the on-map labels are hidden. Each entry opens that faction's chart." },
     "network.forceCounts": {
         text: "{people, plural, one {# person} other {# people}} · {hexes, plural, one {# hex} other {# hexes}}",
         description: "Small counts on a faction label on the map.",
@@ -79,7 +80,7 @@ export const messages = {
     "file.operatorPage": { text: "Operator page", description: "Button to the operator's main page." },
     "file.exam": { text: "Physical exam", description: "Section heading." },
     "file.examMissing": {
-        text: "{count, plural, one {# of the six ratings isn't on file, so that corner sits at the centre.} other {# of the six ratings aren't on file, so those corners sit at the centre.}}",
+        text: "{count, plural, one {# of the six ratings isn't on file, so that corner sits at the center.} other {# of the six ratings aren't on file, so those corners sit at the center.}}",
         description: "Note under the exam radar.",
     },
     "file.examNote": { text: "Rhodes Island's own assessment scale, not a combat stat.", description: "Note under the exam radar." },
@@ -188,7 +189,7 @@ export const messages = {
     "numbers.infectionByBirthplace": { text: "Infection by place of birth", description: "Card title." },
     "numbers.infectionByRace": { text: "Infection by race", description: "Card title." },
     "numbers.infectionByNote": {
-        text: "The gap between the two colours is files that say something neither reading can settle. Groups of fewer than {threshold} are left out.",
+        text: "The gap between the two colors is files that say something neither reading can settle. Groups of fewer than {threshold} are left out.",
         description: "Note under the infection-by charts.",
     },
     "numbers.exam": { text: "The physical exam", description: "Card title." },

@@ -29,7 +29,7 @@ export const messages = {
         description: "How the damage splits between the main target and the secondary targets, in the chosen metric.",
     },
     "dps.detail.spNotModelled": {
-        text: "SP on hit not modelled",
+        text: "SP on hit not modeled",
         description: "Caveat badge: this skill charges SP when the operator is hit, which the cycle model does not simulate; the classic average is shown.",
     },
     "dps.detail.spNotModelled.hint": {

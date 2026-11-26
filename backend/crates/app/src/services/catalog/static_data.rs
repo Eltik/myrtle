@@ -388,10 +388,13 @@ pub async fn skins_index(ctx: &AppContext, server: Server) -> Result<CachedJson,
     .await
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct SkinPopularityResponse {
+    #[ts(type = "number")]
     pub total_users: i64,
+    #[ts(type = "Record<string, number>")]
     pub counts: HashMap<String, i64>,
     pub computed_at: String,
 }
@@ -409,10 +412,12 @@ pub async fn skin_popularity(ctx: &AppContext) -> Result<CachedJson, AppError> {
         .await
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct CommunityEnemyAverageResponse {
     pub average_encountered: f64,
+    #[ts(type = "number")]
     pub user_count: i64,
     pub handbook_total: usize,
     pub computed_at: String,
@@ -445,7 +450,8 @@ pub async fn community_enemy_average(ctx: &AppContext) -> Result<CachedJson, App
         .await
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct EncounteredEnemy {
     pub enemy_id: String,
@@ -454,7 +460,8 @@ pub struct EncounteredEnemy {
     pub sort_id: Option<i32>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct EncounteredEnemiesResponse {
     pub encountered_count: usize,

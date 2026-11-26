@@ -11,6 +11,7 @@ license.workspace = true
 myrtle-dps-formulas.workspace = true
 myrtle-gamedata-raw.workspace = true
 serde.workspace = true
+ts-rs.workspace = true
 
 [lints]
 workspace = true

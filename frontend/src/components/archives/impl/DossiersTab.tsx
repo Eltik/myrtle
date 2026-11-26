@@ -6,6 +6,8 @@ import { ActiveFilterChips, type IActiveChip } from "#/components/operators/list
 import { FilterPanel } from "#/components/operators/list/impl/components/FilterPanel";
 import { FilterToggleButton } from "#/components/operators/list/impl/components/FilterToggleButton";
 import { SearchField } from "#/components/SearchField";
+import { Button } from "#/components/ui/button";
+import { LoadFailed } from "#/components/ui/load-failed";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "#/components/ui/table";
 import { useLocalStorageState } from "#/hooks/use-local-storage-state";
@@ -22,6 +24,16 @@ type SortKey = "name" | "race" | "birthplace" | "height" | "experience" | "infec
 
 /** The pinned first column: opaque so the scrolled cells pass under it, with a hairline on its right edge. */
 const STICKY_COL = "sticky left-0 z-1 bg-card shadow-[inset_-1px_0_0_var(--border)]";
+
+/**
+ * A free-text cell, capped so one long entry wraps instead of widening its whole column.
+ * Cells are `nowrap`, and the 61-character height "35cm (sitting) 75cm (stretching,
+ * including tail, approximate)" and a 63-character assimilation note made those two
+ * columns mostly blank space on every other row.
+ */
+function Prose({ children }: { children: string | null | undefined }) {
+    return <span className="block max-w-44 whitespace-normal leading-snug">{children ?? ""}</span>;
+}
 
 const FILTERS_KEY = "archives:dossiers:filters";
 const FILTERS_VISIBLE_KEY = "archives:dossiers:filtersVisible";
@@ -71,7 +83,7 @@ export function DossiersTab({ onOpenFile }: { onOpenFile: (id: string) => void }
     const t = useArchivesT();
     const f = useFormatters();
     const server = useGamedataServer();
-    const { data, isLoading, isError } = useQuery(archiveDossiersQueryOptions(server));
+    const { data, isLoading, isError, refetch } = useQuery(archiveDossiersQueryOptions(server));
     const [query, setQuery] = useState("");
     const deferred = useDeferredValue(query);
     const [filters, setFilters] = useLocalStorageState<IDossierFilters>(FILTERS_KEY, EMPTY_DOSSIER_FILTERS, { parse: parseFilters });
@@ -101,21 +113,22 @@ export function DossiersTab({ onOpenFile }: { onOpenFile: (id: string) => void }
         return [...list].sort((a, b) => compare(a, b, sort.key, sort.desc) || a.name.localeCompare(b.name));
     }, [all, filters, deferred, sort]);
 
-    if (isError) return <TabMessage>{t("page.error")}</TabMessage>;
+    if (isError) return <LoadFailed message={t("page.error")} onRetry={() => void refetch()} />;
 
     const header = (key: SortKey, label: string, className?: string) => {
         const active = sort.key === key;
         return (
             <TableHead className={className} aria-sort={active ? (sort.desc ? "descending" : "ascending") : "none"}>
-                <button
-                    type="button"
+                <Button
+                    variant="ghost"
+                    size="xs"
                     aria-label={t("dossiers.sortBy", { column: label })}
-                    className={cn("inline-flex pointer-coarse:min-h-11 cursor-pointer items-center gap-1 font-mono text-[10.5px] uppercase tracking-[0.12em]", active ? "text-primary" : "text-muted-foreground hover:text-foreground")}
+                    className={cn("-mx-2 font-mono font-semibold text-[10.5px] uppercase tracking-[0.12em] sm:text-[10.5px]", active ? "text-primary" : "text-muted-foreground hover:text-foreground")}
                     onClick={() => setSort((s) => ({ key, desc: s.key === key ? !s.desc : false }))}
                 >
                     {label}
                     {active ? sort.desc ? <ArrowDownIcon aria-hidden className="size-3" /> : <ArrowUpIcon aria-hidden className="size-3" /> : null}
-                </button>
+                </Button>
             </TableHead>
         );
     };
@@ -138,7 +151,7 @@ export function DossiersTab({ onOpenFile }: { onOpenFile: (id: string) => void }
                 {isLoading ? (
                     <TabMessage>{t("page.loading")}</TabMessage>
                 ) : (
-                    <div className="overflow-x-auto rounded-[14px] border border-border bg-card">
+                    <div className="overflow-x-auto rounded-2xl border border-border bg-card">
                         <Table className="min-w-[880px]">
                             <TableHeader>
                                 <TableRow>
@@ -173,12 +186,22 @@ export function DossiersTab({ onOpenFile }: { onOpenFile: (id: string) => void }
                                                     <span className="font-medium text-foreground">{d.name}</span>
                                                 </button>
                                             </TableCell>
-                                            <TableCell className="text-muted-foreground">{d.race ?? ""}</TableCell>
-                                            <TableCell className="text-muted-foreground">{d.birthplace ?? ""}</TableCell>
-                                            <TableCell className="tabular-nums">{d.height ?? ""}</TableCell>
-                                            <TableCell>{d.combatExperience ?? ""}</TableCell>
+                                            <TableCell className="text-muted-foreground">
+                                                <Prose>{d.race}</Prose>
+                                            </TableCell>
+                                            <TableCell className="text-muted-foreground">
+                                                <Prose>{d.birthplace}</Prose>
+                                            </TableCell>
+                                            <TableCell className="tabular-nums">
+                                                <Prose>{d.height}</Prose>
+                                            </TableCell>
+                                            <TableCell>
+                                                <Prose>{d.combatExperience}</Prose>
+                                            </TableCell>
                                             <TableCell className={cn(d.infectionState === "infected" && "text-destructive-foreground")}>{t(INFECTION_KEY[d.infectionState])}</TableCell>
-                                            <TableCell className="tabular-nums">{d.assimilation ?? ""}</TableCell>
+                                            <TableCell className="tabular-nums">
+                                                <Prose>{d.assimilation}</Prose>
+                                            </TableCell>
                                             <TableCell className="text-right tabular-nums">{d.storyCount > 0 ? f.number(d.storyCount) : ""}</TableCell>
                                             <TableCell className="text-right tabular-nums">{d.recordCount > 0 ? f.number(d.recordCount) : ""}</TableCell>
                                             <TableCell className="text-right tabular-nums">{d.linkCount > 0 ? f.number(d.linkCount) : ""}</TableCell>

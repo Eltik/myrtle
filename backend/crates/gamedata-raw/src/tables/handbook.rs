@@ -5,7 +5,8 @@ use serde::{Deserialize, Serialize};
 use super::material::ItemType;
 use crate::serde_helpers::{deserialize_fb_map, deserialize_fb_map_or_default};
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default, ts_rs::TS)]
+#[ts(export)]
 pub enum OperatorGender {
     #[default]
     Unknown,
@@ -16,7 +17,8 @@ pub enum OperatorGender {
     Conviction,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default, ts_rs::TS)]
+#[ts(export)]
 pub enum OperatorBirthPlace {
     #[default]
     Unknown,
@@ -60,7 +62,8 @@ pub enum OperatorBirthPlace {
     FarEast,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default, ts_rs::TS)]
+#[ts(export)]
 pub enum OperatorRace {
     Undisclosed,
     Zalak,
@@ -111,7 +114,8 @@ pub enum OperatorRace {
     Corrupted,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct BasicInfo {
     #[serde(alias = "CodeName")]
@@ -132,7 +136,8 @@ pub struct BasicInfo {
     pub infection_status: String,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct PhysicalExam {
     #[serde(alias = "PhysicalStrength")]
@@ -149,7 +154,8 @@ pub struct PhysicalExam {
     pub originium_arts_assimilation: String,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct OperatorProfile {
     #[serde(alias = "BasicInfo")]
@@ -158,7 +164,8 @@ pub struct OperatorProfile {
     pub physical_exam: PhysicalExam,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct HandbookRewardItem {
     #[serde(alias = "Id")]
@@ -169,7 +176,8 @@ pub struct HandbookRewardItem {
     pub item_type: ItemType,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct TeamMission {
     #[serde(alias = "Id")]
@@ -186,7 +194,8 @@ pub struct TeamMission {
     pub favor_point: i32,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct HandbookDisplayCondition {
     #[serde(alias = "CharId")]
@@ -197,16 +206,19 @@ pub struct HandbookDisplayCondition {
     pub condition_type: String,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct HandbookStageTime {
     #[serde(alias = "Timestamp")]
+    #[ts(type = "number")]
     pub timestamp: i64,
     #[serde(alias = "CharSet")]
     pub char_set: Vec<String>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct HandbookStory {
     #[serde(alias = "StoryText")]
@@ -221,7 +233,8 @@ pub struct HandbookStory {
     pub patch_id_list: Option<Vec<String>>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct HandbookStoryTextAudio {
     #[serde(alias = "Stories")]
@@ -232,7 +245,8 @@ pub struct HandbookStoryTextAudio {
     pub un_lockor_not: bool,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct HandbookUnlockParam {
     #[serde(alias = "UnlockType")]
@@ -245,7 +259,8 @@ pub struct HandbookUnlockParam {
     pub unlock_param3: Option<String>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct HandbookAvgEntry {
     #[serde(alias = "StoryId")]
@@ -264,7 +279,8 @@ pub struct HandbookAvgEntry {
     pub story_txt: String,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct HandbookAvgList {
     #[serde(alias = "StorySetId")]
@@ -274,6 +290,7 @@ pub struct HandbookAvgList {
     #[serde(alias = "SortId")]
     pub sort_id: i32,
     #[serde(alias = "StoryGetTime")]
+    #[ts(type = "number")]
     pub story_get_time: i64,
     #[serde(alias = "RewardItem")]
     pub reward_item: Vec<HandbookRewardItem>,
@@ -285,7 +302,8 @@ pub struct HandbookAvgList {
     pub char_id: String,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct HandbookItem {
     #[serde(rename = "charID", alias = "CharID")]
@@ -300,7 +318,8 @@ pub struct HandbookItem {
     pub handbook_avg_list: Vec<HandbookAvgList>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct NPCUnlockInfo {
     #[serde(alias = "UnLockType")]
@@ -311,7 +330,8 @@ pub struct NPCUnlockInfo {
     pub un_lock_string: Option<String>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct HandbookNPCItem {
     #[serde(alias = "NpcId")]
@@ -348,7 +368,8 @@ pub struct HandbookNPCItem {
     pub unlock_dict: HashMap<String, NPCUnlockInfo>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct HandbookStageData {
     #[serde(alias = "CharId", default)]
@@ -378,10 +399,12 @@ pub struct HandbookStageData {
     #[serde(alias = "PicId", default)]
     pub pic_id: String,
     #[serde(alias = "StageGetTime", default)]
+    #[ts(type = "number")]
     pub stage_get_time: i64,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct Handbook {
     pub handbook_dict: HashMap<String, HandbookItem>,

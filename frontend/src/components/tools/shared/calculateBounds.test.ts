@@ -12,7 +12,7 @@ import { CALCULATE_BOUNDS, clampField } from "./calculateBounds";
 import { decodeInstance, decodeSweep } from "./shareCodec";
 
 // Joined by hand, as in `conditionals.test.ts`: Vite rewrites `new URL(literal, import.meta.url)`.
-const BACKEND_DPS = join(dirname(fileURLToPath(import.meta.url)), "../../../../../backend/src/app/services/dps.rs");
+const BACKEND_DPS = join(dirname(fileURLToPath(import.meta.url)), "../../../../../backend/crates/app/src/services/catalog/dps/request.rs");
 
 /** Every `int_range` / `float_range` call inside `CalculateRequest::validate`, by field name. */
 function backendBounds(): Map<string, [number, number]> {

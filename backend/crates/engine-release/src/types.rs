@@ -9,7 +9,8 @@ use crate::{
 };
 use myrtle_gamedata_raw::tables::activity::{FarmStage, OpStage};
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(
     tag = "status",
     rename_all = "snake_case",
@@ -18,19 +19,26 @@ use myrtle_gamedata_raw::tables::activity::{FarmStage, OpStage};
 pub enum Resolution {
     Confirmed {
         en_id: String,
+        #[ts(type = "number")]
         en_start: i64,
+        #[ts(type = "number")]
         en_end: i64,
     },
     Override {
         en_id: Option<String>,
+        #[ts(type = "number")]
         en_start: i64,
+        #[ts(type = "number | null")]
         en_end: Option<i64>,
         source: String,
         note: String,
     },
     Estimated {
+        #[ts(type = "number")]
         en_start: i64,
+        #[ts(type = "number")]
         lo: i64,
+        #[ts(type = "number")]
         hi: i64,
     },
     Unlisted,
@@ -38,17 +46,21 @@ pub enum Resolution {
     Independent,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct LagSample {
     pub cn_id: String,
     pub name: String,
+    #[ts(type = "number")]
     pub cn_start: i64,
+    #[ts(type = "number")]
     pub en_start: i64,
     pub lag_days: f64,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct LagModel {
     pub window: usize,
@@ -59,14 +71,16 @@ pub struct LagModel {
     pub samples: Vec<LagSample>,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct YearlyModel {
     pub types: Vec<String>,
     pub model: LagModel,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct Backtest {
     pub window: usize,
@@ -78,7 +92,8 @@ pub struct Backtest {
     pub band_hit_rate: f64,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct LagResponse {
     pub model: LagModel,
@@ -86,7 +101,8 @@ pub struct LagResponse {
     pub backtest: Backtest,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "lowercase")]
 pub enum ShopGoodKind {
     Outfit,
@@ -113,7 +129,8 @@ impl ShopGoodKind {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct ShopItem {
     pub item_id: String,
@@ -123,7 +140,8 @@ pub struct ShopItem {
     pub rarity: i32,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct ShopGood {
     pub good_id: String,
@@ -136,21 +154,25 @@ pub struct ShopGood {
     pub avail_count: i32,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct EventShop {
     /// Which server's shop this is
     pub server: String,
     pub shop_name: String,
     pub token: ShopItem,
+    #[ts(type = "number")]
     pub start_time: i64,
+    #[ts(type = "number")]
     pub end_time: i64,
     /// Token cost of every limited good
     pub max_price: i32,
     pub goods: Vec<ShopGood>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct ReleaseEvent {
     pub cn_id: String,
@@ -158,7 +180,9 @@ pub struct ReleaseEvent {
     pub name_en: Option<String>,
     pub activity_type: String,
     pub has_stage: bool,
+    #[ts(type = "number")]
     pub cn_start: i64,
+    #[ts(type = "number")]
     pub cn_end: i64,
     pub op_stages: Vec<OpStage>,
     pub farm_stages: Vec<FarmStage>,
@@ -169,7 +193,8 @@ pub struct ReleaseEvent {
     pub resolution: Resolution,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct EventsResponse {
     pub model: LagModel,
@@ -177,7 +202,8 @@ pub struct EventsResponse {
     pub events: Vec<ReleaseEvent>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "snake_case")]
 pub enum AlignMethod {
     Content,
@@ -185,20 +211,24 @@ pub enum AlignMethod {
     None,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct PoolAlignment {
     pub en_pool_id: Option<String>,
     pub method: AlignMethod,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct ReleaseBanner {
     pub cn_pool_id: String,
     pub rule_type: String,
     pub name_cn: String,
+    #[ts(type = "number")]
     pub cn_open: i64,
+    #[ts(type = "number")]
     pub cn_end: i64,
     /// Returning players (`GachaPoolClient::returning`)
     pub returning: bool,
@@ -219,7 +249,8 @@ pub struct ReleaseBanner {
     pub linkage_loop_at: Option<u32>,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct BannersResponse {
     pub model: LagModel,
@@ -229,7 +260,8 @@ pub struct BannersResponse {
     pub rule_independence: Vec<crate::align::RuleIndependence>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct NewSkin {
     pub skin_id: String,
@@ -239,6 +271,7 @@ pub struct NewSkin {
     pub skin_group_name: String,
     pub is_buy_skin: bool,
     pub obtain_approach: Option<String>,
+    #[ts(type = "number")]
     pub cn_get_time: i64,
     pub skin_name_auto: Option<AutoName>,
     pub skin_group_name_auto: Option<AutoName>,
@@ -250,19 +283,24 @@ pub struct NewSkin {
     pub resolution: Resolution,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct EventAnchor {
     pub cn_id: String,
     pub name_cn: String,
+    #[ts(type = "number")]
     pub cn_start: i64,
+    #[ts(type = "number")]
     pub cn_end: i64,
+    #[ts(type = "number")]
     pub offset_secs: i64,
     pub name_en: Option<String>,
     pub name_en_auto: Option<AutoName>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct SkinTile {
     pub skin_id: String,
@@ -274,7 +312,8 @@ pub struct SkinTile {
     pub price: SkinPrice,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct SkinGroupArt {
     pub skin_group_id: String,
@@ -284,17 +323,21 @@ pub struct SkinGroupArt {
     pub logo_path: Option<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct BatchForecast {
     pub name: String,
     pub name_en_auto: Option<AutoName>,
+    #[ts(type = "number")]
     pub cn_start: i64,
+    #[ts(type = "number")]
     pub cn_end: i64,
     pub resolution: Resolution,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct RerunForecast {
     pub skin_group_id: String,
@@ -302,30 +345,40 @@ pub struct RerunForecast {
     pub skin_ids: Vec<String>,
     pub skins: Vec<SkinTile>,
     pub windows: Vec<SaleWindow>,
+    #[ts(type = "number")]
     pub last_seen: i64,
     pub next: Resolution,
     pub basis: RerunBasis,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct ReviewWindow {
+    #[ts(type = "number")]
     pub cn_start: i64,
+    #[ts(type = "number")]
     pub cn_end: i64,
+    #[ts(type = "number")]
     pub pool_cutoff: i64,
     pub resolution: Resolution,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct ReviewOutfit {
     #[serde(flatten)]
+    #[ts(flatten)]
     pub tile: SkinTile,
+    #[ts(type = "number")]
     pub cn_get_time: i64,
+    #[ts(type = "number | null")]
     pub en_get_time: Option<i64>,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct SkinsResponse {
     pub model: LagModel,
@@ -339,22 +392,27 @@ pub struct SkinsResponse {
     pub group_art: BTreeMap<String, SkinGroupArt>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct ReleaseOverride {
     pub kind: String,
     pub cn_id: String,
     pub en_id: Option<String>,
     pub en_name: Option<String>,
+    #[ts(type = "number | null")]
     pub en_start: Option<i64>,
+    #[ts(type = "number | null")]
     pub en_end: Option<i64>,
     pub featured_chars: Option<Vec<String>>,
     pub source: String,
     pub note: String,
+    #[ts(type = "number")]
     pub updated_at: i64,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct PutOverride {
     pub kind: String,
@@ -366,8 +424,10 @@ pub struct PutOverride {
     #[serde(default)]
     pub featured_chars: Option<Vec<String>>,
     #[serde(default)]
+    #[ts(type = "number | null")]
     pub en_start: Option<i64>,
     #[serde(default)]
+    #[ts(type = "number | null")]
     pub en_end: Option<i64>,
     #[serde(default)]
     pub source: Option<String>,
@@ -375,17 +435,20 @@ pub struct PutOverride {
     pub note: Option<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct ReleasePlan {
     pub initial: i32,
     pub initial_manual: bool,
     pub picks: Vec<String>,
     pub stages: HashMap<String, HashMap<String, bool>>,
+    #[ts(type = "number")]
     pub updated_at: i64,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct PutReleasePlan {
     pub initial: i32,

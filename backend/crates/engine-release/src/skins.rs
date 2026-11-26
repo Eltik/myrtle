@@ -22,17 +22,21 @@ fn is_skin_shop_sold(skin: &Skin, shop_skin_ids: &HashSet<&str>) -> bool {
         )
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "snake_case")]
 pub enum SaleKind {
     Listing,
     Review,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct SaleWindow {
+    #[ts(type = "number")]
     pub start_time: i64,
+    #[ts(type = "number")]
     pub end_time: i64,
     pub kind: SaleKind,
 }
@@ -96,7 +100,8 @@ pub struct Batch {
     pub tag_id: Option<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct AnniversaryStats {
     pub year: u32,
@@ -107,10 +112,12 @@ pub struct AnniversaryStats {
     pub dev_p75_days: f64,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub enum RerunBasis {
     Cadence {
+        #[ts(type = "number")]
         en_last: i64,
         n: usize,
         median_days: f64,
@@ -119,7 +126,9 @@ pub enum RerunBasis {
         own_gap_days: Option<f64>,
     },
     CnListing {
+        #[ts(type = "number")]
         cn_start: i64,
+        #[ts(type = "number")]
         cn_end: i64,
         anchor: Option<super::types::EventAnchor>,
     },

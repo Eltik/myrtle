@@ -6,7 +6,8 @@ use serde::Serialize;
 use super::sessions::{portal_session_key, session_key};
 use crate::{AppContext, AppError, Subject};
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct DisconnectResult {
     pub status: String,
     pub removed: bool,

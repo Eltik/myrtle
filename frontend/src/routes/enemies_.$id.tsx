@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { EnemyDetail } from "#/components/enemies/detail/Enemies";
+import { RouteError } from "#/components/ui/route-error";
 import { enemyDetailQueryOptions } from "#/lib/api/enemies";
 import { resolveGamedataServer } from "#/lib/api/gamedata";
 import { metaT } from "#/lib/meta";
@@ -10,7 +11,7 @@ import { seo } from "#/lib/seo";
 
 export const Route = createFileRoute("/enemies_/$id")({
     component: RouteComponent,
-    errorComponent: RootErrorComponent,
+    errorComponent: RouteError,
     // Only the single enemy record + its race lookup are needed for the default
     // (Overview) tab. The "Appears In" and Chibi tabs fetch their own data lazily
     // when opened, so nothing else is warmed here.
@@ -38,18 +39,6 @@ export const Route = createFileRoute("/enemies_/$id")({
         };
     },
 });
-
-function RootErrorComponent({ error }: { error: unknown }) {
-    console.error("Router error:", error);
-
-    return (
-        <div style={{ padding: 20 }}>
-            <h1>Something went wrong</h1>
-            <pre style={{ color: "red" }}>{error instanceof Error ? error.message : JSON.stringify(error, null, 2)}</pre>
-            <pre>{error instanceof Error ? error.stack : null}</pre>
-        </div>
-    );
-}
 
 function RouteComponent() {
     return <EnemyDetail />;

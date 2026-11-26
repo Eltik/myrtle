@@ -20,7 +20,7 @@ export function ServerSplitCard({ shares }: { shares: IServerShare[] }) {
     const byServer = new Map<string, number>(shares.map((s) => [s.server.toUpperCase(), s.players]));
 
     return (
-        <aside className="rounded-xl border border-border bg-card p-4 shadow-[0_1px_2px_rgb(0_0_0/0.04)]">
+        <aside className="rounded-2xl border border-border bg-card p-4 shadow-[0_1px_2px_rgb(0_0_0/0.04)]">
             <div className="mb-2.5 flex items-center justify-between">
                 <span className="font-sans font-semibold text-[13.5px] text-foreground leading-tight tracking-tight">{t("leaderboard.serverSplit.title")}</span>
             </div>

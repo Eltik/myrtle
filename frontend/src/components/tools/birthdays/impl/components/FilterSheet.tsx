@@ -41,7 +41,7 @@ export function FilterSheet({ filters, onChange, nations, classNames, matched, t
             <SheetContent side="right" variant="inset" className="w-[min(420px,100vw)]">
                 <SheetHeader>
                     <SheetTitle>{t("birthdays.sheet.title")}</SheetTitle>
-                    <p className="font-medium font-mono text-[11.5px] text-muted-foreground uppercase tracking-[0.08em]">{t("birthdays.sheet.matchCount", { matched, total })}</p>
+                    <p className="text-muted-foreground text-sm">{t("birthdays.sheet.matchCount", { matched, total })}</p>
                 </SheetHeader>
                 <SheetPanel className="px-5 pt-1 pb-2">
                     <FilterControls filters={filters} onChange={onChange} nations={nations} classNames={classNames} />

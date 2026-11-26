@@ -33,7 +33,6 @@ myrtle-types = { path = "crates/types" }
 myrtle-gamedata-raw = { path = "crates/gamedata-raw" }
 myrtle-storage = { path = "crates/storage" }
 myrtle-gamedata = { path = "crates/gamedata" }
-myrtle-snapshot = { path = "crates/snapshot" }
 myrtle-engine-dps = { path = "crates/engine-dps" }
 myrtle-dps-formulas = { path = "crates/dps-formulas" }
 myrtle-engine-grade = { path = "crates/engine-grade" }
@@ -100,6 +99,7 @@ walkdir = "2.5.0"
 zip = "8.6.0"
 flate2 = "1.1.11"
 toml = "0.8.19"
+ts-rs = { version = "11.1.0", features = ["chrono-impl", "uuid-impl", "serde-json-impl", "no-serde-warnings"] }
 
 [workspace.lints.rust]
 unsafe_code = "deny"
@@ -165,9 +165,8 @@ crates = ["myrtle-gamedata"]
 
 [[workspace.metadata.layers]]
 level = 3
-name = "snapshot, engines, upstream"
+name = "engines, upstream"
 crates = [
-    "myrtle-snapshot",
     "myrtle-engine-dps",
     "myrtle-dps-formulas",
     "myrtle-engine-grade",
@@ -208,7 +207,6 @@ pure = [
 ]
 pure-forbidden = [
     "myrtle-hypergryph",
-    "myrtle-snapshot",
     "myrtle-storage",
     "sqlx",
     "tokio",

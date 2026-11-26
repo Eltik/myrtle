@@ -5,7 +5,10 @@ import { useMemo, useRef, useState } from "react";
 import { asset } from "#/components/operators/detail/impl/assets";
 import { VOICE_LANGUAGE_LABEL_KEY } from "#/components/operators/detail/impl/constants";
 import type { messages as detailConstantsMessages } from "#/components/operators/detail/impl/constants.messages";
+import { Button } from "#/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "#/components/ui/collapsible";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
+import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import { storyIndexQueryOptions } from "#/lib/api/story";
 import { GameText } from "#/lib/gamedata/GameText";
 import { useGamedataServer, useT } from "#/lib/i18n";
@@ -58,7 +61,7 @@ export function ArchivePanel({ sections, audio }: IArchivePanelProps): React.Rea
 
     return (
         <div className="flex flex-col gap-2 px-4 py-3 sm:px-5">
-            <p className="m-0 font-mono text-[10.5px] text-muted-foreground uppercase tabular-nums tracking-[0.07em]">{t("archive.total", { count: archiveTotal(sections) })}</p>
+            <p className="m-0 font-sans text-[12px] text-muted-foreground tabular-nums">{t("archive.total", { count: archiveTotal(sections) })}</p>
             {sections.map((section, at) => (
                 <Section key={section.kind} section={section} first={at === 0} audio={audio} onView={setView} />
             ))}
@@ -87,21 +90,15 @@ export function ChapterViewSwitch({ view, onView, sections }: { view: ChapterVie
     if (sections.length === 0) return null;
 
     return (
-        <fieldset className="msv-scroll flex shrink-0 gap-0.5 overflow-x-auto border-border border-b px-4 pb-3 sm:px-5" aria-label={t("archive.view.aria")}>
-            <span className="flex gap-0.5 rounded-[9px] border border-border bg-secondary/45 p-0.75">
+        <div className="msv-scroll flex shrink-0 overflow-x-auto border-border border-b px-4 pb-3 sm:px-5">
+            <ToggleGroup aria-label={t("archive.view.aria")} value={[view]} onValueChange={(next) => next[0] && onView(next[0] as (typeof CHAPTER_VIEWS)[number])} variant="outline">
                 {CHAPTER_VIEWS.map((key) => (
-                    <button
-                        key={key}
-                        type="button"
-                        onClick={() => onView(key)}
-                        aria-pressed={view === key}
-                        className={cn("h-11 pointer-coarse:h-11 shrink-0 cursor-pointer rounded-md px-3 font-sans font-semibold text-[11.5px] transition-colors sm:h-7", view === key ? "bg-background text-foreground shadow-sm/5" : "text-muted-foreground hover:text-foreground")}
-                    >
+                    <ToggleGroupItem key={key} value={key} className="px-3 font-semibold text-[11.5px] sm:text-[11.5px]">
                         {key === "entries" ? t("archive.view.entries") : t("archive.view.archive")}
-                    </button>
+                    </ToggleGroupItem>
                 ))}
-            </span>
-        </fieldset>
+            </ToggleGroup>
+        </div>
     );
 }
 
@@ -112,7 +109,7 @@ function Section({ section, first, audio, onView }: { section: StoryArchiveSecti
 
     return (
         <Collapsible open={open} onOpenChange={setOpen}>
-            <CollapsibleTrigger className="flex min-h-11 w-full items-center justify-between gap-2 rounded-[9px] border border-border bg-secondary/35 px-3 py-2 text-left transition-colors hover:bg-secondary/55 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60">
+            <CollapsibleTrigger className="flex min-h-11 w-full items-center justify-between gap-2 rounded-[9px] border border-border bg-secondary/35 px-3 py-2 text-left transition-colors hover:bg-secondary/55 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                 <span className="flex min-w-0 items-baseline gap-2">
                     <span className="truncate font-sans font-semibold text-[13px] text-foreground">{t(`archive.section.${section.kind}`)}</span>
                     <span className="font-mono text-[10.5px] text-muted-foreground tabular-nums">{section.count}</span>
@@ -200,10 +197,10 @@ function LogChapter({ chapter }: { chapter: ArchiveLogChapter }): React.ReactEle
             <h4 className="m-0 flex flex-wrap items-center gap-2">
                 {chapter.displayId ? <span className="rounded-[5px] border border-border bg-secondary/55 px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground tabular-nums">{chapter.displayId}</span> : null}
                 <span className="font-sans font-semibold text-[13px] text-foreground">{chapter.name}</span>
-                {icon ? <span className="font-mono text-[10px] text-muted-foreground uppercase tracking-[0.08em]">{icon}</span> : null}
+                {icon ? <span className="font-sans text-[11.5px] text-muted-foreground">{icon}</span> : null}
             </h4>
             {chapter.unlockDesc ? (
-                <p className="m-0 font-sans text-[11.5px] text-muted-foreground/85 leading-relaxed">
+                <p className="m-0 font-sans text-[11.5px] text-subtle-foreground leading-relaxed">
                     <GameText text={chapter.unlockDesc} />
                 </p>
             ) : null}
@@ -221,11 +218,11 @@ function LogChapter({ chapter }: { chapter: ArchiveLogChapter }): React.ReactEle
 /** A place: its picture, the name the story uses, the name the setting writes on a map, and what it is. */
 function Landmark({ landmark }: { landmark: ArchiveLandmark }): React.ReactElement {
     return (
-        <article className="flex min-w-0 flex-col gap-1.5 overflow-hidden rounded-[10px] border border-border bg-secondary/25">
+        <article className="flex min-w-0 flex-col gap-1.5 overflow-hidden rounded-2xl border border-border bg-secondary/25">
             {landmark.pictureUrl ? <img src={asset(landmark.pictureUrl)} alt="" aria-hidden="true" loading="lazy" decoding="async" className="aspect-16/9 w-full object-cover" /> : null}
             <div className="flex flex-col gap-1 px-3 pt-1 pb-3">
                 <span className="font-sans font-semibold text-[13px] text-foreground">{landmark.name}</span>
-                {landmark.engName ? <span className="font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.06em]">{landmark.engName}</span> : null}
+                {landmark.engName ? <span className="font-sans text-[11.5px] text-muted-foreground">{landmark.engName}</span> : null}
                 <p className="m-0 font-sans text-[12px] text-muted-foreground leading-relaxed">
                     <GameText text={landmark.description} />
                 </p>
@@ -240,10 +237,10 @@ function NewsItem({ item }: { item: ArchiveNewsItem }): React.ReactElement {
     const masthead = item.format?.mainLogoUrl ?? item.format?.logoUrl;
 
     return (
-        <article className="flex flex-col gap-2 rounded-[10px] border border-border bg-secondary/25 px-3 py-3">
+        <article className="flex flex-col gap-2 rounded-2xl border border-border bg-secondary/25 px-3 py-3">
             <header className="flex flex-col gap-1">
                 {masthead ? <img src={asset(masthead)} alt={item.format?.typeName ?? ""} loading="lazy" decoding="async" className="h-7 w-auto max-w-full self-start object-contain" /> : null}
-                <span className="flex flex-wrap items-center gap-x-2 font-mono text-[10px] text-muted-foreground uppercase tracking-[0.08em]">
+                <span className="flex flex-wrap items-center gap-x-2 font-sans text-[11.5px] text-muted-foreground">
                     {item.format?.typeName && !masthead ? <span>{item.format.typeName}</span> : null}
                     {item.author ? <span>{t("archive.news.author", { author: item.author })}</span> : null}
                 </span>
@@ -260,7 +257,7 @@ function NewsItem({ item }: { item: ArchiveNewsItem }): React.ReactElement {
                         </p>
                     ) : line.url ? (
                         // biome-ignore lint/suspicious/noArrayIndexKey: same
-                        <img key={at} src={asset(line.url)} alt={line.name} loading="lazy" decoding="async" className="w-full rounded-[7px] object-contain" />
+                        <img key={at} src={asset(line.url)} alt={line.name} loading="lazy" decoding="async" className="aspect-video w-full rounded-[7px] object-contain" />
                     ) : null,
                 )}
             </div>
@@ -271,10 +268,10 @@ function NewsItem({ item }: { item: ArchiveNewsItem }): React.ReactElement {
 /** One document: the drawn title where the event has one, the written one where it does not, and the date it is stamped with. */
 function FileCard({ file }: { file: ArchiveFile }): React.ReactElement {
     return (
-        <article className="flex flex-col gap-2 rounded-[10px] border border-border bg-secondary/25 px-3 py-3">
+        <article className="flex flex-col gap-2 rounded-2xl border border-border bg-secondary/25 px-3 py-3">
             {file.titlePictureUrl ? <img src={asset(file.titlePictureUrl)} alt={file.title} loading="lazy" decoding="async" className="h-9 w-auto max-w-full self-start object-contain" /> : <h4 className="m-0 font-sans font-semibold text-[13.5px] text-foreground leading-snug">{file.title}</h4>}
             {file.date ? <span className="font-mono text-[10.5px] text-muted-foreground tabular-nums">{file.date}</span> : null}
-            {file.pictureUrl ? <img src={asset(file.pictureUrl)} alt="" aria-hidden="true" loading="lazy" decoding="async" className="w-full rounded-[7px] object-contain" /> : null}
+            {file.pictureUrl ? <img src={asset(file.pictureUrl)} alt="" aria-hidden="true" loading="lazy" decoding="async" className="aspect-video w-full rounded-[7px] object-contain" /> : null}
             <p className="m-0 whitespace-pre-line font-sans text-[12.5px] text-foreground/90 leading-relaxed">
                 <GameText text={file.text} />
             </p>
@@ -294,12 +291,12 @@ function GalleryTile({ picture, onView }: { picture: ArchivePicture; onView: (vi
                     type="button"
                     onClick={() => onView({ name: picture.title, url })}
                     aria-label={t("illustrations.item.view", { name: picture.title })}
-                    className="block aspect-16/9 w-full cursor-pointer overflow-hidden rounded-[10px] border border-border bg-secondary/55 ring-inset transition-colors hover:border-primary/45 focus-visible:ring-2 focus-visible:ring-ring/60"
+                    className="block aspect-16/9 w-full cursor-pointer overflow-hidden rounded-2xl border border-border bg-secondary/55 ring-inset transition-colors hover:border-primary/45 focus-visible:ring-2 focus-visible:ring-ring"
                 >
                     <img src={url} alt="" aria-hidden="true" loading="lazy" decoding="async" className="h-full w-full object-cover" />
                 </button>
             ) : (
-                <div className="flex aspect-16/9 w-full items-center justify-center rounded-[10px] border border-border border-dashed bg-secondary/25 px-2 text-center font-sans text-[10.5px] text-muted-foreground/70">{t("illustrations.item.notExtracted")}</div>
+                <div className="flex aspect-16/9 w-full items-center justify-center rounded-2xl border border-border border-dashed bg-secondary/25 px-2 text-center font-sans text-[10.5px] text-subtle-foreground">{t("illustrations.item.notExtracted")}</div>
             )}
             <figcaption className="flex min-w-0 flex-col gap-0.5">
                 <span className="truncate font-sans text-[12px] text-foreground" title={picture.title}>
@@ -324,14 +321,15 @@ function TrackRow({ track, audio }: { track: ArchiveTrack; audio: IChapterAudio 
 
     return (
         <div className="flex min-h-11 items-center gap-2.5 rounded-[9px] border border-border bg-secondary/25 px-2.5 py-1.5">
-            <button
-                type="button"
+            <Button
+                variant="outline"
+                size="icon-lg"
+                className="rounded-full before:rounded-full"
                 onClick={() => audio.toggle(key, { intro: track.introUrl ?? undefined, loop: track.loopUrl }, track.name?.trim() ? track.name : null)}
                 aria-label={playing ? t("archive.theme.pause", { name }) : t("archive.theme.play", { name })}
-                className="flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-full border border-border bg-background text-foreground transition-colors hover:border-primary/45 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 sm:size-9"
             >
                 {playing ? <PauseIcon className="size-4" aria-hidden="true" /> : <PlayIcon className="size-4" aria-hidden="true" />}
-            </button>
+            </Button>
             <span className="flex min-w-0 flex-col">
                 <span className="truncate font-sans text-[12.5px] text-foreground">{name}</span>
                 {track.description ? (
@@ -363,7 +361,7 @@ function Recordings({ nodes, hidden }: { nodes: readonly ArchiveRecordingNode[];
                 <section key={node.id} className="flex flex-col gap-1.5">
                     <h4 className="m-0 font-sans font-semibold text-[13px] text-foreground">{node.title}</h4>
                     {node.unlockDesc ? (
-                        <p className="m-0 font-sans text-[11.5px] text-muted-foreground/85 leading-relaxed">
+                        <p className="m-0 font-sans text-[11.5px] text-subtle-foreground leading-relaxed">
                             <GameText text={node.unlockDesc} />
                         </p>
                     ) : null}
@@ -379,7 +377,7 @@ function Recordings({ nodes, hidden }: { nodes: readonly ArchiveRecordingNode[];
             {hidden.length > 0 ? (
                 <section className="flex flex-col gap-1.5">
                     <h4 className="m-0 font-sans font-semibold text-[13px] text-foreground">{t("archive.recordings.hidden")}</h4>
-                    <p className="m-0 font-sans text-[11.5px] text-muted-foreground/85 leading-relaxed">{t("archive.recordings.hiddenNote")}</p>
+                    <p className="m-0 font-sans text-[11.5px] text-subtle-foreground leading-relaxed">{t("archive.recordings.hiddenNote")}</p>
                     <ul className="m-0 flex list-none flex-col gap-1.5 p-0">
                         {hidden.map((clip) => (
                             <li key={`${clip.charId}-${clip.voiceId}-${clip.index}`}>
@@ -446,33 +444,30 @@ function ClipRow({ clip, player, name }: { clip: ArchiveClip; player: IClipPlaye
 
     return (
         <div className="flex min-h-11 flex-wrap items-center gap-2 rounded-[9px] border border-border bg-secondary/25 px-2.5 py-1.5">
-            <button
-                type="button"
-                disabled={url === null}
-                onClick={() => url && player.play(url)}
-                aria-label={playing ? t("archive.clip.pause", { name }) : t("archive.clip.play", { name })}
-                className="flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-full border border-border bg-background text-foreground transition-colors hover:border-primary/45 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 disabled:cursor-default disabled:opacity-45 sm:size-9"
-            >
+            <Button variant="outline" size="icon-lg" className="rounded-full before:rounded-full" disabled={url === null} onClick={() => url && player.play(url)} aria-label={playing ? t("archive.clip.pause", { name }) : t("archive.clip.play", { name })}>
                 {playing ? <PauseIcon className="size-4" aria-hidden="true" /> : <PlayIcon className="size-4" aria-hidden="true" />}
-            </button>
+            </Button>
             <img src={getAvatarById(clip.charId)} alt="" aria-hidden="true" loading="lazy" decoding="async" className="size-7 shrink-0 rounded-full bg-secondary/55 object-cover" />
             <span className="min-w-0 flex-1 basis-24 truncate font-sans text-[12.5px] text-foreground">{name}</span>
             {tracks.length > 1 ? (
-                <select
-                    aria-label={t("archive.clip.language")}
+                <Select
                     value={chosen?.language ?? ""}
-                    onChange={(e) => {
+                    onValueChange={(next) => {
                         if (playing) player.stop();
-                        setLanguage(e.target.value as LangType);
+                        setLanguage(next as LangType);
                     }}
-                    className="h-11 pointer-coarse:h-11 shrink-0 cursor-pointer rounded-[7px] border border-border bg-background px-1.5 font-mono text-[10.5px] text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 sm:h-8"
                 >
-                    {tracks.map((track) => (
-                        <option key={track.language} value={track.language}>
-                            {VOICE_LANGUAGE_LABEL_KEY[track.language] ? td(VOICE_LANGUAGE_LABEL_KEY[track.language]) : track.language}
-                        </option>
-                    ))}
-                </select>
+                    <SelectTrigger size="sm" aria-label={t("archive.clip.language")} className="w-auto min-w-0 shrink-0 font-mono text-[10.5px] text-muted-foreground sm:text-[10.5px]">
+                        <SelectValue>{(value: string) => (VOICE_LANGUAGE_LABEL_KEY[value as LangType] ? td(VOICE_LANGUAGE_LABEL_KEY[value as LangType]) : value)}</SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                        {tracks.map((track) => (
+                            <SelectItem key={track.language} value={track.language}>
+                                {VOICE_LANGUAGE_LABEL_KEY[track.language] ? td(VOICE_LANGUAGE_LABEL_KEY[track.language]) : track.language}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
             ) : null}
         </div>
     );

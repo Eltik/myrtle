@@ -25,6 +25,8 @@ export interface IUpdateUserSettingsInput {
     public_profile: boolean;
     store_gacha: boolean;
     share_stats: boolean;
+    /** Visitors may read the pull history (the profile's Pulls tab, shared links). Off by default. */
+    public_gacha: boolean;
     /**
      * Omitted leaves the saved layout alone, `null` resets it to the default (tabs,
      * showcase, background and header alike), a patch sets the keys it carries (the backend

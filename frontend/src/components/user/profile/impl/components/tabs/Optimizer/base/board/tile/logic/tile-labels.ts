@@ -17,8 +17,14 @@ export function tileLabel(tile: ITile, t: TileT = sourceT): string {
     return tile.facility ? tile.name : t("profile.base.tile.empty");
 }
 
+/**
+ * The crew changes the plan makes for the viewed shift ride in the accessible
+ * name: on the board they are only a chip border and a hover tooltip.
+ */
 export function tileAriaLabel(tile: ITile, t: TileT = sourceT): string {
-    return t("profile.base.tile.aria", { name: tileLabel(tile, t), level: tile.level, staffed: tile.operators.length, seats: tile.seats });
+    const label = t("profile.base.tile.aria", { name: tileLabel(tile, t), level: tile.level, staffed: tile.operators.length, seats: tile.seats });
+    const changes = tile.operators.filter((op) => op.change).map((op) => crewLabel(op, t));
+    return changes.length > 0 ? t("profile.base.tile.aria.changes", { label, changes: changes.join(", ") }) : label;
 }
 
 const CHANGE_KEY = {

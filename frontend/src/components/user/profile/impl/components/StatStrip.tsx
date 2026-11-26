@@ -15,7 +15,6 @@ interface IStatCardProps {
     hidden?: boolean;
     value: string | number | null;
     accent?: boolean;
-    live?: boolean;
     compactOnMobile?: boolean;
     unformatted?: boolean;
     onClick?: () => void;
@@ -37,15 +36,10 @@ function formatCompact(value: string | number | null) {
     return `${sign}${abs}`;
 }
 
-function StatCard({ kicker, hidden, value, accent, live, compactOnMobile, unformatted, onClick }: IStatCardProps) {
+function StatCard({ kicker, hidden, value, accent, compactOnMobile, unformatted, onClick }: IStatCardProps) {
     const f = useFormatters();
     const interactive = typeof onClick === "function";
-    const className = cn(
-        "group relative flex flex-col overflow-hidden rounded-xl border border-border bg-card text-left sm:rounded-2xl",
-        "shadow-[0_1px_2px_rgb(0_0_0/0.04)] transition-all duration-200",
-        "hover:border-foreground/15 hover:shadow-[0_8px_24px_-12px_rgb(0_0_0/0.15)]",
-        interactive && "cursor-pointer select-none",
-    );
+    const className = cn("group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card text-left", "shadow-[0_1px_2px_rgb(0_0_0/0.04)] transition-all duration-200", "hover:border-foreground/15 hover:shadow-[0_8px_24px_-12px_rgb(0_0_0/0.15)]", interactive && "cursor-pointer select-none");
     const style = {
         padding: "clamp(0.75rem, 1.2vw + 0.5rem, 1.25rem)",
         gap: "clamp(0.375rem, 0.4vw + 0.25rem, 0.625rem)",
@@ -54,12 +48,6 @@ function StatCard({ kicker, hidden, value, accent, live, compactOnMobile, unform
         <>
             {accent && <div aria-hidden className="pointer-events-none absolute inset-x-0 -top-px h-px bg-linear-to-r from-transparent via-primary/60 to-transparent" />}
             <div className="flex items-center gap-1.5 sm:gap-2">
-                {live && (
-                    <span className="relative inline-flex h-1.5 w-1.5 shrink-0">
-                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-70" />
-                        <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                    </span>
-                )}
                 <span
                     className={cn("truncate font-medium font-mono text-muted-foreground uppercase tracking-wider sm:tracking-widest", hidden && "pr-5")}
                     style={{
@@ -145,23 +133,22 @@ export function StatStrip({ profile, rosterCount, isOwner = false }: IStatStripP
         const hidden = isOwner && isHidden(layout, card);
         switch (card) {
             case "operators":
-                return <StatCard key={card} hidden={hidden} kicker={t("profile.strip.operators.kicker")} value={rosterCount ?? profile.operator_count} live />;
+                return <StatCard key={card} hidden={hidden} kicker={t("profile.strip.operators.kicker")} value={rosterCount ?? profile.operator_count} />;
             case "skins":
                 return <StatCard key={card} hidden={hidden} kicker={t("profile.strip.skins.kicker")} value={profile.non_default_skin_count} />;
             case "items":
                 return <StatCard key={card} hidden={hidden} kicker={t("profile.strip.items.kicker")} value={profile.item_count} />;
-            // The currency names below are the game's own and stay as game vocabulary.
             case "orundum":
-                return <StatCard key={card} hidden={hidden} kicker="Orundum" value={profile.orundum} {...compact(card)} />;
+                return <StatCard key={card} hidden={hidden} kicker={t("profile.strip.orundum.kicker")} value={profile.orundum} {...compact(card)} />;
             // `null` until the account syncs again: the field arrived on 2026-09-15 and is filled per refresh.
             case "originite":
-                return <StatCard key={card} hidden={hidden} kicker="Originite Prime" value={profile.originite} {...compact(card)} />;
+                return <StatCard key={card} hidden={hidden} kicker={t("profile.strip.originite.kicker")} value={profile.originite} {...compact(card)} />;
             case "lmd":
-                return <StatCard key={card} hidden={hidden} kicker="LMD" value={profile.lmd} {...compact(card)} />;
+                return <StatCard key={card} hidden={hidden} kicker={t("profile.strip.lmd.kicker")} value={profile.lmd} {...compact(card)} />;
             case "headhunting_permits":
-                return <StatCard key={card} hidden={hidden} kicker="Headhunting Permits" value={profile.gacha_tickets} />;
+                return <StatCard key={card} hidden={hidden} kicker={t("profile.strip.headhuntingPermits.kicker")} value={profile.gacha_tickets} />;
             case "ten_pull_permits":
-                return <StatCard key={card} hidden={hidden} kicker="Ten-roll Permits" value={profile.ten_pull_tickets} />;
+                return <StatCard key={card} hidden={hidden} kicker={t("profile.strip.tenRollPermits.kicker")} value={profile.ten_pull_tickets} />;
             default:
                 return null;
         }

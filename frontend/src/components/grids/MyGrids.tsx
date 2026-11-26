@@ -2,7 +2,6 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { EyeOffIcon, PencilIcon } from "lucide-react";
 import { Button } from "#/components/ui/button";
-import { Kicker } from "#/components/ui/kicker";
 import { Skeleton } from "#/components/ui/skeleton";
 import { useAuth } from "#/hooks/use-auth";
 import { myGridsQueryOptions } from "#/lib/api/grids";
@@ -23,11 +22,10 @@ export function MyGrids() {
     const grids = data ?? [];
 
     return (
-        <main className="min-h-dvh pb-24">
+        <div className="min-h-dvh pb-24">
             <section className="page-gutter pt-10 pb-6 [--page-max:1080px] sm:pt-14 sm:pb-8">
                 <div className="flex flex-wrap items-end justify-between gap-4">
                     <div className="min-w-0">
-                        <Kicker>{t("my.kicker")}</Kicker>
                         <h1 className="m-0 font-bold font-sans text-3xl text-foreground leading-tight tracking-tight sm:text-4xl">{t("my.title")}</h1>
                         <p className="mt-2 font-sans text-muted-foreground text-sm">{t("my.count", { count: grids.length, max: GRIDS_PER_USER_MAX })}</p>
                     </div>
@@ -44,7 +42,7 @@ export function MyGrids() {
                 {isPending ? (
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                         {["s1", "s2", "s3"].map((k) => (
-                            <Skeleton key={k} className="h-60 rounded-xl" />
+                            <Skeleton key={k} className="h-60 rounded-2xl" />
                         ))}
                     </div>
                 ) : isError ? (
@@ -68,7 +66,7 @@ export function MyGrids() {
                                 grid={grid}
                                 badge={
                                     grid.is_listed ? null : (
-                                        <span className="inline-flex items-center gap-1 rounded-sm bg-muted px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground uppercase tracking-wider">
+                                        <span className="inline-flex items-center gap-1 rounded-sm bg-muted px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
                                             <EyeOffIcon className="h-3 w-3" aria-hidden="true" />
                                             {t("my.unlisted")}
                                         </span>
@@ -88,6 +86,6 @@ export function MyGrids() {
                     </div>
                 )}
             </div>
-        </main>
+        </div>
     );
 }

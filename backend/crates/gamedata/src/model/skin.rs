@@ -4,7 +4,8 @@ use myrtle_gamedata_raw::tables::character::{Brand, Skin, SkinTableFile, Special
 use myrtle_gamedata_raw::tables::obtain::SkinChannel;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct SkinData {
     pub char_skins: HashMap<String, Skin>,
@@ -17,7 +18,8 @@ pub struct SkinData {
     pub enriched_skins: HashMap<String, EnrichedSkin>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct SkinImages {
     pub avatar: String,
@@ -25,7 +27,8 @@ pub struct SkinImages {
     pub skin: String,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct EnrichedSkin {
     pub id: String,

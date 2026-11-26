@@ -13,7 +13,8 @@ use crate::{AppContext, AppError};
 
 const BILIBILI_SMS_COUNTRY: &str = "86";
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct LoginResponse {
     pub token: String,
     pub uid: String,

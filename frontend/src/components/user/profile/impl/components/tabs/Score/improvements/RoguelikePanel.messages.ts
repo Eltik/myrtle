@@ -4,7 +4,7 @@ export const namespace = "user";
 
 export const messages = {
     "score.improvements.roguelike.empty": {
-        text: "No roguelike themes loaded for this account.",
+        text: "No Integrated Strategies progress on this account yet.",
         description: "Empty state in the Roguelike panel. A 'theme' is one Integrated Strategies season.",
     },
     "score.improvements.roguelike.endings": {

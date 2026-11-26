@@ -25,9 +25,9 @@ interface IProfileHeaderEditorProps {
 }
 
 /** One row of either list: the same chrome as the tab editor's rows. */
-const ROW = "flex items-center gap-2 rounded-xl border border-border/50 bg-background/60 py-1.5 pr-1.5 pl-3";
+const ROW = "flex items-center gap-2 rounded-lg border border-border/50 bg-background/60 py-1.5 pr-1.5 pl-3";
 const BADGE = "rounded-full bg-muted px-2 py-0.5 font-medium font-mono text-[11px] text-muted-foreground leading-none";
-const HEADING = "font-medium font-mono text-[11px] text-muted-foreground uppercase tracking-widest";
+const HEADING = "kicker";
 
 /**
  * The owner's header editor: which numbers fill the stat strip, in what order, and which
@@ -44,7 +44,6 @@ export function ProfileHeaderEditor({ profile, onDraft, onClose }: IProfileHeade
     const [announcement, setAnnouncement] = useState("");
     useEffect(() => onDraft?.(draft), [draft, onDraft]);
 
-    // The currency names are the game's own and stay as game vocabulary, as on the cards.
     const labels = useMemo<Record<HeaderField, string>>(
         () => ({
             level: t("profile.headerEditor.field.level"),
@@ -53,11 +52,11 @@ export function ProfileHeaderEditor({ profile, onDraft, onClose }: IProfileHeade
             operators: t("profile.strip.operators.kicker"),
             skins: t("profile.strip.skins.kicker"),
             items: t("profile.strip.items.kicker"),
-            orundum: "Orundum",
-            originite: "Originite Prime",
-            lmd: "LMD",
-            headhunting_permits: "Headhunting Permits",
-            ten_pull_permits: "Ten-roll Permits",
+            orundum: t("profile.strip.orundum.kicker"),
+            originite: t("profile.strip.originite.kicker"),
+            lmd: t("profile.strip.lmd.kicker"),
+            headhunting_permits: t("profile.strip.headhuntingPermits.kicker"),
+            ten_pull_permits: t("profile.strip.tenRollPermits.kicker"),
         }),
         [t],
     );
@@ -87,7 +86,9 @@ export function ProfileHeaderEditor({ profile, onDraft, onClose }: IProfileHeade
     return (
         <section className="flex flex-col gap-5 rounded-2xl border border-border/50 bg-card/40 p-4 sm:p-5" aria-labelledby="profile-header-kicker">
             <div>
-                <Kicker id="profile-header-kicker">{t("profile.headerEditor.kicker")}</Kicker>
+                <Kicker className="mb-2.5" id="profile-header-kicker">
+                    {t("profile.headerEditor.kicker")}
+                </Kicker>
                 <p className="max-w-prose text-muted-foreground text-sm">{t("profile.headerEditor.help")}</p>
             </div>
 
@@ -98,7 +99,7 @@ export function ProfileHeaderEditor({ profile, onDraft, onClose }: IProfileHeade
                         <span className="font-mono text-[11px] text-muted-foreground tabular-nums">{t("profile.headerEditor.cards.count", { count: draft.strip.length, max: STRIP_MAX })}</span>
                     </div>
                     {draft.strip.length === 0 ? (
-                        <p className="rounded-xl border border-border/60 border-dashed px-3 py-3 text-muted-foreground text-sm">{t("profile.headerEditor.cards.empty")}</p>
+                        <p className="rounded-lg border border-border/60 border-dashed px-3 py-3 text-muted-foreground text-sm">{t("profile.headerEditor.cards.empty")}</p>
                     ) : (
                         <ol className="flex flex-col gap-1.5" aria-label={t("profile.headerEditor.cards.list")}>
                             {draft.strip.map((card, i) => {

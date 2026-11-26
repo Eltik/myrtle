@@ -163,7 +163,8 @@ pub struct RawSound {
     pub asset: String,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub enum AudioCategory {
     /// `ON_UNIT_BORN` - deployment / spawn sound
@@ -179,7 +180,8 @@ pub enum AudioCategory {
     Other,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct AudioSound {
     /// Original logical asset path from `audio_data.json`
@@ -188,7 +190,8 @@ pub struct AudioSound {
     pub urls: Vec<String>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct OperatorAudio {
     /// e.g. `battle.ON_UNIT_BORN.char_101_sora`
@@ -211,7 +214,8 @@ pub struct OperatorAudio {
     pub sounds: Vec<AudioSound>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub enum EnemyAudioCategory {
     /// `ON_UNIT_BORN` or `ON_BOSS_ENTER`.
@@ -229,7 +233,8 @@ pub enum EnemyAudioCategory {
     Other,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct EnemyAudio {
     /// e.g. `battle.ON_ABILITY_HIT.enemy_1007_slime.combat`

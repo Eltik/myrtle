@@ -9,7 +9,8 @@ use crate::serde_helpers::{deserialize_fb_map, deserialize_fb_map_option};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "UPPERCASE")]
-#[derive(Default)]
+#[derive(Default, ts_rs::TS)]
+#[ts(export)]
 pub enum ModuleType {
     #[default]
     Initial,
@@ -21,7 +22,8 @@ pub enum ModuleType {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-#[derive(Default)]
+#[derive(Default, ts_rs::TS)]
+#[ts(export)]
 pub enum ModuleTarget {
     #[default]
     Trait,
@@ -34,7 +36,8 @@ pub enum ModuleTarget {
     Unknown,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct RawModuleItemCost {
     #[serde(alias = "Id")]
@@ -45,7 +48,8 @@ pub struct RawModuleItemCost {
     pub item_type: ItemType,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct ModuleItemCost {
     #[serde(alias = "Id")]
@@ -60,7 +64,8 @@ pub struct ModuleItemCost {
     pub image: Option<String>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct SubProfession {
     #[serde(alias = "SubProfessionId")]
@@ -71,7 +76,8 @@ pub struct SubProfession {
     pub sub_profession_category: i32,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct EquipTrackItem {
     #[serde(alias = "CharId")]
@@ -80,16 +86,19 @@ pub struct EquipTrackItem {
     pub equip_id: String,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct EquipTrack {
     #[serde(alias = "Timestamp")]
+    #[ts(type = "number")]
     pub timestamp: i64,
     #[serde(alias = "TrackList")]
     pub track_list: Vec<EquipTrackItem>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct Mission {
     #[serde(alias = "Template")]
@@ -108,7 +117,8 @@ pub struct Mission {
     pub jump_stage_id: Option<String>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct ModuleBlackboard {
     #[serde(alias = "Key", alias = "key", default)]
@@ -122,7 +132,8 @@ pub struct ModuleBlackboard {
     pub value: f64,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct ModuleUnlockCondition {
     #[serde(alias = "Phase", default)]
@@ -131,7 +142,8 @@ pub struct ModuleUnlockCondition {
     pub level: i32,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct AddModuleCandidates {
     #[serde(alias = "DisplayRangeId", default)]
@@ -160,7 +172,8 @@ pub struct AddModuleCandidates {
     pub is_hide_talent: Option<bool>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct ModuleCandidates {
     #[serde(alias = "AdditionalDescription", default)]
@@ -179,21 +192,24 @@ pub struct ModuleCandidates {
     pub range_id: Option<String>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct AddOrOverrideTalentDataBundle {
     #[serde(alias = "Candidates")]
     pub candidates: Option<Vec<AddModuleCandidates>>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct OverrideTraitDataBundle {
     #[serde(alias = "Candidates")]
     pub candidates: Option<Vec<ModuleCandidates>>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct ModulePart {
     #[serde(alias = "ResKey")]
@@ -208,7 +224,8 @@ pub struct ModulePart {
     pub override_trait_data_bundle: OverrideTraitDataBundle,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct ModulePhase {
     #[serde(alias = "EquipLevel")]
@@ -221,14 +238,16 @@ pub struct ModulePhase {
     pub token_attribute_blackboard: Vec<Value>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct ModuleData {
     #[serde(alias = "Phases")]
     pub phases: Vec<ModulePhase>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct RawModule {
     #[serde(alias = "UniEquipId")]
@@ -272,12 +291,14 @@ pub struct RawModule {
     #[serde(rename = "type", alias = "Type_")]
     pub module_type: ModuleType,
     #[serde(alias = "UniEquipGetTime")]
+    #[ts(type = "number")]
     pub uni_equip_get_time: i64,
     #[serde(alias = "CharEquipOrder")]
     pub char_equip_order: i32,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct Module {
     pub id: Option<String>,
@@ -301,11 +322,13 @@ pub struct Module {
     pub item_cost: Option<HashMap<String, Vec<ModuleItemCost>>>,
     #[serde(rename = "type")]
     pub module_type: ModuleType,
+    #[ts(type = "number")]
     pub uni_equip_get_time: i64,
     pub char_equip_order: i32,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct Modules {
     pub equip_dict: HashMap<String, Module>,
@@ -317,7 +340,8 @@ pub struct Modules {
     pub battle_equip: BattleEquip,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct RawModules {
     pub equip_dict: HashMap<String, RawModule>,

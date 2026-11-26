@@ -29,7 +29,8 @@ use crate::{AppContext, AppError};
 
 const CACHE_PREFIX: &str = "i18n:";
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct Locale {
     pub code: String,
     pub english_name: String,
@@ -56,7 +57,8 @@ impl From<LocaleRow> for Locale {
     }
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct GamedataOverride {
     pub locale: String,
     pub kind: String,

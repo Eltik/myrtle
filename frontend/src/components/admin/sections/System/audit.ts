@@ -1,13 +1,15 @@
 import type { TextField } from "#/components/admin/sections/OperatorNotes/notesModel";
-import type { IAuditLogEntry } from "#/lib/api/admin";
+import type { IAuditLogEntry, IContentAuditEntry } from "#/lib/api/admin";
 import { normalizeForSearch } from "#/lib/search/fuzzy";
 import type { TranslationAuditEntry } from "#/types/generated/TranslationAuditEntry";
 
 /** Which log a timeline row came from. */
-export type AuditSource = "notes" | "translations";
+export type AuditSource = "notes" | "translations" | "content";
 
-/** The All / Operator notes / Translations switch. */
+/** The All / Operator notes / Translations / Tier lists and grids switch. */
 export type AuditSourceFilter = "all" | AuditSource;
+
+export const AUDIT_SOURCES: readonly AuditSource[] = ["notes", "translations", "content"];
 
 /** `"all"`, one note field, or `"text"` (a translation's only field). */
 export type AuditFieldFilter = "all" | TextField | "text";
@@ -31,10 +33,12 @@ export interface IAuditRow {
     /** Translation rows: the locale code and message key. */
     locale: string | null;
     messageKey: string | null;
-    /** Note rows: the audited column. Translation rows: `"text"`. */
+    /** Note rows: the audited column. Translation rows: `"text"`. Content rows: the action. */
     field: string;
     oldValue: string | null;
     newValue: string | null;
+    /** Content rows: the tier list or grid action, whole. */
+    content: IContentAuditEntry | null;
 }
 
 function blank(value: string | null): boolean {
@@ -60,6 +64,7 @@ export function noteRow(entry: IAuditLogEntry): IAuditRow {
         field: entry.field_name,
         oldValue: entry.old_value,
         newValue: entry.new_value,
+        content: null,
     };
 }
 
@@ -75,6 +80,23 @@ export function translationRow(entry: TranslationAuditEntry): IAuditRow {
         field: "text",
         oldValue: entry.old_value,
         newValue: entry.new_value,
+        content: null,
+    };
+}
+
+export function contentRow(entry: IContentAuditEntry): IAuditRow {
+    return {
+        key: `c${entry.id}`,
+        source: "content",
+        changedAt: entry.changed_at,
+        actor: { userId: entry.actor.user_id, uid: entry.actor.uid, nickname: entry.actor.nickname },
+        operatorId: null,
+        locale: null,
+        messageKey: null,
+        field: entry.action,
+        oldValue: null,
+        newValue: null,
+        content: entry,
     };
 }
 
@@ -84,6 +106,9 @@ export interface ITimelineInput {
     /** The notes log has older pages not loaded yet. */
     notesHasMore: boolean;
     translationsHasMore: boolean;
+    /** Tier list and grid actions; absent reads as none. */
+    content?: readonly IContentAuditEntry[];
+    contentHasMore?: boolean;
     source: AuditSourceFilter;
 }
 
@@ -100,21 +125,23 @@ function time(iso: string): number {
 }
 
 /**
- * Merges the two logs newest first. Each log is paged on its own, so below the
- * oldest loaded row of a log that has more pages, the other log's rows could
+ * Merges the logs newest first. Each log is paged on its own, so below the
+ * oldest loaded row of a log that has more pages, the other logs' rows could
  * be missing their neighbours. Those rows are held back (not dropped: the next
  * page shows them) so the timeline never shows a gap as if it were quiet.
  */
-export function buildTimeline({ notes, translations, notesHasMore, translationsHasMore, source }: ITimelineInput): ITimeline {
-    const useNotes = source !== "translations";
-    const useTranslations = source !== "notes";
-    const rows = [...(useNotes ? notes.map(noteRow) : []), ...(useTranslations ? translations.map(translationRow) : [])];
+export function buildTimeline({ notes, translations, notesHasMore, translationsHasMore, content = [], contentHasMore = false, source }: ITimelineInput): ITimeline {
+    const useNotes = source === "all" || source === "notes";
+    const useTranslations = source === "all" || source === "translations";
+    const useContent = source === "all" || source === "content";
+    const rows = [...(useNotes ? notes.map(noteRow) : []), ...(useTranslations ? translations.map(translationRow) : []), ...(useContent ? content.map(contentRow) : [])];
     rows.sort((a, b) => time(b.changedAt) - time(a.changedAt) || a.source.localeCompare(b.source) || b.key.localeCompare(a.key, undefined, { numeric: true }));
 
     let cutoff = Number.NEGATIVE_INFINITY;
     const oldest = (list: readonly { changed_at: string }[]): number => (list.length ? time(list[list.length - 1].changed_at) : Number.NEGATIVE_INFINITY);
     if (useNotes && notesHasMore) cutoff = Math.max(cutoff, oldest(notes));
     if (useTranslations && translationsHasMore) cutoff = Math.max(cutoff, oldest(translations));
+    if (useContent && contentHasMore) cutoff = Math.max(cutoff, oldest(content));
 
     const shown = rows.filter((r) => time(r.changedAt) >= cutoff);
     return { rows: shown, held: rows.length - shown.length };
@@ -129,7 +156,8 @@ export function filterTimeline(rows: readonly IAuditRow[], field: AuditFieldFilt
     return rows.filter((r) => {
         if (field !== "all" && r.field !== field) return false;
         if (!q) return true;
-        const haystack = [r.actor.nickname, r.actor.uid, r.operatorId, r.locale, r.messageKey, r.field, r.oldValue, r.newValue, ...labels(r)];
+        const c = r.content;
+        const haystack = [r.actor.nickname, r.actor.uid, r.operatorId, r.locale, r.messageKey, r.field, r.oldValue, r.newValue, c?.target_name, c?.target_slug, c?.details.renamed_from, c?.owner?.nickname, c?.subject?.nickname, ...labels(r)];
         return haystack.some((s) => s != null && normalizeForSearch(s).includes(q));
     });
 }

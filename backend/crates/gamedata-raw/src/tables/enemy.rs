@@ -15,7 +15,8 @@ pub struct EnemyTables {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "UPPERCASE")]
-#[derive(Default)]
+#[derive(Default, ts_rs::TS)]
+#[ts(export)]
 pub enum EnemyLevel {
     #[default]
     Normal,
@@ -25,7 +26,8 @@ pub enum EnemyLevel {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-#[derive(Default)]
+#[derive(Default, ts_rs::TS)]
+#[ts(export)]
 pub enum DamageType {
     #[default]
     Physic,
@@ -34,7 +36,8 @@ pub enum DamageType {
     Heal,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum EnemyApplyWay {
     #[default]
@@ -45,7 +48,8 @@ pub enum EnemyApplyWay {
     Unknown,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum EnemyMotion {
     #[default]
@@ -55,7 +59,8 @@ pub enum EnemyMotion {
     Unknown,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct StatRange {
     #[serde(alias = "Min")]
@@ -64,7 +69,8 @@ pub struct StatRange {
     pub max: f64,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct EnemyInfoList {
     #[serde(alias = "ClassLevel")]
@@ -87,7 +93,8 @@ pub struct EnemyInfoList {
     pub enemy_res: StatRange,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct RaceData {
     #[serde(alias = "Id")]
@@ -98,7 +105,8 @@ pub struct RaceData {
     pub sort_id: i32,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct AbilityInfo {
     #[serde(alias = "Text")]
@@ -156,7 +164,8 @@ pub struct RawEnemyAttributes {
     pub ep_resistance: MaybeValue<f64>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct SkillBlackboardEntry {
     #[serde(default)]
@@ -216,7 +225,8 @@ pub struct EnemyDatabaseFile {
     pub enemies: Vec<RawEnemyDatabaseEntry>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct EnemyAttributes {
     pub max_hp: i32,
@@ -239,7 +249,8 @@ pub struct EnemyAttributes {
     pub lure_immune: bool,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct EnemySkill {
     pub prefab_key: String,
@@ -250,7 +261,8 @@ pub struct EnemySkill {
     pub blackboard: Vec<SkillBlackboardEntry>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct EnemyLevelStats {
     pub level: i32,
@@ -262,13 +274,15 @@ pub struct EnemyLevelStats {
     pub skills: Vec<EnemySkill>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct EnemyStats {
     pub levels: Vec<EnemyLevelStats>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct Enemy {
     #[serde(alias = "EnemyId")]
@@ -311,7 +325,8 @@ pub struct Enemy {
     pub portrait: Option<String>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct EnemyHandbook {
     pub level_info_list: Vec<EnemyInfoList>,

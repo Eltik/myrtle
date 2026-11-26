@@ -24,7 +24,7 @@ export const messages = {
         description: "Toast title when saving or unsaving the list failed.",
     },
     "detail.actions.favorite.errBody": {
-        text: "Something went wrong. Try again in a moment.",
+        text: "The favorite didn't save. Try again in a moment.",
         description: "Toast body when saving or unsaving the list failed.",
     },
     "detail.actions.favorite.authTitle": {
@@ -52,7 +52,7 @@ export const messages = {
         description: "Toast title when rendering the tier-list image failed.",
     },
     "detail.actions.download.errBody": {
-        text: "Something went wrong while preparing the image. Try again in a moment.",
+        text: "The image couldn't be drawn. Try again in a moment.",
         description: "Toast body when rendering the tier-list image failed.",
     },
     "detail.actions.share": {

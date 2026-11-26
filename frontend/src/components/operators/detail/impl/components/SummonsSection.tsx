@@ -3,6 +3,8 @@ import { ChevronDown, Sparkles } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Badge } from "#/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "#/components/ui/collapsible";
+import { LoadFailed } from "#/components/ui/load-failed";
+import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import { operatorGamedataServer } from "#/lib/api/gamedata";
 import { rangesQueryOptions } from "#/lib/api/ranges";
 import { useFormatters, useGamedataServer, useT } from "#/lib/i18n";
@@ -57,21 +59,20 @@ export function SummonsSection({ drones, parentPhaseIndex, parentLevel, server }
             <CollapsibleContent>
                 <div className="mt-3 space-y-3">
                     {drones.length > 1 && (
-                        <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1">
-                            {drones.map((d) => {
-                                const isActive = d.id === active.id;
-                                return (
-                                    <button
-                                        key={d.id ?? d.name}
-                                        type="button"
-                                        onClick={() => d.id && setActiveId(d.id)}
-                                        className={cn("shrink-0 rounded-full border px-3 py-1 font-medium text-xs transition-colors", isActive ? "border-primary bg-primary/15 text-foreground" : "border-border bg-card text-muted-foreground hover:border-primary/40 hover:text-foreground")}
-                                    >
-                                        {d.name}
-                                    </button>
-                                );
-                            })}
-                        </div>
+                        <ToggleGroup aria-label={t("summons.title")} className="-mx-1 w-auto gap-1.5 overflow-x-auto px-1 pb-1" onValueChange={(next) => next[0] && setActiveId(next[0])} size="sm" value={active.id ? [active.id] : []} variant="outline">
+                            {drones.map((d) => (
+                                <ToggleGroupItem
+                                    // Grown on touch with min-height, not a pseudo-element: this strip scrolls
+                                    // sideways, so a box past its edge would be clipped.
+                                    className="pointer-coarse:min-h-11 text-xs sm:text-xs"
+                                    disabled={!d.id}
+                                    key={d.id ?? d.name}
+                                    value={d.id ?? d.name}
+                                >
+                                    {d.name}
+                                </ToggleGroupItem>
+                            ))}
+                        </ToggleGroup>
                     )}
 
                     <SummonCard drone={active} parentPhaseIndex={parentPhaseIndex} parentLevel={parentLevel} server={server} />
@@ -92,7 +93,7 @@ function SummonCard({ drone, parentPhaseIndex, parentLevel, server }: ISummonCar
     const t: SummonsT = useT("operators");
     const f = useFormatters();
     const localeServer = useGamedataServer();
-    const { data: ranges } = useQuery(rangesQueryOptions(operatorGamedataServer(server, localeServer)));
+    const { data: ranges, isError: rangesFailed, refetch: refetchRanges } = useQuery(rangesQueryOptions(operatorGamedataServer(server, localeServer)));
 
     const phaseIndex = clampDronePhase(drone, parentPhaseIndex);
     const phase = drone.phases[phaseIndex];
@@ -155,7 +156,7 @@ function SummonCard({ drone, parentPhaseIndex, parentLevel, server }: ISummonCar
                         {column.map(({ iconURL, label, value }) => (
                             <div key={label} className="flex items-center justify-between py-1.5">
                                 <span className="flex items-center gap-2 text-muted-foreground">
-                                    <img alt={label} className="icon-theme-aware h-4 w-4 object-contain" decoding="async" loading="lazy" src={iconURL} />
+                                    <img alt="" className="icon-theme-aware h-4 w-4 object-contain" decoding="async" loading="lazy" src={iconURL} />
                                     <span className="text-xs">{label}</span>
                                 </span>
                                 <span className="font-semibold text-foreground text-sm tabular-nums">{value}</span>
@@ -165,12 +166,14 @@ function SummonCard({ drone, parentPhaseIndex, parentLevel, server }: ISummonCar
                 ))}
             </div>
 
-            {range && (
+            {range ? (
                 <div className="mt-4">
                     <h5 className="mb-2 font-medium text-foreground text-xs">{t("summons.attackRange")}</h5>
                     <OperatorRange range={range} />
                 </div>
-            )}
+            ) : phase?.rangeId && rangesFailed && !ranges ? (
+                <LoadFailed className="mt-4" message={t("summons.attackRange.error")} onRetry={() => void refetchRanges()} />
+            ) : null}
 
             {visibleTalents.length > 0 && (
                 <div className="mt-4 space-y-2">

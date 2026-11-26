@@ -37,6 +37,8 @@ export interface IClearTranslationInput {
 
 export interface ITranslationAuditInput {
     locale?: string;
+    /** An account id: only that account's edits. */
+    actor?: string;
     limit?: number;
     before?: string;
 }
@@ -234,6 +236,7 @@ export const getTranslationAuditLogFn = createServerFn({ method: "GET" })
         const token = requireSiteToken();
         const params = new URLSearchParams();
         if (data.locale) params.set("locale", data.locale);
+        if (data.actor) params.set("actor", data.actor);
         if (data.limit !== undefined) params.set("limit", String(data.limit));
         if (data.before) params.set("before", data.before);
         const query = params.toString();

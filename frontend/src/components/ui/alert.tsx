@@ -3,7 +3,7 @@ import type * as React from "react";
 import { cn } from "#/lib/utils";
 
 const alertVariants = cva(
-    "relative grid w-full items-start gap-x-2 gap-y-0.5 rounded-xl border px-3.5 py-3 text-card-foreground text-sm has-[>svg]:has-data-[slot=alert-action]:grid-cols-[calc(var(--spacing)*4)_1fr_auto] has-[>svg]:grid-cols-[calc(var(--spacing)*4)_1fr] has-data-[slot=alert-action]:grid-cols-[1fr_auto] has-[>svg]:gap-x-2 [&>svg]:h-lh [&>svg]:w-4",
+    "relative grid w-full items-start gap-x-2 gap-y-0.5 rounded-2xl border px-3.5 py-3 text-card-foreground text-sm has-[>svg]:has-data-[slot=alert-action]:grid-cols-[calc(var(--spacing)*4)_1fr_auto] has-[>svg]:grid-cols-[calc(var(--spacing)*4)_1fr] has-data-[slot=alert-action]:grid-cols-[1fr_auto] has-[>svg]:gap-x-2 [&>svg]:h-lh [&>svg]:w-4",
     {
         defaultVariants: {
             variant: "default",
@@ -21,7 +21,10 @@ const alertVariants = cva(
 );
 
 export function Alert({ className, variant, ...props }: React.ComponentProps<"div"> & VariantProps<typeof alertVariants>): React.ReactElement {
-    return <div className={cn(alertVariants({ variant }), className)} data-slot="alert" role="alert" {...props} />;
+    // `alert` interrupts whatever a screen reader is saying, so only an error
+    // earns it. The other variants are mostly copy present at load, where an
+    // interruption announces the page's furniture; they are a polite `status`.
+    return <div className={cn(alertVariants({ variant }), className)} data-slot="alert" role={variant === "error" ? "alert" : "status"} {...props} />;
 }
 
 export function AlertTitle({ className, ...props }: React.ComponentProps<"div">): React.ReactElement {

@@ -9,7 +9,8 @@ use myrtle_gamedata_raw::tables::{
 };
 
 /// Where a contribution lands. Names follow the request's `zones` fields.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub enum SupporterZone {
     /// `zones.atkPercent`
@@ -37,7 +38,8 @@ pub enum SupporterZone {
 }
 
 /// How sources inside one zone combine
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub enum Stacking {
     /// Summed with every other source of the zone
@@ -63,7 +65,8 @@ impl SupporterZone {
 }
 
 /// Blackboard value -> zone value
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub enum Transform {
     /// The value as stored (`atk` 0.9 -> +90% ATK)
@@ -77,7 +80,8 @@ pub enum Transform {
 }
 
 /// Who receives the effect
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub enum SupporterTarget {
     /// Every ally on the field
@@ -576,7 +580,8 @@ pub static SUPPORTERS: &[SupporterDef] = &[
 ];
 
 /// The investment every supporter is resolved at
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct SupporterInvestment {
     /// 0-2, clamped to the operator's highest promotion
@@ -600,7 +605,8 @@ impl Default for SupporterInvestment {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct ZoneContribution {
     pub zone: SupporterZone,
@@ -614,17 +620,20 @@ pub struct ZoneContribution {
     pub value: f64,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct SupporterScope {
     pub target: SupporterTarget,
     /// Game profession codes (`SUPPORT`, `CASTER`, ...); empty = every class
     pub professions: Vec<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub condition: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct SupporterEntry {
     pub id: String,
@@ -640,26 +649,31 @@ pub struct SupporterEntry {
     pub contributions: Vec<ZoneContribution>,
     /// Seconds, when the effect has a duration
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub duration: Option<f64>,
     pub scope: SupporterScope,
     /// The ATK an Inspiration ratio multiplies
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub supporter_atk: Option<f64>,
     /// The module whose talent override was applied
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub module_id: Option<String>,
     /// The investment after clamping to what the operator has
     pub investment: SupporterInvestment,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct UnresolvedSupporter {
     pub id: String,
     pub reason: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct SupportersResponse {
     pub entries: Vec<SupporterEntry>,

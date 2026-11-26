@@ -1,18 +1,21 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct TargetSkillPlan {
     pub skill_index: i16,
     pub mastery_level: i16,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct TargetModulePlan {
     pub module_id: String,
     pub module_stage: i16,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, ts_rs::TS)]
+#[ts(export)]
 pub struct OperatorPlan {
     pub operator_id: String,
     pub target_elite: i16,
@@ -32,21 +35,24 @@ pub struct PlanInput {
     pub display_on_profile: bool,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct PlanRecipeCost {
     pub count: i32,
     pub item: PlanRequirementItem,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct PlanRecipe {
     pub count: i32,
     pub costs: Vec<PlanRecipeCost>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct PlanRequirementItem {
     pub id: String,
@@ -68,14 +74,16 @@ pub struct PlanRequirementItem {
     pub unmet_stages: Vec<PlanUnmetStage>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct PlanUnmetStage {
     pub stage_id: String,
     pub code: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct PresetTarget {
     pub elite: i16,
     pub level: Option<i16>,

@@ -5,7 +5,8 @@ use serde::{Deserialize, Serialize};
 use super::chapter::MainlineAdditionInfo;
 use crate::serde_helpers::{deserialize_fb_map, deserialize_fb_map_or_default};
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum ZoneType {
     #[default]
@@ -26,7 +27,8 @@ pub enum ZoneType {
     Unknown,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct Zone {
     #[serde(alias = "ZoneID")]
@@ -66,7 +68,8 @@ pub struct Zone {
     pub has_additional_panel: bool,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct ZoneData {
     pub zones: HashMap<String, Zone>,

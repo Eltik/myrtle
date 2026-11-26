@@ -5,7 +5,8 @@ use serde::{Deserialize, Serialize};
 use crate::align::PoolPair;
 use myrtle_gamedata::model::GameModel;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "snake_case")]
 pub enum AutoNameSource {
     Memory,
@@ -13,7 +14,8 @@ pub enum AutoNameSource {
     Override,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct AutoName {
     pub text: String,

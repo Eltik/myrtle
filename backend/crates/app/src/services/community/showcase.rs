@@ -18,22 +18,26 @@ use crate::privacy::{self, UpdateSettingsRequest};
 use crate::snapshots::Snapshot;
 use crate::{AppContext, AppError};
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct ShowcaseView {
     pub blocks: Vec<ShowcaseBlockView>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct ShowcaseBlockView {
     pub block: ShowcaseBlock,
     pub removed: bool,
     pub entities: Vec<ShowcaseEntity>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct ShowcaseEntity {
     pub id: String,
     pub entity: Option<EntitySummary>,
+    #[ts(type = "string | null")]
     pub entity_server: Option<Server>,
 }
 

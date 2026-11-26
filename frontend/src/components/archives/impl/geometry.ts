@@ -20,6 +20,16 @@ export interface IPoint {
     y: number;
 }
 
+/**
+ * A computed coordinate at two decimals. The server and the browser format
+ * trig results differently in the last digits (-86.6012701892219 against
+ * -86.60127018922192), which broke hydration of /archives; every derived
+ * point that reaches an SVG attribute goes through this.
+ */
+export function svgNum(n: number): number {
+    return Math.round(n * 100) / 100;
+}
+
 export function toSvg(p: IPoint): IPoint {
     return { x: p.x, y: -p.y };
 }
@@ -57,8 +67,8 @@ export function outlineSegments(centers: readonly IPoint[], r: number): [IPoint,
             const a0 = (Math.PI / 3) * i;
             const a1 = (Math.PI / 3) * (i + 1);
             segs.push([
-                { x: c.x + r * Math.cos(a0), y: c.y + r * Math.sin(a0) },
-                { x: c.x + r * Math.cos(a1), y: c.y + r * Math.sin(a1) },
+                { x: svgNum(c.x + r * Math.cos(a0)), y: svgNum(c.y + r * Math.sin(a0)) },
+                { x: svgNum(c.x + r * Math.cos(a1)), y: svgNum(c.y + r * Math.sin(a1)) },
             ]);
         }
     }
@@ -68,7 +78,7 @@ export function outlineSegments(centers: readonly IPoint[], r: number): [IPoint,
 export function centroid(points: readonly IPoint[]): IPoint {
     if (points.length === 0) return { x: 0, y: 0 };
     const sum = points.reduce((s, p) => ({ x: s.x + p.x, y: s.y + p.y }), { x: 0, y: 0 });
-    return { x: sum.x / points.length, y: sum.y / points.length };
+    return { x: svgNum(sum.x / points.length), y: svgNum(sum.y / points.length) };
 }
 
 export interface IBox {

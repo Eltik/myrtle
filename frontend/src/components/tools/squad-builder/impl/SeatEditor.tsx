@@ -7,8 +7,10 @@ import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import { Checkbox } from "#/components/ui/checkbox";
 import { Label } from "#/components/ui/label";
+import { LoadFailed } from "#/components/ui/load-failed";
 import { Popover, PopoverPopup, PopoverTrigger } from "#/components/ui/popover";
 import { Slider } from "#/components/ui/slider";
+import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { operatorQueryOptions } from "#/lib/api/operators";
 import { useGamedataServer, useT } from "#/lib/i18n";
@@ -47,9 +49,11 @@ export interface ISeatEditorProps {
 }
 
 /** A toggle tile's border: ringed when pressed, a hover hint when not. */
-function pressedClass(pressed: boolean): string {
-    return pressed ? "border-primary ring-2 ring-primary/40" : "border-border hover:border-primary/50";
-}
+/** Build pickers are kit toggles drawn as separate bordered tiles, not a joined segment. */
+const CHIP = "border-border bg-background/40";
+
+/** The "no module" value in the module group; module ids are never empty. */
+const NO_MODULE = "";
 
 /** The slider reports one thumb as a number or a one-entry list. */
 function sliderValue(v: number | readonly number[]): number {
@@ -65,7 +69,7 @@ function phaseNumber(phase: string | null | undefined): number {
 export function SeatEditor({ seat, resolved, op, roster, readOnly, squadmates, labOpen, onLabOpenChange, onOpenLab, onChange, onRemove, onClose }: ISeatEditorProps): React.ReactElement {
     const t: EditorT = useT("tools");
     const server = useGamedataServer();
-    const { data: detail } = useQuery(operatorQueryOptions(op.id, server));
+    const { data: detail, isError: detailFailed, refetch: refetchDetail } = useQuery(operatorQueryOptions(op.id, server));
     const { member, build, source } = resolved;
     const isSupport = seat === SUPPORT_SEAT;
     const modules = advancedModules(op);
@@ -102,7 +106,7 @@ export function SeatEditor({ seat, resolved, op, roster, readOnly, squadmates, l
     const sourceVariant = source === "roster" ? "success" : source === "hand" ? "info" : "secondary";
 
     return (
-        <section aria-label={op.name} className="rounded-xl border border-border bg-card p-4">
+        <section aria-label={op.name} className="rounded-2xl border border-border bg-card p-4">
             <div className="flex items-start gap-3">
                 <span className="relative size-14 shrink-0 overflow-hidden rounded-lg border border-border bg-muted" style={{ boxShadow: `inset 0 -3px 0 ${rarityStarColor(op.rarity)}` }}>
                     <img alt="" src={getAvatarById(op.id)} className="size-full object-cover" />
@@ -122,35 +126,25 @@ export function SeatEditor({ seat, resolved, op, roster, readOnly, squadmates, l
                 </Button>
             </div>
 
+            {detailFailed && <LoadFailed layout="inline" className="mt-3" message={t("squad.editor.detailFailed")} onRetry={() => void refetchDetail()} />}
             {readOnly && <p className="mt-3 rounded-lg border border-border bg-muted/40 px-3 py-2 text-[12.5px] text-muted-foreground">{t("squad.editor.readOnly")}</p>}
 
             <fieldset disabled={readOnly} className="mt-4 grid gap-x-6 gap-y-4 disabled:opacity-80 md:grid-cols-2">
                 <Field label={t("squad.editor.skill")}>
-                    <div className="flex flex-wrap gap-1.5">
+                    <ToggleGroup aria-label={t("squad.editor.skill")} className="flex-wrap gap-1.5" value={[String(member.skill_index)]} onValueChange={(next) => next[0] !== undefined && onChange({ ...member, skill_index: Number(next[0]) })}>
                         {[...Array(skillCount).keys()].map((i) => {
                             const skill = detail?.skills?.[i];
                             const name = skill?.static?.levels?.[0]?.name ?? t("squad.editor.skillFallback", { skill: i + 1 });
                             return (
                                 <Tooltip key={`skill-${i}`}>
-                                    <TooltipTrigger
-                                        render={(p) => (
-                                            <button
-                                                {...p}
-                                                type="button"
-                                                onClick={() => onChange({ ...member, skill_index: i })}
-                                                aria-label={name}
-                                                aria-pressed={member.skill_index === i}
-                                                className={cn("flex size-12 cursor-pointer items-center justify-center overflow-hidden rounded-md border bg-background/40 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring", pressedClass(member.skill_index === i), isLocked(i) && "opacity-60")}
-                                            >
-                                                {skill ? <img alt="" src={skillIconURL(skill)} className="size-full object-contain" /> : <span className="font-mono text-[11px] text-muted-foreground">S{i + 1}</span>}
-                                            </button>
-                                        )}
-                                    />
+                                    <TooltipTrigger render={<ToggleGroupItem value={String(i)} aria-label={name} className={cn(CHIP, "size-12 overflow-hidden p-0 sm:size-12", isLocked(i) && "opacity-60")} />}>
+                                        {skill ? <img alt="" src={skillIconURL(skill)} className="size-full object-contain" /> : <span className="font-mono text-[11px] text-muted-foreground">S{i + 1}</span>}
+                                    </TooltipTrigger>
                                     <TooltipPopup>{name}</TooltipPopup>
                                 </Tooltip>
                             );
                         })}
-                    </div>
+                    </ToggleGroup>
                     {skillLocked !== null && <Hint>{t("squad.editor.hint.skill", { skill: member.skill_index + 1, phase: skillLocked.phase })}</Hint>}
                 </Field>
 
@@ -169,68 +163,51 @@ export function SeatEditor({ seat, resolved, op, roster, readOnly, squadmates, l
 
                 {modules.length > 0 && (
                     <Field label={t("squad.editor.module")}>
-                        <div className="flex flex-wrap gap-1.5">
-                            <button
-                                type="button"
-                                onClick={() => setModule(null)}
-                                aria-pressed={member.module_id === null}
-                                className={cn("flex h-12 min-w-14 cursor-pointer items-center justify-center rounded-md border bg-background/40 px-2 font-medium text-[12px] outline-none focus-visible:ring-2 focus-visible:ring-ring", pressedClass(member.module_id === null))}
-                            >
+                        <ToggleGroup aria-label={t("squad.editor.module")} className="flex-wrap gap-1.5" value={[member.module_id ?? NO_MODULE]} onValueChange={(next) => next[0] !== undefined && setModule(next[0] === NO_MODULE ? null : next[0])}>
+                            <ToggleGroupItem value={NO_MODULE} className={cn(CHIP, "h-12 min-w-14 px-2 font-medium text-[12px] sm:h-12 sm:text-[12px]")}>
                                 {t("squad.editor.noModule")}
-                            </button>
+                            </ToggleGroupItem>
                             {modules.map((m) => {
                                 const full = detail?.modules?.find((d) => d.uniEquipId === m.uniEquipId);
                                 const label = moduleTypeLabel(m);
                                 return (
                                     <Tooltip key={m.uniEquipId}>
-                                        <TooltipTrigger
-                                            render={(p) => (
-                                                <button
-                                                    {...p}
-                                                    type="button"
-                                                    onClick={() => setModule(m.uniEquipId)}
-                                                    aria-pressed={member.module_id === m.uniEquipId}
-                                                    aria-label={label}
-                                                    className={cn("flex h-12 cursor-pointer items-center gap-1.5 rounded-md border bg-background/40 px-1.5 outline-none focus-visible:ring-2 focus-visible:ring-ring", pressedClass(member.module_id === m.uniEquipId))}
-                                                >
-                                                    {full ? <img alt="" src={moduleIconURL(full)} className="size-9 object-contain" /> : null}
-                                                    <span className="font-medium font-mono text-[11px]">{label}</span>
-                                                </button>
-                                            )}
-                                        />
+                                        <TooltipTrigger render={<ToggleGroupItem value={m.uniEquipId} aria-label={label} className={cn(CHIP, "h-12 gap-1.5 px-1.5 sm:h-12")} />}>
+                                            {full ? <img alt="" src={moduleIconURL(full)} className="size-9 object-contain" /> : null}
+                                            <span className="font-medium font-mono text-[11px]">{label}</span>
+                                        </TooltipTrigger>
                                         <TooltipPopup>{full?.uniEquipName ?? label}</TooltipPopup>
                                     </Tooltip>
                                 );
                             })}
-                        </div>
+                        </ToggleGroup>
                         {moduleLocked && moduleUnlock && <Hint>{t("squad.editor.hint.module", { phase: moduleUnlock.phase, level: moduleUnlock.level })}</Hint>}
                     </Field>
                 )}
 
                 {member.module_id !== null && (
                     <Field label={t("squad.editor.moduleRank")}>
-                        <Segmented options={Array.from({ length: moduleRanks }, (_, i) => i + 1)} value={build.module_level} onChange={(v) => setBuild({ module_level: v })} render={(v) => String(v)} />
+                        <Segmented label={t("squad.editor.moduleRank")} options={Array.from({ length: moduleRanks }, (_, i) => i + 1)} value={build.module_level} onChange={(v) => setBuild({ module_level: v })} render={(v) => String(v)} />
                     </Field>
                 )}
 
                 <Field label={t("squad.editor.promotion")}>
-                    <div className="flex gap-1.5">
+                    <ToggleGroup
+                        aria-label={t("squad.editor.promotion")}
+                        className="gap-1.5"
+                        value={[String(build.phase)]}
+                        onValueChange={(next) => {
+                            if (next[0] === undefined) return;
+                            const p = Number(next[0]);
+                            setBuild({ phase: p, level: build.phase === p ? build.level : Math.min(build.level, levelCap(op, p)) });
+                        }}
+                    >
                         {Array.from({ length: op.phaseMaxLevels.length }, (_, i) => i).map((p) => (
-                            <button
-                                key={`phase-${p}`}
-                                type="button"
-                                disabled={p > maxPhase(op)}
-                                onClick={() => setBuild({ phase: p, level: build.phase === p ? build.level : Math.min(build.level, levelCap(op, p)) })}
-                                aria-pressed={build.phase === p}
-                                className={cn(
-                                    "flex h-10 pointer-coarse:h-11 min-w-14 cursor-pointer items-center justify-center gap-1 rounded-md border bg-background/40 px-2 font-medium font-mono text-[12px] outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-40",
-                                    pressedClass(build.phase === p),
-                                )}
-                            >
+                            <ToggleGroupItem key={`phase-${p}`} value={String(p)} disabled={p > maxPhase(op)} className={cn(CHIP, "h-10 pointer-coarse:h-11 min-w-14 gap-1 px-2 font-medium font-mono text-[12px] disabled:opacity-40 sm:h-10 sm:min-w-14 sm:text-[12px]")}>
                                 <img alt="" src={eliteIcon(p)} className="icon-theme-aware size-5 object-contain" />E{p}
-                            </button>
+                            </ToggleGroupItem>
                         ))}
-                    </div>
+                    </ToggleGroup>
                 </Field>
 
                 <Field label={t("squad.editor.level")} value={`${build.level} / ${cap}`}>
@@ -238,20 +215,13 @@ export function SeatEditor({ seat, resolved, op, roster, readOnly, squadmates, l
                 </Field>
 
                 <Field label={t("squad.editor.potential")}>
-                    <div className="flex flex-wrap gap-1">
+                    <ToggleGroup aria-label={t("squad.editor.potential")} className="flex-wrap gap-1" value={[String(build.potential)]} onValueChange={(next) => next[0] !== undefined && setBuild({ potential: Number(next[0]) })}>
                         {[...Array(op.potentialRankCount + 1).keys()].map((i) => (
-                            <button
-                                key={`pot-${i}`}
-                                type="button"
-                                onClick={() => setBuild({ potential: i })}
-                                aria-pressed={build.potential === i}
-                                aria-label={t("squad.editor.potentialAria", { rank: i + 1 })}
-                                className={cn("flex pointer-coarse:size-11 size-9 cursor-pointer items-center justify-center rounded-md border bg-background/40 outline-none focus-visible:ring-2 focus-visible:ring-ring", pressedClass(build.potential === i))}
-                            >
+                            <ToggleGroupItem key={`pot-${i}`} value={String(i)} aria-label={t("squad.editor.potentialAria", { rank: i + 1 })} className={cn(CHIP, "pointer-coarse:size-11 size-9 min-w-0 p-0 sm:size-9")}>
                                 <img alt="" src={potentialIcon(i)} className="icon-theme-aware size-5 object-contain" />
-                            </button>
+                            </ToggleGroupItem>
                         ))}
-                    </div>
+                    </ToggleGroup>
                     {rosterDiffers && roster && <Hint>{t("squad.editor.hint.roster", { phase: roster.elite, level: roster.level })}</Hint>}
                 </Field>
             </fieldset>
@@ -353,20 +323,14 @@ function Hint({ children }: { children: React.ReactNode }): React.ReactElement {
     return <p className="mt-1.5 text-[11.5px] text-warning-foreground leading-snug">{children}</p>;
 }
 
-function Segmented({ options, value, onChange, render }: { options: number[]; value: number; onChange: (v: number) => void; render: (v: number) => string }): React.ReactElement {
+function Segmented({ label, options, value, onChange, render }: { label: string; options: number[]; value: number; onChange: (v: number) => void; render: (v: number) => string }): React.ReactElement {
     return (
-        <div className="flex gap-1">
+        <ToggleGroup aria-label={label} className="gap-1" value={[String(value)]} onValueChange={(next) => next[0] !== undefined && onChange(Number(next[0]))}>
             {options.map((o) => (
-                <button
-                    key={o}
-                    type="button"
-                    onClick={() => onChange(o)}
-                    aria-pressed={value === o}
-                    className={cn("flex h-9 min-w-10 cursor-pointer items-center justify-center rounded-md border bg-background/40 px-2 font-medium font-mono text-[12px] outline-none focus-visible:ring-2 focus-visible:ring-ring", pressedClass(value === o))}
-                >
+                <ToggleGroupItem key={o} value={String(o)} className={cn(CHIP, "h-9 pointer-coarse:h-11 min-w-10 pointer-coarse:min-w-11 px-2 font-medium font-mono text-[12px] sm:h-9 sm:min-w-10 sm:text-[12px]")}>
                     {render(o)}
-                </button>
+                </ToggleGroupItem>
             ))}
-        </div>
+        </ToggleGroup>
     );
 }

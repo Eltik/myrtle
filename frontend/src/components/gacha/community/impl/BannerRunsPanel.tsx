@@ -1,18 +1,19 @@
-import { useMemo, useState } from "react";
-import { Kicker } from "#/components/ui/kicker";
+import { Fragment, useMemo, useState } from "react";
+import { Button } from "#/components/ui/button";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "#/components/ui/preview-card";
+import { Skeleton } from "#/components/ui/skeleton";
+import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import { type ClientGachaGroup, classifyBannerGroup, type IBanner, type IBannerPullStat } from "#/lib/api/gacha";
-import { type IFormatters, type TypedRichT, useFormatters, useRichT, useT } from "#/lib/i18n";
+import { type IFormatters, useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import type { IOperatorIndexEntry } from "#/types/operators";
-import { BANNER_GROUP_LABEL_KEYS, BANNER_STATUS_COLOR, BANNER_STATUS_LABEL_KEYS, type BannerStatus, bannerStatus } from "../../constants";
+import { BANNER_GROUP_COLOR, BANNER_GROUP_LABEL_KEYS, BANNER_STATUS_INK, BANNER_STATUS_LABEL_KEYS, type BannerStatus, bannerStatus } from "../../constants";
 import type { messages as gachaConstantsMessages } from "../../constants.messages";
 import type { messages } from "./BannerRunsPanel.messages";
 
 /** This panel renders its own chrome plus the shared banner bucket and status labels. */
 type RunsT = TypedT<typeof messages & typeof gachaConstantsMessages>;
-type RunsRichT = TypedRichT<typeof messages>;
 type RunsMessageKey = (keyof typeof messages | keyof typeof gachaConstantsMessages) & string;
 
 interface IBannerRunsPanelProps {
@@ -21,14 +22,6 @@ interface IBannerRunsPanelProps {
     statsById: Map<string, IBannerPullStat>;
     isLoading: boolean;
 }
-
-const TYPE_COLORS: Record<ClientGachaGroup, string> = {
-    limited: "oklch(0.85 0.18 80)",
-    linkage: "oklch(0.78 0.16 320)",
-    regular: "#bcabdb",
-    special: "#88c8e3",
-    boot: "oklch(0.8 0.12 160)",
-};
 
 type Status = BannerStatus;
 
@@ -49,32 +42,42 @@ function fmtDateRange(banner: IBanner, f: IFormatters, t: RunsT): string {
 function StatusPill({ status }: { status: Status }) {
     const t: RunsT = useT("gacha");
     return (
-        <span className="inline-flex items-center gap-1.5 font-mono text-[9.5px] uppercase leading-none tracking-[0.14em]" style={{ color: BANNER_STATUS_COLOR[status] }}>
+        <span className="kicker mb-0 inline-flex items-center gap-1.5 leading-none" style={{ color: BANNER_STATUS_INK[status] }}>
             <span className="block h-1.5 w-1.5 rounded-full bg-current" aria-hidden />
             {t(BANNER_STATUS_LABEL_KEYS[status])}
         </span>
     );
 }
 
-function FeaturedAvatars({ ids, operatorsById, ringColor, cap }: { ids: string[]; operatorsById: Map<string, IOperatorIndexEntry>; ringColor: string; cap: number }) {
+/** `named` prints each name beside its portrait (the detail popup); without it the name is a hover title plus sr-only text, as the card has no room. */
+function FeaturedAvatars({ ids, operatorsById, ringColor, cap, named = false }: { ids: string[]; operatorsById: Map<string, IOperatorIndexEntry>; ringColor: string; cap: number; named?: boolean }) {
     const t: RunsT = useT("gacha");
     if (ids.length === 0) return null;
     const visible = ids.slice(0, cap);
     const extra = ids.length - visible.length;
     return (
-        <div className="flex items-center gap-1">
+        <div className={named ? "flex flex-wrap items-center gap-x-3 gap-y-1.5" : "flex items-center gap-1"}>
             {visible.map((charId) => {
                 const op = operatorsById.get(charId);
                 const opName = op?.name ?? charId;
-                return (
-                    <span key={charId} className="relative inline-flex h-7 w-7 shrink-0 overflow-hidden rounded-md" title={opName} style={{ background: "var(--muted)", boxShadow: `inset 0 0 0 1px color-mix(in oklch, ${ringColor} 60%, transparent)` }}>
+                const portrait = (
+                    <span className="relative inline-flex h-7 w-7 shrink-0 overflow-hidden rounded-md" title={named ? undefined : opName} style={{ background: "var(--muted)", boxShadow: `inset 0 0 0 1px color-mix(in oklch, ${ringColor} 60%, transparent)` }}>
                         <OperatorAvatar charId={charId} name={opName} className="block h-full w-full object-cover" />
+                        {named ? null : <span className="sr-only">{opName}</span>}
+                    </span>
+                );
+                if (!named) return <Fragment key={charId}>{portrait}</Fragment>;
+                return (
+                    <span key={charId} className="inline-flex min-w-0 items-center gap-1.5 font-sans text-[12px] text-foreground leading-none">
+                        {portrait}
+                        {opName}
                     </span>
                 );
             })}
             {extra > 0 ? (
                 <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-muted font-mono text-[10px] text-muted-foreground tabular-nums" title={t("community.runs.moreOperators", { count: extra })}>
-                    +{extra}
+                    <span aria-hidden>+{extra}</span>
+                    <span className="sr-only">{t("community.runs.moreOperators", { count: extra })}</span>
                 </span>
             ) : null}
         </div>
@@ -86,18 +89,22 @@ function CommunityPullsLine({ stat }: { stat: IBannerPullStat | undefined }) {
     const f = useFormatters();
     // No opted-in user has pulled here yet. Said outright so it doesn't read as a failed fetch.
     if (!stat || stat.pullCount === 0) {
-        return <div className="font-mono text-[10.5px] text-muted-foreground/70 uppercase tracking-[0.12em]">{t("community.runs.noPulls")}</div>;
+        return <div className="font-mono text-[11px] text-subtle-foreground">{t("community.runs.noPulls")}</div>;
     }
     // One decimal is enough to tell banners apart; `f.number` would print up to three.
     const average = stat.userCount > 0 ? Math.round((stat.pullCount / stat.userCount) * 10) / 10 : null;
     return (
         <div className="flex items-baseline gap-2 leading-none">
             <span className="font-sans font-semibold text-[18px] text-foreground tabular-nums tracking-[-0.02em]">{f.number(stat.pullCount)}</span>
-            <span className="font-mono text-[10px] text-muted-foreground uppercase tracking-[0.14em]">{t("community.runs.communityPulls")}</span>
+            <span className="text-[12px] text-muted-foreground">{t("community.runs.communityPulls")}</span>
             <div className="ml-auto flex flex-col items-end gap-1 font-mono text-[10px] text-muted-foreground tabular-nums">
-                <span title={t("community.runs.contributors", { count: f.number(stat.userCount) })}>{t("community.runs.people", { count: f.compact(stat.userCount) })}</span>
+                <span title={t("community.runs.contributors", { count: f.number(stat.userCount) })}>
+                    <span aria-hidden>{t("community.runs.people", { count: f.compact(stat.userCount) })}</span>
+                    <span className="sr-only">{t("community.runs.contributors", { count: f.number(stat.userCount) })}</span>
+                </span>
                 {average !== null ? (
-                    <span className="text-muted-foreground/70" title={t("community.runs.averagePullsTitle")}>
+                    <span className="text-subtle-foreground" title={t("community.runs.averagePullsTitle")}>
+                        <span className="sr-only">{t("community.runs.averagePullsTitle")} </span>
                         {t("community.runs.averagePulls", { count: f.number(average) })}
                     </span>
                 ) : null}
@@ -110,22 +117,20 @@ function BannerCard({ entry, operatorsById, stat, rank, rankTitle }: { entry: IB
     const t: RunsT = useT("gacha");
     const f = useFormatters();
     const { banner, group, status } = entry;
-    const typeColor = TYPE_COLORS[group];
+    const groupColor = BANNER_GROUP_COLOR[group];
 
     return (
         <HoverCard>
             <HoverCardTrigger
                 render={
                     <div
-                        className="flex cursor-default flex-col gap-2.5 rounded-xl border bg-muted/30 p-3.5 transition-colors hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-                        style={{ borderColor: status === "active" ? `color-mix(in oklch, ${typeColor} 50%, var(--border))` : "var(--border)" }}
+                        className="flex cursor-default flex-col gap-2.5 rounded-2xl border bg-muted/30 p-3.5 transition-colors hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        style={{ borderColor: status === "active" ? `color-mix(in oklch, ${groupColor.fill} 50%, var(--border))` : "var(--border)" }}
                     >
                         <div className="flex items-start justify-between gap-2">
                             <div className="flex items-center gap-1.5">
                                 {rank !== null ? <RankChip rank={rank} title={rankTitle} /> : null}
-                                <span className="font-mono text-[9.5px] uppercase tracking-[0.14em]" style={{ color: typeColor }}>
-                                    {t(BANNER_GROUP_LABEL_KEYS[group])}
-                                </span>
+                                <span className={`kicker mb-0 ${groupColor.inkClass}`}>{t(BANNER_GROUP_LABEL_KEYS[group])}</span>
                             </div>
                             <StatusPill status={status} />
                         </div>
@@ -141,7 +146,7 @@ function BannerCard({ entry, operatorsById, stat, rank, rankTitle }: { entry: IB
             <HoverCardContent className="w-80 p-4">
                 <div className="flex flex-col gap-3">
                     <div className="flex flex-col gap-1">
-                        <span className="font-mono text-[9.5px] uppercase tracking-[0.14em]" style={{ color: typeColor }}>
+                        <span className={`kicker mb-0 ${groupColor.inkClass}`}>
                             {t(BANNER_GROUP_LABEL_KEYS[group])} · {banner.gachaRuleType}
                         </span>
                         <span className="font-sans font-semibold text-[14px] text-foreground leading-snug">{banner.gachaPoolName}</span>
@@ -158,14 +163,14 @@ function BannerCard({ entry, operatorsById, stat, rank, rankTitle }: { entry: IB
 
                     {banner.featured6.length > 0 ? (
                         <div className="flex flex-col gap-1.5">
-                            <span className="font-mono text-[9.5px] uppercase tracking-[0.14em]" style={{ color: "oklch(0.78 0.18 80)" }}>
+                            <span className="kicker mb-0" style={{ color: "var(--featured-six-ink)" }}>
                                 {t("community.runs.featuredSixStar")}
                             </span>
-                            <FeaturedAvatars ids={banner.featured6} operatorsById={operatorsById} ringColor="oklch(0.78 0.18 80)" cap={8} />
+                            <FeaturedAvatars ids={banner.featured6} operatorsById={operatorsById} ringColor="oklch(0.78 0.18 80)" cap={8} named />
                         </div>
                     ) : null}
 
-                    <div className="break-all font-mono text-[10px] text-muted-foreground/70 tabular-nums">{banner.gachaPoolId}</div>
+                    <div className="break-all font-mono text-[10px] text-subtle-foreground tabular-nums">{banner.gachaPoolId}</div>
                 </div>
             </HoverCardContent>
         </HoverCard>
@@ -195,25 +200,29 @@ const SORT_METRIC_LABEL_KEYS: Record<Exclude<Sort, "timeline">, RunsMessageKey> 
 };
 
 function Segmented<T extends string>({ label, options, value, onChange }: { label: string; options: ReadonlyArray<{ key: T; label: string }>; value: T; onChange: (key: T) => void }) {
+    // Kit single-select group: pressed state with its inset ring and the coarse 44px hit area.
     return (
         <div className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-2">
-            <span className="font-mono text-[9.5px] text-muted-foreground/70 uppercase tracking-[0.14em]">{label}</span>
-            <div className="grid auto-cols-fr grid-flow-col gap-1 rounded-lg border border-border bg-muted p-0.75 sm:inline-flex sm:gap-1.5 sm:rounded-[10px]">
-                {options.map((o) => {
-                    const isActive = value === o.key;
-                    return (
-                        <button
-                            key={o.key}
-                            type="button"
-                            aria-pressed={isActive}
-                            onClick={() => onChange(o.key)}
-                            className={`flex h-8 cursor-pointer touch-manipulation items-center justify-center whitespace-nowrap rounded-md px-2 font-medium font-sans text-[11.5px] outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring sm:h-6.5 sm:px-2.5 ${isActive ? "bg-card text-foreground shadow-[0_1px_2px_oklch(0_0_0/0.4)]" : "bg-transparent text-muted-foreground hover:text-foreground"}`}
-                        >
-                            {o.label}
-                        </button>
-                    );
-                })}
-            </div>
+            <span className="kicker mb-0" aria-hidden>
+                {label}
+            </span>
+            <ToggleGroup
+                aria-label={label}
+                onValueChange={(next) => {
+                    const picked = options.find((o) => o.key === next[0]);
+                    if (picked) onChange(picked.key);
+                }}
+                size="sm"
+                value={[value]}
+                variant="outline"
+                className="grid w-full auto-cols-fr grid-flow-col sm:flex sm:w-fit"
+            >
+                {options.map((o) => (
+                    <ToggleGroupItem key={o.key} className="min-w-0 px-2.5 text-[12px]" value={o.key}>
+                        {o.label}
+                    </ToggleGroupItem>
+                ))}
+            </ToggleGroup>
         </div>
     );
 }
@@ -242,7 +251,7 @@ const PAST_WINDOW_SECS = 180 * 86_400;
 
 export function BannerRunsPanel({ banners, operatorsById, statsById, isLoading }: IBannerRunsPanelProps) {
     const t: RunsT = useT("gacha");
-    const rt: RunsRichT = useRichT("gacha");
+    const f = useFormatters();
     const [filter, setFilter] = useState<Filter>("active");
     const [sort, setSort] = useState<Sort>("timeline");
     const [showAll, setShowAll] = useState(false);
@@ -302,12 +311,12 @@ export function BannerRunsPanel({ banners, operatorsById, statsById, isLoading }
 
     if (isLoading) {
         return (
-            <section id="banner-runs" className="flex scroll-mt-24 flex-col gap-4 rounded-[14px] border border-border bg-card p-[18px_18px] sm:p-[22px_24px]">
-                <div className="h-4 w-32 animate-pulse rounded bg-muted" />
+            <section id="banner-runs" className="flex scroll-mt-24 flex-col gap-4 rounded-2xl border border-border bg-card p-[18px_18px] sm:p-[22px_24px]">
+                <Skeleton className="h-4 w-32 rounded" />
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                     {Array.from({ length: 6 }).map((_, i) => (
                         // biome-ignore lint/suspicious/noArrayIndexKey: skeleton
-                        <div key={i} className="h-32 animate-pulse rounded-xl bg-muted" />
+                        <Skeleton key={i} className="h-32 rounded-2xl" />
                     ))}
                 </div>
             </section>
@@ -319,11 +328,11 @@ export function BannerRunsPanel({ banners, operatorsById, statsById, isLoading }
     }
 
     return (
-        <section id="banner-runs" className="flex scroll-mt-24 flex-col gap-4 rounded-[14px] border border-border bg-card p-[18px_18px] sm:p-[22px_24px]">
+        <section id="banner-runs" className="flex scroll-mt-24 flex-col gap-4 rounded-2xl border border-border bg-card p-[18px_18px] sm:p-[22px_24px]">
             <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
-                <div>
-                    <Kicker className="mb-1.5">{t("community.runs.kicker")}</Kicker>
-                    <h2 className="m-0 text-balance font-sans font-semibold text-[20px] text-foreground leading-[1.15] tracking-[-0.02em] sm:text-[22px]">{activeCount > 0 ? rt("community.runs.titleActive", { count: <em className="text-primary not-italic">{activeCount}</em> }) : t("community.runs.titleNone")}</h2>
+                <div className="flex items-baseline gap-2">
+                    <h2 className="m-0 font-sans font-semibold text-[15px] text-foreground leading-tight">{t("community.runs.kicker")}</h2>
+                    {activeCount > 0 ? <span className="font-sans text-[12.5px] text-muted-foreground tabular-nums">{t("community.runs.active", { count: f.number(activeCount) })}</span> : null}
                 </div>
 
                 <div className="flex flex-col gap-3 sm:items-end sm:gap-2">
@@ -360,9 +369,9 @@ export function BannerRunsPanel({ banners, operatorsById, statsById, isLoading }
 
                     {filtered.length > PAGE_SIZE ? (
                         <div className="flex justify-center">
-                            <button type="button" onClick={() => setShowAll((s) => !s)} className="inline-flex h-8 cursor-pointer items-center rounded-md border border-border bg-card px-4 font-mono text-[11px] text-muted-foreground uppercase tracking-[0.12em] transition-colors hover:text-foreground">
+                            <Button onClick={() => setShowAll((s) => !s)} size="sm" variant="outline">
                                 {showAll ? t("community.runs.showFewer") : t("community.runs.showAll", { count: filtered.length })}
-                            </button>
+                            </Button>
                         </div>
                     ) : null}
                 </>

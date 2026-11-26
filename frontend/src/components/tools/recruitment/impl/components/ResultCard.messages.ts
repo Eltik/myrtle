@@ -83,6 +83,38 @@ export const messages = {
         text: "ASPD {value}",
         description: "Next potential changes attack speed. {value} is signed.",
     },
+    "recruit.result.newOdds.pct": {
+        text: "{pct}% new",
+        description: "Chance the recruit is an operator the signed-in roster does not hold, on a combination that can only roll one rarity, e.g. '50% new'. Very narrow.",
+    },
+    "recruit.result.newOdds.allNew": {
+        text: "Guaranteed new",
+        description: "Shown instead of '100% new': every operator this combination can roll is one the roster does not hold.",
+    },
+    "recruit.result.newOdds.allOwned": {
+        text: "All owned",
+        description: "Shown instead of '0% new': the roster already holds every operator this combination can roll.",
+    },
+    "recruit.result.newOdds.rarityPct": {
+        text: "{rarity} {pct}% new",
+        description: "One rarity's share of new operators on a combination that can roll several rarities, e.g. '5★ 67% new'. {rarity} is a star rating or the word Robot. Very narrow.",
+    },
+    "recruit.result.newOdds.rarityAllNew": {
+        text: "{rarity} all new",
+        description: "Shown instead of '{rarity} 100% new': the roster holds none of this rarity's operators in the combination.",
+    },
+    "recruit.result.newOdds.rarityAllOwned": {
+        text: "{rarity} all owned",
+        description: "Shown instead of '{rarity} 0% new': the roster holds every operator of this rarity in the combination.",
+    },
+    "recruit.result.newOdds.title": {
+        text: "Among {rarity} results, {unowned} of {total} {total, plural, one {operator} other {operators}} {unowned, plural, one {is} other {are}} new to you.",
+        description: "Tooltip line explaining one new-operator figure, e.g. 'Among 6★ results, 1 of 2 operators is new to you.' {rarity} is a star rating or the word Robot.",
+    },
+    "recruit.result.newOdds.unpublished": {
+        text: "The game does not publish how likely each rarity is, so the rarities are not combined.",
+        description: "Last tooltip line on a combination that can roll several rarities: why the new-operator odds are given per rarity rather than as one number.",
+    },
 } satisfies MessageMap;
 
 // `dynamic`: the stat labels are resolved as `t(`recruit.result.upgrade.stat.${attribute}`)`

@@ -8,6 +8,10 @@ export const messages = {
         text: "Remove",
         description: "Accessible name of the small x on a selected-value chip in a multi-select combobox. A verb: it deselects that one value.",
     },
+    "combobox.clear": {
+        text: "Clear",
+        description: "Accessible name of the x button at the end of a combobox or autocomplete field. A verb: it empties the field, or deselects every value.",
+    },
 } satisfies MessageMap;
 
 export const { keys } = defineMessages({ namespace, messages });

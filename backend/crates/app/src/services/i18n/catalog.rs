@@ -14,18 +14,22 @@ const MANIFEST_KEY: &str = "i18n:manifest";
 const MANIFEST_TTL: Duration = Duration::from_secs(30);
 const CATALOG_TTL: Duration = Duration::from_hours(24);
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct I18nManifestLocale {
     pub code: String,
     pub native_name: String,
     pub english_name: String,
     pub gamedata_server: String,
     pub namespaces: BTreeMap<String, String>,
+    #[ts(type = "number")]
     pub translated: i64,
+    #[ts(type = "number")]
     pub total: i64,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct I18nManifest {
     pub default_locale: String,
     pub locales: Vec<I18nManifestLocale>,

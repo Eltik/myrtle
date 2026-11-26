@@ -23,6 +23,14 @@ export const messages = {
         text: "Hidden faction (spoiler):",
         description: "Screen-reader prefix read before the name of a faction the operator secretly belongs to.",
     },
+    "hero.dataSaver.load": {
+        text: "Load artwork",
+        description: "Button in place of the operator's splash art while data saver is on; pressing it downloads the full art.",
+    },
+    "hero.dataSaver.note": {
+        text: "Data saver is on",
+        description: "Small caption under the Load artwork button, saying why the splash art is not shown. 'Data saver' is the setting in Settings, Appearance.",
+    },
 } satisfies MessageMap;
 
 export const { keys } = defineMessages({ namespace, messages });

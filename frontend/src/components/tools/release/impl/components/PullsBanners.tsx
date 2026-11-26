@@ -5,6 +5,8 @@ import { Button } from "#/components/ui/button";
 import { Card } from "#/components/ui/card";
 import { Collapsible, CollapsiblePanel, CollapsibleTrigger } from "#/components/ui/collapsible";
 import { Input } from "#/components/ui/input";
+import { Kicker } from "#/components/ui/kicker";
+import { LoadFailed } from "#/components/ui/load-failed";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { releaseEventsQueryOptions } from "#/lib/api/release";
@@ -64,7 +66,7 @@ export function PullsBanners({ rows, totals, lookup, charNames, today, onAllocat
                     <SectionTitle count={rows.length}>{t("release.pulls.plan.title")}</SectionTitle>
                     <p className="m-0 max-w-2xl font-sans text-[12px] text-muted-foreground leading-normal">{t("release.pulls.plan.intro")}</p>
                     <p className="m-0 max-w-2xl font-sans text-[12px] text-muted-foreground leading-normal">{t("release.pulls.plan.pickHint")}</p>
-                    {inferred > 0 && <p className="m-0 max-w-2xl font-sans text-[12px] text-amber-500/90 leading-normal">{t("release.pulls.plan.inferredCount", { count: inferred })}</p>}
+                    {inferred > 0 && <p className="m-0 max-w-2xl font-sans text-[12px] text-warning-foreground leading-normal">{t("release.pulls.plan.inferredCount", { count: inferred })}</p>}
                 </div>
                 <div className="flex flex-none items-center gap-2">
                     <Button size="sm" variant="outline" onClick={onExport} disabled={rows.length === 0}>
@@ -79,9 +81,13 @@ export function PullsBanners({ rows, totals, lookup, charNames, today, onAllocat
             <div className="flex flex-wrap items-start gap-x-8 gap-y-3 rounded-lg border border-border bg-muted/30 p-3">
                 <Stat label={t("release.pulls.plan.committed")} value={f.number(totals.spent)} />
                 <Stat label={t("release.pulls.plan.remaining")} value={f.number(totals.remaining)} />
-                {totals.shortBanners > 0 && <Stat label={t("release.pulls.plan.overrun", { count: totals.shortBanners })} value={f.number(totals.shortfall)} className="text-amber-500" />}
+                {totals.shortBanners > 0 && <Stat label={t("release.pulls.plan.overrun", { count: totals.shortBanners })} value={f.number(totals.shortfall)} className="text-warning-foreground" />}
                 {!planned && <p className="m-0 self-center font-sans text-[12px] text-muted-foreground">{t("release.pulls.plan.untouched")}</p>}
             </div>
+
+            {/* The rows still plan without the events list; only the borrowed names and art are lost,
+                so the failure is a notice above them rather than a replacement for them. */}
+            {events.isError && <LoadFailed layout="inline" message={t("release.pulls.plan.eventsError")} onRetry={() => void events.refetch()} />}
 
             {rows.length === 0 ? (
                 <ReleaseEmpty title={t("release.pulls.plan.title")} description={t("release.pulls.banners.empty")} />
@@ -165,7 +171,7 @@ function Estimated({ row, t, onPreset, onAllocate }: { row: IPlanRow; t: PullsT;
     return (
         <Collapsible defaultOpen className="flex w-full min-w-0 flex-col gap-1 rounded-lg border border-border bg-muted/20 px-2.5 py-2">
             <CollapsibleTrigger className="group flex w-full items-baseline justify-between gap-3 text-left">
-                <span className="font-sans text-[11.5px] text-muted-foreground uppercase tracking-[0.06em]">{t("release.pulls.plan.estimated")}</span>
+                <Kicker>{t("release.pulls.plan.estimated")}</Kicker>
                 <span className="flex min-w-0 items-baseline gap-1.5">
                     {activeLabel ? <span className="min-w-0 truncate font-sans text-[11.5px] text-muted-foreground group-data-[panel-open]:hidden">{activeLabel}</span> : null}
                     <ChevronDown className="size-3.5 shrink-0 text-muted-foreground transition-transform group-data-[panel-open]:rotate-180" aria-hidden="true" />
@@ -185,7 +191,7 @@ function Estimated({ row, t, onPreset, onAllocate }: { row: IPlanRow; t: PullsT;
                                    row and the one preset that keeps them. */
                                 onClick={() => (g.key === "yours" ? onAllocate(row.key, g.value) : onPreset(row.key, g.value))}
                                 className={cn(
-                                    "flex w-full cursor-pointer items-baseline justify-between gap-3 rounded border px-2 py-1 text-left transition-colors hover:bg-accent/50",
+                                    "flex pointer-coarse:min-h-11 w-full cursor-pointer pointer-coarse:items-center items-baseline justify-between gap-3 rounded-md border px-2 py-1 text-left transition-colors hover:bg-accent/50",
                                     // A border on every row, not just on hover: these ARE the
                                     // panel's control, and on touch there is no hover to
                                     // reveal that. Without it they read as a definition list.
@@ -211,7 +217,7 @@ function Estimated({ row, t, onPreset, onAllocate }: { row: IPlanRow; t: PullsT;
                 free rolls and the budget line above cannot (free rolls never enter the pool), so
                 they printed "40 short" vs "16 under". "30 + 24 free = 54" makes them two facts. */}
             {row.totalPulls > 0 && (
-                <span className={cn("font-mono text-[12px] tabular-nums", gap > 0 ? "text-amber-500" : "text-emerald-500")}>
+                <span className={cn("font-mono text-[12px] tabular-nums", gap > 0 ? "text-warning-foreground" : "text-success-foreground")}>
                     {row.freePulls > 0
                         ? gap > 0
                             ? t("release.pulls.plan.sumFreeGap", { spent: f.number(row.spent), free: f.number(row.freePulls), total: f.number(row.totalPulls), gap: f.number(gap), goal: f.number(active.p50) })
@@ -254,19 +260,13 @@ function OperatorPot({ id, lookup, name, copies, onSet, t }: { id: string; looku
                 </span>
             )}
             <span className="ml-0.5 inline-flex shrink-0 items-center gap-0.5 rounded bg-background/60 p-0.5">
-                <button type="button" onClick={() => onSet(copies - 1)} disabled={copies <= 0} aria-label={t("release.pulls.plan.potLess", { operator: label.text })} className="inline-flex size-6 cursor-pointer items-center justify-center rounded hover:bg-accent disabled:cursor-default disabled:opacity-40">
-                    <Minus className="size-3" />
-                </button>
+                <Button variant="ghost" size="icon-xs" onClick={() => onSet(copies - 1)} disabled={copies <= 0} aria-label={t("release.pulls.plan.potLess", { operator: label.text })}>
+                    <Minus aria-hidden="true" className="size-3" />
+                </Button>
                 <span className={cn("min-w-8 text-center font-mono text-[12px] tabular-nums", active ? "font-bold text-foreground" : "text-muted-foreground")}>{active ? t("release.pulls.plan.potValue", { count: copies }) : t("release.pulls.plan.potNone")}</span>
-                <button
-                    type="button"
-                    onClick={() => onSet(copies + 1)}
-                    disabled={copies >= MAX_POT_COPIES}
-                    aria-label={t("release.pulls.plan.potMore", { operator: label.text })}
-                    className="inline-flex size-6 cursor-pointer items-center justify-center rounded hover:bg-accent disabled:cursor-default disabled:opacity-40"
-                >
-                    <Plus className="size-3" />
-                </button>
+                <Button variant="ghost" size="icon-xs" onClick={() => onSet(copies + 1)} disabled={copies >= MAX_POT_COPIES} aria-label={t("release.pulls.plan.potMore", { operator: label.text })}>
+                    <Plus aria-hidden="true" className="size-3" />
+                </Button>
             </span>
         </div>
     );
@@ -343,10 +343,10 @@ function PlanRow({ row, lookup, charNames, today, t, onAllocate, onPreset, onSet
                 <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5">
                     {row.allocated > 0 ? (
                         <>
-                            <span className={cn("font-bold font-mono text-[28px] tabular-nums leading-none", row.shortfall > 0 ? "text-amber-500" : "text-foreground")}>{f.number(row.allocated)}</span>
+                            <span className={cn("font-bold font-mono text-[28px] tabular-nums leading-none", row.shortfall > 0 ? "text-warning-foreground" : "text-foreground")}>{f.number(row.allocated)}</span>
                             <span className="font-sans text-[12px] text-muted-foreground">{t("release.pulls.plan.plannedHere")}</span>
                             {row.shortfall > 0 ? (
-                                <span className="font-sans text-[12px] text-amber-500">{t("release.pulls.plan.planShort", { short: f.number(row.shortfall), available: f.number(row.available) })}</span>
+                                <span className="font-sans text-[12px] text-warning-foreground">{t("release.pulls.plan.planShort", { short: f.number(row.shortfall), available: f.number(row.available) })}</span>
                             ) : (
                                 <span className="font-sans text-[12px] text-muted-foreground">{t("release.pulls.plan.planFits", { available: f.number(row.available) })}</span>
                             )}
@@ -408,11 +408,9 @@ function PlanRow({ row, lookup, charNames, today, t, onAllocate, onPreset, onSet
                         {/* Label and first preset wrap together, and each preset names what it
                             is (bank, bonus copy, guarantee): bare numbers read as random stats. */}
                         <span className="inline-flex items-center gap-1">
-                            <span className="font-sans text-[11.5px] text-muted-foreground uppercase tracking-[0.06em]">{t("release.pulls.plan.setTo")}</span>
+                            <Kicker>{t("release.pulls.plan.setTo")}</Kicker>
                             <Tooltip>
-                                <TooltipTrigger render={<Button size="sm" variant="outline" className="h-7 px-2 font-mono text-[12px]" onClick={() => onPreset(row.key, targets.max)} disabled={targets.max === 0} aria-label={t("release.pulls.plan.max")} />}>
-                                    {t("release.pulls.plan.maxLabel", { count: f.number(targets.max) })}
-                                </TooltipTrigger>
+                                <TooltipTrigger render={<Button size="sm" variant="outline" className="h-7 px-2 font-mono text-[12px]" onClick={() => onPreset(row.key, targets.max)} disabled={targets.max === 0} />}>{t("release.pulls.plan.maxLabel", { count: f.number(targets.max) })}</TooltipTrigger>
                                 <TooltipPopup className="max-w-xs">{t("release.pulls.plan.maxTitle", { count: f.number(targets.max) })}</TooltipPopup>
                             </Tooltip>
                         </span>
@@ -468,5 +466,5 @@ function FaceStrip({ ids, lookup }: { ids: string[]; lookup: OperatorLookup }): 
 function Face({ id, onEn, many }: { id: string; onEn: boolean; many: boolean }): React.ReactElement | null {
     const [failed, setFailed] = React.useState(false);
     if (failed) return null;
-    return <img src={getAvatarById(id, onEn ? undefined : "cn")} alt="" loading="lazy" onError={() => setFailed(true)} className={cn("h-full rounded-sm", many ? "min-w-0 flex-1 object-contain" : "aspect-square flex-none object-cover")} />;
+    return <img src={getAvatarById(id, onEn ? undefined : "cn")} alt="" width={64} height={64} loading="lazy" onError={() => setFailed(true)} className={cn("h-full rounded-sm", many ? "min-w-0 flex-1 object-contain" : "aspect-square flex-none object-cover")} />;
 }

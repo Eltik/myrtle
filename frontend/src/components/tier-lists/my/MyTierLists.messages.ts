@@ -12,7 +12,7 @@ export const messages = {
         description: "Toast body naming the list just created. {name} is the author's own title; keep the quotes.",
     },
     "my.toast.createFailed": {
-        text: "Couldn't create list.",
+        text: "Couldn't create the list",
         description: "Stand-in message when creating the list failed and the server sent none of its own.",
     },
     "my.toast.updatedTitle": {
@@ -24,7 +24,7 @@ export const messages = {
         description: "Toast body after the list's name or description was saved.",
     },
     "my.toast.updateFailed": {
-        text: "Couldn't save changes.",
+        text: "Couldn't save the changes",
         description: "Stand-in message when saving the details failed and the server sent none of its own.",
     },
     "my.toast.deletedTitle": {
@@ -40,7 +40,7 @@ export const messages = {
         description: "Stand-in for the deleted list's name in the toast when the name is no longer to hand.",
     },
     "my.toast.deleteFailed": {
-        text: "Couldn't delete list.",
+        text: "Couldn't delete the list",
         description: "Stand-in message when deleting the list failed and the server sent none of its own.",
     },
     "my.toast.copiedTitle": {
@@ -64,7 +64,7 @@ export const messages = {
         description: "Shown in place of the grid when the player's own lists could not be fetched.",
     },
     "my.retry": {
-        text: "Retry",
+        text: "Try again",
         description: "Button that re-runs the failed request for the player's lists.",
     },
     "my.empty.title": {

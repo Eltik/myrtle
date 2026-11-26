@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { Avatar, AvatarFallback, AvatarImage } from "#/components/ui/avatar";
+import { Badge } from "#/components/ui/badge";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "#/components/ui/breadcrumb";
-import { Kicker } from "#/components/ui/kicker";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import type { ITierListDetail } from "#/lib/api/tier-lists";
 import { useFormatters, useT } from "#/lib/i18n";
@@ -26,7 +26,7 @@ export function TierListHero({ detail }: ITierListHeroProps) {
 
     return (
         <header className="border-border/60 border-b bg-linear-to-b from-card/40 to-transparent">
-            <div className="page-gutter pt-5 pb-6 [--page-max:1080px] sm:pt-10 sm:pb-9">
+            <div className="page-gutter pt-5 pb-6 [--page-max:1200px] sm:pt-10 sm:pb-9">
                 <Breadcrumb className="mb-3">
                     <BreadcrumbList className="text-xs">
                         <BreadcrumbItem>
@@ -41,63 +41,20 @@ export function TierListHero({ detail }: ITierListHeroProps) {
 
                 <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
                     <div className="min-w-0 flex-1">
-                        <div className="mb-2 flex flex-wrap items-center gap-1.5">
-                            {isOfficial ? (
-                                <span className="inline-flex items-center gap-1 rounded-full border border-[oklch(0.92_0.13_85)] bg-[oklch(0.92_0.13_85)] px-2 py-0.5 font-bold font-mono text-[10.5px] text-[oklch(0.32_0.12_75)] uppercase leading-none tracking-wider">
-                                    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className="h-2.5 w-2.5">
-                                        <path d="M12 2 9.6 4.4 6.3 4l-.6 3.3L2.5 9 4 12l-1.5 3 3.2 1.7.6 3.3 3.3-.4L12 22l2.4-2.4 3.3.4.6-3.3L21.5 15 20 12l1.5-3-3.2-1.7-.6-3.3L14.4 4.4Zm-1.2 13.4-3.4-3.4 1.4-1.4 2 2 4.4-4.4 1.4 1.4Z" />
-                                    </svg>
-                                    {t("detail.hero.official")}
-                                </span>
-                            ) : (
-                                <span className="inline-flex items-center gap-1 rounded-full border border-border bg-muted px-2 py-0.5 font-medium font-mono text-[10.5px] text-muted-foreground uppercase leading-none tracking-wider">{t("detail.hero.community")}</span>
-                            )}
-
-                            {flair && (
-                                <span
-                                    className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-bold font-mono text-[10.5px] uppercase leading-none tracking-wider"
-                                    style={
-                                        flair.color
-                                            ? {
-                                                  background: `color-mix(in srgb, ${flair.color} 18%, transparent)`,
-                                                  color: flair.color,
-                                                  border: `1px solid color-mix(in srgb, ${flair.color} 50%, transparent)`,
-                                              }
-                                            : {
-                                                  background: "var(--muted)",
-                                                  color: "var(--muted-foreground)",
-                                                  border: "1px solid var(--border)",
-                                              }
-                                    }
-                                >
-                                    <span className="h-1.5 w-1.5 rounded-full" style={{ background: flair.color ?? "currentColor" }} aria-hidden="true" />
-                                    {flair.label}
-                                </span>
-                            )}
-
-                            {stats?.isTrending && (
-                                <span className="inline-flex items-center gap-1 rounded-full border border-[color-mix(in_srgb,var(--primary)_36%,transparent)] bg-[color-mix(in_srgb,var(--primary)_10%,transparent)] px-2 py-0.5 font-bold font-mono text-[10.5px] text-primary uppercase leading-none tracking-wider">
-                                    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className="h-2.5 w-2.5">
-                                        <path d="M12 2c.6 4 4.7 5.4 4.7 9.5 0 2.6-2 4.5-4.7 4.5s-4.7-1.9-4.7-4.5C7.3 9.4 9.6 8 9 4c2.4 1.4 3 4 3 4Z" />
-                                    </svg>
-                                    {t("detail.hero.trending")}
-                                </span>
-                            )}
-                        </div>
-
-                        <Kicker>{t("detail.hero.kicker")}</Kicker>
                         <h1 className="m-0 font-bold font-sans text-2xl text-foreground leading-tight tracking-tight sm:text-3xl md:text-4xl">{detail.title}</h1>
 
                         {detail.description && <ExpandableDescription text={detail.description} markdown className="mt-3 max-w-160 font-sans text-muted-foreground text-sm leading-relaxed sm:text-[15px]" />}
 
-                        <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 font-sans text-[12.5px] text-muted-foreground">
+                        {/* The byline is its own band under a hairline, so the description's "Show more"
+                            ends the description block instead of sitting on the byline's edge. */}
+                        <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 border-border/60 border-t pt-4 font-sans text-[12.5px] text-muted-foreground">
                             {author ? (
                                 <Link to="/user/$id" params={{ id: author.uid }} className="group inline-flex min-w-0 items-center gap-2 text-foreground no-underline">
                                     <Avatar className="h-6 w-6 shrink-0 rounded-full border border-border bg-linear-to-br from-muted to-border font-sans font-semibold text-[10px] text-foreground">
                                         {author.avatarId && <AvatarImage src={getAvatarById(author.avatarId)} alt="" />}
                                         <AvatarFallback>{(author.nickname?.charAt(0) || "?").toUpperCase()}</AvatarFallback>
                                     </Avatar>
-                                    <span className="min-w-0 truncate font-medium transition-colors group-hover:text-primary">{author.nickname?.trim() || t("detail.hero.authorFallback")}</span>
+                                    <span className="min-w-0 truncate font-medium transition-colors group-hover:underline">{author.nickname?.trim() || t("detail.hero.authorFallback")}</span>
                                 </Link>
                             ) : (
                                 <span className="inline-flex items-center gap-2">
@@ -106,10 +63,7 @@ export function TierListHero({ detail }: ITierListHeroProps) {
                                 </span>
                             )}
 
-                            <span className="opacity-50 max-sm:hidden" aria-hidden="true">
-                                ·
-                            </span>
-
+                            {/* No dot separators: the row's gap separates the items, so a wrap never starts a line with an orphan "·". */}
                             <span className="inline-flex items-center gap-1.5">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5 opacity-70" aria-hidden="true">
                                     <circle cx="12" cy="12" r="10" />
@@ -120,9 +74,6 @@ export function TierListHero({ detail }: ITierListHeroProps) {
 
                             {stats && (
                                 <>
-                                    <span className="opacity-50" aria-hidden="true">
-                                        ·
-                                    </span>
                                     <Tooltip>
                                         <TooltipTrigger render={<span className="inline-flex items-center gap-1.5" />}>
                                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5 opacity-70" aria-hidden="true">
@@ -146,6 +97,24 @@ export function TierListHero({ detail }: ITierListHeroProps) {
                                     </Tooltip>
                                 </>
                             )}
+
+                            {/* Kind, flair and trending sit in the meta row, under the title they describe: official in gold, the flair in its own colour, trending in the accent. */}
+                            <span className="inline-flex flex-wrap items-center gap-1.5">
+                                <Badge variant="outline" className={isOfficial ? "border-transparent bg-[oklch(0.92_0.13_85)] text-[oklch(0.32_0.12_75)]" : undefined}>
+                                    {isOfficial ? t("detail.hero.official") : t("detail.hero.community")}
+                                </Badge>
+                                {flair && (
+                                    // Free-form flair colours measured 2.46 to 2.94 as text on their own tint; the tint and border carry the colour, the text stays foreground.
+                                    <Badge variant={flair.color ? "tint" : "outline"} style={flair.color ? ({ "--tone": flair.color } as React.CSSProperties) : undefined}>
+                                        {flair.label}
+                                    </Badge>
+                                )}
+                                {stats?.isTrending && (
+                                    <Badge variant="tint" style={{ "--tone": "var(--primary)" } as React.CSSProperties}>
+                                        {t("detail.hero.trending")}
+                                    </Badge>
+                                )}
+                            </span>
                         </div>
                     </div>
 

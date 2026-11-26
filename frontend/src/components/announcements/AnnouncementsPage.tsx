@@ -40,7 +40,7 @@ export function AnnouncementsPage() {
     };
 
     return (
-        <main className="page-shell [--page-max:1200px]">
+        <div className="page-shell [--page-max:1200px]">
             <PageHeader
                 title={t("page.title")}
                 description={t("page.description")}
@@ -97,6 +97,6 @@ export function AnnouncementsPage() {
                     )}
                 </section>
             </div>
-        </main>
+        </div>
     );
 }

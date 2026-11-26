@@ -3,6 +3,7 @@ import { StatTile } from "#/components/admin/Primitives";
 import { type IAdminAccess, useAdminAccess } from "#/components/admin/shell/access";
 import { PageHead } from "#/components/admin/shell/PageHead";
 import type { IAdminHomeSearch } from "#/components/admin/shell/search";
+import { LoadFailed } from "#/components/ui/load-failed";
 import { useAuth } from "#/hooks/use-auth";
 import { adminStatsQueryOptions } from "#/lib/api/admin";
 import { useFormatters, useT } from "#/lib/i18n";
@@ -57,7 +58,9 @@ function StatTiles(): React.ReactElement {
     const byRole = stats?.usersByRole;
     const totalUsers = byRole ? byRole.user + byRole.translator + byRole.tierListEditor + byRole.tierListAdmin + byRole.superAdmin : undefined;
     const staffCount = byRole && totalUsers !== undefined ? totalUsers - byRole.user : undefined;
-    const dash = "—";
+    const dash = "-";
+
+    if (statsQuery.isError) return <LoadFailed message={t("home.tile.loadFailed")} onRetry={() => void statsQuery.refetch()} />;
 
     return (
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">

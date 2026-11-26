@@ -3,7 +3,6 @@ import { useEntityLabels } from "#/components/tier-lists/kinds";
 import { Button } from "#/components/ui/button";
 import { Checkbox } from "#/components/ui/checkbox";
 import { Dialog, DialogClose, DialogDescription, DialogFooter, DialogHeader, DialogPanel, DialogPopup, DialogTitle } from "#/components/ui/dialog";
-import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { ALL_ENTITY_KINDS, type TierEntityKind } from "#/lib/api/tier-entities";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -49,21 +48,18 @@ export function AllowedKindsChecklist({ value, onChange, placedByKind, disabled 
                     const checked = value.includes(kind);
                     const placed = placedByKind?.[kind] ?? 0;
                     return (
-                        <Tooltip key={kind}>
-                            <TooltipTrigger
-                                render={
-                                    // biome-ignore lint/a11y/noLabelWithoutControl: the Checkbox inside is the control; base-ui renders it as a checkbox button biome cannot see through
-                                    <label
-                                        className={cn("flex min-w-0 cursor-pointer items-center gap-2 rounded-lg border px-2.5 py-2 transition-colors", checked ? "border-[color-mix(in_srgb,var(--ring)_45%,var(--border))] bg-accent/30" : "border-border hover:bg-accent/40", disabled && "cursor-not-allowed opacity-60")}
-                                    />
-                                }
-                            >
-                                <Checkbox checked={checked} onCheckedChange={(on) => toggle(kind, on)} disabled={disabled} />
-                                <span className="min-w-0 flex-1 truncate font-medium font-sans text-[13px] text-foreground leading-none">{labels.plural(kind)}</span>
-                                {placed > 0 && <span className="shrink-0 font-mono text-[10.5px] text-muted-foreground tabular-nums leading-none">{t("kinds.placed", { count: placed })}</span>}
-                            </TooltipTrigger>
-                            <TooltipPopup>{labels.description(kind)}</TooltipPopup>
-                        </Tooltip>
+                        // biome-ignore lint/a11y/noLabelWithoutControl: the Checkbox inside is the control; base-ui renders it as a checkbox button biome cannot see through
+                        <label key={kind} className={cn("flex min-w-0 cursor-pointer items-start gap-2 rounded-lg border px-2.5 py-2 transition-colors", checked ? "border-[color-mix(in_srgb,var(--ring)_45%,var(--border))] bg-accent/30" : "border-border hover:bg-accent/40", disabled && "cursor-not-allowed opacity-60")}>
+                            <Checkbox checked={checked} onCheckedChange={(on) => toggle(kind, on)} disabled={disabled} />
+                            {/* R-39: the description was a tooltip on a label whose tap toggles, so touch never saw it; it is now a visible line. */}
+                            <span className="flex min-w-0 flex-1 flex-col gap-1">
+                                <span className="flex items-baseline gap-2">
+                                    <span className="min-w-0 flex-1 truncate font-medium font-sans text-[13px] text-foreground leading-none">{labels.plural(kind)}</span>
+                                    {placed > 0 && <span className="shrink-0 font-mono text-[10.5px] text-muted-foreground tabular-nums leading-none">{t("kinds.placed", { count: placed })}</span>}
+                                </span>
+                                <span className="line-clamp-2 font-sans text-[11.5px] text-muted-foreground leading-snug">{labels.description(kind)}</span>
+                            </span>
+                        </label>
                     );
                 })}
             </div>
@@ -124,34 +120,26 @@ export function AllowedKindsDialog({ open, kinds, placedByKind, onClose, onApply
 
 interface IKindChipsProps {
     kinds: readonly TierEntityKind[];
-    /** Show at most this many chips, then `+N`. Unset shows every kind. */
-    max?: number;
     className?: string;
 }
 
-/** The allowed types as small chips, in tab order. */
-export function KindChips({ kinds, max, className }: IKindChipsProps) {
+/**
+ * The allowed types as small chips, in tab order, every one shown. A `+N` overflow
+ * chip used to hide the rest behind a hover tooltip on a plain `<li>`, which touch
+ * and keyboard could not reach (R-39); on a card it sits inside the card's link, so
+ * it could not become a button either.
+ */
+export function KindChips({ kinds, className }: IKindChipsProps) {
     const t: KindsT = useT("grids");
     const labels = useEntityLabels();
-    const ordered = orderKinds(kinds);
-    // `+1` would take the room of the chip it hides, so a list one over the cap shows whole.
-    const cut = max !== undefined && ordered.length > max + 1 ? max : ordered.length;
-    const shown = ordered.slice(0, cut);
-    const hidden = ordered.slice(cut);
 
     return (
         <ul className={cn("m-0 flex list-none flex-wrap items-center gap-1 p-0", className)} aria-label={t("kinds.label")}>
-            {shown.map((kind) => (
+            {orderKinds(kinds).map((kind) => (
                 <li key={kind} className="rounded-sm border border-border bg-muted/60 px-1.5 py-0.5 font-sans text-[10.5px] text-muted-foreground leading-none">
                     {labels.plural(kind)}
                 </li>
             ))}
-            {hidden.length > 0 && (
-                <Tooltip>
-                    <TooltipTrigger render={<li className="rounded-sm border border-border border-dashed px-1.5 py-0.5 font-mono text-[10.5px] text-muted-foreground tabular-nums leading-none" />}>{t("kinds.more", { count: hidden.length })}</TooltipTrigger>
-                    <TooltipPopup>{t("kinds.moreTitle", { kinds: hidden.map((k) => labels.plural(k)).join(", ") })}</TooltipPopup>
-                </Tooltip>
-            )}
         </ul>
     );
 }

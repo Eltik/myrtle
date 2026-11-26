@@ -2,17 +2,4 @@
 import type { CycleLegDto } from "./CycleLegDto";
 import type { RotationValueDto } from "./RotationValueDto";
 
-/**
- * The proposed hand-swapped cycle, see [`RotationResponse::cycle`].
- */
-export type CycleDto = {
-    legs: Array<CycleLegDto>;
-    /**
-     * Daily figures, leg-weighted.
-     */
-    value: RotationValueDto;
-    /**
-     * Whether it out-values the recommended rotation.
-     */
-    beats_rotation: boolean;
-};
+export type CycleDto = { legs: Array<CycleLegDto>; value: RotationValueDto; beats_rotation: boolean };

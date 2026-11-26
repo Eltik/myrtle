@@ -20,7 +20,7 @@ export const messages = {
         description: "Empty-state heading when the event list is empty.",
     },
     "release.events.empty.none": {
-        text: "The backend returned no CN activities.",
+        text: "No CN events to show yet.",
         description: "Empty-state body when the server sent nothing at all. 'CN' is the Chinese game server; 'activity' is its own word for an event.",
     },
     "release.events.empty.filtered": {

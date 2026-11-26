@@ -36,12 +36,12 @@
 }
 
 .body :global(.accent) {
-    color: var(--primary);
+    color: var(--primary-ink);
     font-weight: 550;
 }
 
 .body a {
-    color: var(--primary);
+    color: var(--primary-ink);
     text-decoration: underline;
     text-underline-offset: 3px;
 }

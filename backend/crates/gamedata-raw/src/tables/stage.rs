@@ -26,7 +26,8 @@ pub struct StageTables {
     pub crisis_v2: CrisisV2TableFile,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct RetroAct {
     #[serde(alias = "RetroId")]
@@ -39,6 +40,7 @@ pub struct RetroAct {
     pub index: i32,
 
     #[serde(alias = "StartTime", default)]
+    #[ts(type = "number")]
     pub start_time: i64,
 
     #[serde(alias = "Type_", alias = "Type", default)]
@@ -48,7 +50,8 @@ pub struct RetroAct {
     pub linked_act_id: Vec<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum StageType {
     #[default]
@@ -64,7 +67,8 @@ pub enum StageType {
     Unknown,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum StageDifficulty {
     #[default]
@@ -75,7 +79,8 @@ pub enum StageDifficulty {
     Unknown,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum AppearanceStyle {
     #[default]
@@ -90,7 +95,9 @@ pub enum AppearanceStyle {
     Unknown,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
+#[ts(rename = "StageUnlockCondition")]
 #[serde(rename_all = "camelCase")]
 pub struct UnlockCondition {
     #[serde(alias = "StageId")]
@@ -101,7 +108,8 @@ pub struct UnlockCondition {
 }
 
 /// Single item stage can drop, with drop category and occurrence band
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(default, rename_all = "camelCase")]
 pub struct DisplayDetailReward {
     /// e.g. `ONCE`, `NORMAL`, `SPECIAL`, `ADDITIONAL`, `COMPLETE`, `CONDITION_DROP`
@@ -120,14 +128,16 @@ pub struct DisplayDetailReward {
     pub item_type: String,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(default, rename_all = "camelCase")]
 pub struct StageDropInfo {
     #[serde(alias = "DisplayDetailRewards", default)]
     pub display_detail_rewards: Vec<DisplayDetailReward>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(default, rename_all = "camelCase")]
 pub struct Stage {
     #[serde(alias = "StageId")]
@@ -210,7 +220,8 @@ pub struct Stage {
     pub stage_drop_info: Option<StageDropInfo>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct StageData {
     pub stages: HashMap<String, Stage>,

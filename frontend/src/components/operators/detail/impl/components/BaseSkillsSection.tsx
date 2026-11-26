@@ -61,13 +61,13 @@ export function BaseSkillsSection({ skills, server }: IBaseSkillsSectionProps) {
                 <ChevronDown className={cn("h-4 w-4 transition-transform", open && "rotate-180")} />
             </CollapsibleTrigger>
             <CollapsibleContent>
-                <div className="mt-3 grid gap-3 md:grid-cols-2">
+                <ul className="mt-3 grid gap-3 md:grid-cols-2">
                     {sorted.map((skill) => {
                         const iconURL = skill.skillIcon ? baseSkillIcon(skill.skillIcon, server) : "";
                         const html = descriptionToHtml(skill.description, []);
                         const targets = skill.targets.map(formatTarget);
                         return (
-                            <div className="rounded-lg border border-border/50 bg-card/30 p-3" key={skill.buffId}>
+                            <li className="rounded-lg border border-border/50 bg-card/30 p-3" key={skill.buffId}>
                                 <div className="flex gap-3">
                                     <div className="relative flex h-12 w-12 shrink-0 items-center justify-center self-start rounded-md border border-border/40 bg-secondary/30">
                                         {iconURL ? <img alt={skill.buffName} className="h-10 w-10 object-contain" decoding="async" loading="lazy" src={iconURL} /> : <Building2 className="h-5 w-5 text-muted-foreground" />}
@@ -97,10 +97,10 @@ export function BaseSkillsSection({ skills, server }: IBaseSkillsSectionProps) {
                                         />
                                     </div>
                                 </div>
-                            </div>
+                            </li>
                         );
                     })}
-                </div>
+                </ul>
             </CollapsibleContent>
         </Collapsible>
     );

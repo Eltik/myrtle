@@ -15,6 +15,9 @@ interface IUseDpsCurvesResult {
     points: number[];
     rows: ICurvePoint[];
     isPending: boolean;
+    /** A whole batch call failed (network, 400): its cards draw no curve until a retry. */
+    isError: boolean;
+    refetch: () => void;
 }
 
 /**
@@ -47,7 +50,11 @@ export function useDpsCurves(state: IDpsState, ctx: ITeamBuffsContext): IUseDpsC
         // Forget cards that are gone or hidden, so their uid holds no stale curve.
         const live = new Set(visibleInstances.map((i) => i.uid));
         for (const uid of lastRef.current.keys()) if (!live.has(uid)) lastRef.current.delete(uid);
-        if (teamError) return { points, rows, isPending: false };
+        const failed = queries.filter((q) => q.isError);
+        const refetch = () => {
+            for (const q of failed) void q.refetch();
+        };
+        if (teamError) return { points, rows, isPending: false, isError: false, refetch };
         let isPending = false;
         visibleInstances.forEach((inst, i) => {
             const slot = slots[i];
@@ -61,7 +68,7 @@ export function useDpsCurves(state: IDpsState, ctx: ITeamBuffsContext): IUseDpsC
                 row[inst.uid] = point ? selectMetric(point, state.yMetric) : null;
             });
         });
-        return { points, rows, isPending };
+        return { points, rows, isPending, isError: failed.length > 0, refetch };
     }, [chunks, queries, points, visibleInstances, state.yMetric, teamError]);
 }
 

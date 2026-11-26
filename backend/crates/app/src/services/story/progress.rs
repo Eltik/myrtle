@@ -17,18 +17,27 @@ pub const MAX_DOCUMENT_BYTES: usize = 512 * 1024;
 pub const STORY_INDEX_BUDGET: Duration = Duration::from_secs(30);
 pub const GAME_READ_STORE_BUDGET: Duration = Duration::from_secs(10);
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(transparent)]
-pub struct StoryProgressDocument(pub Value);
+pub struct StoryProgressDocument(
+    #[ts(
+        type = "{ v: 1 | 2; read: Record<string, number>; unread?: Record<string, number>; pos: Record<string, { halt: number; total: number; ts: number; choices: Record<number, string>; reach?: number }>; last?: string }"
+    )]
+    pub Value,
+);
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct StoryProgressResponse {
     pub progress: Option<StoryProgressDocument>,
+    #[ts(type = "number | null")]
     pub updated_at: Option<i64>,
     pub game_read: Vec<String>,
     pub game_unread: Vec<String>,
     pub game_archived: u32,
+    #[ts(type = "number | null")]
     pub game_synced_at: Option<i64>,
 }
 

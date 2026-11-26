@@ -5,7 +5,7 @@ export const namespace = "stages";
 export const messages = {
     "overview.title": {
         text: "Overview",
-        description: "Kicker over the row of stage stat cards (starting DP, DP rate, unit limit, move speed).",
+        description: "Section heading over the row of stage stat cards (starting DP, DP rate, unit limit, move speed).",
     },
     "overview.initialCost": {
         text: "Initial DP",
@@ -15,16 +15,12 @@ export const messages = {
         text: "The amount of Deployment Points (DP) you start the battle with.",
         description: "Tooltip on the Initial DP stat card. 'Deployment Points' is the in-game term.",
     },
-    "overview.dpTick.alt": {
-        text: "DP per tick",
-        description: "Alt text of the icon on the DP / Tick stat card. Spelled out because a screen reader reads it aloud.",
-    },
     "overview.dpTick": {
         text: "DP / Tick",
         description: "Stat card label: how many seconds pass between passive DP gains. Very tight space.",
     },
     "overview.dpTick.info": {
-        text: "How often you passively gain 1 DP - a lower number means DP regenerates faster.",
+        text: "How often you passively gain 1 DP. A lower number means DP regenerates faster.",
         description: "Tooltip on the DP / Tick stat card.",
     },
     "overview.unitLimit": {

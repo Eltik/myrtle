@@ -2,6 +2,7 @@ import type React from "react";
 import { useMemo, useState } from "react";
 import { asset } from "#/components/operators/detail/impl/assets";
 import { Tabs, TabsList, TabsTab } from "#/components/ui/tabs";
+import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import { useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
@@ -43,7 +44,7 @@ export function IllustrationsTab({ groups, records }: IIllustrationsTabProps): R
 
     return (
         <Tabs value={kind} onValueChange={(value) => setKind(String(value) as ArtKind)} className="gap-0">
-            <TabsList variant="underline" className="msv-scroll w-full max-w-full justify-start overflow-x-auto border-border border-b pb-0">
+            <TabsList variant="underline" className="w-full justify-start border-border border-b pb-0">
                 {ART_KINDS.map((key) => (
                     <TabsTab key={key} value={key} className="grow-0 px-3 max-sm:min-h-11">
                         {t(`illustrations.kind.${key}`)}
@@ -53,25 +54,19 @@ export function IllustrationsTab({ groups, records }: IIllustrationsTabProps): R
 
             <div className="pt-4">
                 <div className="mb-4 flex flex-wrap items-center gap-x-3 gap-y-2">
-                    <fieldset className="msv-scroll flex min-w-0 max-w-full gap-0.5 overflow-x-auto rounded-[9px] border border-border bg-secondary/45 p-0.75" aria-label={t("illustrations.category.aria")}>
+                    <ToggleGroup aria-label={t("illustrations.category.aria")} value={active ? [active.key] : []} onValueChange={(next) => next[0] && setCategory(next[0] as (typeof tabs)[number]["key"])} variant="outline" className="msv-scroll min-w-0 max-w-full overflow-x-auto">
                         {tabs.map((entry) => (
-                            <button
-                                key={entry.key}
-                                type="button"
-                                onClick={() => setCategory(entry.key)}
-                                aria-pressed={active?.key === entry.key}
-                                className={cn("h-11 shrink-0 cursor-pointer rounded-md px-2.5 font-sans font-semibold text-[11.5px] transition-colors sm:h-6.5", active?.key === entry.key ? "bg-background text-foreground shadow-sm/5" : "text-muted-foreground hover:text-foreground")}
-                            >
+                            <ToggleGroupItem key={entry.key} value={entry.key} className="px-2.5 font-semibold text-[11.5px] sm:text-[11.5px]">
                                 {entry.key === "record" ? t("illustrations.category.record") : t(`stories.tab.${entry.key}`)}
                                 <span className="ms-1.5 font-mono text-[10px] text-muted-foreground tabular-nums">{entry.groups.length}</span>
-                            </button>
+                            </ToggleGroupItem>
                         ))}
-                    </fieldset>
+                    </ToggleGroup>
                     <span className="font-mono text-[11px] text-muted-foreground tabular-nums">{total === null ? t("illustrations.totalUnknown") : t("illustrations.total", { count: f.number(total) })}</span>
                 </div>
 
                 {!active || active.groups.length === 0 ? (
-                    <div className="rounded-[14px] border border-border border-dashed p-14 text-center font-sans text-[14px] text-muted-foreground">{t("illustrations.empty")}</div>
+                    <div className="rounded-2xl border border-border border-dashed p-14 text-center font-sans text-[14px] text-muted-foreground">{t("illustrations.empty")}</div>
                 ) : (
                     <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
                         {active.groups.map((group) => (
@@ -108,13 +103,13 @@ function ArtCard({ group, kind, onOpen }: { group: IArtGroup; kind: ArtKind; onO
             type="button"
             onClick={onOpen}
             aria-label={t("illustrations.card.open", { name: group.name })}
-            className="group flex cursor-pointer flex-col overflow-hidden rounded-xl border border-border bg-card text-left ring-inset transition-colors hover:border-primary/45 focus-visible:ring-2 focus-visible:ring-ring/60"
+            className="group flex cursor-pointer flex-col overflow-hidden rounded-2xl border border-border bg-card text-left ring-inset transition-colors hover:border-primary/45 focus-visible:ring-2 focus-visible:ring-ring"
         >
             <span className="relative block aspect-16/9 w-full overflow-hidden bg-secondary/55">
                 {art ? (
                     <img src={art} alt="" aria-hidden="true" loading="lazy" decoding="async" data-source={group.art.kind} className={cn("h-full w-full transition-transform duration-300 group-hover:scale-103", group.art.kind === "avatar" ? "object-contain" : "object-cover")} />
                 ) : (
-                    <span data-source="none" className="flex h-full w-full items-center justify-center bg-linear-to-br from-secondary/70 to-card px-2 text-center font-black font-heading text-[15px] text-muted-foreground/70 uppercase tracking-tight sm:text-[19px]">
+                    <span data-source="none" className="flex h-full w-full items-center justify-center bg-linear-to-br from-secondary/70 to-card px-2 text-center font-black font-heading text-[15px] text-subtle-foreground uppercase tracking-tight sm:text-[19px]">
                         {group.code}
                     </span>
                 )}

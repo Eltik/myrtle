@@ -14,15 +14,19 @@ pub struct ItemTables {
     pub display_meta: DisplayMetaTableFile,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct SkinWindow {
     pub skin_id: String,
+    #[ts(type = "number")]
     pub start_time: i64,
+    #[ts(type = "number")]
     pub end_time: i64,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub enum ListingKind {
     Group {
@@ -33,10 +37,13 @@ pub enum ListingKind {
     Review,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct SkinListing {
+    #[ts(type = "number")]
     pub start_time: i64,
+    #[ts(type = "number")]
     pub end_time: i64,
     /// Recommend entry's `TagId`, e.g. `tag_1022`
     #[serde(default)]

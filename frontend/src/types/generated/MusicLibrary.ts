@@ -4,34 +4,4 @@ import type { MusicPlay } from "./MusicPlay";
 import type { MusicPlaylist } from "./MusicPlaylist";
 import type { MusicPlayTotal } from "./MusicPlayTotal";
 
-/**
- * Everything the account keeps about music, in one read.
- */
-export type MusicLibrary = {
-    /**
-     * Newest like first.
-     */
-    likes: Array<MusicLike>;
-    /**
-     * The most recent plays, newest first, at most `history_limit`.
-     */
-    history: Array<MusicPlay>;
-    /**
-     * How many plays `history` can carry.
-     */
-    historyLimit: number;
-    /**
-     * Per-track totals over the WHOLE history, most played first.
-     */
-    totals: Array<MusicPlayTotal>;
-    /**
-     * The first play ever logged, for "listening since".
-     */
-    firstPlayedAt: string | null;
-    /**
-     * Oldest playlist first.
-     */
-    playlists: Array<MusicPlaylist>;
-    playlistLimit: number;
-    playlistTracksMax: number;
-};
+export type MusicLibrary = { likes: Array<MusicLike>; history: Array<MusicPlay>; historyLimit: number; totals: Array<MusicPlayTotal>; firstPlayedAt: string | null; playlists: Array<MusicPlaylist>; playlistLimit: number; playlistTracksMax: number };

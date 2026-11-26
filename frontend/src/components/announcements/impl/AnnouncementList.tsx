@@ -4,7 +4,7 @@ import { Newspaper, Search, SearchX } from "lucide-react";
 import { Button } from "#/components/ui/button";
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "#/components/ui/empty";
 import { FilterChip } from "#/components/ui/filter-chip";
-import { Input } from "#/components/ui/input";
+import { InputGroup, InputGroupAddon, InputGroupInput } from "#/components/ui/input-group";
 import { Skeleton } from "#/components/ui/skeleton";
 import { boardDate, type IGroupCount } from "#/lib/announcements";
 import { useFormatters, useT } from "#/lib/i18n";
@@ -44,10 +44,12 @@ export function AnnouncementList({ query, server, all, shown, groups, group, onG
 
     return (
         <div className="flex min-w-0 flex-col gap-3">
-            <div className="relative">
-                <Search className="pointer-events-none absolute start-3 top-1/2 z-10 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
-                <Input type="search" value={text} onChange={(e) => onText(e.target.value)} placeholder={t("search.placeholder")} aria-label={t("search.label")} className="ps-6 max-lg:[&_input]:h-11 max-lg:[&_input]:text-base max-lg:[&_input]:leading-11" />
-            </div>
+            <InputGroup>
+                <InputGroupAddon>
+                    <Search aria-hidden="true" />
+                </InputGroupAddon>
+                <InputGroupInput type="search" value={text} onChange={(e) => onText(e.target.value)} placeholder={t("search.placeholder")} aria-label={t("search.label")} className="max-lg:[&_input]:h-11 max-lg:[&_input]:text-base max-lg:[&_input]:leading-11" />
+            </InputGroup>
 
             {groups.length > 1 ? (
                 // biome-ignore lint/a11y/useSemanticElements: a chip row, not a form field group
@@ -72,7 +74,7 @@ export function AnnouncementList({ query, server, all, shown, groups, group, onG
             </div>
 
             {all.length === 0 ? (
-                <Empty className="rounded-xl border border-dashed py-10">
+                <Empty className="rounded-2xl border border-dashed py-10">
                     <EmptyHeader>
                         <EmptyTitle>{t("empty.title")}</EmptyTitle>
                         <EmptyDescription>{t("empty.body")}</EmptyDescription>
@@ -82,7 +84,7 @@ export function AnnouncementList({ query, server, all, shown, groups, group, onG
                     </EmptyContent>
                 </Empty>
             ) : shown.length === 0 ? (
-                <Empty className="rounded-xl border border-dashed py-10">
+                <Empty className="rounded-2xl border border-dashed py-10">
                     <EmptyHeader>
                         <EmptyMedia variant="icon">
                             <SearchX aria-hidden="true" />
@@ -116,12 +118,12 @@ export function AnnouncementList({ query, server, all, shown, groups, group, onG
                                     search={{ server, id: a.id }}
                                     aria-current={active ? "page" : undefined}
                                     className={cn(
-                                        "group flex min-h-16 min-w-0 items-center gap-3 rounded-xl border border-transparent p-2.5 text-foreground no-underline outline-none transition-colors hover:bg-accent/60 focus-visible:ring-2 focus-visible:ring-ring",
+                                        "group flex min-h-16 min-w-0 items-center gap-3 rounded-2xl border border-transparent p-2.5 text-foreground no-underline outline-none transition-colors hover:bg-accent/60 focus-visible:ring-2 focus-visible:ring-ring",
                                         active && "border-primary/40 bg-primary/8 hover:bg-primary/10",
                                     )}
                                 >
                                     <span className="relative block aspect-video w-24 shrink-0 overflow-hidden rounded-lg bg-muted sm:w-28">
-                                        {a.banner_url ? <img src={a.banner_url} alt="" loading="lazy" decoding="async" className="size-full object-cover" /> : <Newspaper className="absolute inset-0 m-auto size-5 text-muted-foreground/60" aria-hidden="true" />}
+                                        {a.banner_url ? <img src={a.banner_url} alt="" loading="lazy" decoding="async" className="size-full object-cover" /> : <Newspaper className="absolute inset-0 m-auto size-5 text-subtle-foreground" aria-hidden="true" />}
                                     </span>
                                     <span className="flex min-w-0 flex-1 flex-col gap-1">
                                         <span className={cn("wrap-break-word line-clamp-2 text-[14px] leading-snug", unread ? "font-semibold" : "font-medium")}>{a.title}</span>

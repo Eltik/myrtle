@@ -73,6 +73,7 @@ string in the namespace of the screen it appears on.
 | `changelog` | `components/changelog/**` |
 | `skins` | `components/skins/**`, `components/export/**` |
 | `settings` | `components/settings/**` |
+| `oauth` | `components/oauth/**` (the consent page another site sends a player to) |
 | `legal` | `components/legal/**` |
 | `admin` | `components/admin/**` |
 

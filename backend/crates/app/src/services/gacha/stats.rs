@@ -40,71 +40,92 @@ pub async fn flush_shared_stats(ctx: &AppContext) {
     ctx.cache.invalidate_prefix(SHARED_STATS_PREFIX).await;
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct GlobalGachaStats {
+    #[ts(type = "number")]
     pub total_pulls: i64,
+    #[ts(type = "number")]
     pub total_users: i64,
     pub six_star_rate: f64,
     pub five_star_rate: f64,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct CollectiveStats {
+    #[ts(type = "number")]
     pub total_pulls: i64,
+    #[ts(type = "number")]
     pub total_users: i64,
+    #[ts(type = "number")]
     pub total_six_stars: i64,
+    #[ts(type = "number")]
     pub total_five_stars: i64,
+    #[ts(type = "number")]
     pub total_four_stars: i64,
+    #[ts(type = "number")]
     pub total_three_stars: i64,
     #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(type = "number | null")]
     pub first_pull_at: Option<i64>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct PullRates {
     pub six_star_rate: f64,
     pub five_star_rate: f64,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct OperatorPopularity {
     pub char_id: String,
     pub char_name: String,
     pub rarity: i16,
+    #[ts(type = "number")]
     pub pull_count: i64,
     pub percentage: f64,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct HourlyPullData {
     pub hour: i32,
+    #[ts(type = "number")]
     pub pull_count: i64,
     pub percentage: f64,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct DayOfWeekPullData {
     pub day: i32,
     pub day_name: String,
+    #[ts(type = "number")]
     pub pull_count: i64,
     pub percentage: f64,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct DatePullData {
     pub date: String,
+    #[ts(type = "number")]
     pub pull_count: i64,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct PullTimingData {
     pub by_hour: Vec<HourlyPullData>,
@@ -114,7 +135,8 @@ pub struct PullTimingData {
     pub by_date: Option<Vec<DatePullData>>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct GachaEnhancedStats {
     pub collective_stats: CollectiveStats,
@@ -129,13 +151,18 @@ pub struct GachaEnhancedStats {
     pub cached: bool,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct BannerPullStat {
     pub pool_id: String,
+    #[ts(type = "number")]
     pub pull_count: i64,
+    #[ts(type = "number")]
     pub six_star_count: i64,
+    #[ts(type = "number")]
     pub five_star_count: i64,
+    #[ts(type = "number")]
     pub user_count: i64,
 }
 

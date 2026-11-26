@@ -106,7 +106,7 @@ export const messages = {
         description: "Shown while the supporter list loads.",
     },
     "dps.supporters.failed": {
-        text: "Supporters could not be loaded: {error}",
+        text: "Couldn't load the supporters: {error}",
         description: "Shown when the supporter list request failed. {error} is the server's message.",
     },
     "dps.supporters.none": {
@@ -150,7 +150,7 @@ export const messages = {
         description: "Note in the ranking view: class limits on supporters are not applied per row there.",
     },
     "dps.supporters.blocked": {
-        text: "Results are paused: the supporter values could not be loaded ({error}). Switch the supporters off or try again.",
+        text: "Results are paused: couldn't load the supporter values ({error}). Switch the supporters off or try again.",
         description: "Shown when switched-on supporters' values failed to load; the calculator does not compute without them. {error} is the server's message.",
     },
     "dps.supporters.waiting": {

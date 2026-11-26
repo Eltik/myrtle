@@ -1,9 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { AlertTriangle } from "lucide-react";
 import { Birthdays } from "#/components/tools/birthdays/Birthdays";
-import { Button } from "#/components/ui/button";
-import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "#/components/ui/empty";
+import { RouteError } from "#/components/ui/route-error";
 import { operatorsIndexQueryOptions } from "#/lib/api/operators";
 import { useGamedataServer } from "#/lib/i18n";
 import { metaT } from "#/lib/meta";
@@ -12,7 +10,7 @@ import { seo } from "#/lib/seo";
 
 export const Route = createFileRoute("/tools/birthdays")({
     component: RouteComponent,
-    errorComponent: BirthdaysErrorComponent,
+    errorComponent: RouteError,
     loader: ({ context: { queryClient, i18n } }) => queryClient.ensureQueryData(operatorsIndexQueryOptions(i18n.gamedataServer)),
     head: ({ match }) => {
         const t = metaT(match.context.i18n);
@@ -34,24 +32,4 @@ function RouteComponent() {
     const server = useGamedataServer();
     const { data: operators = [] } = useQuery(operatorsIndexQueryOptions(server));
     return <Birthdays operators={operators} />;
-}
-
-function BirthdaysErrorComponent({ error, reset }: { error: unknown; reset: () => void }) {
-    const message = error instanceof Error ? error.message : String(error);
-    return (
-        <div className="relative z-1 mx-auto w-[min(640px,calc(100%-2rem))] py-20">
-            <Empty>
-                <EmptyHeader>
-                    <EmptyMedia variant="icon">
-                        <AlertTriangle className="text-destructive" />
-                    </EmptyMedia>
-                    <EmptyTitle>Birthdays failed to load</EmptyTitle>
-                    <EmptyDescription>{message || "An unexpected error occurred while loading birthday data."}</EmptyDescription>
-                </EmptyHeader>
-                <Button onClick={reset} variant="outline">
-                    Retry
-                </Button>
-            </Empty>
-        </div>
-    );
 }

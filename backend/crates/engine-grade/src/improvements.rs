@@ -32,13 +32,15 @@ const MODULE_MILESTONE: i16 = 3;
 /// Potential is 0-based
 const POTENTIAL_MILESTONE_INDEX: i16 = 5;
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct StageImprovements {
     pub permanent: StagePoolImprovements,
     pub event: StagePoolImprovements,
 }
 
-#[derive(Debug, Clone, Serialize, Default)]
+#[derive(Debug, Clone, Serialize, Default, ts_rs::TS)]
+#[ts(export)]
 pub struct StagePoolImprovements {
     pub total: usize,
     pub cleared: usize,
@@ -47,7 +49,8 @@ pub struct StagePoolImprovements {
     pub not_three_starred: Vec<StageGap>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct StageGap {
     pub stage_id: String,
     pub code: String,
@@ -61,16 +64,20 @@ pub struct StageGap {
     pub rotation: Option<RotationInfo>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct RotationInfo {
     /// `active`, `past` or `future`
     pub status: &'static str,
+    #[ts(type = "number")]
     pub start_ts: i64,
+    #[ts(type = "number")]
     pub end_ts: i64,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct RoguelikeThemeImprovement {
     pub theme_id: String,
     pub theme_name: String,
@@ -80,44 +87,52 @@ pub struct RoguelikeThemeImprovement {
     pub bp: ProgressPair,
     pub challenges: ProgressPair,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub special_endings: Option<Vec<RoguelikeSpecialEnding>>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct RoguelikeSpecialEnding {
     pub id: String,
     pub name: String,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub mode_name: Option<String>,
 }
 
-#[derive(Debug, Clone, Default, Serialize)]
+#[derive(Debug, Clone, Default, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct ProgressPair {
     pub current: usize,
     pub max: usize,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct RoguelikeDifficulty {
     pub highest_cleared: i32,
     pub max: i32,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct RoguelikeCollectibles {
     pub relics: ProgressPair,
     pub capsules: ProgressPair,
     pub bands: ProgressPair,
 }
 
-#[derive(Debug, Clone, Serialize, Default)]
+#[derive(Debug, Clone, Serialize, Default, ts_rs::TS)]
+#[ts(export)]
 pub struct SandboxImprovements {
     /// Equal-weight mean of each RA
     pub total: f64,
     pub topics: Vec<SandboxTopic>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct SandboxTopic {
     pub topic_id: String,
     pub name: String,
@@ -126,7 +141,8 @@ pub struct SandboxTopic {
     pub categories: Vec<SandboxCategory>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct SandboxCategory {
     pub key: &'static str,
     pub label: &'static str,
@@ -135,14 +151,16 @@ pub struct SandboxCategory {
     pub parts: Vec<SandboxPart>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct SandboxPart {
     pub label: &'static str,
     pub current: usize,
     pub max: usize,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct MedalImprovements {
     pub permanent_missing: Vec<MedalGap>,
     pub event_in_window_missing: Vec<MedalGap>,
@@ -150,7 +168,8 @@ pub struct MedalImprovements {
     pub unobtainable_missing: Vec<MedalGap>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct MedalGap {
     pub medal_id: String,
     pub name: String,
@@ -158,6 +177,7 @@ pub struct MedalGap {
     pub get_method: String,
     pub description: String,
     pub is_hidden: bool,
+    #[ts(type = "number | null")]
     pub end_time: Option<i64>,
     #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -167,7 +187,8 @@ pub struct MedalGap {
     pub owned_pct: Option<f64>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct MedalOperatorLock {
     pub operator_id: String,
@@ -175,13 +196,15 @@ pub struct MedalOperatorLock {
     pub reason: &'static str,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct OperatorImprovements {
     pub score_breakdown: Vec<ScoreDimension>,
     pub below_milestone: Vec<OperatorGap>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct OperatorGap {
     pub operator_id: String,
     pub name: String,

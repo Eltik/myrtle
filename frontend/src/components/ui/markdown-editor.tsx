@@ -90,8 +90,8 @@ export function MarkdownEditor({ id, name, value, onChange, placeholder, maxLeng
         <div
             className={cn(
                 "flex w-full min-w-0 flex-col rounded-lg border border-input bg-background not-dark:bg-clip-padding shadow-xs/5 transition-shadow",
-                "focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/24",
-                ariaInvalid && "border-destructive/36 focus-within:border-destructive/64 focus-within:ring-destructive/16",
+                "focus-within:border-ring focus-within:ring-2 focus-within:ring-ring",
+                ariaInvalid && "border-destructive/36 focus-within:border-destructive/64 focus-within:ring-destructive-foreground",
                 disabled && "opacity-64",
                 "dark:bg-input/32",
                 className,
@@ -151,7 +151,7 @@ export function MarkdownEditor({ id, name, value, onChange, placeholder, maxLeng
                             "w-full resize-y bg-transparent px-3 py-2.5 font-sans text-[16px] text-foreground outline-none sm:text-sm",
                             "field-sizing-content min-h-32 sm:min-h-24",
                             size === "sm" && "px-2.5 py-2 sm:text-[13px]",
-                            "placeholder:text-muted-foreground/70",
+                            "placeholder:text-subtle-foreground",
                             textareaClassName,
                         )}
                         data-slot="markdown-editor-input"
@@ -160,13 +160,13 @@ export function MarkdownEditor({ id, name, value, onChange, placeholder, maxLeng
 
                 <TabsPanel value="preview" className="flex flex-col">
                     <div className={cn("min-h-32 px-3 py-2.5 font-sans text-[15px] text-foreground sm:min-h-24 sm:text-sm", size === "sm" && "px-2.5 py-2 sm:text-[13px]")} style={{ minHeight: `${Math.max(rows, 2) * 1.6}em` }}>
-                        {value.trim() ? <Markdown text={value} flush /> : <p className="m-0 font-sans text-muted-foreground/70 text-sm italic">{t("markdownEditor.nothingToPreview")}</p>}
+                        {value.trim() ? <Markdown text={value} flush /> : <p className="m-0 font-sans text-sm text-subtle-foreground italic">{t("markdownEditor.nothingToPreview")}</p>}
                     </div>
                 </TabsPanel>
             </Tabs>
 
             {showHint && (
-                <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 border-border/60 border-t px-2.5 py-1 font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.08em]">
+                <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 border-border/60 border-t px-2.5 py-1 font-mono text-[10.5px] text-muted-foreground">
                     <span className="hidden sm:inline">
                         <span className="font-semibold text-foreground/80">**bold**</span> · <span className="font-semibold text-foreground/80">*italic*</span> · <span className="font-semibold text-foreground/80">`code`</span> · <span className="font-semibold text-foreground/80">[link](url)</span>
                     </span>

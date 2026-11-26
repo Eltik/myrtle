@@ -117,54 +117,37 @@ export function StoryLibrary(): React.ReactElement {
 
     return (
         <div className="page-shell [--page-max:1400px]">
-            {/* THE BIG NUMBER IS A DESKTOP ORNAMENT. Under 640 it would be a 130 px block
-                of its own over a 923 px head, so there it folds into the subhead as a
-                third count and the right-hand stat is hidden. At 640 and up the
-                subhead keeps its two counts and the number stays where it was. */}
             <PageHeader
                 className={cn("mb-4 border-primary/70 border-b-2 pb-3", SHELF_HEAD)}
                 breadcrumbLabel={t("library.breadcrumb")}
                 breadcrumb={[t("library.breadcrumb.archive"), t("library.breadcrumb.stories")]}
                 title={t("library.title")}
-                description={
-                    <>
-                        <span className="sm:hidden">{t("library.countsAll", { groups: storyGroups.length, records: index.records.length, stories: f.number(totals) })}</span>
-                        <span className="max-sm:hidden">{t("library.counts", { groups: storyGroups.length, records: index.records.length })}</span>
-                    </>
-                }
-                actions={
-                    <div className="hidden sm:block sm:text-right">
-                        <div className="font-light font-sans text-[34px] text-primary tabular-nums leading-none tracking-[-0.02em]">{f.number(totals)}</div>
-                        <div className="mt-1.5 font-sans text-[12px] text-muted-foreground">{t("library.storiesLabel")}</div>
-                    </div>
-                }
+                description={t("library.counts", { groups: storyGroups.length, records: index.records.length, stories: f.number(totals) })}
             />
 
             {hero ? <ContinueCard pick={hero} progress={progress} gameRead={gameRead} onViewChapter={viewChapter} /> : null}
 
             <Tabs value={tab} onValueChange={(value) => setTab(String(value))}>
-                <div className="msv-scroll flex max-w-full items-center gap-1 overflow-x-auto">
-                    <TabsList className="shrink-0">
-                        <TabsTab value="browse" className="shrink-0 max-sm:min-h-11">
-                            {t("library.tab.browse")}
-                        </TabsTab>
-                        <TabsTab value="reading" className="shrink-0 max-sm:min-h-11">
-                            {t("library.tab.reading")}
-                        </TabsTab>
-                        <TabsTab value="illustrations" className="shrink-0 max-sm:min-h-11">
-                            {t("library.tab.illustrations")}
-                        </TabsTab>
-                        <TabsTab value="progress" className="shrink-0 max-sm:min-h-11">
-                            {t("library.tab.progress")}
-                        </TabsTab>
-                        <TabsTab value="community" className="shrink-0 max-sm:min-h-11">
-                            {t("community.tab")}
-                        </TabsTab>
-                        <TabsTab value="characters" className="shrink-0 max-sm:min-h-11">
-                            {t("sprites.tab")}
-                        </TabsTab>
-                    </TabsList>
-                </div>
+                <TabsList className="shrink-0">
+                    <TabsTab value="browse" className="shrink-0 max-sm:min-h-11">
+                        {t("library.tab.browse")}
+                    </TabsTab>
+                    <TabsTab value="reading" className="shrink-0 max-sm:min-h-11">
+                        {t("library.tab.reading")}
+                    </TabsTab>
+                    <TabsTab value="illustrations" className="shrink-0 max-sm:min-h-11">
+                        {t("library.tab.illustrations")}
+                    </TabsTab>
+                    <TabsTab value="progress" className="shrink-0 max-sm:min-h-11">
+                        {t("library.tab.progress")}
+                    </TabsTab>
+                    <TabsTab value="community" className="shrink-0 max-sm:min-h-11">
+                        {t("community.tab")}
+                    </TabsTab>
+                    <TabsTab value="characters" className="shrink-0 max-sm:min-h-11">
+                        {t("sprites.tab")}
+                    </TabsTab>
+                </TabsList>
                 <TabsPanel value="browse" className="pt-4">
                     <Browse index={index} progress={progress} gameRead={gameRead} openGroup={openGroup} onOpenHandled={onOpenHandled} />
                 </TabsPanel>

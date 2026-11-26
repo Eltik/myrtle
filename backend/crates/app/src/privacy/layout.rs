@@ -3,7 +3,8 @@ use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value, json};
 use uuid::Uuid;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "snake_case")]
 pub enum ProfileTabId {
     Showcase,
@@ -51,21 +52,26 @@ impl ProfileTabId {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export, rename = "ProfileTab")]
 pub struct LayoutTab {
     pub id: ProfileTabId,
     pub visible: bool,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(from = "Value")]
 pub struct ProfileLayout {
     pub tabs: Vec<LayoutTab>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub showcase: Option<ProfileShowcase>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub background: Option<ProfileBackground>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub header: Option<ProfileHeader>,
 }
 
@@ -110,18 +116,21 @@ fn normalize_title(raw: &str) -> Option<String> {
     (!title.is_empty()).then_some(title)
 }
 
-#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct ProfileShowcase {
     pub blocks: Vec<ShowcaseBlock>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum ShowcaseBlock {
     Favourites {
         entity_kind: EntityKind,
         ids: Vec<String>,
         #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional)]
         title: Option<String>,
     },
     Grid {
@@ -131,8 +140,10 @@ pub enum ShowcaseBlock {
         slug: String,
     },
     Plan {
+        #[ts(type = "string")]
         id: Uuid,
         #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional)]
         operator_id: Option<String>,
     },
 }
@@ -213,7 +224,8 @@ impl ProfileShowcase {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "snake_case")]
 pub enum ProfileBackgroundKind {
     Skin,
@@ -258,17 +270,22 @@ impl ProfileBackgroundKind {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct ProfileBackground {
     pub kind: ProfileBackgroundKind,
     pub id: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub focus_x: Option<u8>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub focus_y: Option<u8>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub scale: Option<u16>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub elite: Option<u8>,
 }
 
@@ -300,7 +317,8 @@ impl ProfileBackground {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "snake_case")]
 pub enum ProfileHeaderField {
     Level,
@@ -369,10 +387,12 @@ impl ProfileHeaderField {
 
 pub const HEADER_STRIP_MAX: usize = 5;
 
-#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct ProfileHeader {
     pub hidden: Vec<ProfileHeaderField>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub strip: Option<Vec<ProfileHeaderField>>,
 }
 

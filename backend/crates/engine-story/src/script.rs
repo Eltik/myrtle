@@ -7,7 +7,8 @@ use serde::{Deserialize, Serialize};
 use crate::assets::{CharacterSprite, StoryAssetIndex, StoryAssets, parse_sprite_name, trim_index};
 use crate::parser::{self, StoryCommand};
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct StoryScript {
     pub id: String,
@@ -18,6 +19,7 @@ pub struct StoryScript {
     pub word_count: u32,
     /// The `[uc]info` summary Skip dialog shows
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub synopsis: Option<String>,
 }
 

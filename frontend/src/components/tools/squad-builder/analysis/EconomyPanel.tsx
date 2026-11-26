@@ -1,6 +1,5 @@
-import { Minus, Plus } from "lucide-react";
 import * as React from "react";
-import { Button } from "#/components/ui/button";
+import { NumberField, NumberFieldDecrement, NumberFieldGroup, NumberFieldIncrement, NumberFieldInput } from "#/components/ui/number-field";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useFormatters, useT } from "#/lib/i18n";
@@ -14,7 +13,7 @@ import type { EconomySeat } from "#/types/generated/EconomySeat";
 import type { IStageContext } from "../model";
 import type { StartDpFrom } from "../state";
 import type { messages } from "./EconomyPanel.messages";
-import { baseDpFromLine, clampStartDp, cutAmountText, cutLabelInput, dpFromPointer, fractionOf, ladderScale, respawnRange, START_DP_MAX, START_DP_MIN, squadRespawnCut, startBonusTotal } from "./economyMath";
+import { baseDpFromLine, clampStartDp, cutAmountText, cutLabelInput, dpFromPointer, fractionOf, ladderScale, noteChangeText, respawnRange, START_DP_MAX, START_DP_MIN, squadRespawnCut, startBonusTotal } from "./economyMath";
 import { type IChipContext, type IPanelBaseProps, opName, PanelShell, SectionHeading, StatCell, StatStrip, sourceLabel } from "./shared";
 import type { messages as sharedMessages } from "./shared.messages";
 
@@ -57,6 +56,8 @@ function EconomyBody({ economy, startDp, onStartDpChange, startDpFrom, stage, ha
     };
     const cheapestCaption = startDpFrom.kind === "stage" && economy.deploy_limit !== null ? t("squad.analysis.economy.cheapest.stage", { code: startDpFrom.code }) : t("squad.analysis.economy.cheapest.none");
     const notes = [...economy.counted, ...economy.notes];
+    const floorNote = economy.counted.find((n) => n.kind === "dp_floor");
+    const firstRedeploys = economy.seats.filter((s) => s.first_respawn !== null);
 
     return (
         <div className="space-y-5">
@@ -66,7 +67,7 @@ function EconomyBody({ economy, startDp, onStartDpChange, startDpFrom, stage, ha
                     value={<DpStepper value={startDp} onChange={onStartDpChange} t={t} />}
                     caption={startDpFrom.kind === "stage" ? t("squad.analysis.economy.startDp.from", { code: startDpFrom.code }) : t("squad.analysis.economy.startDp.page")}
                     extra={
-                        economy.start_bonus.length > 0 && (
+                        (economy.start_bonus.length > 0 || floorNote) && (
                             <div className="mt-0.5 space-y-0.5">
                                 {economy.start_bonus.map((b) => (
                                     <Tooltip key={`${b.seat}-${b.name}`}>
@@ -74,6 +75,12 @@ function EconomyBody({ economy, startDp, onStartDpChange, startDpFrom, stage, ha
                                         <TooltipPopup>{b.name}</TooltipPopup>
                                     </Tooltip>
                                 ))}
+                                {floorNote && (
+                                    <Tooltip>
+                                        <TooltipTrigger render={<div className="text-[11px] text-primary leading-snug" />}>{t("squad.analysis.economy.startDp.floor", { amount: f.number(economy.dp_lower_limit), name: opName(ctx.operators, floorNote.char_id) })}</TooltipTrigger>
+                                        <TooltipPopup>{floorNote.name}</TooltipPopup>
+                                    </Tooltip>
+                                )}
                             </div>
                         )
                     }
@@ -84,12 +91,23 @@ function EconomyBody({ economy, startDp, onStartDpChange, startDpFrom, stage, ha
                     label={t("squad.analysis.economy.redeploy")}
                     value={range === null ? "-" : range.min === range.max ? t("squad.analysis.economy.redeploy.one", { value: f.number(range.min) }) : t("squad.analysis.economy.redeploy.range", { min: f.number(range.min), max: f.number(range.max) })}
                     caption={squadCut ? t("squad.analysis.economy.redeploy.cut", { name: giverOf(squadCut) ?? squadCut.name ?? "", amount: cutAmountText(squadCut) }) : t("squad.analysis.economy.redeploy.noCut")}
+                    extra={
+                        firstRedeploys.length > 0 && (
+                            <div className="mt-0.5 space-y-0.5">
+                                {firstRedeploys.map((s) => (
+                                    <div key={`${s.seat}-${s.char_id}`} className="text-[11px] text-primary leading-snug">
+                                        {t("squad.analysis.economy.redeploy.first", { name: opName(ctx.operators, s.char_id), value: f.number(s.first_respawn ?? s.respawn) })}
+                                    </div>
+                                ))}
+                            </div>
+                        )
+                    }
                 />
             </StatStrip>
 
             <section>
                 <SectionHeading title={t("squad.analysis.economy.ladder")} />
-                <CostLadder seats={economy.seats} lineDp={lineDp} bonus={bonus} onStartDpChange={onStartDpChange} giverOf={giverOf} ctx={ctx} t={t} />
+                <CostLadder seats={economy.seats} lineDp={lineDp} floor={economy.dp_lower_limit} bonus={bonus} onStartDpChange={onStartDpChange} giverOf={giverOf} ctx={ctx} t={t} />
             </section>
 
             <section>
@@ -97,7 +115,7 @@ function EconomyBody({ economy, startDp, onStartDpChange, startDpFrom, stage, ha
                 {economy.sources.length === 0 ? (
                     <p className="text-[13px] text-muted-foreground">{t("squad.analysis.economy.sources.empty")}</p>
                 ) : (
-                    <ul className="divide-y divide-border/60 rounded-xl border border-border bg-card">
+                    <ul className="divide-y divide-border/60 rounded-2xl border border-border bg-card">
                         {economy.sources.map((s) => (
                             <li key={`${s.seat}-${s.source.kind}-${s.source.name ?? ""}`} className="flex items-start gap-3 px-3 py-2" onMouseEnter={() => ctx.onHoverSeat(s.seat)} onMouseLeave={() => ctx.onHoverSeat(null)}>
                                 <div className="min-w-0 flex-1">
@@ -123,43 +141,24 @@ function EconomyBody({ economy, startDp, onStartDpChange, startDpFrom, stage, ha
 }
 
 function DpStepper({ value, onChange, t }: { value: number; onChange: (n: number) => void; t: EconomyT }): React.ReactElement {
-    const [draft, setDraft] = React.useState(String(value));
-    React.useEffect(() => setDraft(String(value)), [value]);
-    const commit = (raw: string) => {
-        const n = Number.parseInt(raw, 10);
-        if (Number.isNaN(n)) setDraft(String(value));
-        else onChange(clampStartDp(n));
-    };
+    // The field keeps the typed draft until blur, clamps to min/max there, and restores the
+    // last value when the draft is cleared (a null change is ignored, so the controlled value wins).
     return (
-        <span className="flex items-center gap-1">
-            <Button variant="outline" size="icon-xs" aria-label={t("squad.analysis.economy.startDp.less")} disabled={value <= START_DP_MIN} onClick={() => onChange(clampStartDp(value - 1))}>
-                <Minus />
-            </Button>
-            <input
-                type="number"
-                inputMode="numeric"
-                min={START_DP_MIN}
-                max={START_DP_MAX}
-                value={draft}
-                aria-label={t("squad.analysis.economy.startDp.input")}
-                onChange={(e) => {
-                    setDraft(e.target.value);
-                    const n = Number.parseInt(e.target.value, 10);
-                    if (!Number.isNaN(n)) onChange(clampStartDp(n));
-                }}
-                onBlur={(e) => commit(e.target.value)}
-                className="h-7 pointer-coarse:h-11 w-11 rounded-md border border-input bg-background px-1 text-center font-mono font-semibold text-[16px] tabular-nums outline-none [appearance:textfield] focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-            />
-            <Button variant="outline" size="icon-xs" aria-label={t("squad.analysis.economy.startDp.more")} disabled={value >= START_DP_MAX} onClick={() => onChange(clampStartDp(value + 1))}>
-                <Plus />
-            </Button>
-        </span>
+        <NumberField value={value} min={START_DP_MIN} max={START_DP_MAX} step={1} size="sm" className="w-auto" onValueChange={(n) => n !== null && onChange(clampStartDp(n))}>
+            <NumberFieldGroup className="w-auto">
+                <NumberFieldDecrement aria-label={t("squad.analysis.economy.startDp.less")} />
+                <NumberFieldInput aria-label={t("squad.analysis.economy.startDp.input")} className="w-11 grow-0 px-1 font-mono font-semibold text-[16px]" />
+                <NumberFieldIncrement aria-label={t("squad.analysis.economy.startDp.more")} />
+            </NumberFieldGroup>
+        </NumberField>
     );
 }
 
 interface ICostLadderProps {
     seats: EconomySeat[];
     lineDp: number;
+    /** The lowest DP the squad may drop to (0, or below with a DP-debt talent). */
+    floor: number;
     bonus: number;
     onStartDpChange: (n: number) => void;
     giverOf: (cut: Cut) => string | null;
@@ -167,7 +166,7 @@ interface ICostLadderProps {
     t: EconomyT;
 }
 
-function CostLadder({ seats, lineDp, bonus, onStartDpChange, giverOf, ctx, t }: ICostLadderProps): React.ReactElement {
+function CostLadder({ seats, lineDp, floor, bonus, onStartDpChange, giverOf, ctx, t }: ICostLadderProps): React.ReactElement {
     const f = useFormatters();
     const trackRef = React.useRef<HTMLDivElement>(null);
     const scale = ladderScale(seats.map((s) => s.cost));
@@ -195,7 +194,7 @@ function CostLadder({ seats, lineDp, bonus, onStartDpChange, giverOf, ctx, t }: 
         <div className="grid grid-cols-[minmax(0,8.5rem)_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1" style={{ gridTemplateRows }}>
             {seats.map((s, i) => {
                 const name = opName(ctx.operators, s.char_id);
-                const open = s.cost <= lineDp;
+                const open = s.cost <= lineDp - floor;
                 const row = i + 2;
                 const hover = { onMouseEnter: () => ctx.onHoverSeat(s.seat), onMouseLeave: () => ctx.onHoverSeat(null) };
                 return (
@@ -231,7 +230,7 @@ function CostLadder({ seats, lineDp, bonus, onStartDpChange, giverOf, ctx, t }: 
                             </Tooltip>
                         </div>
                         <div className="flex items-baseline justify-end gap-1 font-mono tabular-nums" style={{ gridRow: row, gridColumn: 3 }} {...hover}>
-                            {s.base_cost !== s.cost && <span className="text-[11px] text-muted-foreground/70 line-through">{f.number(s.base_cost)}</span>}
+                            {s.base_cost !== s.cost && <span className="text-[11px] text-subtle-foreground line-through">{f.number(s.base_cost)}</span>}
                             <span className={cn("text-[13px]", open ? "text-primary" : "text-foreground")}>{f.number(s.cost)}</span>
                         </div>
                     </React.Fragment>
@@ -275,6 +274,8 @@ function cutLabel(cut: Cut, giver: string | null, t: EconomyT): string {
             return t("squad.analysis.economy.cut.talent", { name: input.name, amount: input.amount });
         case "module":
             return t("squad.analysis.economy.cut.module", { name: input.name, amount: input.amount });
+        case "trait":
+            return t("squad.analysis.economy.cut.trait", { amount: input.amount });
         case "squad":
             return t("squad.analysis.economy.cut.squad", { giver: input.giver, name: input.name, amount: input.amount });
     }
@@ -295,6 +296,14 @@ function sourceSentence(s: DpSource, t: EconomyT, num: (n: number) => string): s
 }
 
 function noteSentence(n: EconomyNote, name: string, t: EconomyT, num: (n: number) => string): string {
+    const sentence = noteBase(n, name, t, num);
+    const change = noteChangeText(n);
+    if (change === null) return sentence;
+    const label = change.stat === "cost" ? t("squad.analysis.economy.note.change.cost", { amount: change.amount }) : t("squad.analysis.economy.note.change.respawn", { amount: change.amount });
+    return t("squad.analysis.economy.note.withChange", { sentence, change: label });
+}
+
+function noteBase(n: EconomyNote, name: string, t: EconomyT, num: (n: number) => string): string {
     const talent = n.name;
     const amount = num(n.amount ?? 0);
     switch (n.kind) {
@@ -306,6 +315,10 @@ function noteSentence(n: EconomyNote, name: string, t: EconomyT, num: (n: number
             return t("squad.analysis.economy.note.next_operator", { name, talent });
         case "conditional":
             return t("squad.analysis.economy.note.conditional", { name, talent });
+        case "skill_active":
+            return t("squad.analysis.economy.note.skill_active", { name, talent });
+        case "dp_floor":
+            return t("squad.analysis.economy.note.dp_floor", { name, talent, amount });
         case "sp_bonus":
             return t("squad.analysis.economy.note.sp_bonus", { name, talent, amount });
         case "redeploy_cut":

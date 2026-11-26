@@ -20,7 +20,7 @@ export const messages = {
         description: "Shown when the gallery pictures failed to load in the background editor.",
     },
     "profile.background.gallery.retry": {
-        text: "Retry",
+        text: "Try again",
         description: "Button that loads the gallery pictures again after a failure.",
     },
     "profile.background.gallery.allGroups": {
@@ -43,10 +43,6 @@ export const messages = {
         text: "Filter by story category",
         description: "Accessible label of the gallery's row of category toggles.",
     },
-    "profile.background.gallery.categoryOption": {
-        text: "{label}, {count, plural, one {# picture} other {# pictures}}",
-        description: "Accessible label of one category toggle in the gallery. {label} is the category, {count} how many pictures it holds under the other filters.",
-    },
     "profile.background.gallery.count": {
         text: "{count, plural, one {# picture} other {# pictures}}",
         description: "How many gallery pictures the current source, filters and search leave.",
@@ -56,7 +52,7 @@ export const messages = {
         description: "Accessible label of the x on one active-filter chip above the gallery pictures. {name} is the category or story it filters by.",
     },
     "profile.background.gallery.clearFilters": {
-        text: "Clear all",
+        text: "Clear filters",
         description: "Button beside the active-filter chips that turns off every category, story and search filter of the gallery.",
     },
     "profile.background.gallery.grid": {

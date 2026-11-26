@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
+import { LoadFailed } from "#/components/ui/load-failed";
 import { useAuth } from "#/hooks/use-auth";
 import { bannersQueryOptions, gachaEnhancedStatsQueryOptions, type IBanner, type IBannerPullStat, myGachaStatsQueryOptions, PULLS_GAMEDATA_SERVER, perBannerStatsQueryOptions } from "#/lib/api/gacha";
 import { operatorsIndexQueryOptions } from "#/lib/api/operators";
@@ -73,22 +74,28 @@ export function CommunityPage() {
             <section className="page-shell flex flex-col gap-6 [--page-max:1320px]">
                 <PageHeader data={data} isLoading={isLoading} />
 
-                {enhanced.isError ? (
-                    <div className="rounded-[14px] border border-destructive/30 bg-destructive/8 px-5 py-4 font-sans text-foreground/90 text-sm">
-                        <strong className="font-semibold text-foreground">{t("community.error.load")}</strong> {(enhanced.error as Error)?.message ?? t("community.error.unknown")}
-                    </div>
-                ) : null}
+                {/* The KPIs, leaderboard, rarity and timing panels all read this one query; on a failure
+                    they would each sit on their placeholders, so one failure line stands in for all four. */}
+                {enhanced.isError && !data ? (
+                    <LoadFailed message={t("community.error.load")} onRetry={() => void enhanced.refetch()} />
+                ) : (
+                    <>
+                        <KpiStrip data={data} />
 
-                <KpiStrip data={data} />
+                        <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.3fr_1fr]">
+                            <div className="lg:relative lg:min-h-0">
+                                <Leaderboard ops={data?.mostCommonOperators ?? []} operatorsById={operatorsById} isLoading={isLoading} />
+                            </div>
+                            <RarityPanel data={data} personal={personalRates} />
+                        </div>
 
-                <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.3fr_1fr]">
-                    <div className="lg:relative lg:min-h-0">
-                        <Leaderboard ops={data?.mostCommonOperators ?? []} operatorsById={operatorsById} isLoading={isLoading} />
-                    </div>
-                    <RarityPanel data={data} personal={personalRates} />
-                </div>
+                        <TimingPanel timing={data?.pullTiming} firstPullAt={data?.collectiveStats.firstPullAt} banners={bannersSorted} />
+                    </>
+                )}
 
-                <TimingPanel timing={data?.pullTiming} firstPullAt={data?.collectiveStats.firstPullAt} banners={bannersSorted} />
+                {/* The banner list and its per-banner stats are separate queries: without the list the runs
+                    panel is empty, and without the stats its rows show no pull counts. */}
+                {banners.isError ? <LoadFailed message={t("community.error.banners")} onRetry={() => void banners.refetch()} /> : perBannerStats.isError ? <LoadFailed message={t("community.error.bannerStats")} onRetry={() => void perBannerStats.refetch()} /> : null}
 
                 <BannerRunsPanel banners={bannersSorted} operatorsById={operatorsById} statsById={perBannerById} isLoading={banners.isLoading} />
             </section>

@@ -6,12 +6,27 @@ import { Button } from "#/components/ui/button";
 import { Field, FieldLabel } from "#/components/ui/field";
 import { Input } from "#/components/ui/input";
 import { Kicker } from "#/components/ui/kicker";
+import { Label } from "#/components/ui/label";
 import { MarkdownEditor } from "#/components/ui/markdown-editor";
+import { Switch } from "#/components/ui/switch";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { LIST_DESCRIPTION_MAX as DESC_MAX, LIST_NAME_MAX as TITLE_MAX } from "../shared";
 import type { messages } from "./EditHero.messages";
 import type { IPendingChange } from "./state";
+import { useCountdownSeconds } from "./useCountdownSeconds";
+
+/** Where auto-save stands. `failed` and `conflict` hold it until the author acts. */
+export type AutosaveStatus = "idle" | "saving" | "saved" | "failed" | "conflict";
+
+interface IAutosaveControls {
+    enabled: boolean;
+    status: AutosaveStatus;
+    /** When the pending auto-save starts, in ms since the epoch. Null when none is scheduled. */
+    nextSaveAt: number | null;
+    onToggle: (next: boolean) => void;
+    onRetry: () => void;
+}
 
 interface IEditHeroProps {
     slug: string;
@@ -26,12 +41,14 @@ interface IEditHeroProps {
     saving: boolean;
     saveError: string | null;
     saveProgress: { step: number; total: number; label: string } | null;
+    autosave: IAutosaveControls;
 }
 
-export function EditHero({ slug, title, description, onTitleChange, onDescriptionChange, onSave, onReset, onAddTier, pendingChanges, saving, saveError, saveProgress }: IEditHeroProps) {
+export function EditHero({ slug, title, description, onTitleChange, onDescriptionChange, onSave, onReset, onAddTier, pendingChanges, saving, saveError, saveProgress, autosave }: IEditHeroProps) {
     const t: TypedT<typeof messages> = useT("tierLists");
     const titleId = useId();
     const descId = useId();
+    const autosaveHintId = useId();
     const isDirty = pendingChanges.length > 0;
     const trimmedTitle = title.trim();
     const titleValid = trimmedTitle.length > 0;
@@ -57,7 +74,7 @@ export function EditHero({ slug, title, description, onTitleChange, onDescriptio
 
                 <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
                     <div className="min-w-0 flex-1">
-                        <Kicker>{t("edit.hero.kicker")}</Kicker>
+                        <Kicker className="mb-2.5">{t("edit.hero.kicker")}</Kicker>
 
                         <div className="mt-1 flex flex-col gap-3">
                             <Field>
@@ -82,7 +99,7 @@ export function EditHero({ slug, title, description, onTitleChange, onDescriptio
                                 <MarkdownEditor id={descId} value={description} onChange={onDescriptionChange} placeholder={t("edit.hero.descriptionPlaceholder")} rows={4} maxLength={DESC_MAX} showHint={false} />
                             </Field>
 
-                            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.14em]">
+                            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[10.5px] text-muted-foreground">
                                 <span className="tabular-nums">
                                     <span className="text-foreground">{title.length}</span> {t("edit.hero.titleCounter", { max: TITLE_MAX })}
                                 </span>
@@ -95,9 +112,9 @@ export function EditHero({ slug, title, description, onTitleChange, onDescriptio
                     </div>
 
                     <div className="flex w-full shrink-0 flex-col gap-3 lg:w-72">
-                        <div className="rounded-xl border border-border bg-card p-3 shadow-[0_1px_2px_oklch(0_0_0/0.04)]">
+                        <div className="rounded-2xl border border-border bg-card p-3 shadow-[0_1px_2px_oklch(0_0_0/0.04)]">
                             <div className="flex items-center justify-between gap-2">
-                                <span className="font-bold font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.14em]">{isDirty ? t("edit.hero.unsaved") : t("edit.hero.allSaved")}</span>
+                                <span className="font-bold font-mono text-[10.5px] text-muted-foreground">{isDirty ? t("edit.hero.unsaved") : t("edit.hero.allSaved")}</span>
                                 {!isDirty && <CheckIcon className="h-3.5 w-3.5 text-primary" aria-hidden="true" />}
                             </div>
                             {isDirty ? (
@@ -136,13 +153,27 @@ export function EditHero({ slug, title, description, onTitleChange, onDescriptio
                         </div>
 
                         <div className="flex flex-wrap items-center gap-1.5">
-                            <Button type="button" onClick={onSave} disabled={!isDirty || saving || !titleValid} loading={saving} className="flex-1">
+                            <Button type="button" onClick={onSave} disabled={!isDirty || saving || !titleValid} loading={saving && autosave.status !== "saving"} className="flex-1">
                                 <CheckIcon />
                                 {t("edit.hero.save")}
                             </Button>
                             <Button type="button" variant="outline" onClick={onReset} disabled={!isDirty || saving} size="icon" aria-label={t("edit.hero.discard")}>
                                 <RotateCcwIcon />
                             </Button>
+                        </div>
+
+                        <div className="rounded-2xl border border-border bg-card px-3 py-2">
+                            <div className="flex items-center justify-between gap-2">
+                                <Label className="flex cursor-pointer items-center gap-2 font-medium font-sans text-[12.5px] text-foreground">
+                                    <Switch checked={autosave.enabled} onCheckedChange={autosave.onToggle} aria-describedby={autosaveHintId} />
+                                    {t("edit.hero.autosave")}
+                                </Label>
+                                {autosave.enabled && <AutosaveBadge status={autosave.status} nextSaveAt={autosave.nextSaveAt} isDirty={isDirty} onRetry={autosave.onRetry} t={t} />}
+                            </div>
+                            <p id={autosaveHintId} className="mt-1 font-sans text-[11.5px] text-muted-foreground">
+                                {t("edit.hero.autosaveHint")}
+                            </p>
+                            {autosave.enabled && autosave.status === "conflict" && <output className="mt-1.5 block rounded-md border border-border bg-muted/50 px-2 py-1.5 font-sans text-[11.5px] text-foreground">{t("edit.hero.autosaveConflict")}</output>}
                         </div>
 
                         <div className="flex flex-wrap items-center gap-1.5">
@@ -159,4 +190,50 @@ export function EditHero({ slug, title, description, onTitleChange, onDescriptio
             </div>
         </header>
     );
+}
+
+interface IAutosaveBadgeProps {
+    status: AutosaveStatus;
+    nextSaveAt: number | null;
+    isDirty: boolean;
+    onRetry: () => void;
+    t: TypedT<typeof messages>;
+}
+
+/** The auto-save state in a word, beside the switch. While a save is scheduled, the seconds until it starts. */
+function AutosaveBadge({ status, nextSaveAt, isDirty, onRetry, t }: IAutosaveBadgeProps) {
+    const label = "font-bold font-mono text-[10.5px]";
+    const seconds = useCountdownSeconds(status === "idle" || status === "saved" ? nextSaveAt : null);
+    if (status === "saving") {
+        return <output className={`${label} text-muted-foreground`}>{t("edit.hero.autosaveSaving")}</output>;
+    }
+    if (status === "saved" && !isDirty) {
+        return (
+            <output className={`${label} flex items-center gap-1 text-muted-foreground`}>
+                <CheckIcon className="h-3 w-3 text-primary" aria-hidden="true" />
+                {t("edit.hero.autosaveSaved")}
+            </output>
+        );
+    }
+    if (status === "failed") {
+        return (
+            <output className="flex items-center gap-1.5">
+                <span className={`${label} text-destructive-foreground`}>{t("edit.hero.autosaveFailed")}</span>
+                <Button type="button" variant="outline" size="xs" onClick={onRetry}>
+                    {t("edit.hero.autosaveRetry")}
+                </Button>
+            </output>
+        );
+    }
+    if (seconds !== null && isDirty) {
+        return (
+            <>
+                <output className="sr-only">{t("edit.hero.autosaveScheduled")}</output>
+                <span aria-hidden="true" className={`${label} text-muted-foreground tabular-nums`}>
+                    {t("edit.hero.autosaveCountdown", { seconds })}
+                </span>
+            </>
+        );
+    }
+    return null;
 }

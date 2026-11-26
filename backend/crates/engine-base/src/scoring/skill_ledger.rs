@@ -11,7 +11,8 @@ use crate::types::{OperatorBaseProfile, compute_match_tags};
 use crate::util::buff_family;
 
 /// How a zero-marginal line should be read
-#[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "snake_case")]
 pub enum LineDisposition {
     Contributes,

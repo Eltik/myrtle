@@ -1,6 +1,7 @@
 import { MusicIcon, PauseIcon, PlayIcon, SquareIcon } from "lucide-react";
 import type React from "react";
 import { useState } from "react";
+import { Button } from "#/components/ui/button";
 import { Slider, SliderPrimitive } from "#/components/ui/slider";
 import { useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -65,7 +66,7 @@ function Bar({ state }: { state: IPlayerBarState }): React.ReactElement {
                 where it sits inline; the difference is trailing whitespace at the end of the
                 page rather than a card clipped by a home indicator. */}
             <div aria-hidden="true" className="h-[calc(120px+env(safe-area-inset-bottom))] sm:h-[calc(64px+env(safe-area-inset-bottom))]" />
-            <div data-claims-bottom="" className="fixed inset-x-0 bottom-0 z-40 border-border border-t bg-card/95 shadow-[0_-8px_24px_-12px_rgba(0,0,0,0.45)] backdrop-blur-md">
+            <div data-claims-bottom="" className="fixed inset-x-0 bottom-0 z-40 border-border border-t bg-card shadow-[0_-8px_24px_-12px_rgba(0,0,0,0.45)]">
                 <section aria-label={t("nowPlaying.region")} className="mx-auto flex max-w-350 flex-wrap items-center gap-x-2 gap-y-1 px-3 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] sm:flex-nowrap sm:gap-x-4 sm:px-6">
                     <MusicIcon aria-hidden="true" className="hidden size-4 shrink-0 text-primary sm:block" />
 
@@ -73,7 +74,7 @@ function Bar({ state }: { state: IPlayerBarState }): React.ReactElement {
                         <span aria-hidden="true" className="truncate font-sans text-[12.5px] text-foreground">
                             {name}
                         </span>
-                        <span aria-hidden="true" className="truncate font-mono text-[10px] text-muted-foreground uppercase tracking-[0.08em]">
+                        <span aria-hidden="true" className="truncate font-sans text-[11.5px] text-muted-foreground">
                             {state.paused ? t("nowPlaying.paused") : chapter}
                         </span>
                         {/* The two visible lines TRUNCATE and read in the wrong order to a screen
@@ -85,23 +86,13 @@ function Bar({ state }: { state: IPlayerBarState }): React.ReactElement {
                         </span>
                     </div>
 
-                    <button
-                        type="button"
-                        onClick={() => (state.paused ? resume() : pause())}
-                        aria-label={state.paused ? t("nowPlaying.resume", { name }) : t("nowPlaying.pause", { name })}
-                        className="flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-full border border-border bg-background text-foreground transition-colors hover:border-primary/45 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
-                    >
+                    <Button variant="outline" size="icon-xl" className="rounded-full before:rounded-full" onClick={() => (state.paused ? resume() : pause())} aria-label={state.paused ? t("nowPlaying.resume", { name }) : t("nowPlaying.pause", { name })}>
                         {state.paused ? <PlayIcon className="size-4" aria-hidden="true" /> : <PauseIcon className="size-4" aria-hidden="true" />}
-                    </button>
+                    </Button>
 
-                    <button
-                        type="button"
-                        onClick={stop}
-                        aria-label={t("nowPlaying.stop", { name })}
-                        className="flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-full border border-border bg-background text-muted-foreground transition-colors hover:border-primary/45 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
-                    >
+                    <Button variant="outline" size="icon-xl" className="rounded-full text-muted-foreground before:rounded-full hover:text-foreground" onClick={stop} aria-label={t("nowPlaying.stop", { name })}>
                         <SquareIcon className="size-3.5" aria-hidden="true" />
-                    </button>
+                    </Button>
 
                     {/* At 390 the seek takes a SECOND ROW of its own, full width, which is what
                         `order-last` plus `w-full` buys out of one wrapping row: the title and
@@ -193,7 +184,7 @@ function Seek({ state, t, className }: { state: IPlayerBarState; t: NowT; classN
                         <SliderPrimitive.Indicator className="rounded-full bg-primary" />
                         {loopPercent !== null && <span aria-hidden="true" className="absolute top-1/2 h-2.5 w-px -translate-x-1/2 -translate-y-1/2 rounded-full bg-foreground/45" style={{ left: `${loopPercent}%` }} title={t("nowPlaying.loopPoint")} />}
                         <SliderPrimitive.Thumb
-                            className="block size-4 shrink-0 select-none rounded-full border border-input bg-background not-dark:bg-clip-padding shadow-xs/5 outline-none transition-[box-shadow,scale] has-focus-visible:ring-3 has-focus-visible:ring-ring/24 data-dragging:scale-120 sm:size-3.5 dark:border-background dark:bg-foreground dark:has-focus-visible:ring-ring/48"
+                            className="block size-4 shrink-0 select-none rounded-full border border-input bg-background not-dark:bg-clip-padding shadow-xs/5 outline-none transition-[box-shadow,scale] has-focus-visible:ring-3 has-focus-visible:ring-ring data-dragging:scale-120 sm:size-3.5 dark:border-background dark:bg-foreground"
                             getAriaValueText={() => t("nowPlaying.seekValue", { elapsed, total })}
                             index={0}
                         />

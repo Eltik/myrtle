@@ -145,7 +145,7 @@ export function OperatorPanel({ improvements, accent }: IProps) {
 
             {/* Doubles as the filter for the rarity buckets below. */}
             <div className="flex flex-col gap-2">
-                <span className={cn(TEXT_KICKER, "text-muted-foreground/70")}>{t("score.improvements.operator.byType")}</span>
+                <span className={cn(TEXT_KICKER, "text-subtle-foreground")}>{t("score.improvements.operator.byType")}</span>
                 <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-6">
                     {TAG_ORDER.map((tag) => {
                         const gain = tagGains[tag];
@@ -162,7 +162,7 @@ export function OperatorPanel({ improvements, accent }: IProps) {
 
             <div className="flex flex-col gap-1.5">{buckets.length === 0 ? <EmptyHint>{t("score.improvements.operator.noMatch")}</EmptyHint> : buckets.map(([rarity, list], idx) => <RarityBucket key={rarity} rarity={rarity} ops={list} defaultOpen={idx === 0} accent={accent} />)}</div>
 
-            <p className={cn(TEXT_BADGE, "text-muted-foreground/60 leading-relaxed")}>
+            <p className={cn(TEXT_BADGE, "text-subtle-foreground leading-relaxed")}>
                 {rt("score.improvements.operator.footnote", {
                     gain: <span className="text-foreground/80">{t("score.improvements.operator.footnote.headerGain", { gain: totalOverallGainPct.toFixed(1) })}</span>,
                     unit: <span className="text-foreground/80">{t("score.improvements.operator.footnote.sectionUnit")}</span>,
@@ -200,7 +200,7 @@ function ScoreBreakdown({ dims, accent }: { dims: IScoreDimension[] | undefined;
                     const titleValues = { label, share: sharePct.toFixed(1), completion: completionPct.toFixed(0), earned: earnedPct.toFixed(1) };
                     return (
                         <Tooltip key={d.kind}>
-                            <TooltipTrigger render={<div className="grid grid-cols-[5.5rem_1fr_auto] items-center gap-2.5" />}>
+                            <TooltipTrigger render={<button type="button" className="grid w-full cursor-default grid-cols-[5.5rem_1fr_auto] items-center gap-2.5 rounded-sm text-left focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2" />}>
                                 <span className={cn(TEXT_BADGE, "truncate text-muted-foreground")}>{label}</span>
                                 <div className="h-1 w-full overflow-hidden rounded-full bg-muted/40">
                                     <div
@@ -212,7 +212,7 @@ function ScoreBreakdown({ dims, accent }: { dims: IScoreDimension[] | undefined;
                                     />
                                 </div>
                                 <span className={cn(TEXT_BADGE, "text-foreground/85")}>
-                                    {earnedPct.toFixed(1)} <span className="text-muted-foreground/70">/ {sharePct.toFixed(1)}%</span>
+                                    {earnedPct.toFixed(1)} <span className="text-subtle-foreground">/ {sharePct.toFixed(1)}%</span>
                                 </span>
                             </TooltipTrigger>
                             <TooltipPopup>{detailKey ? t("score.improvements.operator.dim.rowTitleDetail", { ...titleValues, detail: t(detailKey) }) : t("score.improvements.operator.dim.rowTitle", titleValues)}</TooltipPopup>
@@ -220,7 +220,7 @@ function ScoreBreakdown({ dims, accent }: { dims: IScoreDimension[] | undefined;
                     );
                 })}
             </div>
-            <p className={cn(TEXT_BADGE, "text-muted-foreground/60 leading-relaxed")}>{rt("score.improvements.operator.dim.footnote", { unit: <span className="text-foreground/80">{t("score.improvements.operator.dim.footnote.unit")}</span> })}</p>
+            <p className={cn(TEXT_BADGE, "text-subtle-foreground leading-relaxed")}>{rt("score.improvements.operator.dim.footnote", { unit: <span className="text-foreground/80">{t("score.improvements.operator.dim.footnote.unit")}</span> })}</p>
         </div>
     );
 }
@@ -250,16 +250,20 @@ function RarityBucket({ rarity, ops, defaultOpen, accent }: IBucketProps) {
                     {rarity}★
                 </span>
                 <span className={cn(TEXT_BADGE, "text-foreground/85")}>{ops.length}</span>
-                <span className={cn(TEXT_KICKER, "text-muted-foreground/65")}>{t("score.improvements.operator.bucket.toUpgrade")}</span>
+                <span className={cn(TEXT_KICKER, "text-subtle-foreground")}>{t("score.improvements.operator.bucket.toUpgrade")}</span>
                 {bucketGain > 0.01 && (
                     <Tooltip>
-                        <TooltipTrigger render={<span className={cn(TEXT_BADGE, "rounded-sm border border-border/40 bg-background px-1 py-px font-semibold tabular-nums")} style={{ color: `color-mix(in oklch, ${accent} 70%, var(--foreground))` }} />}>+{bucketGain.toFixed(1)}%</TooltipTrigger>
+                        <TooltipTrigger render={<span aria-hidden className={cn(TEXT_BADGE, "rounded-sm border border-border/40 bg-background px-1 py-px font-semibold tabular-nums")} style={{ color: `color-mix(in oklch, ${accent} 70%, var(--foreground))` }} />}>+{bucketGain.toFixed(1)}%</TooltipTrigger>
                         <TooltipPopup>{t("score.improvements.operator.bucket.gainTitle", { rarity, gain: bucketGain.toFixed(1) })}</TooltipPopup>
                     </Tooltip>
                 )}
+                {bucketGain > 0.01 && (
+                    // Inside the bucket's own toggle button, so the hint cannot be a focusable trigger: its sentence is read as part of the button instead.
+                    <span className="sr-only">{t("score.improvements.operator.bucket.gainTitle", { rarity, gain: bucketGain.toFixed(1) })}</span>
+                )}
                 <span className="ml-auto flex items-center gap-2">
                     <PreviewStrip ops={ops.slice(0, 5)} color={color} dim={open} />
-                    <ChevronDown aria-hidden className={cn("size-3.5 text-muted-foreground/70 transition-transform duration-200", open && "rotate-180")} />
+                    <ChevronDown aria-hidden className={cn("size-3.5 text-subtle-foreground transition-transform duration-200", open && "rotate-180")} />
                 </span>
             </button>
 
@@ -330,13 +334,23 @@ const OperatorRow = memo(function OperatorRow({ op, color, accent }: { op: IOper
                     </span>
                     {subscoreGainPct >= SHOW_DELTA_THRESHOLD_PCT && (
                         <Tooltip>
-                            <TooltipTrigger render={<span className={cn(TEXT_BADGE, "shrink-0 rounded-sm border border-border/40 bg-background px-1 py-px font-semibold tabular-nums")} style={{ color: `color-mix(in oklch, ${accent} 70%, var(--foreground))` }} />}>+{subscoreGainPct.toFixed(2)}</TooltipTrigger>
+                            <TooltipTrigger
+                                render={
+                                    <button
+                                        type="button"
+                                        className={cn(TEXT_BADGE, "shrink-0 cursor-default rounded-sm border border-border/40 bg-background px-1 py-px text-left font-semibold tabular-nums focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2")}
+                                        style={{ color: `color-mix(in oklch, ${accent} 70%, var(--foreground))` }}
+                                    />
+                                }
+                            >
+                                +{subscoreGainPct.toFixed(2)}
+                            </TooltipTrigger>
                             <TooltipPopup>{t("score.improvements.operator.row.gainTitle", { name: op.name, section: subscoreGainPct.toFixed(2), overall: totalScoreGainPct.toFixed(2) })}</TooltipPopup>
                         </Tooltip>
                     )}
                 </div>
                 {/* `whitespace-nowrap truncate` together prevent the char-by-char wrap and let ellipsis kick in when the card is narrow. */}
-                <span className={cn(TEXT_BADGE, "truncate whitespace-nowrap text-muted-foreground/80")}>
+                <span className={cn(TEXT_BADGE, "truncate whitespace-nowrap text-subtle-foreground")}>
                     E{op.current_elite}·L{op.current_level}
                     {op.max_mastery >= 0 && `·M${op.max_mastery}`}
                     {op.max_module_level >= 0 && `·Mod${op.max_module_level}`}
@@ -358,9 +372,17 @@ const OperatorRow = memo(function OperatorRow({ op, color, accent }: { op: IOper
                                 : t(TAG_DESC[tag]);
                             return (
                                 <Tooltip key={tag}>
-                                    <TooltipTrigger render={<span className={cn("rounded-sm border border-border/40 bg-background px-1 py-px font-semibold", TEXT_BADGE)} style={{ color: `color-mix(in oklch, ${color} 65%, var(--foreground))` }} />}>
+                                    <TooltipTrigger
+                                        render={
+                                            <button
+                                                type="button"
+                                                className={cn("cursor-default rounded-sm border border-border/40 bg-background px-1 py-px text-left font-semibold focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2", TEXT_BADGE)}
+                                                style={{ color: `color-mix(in oklch, ${color} 65%, var(--foreground))` }}
+                                            />
+                                        }
+                                    >
                                         {t(TAG_LABEL[tag])}
-                                        {showNumber ? <span className="ml-1 font-mono text-muted-foreground/85">+{tagDeltaPct.toFixed(2)}</span> : <span className="ml-1 text-muted-foreground/45">·</span>}
+                                        {showNumber ? <span className="ml-1 font-mono text-subtle-foreground">+{tagDeltaPct.toFixed(2)}</span> : <span className="ml-1 text-subtle-foreground">·</span>}
                                     </TooltipTrigger>
                                     <TooltipPopup>{tooltip}</TooltipPopup>
                                 </Tooltip>

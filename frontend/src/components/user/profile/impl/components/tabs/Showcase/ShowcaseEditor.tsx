@@ -10,6 +10,7 @@ import { useErrorMessage } from "#/components/ui/error-message";
 import { Input } from "#/components/ui/input";
 import { Kicker } from "#/components/ui/kicker";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
+import { Skeleton } from "#/components/ui/skeleton";
 import { toastManager } from "#/components/ui/toast";
 import { useAuth } from "#/hooks/use-auth";
 import { useOperatorName } from "#/hooks/use-operator-name";
@@ -110,14 +111,16 @@ export function ShowcaseEditor({ uid, view, plansHidden, onClose }: IShowcaseEdi
         <section className="flex flex-col gap-4 rounded-2xl border border-border/50 bg-card/40 p-4 sm:p-5" aria-labelledby="showcase-editor-kicker">
             <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                 <div>
-                    <Kicker id="showcase-editor-kicker">{t("profile.showcase.editor.kicker")}</Kicker>
+                    <Kicker className="mb-2.5" id="showcase-editor-kicker">
+                        {t("profile.showcase.editor.kicker")}
+                    </Kicker>
                     <p className="max-w-prose text-muted-foreground text-sm">{t("profile.showcase.editor.help")}</p>
                 </div>
                 <span className="shrink-0 font-mono text-[11px] text-muted-foreground tabular-nums">{t("profile.showcase.editor.count", { count: draft.length, max: SHOWCASE_MAX_BLOCKS })}</span>
             </div>
 
             {draft.length === 0 ? (
-                <p className="rounded-xl border border-border border-dashed px-4 py-8 text-center text-muted-foreground text-sm">{t("profile.showcase.editor.empty")}</p>
+                <p className="rounded-2xl border border-border border-dashed px-4 py-8 text-center text-muted-foreground text-sm">{t("profile.showcase.editor.empty")}</p>
             ) : (
                 <ol className="m-0 flex list-none flex-col gap-2 p-0" aria-label={t("profile.showcase.editor.list")}>
                     {draft.map((block, i) => {
@@ -137,7 +140,7 @@ export function ShowcaseEditor({ uid, view, plansHidden, onClose }: IShowcaseEdi
                                     e.preventDefault();
                                     drop(i);
                                 }}
-                                className={cn("relative overflow-hidden rounded-xl border border-border/50 bg-background/60 transition-colors", dragFrom === i && "opacity-50", dragOver === i && dragFrom !== i && "border-primary/60 bg-primary/5")}
+                                className={cn("relative overflow-hidden rounded-2xl border border-border/50 bg-background/60 transition-colors", dragFrom === i && "opacity-50", dragOver === i && dragFrom !== i && "border-primary/60 bg-primary/5")}
                             >
                                 <div aria-hidden="true" className="absolute inset-y-0 left-0 w-0.5" style={{ background: BLOCK_ACCENT[block.type] }} />
                                 <div className="flex items-center gap-2 py-1.5 pr-1.5 pl-2">
@@ -243,7 +246,7 @@ function ReferentName({ block, uid }: { block: Exclude<ShowcaseDraftBlock, Favou
     return (
         <>
             <span className="text-muted-foreground">{kind}</span>
-            <span aria-hidden="true" className="mx-1.5 text-muted-foreground/60">
+            <span aria-hidden="true" className="mx-1.5 text-subtle-foreground">
                 ·
             </span>
             {name}
@@ -347,10 +350,9 @@ function FavouritesFields({ block, onChange, onPick, onAnnounce }: IFavouritesFi
                                 </button>
                                 <button
                                     type="button"
-                                    tabIndex={-1}
                                     onClick={() => removeEntity(i)}
                                     aria-label={t("profile.showcase.editor.remove", { item: name })}
-                                    className="absolute -top-1.5 -right-1.5 hidden size-5 items-center justify-center rounded-full border border-border bg-popover text-muted-foreground shadow-sm hover:text-foreground group-focus-within:flex group-hover:flex"
+                                    className="pointer-coarse:after:-translate-1/2 absolute -top-1.5 -right-1.5 pointer-coarse:flex hidden size-5 items-center justify-center rounded-full border border-border bg-popover text-muted-foreground shadow-sm outline-none pointer-coarse:after:absolute pointer-coarse:after:top-1/2 pointer-coarse:after:left-1/2 pointer-coarse:after:size-11 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring group-focus-within:flex group-hover:flex"
                                 >
                                     <XIcon className="size-3" />
                                 </button>
@@ -481,7 +483,7 @@ function TypeStep({ onChoose }: { onChoose: (type: ShowcaseBlockType) => void })
                         <button
                             type="button"
                             onClick={() => onChoose(option.type)}
-                            className="flex h-full w-full cursor-pointer items-start gap-3 rounded-xl border border-border bg-background/60 p-3 text-start transition-colors hover:border-foreground/20 hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            className="flex h-full w-full cursor-pointer items-start gap-3 rounded-2xl border border-border bg-background/60 p-3 text-start transition-colors hover:border-foreground/20 hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         >
                             <span aria-hidden="true" className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-border bg-muted/50" style={{ color: BLOCK_ACCENT[option.type] }}>
                                 <Icon className="size-4" />
@@ -504,13 +506,9 @@ function KindStep({ onChoose }: { onChoose: (kind: TierEntityKind) => void }) {
         <ul className="m-0 flex list-none flex-wrap gap-1.5 p-0">
             {ALL_ENTITY_KINDS.map((kind) => (
                 <li key={kind}>
-                    <button
-                        type="button"
-                        onClick={() => onChoose(kind)}
-                        className="inline-flex h-8 cursor-pointer items-center rounded-full border border-border bg-popover px-3 font-medium font-sans text-muted-foreground text-xs leading-none transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    >
+                    <Button variant="outline" size="sm" onClick={() => onChoose(kind)}>
                         {labels.plural(kind)}
-                    </button>
+                    </Button>
                 </li>
             ))}
         </ul>
@@ -558,7 +556,7 @@ function ListStep({ type, draft, onAdd }: { type: "grid" | "tier_list"; draft: r
             <div className="flex flex-col gap-2">
                 <span className="kicker">{t("profile.showcase.add.yours")}</span>
                 {pending ? (
-                    <div className="h-16 animate-pulse rounded-xl bg-muted/40" />
+                    <OptionsLoading />
                 ) : options.length === 0 ? (
                     <p className="m-0 text-muted-foreground text-sm">{type === "grid" ? t("profile.showcase.add.noGrids") : t("profile.showcase.add.noTierLists")}</p>
                 ) : (
@@ -615,12 +613,23 @@ function ListStep({ type, draft, onAdd }: { type: "grid" | "tier_list"; draft: r
     );
 }
 
+/** The add step's list while it loads: the kit skeleton, announced once. */
+function OptionsLoading() {
+    const t: EditorT = useT("user");
+    return (
+        <output className="block">
+            <Skeleton className="h-16 rounded-2xl" />
+            <span className="sr-only">{t("profile.showcase.add.loading")}</span>
+        </output>
+    );
+}
+
 function PlanStep({ uid, draft, onAdd }: { uid: string; draft: readonly ShowcaseDraftBlock[]; onAdd: (block: ShowcaseDraftBlock) => void }) {
     const t: EditorT = useT("user");
     const operatorName = useOperatorName();
     const { data: plans, isPending } = useQuery(publicPlansQueryOptions(uid));
     const held = new Set(draft.filter((b) => b.type === "plan" && !b.removed).map((b) => (b.type === "plan" ? b.id : "")));
-    if (isPending) return <div className="h-16 animate-pulse rounded-xl bg-muted/40" />;
+    if (isPending) return <OptionsLoading />;
     const shown = (plans ?? []).filter((p) => p.operator);
     if (shown.length === 0) return <p className="m-0 text-muted-foreground text-sm">{t("profile.showcase.add.noPlans")}</p>;
     return (

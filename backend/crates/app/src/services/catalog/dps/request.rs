@@ -10,7 +10,8 @@ use crate::AppError;
 pub const MAX_BATCH: usize = 64;
 pub const MAX_SWEEP_STEPS: u32 = 101;
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, ts_rs::TS)]
+#[ts(export, optional_fields)]
 #[serde(rename_all = "camelCase")]
 pub struct RequestConditionals {
     pub trait_damage: Option<bool>,
@@ -20,7 +21,8 @@ pub struct RequestConditionals {
     pub module_damage: Option<bool>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, ts_rs::TS)]
+#[ts(export, optional_fields)]
 #[serde(rename_all = "camelCase")]
 pub struct CalculateRequest {
     pub operator_id: String,
@@ -53,7 +55,8 @@ pub struct CalculateRequest {
     pub clone_operator_id: Option<String>,
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone, Copy)]
+#[derive(Debug, Deserialize, Serialize, Clone, Copy, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct RequestSecondary {
     pub def: f64,
@@ -61,14 +64,16 @@ pub struct RequestSecondary {
     pub count: i32,
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Deserialize, Serialize, Clone, Copy, PartialEq, Eq, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "lowercase")]
 pub enum RequestCycleModel {
     Legacy,
     V2,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, ts_rs::TS)]
+#[ts(export, optional_fields)]
 #[serde(rename_all = "camelCase")]
 pub struct RequestBuffs {
     pub atk: Option<f32>,
@@ -77,7 +82,8 @@ pub struct RequestBuffs {
     pub fragile: Option<f32>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, ts_rs::TS)]
+#[ts(export, optional_fields)]
 #[serde(rename_all = "camelCase")]
 pub struct RequestShred {
     pub def: Option<i32>,
@@ -280,14 +286,16 @@ fn float_range(field: &str, value: Option<f64>, min: f64, max: f64) -> Result<()
     }
 }
 
-#[derive(Debug, Clone, Copy, Deserialize, Serialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, PartialEq, Eq, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "lowercase")]
 pub enum SweepAxis {
     Def,
     Res,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct Sweep {
     pub axis: SweepAxis,
@@ -333,7 +341,8 @@ impl Sweep {
     }
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, ts_rs::TS)]
+#[ts(export, optional_fields)]
 #[serde(rename_all = "camelCase")]
 pub struct BatchRequest {
     pub requests: Vec<CalculateRequest>,
@@ -362,14 +371,16 @@ impl BatchRequest {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct SweepPoint {
     pub x: f64,
     #[serde(flatten)]
     pub result: DpsResult,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export, optional_fields)]
 #[serde(rename_all = "camelCase")]
 pub struct BatchItem {
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -380,13 +391,15 @@ pub struct BatchItem {
     pub error: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct BatchResponse {
     pub results: Vec<BatchItem>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export, optional_fields)]
 #[serde(rename_all = "camelCase")]
 pub struct HpsBatchItem {
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -395,7 +408,8 @@ pub struct HpsBatchItem {
     pub error: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct HpsBatchResponse {
     pub results: Vec<HpsBatchItem>,

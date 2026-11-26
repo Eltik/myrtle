@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import * as React from "react";
 import { Card } from "#/components/ui/card";
+import { InfoHint } from "#/components/ui/info-hint";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { operatorsIndexQueryOptions } from "#/lib/api/operators";
 import { releaseBannersQueryOptions, releaseEventsQueryOptions } from "#/lib/api/release";
@@ -36,10 +37,9 @@ function IndependenceNote({ rules }: { rules: RuleIndependence[] }): React.React
     if (independent.length === 0) return null;
     const list = independent.map((r) => t("release.banners.independence.item", { type: r.ruleType.toLowerCase().replaceAll("_", " "), rate: Math.round(r.mismatchRate * 100), count: r.events })).join(", ");
     return (
-        <Tooltip>
-            <TooltipTrigger render={<p className="m-0 font-sans text-[12.5px] text-muted-foreground leading-normal" />}>{t("release.banners.independence", { list })}</TooltipTrigger>
-            <TooltipPopup className="max-w-xs">{t("release.banners.independence.title")}</TooltipPopup>
-        </Tooltip>
+        <p className="m-0 font-sans text-[12.5px] text-muted-foreground leading-normal">
+            {t("release.banners.independence", { list })} <InfoHint label={t("release.banners.independence.hint")}>{t("release.banners.independence.title")}</InfoHint>
+        </p>
     );
 }
 
@@ -82,7 +82,7 @@ export function BannersTab({ today }: IBannersTabProps): React.ReactElement {
     const rows = React.useMemo(() => all.filter((b) => showPast || !isPast(sortKey(b.resolution, b.cnOpen, model), today)), [all, showPast, model, today]);
 
     if (banners.isPending) return <ReleaseLoading />;
-    if (banners.isError) return <ReleaseError error={banners.error} onRetry={() => banners.refetch()} />;
+    if (banners.isError) return <ReleaseError onRetry={() => banners.refetch()} />;
 
     return (
         <div className="flex flex-col gap-3">
@@ -122,7 +122,7 @@ function FaceStrip({ ids, lookup, alt, t }: { ids: string[]; lookup: OperatorLoo
     const tight = ids.length > 2;
     return (
         <Tooltip>
-            <TooltipTrigger render={<div className="flex aspect-[5/2] w-full items-center justify-center gap-1 overflow-hidden rounded-md bg-linear-to-br from-zinc-800 to-zinc-950 p-1 sm:w-60 sm:p-1.5" />}>
+            <TooltipTrigger render={<div role="img" aria-label={t("release.banners.faceStrip.title", { banner: alt })} className="flex aspect-[5/2] w-full items-center justify-center gap-1 overflow-hidden rounded-md bg-muted p-1 sm:w-60 sm:p-1.5" />}>
                 {ids.map((id) => (
                     <FaceAvatar key={id} id={id} onEn={lookup.has(id)} tight={tight} />
                 ))}
@@ -135,7 +135,7 @@ function FaceStrip({ ids, lookup, alt, t }: { ids: string[]; lookup: OperatorLoo
 function FaceAvatar({ id, onEn, tight }: { id: string; onEn: boolean; tight: boolean }): React.ReactElement | null {
     const [failed, setFailed] = React.useState(false);
     if (failed) return null;
-    return <img src={getAvatarById(id, onEn ? undefined : "cn")} alt="" loading="lazy" onError={() => setFailed(true)} className={cn("h-full rounded-sm object-cover", tight ? "min-w-0 flex-1" : "aspect-square flex-none")} />;
+    return <img src={getAvatarById(id, onEn ? undefined : "cn")} alt="" width={64} height={64} loading="lazy" onError={() => setFailed(true)} className={cn("h-full rounded-sm object-cover", tight ? "min-w-0 flex-1" : "aspect-square flex-none")} />;
 }
 
 interface IBannerRowProps {
@@ -184,7 +184,7 @@ function BannerRow({ banner, lookup, charNames, eventNames, eventsByDay, eventTi
             <CnName cn={banner.nameCn} auto={banner.nameEnAuto} primaryClassName="font-sans font-semibold text-[13.5px] text-foreground">
                 <Tag>{tagLabel(banner.ruleType)}</Tag>
                 <span className="font-mono text-[11.5px] text-muted-foreground tabular-nums">
-                    <span className="mr-1 uppercase tracking-[0.06em]">{t("release.banners.cn")}</span>
+                    <span className="mr-1">{t("release.banners.cn")}</span>
                     {formatDate(banner.cnOpen, locale)}
                 </span>
             </CnName>
@@ -192,14 +192,10 @@ function BannerRow({ banner, lookup, charNames, eventNames, eventsByDay, eventTi
                 <div className="flex flex-col gap-1">
                     {rosters.map(([label, ids, title]) => (
                         <div key={label} className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                            {title ? (
-                                <Tooltip>
-                                    <TooltipTrigger render={<span className="cursor-help font-sans text-[11px] text-muted-foreground" />}>{label}</TooltipTrigger>
-                                    <TooltipPopup className="max-w-xs">{title}</TooltipPopup>
-                                </Tooltip>
-                            ) : (
-                                <span className="font-sans text-[11px] text-muted-foreground">{label}</span>
-                            )}
+                            <span className="inline-flex items-center gap-1 font-sans text-[11px] text-muted-foreground">
+                                {label}
+                                {title && <InfoHint label={t("release.banners.roster.entered.hint")}>{title}</InfoHint>}
+                            </span>
                             <OpRefList ids={ids} lookup={lookup} names={charNames} />
                         </div>
                     ))}
@@ -215,7 +211,7 @@ function BannerRow({ banner, lookup, charNames, eventNames, eventsByDay, eventTi
                         case says "guess" in the phrase itself, not only in a label beside it. */}
                     {banner.anchorActivity && (
                         <span title={banner.anchorActivity}>
-                            {banner.alignment.method === "anchor" ? rt("release.banners.probablyWith", { event: <span className={anchor ? "text-foreground/80" : "font-mono"}>{anchorName}</span> }) : rt("release.banners.with", { event: <span className={anchor ? "text-foreground/80" : "font-mono"}>{anchorName}</span> })}
+                            {banner.alignment.method === "anchor" ? rt("release.banners.probablyWith", { event: <span className={anchor ? "text-foreground" : "font-mono"}>{anchorName}</span> }) : rt("release.banners.with", { event: <span className={anchor ? "text-foreground" : "font-mono"}>{anchorName}</span> })}
                         </span>
                     )}
                 </div>

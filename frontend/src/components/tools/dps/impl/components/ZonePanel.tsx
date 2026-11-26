@@ -113,8 +113,8 @@ function StackingSummary({ team, ctx }: { team: ITeamBuffs; ctx: ITeamBuffsConte
     const zones = ZONE_FIELDS.filter((f) => ctx.sources.some((s) => s.zone === f.key));
     if (zones.length === 0) return null;
     return (
-        <div className="space-y-1.5 rounded-md border border-border bg-muted/30 p-2">
-            <h3 className="font-medium text-[11px] text-muted-foreground">{t("dps.stacking.title")}</h3>
+        <div className="space-y-1.5 sm:rounded-md sm:border sm:border-border sm:bg-muted/30 sm:p-2">
+            <h3 className="font-semibold text-foreground text-sm">{t("dps.stacking.title")}</h3>
             {zones.map((f) => {
                 const r = resolveZone(f.key, [{ origin: "team", zones: team.zones }], ctx.sources);
                 return (
@@ -178,7 +178,7 @@ function ZoneHelper(): React.ReactElement {
                             <dt className="text-foreground">{t(row.wordingKey)}</dt>
                             <dd className="mt-0.5 flex flex-wrap gap-1">
                                 {row.zones.map((z) => (
-                                    <span key={z} className="rounded bg-primary/10 px-1.5 py-0.5 font-medium text-[11px] text-primary">
+                                    <span key={z} className="rounded bg-primary/10 px-1.5 py-0.5 font-medium text-[11px] text-foreground">
                                         {t(zoneField(z).labelKey)}
                                     </span>
                                 ))}

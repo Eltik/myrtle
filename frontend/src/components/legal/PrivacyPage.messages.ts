@@ -25,7 +25,7 @@ export const messages = {
     },
     "privacy.hero.effective": {
         text: "Effective: {date}",
-        description: "Badge giving the date the policy took effect. {date} is an already-formatted date such as 'Jan 12, 2026'.",
+        description: "Line giving the date the policy took effect. {date} is an already-formatted date such as 'Jan 12, 2026'.",
     },
     "privacy.hero.version": {
         text: "Version {version}",

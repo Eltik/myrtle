@@ -6,7 +6,8 @@ use myrtle_dps_formulas::operator_unit::EnemyStats;
 
 pub const MAX_SOURCES: usize = 16;
 
-#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+#[derive(Debug, Clone, Default, Deserialize, Serialize, ts_rs::TS)]
+#[ts(export, optional_fields)]
 #[serde(rename_all = "camelCase", default)]
 pub struct BuffZones {
     /// Added to the operator's base ATK
@@ -35,7 +36,8 @@ pub struct BuffZones {
 
 /// Reduction of one enemy stat
 /// `((v - flat - max(steal)) * (1 - percent) - ignoreFlat) * (1 - ignorePercent)`
-#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+#[derive(Debug, Clone, Default, Deserialize, Serialize, ts_rs::TS)]
+#[ts(export, optional_fields)]
 #[serde(rename_all = "camelCase", default)]
 pub struct StatReduction {
     /// Flat reduction

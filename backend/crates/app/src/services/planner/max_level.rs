@@ -34,7 +34,8 @@ pub enum LevelTarget {
     Module,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct MaxLevelOperatorDto {
     pub operator_id: String,
     pub name: String,
@@ -43,35 +44,50 @@ pub struct MaxLevelOperatorDto {
     pub level: i16,
     pub target_elite: i16,
     pub target_level: i16,
+    #[ts(type = "number")]
     pub exp: i64,
+    #[ts(type = "number")]
     pub level_lmd: i64,
+    #[ts(type = "number")]
     pub promotion_lmd: i64,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct MaxLevelCostResponse {
     pub operators_total: usize,
     pub operators_remaining: usize,
+    #[ts(type = "number")]
     pub exp_needed: i64,
+    #[ts(type = "number")]
     pub level_lmd_needed: i64,
+    #[ts(type = "number")]
     pub promotion_lmd_needed: i64,
+    #[ts(type = "number")]
     pub lmd_needed: i64,
+    #[ts(type = "number")]
     pub exp_owned: i64,
+    #[ts(type = "number | null")]
     pub lmd_owned: Option<i64>,
+    #[ts(type = "number")]
     pub exp_missing: i64,
+    #[ts(type = "number | null")]
     pub lmd_missing: Option<i64>,
     pub operators: Vec<MaxLevelOperatorDto>,
     pub income: LmdIncomeDto,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct LmdIncomeDto {
     pub base_per_day: Option<f64>,
     pub dailies_per_day: f64,
     pub farming_stage: String,
     pub farming_runs_per_day: f64,
     pub farming_per_day: f64,
+    #[ts(type = "number | null")]
     pub days_without_farming: Option<i64>,
+    #[ts(type = "number | null")]
     pub days_with_farming: Option<i64>,
 }
 

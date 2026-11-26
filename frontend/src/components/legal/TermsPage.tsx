@@ -1,8 +1,7 @@
 import { Link } from "@tanstack/react-router";
-import { Calendar, FileText, ScaleIcon, ShieldIcon } from "lucide-react";
-import { LegalContainer, LegalDivider, RelatedDocLink, RelatedLinksFooter } from "#/components/legal/LegalShell";
+import { Calendar, FileText, ShieldIcon } from "lucide-react";
+import { LegalContainer, LegalDivider, LegalHeader, LegalHeaderLine, RelatedDocLink, RelatedLinksFooter } from "#/components/legal/LegalShell";
 import { Alert, AlertDescription } from "#/components/ui/alert";
-import { Badge } from "#/components/ui/badge";
 import { CONTACT_EMAIL, CONTACT_MAILTO, PRIVACY_EMAIL, PRIVACY_MAILTO, REPO_URL } from "#/lib/constants";
 import { type TypedRichT, useRichT, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -35,11 +34,11 @@ function Section({ id, children }: { id: string; children: React.ReactNode }) {
 }
 
 function H2({ children }: { children: React.ReactNode }) {
-    return <h2 className="m-0 mb-4 font-semibold text-[26px] text-foreground leading-[1.2] tracking-[-0.02em] sm:text-[30px]">{children}</h2>;
+    return <h2 className="m-0 mb-4 font-semibold text-[20px] text-foreground leading-[1.25] tracking-[-0.01em] sm:text-[22px]">{children}</h2>;
 }
 
 function H3({ children }: { children: React.ReactNode }) {
-    return <h3 className="m-0 mt-6 mb-2 font-semibold text-[20px] text-foreground leading-[1.3] tracking-[-0.01em] first:mt-0">{children}</h3>;
+    return <h3 className="m-0 mt-6 mb-2 font-semibold text-[17px] text-foreground leading-[1.3] tracking-[-0.01em] first:mt-0">{children}</h3>;
 }
 
 function P({ children }: { children: React.ReactNode }) {
@@ -56,7 +55,11 @@ function LI({ children }: { children: React.ReactNode }) {
 
 function A({ href, children, external }: { href: string; children: React.ReactNode; external?: boolean }) {
     return (
-        <a href={href} {...(external ? { target: "_blank", rel: "noreferrer" } : {})} className="text-primary no-underline transition-colors hover:underline hover:underline-offset-[3px]">
+        <a
+            href={href}
+            {...(external ? { target: "_blank", rel: "noreferrer" } : {})}
+            className="relative text-primary underline decoration-1 underline-offset-[3px] transition-[text-decoration-thickness] pointer-coarse:after:absolute pointer-coarse:after:inset-x-0 pointer-coarse:after:top-1/2 pointer-coarse:after:h-11 pointer-coarse:after:-translate-y-1/2 hover:decoration-2"
+        >
             {children}
         </a>
     );
@@ -68,42 +71,24 @@ export function TermsPage() {
 
     return (
         <LegalContainer>
-            <header className="mb-12 border-border border-b pb-8">
-                <div className="flex items-start justify-between gap-4">
-                    <div className="min-w-0">
-                        <h1 className="m-0 mb-3.5 text-balance font-extrabold text-[clamp(36px,5vw,52px)] text-foreground leading-[1.05] tracking-[-0.02em]">{t("terms.hero.title")}</h1>
-                        <p className="m-0 max-w-[56ch] font-sans text-[20px] text-muted-foreground leading-[1.55]">{t("terms.hero.subtitle")}</p>
-                    </div>
-                    <div className="flex shrink-0 gap-2 pt-2">
-                        <Badge variant="outline" size="lg">
-                            {t("terms.hero.version", { version: VERSION })}
-                        </Badge>
-                    </div>
-                </div>
-                <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 font-sans text-[14px] text-muted-foreground">
-                    <span className="inline-flex items-center gap-2">
-                        <Calendar className="size-4" aria-hidden="true" />
-                        {t("terms.hero.effective", { date: EFFECTIVE_DATE })}
-                    </span>
-                    <span className="hidden h-4 w-px bg-border sm:inline-block" aria-hidden="true" />
-                    <span className="inline-flex items-center gap-2">
-                        <FileText className="size-4" aria-hidden="true" />
-                        {t("terms.hero.lastUpdated", { date: LAST_UPDATED })}
-                    </span>
-                </div>
-            </header>
+            <LegalHeader title={t("terms.hero.title")} subtitle={t("terms.hero.subtitle")} version={t("terms.hero.version", { version: VERSION })}>
+                <LegalHeaderLine icon={<Calendar className="size-4" aria-hidden="true" />}>{t("terms.hero.effective", { date: EFFECTIVE_DATE })}</LegalHeaderLine>
+                <LegalHeaderLine icon={<FileText className="size-4" aria-hidden="true" />} separated>
+                    {t("terms.hero.lastUpdated", { date: LAST_UPDATED })}
+                </LegalHeaderLine>
+            </LegalHeader>
 
             <Alert className="mb-10 border-[color-mix(in_srgb,var(--primary)_32%,transparent)] bg-[color-mix(in_srgb,var(--primary)_5%,transparent)] [&>svg]:text-primary">
                 <ShieldIcon strokeWidth={1.8} />
                 <AlertDescription className="text-[15px] text-muted-foreground leading-[1.55]">{t("terms.tldr")}</AlertDescription>
             </Alert>
 
-            <nav aria-label={t("terms.toc.nav")} className="mb-12 rounded-xl border border-border bg-[color-mix(in_srgb,var(--muted)_50%,var(--card))] p-6">
+            <nav aria-label={t("terms.toc.nav")} className="mb-12 rounded-2xl border border-border bg-card p-6">
                 <h2 className="m-0 mb-3.5 font-semibold text-[18px] text-foreground leading-[1.3]">{t("terms.toc.heading")}</h2>
                 <ol className="m-0 list-decimal pl-6 font-sans text-[14.5px] leading-[1.6]">
                     {TOC.map((entry) => (
-                        <li key={entry.id} className="my-1.5">
-                            <a href={`#${entry.id}`} className="text-primary no-underline transition-colors hover:underline hover:underline-offset-[3px]">
+                        <li key={entry.id} className="my-1.5 pointer-coarse:my-0">
+                            <a href={`#${entry.id}`} className="pointer-coarse:inline-flex pointer-coarse:min-h-11 pointer-coarse:items-center text-foreground underline decoration-1 underline-offset-[3px] transition-[text-decoration-thickness] hover:decoration-2">
                                 {t(entry.labelKey)}
                             </a>
                         </li>
@@ -112,13 +97,10 @@ export function TermsPage() {
             </nav>
 
             <Section id="acceptance">
-                <div className="mb-4 flex items-center gap-3">
-                    <div className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                        <ScaleIcon className="size-5" strokeWidth={1.8} />
-                    </div>
+                <div className="mb-4">
                     <H2>{t("terms.s1.heading")}</H2>
                 </div>
-                <div className="pl-13 max-sm:pl-0">
+                <div>
                     <P>{t("terms.s1.p1")}</P>
                     <P>{t("terms.s1.p2")}</P>
                     <P>{t("terms.s1.p3")}</P>
@@ -244,7 +226,7 @@ export function TermsPage() {
             <Section id="contact">
                 <H2>{t("terms.s9.heading")}</H2>
                 <P>{t("terms.s9.intro")}</P>
-                <div className="rounded-xl border border-border bg-[color-mix(in_srgb,var(--muted)_50%,var(--card))] px-6 py-5">
+                <div className="rounded-2xl border border-border bg-card px-6 py-5">
                     <div className="my-3.5 first:mt-0 last:mb-0">
                         <p className="m-0 mb-1 font-medium font-sans text-[14px] text-foreground">{t("terms.s9.gdpr.label")}</p>
                         <A href={PRIVACY_MAILTO}>{PRIVACY_EMAIL}</A>
@@ -262,7 +244,10 @@ export function TermsPage() {
                     </div>
                     <div className="my-3.5 first:mt-0 last:mb-0">
                         <p className="m-0 mb-1 font-medium font-sans text-[14px] text-foreground">{t("terms.s9.inApp.label")}</p>
-                        <Link to="/" className="font-sans text-[14px] text-primary no-underline transition-colors hover:underline hover:underline-offset-[3px]">
+                        <Link
+                            to="/"
+                            className="relative font-sans text-[14px] text-primary underline decoration-1 underline-offset-[3px] transition-[text-decoration-thickness] pointer-coarse:after:absolute pointer-coarse:after:inset-x-0 pointer-coarse:after:top-1/2 pointer-coarse:after:h-11 pointer-coarse:after:-translate-y-1/2 hover:decoration-2"
+                        >
                             {t("terms.s9.inApp.link")}
                         </Link>
                     </div>

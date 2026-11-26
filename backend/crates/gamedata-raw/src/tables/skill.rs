@@ -4,7 +4,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::serde_helpers::deserialize_fb_map;
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct SkillBlackboard {
     #[serde(alias = "Key", alias = "key")]
@@ -15,7 +16,8 @@ pub struct SkillBlackboard {
     pub value_str: Option<String>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct SkillSpData {
     #[serde(alias = "SpType", default)]
@@ -32,7 +34,8 @@ pub struct SkillSpData {
     pub increment: f64,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct SkillLevel {
     #[serde(alias = "Name", default)]
@@ -55,7 +58,8 @@ pub struct SkillLevel {
     pub blackboard: Vec<SkillBlackboard>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct RawSkill {
     #[serde(alias = "SkillId")]
@@ -68,7 +72,8 @@ pub struct RawSkill {
     pub levels: Vec<SkillLevel>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct Skill {
     pub id: Option<String>,

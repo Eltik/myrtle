@@ -51,14 +51,6 @@ export const messages = {
         text: "indexed",
         description: "Sub-line under the enemy count: how many we hold data for.",
     },
-    "catalog.tierLists": {
-        text: "Tier lists",
-        description: "Catalog tile label: community tier lists. Its value reads 'active/total'. Rendered uppercase.",
-    },
-    "catalog.tierLists.meta": {
-        text: "{count} placements",
-        description: "Sub-line under the tier-list tile. A placement is one operator placed on one tier. {count} is an already-formatted compact number and the label is always plural in the source.",
-    },
     "catalog.rosters": {
         text: "Rosters",
         description: "Catalog tile label: player collections synced with the site. Rendered uppercase.",

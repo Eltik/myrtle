@@ -173,7 +173,7 @@ export function SoundsTab({ enemyId, audio }: { enemyId: string; audio: IEnemyAu
             <p className="m-0 font-sans text-[12px] text-muted-foreground leading-normal">{t("sounds.intro", { count: items.length })}</p>
             {groups.map((group) => (
                 <section key={group.category} className="flex flex-col gap-2">
-                    <h3 className="m-0 font-sans font-semibold text-[11px] text-muted-foreground uppercase tracking-wide">{t(CATEGORY_LABEL_KEY[group.category])}</h3>
+                    <h3 className="kicker m-0">{t(CATEGORY_LABEL_KEY[group.category])}</h3>
                     {group.category === "projectile" && <p className="m-0 -mt-1 font-sans text-[11.5px] text-muted-foreground leading-normal">{t("sounds.projectileNote")}</p>}
                     <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                         {group.items.map((item) => (
@@ -193,7 +193,7 @@ function SoundRow({ item, player, t }: { item: ISoundItem; player: ReturnType<ty
     const isUnavailable = item.urls.every((u) => player.errored.has(u));
 
     return (
-        <div className={cn("relative overflow-hidden rounded-lg border transition-colors", isPlaying ? "border-primary bg-primary/10" : "border-border bg-card/30 hover:bg-secondary/30", isUnavailable && "opacity-60")}>
+        <div className={cn("relative overflow-hidden rounded-lg border transition-colors", isPlaying ? "border-primary bg-primary/10" : "border-border bg-card/30 hover:bg-secondary/30", isUnavailable && "border-dashed")}>
             <div className="flex items-center gap-3 p-2.5">
                 <button
                     type="button"
@@ -210,7 +210,7 @@ function SoundRow({ item, player, t }: { item: ISoundItem; player: ReturnType<ty
                 <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
                         <span className="font-medium font-sans text-[13px] text-foreground">{item.label}</span>
-                        {isUnavailable && <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground uppercase tracking-wide">{t("sounds.unavailable")}</span>}
+                        {isUnavailable && <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">{t("sounds.unavailable")}</span>}
                     </div>
                     {item.detail && (
                         <p className="m-0 mt-0.5 truncate font-mono text-[11px] text-muted-foreground" title={item.detail}>

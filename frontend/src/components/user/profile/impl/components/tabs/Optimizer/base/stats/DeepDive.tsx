@@ -1,7 +1,9 @@
-import { Camera, ChevronDown, Copy, X } from "lucide-react";
-import { useState } from "react";
+import { Camera, Check, ChevronDown, Copy, X } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Button } from "#/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "#/components/ui/collapsible";
+import { Input } from "#/components/ui/input";
+import { Spinner } from "#/components/ui/spinner";
 import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import type { IEvaluateResponse } from "#/lib/api/base";
 import { roomLabel } from "#/lib/base/catalog";
@@ -75,7 +77,7 @@ function DiffRow({ label, from, to, format, betterLow }: { label: string; from: 
             <span className="font-mono text-[11.5px] tabular-nums">
                 {format(from)} &rarr; {format(to)}{" "}
                 {meaningful ? (
-                    <span className={cn("font-semibold", improved ? "text-emerald-400" : "text-destructive")}>
+                    <span className={cn("font-semibold", improved ? "text-success-foreground" : "text-destructive-foreground")}>
                         {delta > 0 ? "+" : "−"}
                         {format(Math.abs(delta))}
                     </span>
@@ -122,6 +124,13 @@ export function DeepDive() {
     const periodMult = { day: 1, week: 7, month: 30, year: 365 }[period];
     const periodLabel = t(PERIOD_SUFFIX[period]);
     const [snapshot, setSnapshot] = useState<ISnapshot | null>(null);
+    // The copy button says it worked for two seconds; nothing else on screen changes.
+    const [copied, setCopied] = useState(false);
+    useEffect(() => {
+        if (!copied) return;
+        const timer = setTimeout(() => setCopied(false), 2000);
+        return () => clearTimeout(timer);
+    }, [copied]);
     const api = useBaseOptimizer();
     const evaluation = api.evaluation;
     if (!evaluation) return null;
@@ -147,22 +156,22 @@ export function DeepDive() {
 
     return (
         <Collapsible onOpenChange={setOpen} open={open}>
-            <CollapsibleTrigger className="flex w-full items-center justify-between rounded-xl border border-border bg-card px-4 py-2.5 transition-colors hover:bg-muted/40">
+            <CollapsibleTrigger className="flex pointer-coarse:min-h-11 w-full items-center justify-between rounded-2xl border border-border bg-card px-4 py-2.5 transition-colors hover:bg-muted/40">
                 <span className="font-medium text-[13px]">{t("profile.base.deep.title")}</span>
                 <ChevronDown className={cn("size-4 text-muted-foreground transition-transform", open && "rotate-180")} />
             </CollapsibleTrigger>
 
             <CollapsibleContent>
-                <div className="mt-2 flex flex-col gap-4 rounded-xl border border-border bg-card px-4 py-3">
+                <div className="mt-2 flex flex-col gap-4 rounded-2xl border border-border bg-card px-4 py-3">
                     {claim && (
                         <section className="flex flex-col gap-2">
-                            <h3 className="font-medium text-[10px] text-muted-foreground uppercase tracking-wider">{t("profile.base.deep.checkin")}</h3>
+                            <h3 className="kicker">{t("profile.base.deep.checkin")}</h3>
                             <div className="flex flex-wrap items-center justify-between gap-3">
                                 <div className="flex flex-col gap-0.5">
                                     <span className="text-[12px]">{rt("profile.base.deep.logInBefore", { time: <span className="font-semibold text-foreground">{clockAfter(claim.next_full_hours, f)}</span> })}</span>
                                     <span className="text-[11px] text-muted-foreground">
                                         {t("profile.base.deep.stalls", { room: stallRoom ? roomLabel(stallRoom.room_type, api.catalog) : t("profile.base.deep.firstRoom"), duration: hoursLabel(claim.next_full_hours, t) })}{" "}
-                                        <TileTooltip label={<span className="block max-w-64">{t("profile.base.deep.conservative.tooltip")}</span>}>
+                                        <TileTooltip focusable label={<span className="block max-w-64">{t("profile.base.deep.conservative.tooltip")}</span>}>
                                             <span className="cursor-help underline decoration-dotted underline-offset-2">{t("profile.base.deep.conservative")}</span>
                                         </TileTooltip>
                                     </span>
@@ -183,7 +192,7 @@ export function DeepDive() {
                                                     <span className="font-mono tabular-nums">
                                                         {Math.round(evaluation.drones.current)}/{evaluation.drones.max}
                                                     </span>
-                                                    <span className="text-destructive">{t("profile.base.deep.dronesFull")}</span>
+                                                    <span className="text-destructive-foreground">{t("profile.base.deep.dronesFull")}</span>
                                                 </>
                                             )}
                                         </span>
@@ -205,13 +214,13 @@ export function DeepDive() {
                                             {atRisk.map((e, i) => (
                                                 <span key={e.operator_id}>
                                                     {i > 0 && <span className="text-muted-foreground"> · </span>}
-                                                    {e.name} <span className={cn("font-mono tabular-nums", (e.lasts_hours ?? 99) < 12 ? "text-destructive" : "text-muted-foreground")}>{hoursLabel(e.lasts_hours ?? 0, t)}</span>
+                                                    {e.name} <span className={cn("font-mono tabular-nums", (e.lasts_hours ?? 99) < 12 ? "text-destructive-foreground" : "text-muted-foreground")}>{hoursLabel(e.lasts_hours ?? 0, t)}</span>
                                                 </span>
                                             ))}
                                         </span>
                                     )}
                                 </div>
-                                <div className="flex items-center gap-2">
+                                <div className="flex flex-wrap items-center gap-2">
                                     <ToggleGroup
                                         aria-label={t("profile.base.deep.cadence.aria")}
                                         onValueChange={(next: string[]) => {
@@ -225,9 +234,10 @@ export function DeepDive() {
                                             </ToggleGroupItem>
                                         ))}
                                     </ToggleGroup>
-                                    <input
+                                    <Input
                                         aria-label={t("profile.base.deep.cadence.custom")}
-                                        className="w-14 rounded-md border border-border bg-transparent px-1.5 py-0.5 text-center font-mono text-[11px] tabular-nums placeholder:text-muted-foreground/50"
+                                        className="w-14 font-mono tabular-nums [&_input]:text-center"
+                                        size="sm"
                                         inputMode="numeric"
                                         onChange={(e) => {
                                             const v = Number(e.target.value);
@@ -253,7 +263,9 @@ export function DeepDive() {
                                             </ToggleGroupItem>
                                         ))}
                                     </ToggleGroup>
-                                    <span className={cn("font-mono text-[11.5px] tabular-nums", losses.length > 0 ? "text-destructive" : "text-muted-foreground")}>{losses.length > 0 ? t("profile.base.deep.lost.suffix", { losses: losses.join(" · "), period: periodLabel }) : t("profile.base.deep.lost.nothing")}</span>
+                                    <span className={cn("font-mono text-[11.5px] tabular-nums", losses.length > 0 ? "text-destructive-foreground" : "text-muted-foreground")}>
+                                        {losses.length > 0 ? t("profile.base.deep.lost.suffix", { losses: losses.join(" · "), period: periodLabel }) : t("profile.base.deep.lost.nothing")}
+                                    </span>
                                 </div>
                             </div>
                         </section>
@@ -261,7 +273,7 @@ export function DeepDive() {
 
                     {(evaluation.dorms.per_dorm ?? []).some((d) => (d.comfort_upside_per_hour ?? 0) > 0.05) && (
                         <section className="flex flex-col gap-1">
-                            <h3 className="font-medium text-[10px] text-muted-foreground uppercase tracking-wider">{t("profile.base.deep.furniture")}</h3>
+                            <h3 className="kicker">{t("profile.base.deep.furniture")}</h3>
                             {(evaluation.dorms.per_dorm ?? [])
                                 .filter((d) => (d.comfort_upside_per_hour ?? 0) > 0.05)
                                 .map((d) => (
@@ -273,7 +285,7 @@ export function DeepDive() {
                                                     {d.comfort}/{d.comfort_limit}
                                                 </span>
                                             ),
-                                            rate: <span className="font-mono font-semibold text-emerald-400 tabular-nums">{t("profile.base.deep.furniture.rate", { rate: (d.comfort_upside_per_hour ?? 0).toFixed(2) })}</span>,
+                                            rate: <span className="font-mono font-semibold text-success-foreground tabular-nums">{t("profile.base.deep.furniture.rate", { rate: (d.comfort_upside_per_hour ?? 0).toFixed(2) })}</span>,
                                         })}
                                     </span>
                                 ))}
@@ -282,7 +294,7 @@ export function DeepDive() {
 
                     {rooms.length > 0 && (
                         <section className="flex flex-col gap-2">
-                            <h3 className="font-medium text-[10px] text-muted-foreground uppercase tracking-wider">{t("profile.base.deep.outputByFacility")}</h3>
+                            <h3 className="kicker">{t("profile.base.deep.outputByFacility")}</h3>
                             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                                 {rooms.map((room) => {
                                     const daily =
@@ -296,7 +308,7 @@ export function DeepDive() {
                                         <div className="flex flex-col gap-1 rounded-lg border border-border/60 bg-muted/10 px-3 py-2" key={room.slot_id}>
                                             <div className="flex items-baseline justify-between gap-2">
                                                 <span className="min-w-0 truncate font-medium text-[12px]">{roomLabel(room.room_type, api.catalog)}</span>
-                                                <span className="shrink-0 text-[10px] text-muted-foreground uppercase tracking-wide">{productLabel(room, t)}</span>
+                                                <span className="shrink-0 text-[10px] text-muted-foreground">{productLabel(room, t)}</span>
                                             </div>
                                             <div className="flex items-baseline justify-between gap-2">
                                                 <span className="font-mono font-semibold text-[13px] tabular-nums">
@@ -305,7 +317,7 @@ export function DeepDive() {
                                                 </span>
                                                 <span className="font-mono text-[11px] text-muted-foreground tabular-nums">{Math.round(room.total_efficiency)}%</span>
                                             </div>
-                                            <span className={cn("text-[10.5px]", overflows ? "text-destructive" : "text-muted-foreground")}>
+                                            <span className={cn("text-[10.5px]", overflows ? "text-destructive-foreground" : "text-muted-foreground")}>
                                                 {t("profile.base.deep.fullIn", { duration: room.fill_hours == null ? "-" : hoursLabel(room.fill_hours, t), count: room.capacity, unit: room.room_type === "TRADING" ? t("profile.base.deep.unit.orders") : t("profile.base.deep.unit.items") })}
                                                 {overflows && t("profile.base.deep.overflows")}
                                             </span>
@@ -317,9 +329,9 @@ export function DeepDive() {
                     )}
 
                     <section className="flex flex-col gap-1.5">
-                        <div className="flex items-center justify-between gap-3">
-                            <h3 className="font-medium text-[10px] text-muted-foreground uppercase tracking-wider">{t("profile.base.deep.compare")}</h3>
-                            <div className="flex items-center gap-1.5">
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                            <h3 className="kicker">{t("profile.base.deep.compare")}</h3>
+                            <div className="flex flex-wrap items-center gap-1.5">
                                 <Button
                                     disabled={!api.rotation}
                                     onClick={() => {
@@ -331,13 +343,16 @@ export function DeepDive() {
                                                 lines.push(`  ${t("profile.base.deep.copy.room", { room: roomLabel(r.room_type, api.catalog), operators: r.recommended.map((o) => o.name).join(", ") })}`);
                                             }
                                         }
-                                        void navigator.clipboard.writeText(lines.join("\n"));
+                                        navigator.clipboard.writeText(lines.join("\n")).then(
+                                            () => setCopied(true),
+                                            () => setCopied(false),
+                                        );
                                     }}
                                     size="sm"
                                     variant="ghost"
                                 >
-                                    <Copy />
-                                    {t("profile.base.deep.copyPlan")}
+                                    {copied ? <Check /> : <Copy />}
+                                    <span aria-live="polite">{copied ? t("profile.base.deep.copied") : t("profile.base.deep.copyPlan")}</span>
                                 </Button>
                                 <Button onClick={() => setSnapshot(live)} size="sm" variant="outline">
                                     <Camera />
@@ -368,14 +383,17 @@ export function DeepDive() {
 
                     {api.rotationLoading && !sustainability && (
                         <section className="flex flex-col gap-1">
-                            <h3 className="font-medium text-[10px] text-muted-foreground uppercase tracking-wider">{t("profile.base.deep.simulating.title")}</h3>
-                            <span className="animate-pulse text-[11.5px] text-muted-foreground">{t("profile.base.deep.simulating")}</span>
+                            <h3 className="kicker">{t("profile.base.deep.simulating.title")}</h3>
+                            <span className="inline-flex items-center gap-1.5 text-[11.5px] text-muted-foreground">
+                                <Spinner className="size-3.5" />
+                                {t("profile.base.deep.simulating")}
+                            </span>
                         </section>
                     )}
 
                     {sustainability?.facilities && sustainability.facilities.length > 0 && (
                         <section className="flex flex-col gap-1.5">
-                            <h3 className="font-medium text-[10px] text-muted-foreground uppercase tracking-wider">{t("profile.base.deep.simulated.title", { days: Math.round(sustainability.horizon_hours / 24) })}</h3>
+                            <h3 className="kicker">{t("profile.base.deep.simulated.title", { days: Math.round(sustainability.horizon_hours / 24) })}</h3>
                             <div className="flex flex-col divide-y divide-border/60">
                                 {sustainability.facilities.map((facility) => {
                                     const produced =
@@ -390,7 +408,7 @@ export function DeepDive() {
                                         <div className="flex items-baseline gap-3 py-1 text-[11.5px]" key={facility.slot_id}>
                                             <span className="min-w-0 flex-1 truncate">{roomLabel(facility.room_type, api.catalog)}</span>
                                             <span className="font-mono tabular-nums">{produced}</span>
-                                            <span className={cn("w-24 text-right font-mono tabular-nums", facility.idle_hours > 0.05 ? "text-destructive" : "text-muted-foreground")}>
+                                            <span className={cn("w-24 text-right font-mono tabular-nums", facility.idle_hours > 0.05 ? "text-destructive-foreground" : "text-muted-foreground")}>
                                                 {facility.idle_hours > 0.05 ? t("profile.base.deep.idle", { hours: facility.idle_hours.toFixed(1) }) : t("profile.base.deep.noIdle")}
                                             </span>
                                         </div>
@@ -402,13 +420,13 @@ export function DeepDive() {
 
                     {evaluation.unrotated && (
                         <section className="flex flex-col gap-1">
-                            <h3 className="font-medium text-[10px] text-muted-foreground uppercase tracking-wider">{t("profile.base.deep.unrotated.title", { days: Math.round(evaluation.unrotated.horizon_hours / 24) })}</h3>
+                            <h3 className="kicker">{t("profile.base.deep.unrotated.title", { days: Math.round(evaluation.unrotated.horizon_hours / 24) })}</h3>
                             {evaluation.unrotated.depleted.length === 0 ? (
                                 <span className="text-[11.5px] text-muted-foreground">{t("profile.base.deep.unrotated.fine")}</span>
                             ) : (
                                 <span className="text-[11.5px] text-muted-foreground">
                                     {rt("profile.base.deep.unrotated.line", {
-                                        count: <span className="font-semibold text-destructive">{t("profile.base.deep.unrotated.dry", { count: evaluation.unrotated.depleted.length })}</span>,
+                                        count: <span className="font-semibold text-destructive-foreground">{t("profile.base.deep.unrotated.dry", { count: evaluation.unrotated.depleted.length })}</span>,
                                         hours: (evaluation.unrotated.depleted[0]?.at_hours ?? 0).toFixed(1),
                                         name: evaluation.unrotated.depleted[0]?.operator.name,
                                     })}
@@ -419,7 +437,7 @@ export function DeepDive() {
 
                     {sustainability && (
                         <section className="flex flex-col gap-1.5">
-                            <h3 className="font-medium text-[10px] text-muted-foreground uppercase tracking-wider">{t("profile.base.deep.events.title", { days: Math.round(sustainability.horizon_hours / 24) })}</h3>
+                            <h3 className="kicker">{t("profile.base.deep.events.title", { days: Math.round(sustainability.horizon_hours / 24) })}</h3>
                             {sustainability.depleted.length === 0 ? (
                                 <span className="text-[11.5px] text-muted-foreground">{t("profile.base.deep.events.none")}</span>
                             ) : (

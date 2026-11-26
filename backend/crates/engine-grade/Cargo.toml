@@ -13,6 +13,7 @@ myrtle-gamedata.workspace = true
 myrtle-gamedata-raw.workspace = true
 serde.workspace = true
 serde_json.workspace = true
+ts-rs.workspace = true
 
 [dev-dependencies]
 myrtle-testkit.workspace = true

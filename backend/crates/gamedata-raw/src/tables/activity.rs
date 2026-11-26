@@ -29,7 +29,8 @@ pub struct ActivityTables {
     pub event_shops: HashMap<String, EventShopData>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct ActivityBasicInfo {
     #[serde(alias = "Id")]
@@ -39,13 +40,16 @@ pub struct ActivityBasicInfo {
     pub name: String,
 
     #[serde(alias = "StartTime", default)]
+    #[ts(type = "number")]
     pub start_time: i64,
 
     #[serde(alias = "EndTime", default)]
+    #[ts(type = "number")]
     pub end_time: i64,
 
     /// When event-medal rewards stop being claimable, 0 if absent
     #[serde(alias = "RewardEndTime", default)]
+    #[ts(type = "number")]
     pub reward_end_time: i64,
 
     /// Group id tying medals together (e.g. `medalGroupActivity46side`)
@@ -211,7 +215,8 @@ pub fn mission_tokens_by_activity(
 }
 
 /// Stage that awards Originite Prime on first clear
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct OpStage {
     pub stage_id: String,
@@ -266,7 +271,8 @@ pub fn share_between_twins<T: Clone>(map: &mut HashMap<String, Vec<T>>) {
     map.extend(borrowed);
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct FarmDrop {
     pub item_id: String,
@@ -277,7 +283,8 @@ pub struct FarmDrop {
     pub occ: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct FarmStage {
     pub stage_id: String,

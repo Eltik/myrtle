@@ -24,6 +24,10 @@ export const messages = {
         text: "No notes",
         description: "Notes filter option: only operators with no notes.",
     },
+    "filters.chip.module": {
+        text: "{type} module",
+        description: "Text of the applied-filter chip for a module type. {type} is the game's own short type glyph (X, Y, D, A, B), which stays as-is.",
+    },
     "sort.rarity": {
         text: "Rarity",
         description: "Sort option: by star rating. Short label in a compact select.",

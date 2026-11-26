@@ -20,7 +20,8 @@ const ANNOUNCE_PLATFORM: &str = "Android";
 const FETCH_TIMEOUT: Duration = Duration::from_secs(10);
 const FUTURE_SLACK_DAYS: i64 = 1;
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct AnnouncementSummary {
     pub id: String,
     pub title: String,
@@ -30,20 +31,24 @@ pub struct AnnouncementSummary {
     pub notice_url: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct Announcement {
     #[serde(flatten)]
+    #[ts(flatten)]
     pub summary: AnnouncementSummary,
     pub server: String,
     pub headline: Option<String>,
     pub body_html: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct AnnouncementList {
     pub server: String,
     pub servers: Vec<String>,
     pub announcements: Vec<AnnouncementSummary>,
+    #[ts(type = "number | null")]
     pub checked_at: Option<i64>,
 }
 

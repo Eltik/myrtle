@@ -91,7 +91,7 @@ function SourceItem({ item, seatOps, ctx, t }: { item: SynergyItem; seatOps: Rea
     else if (receivers.length > 0) reaches = receivers.map((r) => <OpChip key={r.seat} charId={r.op.charId} seat={r.seat} support={r.op.support} ctx={ctx} why={item.name} />);
 
     return (
-        <li className="rounded-xl border border-border bg-card px-3 py-2.5">
+        <li className="rounded-2xl border border-border bg-card px-3 py-2.5">
             <div className="flex flex-wrap items-center gap-1.5">
                 <OpChip charId={item.char_id} seat={item.seat} support={item.support} ctx={ctx} why={item.name} />
                 <span className="font-medium text-[13px] text-foreground">{item.name}</span>
@@ -127,7 +127,7 @@ function ByReceiver({ items, seatOps, onOpenInDps, ctx, t }: { items: SynergyIte
     const seats = [...seatOps.entries()].sort((a, b) => a[0] - b[0]);
     return (
         <div className="space-y-3">
-            <ul className="divide-y divide-border/60 rounded-xl border border-border bg-card">
+            <ul className="divide-y divide-border/60 rounded-2xl border border-border bg-card">
                 {seats.map(([seat, op]) => {
                     const got = itemsReaching(items, seat);
                     return (

@@ -9,7 +9,9 @@ import type React from "react";
 import { createElement } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { I18nProvider } from "#/lib/i18n/context";
+import { themeActions } from "#/lib/theme/store";
 import type { ICatalog, ITrack } from "../impl/model";
+import { DEFAULT_SETTINGS } from "./types";
 
 const channel = {
     arm: vi.fn(() => true),
@@ -274,5 +276,16 @@ describe("player engine", () => {
         engine.handleKeydown(new KeyboardEvent("keydown", { key: "s" }));
         expect(engine.playerStore.state.shuffle).toBe(true);
         expect(engine.playerStore.state.order[0]).toBe(0);
+    });
+});
+
+describe("preload in auto mode", () => {
+    afterEach(() => themeActions.setDataSaver(false));
+
+    it("turns off under the site's data saver, and an explicit on still wins", () => {
+        expect(engine.preloadIsOn({ ...DEFAULT_SETTINGS, preload: "auto" })).toBe(true);
+        themeActions.setDataSaver(true);
+        expect(engine.preloadIsOn({ ...DEFAULT_SETTINGS, preload: "auto" })).toBe(false);
+        expect(engine.preloadIsOn({ ...DEFAULT_SETTINGS, preload: "on" })).toBe(true);
     });
 });

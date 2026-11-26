@@ -10,7 +10,8 @@ const STATS_KEY: &str = "stats:global";
 const STATS_TTL: Duration = Duration::from_mins(5);
 const RECENT_USERS: i64 = 20;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct StatsResponse {
     pub users: UserStats,
@@ -21,38 +22,57 @@ pub struct StatsResponse {
     pub computed_at: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct UserStats {
+    #[ts(type = "number")]
     pub total: i64,
     pub by_server: ServerBreakdown,
+    #[ts(type = "number")]
     pub signups_7d: i64,
+    #[ts(type = "number")]
     pub signups_30d: i64,
+    #[ts(type = "number")]
     pub public_profiles: i64,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct ServerBreakdown {
+    #[ts(type = "number")]
     pub en: i64,
+    #[ts(type = "number")]
     pub jp: i64,
+    #[ts(type = "number")]
     pub kr: i64,
+    #[ts(type = "number")]
     pub cn: i64,
+    #[ts(type = "number")]
     pub bili: i64,
+    #[ts(type = "number")]
     pub tw: i64,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct GachaPublicStats {
+    #[ts(type = "number")]
     pub total_pulls: i64,
+    #[ts(type = "number")]
     pub contributing_users: i64,
+    #[ts(type = "number")]
     pub six_star_count: i64,
+    #[ts(type = "number")]
     pub five_star_count: i64,
+    #[ts(type = "number")]
     pub four_star_count: i64,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct GameDataStats {
     pub operators: usize,
@@ -64,22 +84,30 @@ pub struct GameDataStats {
     pub enemies: usize,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct TierListSiteStats {
+    #[ts(type = "number")]
     pub total: i64,
+    #[ts(type = "number")]
     pub active: i64,
+    #[ts(type = "number")]
     pub total_versions: i64,
+    #[ts(type = "number")]
     pub total_placements: i64,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct RostersStats {
+    #[ts(type = "number")]
     pub total: i64,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct AdminStatsResponse {
     #[serde(flatten)]
@@ -88,17 +116,24 @@ pub struct AdminStatsResponse {
     pub recent_users: Vec<RecentUser>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct RoleBreakdown {
+    #[ts(type = "number")]
     pub user: i64,
+    #[ts(type = "number")]
     pub tier_list_editor: i64,
+    #[ts(type = "number")]
     pub tier_list_admin: i64,
+    #[ts(type = "number")]
     pub translator: i64,
+    #[ts(type = "number")]
     pub super_admin: i64,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct RecentUser {
     pub uid: String,

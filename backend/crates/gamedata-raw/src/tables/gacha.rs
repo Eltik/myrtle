@@ -16,7 +16,8 @@ pub struct GachaTables {
     pub pool_details: Option<PoolDetailFile>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct GachaPoolClient {
     #[serde(alias = "GachaPoolId")]
@@ -24,8 +25,10 @@ pub struct GachaPoolClient {
     #[serde(alias = "GachaIndex")]
     pub gacha_index: i32,
     #[serde(alias = "OpenTime")]
+    #[ts(type = "number")]
     pub open_time: i64,
     #[serde(alias = "EndTime")]
+    #[ts(type = "number")]
     pub end_time: i64,
     #[serde(alias = "GachaPoolName")]
     pub gacha_pool_name: String,
@@ -81,14 +84,17 @@ pub struct GachaPoolClient {
     /// Per-operator 6★ rate-up share as a 0..1 fraction of the 6★ band
     /// (`upCharInfo.perCharList[rarityRank=5].percent`), `None` without a 6★ rate-up
     #[serde(skip)]
+    #[ts(skip)]
     pub declared_share6: Option<f64>,
     /// Rolls per cycle of a repeating collab handover (`LinkageParam.loopTarget6Count`),
     /// `None` otherwise
     #[serde(skip)]
+    #[ts(skip)]
     pub linkage_loop_at: Option<u32>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct NewbeeGachaPoolClient {
     #[serde(alias = "GachaPoolId")]
@@ -107,7 +113,8 @@ pub struct NewbeeGachaPoolClient {
     pub gacha_offset: Option<String>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct GachaTag {
     #[serde(alias = "TagId")]
@@ -118,14 +125,16 @@ pub struct GachaTag {
     pub tag_group: i32,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct RecruitTimeEntry {
     #[serde(alias = "RecruitPrice")]
     pub recruit_price: i32,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct RecruitPool {
     #[serde(alias = "RecruitTimeTable")]
@@ -162,7 +171,8 @@ pub fn profession_names(tags: &[GachaTag]) -> HashMap<String, String> {
         .collect()
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct RecruitRarityEntry {
     #[serde(alias = "RarityStart")]
@@ -171,7 +181,8 @@ pub struct RecruitRarityEntry {
     pub rarity_end: i32,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct GachaData {
     pub gacha_pool_client: Vec<GachaPoolClient>,
@@ -181,7 +192,9 @@ pub struct GachaData {
     pub recruit_pool: RecruitPool,
     pub potential_material_converter: Value,
     pub classic_potential_material_converter: Value,
+    #[ts(as = "HashMap<String, RecruitRarityEntry>")]
     pub recruit_rarity_table: HashMap<i32, RecruitRarityEntry>,
+    #[ts(as = "HashMap<String, Vec<i32>>")]
     pub special_tag_rarity_table: HashMap<i32, Vec<i32>>,
     pub recruit_detail: String,
     pub show_gacha_log_entry: bool,
@@ -192,10 +205,12 @@ pub struct GachaData {
     pub normal_gacha_item: Vec<Value>,
     pub fes_gacha_pool_relate_item: HashMap<String, FesGachaPoolRelateEntry>,
     pub dic_recruit6_star_hint: HashMap<String, String>,
+    #[ts(as = "HashMap<String, f64>")]
     pub special_gacha_percent_dict: HashMap<i32, f64>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct FesGachaPoolRelateEntry {
     #[serde(alias = "RarityRank5ItemId")]
@@ -270,7 +285,8 @@ impl GachaTableFile {
     }
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct WeightUpChar {
     #[serde(default)]
@@ -278,11 +294,13 @@ pub struct WeightUpChar {
     #[serde(default)]
     pub rarity_rank: i32,
     #[serde(default)]
+    #[ts(type = "number")]
     pub weight: i64,
 }
 
 /// Per-rarity headline rate for a banner
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct RarityRate {
     pub rarity_rank: i32,

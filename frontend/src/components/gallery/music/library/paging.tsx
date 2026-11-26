@@ -9,7 +9,7 @@ import type { messages } from "../MusicGallery.messages";
 type MusicT = TypedT<typeof messages>;
 
 /** The dashed box a list view shows in place of an empty list or a missing source. */
-export const NOTICE_CLASS = "rounded-xl border border-border border-dashed p-10 text-center font-sans text-[13px] text-muted-foreground";
+export const NOTICE_CLASS = "rounded-2xl border border-border border-dashed p-10 text-center font-sans text-[13px] text-muted-foreground";
 
 export interface IPagedList<T> {
     shown: readonly T[];

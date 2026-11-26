@@ -27,7 +27,7 @@ export function ScoreTab({ score, isLoading, improvements, isImprovementsLoading
     // score row; both are public leaderboard data, so a private-profile 404
     // simply leaves their sections off.
     const { data: standing } = useQuery({ ...playerStandingQueryOptions({ uid, server, interval: "7 days" }), enabled: Boolean(score) });
-    const { data: history, isLoading: isHistoryLoading } = useQuery({ ...scoreHistoryQueryOptions(uid), enabled: Boolean(score) });
+    const { data: history, isLoading: isHistoryLoading, isError: isHistoryError, refetch: refetchHistory } = useQuery({ ...scoreHistoryQueryOptions(uid), enabled: Boolean(score) });
 
     if (isLoading && !score) return <ScoreTabSkeleton />;
     if (!score) return <ScoreTabEmpty />;
@@ -35,13 +35,13 @@ export function ScoreTab({ score, isLoading, improvements, isImprovementsLoading
     return (
         <div className="flex flex-col gap-3 pb-8">
             <div className="flex items-center gap-2 rounded-lg border border-border/60 bg-muted/30 px-3 py-2">
-                <span className="rounded-md border border-border/60 bg-background px-1.5 py-0.5 font-mono font-semibold text-[9.5px] text-muted-foreground uppercase tracking-wider">{t("score.beta.tag")}</span>
+                <span className="rounded-md border border-border/60 bg-background px-1.5 py-0.5 font-mono font-semibold text-[9.5px] text-muted-foreground">{t("score.beta.tag")}</span>
                 <span className="text-[12px] text-muted-foreground">{t("score.beta.note")}</span>
             </div>
             <div className="grid grid-cols-1 items-start gap-3 sm:grid-cols-2">
                 <OverallGradeCard score={score} standing={standing} />
                 <ContributionCard score={score} />
-                <ScoreHistoryCard score={score} history={history} isLoading={isHistoryLoading} />
+                <ScoreHistoryCard score={score} history={history} isLoading={isHistoryLoading} onRetry={isHistoryError && !history ? () => void refetchHistory() : undefined} />
                 {SUBSCORES.map((sub) => (
                     <SubscoreCard key={sub.key} score={score[sub.key]} sub={sub} improvements={improvements} isImprovementsLoading={isImprovementsLoading} scoreRow={score} />
                 ))}

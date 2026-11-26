@@ -1,7 +1,8 @@
 use myrtle_gamedata_raw::tables::stage::StageDifficulty;
 use serde::Serialize;
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct StageIndexEntry {
     pub stage_id: String,
@@ -10,6 +11,7 @@ pub struct StageIndexEntry {
     pub name: Option<String>,
     pub zone_id: String,
     pub zone_name: Option<String>,
+    #[ts(type = "number")]
     pub zone_order: i64,
     pub group: String,
     pub category: String,

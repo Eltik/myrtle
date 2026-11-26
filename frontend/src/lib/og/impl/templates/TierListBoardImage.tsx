@@ -85,17 +85,31 @@ function titleFontSize(name: string): number {
     return 28;
 }
 
+/** Inner width of a tier label: `tierLabelWidth` less the 12px padding on each side. */
+const TIER_LABEL_INNER_WIDTH = L.tierLabelWidth - 24;
+/** Inter 800's widest-case advance per glyph, in em; a word this wide at the chosen size fits. */
+const TIER_LABEL_GLYPH_EM = 0.68;
+const TIER_LABEL_MIN_FONT = 10;
+
+function tierLabelBaseFontSize(total: number, longest: number): number {
+    if (total <= 2) return 60;
+    if (total <= 6 && longest <= 6) return 30;
+    if (total <= 12 && longest <= 8) return 22;
+    if (total <= 20 && longest <= 10) return 17;
+    return 14;
+}
+
+/** The size band for the label's length, shrunk so its longest word fits the label without breaking. */
 function tierLabelFontSize(name: string): number {
     const total = name.trim().length;
     const longest = name
         .trim()
         .split(/\s+/)
         .reduce((m, w) => Math.max(m, w.length), 0);
-    if (total <= 2) return 60;
-    if (total <= 6 && longest <= 6) return 30;
-    if (total <= 12 && longest <= 8) return 22;
-    if (total <= 20 && longest <= 10) return 17;
-    return 14;
+    const base = tierLabelBaseFontSize(total, longest);
+    if (longest === 0) return base;
+    const fitted = Math.floor(TIER_LABEL_INNER_WIDTH / (longest * TIER_LABEL_GLYPH_EM));
+    return Math.max(TIER_LABEL_MIN_FONT, Math.min(base, fitted));
 }
 
 function truncate(text: string, max: number): string {

@@ -1,3 +1,4 @@
+import type { OperatorChange } from "#/types/generated/OperatorChange";
 import type { IOperatorIndexEntry, OperatorRarity, OperatorRarityTier } from "#/types/operators";
 
 export type ViewMode = "grid" | "compact" | "list";
@@ -44,6 +45,9 @@ export interface IOperatorView extends IOperatorIndexEntry {
     /** Population-level ownership, or `null` when ownership data is unavailable
      *  (still loading) or the operator has no recorded owners. */
     ownership: IOperatorOwnershipInfo | null;
+    /** What CN's data has for this operator that this server's does not yet, or `null` when
+     *  nothing differs (or the changes have not loaded). */
+    cnChanges: OperatorChange[] | null;
 }
 
 /**

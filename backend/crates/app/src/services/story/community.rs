@@ -23,27 +23,32 @@ pub fn cache_key(server: Server, res: &str) -> String {
     format!("story:community:{}:{res}", server.data_server().as_str())
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct StoryReaders {
     pub id: String,
     pub readers: u32,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct StoryGroupReaders {
     pub id: String,
     pub readers: u32,
     pub finished: u32,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub depth: Option<Vec<u32>>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct StoryCommunity {
     pub players: u32,
+    #[ts(type = "number")]
     pub computed_at: i64,
     pub stories: Vec<StoryReaders>,
     pub groups: Vec<StoryGroupReaders>,

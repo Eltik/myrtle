@@ -212,7 +212,41 @@ export interface IAnimationBounds {
 
 const BOUNDS_SAMPLES = 40;
 
-export function measureAnimationBounds(spine: Spine, animationName: string, samples = BOUNDS_SAMPLES): IAnimationBounds | null {
+/**
+ * Make the next bounds read see the skeleton's current mesh pose. A pixi-spine mesh writes
+ * its posed vertices into its buffer on `update`, but PixiJS's `SimpleMesh` marks that
+ * buffer changed only when it is DRAWN, and a mesh's bounds are cached against that mark.
+ * So between two renders `getLocalBounds` reads every mesh where it was last drawn: on a
+ * skeleton never rendered, the first pose for the whole clip. Bumping the mark is what the
+ * next render does anyway, so drawing is unchanged.
+ */
+export function syncMeshBounds(spine: Spine): void {
+    for (const slot of spine.slotContainers) {
+        for (const child of slot.children) {
+            if (child instanceof PIXI.SimpleMesh && child.autoUpdate) child.geometry.getBuffer("aVertexPosition").update();
+        }
+    }
+}
+
+/** The current pose's local bounds as a plain box (PixiJS reuses the rectangle it returns). */
+export function poseBounds(spine: Spine): IAnimationBounds {
+    syncMeshBounds(spine);
+    const { x, y, width, height } = spine.getLocalBounds();
+    return { x, y, width, height };
+}
+
+export interface IMeasureOptions {
+    /**
+     * Re-read the mesh pose at every sample (see {@link syncMeshBounds}). Without it a
+     * skeleton not yet drawn reports its first pose's box: Amiya's Idle measured 250 wide
+     * where the clip reaches 312. Off by default only because the dynamic-illustration
+     * framing in `SceneIllust` was tuned against the old result; the chibi viewer and its
+     * exporter turn it on.
+     */
+    wholeClip?: boolean;
+}
+
+export function measureAnimationBounds(spine: Spine, animationName: string, samples = BOUNDS_SAMPLES, options: IMeasureOptions = {}): IAnimationBounds | null {
     const animation = spine.spineData.findAnimation(animationName);
     if (!animation) return null;
 
@@ -230,6 +264,7 @@ export function measureAnimationBounds(spine: Spine, animationName: string, samp
 
     for (let i = 0; i <= samples; i++) {
         spine.update(i === 0 ? 0 : step);
+        if (options.wholeClip) syncMeshBounds(spine);
         const b = spine.getLocalBounds();
         if (b.width > 0 && b.height > 0) {
             minX = Math.min(minX, b.x);

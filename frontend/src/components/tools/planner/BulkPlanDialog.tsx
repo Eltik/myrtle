@@ -5,6 +5,7 @@ import * as React from "react";
 import { Button, type IButtonProps } from "#/components/ui/button";
 import { Dialog, DialogClose, DialogDescription, DialogFooter, DialogHeader, DialogPanel, DialogPopup, DialogTitle } from "#/components/ui/dialog";
 import { useErrorMessage } from "#/components/ui/error-message";
+import { Kicker } from "#/components/ui/kicker";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { useAuth } from "#/hooks/use-auth";
 import { operatorQueryOptions } from "#/lib/api/operators";
@@ -92,7 +93,7 @@ export function BulkPlanDialog({ open, onOpenChange }: IBulkPlanDialogProps): Re
         setFailures({});
     }, [open]);
 
-    const { options, isLoading: isOptionsLoading } = useOperatorOptions(server, searchQuery, null);
+    const { options, isLoading: isOptionsLoading, failed: isOptionsFailed, retry: retryOptions } = useOperatorOptions(server, searchQuery, null);
     const { data: roster, isSuccess: isRosterLoaded } = useQuery({
         ...userRosterQueryOptions(user?.uid ?? ""),
         enabled: !!user?.uid,
@@ -208,7 +209,7 @@ export function BulkPlanDialog({ open, onOpenChange }: IBulkPlanDialogProps): Re
                                     </Button>
                                 )}
                             </div>
-                            <OperatorMultiSelector options={pickableOptions} selectedOptions={selected} isLoading={isOptionsLoading} onSelectedChange={setSelected} searchQuery={searchQuery} onSearchQueryChange={setSearchQuery} />
+                            <OperatorMultiSelector options={pickableOptions} selectedOptions={selected} isLoading={isOptionsLoading} failed={isOptionsFailed} onRetry={retryOptions} onSelectedChange={setSelected} searchQuery={searchQuery} onSearchQueryChange={setSearchQuery} />
 
                             {failureCount > 0 && (
                                 <div role="alert" className="rounded-lg border border-destructive/30 bg-destructive/8 px-3 py-2 text-destructive-foreground text-xs">
@@ -216,11 +217,11 @@ export function BulkPlanDialog({ open, onOpenChange }: IBulkPlanDialogProps): Re
                                 </div>
                             )}
 
-                            <span className="mt-2 font-semibold text-muted-foreground text-xs uppercase tracking-wider">{t("planner.bulk.preview")}</span>
+                            <Kicker className="mt-2 block">{t("planner.bulk.preview")}</Kicker>
                             {rows.length === 0 ? (
                                 <p className="text-muted-foreground text-sm italic">{t("planner.bulk.previewEmpty")}</p>
                             ) : (
-                                <ul className="divide-y divide-border rounded-xl border border-border bg-card">
+                                <ul className="divide-y divide-border rounded-2xl border border-border bg-card">
                                     {rows.map((row) => (
                                         <PreviewRow key={row.option.id} row={row} failure={failures[row.option.id]} onRemove={() => removeOperator(row.option.id)} />
                                     ))}
@@ -295,9 +296,9 @@ function TargetSummary({ target, replaces }: { target: IBulkPlanTarget; replaces
     if (stages.some((s) => s > 0)) parts.push(t("planner.bulk.summary.module", { stage: stages.join("/") }));
 
     return (
-        <span className="flex flex-wrap items-center gap-x-2 font-mono text-foreground/80">
+        <span className="flex flex-wrap items-center gap-x-2 font-mono text-muted-foreground">
             <span>{parts.join(" · ")}</span>
-            {replaces && <span className="font-sans text-amber-600 dark:text-amber-400">{t("planner.bulk.status.replaces")}</span>}
+            {replaces && <span className="font-sans text-warning-foreground">{t("planner.bulk.status.replaces")}</span>}
         </span>
     );
 }

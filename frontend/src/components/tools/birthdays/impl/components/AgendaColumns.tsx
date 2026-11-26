@@ -59,11 +59,11 @@ export function AgendaColumns({ scale, days, byDay, today, onSelect }: IAgendaCo
                             key={date.toISOString()}
                             type="button"
                             onClick={() => onSelect(toSelectedDay(date))}
-                            className={cn("flex cursor-pointer flex-col gap-2.5 rounded-[10px] border p-2.5 text-left transition-colors", columnMinH, isToday ? "border-primary/40 bg-primary/8" : ops.length > 0 ? "border-border bg-muted/40 hover:bg-accent" : "border-transparent hover:border-border hover:bg-accent")}
+                            className={cn("flex cursor-pointer flex-col gap-2.5 rounded-lg border p-2.5 text-left transition-colors", columnMinH, isToday ? "border-primary/40 bg-primary/8" : ops.length > 0 ? "border-border bg-muted/40 hover:bg-accent" : "border-transparent hover:border-border hover:bg-accent")}
                         >
                             <div className="flex items-baseline justify-between gap-1">
                                 <div className="flex min-w-0 flex-col gap-0.5">
-                                    <span className="font-medium font-mono text-[10px] text-muted-foreground uppercase tracking-[0.08em]">{weekdays[date.getDay()]}</span>
+                                    <span className="font-sans text-[12px] text-muted-foreground">{weekdays[date.getDay()]}</span>
                                     <span className={cn("font-bold font-sans text-[20px] leading-none tracking-tight", isToday ? "text-primary" : "text-foreground")}>{date.getDate()}</span>
                                 </div>
                                 {ops.length > 0 && <span className="font-medium font-mono text-[10.5px] text-muted-foreground">{ops.length}</span>}

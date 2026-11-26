@@ -1,5 +1,6 @@
 import { EyeOffIcon } from "lucide-react";
 import { type ReactNode, useEffect, useRef, useState } from "react";
+import { Tabs, TabsPrimitive, useTabStripScroll } from "#/components/ui/tabs";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
@@ -37,6 +38,8 @@ export const PROFILE_STICKY_OFFSET_PX = 64 + 44;
 export function ProfileTabs({ tabs, active, onChange, onIntent, end }: IProfileTabsProps) {
     const t: TypedT<typeof messages> = useT("user");
     const wrapRef = useRef<HTMLDivElement>(null);
+    const stripRef = useRef<HTMLDivElement>(null);
+    const overflowing = useTabStripScroll(stripRef);
     const [indicator, setIndicator] = useState({ left: 0, width: 0 });
 
     // Re-measured when the order changes too: saving a layout moves the active tab.
@@ -50,27 +53,21 @@ export function ProfileTabs({ tabs, active, onChange, onIntent, end }: IProfileT
         setIndicator({ left: rect.left - pRect.left, width: rect.width });
     }, [active, order]);
 
+    // Kit Tabs (Base UI) for the roving tabIndex and arrow / Home / End keys; the
+    // bar keeps its own look and measured indicator. No tabpanels: the profile
+    // body below is the panel, swapped by the route.
     return (
-        <div className={cn(styles.tabs, "overflow-y-hidden")} role="tablist" aria-label={t("profile.tabs.label")}>
+        <Tabs value={active} onValueChange={(value) => onChange(value as TabId)} ref={stripRef} className={cn(styles.tabs, "block overflow-y-hidden", overflowing && "scroll-shadows-x")}>
             <div className={styles.inner} ref={wrapRef}>
-                {tabs.map((tab) => (
-                    <button
-                        key={tab.id}
-                        type="button"
-                        role="tab"
-                        aria-selected={active === tab.id}
-                        data-tab={tab.id}
-                        className={cn(styles.tab, active === tab.id && styles.tabActive)}
-                        onPointerEnter={() => onIntent?.(tab.id)}
-                        onPointerDown={() => onIntent?.(tab.id)}
-                        onFocus={() => onIntent?.(tab.id)}
-                        onClick={() => onChange(tab.id)}
-                    >
-                        {tab.private && <EyeOffIcon aria-label={t("profile.tabs.private")} className="size-3.5 opacity-70" />}
-                        {tab.label}
-                        {tab.count != null && <span className={cn(styles.count, "tabular-nums")}>{tab.count}</span>}
-                    </button>
-                ))}
+                <TabsPrimitive.List className={styles.list} activateOnFocus={false} aria-label={t("profile.tabs.label")}>
+                    {tabs.map((tab) => (
+                        <TabsPrimitive.Tab key={tab.id} value={tab.id} data-tab={tab.id} className={cn(styles.tab, active === tab.id && styles.tabActive)} onPointerEnter={() => onIntent?.(tab.id)} onPointerDown={() => onIntent?.(tab.id)} onFocus={() => onIntent?.(tab.id)}>
+                            {tab.private && <EyeOffIcon aria-label={t("profile.tabs.private")} className="size-3.5 opacity-70" />}
+                            {tab.label}
+                            {tab.count != null && <span className={cn(styles.count, "tabular-nums")}>{tab.count}</span>}
+                        </TabsPrimitive.Tab>
+                    ))}
+                </TabsPrimitive.List>
                 {end && <div className={styles.end}>{end}</div>}
                 <span
                     aria-hidden="true"
@@ -81,6 +78,6 @@ export function ProfileTabs({ tabs, active, onChange, onIntent, end }: IProfileT
                     }}
                 />
             </div>
-        </div>
+        </Tabs>
     );
 }

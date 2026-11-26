@@ -35,6 +35,14 @@ export const messages = {
         text: "Optimizer",
         description: "Profile tab: tools that suggest improvements to the account.",
     },
+    "profile.tab.pulls": {
+        text: "Pulls",
+        description: "Profile tab: the account's gacha pull history, shown to visitors only when the player made it public. A pull is one draw on a headhunting banner.",
+    },
+    "profile.tab.lookback": {
+        text: "Lookback",
+        description: "Profile tab: snapshots of how built the account was at each event launch, and how it changed between them.",
+    },
     "profile.notFound.eyebrow": {
         text: "Player",
         description: "Small uppercase label above the 'profile not found' heading. 'Player' is the site's term; the game itself says 'Doctor'.",
@@ -54,6 +62,30 @@ export const messages = {
     "profile.noTabs.desc": {
         text: "This player keeps every section of their profile private.",
         description: "Shown under another player's profile header when they hid every tab, so there is nothing else to view.",
+    },
+    "profile.loadFailed.profile": {
+        text: "Couldn't load this profile. Try again in a moment.",
+        description: "Shown in place of a profile page when loading it failed for a reason other than the profile not existing or being private (a network error or server outage). A retry button follows.",
+    },
+    "profile.loadFailed.roster": {
+        text: "Couldn't load this player's operators.",
+        description: "Shown in place of a profile tab that needs the player's operator list (Stats, Roster, Plans, Optimizer) when loading that list failed. A retry button follows.",
+    },
+    "profile.loadFailed.inventory": {
+        text: "Couldn't load this player's items.",
+        description: "Shown in place of the profile's Inventory tab when loading the items failed. A retry button follows.",
+    },
+    "profile.loadFailed.score": {
+        text: "Couldn't load this player's score.",
+        description: "Shown in place of the profile's Score tab when loading the score failed. A retry button follows.",
+    },
+    "profile.loadFailed.improvements": {
+        text: "Couldn't load upgrade suggestions, so the panels below show none.",
+        description: "Shown above the Score tab's cards when the suggestions of what to upgrade next failed to load; the score itself loaded. A retry button follows.",
+    },
+    "profile.loadFailed.enemies": {
+        text: "Couldn't load this player's encountered enemies.",
+        description: "Shown in place of the profile's Enemies tab when loading which enemies the player has met failed. A retry button follows.",
     },
 } satisfies MessageMap;
 

@@ -3,24 +3,4 @@ import type { AssignedOperator } from "./AssignedOperator";
 import type { ShiftDto } from "./ShiftDto";
 import type { SustainabilityDto } from "./SustainabilityDto";
 
-/**
- * A recommended 3-shift rotation alongside the player's saved presets, for the
- * preset-vs-recommended comparison.
- */
-export type ShiftRotationDto = {
-    shifts: Array<ShiftDto>;
-    /**
-     * Operators the player runs 24/7 with a morale-swap manager (Fiammetta) - kept working every
-     * shift instead of resting the middle one. The frontend badges these as "24/7 - Fiammetta".
-     */
-    sustained: Array<AssignedOperator>;
-    /**
-     * Operators seated as zero-morale tokens (the "dead Lancet"): kept in
-     * their room every shift, never rested. The frontend badges them.
-     */
-    parked: Array<AssignedOperator>;
-    /**
-     * A week-long morale simulation of the recommended rhythm: does it hold up?
-     */
-    sustainability: SustainabilityDto;
-};
+export type ShiftRotationDto = { shifts: Array<ShiftDto>; sustained: Array<AssignedOperator>; parked: Array<AssignedOperator>; sustainability: SustainabilityDto };

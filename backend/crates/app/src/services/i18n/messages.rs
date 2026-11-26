@@ -12,7 +12,8 @@ use super::{CACHE_PREFIX, require_locale, require_panel};
 use crate::policy::{Action, Resource, Subject};
 use crate::{AppContext, AppError};
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct TranslationEntry {
     pub key: String,
     pub namespace: String,
@@ -47,8 +48,10 @@ impl From<EntryRow> for TranslationEntry {
     }
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct UiMessageAuditEntry {
+    #[ts(type = "number")]
     pub id: i64,
     pub message_key: String,
     pub locale: String,
@@ -59,7 +62,8 @@ pub struct UiMessageAuditEntry {
     pub actor: UiMessageAuditActor,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct UiMessageAuditActor {
     pub id: Uuid,
     pub nickname: Option<String>,
@@ -83,21 +87,28 @@ impl From<AuditRow> for UiMessageAuditEntry {
     }
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct TranslationListResponse {
     pub entries: Vec<TranslationEntry>,
+    #[ts(type = "number")]
     pub total: i64,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct LocaleProgress {
     pub locale: String,
+    #[ts(type = "number")]
     pub total: i64,
+    #[ts(type = "number")]
     pub translated: i64,
+    #[ts(type = "number")]
     pub stale: i64,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct TranslationAuditActor {
     pub user_id: Uuid,
     pub uid: Option<String>,
@@ -106,8 +117,10 @@ pub struct TranslationAuditActor {
     pub secretary_skin_id: Option<String>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct TranslationAuditEntry {
+    #[ts(type = "number")]
     pub id: i64,
     pub message_key: String,
     pub locale: String,
@@ -117,9 +130,11 @@ pub struct TranslationAuditEntry {
     pub actor: TranslationAuditActor,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct TranslationAuditResponse {
     pub entries: Vec<TranslationAuditEntry>,
+    #[ts(type = "number")]
     pub total: i64,
 }
 
@@ -180,9 +195,12 @@ pub struct SourceEntry {
     pub placeholders: Vec<String>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct SyncResult {
+    #[ts(type = "number")]
     pub upserted: u64,
+    #[ts(type = "number")]
     pub deactivated: u64,
 }
 

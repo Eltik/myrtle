@@ -80,8 +80,8 @@ export const messages = {
         description: "Button that closes the operator records section.",
     },
     "browse.fallback": {
-        text: "The running backend sends no storyline shelves yet, so the page is grouped by chapter order and release year instead of by the game's own themes. A backend restart fills them in.",
-        description: "Notice shown when the wire carries no storylines and the fallback sectioning is in use.",
+        text: "Storyline groups aren't available right now, so stories are grouped by chapter order and release year instead of the game's own themes.",
+        description: "Notice shown when no storyline groups are available and the page falls back to chapter order and release year.",
     },
     "browse.empty": {
         text: "Nothing matches that search.",

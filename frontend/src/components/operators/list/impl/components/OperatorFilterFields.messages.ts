@@ -72,7 +72,7 @@ export const messages = {
         description: "Prompt inside the empty artist multi-select.",
     },
     "filters.voiceActor": {
-        text: "Voice Actor",
+        text: "Voice actor",
         description: "Field label for the voice-actor filter. The names themselves are never translated.",
     },
     "filters.voiceActor.placeholder": {

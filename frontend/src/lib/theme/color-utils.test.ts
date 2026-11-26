@@ -1,9 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { ACCENT_STORAGE_KEY, accentToRenderedHex, applyAccentColors, clearAccentColors, DEFAULT_PRIMARY_HUE, generateAccentColors, getStoredAccent, parseAccent, serializeAccent, setStoredAccent } from "./color-utils";
 
-const LIGHT_FG = "oklch(0.985 0.002 285)";
-const DARK_FG = "oklch(0.13 0.005 285)";
-
 describe("parseAccent and serializeAccent", () => {
     it("round-trip presets and custom hexes", () => {
         expect(serializeAccent({ type: "preset", hue: 250 })).toBe("h:250");
@@ -41,36 +38,37 @@ describe("parseAccent and serializeAccent", () => {
 
 describe("generateAccentColors", () => {
     it("builds a preset from the OKLch formula per theme", () => {
-        const dark = generateAccentColors({ type: "preset", hue: 250 }, true);
-        expect(dark.primary).toBe("oklch(0.75 0.15 250)");
-        expect(dark.primaryForeground).toBe(DARK_FG);
-        expect(dark.glowPrimary).toBe("oklch(0.75 0.15 250 / 0.5)");
-        expect(dark.glowPrimaryIntense).toBe("oklch(0.75 0.15 250 / 0.8)");
-        expect(dark.glowTextIcon).toBe("oklch(0.75 0.15 250 / 0.6)");
+        const dark = generateAccentColors({ type: "preset", hue: 25 }, true);
+        expect(dark.primary).toBe("oklch(0.75 0.15 25)");
+        expect(dark.primaryForeground).toBe("#000000");
+        expect(dark.glowPrimary).toBe("oklch(0.75 0.15 25 / 0.5)");
+        expect(dark.glowPrimaryIntense).toBe("oklch(0.75 0.15 25 / 0.8)");
 
-        const light = generateAccentColors({ type: "preset", hue: 250 }, false);
-        expect(light.primary).toBe("oklch(0.58 0.22 250)");
-        expect(light.primaryForeground).toBe(LIGHT_FG);
-        expect(light.glowPrimary).toBe("oklch(0.58 0.22 250 / 0.35)");
-        expect(light.glowTextIcon).toBe("oklch(0.58 0.22 250 / 0.55)");
+        const light = generateAccentColors({ type: "preset", hue: 25 }, false);
+        expect(light.primary).toBe("oklch(0.58 0.22 25)");
+        expect(light.primaryForeground).toBe("#ffffff");
+        expect(light.primaryHover).toBe("color-mix(in oklab, oklch(0.58 0.22 25) 88%, black)");
+        expect(light.glowPrimary).toBe("oklch(0.58 0.22 25 / 0.35)");
         expect(light.ring).toBe(light.primary);
+        expect(light.primaryInk).toBe(light.primary);
         expect(light.sidebarPrimary).toBe(light.primary);
     });
 
-    it("uses a custom hex as is, with alpha glows and a legible foreground", () => {
+    it("keeps a custom hex as the fill, with alpha glows and a legible foreground", () => {
         const c = generateAccentColors({ type: "custom", hex: "#336699" }, true);
         expect(c.primary).toBe("#336699");
+        expect(c.chart1).toBe("#336699");
         expect(c.glowPrimary).toBe("rgb(51 102 153 / 0.5)");
         expect(c.glowPrimaryIntense).toBe("rgb(51 102 153 / 0.8)");
-        expect(c.primaryForeground).toBe(LIGHT_FG);
-        expect(generateAccentColors({ type: "custom", hex: "#ffee88" }, false).primaryForeground).toBe(DARK_FG);
+        expect(c.primaryForeground).toBe("#ffffff");
+        expect(generateAccentColors({ type: "custom", hex: "#ffee88" }, false).primaryForeground).toBe("#000000");
     });
 
     it("expands three-digit hexes and passes unreadable ones through", () => {
         expect(generateAccentColors({ type: "custom", hex: "#fff" }, true).glowPrimary).toBe("rgb(255 255 255 / 0.5)");
         const bad = generateAccentColors({ type: "custom", hex: "nope" }, true);
         expect(bad.glowPrimary).toBe("nope");
-        expect(bad.primaryForeground).toBe(LIGHT_FG);
+        expect(bad.primaryForeground).toBe("#ffffff");
     });
 
     it("treats a hex with a stray non-hex digit as unreadable", () => {
@@ -78,7 +76,7 @@ describe("generateAccentColors", () => {
         // for a custom accent that bypassed `parseAccent`'s #rrggbb check.
         const bad = generateAccentColors({ type: "custom", hex: "#12345g" }, true);
         expect(bad.glowPrimary).toBe("#12345g");
-        expect(bad.primaryForeground).toBe(LIGHT_FG);
+        expect(bad.primaryForeground).toBe("#ffffff");
         expect(generateAccentColors({ type: "custom", hex: "#fg0" }, true).glowPrimary).toBe("#fg0");
     });
 });
@@ -108,7 +106,7 @@ describe("CSS variables", () => {
         expect(root.style.getPropertyValue("--glow-primary")).not.toBe("");
         clearAccentColors(root);
         expect(root.style.getPropertyValue("--primary")).toBe("");
-        expect(root.style.getPropertyValue("--glow-text-icon")).toBe("");
+        expect(root.style.getPropertyValue("--primary-ink")).toBe("");
     });
 });
 

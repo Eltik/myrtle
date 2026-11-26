@@ -118,7 +118,7 @@ function OverridesListSheet({ open, onClose }: { open: boolean; onClose: () => v
                     {query.isPending ? (
                         <ReleaseLoading />
                     ) : query.isError ? (
-                        <ReleaseError error={query.error} onRetry={() => query.refetch()} />
+                        <ReleaseError onRetry={() => query.refetch()} />
                     ) : rows.length === 0 ? (
                         <ReleaseEmpty title={t("release.overrides.empty.title")} description={t("release.overrides.empty.description")} />
                     ) : (

@@ -1,6 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { ChevronDown } from "lucide-react";
-import { Fragment, useRef, useState } from "react";
+import { Fragment, useState } from "react";
 import { Kbd } from "#/components/ui/kbd";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "#/components/ui/menu";
 import { useIsMac } from "#/hooks/use-is-mac";
@@ -27,26 +27,28 @@ export interface INavItem {
 }
 
 /** The mono caps heading every dropdown section has always worn, now on the menu's own group label. */
-const SECTION_LABEL = "px-3 pt-2 pb-1.5 font-medium font-mono text-[10.5px] text-muted-foreground uppercase leading-none tracking-widest";
+// `.kicker` voice; the size and weight are restated because MenuGroupLabel's `text-xs font-medium` utilities outrank the component layer.
+const SECTION_LABEL = "kicker px-3 pt-2 pb-1.5 font-semibold text-[10.5px] leading-none";
 
 interface IMainNavProps extends React.ComponentProps<"nav"> {
     items: INavItem[];
     onOpenCommand?: () => void;
+    /**
+     * The nav does not fit the header row. It stays laid out, out of flow and
+     * invisible, so the header can keep measuring its natural width.
+     */
+    collapsed?: boolean;
 }
 
-function HoverDropdown({ item, isActive, onOpenCommand }: { item: INavItem; isActive: boolean; onOpenCommand?: () => void }) {
-    const [open, setOpen] = useState(false);
-    const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+interface IHoverDropdownProps {
+    item: INavItem;
+    isActive: boolean;
+    open: boolean;
+    setOpen: (open: boolean) => void;
+    onOpenCommand?: () => void;
+}
 
-    const openNow = () => {
-        if (closeTimer.current) clearTimeout(closeTimer.current);
-        setOpen(true);
-    };
-    const closeSoon = () => {
-        if (closeTimer.current) clearTimeout(closeTimer.current);
-        closeTimer.current = setTimeout(() => setOpen(false), 140);
-    };
-
+function HoverDropdown({ item, isActive, open, setOpen, onOpenCommand }: IHoverDropdownProps) {
     const isMac = useIsMac();
     const t: TypedT<typeof messages> = useT("nav");
 
@@ -69,70 +71,74 @@ function HoverDropdown({ item, isActive, onOpenCommand }: { item: INavItem; isAc
     );
 
     return (
-        // biome-ignore lint/a11y/noStaticElementInteractions: hover timers supplement the already-accessible DropdownMenu
-        <div role="presentation" onMouseEnter={openNow} onMouseLeave={closeSoon}>
-            <DropdownMenu open={open} onOpenChange={setOpen} modal={false}>
-                <DropdownMenuTrigger className={cn(styles.navLink, isActive && styles.isActive)} aria-expanded={open}>
-                    {item.label}
-                    <ChevronDown className={cn(styles.chev, open && "opacity-90")} />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" alignOffset={-8} sideOffset={10} className={cn("p-2", hasIcons ? "min-w-95" : "min-w-52")} onMouseEnter={openNow} onMouseLeave={closeSoon}>
-                    {/* Each section is a menu group labelled by its heading, so a
+        // Hover and click both go through Base UI. The old hand-rolled hover timers opened the
+        // menu on mouseenter, so the click that followed toggled it straight back shut and a
+        // mouse click read as a dead control (audit-002 Z1); Base UI's hover keeps it open.
+        <DropdownMenu open={open} onOpenChange={setOpen} modal={false}>
+            <DropdownMenuTrigger className={cn(styles.navLink, isActive && styles.isActive)} openOnHover delay={0} closeDelay={140}>
+                {item.label}
+                <ChevronDown className={cn(styles.chev, open && "opacity-90")} />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" alignOffset={-8} sideOffset={10} className={cn("p-2", hasIcons ? "min-w-95" : "min-w-52")}>
+                {/* Each section is a menu group labelled by its heading, so a
                         screen reader announces "Game Data, group" on entering it,
                         while arrow keys still run straight through every group. */}
-                    {showSectionTitles ? (
-                        sections.map((section, i) => (
-                            <Fragment key={section.title}>
-                                {i > 0 && <DropdownMenuSeparator className="mx-3 my-1.5" />}
-                                <DropdownMenuGroup className="flex flex-col gap-px">
-                                    <DropdownMenuLabel className={SECTION_LABEL}>{section.title}</DropdownMenuLabel>
-                                    {section.items.map(renderLink)}
-                                </DropdownMenuGroup>
-                            </Fragment>
-                        ))
-                    ) : (
-                        <DropdownMenuGroup className="flex flex-col gap-px">
-                            <DropdownMenuLabel className={SECTION_LABEL}>{item.label}</DropdownMenuLabel>
-                            {sections[0]?.items.map(renderLink)}
-                        </DropdownMenuGroup>
-                    )}
-                    {hasIcons && (
-                        <div className="mt-1.5 flex items-center justify-between gap-2 border-white/5 border-t px-3 pt-2.5 pb-2 font-sans text-[11.5px] text-muted-foreground leading-none">
-                            <span className="inline-flex items-center gap-1.5 font-medium font-mono text-[11.5px]">
-                                {t("mainNav.press")} <Kbd>{modKey(isMac)}</Kbd>
-                                <Kbd>K</Kbd> {t("mainNav.forAllCommands")}
-                            </span>
-                            <button
-                                type="button"
-                                className="cursor-pointer border-none bg-transparent p-0 font-medium font-sans text-[11.5px] text-primary leading-none transition-colors hover:text-[color-mix(in_oklab,var(--primary),white_40%)]"
-                                onClick={() => {
-                                    setOpen(false);
-                                    onOpenCommand?.();
-                                }}
-                            >
-                                {t("mainNav.openPalette")}
-                            </button>
-                        </div>
-                    )}
-                </DropdownMenuContent>
-            </DropdownMenu>
-        </div>
+                {showSectionTitles ? (
+                    sections.map((section, i) => (
+                        <Fragment key={section.title}>
+                            {i > 0 && <DropdownMenuSeparator className="mx-3 my-1.5" />}
+                            <DropdownMenuGroup className="flex flex-col gap-px">
+                                <DropdownMenuLabel className={SECTION_LABEL}>{section.title}</DropdownMenuLabel>
+                                {section.items.map(renderLink)}
+                            </DropdownMenuGroup>
+                        </Fragment>
+                    ))
+                ) : (
+                    <DropdownMenuGroup className="flex flex-col gap-px">
+                        <DropdownMenuLabel className={SECTION_LABEL}>{item.label}</DropdownMenuLabel>
+                        {sections[0]?.items.map(renderLink)}
+                    </DropdownMenuGroup>
+                )}
+                {hasIcons && (
+                    <div className="mt-1.5 flex items-center justify-between gap-2 border-border border-t px-3 pt-2.5 pb-2 font-sans text-[11.5px] text-muted-foreground leading-none">
+                        <span className="inline-flex items-center gap-1.5 font-medium font-mono text-[11.5px]">
+                            {t("mainNav.press")} <Kbd>{modKey(isMac)}</Kbd>
+                            <Kbd>K</Kbd> {t("mainNav.forAllCommands")}
+                        </span>
+                        <button
+                            type="button"
+                            className="cursor-pointer border-none bg-transparent p-0 font-medium font-sans text-[11.5px] text-primary leading-none underline-offset-2 hover:underline"
+                            onClick={() => {
+                                setOpen(false);
+                                onOpenCommand?.();
+                            }}
+                        >
+                            {t("mainNav.openPalette")}
+                        </button>
+                    </div>
+                )}
+            </DropdownMenuContent>
+        </DropdownMenu>
     );
 }
 
-export function MainNav({ items, className, onOpenCommand, ...props }: IMainNavProps) {
+export function MainNav({ items, className, onOpenCommand, collapsed = false, ...props }: IMainNavProps) {
     const router = useRouterState();
     const pathname = router.location.pathname;
+    // One open menu for the whole bar. Each menu kept its own state, so a menu opened by a
+    // click stayed open while the pointer moved onto the next trigger, and that trigger's
+    // hover never took over (seen in the 2026-11-04 browser pass).
+    const [openHref, setOpenHref] = useState<string | null>(null);
 
     return (
-        <nav className={cn("hidden items-center gap-1 lg:flex", className)} {...props}>
+        <nav className={cn("hidden shrink-0 items-center gap-1 lg:flex", collapsed && "pointer-events-none invisible absolute top-0 left-0", className)} aria-hidden={collapsed || undefined} {...props}>
             {items.map((item) => {
                 const selfActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
                 const childActive = item.items?.some((c) => pathname === c.href || (c.href !== "/" && pathname.startsWith(c.href))) ?? false;
                 const isActive = selfActive || childActive;
 
                 if (item.items) {
-                    return <HoverDropdown key={item.href} item={item} isActive={isActive} onOpenCommand={onOpenCommand} />;
+                    return <HoverDropdown key={item.href} item={item} isActive={isActive} open={openHref === item.href} setOpen={(next) => setOpenHref((cur) => (next ? item.href : cur === item.href ? null : cur))} onOpenCommand={onOpenCommand} />;
                 }
 
                 return (

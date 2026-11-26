@@ -106,7 +106,7 @@ export function KindPool({ kind, entities, status, onRetry, placedKeys, onUnplac
 
     return (
         <TooltipProvider delay={300}>
-            <div className={cn("flex h-full min-h-0 flex-col gap-3 rounded-xl border border-border bg-card p-3 shadow-[0_1px_2px_oklch(0_0_0/0.04)]", rootClassName)}>
+            <div className={cn("flex h-full min-h-0 flex-col gap-3 rounded-2xl border border-border bg-card p-3 shadow-[0_1px_2px_oklch(0_0_0/0.04)]", rootClassName)}>
                 <header className="flex items-baseline justify-between gap-2">
                     <div className="min-w-0">
                         <Kicker className="mb-0.5">{config.kicker}</Kicker>
@@ -240,7 +240,7 @@ export function KindPool({ kind, entities, status, onRetry, placedKeys, onUnplac
                                                     <TooltipContent>
                                                         <span className="font-sans font-semibold text-xs">{entry.name}</span>
                                                         {owner ? <span className="ms-1.5 font-sans text-xs opacity-70">{owner}</span> : null}
-                                                        {placed ? <span className="ms-1.5 font-mono text-[10px] uppercase tracking-wider opacity-70">{t("edit.pool.placed")}</span> : null}
+                                                        {placed ? <span className="ms-1.5 font-mono text-[10px] opacity-70">{t("edit.pool.placed")}</span> : null}
                                                     </TooltipContent>
                                                 </Tooltip>
                                             </li>

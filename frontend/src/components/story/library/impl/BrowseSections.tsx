@@ -35,12 +35,12 @@ import { type ISection, underLine } from "./sections";
 type BrowseT = TypedT<typeof messages>;
 
 /** The heading over the one flat section a sort produces. It carries no glyph and no chapter range, because the list it heads is not a shelf and describing it as one would be a lie. */
-export function FlatHead({ title, count }: { title: string; count: string }): React.ReactElement {
+export function FlatHead({ title, count }: { title: string; count?: string }): React.ReactElement {
     return (
         <div className="mb-3 flex items-end justify-between gap-3 border-border border-b pb-2">
             <div className="flex min-w-0 flex-col gap-0.5">
-                <h2 className="m-0 font-bold font-heading text-[13px] text-foreground uppercase tracking-widest sm:truncate">{title}</h2>
-                <span className="font-sans text-[12px] text-muted-foreground tabular-nums sm:truncate">{count}</span>
+                <h2 className="m-0 font-bold font-heading text-[15px] text-foreground sm:truncate">{title}</h2>
+                {count ? <span className="font-sans text-[12px] text-muted-foreground tabular-nums sm:truncate">{count}</span> : null}
             </div>
         </div>
     );
@@ -127,13 +127,15 @@ export function SectionGlyph({ chip, place, className, lit, alone = false }: { c
         const size = chip.iconWide ? (place === "chip" ? "h-5 w-auto max-w-19.5" : "h-6.5 w-auto max-w-22 sm:max-w-26") : chip.iconLogo ? (place === "chip" ? (alone ? "size-6" : "size-5.5") : "size-7") : place === "chip" ? "size-5" : "size-6";
         const src = asset(chip.iconUrl);
         const image = (ink: string, extra?: string) => <img src={src} alt="" loading="lazy" decoding="async" className={cn("shrink-0 object-contain", size, ink, extra)} />;
-        if (lit === undefined) return image(GLYPH_INK, className);
+        const glyphInk = chip.iconWide ? BANNER_INK : GLYPH_INK;
+        const litInk = chip.iconWide ? BANNER_LIT_INK : WHITE_INK;
+        if (lit === undefined) return image(glyphInk, className);
         // The fade is on a wrapper per layer, because `GLYPH_INK` carries its own opacity.
         const layer = "col-start-1 row-start-1 flex items-center justify-center transition-opacity duration-200";
         return (
             <span className={cn("grid shrink-0", className)}>
-                <span className={cn(layer, lit ? "opacity-0" : "opacity-100")}>{image(GLYPH_INK)}</span>
-                <span className={cn(layer, lit ? "opacity-100" : "opacity-0")}>{image(WHITE_INK)}</span>
+                <span className={cn(layer, lit ? "opacity-0" : "opacity-100")}>{image(glyphInk)}</span>
+                <span className={cn(layer, lit ? "opacity-100" : "opacity-0")}>{image(litInk)}</span>
             </span>
         );
     }
@@ -165,11 +167,12 @@ export const SectionHead = memo(function SectionHead({ chip, count, action }: { 
                 {/* A HEADING WRAPS ON A PHONE RATHER THAN LOSING ITS RANGE. At 320 the
                     wide arc banner leaves the text column 173 px against a 245 px
                     "Main story · Chapters 0 to 3", so the ellipsis ate the numbers a
-                    reader navigates by. `truncate` is kept from 640 up, where the
-                    column is 245 px and the string has never been cut. */}
+                    reader navigates by. Above 640 the browser QA still caught
+                    "Main story · Chapt…" beside a wide banner, so every width wraps
+                    to two lines and only a third is cut. */}
                 <div className="flex min-w-0 flex-col gap-0.5">
-                    <h2 className="m-0 font-bold font-heading text-[15px] text-foreground uppercase tracking-widest sm:truncate">{heading}</h2>
-                    <span className="font-sans text-[12px] text-muted-foreground tabular-nums sm:truncate">{under}</span>
+                    <h2 className="m-0 line-clamp-2 font-bold font-heading text-[15px] text-foreground">{heading}</h2>
+                    <span className="line-clamp-2 font-sans text-[12px] text-muted-foreground tabular-nums">{under}</span>
                 </div>
             </div>
             {action}
@@ -179,6 +182,23 @@ export const SectionHead = memo(function SectionHead({ chip, count, action }: { 
 
 /** The glyph ink on a lit chip's primary fill. */
 const WHITE_INK = "brightness-0 invert";
+/**
+ * The four act banners are NOT monochrome: white letters on a dark halo (act_0
+ * has 535 near-white and 3,543 dark visible pixels). Flattened to one ink, the halo and
+ * the letters merge, which left "Act Initium" a blur on the light page and dim
+ * on the lit pill. The light page inverts them (black letters, the halo goes
+ * white into the page); the dark page and the lit pill draw them as authored.
+ */
+const BANNER_INK = "invert dark:invert-0";
+/**
+ * On the lit pill the halo is the problem: drawn as authored it read as a dark blob on
+ * the red pill, and the white letters vanished into the dark theme's salmon pill (browser
+ * QA 2026-11-04). A blend drops the halo into the fill without editing the art: `screen`
+ * keeps the white letters and lets black through to the red (white on primary 4.59);
+ * in dark the banner is inverted first and `multiply` does the same for the white halo,
+ * leaving black letters on salmon.
+ */
+const BANNER_LIT_INK = "mix-blend-screen dark:invert dark:mix-blend-multiply";
 
 /** How much of the scroller is faded at each edge once there is something to scroll to. */
 const FADE = 28;
@@ -245,7 +265,7 @@ const FADE = 28;
  * How the bar moves (the spy, the held chip on a click, the rail's slide and
  * its fade edges) lives in `./jumpBar`; this component is the markup.
  */
-export const JumpBar = memo(function JumpBar({ chips, tools }: { chips: readonly IChipModel[]; tools: React.ReactNode }): React.ReactElement {
+export const JumpBar = memo(function JumpBar({ chips, tools, toolsShown }: { chips: readonly IChipModel[]; tools: React.ReactNode; toolsShown: boolean }): React.ReactElement {
     const t: BrowseT = useT("story");
     const spied = useScrollSpy(useMemo(() => chips.map((chip) => chip.id), [chips]));
     const { active, jump } = useJumpHold(spied);
@@ -264,13 +284,24 @@ export const JumpBar = memo(function JumpBar({ chips, tools }: { chips: readonly
     const phone = useMediaQuery("max-sm");
     const pickerCurrent = phone ? current : (chips[0] ?? null);
 
-    return (
-        <nav aria-label={t("browse.jump.aria")} className="page-bleed sticky top-14 z-20 mt-4 border-border/60 border-b bg-background/85 px-(--page-gutter) pt-1 pb-0.75 backdrop-blur-md sm:top-16 sm:py-2">
+    // Under a sort the bar holds nothing but the search button, which the inline
+    // toolbar above already shows. So there it takes no room in the flow and
+    // appears, laid over the cards, only once the toolbar has scrolled away.
+    const flat = current === null;
+    const bar = (
+        <nav
+            aria-label={t("browse.jump.aria")}
+            // The fill bleeds to the page edges; the 1 px rule is an inset pseudo-element held to the
+            // content column, because a border on the bled box ran out past the content to x 5. The
+            // bottom padding grew 1 px to keep the 52 / 66 px bar the border made.
+            className={cn("page-bleed bg-background px-(--page-gutter) pt-1 pb-1 after:pointer-events-none after:absolute after:inset-x-(--page-gutter) after:bottom-0 after:h-px after:bg-border/60 sm:pt-2 sm:pb-2.25", flat ? cn("relative", !toolsShown && "invisible") : "sticky top-(--site-header-height) z-20 mt-4")}
+        >
             <div className="flex items-center gap-2 sm:gap-1.5">
                 {current === null ? (
                     // A sort flattens the shelves, so there is nothing to jump between;
-                    // the bar stays for its search button and names the one list.
-                    <span className="min-w-0 flex-1 truncate font-bold font-heading text-[13px] text-foreground uppercase tracking-widest">{t("browse.section.sorted")}</span>
+                    // the bar stays for its search button. It prints no name: the flat
+                    // list's own heading says "All chapters" just under it.
+                    <span className="min-w-0 flex-1" />
                 ) : (
                     <>
                         {pickerCurrent ? <SectionPicker chips={chips} current={pickerCurrent} t={t} /> : null}
@@ -288,10 +319,13 @@ export const JumpBar = memo(function JumpBar({ chips, tools }: { chips: readonly
                         <span aria-hidden="true" className="hidden h-6 w-px shrink-0 bg-border sm:block" />
                     </>
                 )}
-                {tools}
+                {/* Hidden, not unmounted, while the inline toolbar is on screen: one
+                    filter trigger in view at a time, and the bar keeps its height. */}
+                <div className={cn("contents", !toolsShown && "invisible")}>{tools}</div>
             </div>
         </nav>
     );
+    return flat ? <div className="sticky top-(--site-header-height) z-20 h-0">{bar}</div> : bar;
 });
 
 /**
@@ -324,7 +358,7 @@ const SectionPicker = memo(function SectionPicker({ chips, current, t }: { chips
         <Sheet open={open} onOpenChange={setOpen} onOpenChangeComplete={onOpenChangeComplete}>
             <SheetTrigger
                 aria-label={t("browse.jump.picker", { name: current.name })}
-                className="flex h-11 min-w-0 flex-1 cursor-pointer items-center gap-2 rounded-[10px] border border-border bg-secondary/50 px-2.5 text-start text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 data-popup-open:border-primary/55 sm:hidden"
+                className="flex h-11 min-w-0 flex-1 cursor-pointer items-center gap-2 rounded-lg border border-border bg-secondary/50 px-2.5 text-start text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring data-popup-open:border-primary/55 sm:hidden"
             >
                 <SectionGlyph chip={current} place="chip" className="opacity-80" />
                 <span className="min-w-0 flex-1 truncate font-sans font-semibold text-[13px]">{current.name}</span>
@@ -350,7 +384,7 @@ const SectionPicker = memo(function SectionPicker({ chips, current, t }: { chips
                                             setOpen(false);
                                         }}
                                         className={cn(
-                                            "flex min-h-11 w-full cursor-pointer items-center gap-3 rounded-[10px] border px-2.5 py-1.5 text-start transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60",
+                                            "flex min-h-11 w-full cursor-pointer items-center gap-3 rounded-lg border px-2.5 py-1.5 text-start transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                                             on ? "border-primary/55 bg-primary/12 text-foreground" : "border-transparent text-foreground active:bg-secondary/60",
                                         )}
                                     >
@@ -411,7 +445,7 @@ const JumpChip = memo(function JumpChip({ chip, on, onJump, t }: { chip: IChipMo
                 onJump(chip.id);
             }}
             className={cn(
-                "flex shrink-0 items-center gap-2 rounded-[10px] border py-1.5 transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-ring/60",
+                "flex shrink-0 items-center gap-2 rounded-lg border py-1.5 transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-ring",
                 bare ? "px-2" : "px-2.5",
                 on ? "border-primary bg-primary text-primary-foreground" : "border-transparent text-muted-foreground hover:border-border hover:bg-secondary/50 hover:text-foreground",
             )}
@@ -420,11 +454,12 @@ const JumpChip = memo(function JumpChip({ chip, on, onJump, t }: { chip: IChipMo
             {bare ? null : (
                 <span className="flex min-w-0 flex-col items-start leading-none">
                     {lines.name ? <span className="whitespace-nowrap font-sans font-semibold text-[13px]">{lines.name}</span> : null}
-                    {lines.abbr ? <span className="whitespace-nowrap font-mono font-semibold text-[10px] uppercase tracking-[0.08em] opacity-75">{lines.abbr}</span> : null}
-                    {mono ? <span className={cn("whitespace-nowrap font-mono text-[10px] uppercase tabular-nums tracking-[0.08em]", lines.name ? "mt-1" : "", on ? "opacity-80" : "opacity-75")}>{mono}</span> : null}
+                    {/* No element opacity on the 10 px sublines: it took them to 3.88 at rest and 3.08 / 3.34 on the lit chip. Rest is subtle-foreground (5.29), lit is full primary-foreground (4.59). */}
+                    {lines.abbr ? <span className={cn("whitespace-nowrap font-mono font-semibold text-[10px] uppercase tracking-[0.08em]", !on && "text-subtle-foreground")}>{lines.abbr}</span> : null}
+                    {mono ? <span className={cn("whitespace-nowrap font-mono text-[10px] uppercase tabular-nums tracking-[0.08em]", lines.name ? "mt-1" : "", !on && "text-subtle-foreground")}>{mono}</span> : null}
                 </span>
             )}
-            {on ? <span className="shrink-0 font-mono text-[10px] tabular-nums opacity-80">{chip.count}</span> : null}
+            {on ? <span className="shrink-0 font-mono text-[10px] tabular-nums">{chip.count}</span> : null}
         </a>
     );
     // The tooltip is DISABLED on the active chip, never unwrapped: returning the

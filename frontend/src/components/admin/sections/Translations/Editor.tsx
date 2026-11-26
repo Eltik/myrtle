@@ -1,8 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeftIcon, EraserIcon, HistoryIcon, MoreHorizontalIcon, RotateCcwIcon } from "lucide-react";
+import { ArrowLeftIcon, CheckIcon, EraserIcon, HistoryIcon, MoreHorizontalIcon, RotateCcwIcon, TriangleAlertIcon } from "lucide-react";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { invalidateTranslationQueries } from "#/components/admin/shell/invalidate";
 import { toastError, toastSuccess } from "#/components/admin/shell/toast";
+import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import { Card, CardAction, CardDescription, CardHeader, CardPanel, CardTitle } from "#/components/ui/card";
 import { useErrorMessage } from "#/components/ui/error-message";
@@ -210,7 +211,7 @@ export function Editor({ entry, locale, canEdit, position, nextKey, skipKey, onG
                 <div className="flex flex-col gap-[18px]">
                     <div className="flex flex-col gap-1.5">
                         <Label render={<span />}>{t("translations.editor.english")}</Label>
-                        <div className="whitespace-pre-line rounded-[10px] bg-muted px-3.5 py-3 text-[15px] leading-normal">{entry.source_text}</div>
+                        <div className="whitespace-pre-line rounded-lg bg-muted px-3.5 py-3 text-[15px] leading-normal">{entry.source_text}</div>
                         {status === "stale" ? <SourceChange t={t} before={entry.translated_source_text} after={entry.source_text} /> : null}
                         {entry.description ? (
                             <div className="text-[12.5px] text-muted-foreground leading-normal">
@@ -226,31 +227,38 @@ export function Editor({ entry, locale, canEdit, position, nextKey, skipKey, onG
                                 const ok = !missing.includes(name);
                                 const braced = `{${name}}`;
                                 // An empty box is missing every argument, which is not news; once typing starts, a missing one turns orange.
-                                const tone = ok ? "bg-[color-mix(in_oklch,var(--success)_14%,transparent)] text-success-foreground" : started ? "bg-warning/16 text-warning-foreground" : "bg-muted text-muted-foreground";
+                                // The state rides on a glyph (check / warning triangle) as well as the tint, and the text stays foreground.
+                                const flagged = !ok && started;
+                                const glyph = ok ? <CheckIcon aria-hidden className="text-success-foreground" /> : flagged ? <TriangleAlertIcon aria-hidden className="text-warning-foreground" /> : null;
                                 if (!canEdit) {
                                     return (
-                                        <span key={name} className={cn("rounded-md px-2 py-0.5 font-mono text-[12px]", tone)}>
+                                        <Badge key={name} variant="tint" className="font-mono" style={{ "--tone": ok ? "var(--success)" : flagged ? "var(--warning)" : "var(--muted-foreground)" } as React.CSSProperties}>
+                                            {glyph}
                                             {braced}
-                                        </span>
+                                            {flagged ? <span className="sr-only">{t("translations.editor.argMissing")}</span> : null}
+                                        </Badge>
                                     );
                                 }
+                                const label = flagged ? t("translations.editor.insertArgMissing", { placeholder: braced }) : t("translations.editor.insertArg", { placeholder: braced });
                                 return (
                                     <Tooltip key={name}>
                                         <TooltipTrigger
                                             render={
-                                                <button
-                                                    type="button"
-                                                    aria-label={t("translations.editor.insertArg", { placeholder: braced })}
+                                                <Button
+                                                    size="xs"
+                                                    variant="outline"
+                                                    aria-label={label}
                                                     // Keep the caret (and any selection) in the box through the click.
                                                     onMouseDown={(e) => e.preventDefault()}
                                                     onClick={() => insertAtCaret(braced)}
-                                                    className={cn("cursor-pointer rounded-md px-2 py-0.5 font-mono text-[12px] outline-none transition-[filter] hover:brightness-125 focus-visible:ring-2 focus-visible:ring-ring", tone)}
+                                                    className={cn("font-mono", flagged && "border-warning")}
                                                 />
                                             }
                                         >
+                                            {glyph}
                                             {braced}
                                         </TooltipTrigger>
-                                        <TooltipPopup>{t("translations.editor.insertArg", { placeholder: braced })}</TooltipPopup>
+                                        <TooltipPopup>{label}</TooltipPopup>
                                     </Tooltip>
                                 );
                             })}

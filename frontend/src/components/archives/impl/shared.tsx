@@ -3,10 +3,11 @@ import { EyeOffIcon } from "lucide-react";
 import type * as React from "react";
 import { useEffect, useId, useState } from "react";
 import { campLogo } from "#/components/operators/detail/impl/assets";
+import { Kicker } from "#/components/ui/kicker";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { type TypedRichT, useRichT, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import { cn, RARITY_HEX } from "#/lib/utils";
+import { cn, rarityInk } from "#/lib/utils";
 import type { ArchivePerson } from "#/types/generated/ArchivePerson";
 import type { ExamAxis } from "#/types/generated/ExamAxis";
 import type { ExamStep } from "#/types/generated/ExamStep";
@@ -52,8 +53,9 @@ export const STEP_KEY: Record<ExamStep, "exam.step.flawed" | "exam.step.normal" 
 export const INFECTED_COLOR = "var(--destructive)";
 export const CLEAR_COLOR = "var(--success)";
 
+/** The rarity edge as ink: `RARITY_HEX` paints 1★ #ffffff, invisible on the light card. */
 export function rarityColor(rarity: number | null | undefined): string {
-    return rarity ? (RARITY_HEX[rarity] ?? "var(--muted-foreground)") : "var(--muted-foreground)";
+    return rarity ? rarityInk(rarity) : "var(--muted-foreground)";
 }
 
 /** A person as a small chip: avatar, name, a rarity edge. Clickable when `onOpen` is given. */
@@ -145,11 +147,15 @@ export function SpoilerNote({ className }: { className?: string }): React.ReactE
     );
 }
 
-/** Dark card with a primary kicker title, the panel every Archives card sits in. */
+/** Dark card with a kicker title, the panel every Archives card sits in. */
 export function Panel({ title, children, className, footer }: { title?: React.ReactNode; children: React.ReactNode; className?: string; footer?: React.ReactNode }): React.ReactElement {
     return (
-        <section className={cn("flex min-w-0 flex-col gap-3 rounded-[14px] border border-border bg-card p-4 sm:p-5", className)}>
-            {title ? <h3 className="m-0 font-bold font-sans text-[0.69rem] text-primary uppercase tracking-[0.22em]">{title}</h3> : null}
+        <section className={cn("flex min-w-0 flex-col gap-3 rounded-2xl border border-border bg-card p-4 sm:p-5", className)}>
+            {title ? (
+                <h3 className="m-0 leading-none">
+                    <Kicker tone="accent">{title}</Kicker>
+                </h3>
+            ) : null}
             {children}
             {footer ? <div className="font-sans text-[12px] text-muted-foreground leading-normal">{footer}</div> : null}
         </section>
@@ -160,14 +166,14 @@ export function peopleById(people: readonly ArchivePerson[] | undefined): Map<st
     return new Map((people ?? []).map((p) => [p.id, p]));
 }
 
-/** A tab's loading or error line, in place of its body. */
+/** A tab's loading line, in place of its body. */
 export function TabMessage({ children }: { children: React.ReactNode }): React.ReactElement {
     return <p className="text-muted-foreground text-sm">{children}</p>;
 }
 
 /** The headline figures under a tab's lede: four cells, two per row on a phone. */
 export function StatStrip({ children }: { children: React.ReactNode }): React.ReactElement {
-    return <div className="grid grid-cols-4 overflow-hidden rounded-[14px] border border-border bg-card max-[760px]:grid-cols-2">{children}</div>;
+    return <div className="grid grid-cols-4 overflow-hidden rounded-2xl border border-border bg-card max-[760px]:grid-cols-2">{children}</div>;
 }
 
 /** One {@link StatStrip} cell. `grow` sets the figure larger from `sm` up. */
@@ -175,7 +181,7 @@ export function BigStat({ label, value, grow }: { label: string; value: string; 
     return (
         <div className="flex flex-col gap-1.5 border-border not-last:border-r px-4 py-3.5 max-[760px]:nth-[2n]:border-r-0">
             <span className={cn("font-bold text-[28px] text-foreground tabular-nums leading-none tracking-tight", grow && "sm:text-[34px]")}>{value}</span>
-            <span className="font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.14em]">{label}</span>
+            <Kicker>{label}</Kicker>
         </div>
     );
 }

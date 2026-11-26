@@ -27,16 +27,21 @@ const PLAYABLE: [OperatorProfession; 8] = [
     OperatorProfession::Vanguard,
 ];
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct SearchEntry {
     #[serde(flatten)]
+    #[ts(flatten)]
     pub profile: UserProfile,
+    #[ts(type = "number | null")]
     pub metric: Option<i64>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct SearchPage {
     pub entries: Vec<SearchEntry>,
+    #[ts(type = "number")]
     pub total: i64,
 }
 

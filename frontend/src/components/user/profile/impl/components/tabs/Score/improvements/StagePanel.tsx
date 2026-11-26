@@ -72,8 +72,7 @@ function AnnihilationSection({ stages, accent }: { stages: IStageGap[]; accent: 
 
     return (
         <div className="flex flex-col gap-3">
-            {/* "Annihilation" is the game mode's own name and stays as game vocabulary. */}
-            <SectionHeader title="Annihilation" count={t("score.improvements.stage.annihilation.count", { n: available.length })} accent={accent} />
+            <SectionHeader title={t("score.improvements.stage.annihilation.title")} count={t("score.improvements.stage.annihilation.count", { n: available.length })} accent={accent} />
             {available.length > 0 ? <StageList title={t("score.improvements.stage.annihilation.available")} subtitle={t("score.improvements.stage.annihilation.availableSubtitle")} stages={available} accent={accent} emptyLabel="" /> : <EmptyHint>{t("score.improvements.stage.annihilation.maxed")}</EmptyHint>}
             {locked.length > 0 && <StageList title={t("score.improvements.stage.annihilation.locked")} subtitle={t("score.improvements.stage.annihilation.lockedSubtitle")} stages={locked} accent={accent} emptyLabel="" locked />}
         </div>
@@ -101,7 +100,7 @@ function StageList({ title, subtitle, stages, accent, emptyLabel, locked = false
                 <span className={cn(TEXT_KICKER, "text-muted-foreground")}>{title}</span>
                 <span className={cn(TEXT_BADGE, "text-muted-foreground")}>{t("score.improvements.stage.total", { n: stages.length })}</span>
             </div>
-            {subtitle && <p className={cn(TEXT_META, "-mt-1 text-muted-foreground/80")}>{subtitle}</p>}
+            {subtitle && <p className={cn(TEXT_META, "-mt-1 text-subtle-foreground")}>{subtitle}</p>}
             <div className="flex flex-wrap gap-1.5">
                 {visible.map((s) => (
                     <StageChip key={s.stage_id} stage={s} accent={accent} locked={locked} />

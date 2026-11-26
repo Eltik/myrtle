@@ -1,7 +1,8 @@
-import { BookOpenIcon, CheckIcon, ChevronDownIcon, FilterXIcon, XIcon } from "lucide-react";
+import { BookOpenIcon, ChevronDownIcon, FilterXIcon, XIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { SearchField } from "#/components/SearchField";
 import { Button } from "#/components/ui/button";
+import { FilterChip } from "#/components/ui/filter-chip";
 import { Popover, PopoverPopup, PopoverTrigger } from "#/components/ui/popover";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -9,7 +10,7 @@ import { cn } from "#/lib/utils";
 import type { StoryCategory } from "#/types/generated/StoryCategory";
 import { type ICategoryOption, type IGroupOption, searchGroups } from "../../gallery";
 import type { messages } from "../ArtBrowser.messages";
-import { COUNT, chip } from "../chips";
+import { COUNT } from "../chips";
 
 type T = TypedT<typeof messages>;
 
@@ -33,22 +34,14 @@ function categoryLabel(t: T, category: StoryCategory): string {
     }
 }
 
-/** The category toggles as one row of chips, each with its muted count; several can be on. A category the other filters leave empty dims. */
+/** The category toggles as one row of kit filter chips, each with its count; several can be on. */
 export function CategoryChips({ options, chosen, onToggle }: { options: readonly ICategoryOption[]; chosen: readonly StoryCategory[]; onToggle: (id: StoryCategory) => void }) {
     const t: T = useT("user");
     return (
         <fieldset className="m-0 flex min-w-0 flex-wrap gap-1.5 border-0 p-0" aria-label={t("profile.background.gallery.categoriesLabel")}>
-            {options.map((option) => {
-                const on = chosen.includes(option.id);
-                const label = categoryLabel(t, option.id);
-                return (
-                    <button key={option.id} type="button" aria-pressed={on} onClick={() => onToggle(option.id)} aria-label={t("profile.background.gallery.categoryOption", { label, count: option.count })} className={cn(chip(on), option.count === 0 && !on && "opacity-50")}>
-                        {on && <CheckIcon className="size-3.5" strokeWidth={2.5} aria-hidden="true" />}
-                        {label}
-                        <span className={COUNT}>{option.count}</span>
-                    </button>
-                );
-            })}
+            {options.map((option) => (
+                <FilterChip key={option.id} label={categoryLabel(t, option.id)} count={option.count} active={chosen.includes(option.id)} onSelect={() => onToggle(option.id)} />
+            ))}
         </fieldset>
     );
 }
@@ -147,8 +140,13 @@ export function ActiveFilters({ groupName, onRemoveGroup, onClear }: { groupName
                 <span className="inline-flex h-7 max-w-64 items-center gap-1 rounded-full border border-primary/40 bg-primary/10 ps-2.5 pe-0.5 font-sans text-foreground text-xs">
                     <BookOpenIcon className="size-3.5 shrink-0 opacity-70" aria-hidden="true" />
                     <span className="min-w-0 truncate">{groupName}</span>
-                    <button type="button" onClick={onRemoveGroup} aria-label={t("profile.background.gallery.removeFilter", { name: groupName })} className="inline-flex size-6 cursor-pointer items-center justify-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground">
-                        <XIcon className="size-3" />
+                    <button
+                        type="button"
+                        onClick={onRemoveGroup}
+                        aria-label={t("profile.background.gallery.removeFilter", { name: groupName })}
+                        className="pointer-coarse:after:-translate-1/2 relative inline-flex size-6 cursor-pointer items-center justify-center rounded-full text-muted-foreground pointer-coarse:after:absolute pointer-coarse:after:top-1/2 pointer-coarse:after:left-1/2 pointer-coarse:after:size-11 hover:bg-accent hover:text-foreground"
+                    >
+                        <XIcon aria-hidden="true" className="size-3" />
                     </button>
                 </span>
             )}

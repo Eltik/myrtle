@@ -28,9 +28,14 @@ function Sparkline({ samples }: { samples: number[] }) {
     );
 }
 
-export function MoraleTimeline({ catalog, timeline }: { catalog: Catalog; timeline: IMoraleTimeline[] }) {
+/**
+ * `label` names the scroll region: it scrolls but holds nothing focusable, so
+ * it takes the tab stop itself and keyboard users can scroll it.
+ */
+export function MoraleTimeline({ catalog, timeline, label }: { catalog: Catalog; timeline: IMoraleTimeline[]; label: string }) {
     return (
-        <div className="grid max-h-72 grid-cols-1 gap-1.5 overflow-y-auto pr-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        // biome-ignore lint/a11y/noNoninteractiveTabindex: a scroll region with no focusable content needs the tab stop to be scrollable by keyboard
+        <section aria-label={label} className="grid max-h-72 grid-cols-1 gap-1.5 overflow-y-auto pr-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" tabIndex={0}>
             {timeline.map((row) => {
                 const accent = roomAccent(row.room_type);
                 const low = row.end < MORALE_MAX / 2;
@@ -47,13 +52,13 @@ export function MoraleTimeline({ catalog, timeline }: { catalog: Catalog; timeli
                             </span>
                             <Sparkline samples={row.samples} />
                         </div>
-                        <span className={cn("shrink-0 font-mono font-semibold text-[11px] tabular-nums", low ? "text-red-500/90" : "text-foreground/80")}>
+                        <span className={cn("shrink-0 font-mono font-semibold text-[11px] tabular-nums", low ? "text-destructive-foreground" : "text-foreground")}>
                             {row.end.toFixed(1)}
-                            <span className="text-[9px] text-muted-foreground/60">/{MORALE_MAX}</span>
+                            <span className="text-[9px] text-subtle-foreground">/{MORALE_MAX}</span>
                         </span>
                     </div>
                 );
             })}
-        </div>
+        </section>
     );
 }

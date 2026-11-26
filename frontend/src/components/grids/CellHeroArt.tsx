@@ -48,7 +48,7 @@ function HeroChain({ entity, server, size }: ICellHeroArtProps) {
             {!loaded && (
                 <span
                     className={cn(
-                        "relative flex items-center justify-center overflow-hidden rounded-xl bg-[oklch(0.24_0.005_285)] text-5xl text-white shadow-[0_18px_48px_-18px_oklch(0_0_0/0.7)] ring-1 ring-white/8",
+                        "relative flex items-center justify-center overflow-hidden rounded-2xl bg-[oklch(0.24_0.005_285)] text-5xl text-white shadow-[0_18px_48px_-18px_oklch(0_0_0/0.7)] ring-1 ring-white/8",
                         wide ? "aspect-[2.1/1]" : "aspect-square",
                         TILE_SIZE[size][wide ? "wide" : "square"],
                         src && "opacity-60",

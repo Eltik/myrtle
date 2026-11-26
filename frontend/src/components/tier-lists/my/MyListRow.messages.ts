@@ -28,7 +28,7 @@ export const messages = {
         description: "Menu item that opens the list's public page.",
     },
     "my.row.editBoard": {
-        text: "Edit Tierlist",
+        text: "Edit list",
         description: "Menu item that opens the tier board editor, where operators are placed.",
     },
     "my.row.editDetails": {

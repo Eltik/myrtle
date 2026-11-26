@@ -4,7 +4,7 @@ export const namespace = "operators";
 
 export const messages = {
     "notes.title": {
-        text: "Operator Notes",
+        text: "Operator notes",
         description: "Heading of the collapsible panel holding this site's own written notes about an operator.",
     },
     "notes.pros": {
@@ -30,6 +30,14 @@ export const messages = {
     "notes.showLess": {
         text: "Show less",
         description: "Button that re-collapses an expanded note.",
+    },
+    "notes.loading": {
+        text: "Loading operator notes…",
+        description: "Screen-reader text for the spinner shown while the community notes for this operator load.",
+    },
+    "notes.error": {
+        text: "Couldn't load the operator notes.",
+        description: "Shown in place of the notes section when its request failed, beside a Try again button. Not the same as an operator with no notes, which shows nothing.",
     },
 } satisfies MessageMap;
 

@@ -35,8 +35,12 @@ export const messages = {
         text: "Hard",
         description: "Tag on a stage card for a harder variant (Adverse Environment, six-star, Hard chapter) that shares its code with the standard stage.",
     },
+    "squad.stagePicker.error": {
+        text: "Couldn't load the stage list.",
+        description: "Shown in place of the stage grid when the stage list fails to load.",
+    },
     "squad.stagePicker.loading": {
-        text: "Loading stages...",
+        text: "Loading stages…",
         description: "Shown while the stage list loads.",
     },
 } satisfies MessageMap;

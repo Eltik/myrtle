@@ -17,7 +17,8 @@ interface IOverlaySpec {
         content_on_top?: boolean;
         content_on_box?: boolean;
         content_fade_out_perspective?: boolean;
-        content_fade_out_flat?: boolean;
+        /** The tile under a coordinate label is a light grey (a deployable tile, flat or raised). */
+        on_light?: boolean;
     };
 }
 
@@ -35,7 +36,9 @@ function overlayTransform(spec: IOverlaySpec, hovered?: boolean): string {
         return hovered && o.content_on_top ? "scale-90 translate-z-[19.2px]" : "scale-100 translate-z-px";
     }
     if (spec.type === "coord") {
-        return hovered ? "scale-100 translate-x-0 translate-y-0" : "scale-[0.6] translate-x-4.5 translate-y-5";
+        // In 3D a raised tile's label rides its top face (0.4 of a tile up, as in tiles.css), not the base under it.
+        if (hovered) return o.content_fade_out_perspective ? "scale-100 translate-x-0 translate-y-0 translate-z-[19.2px]" : "scale-100 translate-x-0 translate-y-0";
+        return "scale-[0.6] translate-x-4.5 translate-y-5";
     }
     if (hovered && o.content_on_top) return o.content_on_box ? "translate-z-12" : "translate-z-[19.2px]";
     return "";
@@ -44,10 +47,11 @@ function overlayTransform(spec: IOverlaySpec, hovered?: boolean): string {
 function overlayOpacity(spec: IOverlaySpec, hovered?: boolean): string {
     const o = spec.options;
     if (spec.type === "content") return o.content_fade_out_perspective && hovered ? "opacity-10" : "opacity-80";
-    if (spec.type === "coord") {
-        if (hovered) return o.content_fade_out_perspective ? "opacity-10" : "opacity-20";
-        return o.content_fade_out_flat ? "opacity-10" : "opacity-50";
-    }
+    // Coordinates were white at 10-50% opacity (1.1-1.2:1). Now ink by the tile under them,
+    // measured over the #181818 board: black on the light deployable greys (road #767676
+    // 4.62:1, raised top #c2c2c2 11.79:1), white/70 on the dark ones (floor #353535 6.90:1,
+    // forbidden #181818 9.12:1, start/end tints 8.3:1 and up).
+    if (spec.type === "coord") return o.on_light ? "text-black" : "text-white/70";
     return "";
 }
 
@@ -89,7 +93,7 @@ export function Tile({ def, row, col, ctx }: { def: IRawTile; row: number; col: 
     const contentOv: IOverlaySpec | null = type.contentKey ? { type: "content", content: ctx.t(type.contentKey), options: { content_on_top: block && type.content_on_top, content_on_box: box && type.content_on_top, content_fade_out_perspective: key === "tile_hole" } } : null;
 
     const coordShown = !COORD_EXCLUDE.includes(key) && !(!block && contentOv) && coordStr;
-    if (coordShown) overlays.push({ type: "coord", content: coordStr, options: { content_fade_out_perspective: block, content_fade_out_flat: type.content_on_top } });
+    if (coordShown) overlays.push({ type: "coord", content: coordStr, options: { content_fade_out_perspective: block, on_light: deployable } });
 
     if (contentOv) overlays.push(contentOv);
     if (deployable) overlays.push({ type: "deployable", content: "", options: { content_on_top: block } });

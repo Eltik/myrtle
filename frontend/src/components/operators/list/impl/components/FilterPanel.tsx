@@ -1,5 +1,7 @@
 import { Filter, X } from "lucide-react";
 import type { CSSProperties, ReactNode } from "react";
+import { Badge } from "#/components/ui/badge";
+import { Button } from "#/components/ui/button";
 import { Sheet, SheetHeader, SheetPanel, SheetPopup, SheetTitle } from "#/components/ui/sheet";
 import { useMediaQuery } from "#/hooks/use-media-query";
 import { useT } from "#/lib/i18n";
@@ -43,13 +45,17 @@ export function FilterPanel(props: IFilterPanelProps) {
                             <SheetTitle className="flex items-center gap-2 text-base">
                                 <Filter className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                                 {t("filters.panel.title")}
-                                {props.activeFilterCount && props.activeFilterCount > 0 ? <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 font-mono font-semibold text-[10px] text-primary-foreground">{props.activeFilterCount}</span> : null}
+                                {props.activeFilterCount && props.activeFilterCount > 0 ? (
+                                    <Badge className="font-mono tabular-nums" size="sm">
+                                        {props.activeFilterCount}
+                                    </Badge>
+                                ) : null}
                             </SheetTitle>
                             {props.hasActiveFilters && (
-                                <button type="button" className="inline-flex items-center gap-1 font-medium text-[11.5px] text-muted-foreground hover:text-foreground" onClick={props.onClearAll}>
-                                    <X className="h-2.5 w-2.5" aria-hidden="true" />
+                                <Button onClick={props.onClearAll} size="xs" variant="ghost">
+                                    <X aria-hidden="true" />
                                     {t("filters.panel.clearAll")}
-                                </button>
+                                </Button>
                             )}
                         </div>
                     </SheetHeader>
@@ -70,10 +76,10 @@ export function FilterPanel(props: IFilterPanelProps) {
                         {t("filters.panel.title")}
                     </h3>
                     {props.hasActiveFilters && (
-                        <button type="button" className={styles.clear} onClick={props.onClearAll}>
-                            <X className="h-2.5 w-2.5" aria-hidden="true" />
+                        <Button className="-my-1" onClick={props.onClearAll} size="xs" variant="ghost">
+                            <X aria-hidden="true" />
                             {t("filters.panel.clearAll")}
-                        </button>
+                        </Button>
                     )}
                 </div>
                 {props.children}

@@ -16,13 +16,16 @@ export const TABS: { type: TabType; labelKey: DetailMessageKey; icon: React.Elem
     { type: "lore", labelKey: "tab.lore", icon: BookOpen },
 ];
 
+/** Star colour per rarity, as TEXT: the plain rarity hues measure 1.39 to 2.52 on the light page,
+ *  so the hero stars take the `-ink` tokens, which clear 4.5:1 on the page in light and equal the
+ *  plain hue in dark. */
 export const RARITY_COLORS: Record<OperatorRarityTier, string> = {
-    TIER_6: "text-[var(--rarity-6)] border-[var(--rarity-6)]/50",
-    TIER_5: "text-[var(--rarity-5)] border-[var(--rarity-5)]/50",
-    TIER_4: "text-[var(--rarity-4)] border-[var(--rarity-4)]/50",
-    TIER_3: "text-[var(--rarity-3)] border-[var(--rarity-3)]/50",
-    TIER_2: "text-[var(--rarity-2)] border-[var(--rarity-2)]/50",
-    TIER_1: "text-[var(--rarity-1)] border-[var(--rarity-1)]/50",
+    TIER_6: "text-rarity-6-ink",
+    TIER_5: "text-rarity-5-ink",
+    TIER_4: "text-rarity-4-ink",
+    TIER_3: "text-rarity-3-ink",
+    TIER_2: "text-rarity-2-ink",
+    TIER_1: "text-rarity-1-ink",
 };
 
 export const RARITY_GLOW: Record<OperatorRarityTier, string> = {

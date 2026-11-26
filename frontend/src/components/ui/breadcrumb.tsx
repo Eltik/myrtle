@@ -25,7 +25,7 @@ export function BreadcrumbItem({ className, ...props }: React.ComponentProps<"li
 
 export function BreadcrumbLink({ className, render, ...props }: useRender.ComponentProps<"a">): React.ReactElement {
     const defaultProps = {
-        className: cn("transition-colors hover:text-foreground", className),
+        className: cn("relative transition-colors pointer-coarse:after:absolute pointer-coarse:after:inset-x-0 pointer-coarse:after:top-1/2 pointer-coarse:after:h-11 pointer-coarse:after:-translate-y-1/2 hover:text-foreground", className),
         "data-slot": "breadcrumb-link",
     };
 
@@ -52,8 +52,8 @@ export function BreadcrumbEllipsis({ className, ...props }: React.ComponentProps
     const t: TypedT<typeof messages> = useT("common");
 
     return (
-        <span aria-hidden="true" className={className} data-slot="breadcrumb-ellipsis" role="presentation" {...props}>
-            <MoreHorizontal className="size-4" />
+        <span className={className} data-slot="breadcrumb-ellipsis" {...props}>
+            <MoreHorizontal aria-hidden="true" className="size-4" />
             <span className="sr-only">{t("breadcrumb.more")}</span>
         </span>
     );

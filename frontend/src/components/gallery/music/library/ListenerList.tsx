@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import type React from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "#/components/ui/avatar";
 import { Skeleton } from "#/components/ui/skeleton";
+import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import { ServerTag } from "#/components/user/leaderboard/impl/components/ServerTag";
 import { playerIdentity } from "#/components/user/leaderboard/impl/identity";
 import { useFormatters, useT } from "#/lib/i18n";
@@ -24,19 +25,13 @@ const LISTENER_SORTS: readonly MusicListenerSort[] = ["listens", "time"];
  */
 function Segmented<T extends string>({ value, options, label, onChange, render, size = "md" }: { value: T; options: readonly T[]; label: string; onChange: (next: T) => void; render: (v: T) => string; size?: "sm" | "md" }): React.ReactElement {
     return (
-        <fieldset className="flex w-fit gap-0.5 rounded-[9px] border border-border bg-secondary/45 p-0.75" aria-label={label}>
+        <ToggleGroup aria-label={label} value={[value]} onValueChange={(next) => next[0] && onChange(next[0] as (typeof options)[number])} variant="outline" size={size === "sm" ? "sm" : "default"} className="w-fit">
             {options.map((v) => (
-                <button
-                    key={v}
-                    type="button"
-                    onClick={() => onChange(v)}
-                    aria-pressed={value === v}
-                    className={cn("cursor-pointer whitespace-nowrap rounded-md font-sans font-semibold transition-colors max-sm:min-h-11", size === "sm" ? "h-7 px-2.5 text-[12px]" : "h-8 px-3 text-[12.5px]", value === v ? "bg-primary text-primary-foreground shadow-sm/5" : "text-muted-foreground hover:text-foreground")}
-                >
+                <ToggleGroupItem key={v} value={v} className={size === "sm" ? "px-2.5 font-semibold text-[12px] sm:text-[12px]" : "px-3 font-semibold text-[12.5px] sm:text-[12.5px]"}>
                     {render(v)}
-                </button>
+                </ToggleGroupItem>
             ))}
-        </fieldset>
+        </ToggleGroup>
     );
 }
 

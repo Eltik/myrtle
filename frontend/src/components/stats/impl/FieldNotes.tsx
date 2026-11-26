@@ -1,7 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import type * as React from "react";
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { Kicker } from "#/components/ui/kicker";
+import { Skeleton } from "#/components/ui/skeleton";
+import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import { enemiesListQueryOptions, enemyCommunityAverageQueryOptions } from "#/lib/api/enemies";
 import { operatorOwnershipQueryOptions, operatorsIndexQueryOptions, operatorsRosterQueryOptions } from "#/lib/api/operators";
 import { useFormatters, useGamedataServer, useT } from "#/lib/i18n";
@@ -27,13 +29,13 @@ function FactTile({ label, fraction, sentence, meta, className }: IFactTileProps
     const f = useFormatters();
     const loading = fraction === undefined;
     return (
-        <div className={cn("flex min-w-0 flex-col gap-2 rounded-xl border border-border bg-card px-4 py-3.5", className)} aria-busy={loading || undefined}>
-            <span className="font-medium font-mono text-[10.5px] text-muted-foreground uppercase leading-none tracking-[0.14em]">{label}</span>
+        <div className={cn("flex min-w-0 flex-col gap-2 bg-card px-4 py-3.5", className)} aria-busy={loading || undefined}>
+            <Kicker>{label}</Kicker>
             {loading ? (
                 <>
-                    <span className="h-6 w-16 animate-pulse rounded-md bg-muted/70" />
+                    <Skeleton className="h-6 w-16 rounded-md" />
                     <span className="h-1 w-full rounded-full bg-muted" />
-                    <span className="h-3 w-4/5 animate-pulse rounded bg-muted/50" />
+                    <Skeleton className="h-3 w-4/5 rounded" />
                 </>
             ) : (
                 <>
@@ -55,45 +57,20 @@ interface IStatusPickerProps {
     t: FieldNotesT;
 }
 
-/** A radiogroup of chips: one tab stop, arrow keys move the selection. */
+/**
+ * A single-select kit ToggleGroup: one tab stop, arrow keys move focus, the kit carries the coarse 44px hit area.
+ * Unpressed items keep a border so they read as options, not text. Below sm the five statuses sit 3 + 2 on a
+ * six-track grid, so no row ends with one orphaned chip ("Levitate" wrapped alone at 375).
+ */
 function StatusPicker({ value, onChange, t }: IStatusPickerProps) {
-    const refs = useRef<(HTMLButtonElement | null)[]>([]);
-    const onKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
-        const step = event.key === "ArrowRight" || event.key === "ArrowDown" ? 1 : event.key === "ArrowLeft" || event.key === "ArrowUp" ? -1 : 0;
-        const edge = event.key === "Home" ? 0 : event.key === "End" ? FIELD_NOTE_STATUSES.length - 1 : null;
-        if (step === 0 && edge === null) return;
-        event.preventDefault();
-        const current = FIELD_NOTE_STATUSES.indexOf(value);
-        const next = edge ?? (current + step + FIELD_NOTE_STATUSES.length) % FIELD_NOTE_STATUSES.length;
-        onChange(FIELD_NOTE_STATUSES[next]);
-        refs.current[next]?.focus();
-    };
     return (
-        <div role="radiogroup" aria-label={t("fieldNotes.picker")} onKeyDown={onKeyDown} className="flex flex-wrap gap-1 rounded-lg border border-border bg-muted/40 p-0.5">
-            {FIELD_NOTE_STATUSES.map((status, i) => {
-                const checked = status === value;
-                return (
-                    // biome-ignore lint/a11y/useSemanticElements: a chip row with roving focus; native radio inputs would need hidden inputs plus labels for the same result
-                    <button
-                        key={status}
-                        ref={(el) => {
-                            refs.current[i] = el;
-                        }}
-                        type="button"
-                        role="radio"
-                        aria-checked={checked}
-                        tabIndex={checked ? 0 : -1}
-                        onClick={() => onChange(status)}
-                        className={cn(
-                            "rounded-md px-2.5 py-1 font-medium font-mono text-[11px] uppercase leading-none tracking-[0.08em] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                            checked ? "bg-card text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground",
-                        )}
-                    >
-                        {t("fieldNotes.status", { status })}
-                    </button>
-                );
-            })}
-        </div>
+        <ToggleGroup aria-label={t("fieldNotes.picker")} value={[value]} onValueChange={(next) => next[0] && onChange(next[0] as FieldNoteStatus)} size="sm" className="flex-wrap max-sm:grid max-sm:w-full max-sm:grid-cols-6 max-sm:*:col-span-2 max-sm:*:nth-[n+4]:col-span-3">
+            {FIELD_NOTE_STATUSES.map((status) => (
+                <ToggleGroupItem key={status} value={status} className="border-border px-2.5 text-[12.5px]">
+                    {t("fieldNotes.status", { status })}
+                </ToggleGroupItem>
+            ))}
+        </ToggleGroup>
     );
 }
 
@@ -134,10 +111,10 @@ export function FieldNotes() {
     return (
         <div className="flex flex-col gap-3 border-border border-t pt-4">
             <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-                <Kicker className="mb-0">{t("fieldNotes.kicker")}</Kicker>
+                <Kicker>{t("fieldNotes.kicker")}</Kicker>
                 <StatusPicker value={status} onChange={setStatus} t={t} />
             </div>
-            <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+            <div className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-border bg-border lg:grid-cols-5">
                 <FactTile
                     label={t("fieldNotes.immune.label")}
                     fraction={shareOf(enemies, () => immunity ?? null)}

@@ -52,7 +52,7 @@ export const messages = {
         description: "Tooltip on the movement-only toggle while it is off, describing what clicking will do.",
     },
     "leaderboard.toolbar.search.placeholder": {
-        text: "Search player name or UID…",
+        text: "Search by nickname or UID…",
         description: "Placeholder in the leaderboard's filter box. 'UID' is the in-game account number. Keep the single-character ellipsis.",
     },
     "leaderboard.toolbar.search.label": {
@@ -66,6 +66,10 @@ export const messages = {
     "leaderboard.toolbar.movement.scoreOnly": {
         text: "Rank movement is tracked for score rankings only",
         description: "Tooltip on the disabled interval and movement controls while the table is ranked by an item, explaining why they are off.",
+    },
+    "leaderboard.toolbar.scope.label": {
+        text: "Players to rank",
+        description: "Accessible name of the two-choice group (Global / Friends) at the start of the leaderboard filter row.",
     },
 } satisfies MessageMap;
 

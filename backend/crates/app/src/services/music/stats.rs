@@ -24,7 +24,8 @@ pub const STATS_KEY: &str = "music:stats";
 const STATS_TTL: Duration = Duration::from_mins(1);
 const RANKING_TTL: Duration = Duration::from_mins(5);
 
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "lowercase")]
 pub enum MusicStatWindow {
     #[default]
@@ -53,7 +54,8 @@ impl MusicStatWindow {
     }
 }
 
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "lowercase")]
 pub enum MusicListenerSort {
     #[default]
@@ -71,49 +73,61 @@ impl MusicListenerSort {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct MusicStatInput {
     pub track_id: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct MusicStatRecorded {
     pub counted: bool,
 }
 
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct MusicTrackCounts {
+    #[ts(type = "number")]
     pub listens: i64,
+    #[ts(type = "number")]
     pub downloads: i64,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct MusicStatsCatalog {
     pub tracks: BTreeMap<String, MusicTrackCounts>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct MusicTopTrack {
+    #[ts(type = "number")]
     pub rank: i64,
     pub track_id: String,
+    #[ts(type = "number")]
     pub listens: i64,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct MusicTopTracks {
     pub window: MusicStatWindow,
     pub entries: Vec<MusicTopTrack>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct MusicListenerEntry {
+    #[ts(type = "number")]
     pub rank: i64,
     pub uid: String,
     pub nickname: Option<String>,
@@ -121,18 +135,22 @@ pub struct MusicListenerEntry {
     pub level: Option<i16>,
     pub avatar_id: Option<String>,
     pub server: String,
+    #[ts(type = "number")]
     pub listens: i64,
     pub listened_seconds: f64,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct MusicListenerPage {
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub track_id: Option<String>,
     pub window: MusicStatWindow,
     pub sort: MusicListenerSort,
     pub entries: Vec<MusicListenerEntry>,
+    #[ts(type = "number")]
     pub total: i64,
 }
 

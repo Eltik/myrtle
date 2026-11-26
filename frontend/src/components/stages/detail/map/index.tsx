@@ -43,11 +43,26 @@ const H_GUTTER = 24;
 const HOVER_OPEN_DELAY = 180;
 /** Keep the board within this fraction of the viewport height so tall maps stay fully visible without dominating the page. */
 const MAX_VIEWPORT_HEIGHT_FRACTION = 0.82;
+/** The board's `perspective-[900px]`, in px. */
+const PERSPECTIVE_PX = 900;
+/** The 3D board's `rotate-x-30` tilt. */
+const TILT_RAD = Math.PI / 6;
+
+/**
+ * How much wider than its flat width the tilted board draws. The tilt brings the board's near edge
+ * H/2 * sin(30deg) toward the viewer, and the perspective magnifies it by d / (d - z): a 496px-tall board
+ * draws its near row 1.16x wide, which is what cut the edge cells off at 375 when the fit used the flat width.
+ */
+function perspectiveSpread(naturalHeight: number, is3D: boolean): number {
+    if (!is3D) return 1;
+    const nearZ = (naturalHeight / 2) * Math.sin(TILT_RAD);
+    return PERSPECTIVE_PX / Math.max(PERSPECTIVE_PX - nearZ, PERSPECTIVE_PX / 4);
+}
 
 function MapControls({ onPrev, onNext, atStart, atEnd, hasRoutes, is3D, onToggle3D }: { onPrev: () => void; onNext: () => void; atStart: boolean; atEnd: boolean; hasRoutes: boolean; is3D: boolean; onToggle3D: () => void }) {
     const t: TypedT<typeof messages> = useT("stages");
     return (
-        <div className="absolute top-3 right-3 z-50 flex items-center gap-2 sm:top-4 sm:right-4 sm:gap-1.5">
+        <div className="relative z-50 flex items-center justify-end gap-2 px-3 pt-3 sm:absolute sm:top-4 sm:right-4 sm:gap-1.5 sm:p-0">
             <Button aria-label={t("map.toggle3d")} aria-pressed={is3D} onClick={onToggle3D} size="icon" variant={is3D ? "secondary" : "outline"}>
                 <Box />
             </Button>
@@ -160,7 +175,11 @@ const MapBoard = forwardRef<IMapViewHandle, { level: ILevel; code?: string; sett
 
     const mapRef = useRef<HTMLDivElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
+    const boardRef = useRef<HTMLDivElement>(null);
     const [scale, setScale] = useState(1);
+    // The modelled spread missed raised-tile faces: at 375 the drawn board measured 587px against a
+    // 548px box, so the fit also reads the board's drawn width once its tilt transition settles.
+    const [measuredSpread, setMeasuredSpread] = useState(1);
 
     const naturalWidth = width * TILE_SIZE + (width - 1) * SPACING;
     const naturalHeight = height * TILE_SIZE + (height - 1) * SPACING + BOARD_PADDING_Y * 2;
@@ -169,7 +188,8 @@ const MapBoard = forwardRef<IMapViewHandle, { level: ILevel; code?: string; sett
         const el = containerRef.current;
         if (!el) return;
         const update = () => {
-            const widthScale = (el.clientWidth - H_GUTTER) / naturalWidth;
+            const spread = Math.max(perspectiveSpread(naturalHeight, is3D), measuredSpread);
+            const widthScale = (el.clientWidth - H_GUTTER) / (naturalWidth * spread);
             const viewportH = typeof window === "undefined" ? Infinity : window.innerHeight;
             const heightScale = (viewportH * MAX_VIEWPORT_HEIGHT_FRACTION) / naturalHeight;
             setScale(Math.min(1, Math.max(0.1, Math.min(widthScale, heightScale))));
@@ -184,7 +204,39 @@ const MapBoard = forwardRef<IMapViewHandle, { level: ILevel; code?: string; sett
             ro.disconnect();
             window.removeEventListener("resize", update);
         };
-    }, [naturalWidth, naturalHeight]);
+    }, [naturalWidth, naturalHeight, is3D, measuredSpread]);
+
+    // biome-ignore lint/correctness/useExhaustiveDependencies: re-measures when the tilt or the map changes; the reads are DOM, not these values
+    useEffect(() => {
+        const el = boardRef.current;
+        if (!el) return;
+        const measure = () => {
+            let left = Infinity;
+            let right = -Infinity;
+            for (const node of el.querySelectorAll(".tile, .tile_box_left, .tile_box_right")) {
+                const r = node.getBoundingClientRect();
+                if (r.width === 0) continue;
+                left = Math.min(left, r.left);
+                right = Math.max(right, r.right);
+            }
+            const flat = el.getBoundingClientRect().width;
+            if (!Number.isFinite(left) || flat <= 0) return;
+            // Ratio of drawn width to the box's own width; scale-free, so it does not feed back.
+            const ratio = (right - left) / flat;
+            setMeasuredSpread((prev) => (Math.abs(prev - ratio) > 0.01 ? Math.max(1, ratio) : prev));
+        };
+        // Every tile fires its own transitionend; coalesce them into one measure per frame.
+        let frame = requestAnimationFrame(measure);
+        const schedule = () => {
+            cancelAnimationFrame(frame);
+            frame = requestAnimationFrame(measure);
+        };
+        el.addEventListener("transitionend", schedule);
+        return () => {
+            cancelAnimationFrame(frame);
+            el.removeEventListener("transitionend", schedule);
+        };
+    }, [is3D, level]);
 
     const step = useCallback((delta: number) => setFocus((f) => Math.max(-1, Math.min(maxIndex, f + delta))), [maxIndex]);
     const prev = useCallback(() => step(-1), [step]);
@@ -328,7 +380,7 @@ const MapBoard = forwardRef<IMapViewHandle, { level: ILevel; code?: string; sett
             >
                 <MapControls atEnd={focus >= maxIndex} atStart={focus <= -1} hasRoutes={maxIndex >= 0} is3D={is3D} onNext={next} onPrev={prev} onToggle3D={toggle3D} />
                 <div className="relative mx-auto" style={{ width: naturalWidth * scale, height: naturalHeight * scale }}>
-                    <div className="perspective-[900px] perspective-origin-[50%] transform-3d absolute top-0 left-0" style={{ width: naturalWidth, height: naturalHeight, transform: `scale(${scale})`, transformOrigin: "top left" }}>
+                    <div ref={boardRef} className="perspective-[900px] perspective-origin-[50%] transform-3d absolute top-0 left-0" style={{ width: naturalWidth, height: naturalHeight, transform: `scale(${scale})`, transformOrigin: "top left" }}>
                         <Board coordOverride={null} hovered={is3D} level={level} operators={operators} />
                         <RoutesLayer focus={focus} hovered={is3D} onEnemyHover={handleEnemyHover} routes={routes} settings={settings} speedFor={speedFor} />
                         {chibiActive && walkers.length > 0 && (

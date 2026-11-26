@@ -2,20 +2,4 @@
 import type { ShowcaseBlock } from "./ShowcaseBlock";
 import type { ShowcaseEntity } from "./ShowcaseEntity";
 
-/**
- * One block, with what it points at checked and, for favourites, resolved.
- */
-export type ShowcaseBlockView = {
-    block: ShowcaseBlock;
-    /**
-     * What the block points at is gone: a deleted grid or tier list, a plan
-     * deleted or no longer shown on the profile, or favourites none of whose
-     * ids the game data knows. Only the owner is ever sent such a block.
-     */
-    removed: boolean;
-    /**
-     * Favourites only, one per id in `block`, in its order; empty for every
-     * other block. A visitor is sent only the ids that resolve.
-     */
-    entities: Array<ShowcaseEntity>;
-};
+export type ShowcaseBlockView = { block: ShowcaseBlock; removed: boolean; entities: Array<ShowcaseEntity> };

@@ -64,7 +64,7 @@ export const messages = {
         description: "Accessible name of the button that removes a showcase block, or one favourite from a block.",
     },
     "profile.showcase.editor.type.favourites": {
-        text: "Favourites",
+        text: "Favorites",
         description: "Showcase block type: a row of favourite operators, skins, events or anything else of one type.",
     },
     "profile.showcase.editor.type.favouritesDesc": {
@@ -96,7 +96,7 @@ export const messages = {
         description: "Description of the plan block type in the add-block dialog.",
     },
     "profile.showcase.editor.favouritesOf": {
-        text: "Favourite {kind}",
+        text: "Favorite {kind}",
         description: "Name of a favourites block in the editor when it has no title. {kind} is the plural type name, e.g. 'Operators'.",
     },
     "profile.showcase.editor.titleLabel": {
@@ -112,7 +112,7 @@ export const messages = {
         description: "How many favourites a block holds, out of the most it can (24).",
     },
     "profile.showcase.editor.entitiesList": {
-        text: "Favourites in this block",
+        text: "Favorites in this block",
         description: "Accessible name of the reorderable list of favourites inside one block.",
     },
     "profile.showcase.editor.entityHint": {
@@ -168,7 +168,7 @@ export const messages = {
         description: "Button that closes the add-block dialog.",
     },
     "profile.showcase.add.kindTitle": {
-        text: "Favourites of which type?",
+        text: "Favorites of which type?",
         description: "Heading of the add-block dialog's step where the owner chooses the type of entity a favourites block holds.",
     },
     "profile.showcase.add.gridTitle": {
@@ -250,6 +250,10 @@ export const messages = {
     "profile.showcase.picker.done": {
         text: "Done",
         description: "Button that closes the favourites picker.",
+    },
+    "profile.showcase.add.loading": {
+        text: "Loading",
+        description: "Screen-reader text while the showcase editor fetches the player's grids, tier lists or plans to choose from. No trailing ellipsis.",
     },
 } satisfies MessageMap;
 

@@ -33,7 +33,7 @@ export function ContributionCard({ score }: IProps) {
         <StatCard className="sm:col-span-2" color={gradeColor(score.grade)}>
             <div className={`${CARD_PADDING} flex flex-col gap-4`}>
                 <Kicker icon={PieChart} label={t("score.contribution.title")} />
-                <div className="flex h-3 w-full overflow-hidden rounded-full border border-border/40 bg-muted/25">
+                <div aria-hidden className="flex h-3 w-full overflow-hidden rounded-full border border-border/40 bg-muted/25">
                     {rows.map(({ sub, share, earned }) => (
                         <Tooltip key={sub.key}>
                             <TooltipTrigger render={<div className="relative h-full border-background/60 border-r last:border-r-0" style={{ width: `${share}%` }} />}>
@@ -52,7 +52,7 @@ export function ContributionCard({ score }: IProps) {
                             </span>
                             <span className="font-mono text-foreground/85 tabular-nums">
                                 {earned.toFixed(1)}
-                                <span className="text-muted-foreground/60"> / {share.toFixed(1)}</span>
+                                <span className="text-subtle-foreground"> / {share.toFixed(1)}</span>
                             </span>
                         </div>
                     ))}

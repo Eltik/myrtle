@@ -17,7 +17,8 @@ const PAGE_TTL: Duration = Duration::from_mins(5);
 const MOVERS_TTL: Duration = Duration::from_mins(15);
 const DISTRIBUTION_TTL: Duration = Duration::from_mins(10);
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct LeaderboardEntry {
     pub id: Uuid,
     pub uid: String,
@@ -37,8 +38,11 @@ pub struct LeaderboardEntry {
     pub medal_score: Option<f64>,
     pub base_score: Option<f64>,
     pub skin_score: Option<f64>,
+    #[ts(type = "number | null")]
     pub rank_global: Option<i64>,
+    #[ts(type = "number | null")]
     pub rank_server: Option<i64>,
+    #[ts(type = "number | null")]
     pub rank_delta: Option<i64>,
 }
 
@@ -70,22 +74,28 @@ impl From<LeaderboardRow> for LeaderboardEntry {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct LeaderboardPage {
     pub entries: Vec<LeaderboardEntry>,
+    #[ts(type = "number")]
     pub total: i64,
     pub updated_at: Option<DateTime<Utc>>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct LeaderboardMover {
     pub uid: String,
     pub nickname: Option<String>,
     pub nick_number: Option<String>,
     pub avatar_id: Option<String>,
     pub server: String,
+    #[ts(type = "number")]
     pub current_rank: i64,
+    #[ts(type = "number")]
     pub previous_rank: i64,
+    #[ts(type = "number")]
     pub rank_delta: i64,
     pub current_score: Option<f64>,
     pub score_delta: Option<f64>,
@@ -108,21 +118,26 @@ impl From<MoverRow> for LeaderboardMover {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct ServerShare {
     pub server: String,
+    #[ts(type = "number")]
     pub players: i64,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct PlayerStanding {
     pub player: LeaderboardEntry,
     pub neighbors: Vec<LeaderboardEntry>,
     pub percentile: f64,
+    #[ts(type = "number | null")]
     pub rank_delta: Option<i64>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct ScoreHistoryPoint {
     pub taken_at: DateTime<Utc>,
     pub total_score: Option<f64>,

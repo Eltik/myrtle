@@ -15,7 +15,8 @@ pub struct OwnedSkin {
     pub obtained_at: Option<i64>,
 }
 
-#[derive(Debug, Clone, Copy, Serialize)]
+#[derive(Debug, Clone, Copy, Serialize, ts_rs::TS)]
+#[ts(export, rename = "StageClearDto")]
 #[serde(rename_all = "camelCase")]
 pub struct StageClearEntry {
     pub state: i16,
@@ -37,7 +38,8 @@ impl From<StageClear> for StageClearEntry {
     }
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct ItemEntry {
     pub item_id: String,
     pub quantity: i32,

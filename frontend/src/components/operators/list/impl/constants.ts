@@ -100,6 +100,7 @@ export const CHIP_CONFIG: { key: ArrayFilterKey; prefix: string; label: (v: stri
     { key: "birthPlaces", prefix: "birth", label: (v) => v },
     { key: "artists", prefix: "artist", label: (v) => v },
     { key: "voiceActors", prefix: "va", label: (v) => v },
+    // The English fallback for a caller with no translator; the list page passes `moduleChip`.
     { key: "modules", prefix: "mod", label: (v) => `${moduleTypeGlyph(v)} module` },
 ];
 

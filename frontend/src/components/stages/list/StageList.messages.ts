@@ -15,17 +15,13 @@ export const messages = {
         text: "Stages",
         description: "Last breadcrumb crumb: this page.",
     },
-    "list.title": {
-        text: "Every operation, catalogued.",
-        description: "Page heading of the stage list. 'Operation' is the game's word for a stage.",
-    },
     "list.blurb": {
-        text: "Browse by story arc and code - each stage opens to a faux-3D board and enemy-pathing simulator. Ordered by episode and code.",
+        text: "Browse by story arc and code. Each stage opens to a faux-3D board and enemy-pathing simulator.",
         description: "Paragraph under the stage-list heading, explaining what the list offers.",
     },
     "list.counts": {
-        text: "STAGES · {zones} ZONES · {categories} CATEGORIES",
-        description: "Metric line beside the total stage count, which is rendered separately in large type just above it. Uppercase on purpose. {zones} and {categories} are counts.",
+        text: "{stages} stages · {zones} zones · {categories} categories",
+        description: "Muted meta line beside the stage-list heading. {stages} and {zones} are formatted counts, {categories} is a count; all are always more than one.",
     },
     "list.search.placeholder": {
         text: "Search event, code or stage…",
@@ -50,6 +46,10 @@ export const messages = {
     "list.expandAll": {
         text: "Expand all",
         description: "Button that opens every zone row in the list.",
+    },
+    "list.filter.label": {
+        text: "Stage category",
+        description: "Accessible name of the row of category filter pills above the stage list; one category is shown at a time.",
     },
     "list.filter.all": {
         text: "All",
@@ -114,6 +114,10 @@ export const messages = {
     "list.card.adverse.label": {
         text: "{title}, Adverse",
         description: "Accessible name of the Adverse link on a stage card. {title} is the stage name from the game data.",
+    },
+    "list.card.variant.unavailable": {
+        text: "{label}, no stage page",
+        description: "Accessible name and tooltip of a CM or Adverse chip on a stage card when that version has no level data, so it is not a link. {label} is list.card.cm.label or list.card.adverse.label.",
     },
     "list.hero.operations": {
         text: "{count, plural, one {operation} other {operations}}",

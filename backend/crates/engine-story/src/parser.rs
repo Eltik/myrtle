@@ -3,12 +3,14 @@ use std::collections::BTreeMap;
 use serde::{Deserialize, Serialize};
 
 /// One parsed line
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct StoryCommand {
     pub kind: String,
     pub args: BTreeMap<String, String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub text: Option<String>,
     /// 1-based line number in the script file
     pub line: u32,

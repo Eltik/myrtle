@@ -5,7 +5,7 @@ export const namespace = "stages";
 export const messages = {
     "drops.title": {
         text: "Drops",
-        description: "Kicker over the stage's drop cards; the count of drops sits beside it.",
+        description: "Section heading over the stage's drop cards; the count of drops sits beside it.",
     },
     "drops.rateTitle": {
         text: "Drop rate: {rate}",

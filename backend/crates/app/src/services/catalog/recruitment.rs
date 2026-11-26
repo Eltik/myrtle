@@ -12,14 +12,16 @@ use super::static_data::{cached, to_json};
 use crate::cache::CachedJson;
 use crate::{AppContext, AppError};
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct RecruitmentData<'a> {
     pub tags: &'a [GachaTag],
     pub operators: Vec<RecruitmentOperator>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct RecruitmentOperator {
     pub id: String,
@@ -32,14 +34,16 @@ pub struct RecruitmentOperator {
     pub talent_potential_ranks: Vec<Vec<i32>>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct RecruitmentPotentialRank {
     pub description: String,
     pub modifier: Option<RecruitmentModifier>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct RecruitmentModifier {
     pub attribute_type: String,

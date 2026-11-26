@@ -20,7 +20,7 @@ export const messages = {
         description: "Page heading of the enemy list.",
     },
     "list.blurb": {
-        text: "View all {count} enemies catalogued in Arknights, sorted by Hypergryph's internal sort index by default.",
+        text: "View all {count} enemies cataloged in Arknights, sorted by Hypergryph's internal sort index by default.",
         description: "Paragraph under the enemy-list heading. {count} is the bold number of enemies and may move wherever the sentence needs it. 'Arknights' and 'Hypergryph' are the game and its developer; keep both names.",
     },
     "list.results.aria": {
@@ -99,6 +99,14 @@ export const messages = {
         text: "{count, plural, one {Clear # filter} other {Clear # filters}}",
         description: "Inline link after the result count that drops every active filter, counting how many are on.",
     },
+    "list.filters.button": {
+        text: "Filters",
+        description: "Button beside the search box on phone and tablet widths; opens a side sheet holding the level, damage, attack, race, immunity and Appears In filters. A count badge follows when any are on.",
+    },
+    "list.filters.title": {
+        text: "Filters",
+        description: "Title of the side sheet that holds the enemy filters on phone and tablet widths.",
+    },
     "list.hint": {
         text: "Click a card for details",
         description: "Hint beside the pager, hidden on phone widths, telling the reader a card opens the enemy's page.",
@@ -124,12 +132,16 @@ export const messages = {
         description: "Empty-state heading when the filters and search match no enemy.",
     },
     "list.empty.body": {
-        text: "Adjust the chip rail or your search above, or clear everything and start fresh.",
+        text: "Change the filters or the search above, or clear them all.",
         description: "Empty-state paragraph. 'Chip rail' is the row of filter chips above the results.",
     },
     "list.empty.clear": {
-        text: "Clear all filters",
+        text: "Clear filters",
         description: "Empty-state button that drops every active filter.",
+    },
+    "list.locations.failed": {
+        text: "Couldn't load where enemies appear, so the Appears In filter is unavailable.",
+        description: "Error line on the enemy list when the enemy-to-stage table fails to load. The Appears In filter (pick stages or zones an enemy shows up in) needs that table.",
     },
 } satisfies MessageMap;
 

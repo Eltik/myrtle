@@ -3,6 +3,8 @@ import { CheckIcon, ChevronDownIcon, MinusIcon, PlusIcon } from "lucide-react";
 import type React from "react";
 import { useMemo, useState } from "react";
 import { asset } from "#/components/operators/detail/impl/assets";
+import { Kicker } from "#/components/ui/kicker";
+import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import { useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import type { StoryProgress } from "#/lib/story/progress";
@@ -47,22 +49,16 @@ export function ReadingOrderTab({ groups, progress, gameRead }: IReadingOrderTab
 
     return (
         <div className="pt-4">
-            <fieldset className="msv-scroll mb-3 flex max-w-full gap-0.5 overflow-x-auto rounded-[9px] border border-border bg-secondary/45 p-0.75" aria-label={t("reading.mode.aria")}>
+            <ToggleGroup aria-label={t("reading.mode.aria")} value={[mode]} onValueChange={(next) => next[0] && setMode(next[0] as (typeof READING_ORDER_MODES)[number])} variant="outline" className="msv-scroll mb-3 max-w-full overflow-x-auto">
                 {READING_ORDER_MODES.map((key) => (
-                    <button
-                        key={key}
-                        type="button"
-                        onClick={() => setMode(key)}
-                        aria-pressed={mode === key}
-                        className={cn("h-11 pointer-coarse:h-11 shrink-0 cursor-pointer rounded-md px-3 font-sans font-semibold text-[12px] transition-colors sm:h-8", mode === key ? "bg-background text-foreground shadow-sm/5" : "text-muted-foreground hover:text-foreground")}
-                    >
+                    <ToggleGroupItem key={key} value={key} className="px-3 font-semibold text-[12px] sm:text-[12px]">
                         {t(`reading.mode.${key}`)}
-                    </button>
+                    </ToggleGroupItem>
                 ))}
-            </fieldset>
+            </ToggleGroup>
 
             {mode === "timeline" ? (
-                <div className="rounded-[14px] border border-border border-dashed p-6 sm:p-8">
+                <div className="rounded-2xl border border-border border-dashed p-6 sm:p-8">
                     <h3 className="m-0 font-sans font-semibold text-[14px] text-foreground">{t("reading.timeline.title")}</h3>
                     <p className="mt-2 mb-0 max-w-160 font-sans text-[13px] text-muted-foreground leading-relaxed">{t("reading.timeline.body")}</p>
                 </div>
@@ -79,10 +75,10 @@ export function ReadingOrderTab({ groups, progress, gameRead }: IReadingOrderTab
                         storyline order disagree about what comes next by design,
                         so it is recomputed per order rather than shared with the
                         continue card at the top of the page. */}
-                    <div className="mb-4 rounded-xl border border-primary/35 bg-primary/5 px-3 py-2.5">
+                    <div className="mb-4 rounded-2xl border border-primary/35 bg-primary/5 px-3 py-2.5">
                         {next ? (
                             <p className="m-0 flex flex-wrap items-baseline gap-x-2 gap-y-0.5 font-sans text-[12.5px]">
-                                <span className="font-mono text-[10px] text-muted-foreground uppercase tracking-[0.12em]">{t("reading.next")}</span>
+                                <Kicker>{t("reading.next")}</Kicker>
                                 <Link to="/stories/$storyId" params={{ storyId: next.entry.id }} className="min-w-0 font-semibold text-foreground underline-offset-4 hover:underline">
                                     {next.group.name}
                                 </Link>
@@ -107,7 +103,7 @@ export function ReadingOrderTab({ groups, progress, gameRead }: IReadingOrderTab
 function Blurb({ tone, text }: { tone: "pro" | "con"; text: string }): React.ReactElement {
     const Icon = tone === "pro" ? PlusIcon : MinusIcon;
     return (
-        <div className={cn("flex gap-2.5 rounded-xl border p-3", tone === "pro" ? "border-primary/35 bg-primary/5" : "border-border bg-secondary/30")}>
+        <div className={cn("flex gap-2.5 rounded-2xl border p-3", tone === "pro" ? "border-primary/35 bg-primary/5" : "border-border bg-secondary/30")}>
             <Icon className={cn("mt-0.5 size-3.5 shrink-0", tone === "pro" ? "text-primary" : "text-muted-foreground")} aria-hidden="true" />
             <p className="m-0 font-sans text-[12.5px] text-muted-foreground leading-relaxed">{text}</p>
         </div>
@@ -132,11 +128,13 @@ function OrderSection({ section, dates, progress, gameRead, expanded, onExpand }
 
     return (
         <section>
-            <h3 className="m-0 font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.14em]">{heading}</h3>
+            <h3 className="m-0 font-normal">
+                <Kicker>{heading}</Kicker>
+            </h3>
             <p className="mt-1 mb-0 font-mono text-[10.5px] text-muted-foreground tabular-nums">
                 {totals.total === null ? t("reading.section.totalsUncounted", { done: totals.done, groups: totals.groups }) : t("reading.section.totals", { words: f.number(totals.total), time: humanTime(minutesFor(totals.total, wpm)), done: totals.done, groups: totals.groups })}
             </p>
-            {note ? <p className="mt-1 mb-0 max-w-160 font-sans text-[11.5px] text-muted-foreground/85 leading-relaxed">{note}</p> : null}
+            {note ? <p className="mt-1 mb-0 max-w-160 font-sans text-[11.5px] text-subtle-foreground leading-relaxed">{note}</p> : null}
             <ul className="m-0 mt-2 flex list-none flex-col gap-1.5 p-0">
                 {section.rows.map((row) => (
                     <OrderRow key={row.group.id} row={row} progress={progress} gameRead={gameRead} open={expanded === row.group.id} onToggle={() => onExpand(expanded === row.group.id ? null : row.group.id)} />
@@ -172,13 +170,13 @@ function OrderRow({ row, progress, gameRead, open, onToggle }: { row: IOrderRow;
                 onClick={onToggle}
                 aria-expanded={open}
                 aria-label={open ? t("reading.row.collapse", { name: group.name }) : t("reading.row.expand", { name: group.name })}
-                className={cn("flex w-full cursor-pointer items-center gap-3 rounded-xl border border-border bg-card p-2 text-left ring-inset transition-colors hover:border-primary/45 focus-visible:ring-2 focus-visible:ring-ring/60 max-sm:min-h-11", open && "border-primary/70")}
+                className={cn("flex w-full cursor-pointer items-center gap-3 rounded-2xl border border-border bg-card p-2 text-left ring-inset transition-colors hover:border-primary/45 focus-visible:ring-2 focus-visible:ring-ring max-sm:min-h-11", open && "border-primary/70")}
             >
                 <span className="relative block aspect-16/9 w-18 shrink-0 overflow-hidden rounded-lg bg-secondary/55 sm:w-24">
                     {plate ? (
                         <img src={plate} alt="" aria-hidden="true" loading="lazy" decoding="async" data-source={model.plate.kind} className="h-full w-full object-cover" />
                     ) : (
-                        <span data-source="none" className="flex h-full w-full items-center justify-center bg-linear-to-br from-secondary/70 to-card px-1 text-center font-black font-heading text-[10px] text-muted-foreground/70 uppercase tracking-tight sm:text-[12px]">
+                        <span data-source="none" className="flex h-full w-full items-center justify-center bg-linear-to-br from-secondary/70 to-card px-1 text-center font-black font-heading text-[10px] text-subtle-foreground uppercase tracking-tight sm:text-[12px]">
                             {model.code}
                         </span>
                     )}
@@ -210,7 +208,7 @@ function OrderRow({ row, progress, gameRead, open, onToggle }: { row: IOrderRow;
             </button>
 
             {open ? (
-                <ul className="m-0 mt-1 flex list-none flex-col rounded-xl border border-primary/45 bg-card/70 p-2 sm:p-2.5">
+                <ul className="m-0 mt-1 flex list-none flex-col rounded-2xl border border-primary/45 bg-card/70 p-2 sm:p-2.5">
                     {sortedStories(group.stories).map((story) => (
                         <li key={story.id}>
                             <StoryRow story={story} progress={progress} gameRead={gameRead} />

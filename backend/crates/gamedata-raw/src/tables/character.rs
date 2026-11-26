@@ -41,7 +41,8 @@ pub struct CharacterTables {
     pub ranges: Ranges,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct TokenSkinMapEntry {
     #[serde(alias = "TokenId")]
@@ -50,7 +51,8 @@ pub struct TokenSkinMapEntry {
     pub token_skin_id: String,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct BattleSkin {
     #[serde(alias = "OverwritePrefab", default)]
@@ -59,7 +61,8 @@ pub struct BattleSkin {
     pub skin_or_prefab_id: String,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct DisplaySkin {
     #[serde(alias = "SkinName")]
@@ -95,6 +98,7 @@ pub struct DisplaySkin {
     #[serde(alias = "DisplayTagId")]
     pub display_tag_id: Option<String>,
     #[serde(alias = "GetTime")]
+    #[ts(type = "number")]
     pub get_time: i64,
     #[serde(alias = "OnYear")]
     pub on_year: i32,
@@ -102,16 +106,19 @@ pub struct DisplaySkin {
     pub on_period: i32,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct BrandGroup {
     #[serde(alias = "SkinGroupId")]
     pub skin_group_id: String,
     #[serde(alias = "PublishTime")]
+    #[ts(type = "number")]
     pub publish_time: i64,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct BrandKvImg {
     #[serde(alias = "KvImgId")]
@@ -120,7 +127,8 @@ pub struct BrandKvImg {
     pub linked_skin_group_id: String,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct Brand {
     #[serde(alias = "BrandId")]
@@ -136,12 +144,14 @@ pub struct Brand {
     #[serde(alias = "Description")]
     pub description: String,
     #[serde(alias = "PublishTime")]
+    #[ts(type = "number")]
     pub publish_time: i64,
     #[serde(alias = "SortId")]
     pub sort_id: i32,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct Skin {
     #[serde(alias = "SkinId", default)]
@@ -183,14 +193,17 @@ pub struct Skin {
     pub obtain_channel: SkinChannel,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct SpecialSkinInfo {
     #[serde(alias = "SkinId")]
     pub skin_id: String,
     #[serde(alias = "StartTime")]
+    #[ts(type = "number")]
     pub start_time: i64,
     #[serde(alias = "EndTime")]
+    #[ts(type = "number")]
     pub end_time: i64,
 }
 

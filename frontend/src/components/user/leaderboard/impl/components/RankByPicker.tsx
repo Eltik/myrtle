@@ -1,7 +1,10 @@
 import { Check, ChevronDown, Search, X } from "lucide-react";
 import { useDeferredValue, useMemo, useState } from "react";
 import { Button } from "#/components/ui/button";
+import { FilterChip } from "#/components/ui/filter-chip";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "#/components/ui/input-group";
+import { Kicker } from "#/components/ui/kicker";
+import { LoadFailed } from "#/components/ui/load-failed";
 import { Popover, PopoverPopup, PopoverTrigger } from "#/components/ui/popover";
 import { ItemIcon } from "#/components/user/profile/impl/components/tabs/Items/ItemIcon";
 import type { IMaterials } from "#/lib/api/materials";
@@ -23,6 +26,9 @@ interface IRankByPickerProps {
     onRanking: (next: Ranking) => void;
     catalog: ICatalog;
     materials: IMaterials | undefined;
+    /** The item catalog or the item names failed: the Inventory group says so, with a retry, instead of listing nameless items. */
+    catalogError?: boolean;
+    onRetryCatalog?: () => void;
     /** `toolbar` is the labelled control; `header` is the compact trigger in the table's value column. */
     variant: "toolbar" | "header";
     className?: string;
@@ -43,7 +49,7 @@ function useRankingLabel(ranking: Ranking, catalog: ICatalogItem[], materials: I
     }, [ranking, catalog, materials, t]);
 }
 
-export function RankByPicker({ ranking, onRanking, catalog, materials, variant, className }: IRankByPickerProps) {
+export function RankByPicker({ ranking, onRanking, catalog, materials, catalogError = false, onRetryCatalog, variant, className }: IRankByPickerProps) {
     const t: PickerT = useT("user");
     const [open, setOpen] = useState(false);
     const [query, setQuery] = useState("");
@@ -70,14 +76,17 @@ export function RankByPicker({ ranking, onRanking, catalog, materials, variant, 
 
     const trigger =
         variant === "toolbar" ? (
-            <PopoverTrigger aria-label={t("leaderboard.rankBy.aria")} className={cn("inline-flex h-9 min-w-0 cursor-pointer items-center gap-2 rounded-lg border border-input bg-card pr-2.5 pl-2 font-medium font-sans text-foreground text-xs leading-none transition-colors hover:border-foreground/20 sm:h-8", className)}>
+            <PopoverTrigger
+                aria-label={t("leaderboard.rankBy.aria")}
+                className={cn("inline-flex h-9 pointer-coarse:h-11 min-w-0 cursor-pointer items-center gap-2 rounded-lg border border-input bg-background pr-2.5 pl-2 font-sans text-base text-foreground leading-none transition-colors hover:border-foreground/20 sm:h-8 sm:text-sm dark:bg-input/32", className)}
+            >
                 {activeItem ? <ItemIcon item={toIconEntry(activeItem)} size={20} className="rounded" /> : null}
-                <span className="shrink-0 font-medium font-mono text-[10.5px] text-muted-foreground uppercase leading-none tracking-[0.14em]">{t("leaderboard.rankBy.label")}</span>
+                <span className="shrink-0 text-muted-foreground">{t("leaderboard.rankBy.label")}</span>
                 <span className="min-w-0 truncate font-semibold text-foreground">{label}</span>
                 <ChevronDown className="size-3 shrink-0 opacity-70" aria-hidden />
             </PopoverTrigger>
         ) : (
-            <PopoverTrigger aria-label={t("leaderboard.rankBy.aria")} className={cn("inline-flex min-w-0 max-w-full shrink-0 cursor-pointer items-center gap-1 whitespace-nowrap font-medium font-mono text-[11px] text-foreground uppercase leading-none tracking-[0.16em] transition-colors hover:text-primary", className)}>
+            <PopoverTrigger aria-label={t("leaderboard.rankBy.aria")} className={cn("kicker inline-flex min-w-0 max-w-full shrink-0 cursor-pointer items-center gap-1 whitespace-nowrap text-foreground leading-none transition-colors hover:text-primary", className)}>
                 <span className="truncate">{label}</span>
                 <ChevronDown className="size-3 shrink-0 opacity-70" aria-hidden />
             </PopoverTrigger>
@@ -103,7 +112,7 @@ export function RankByPicker({ ranking, onRanking, catalog, materials, variant, 
                     </InputGroup>
                 </div>
                 <div className="max-h-[min(420px,60dvh)] overflow-y-auto p-1">
-                    {scoreOptions.length === 0 && itemOptions.length === 0 ? <p className="m-0 px-3 py-6 text-center font-sans text-muted-foreground text-sm">{t("leaderboard.rankBy.empty")}</p> : null}
+                    {scoreOptions.length === 0 && itemOptions.length === 0 && !catalogError ? <p className="m-0 px-3 py-6 text-center font-sans text-muted-foreground text-sm">{t("leaderboard.rankBy.empty")}</p> : null}
 
                     {scoreOptions.length > 0 ? (
                         <section aria-label={t("leaderboard.rankBy.group.score")}>
@@ -116,18 +125,7 @@ export function RankByPicker({ ranking, onRanking, catalog, materials, variant, 
                                     const active = ranking.kind === "score" && ranking.sort === opt.value;
                                     return (
                                         <li key={opt.value}>
-                                            <button
-                                                type="button"
-                                                aria-pressed={active}
-                                                onClick={() => choose({ kind: "score", sort: opt.value as LeaderboardSort })}
-                                                className={cn(
-                                                    "inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-lg border px-2.5 font-medium font-sans text-xs leading-none transition-colors",
-                                                    active ? "border-primary/40 bg-[color-mix(in_srgb,var(--primary)_10%,transparent)] text-primary" : "border-input bg-card text-foreground hover:border-foreground/20",
-                                                )}
-                                            >
-                                                {active ? <Check className="size-3" aria-hidden /> : null}
-                                                {opt.label}
-                                            </button>
+                                            <FilterChip label={opt.label} active={active} onSelect={() => choose({ kind: "score", sort: opt.value as LeaderboardSort })} />
                                         </li>
                                     );
                                 })}
@@ -135,7 +133,12 @@ export function RankByPicker({ ranking, onRanking, catalog, materials, variant, 
                         </section>
                     ) : null}
 
-                    {itemOptions.length > 0 ? (
+                    {catalogError ? (
+                        <section aria-label={t("leaderboard.rankBy.group.items")} className={scoreOptions.length > 0 ? "mt-1 border-border/70 border-t pt-1" : undefined}>
+                            <GroupHeading>{t("leaderboard.rankBy.group.items")}</GroupHeading>
+                            <LoadFailed layout="inline" className="px-2.5 py-2" message={t("leaderboard.rankBy.loadFailed")} onRetry={() => onRetryCatalog?.()} />
+                        </section>
+                    ) : itemOptions.length > 0 ? (
                         <section aria-label={t("leaderboard.rankBy.group.items")} className={scoreOptions.length > 0 ? "mt-1 border-border/70 border-t pt-1" : undefined}>
                             <GroupHeading hint={!deferred && catalog.items.length > 0 ? t("leaderboard.rankBy.group.items.hint", { count: catalog.items.length }) : undefined}>{t("leaderboard.rankBy.group.items")}</GroupHeading>
                             <ul className="m-0 list-none p-0">
@@ -210,7 +213,7 @@ function Slash() {
 function GroupHeading({ children, hint }: { children: React.ReactNode; hint?: string }) {
     return (
         <div className="flex items-baseline justify-between gap-2 px-2 pt-1.5 pb-1">
-            <span className="font-medium font-mono text-[10px] text-muted-foreground uppercase leading-none tracking-[0.16em]">{children}</span>
+            <Kicker>{children}</Kicker>
             {hint ? <span className="min-w-0 truncate font-sans text-[11px] text-muted-foreground leading-none">{hint}</span> : null}
         </div>
     );
@@ -222,7 +225,7 @@ function Option({ active, onClick, children }: { active: boolean; onClick: () =>
             type="button"
             onClick={onClick}
             aria-pressed={active}
-            className={cn("flex min-h-10 w-full cursor-pointer items-center gap-2.5 rounded-md px-2 py-1.5 text-left font-sans text-[13px] text-foreground leading-tight transition-colors hover:bg-accent", active && "bg-[color-mix(in_srgb,var(--primary)_8%,transparent)] font-semibold text-primary")}
+            className={cn("flex min-h-10 w-full cursor-pointer items-center gap-2.5 rounded-md px-2 py-1.5 text-left font-sans text-[13px] text-foreground leading-tight transition-colors hover:bg-accent", active && "bg-[color-mix(in_srgb,var(--primary)_8%,transparent)] font-semibold [&>svg]:text-primary")}
         >
             {children}
             {active ? <Check className="size-3.5 shrink-0" aria-hidden /> : <span className="size-3.5 shrink-0" aria-hidden />}

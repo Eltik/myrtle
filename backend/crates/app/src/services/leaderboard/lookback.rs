@@ -16,7 +16,8 @@ pub const STALE_LAUNCH_SECS: i64 = 28 * DAY_SECS;
 pub const KEEP_EVERY_DAYS: i32 = 365;
 const TABS: [ProfileTabId; 2] = [ProfileTabId::Lookback, ProfileTabId::Roster];
 
-#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(default)]
 pub struct LookbackSummary {
     pub operators: u32,
@@ -33,8 +34,10 @@ pub struct LookbackSummary {
     pub grade: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct LookbackSnapshot {
+    #[ts(type = "number")]
     pub id: i64,
     pub period_start: DateTime<Utc>,
     pub taken_at: DateTime<Utc>,
@@ -43,13 +46,15 @@ pub struct LookbackSnapshot {
     pub summary: LookbackSummary,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct LookbackModule {
     pub module_id: String,
     pub stage: i16,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct LookbackOperator {
     pub operator_id: String,
     pub elite: i16,
@@ -60,20 +65,24 @@ pub struct LookbackOperator {
     pub modules: Vec<LookbackModule>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct LookbackBuild {
     pub taken_at: DateTime<Utc>,
     pub summary: LookbackSummary,
     pub operators: Vec<LookbackOperator>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct OwnershipPoint {
+    #[ts(type = "number")]
     pub ts: i64,
     pub count: u32,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct LookbackOverview {
     pub snapshots: Vec<LookbackSnapshot>,
     pub ownership: Vec<OwnershipPoint>,

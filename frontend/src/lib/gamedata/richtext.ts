@@ -178,3 +178,17 @@ export function renderTags(text: string, wrap: (tag: string, content: string) =>
 export function emphasizeTagsHtml(text: string): string {
     return renderTags(text, (_tag, content) => `<strong style="color: var(--foreground)">${content}</strong>`).replace(/\\n|\n/g, "<br/>");
 }
+
+/**
+ * A game span's colour as a theme ink (styles.css `--game-*-ink`), read the way
+ * `colorForTag` reads the tag. `colorForTag` returns the game's raw hexes (the story
+ * reader and anything drawn over art keep them); on the site's own surfaces the raw
+ * keyword cyan measured 1.5:1 on the light page ("Arts damage"), so text uses these.
+ */
+export function inkForTag(tag: string): string {
+    const suffix = tag.startsWith("$") ? "" : tag.slice(tag.indexOf(".") + 1);
+    if (suffix === "vup") return "var(--game-vup-ink)";
+    if (suffix === "vdown") return "var(--game-vdown-ink)";
+    if (suffix === "rem") return "var(--game-rem-ink)";
+    return "var(--game-kw-ink)";
+}

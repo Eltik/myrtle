@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { type Dispatch, useEffect, useRef } from "react";
 import { decodeDpsImport } from "#/components/tools/squad-builder/model";
+import type { messages as routeErrorMessages } from "#/components/ui/route-error.messages";
 import { toastManager } from "#/components/ui/toast";
 import { dpsOperatorsQueryOptions } from "#/lib/api/dps";
 import { useT } from "#/lib/i18n";
@@ -17,8 +18,18 @@ import { legacyBuffsToZones } from "./zones";
  */
 export function useDpsImport(importParam: string | undefined, hydrationToken: number, dispatch: Dispatch<DpsAction>, onConsumed: (() => void) | undefined): void {
     const t: TypedT<typeof messages> = useT("tools");
-    const { data: operators } = useQuery(dpsOperatorsQueryOptions());
+    const tc: TypedT<typeof routeErrorMessages> = useT("common");
+    const { data: operators, isError, errorUpdatedAt, refetch } = useQuery(dpsOperatorsQueryOptions());
     const doneRef = useRef(false);
+    const toastedErrorRef = useRef(0);
+
+    // A failed operator list would drop the squad silently: say so once per failure and keep
+    // the param, so the retry (or a reload) still adds the cards.
+    useEffect(() => {
+        if (doneRef.current || !importParam || !isError || toastedErrorRef.current === errorUpdatedAt) return;
+        toastedErrorRef.current = errorUpdatedAt;
+        toastManager.add({ id: "dps-import-failed", title: t("dps.import.failed"), type: "error", actionProps: { children: tc("routeError.retry"), onClick: () => void refetch() } });
+    }, [importParam, isError, errorUpdatedAt, refetch, t, tc]);
 
     useEffect(() => {
         if (doneRef.current || !importParam || hydrationToken === 0 || !operators) return;

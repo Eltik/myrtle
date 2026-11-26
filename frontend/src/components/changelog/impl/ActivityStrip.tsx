@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { Kicker } from "#/components/ui/kicker";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import type { IChangelogCommit } from "#/lib/api/changelog";
 import { useFormatters, useT } from "#/lib/i18n";
@@ -39,7 +40,7 @@ export function ActivityStrip({ commits, days }: { commits: IChangelogCommit[]; 
     return (
         <div>
             <div className="mb-2 flex items-baseline justify-between">
-                <span className="font-medium font-sans text-[12px] text-muted-foreground uppercase tracking-[0.14em]">{t("activity.title")}</span>
+                <Kicker>{t("activity.title")}</Kicker>
                 {busiest && busiest.count > 0 ? (
                     <span className="font-sans text-[12px] text-muted-foreground">
                         {t("activity.busiest")} <span className="font-medium text-foreground/80">{busiest.label}</span> · {busiest.count}
@@ -51,10 +52,8 @@ export function ActivityStrip({ commits, days }: { commits: IChangelogCommit[]; 
                     // biome-ignore lint/suspicious/noArrayIndexKey: fixed-length ordered day buckets
                     <Tooltip key={i}>
                         <TooltipTrigger render={<div className="group/bar relative flex h-full flex-1 items-end" />}>
-                            <div
-                                className={`${styles.activityBar} w-full rounded-xs transition-colors ${b.count > 0 ? "bg-primary/35 group-hover/bar:bg-primary/70" : "bg-muted group-hover/bar:bg-muted-foreground/30"}`}
-                                style={{ height: `${b.count > 0 ? Math.max(8, (b.count / max) * 100) : 6}%`, animationDelay: `${Math.min(i * 12, 360)}ms` }}
-                            />
+                            {/* Solid primary on card: 4.79 light / 8.07 dark (the old primary/35 measured 1.78 / 1.96). */}
+                            <div className={`${styles.activityBar} w-full rounded-xs transition-colors ${b.count > 0 ? "bg-primary/35 group-hover/bar:bg-primary/70" : "bg-muted group-hover/bar:bg-muted-foreground/30"}`} style={{ height: `${b.count > 0 ? Math.max(8, (b.count / max) * 100) : 6}%` }} />
                         </TooltipTrigger>
                         <TooltipPopup>{t("activity.bar", { label: b.label, count: b.count })}</TooltipPopup>
                     </Tooltip>

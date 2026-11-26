@@ -71,6 +71,10 @@ export const messages = {
         text: "No module",
         description: "On a seat card when the operator has no module equipped.",
     },
+    "squad.grid.detailsFailed": {
+        text: "Couldn't load this operator's details",
+        description: "Screen-reader-only note on a squad seat card when the operator's skill and module details could not be fetched; the tiles fall back to text labels such as S3. Retry lives in the seat editor.",
+    },
     "squad.grid.menu": {
         text: "Seat options",
         description: "Accessible name of the '...' button on a seat card that opens its menu.",
@@ -80,7 +84,7 @@ export const messages = {
         description: "Seat menu item: swap this operator into the first (leader) seat.",
     },
     "squad.grid.move": {
-        text: "Move to seat...",
+        text: "Move to seat…",
         description: "Seat menu item: pick another seat number to swap with. The keyboard alternative to dragging.",
     },
     "squad.grid.remove": {

@@ -10,7 +10,8 @@ use super::retention::RetentionStatus;
 use super::{Data, advanced_modules, calculate_detailed_in, resolve_module};
 use crate::AppError;
 
-#[derive(Debug, Clone, Copy, Default, Deserialize, Serialize, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, Default, Deserialize, Serialize, PartialEq, Eq, Hash, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub enum RankPreset {
     Default,
@@ -19,7 +20,8 @@ pub enum RankPreset {
     P6Max,
 }
 
-#[derive(Debug, Clone, Copy, Default, Deserialize, Serialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Default, Deserialize, Serialize, PartialEq, Eq, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub enum RankMetric {
     #[default]
@@ -28,14 +30,16 @@ pub enum RankMetric {
     AverageDps,
 }
 
-#[derive(Debug, Clone, Copy, Deserialize, Serialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, PartialEq, Eq, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "lowercase")]
 pub enum DamageKind {
     Physical,
     Arts,
 }
 
-#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+#[derive(Debug, Clone, Default, Deserialize, Serialize, ts_rs::TS)]
+#[ts(export, optional_fields)]
 #[serde(rename_all = "camelCase", default)]
 pub struct RankFilters {
     pub professions: Option<Vec<String>>,
@@ -43,7 +47,8 @@ pub struct RankFilters {
     pub damage_types: Option<Vec<DamageKind>>,
 }
 
-#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+#[derive(Debug, Clone, Default, Deserialize, Serialize, ts_rs::TS)]
+#[ts(export, optional_fields)]
 #[serde(rename_all = "camelCase")]
 pub struct RankRequest {
     pub defense: Option<f64>,
@@ -163,7 +168,8 @@ impl RankRequest {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct RankRow {
     pub operator_id: String,
@@ -174,30 +180,41 @@ pub struct RankRow {
     pub damage_type: DamageKind,
     pub skill_index: i32,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub skill_id: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub skill_name: Option<String>,
     pub module_index: i32,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub module_id: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub module_name: Option<String>,
     pub skill_dps: f64,
     pub total_damage: f64,
     pub average_dps: f64,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub primary: Option<DpsMetrics>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub secondary: Option<DpsMetrics>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub category: Option<SkillCategory>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub sp_recovery: Option<SpRecovery>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub startup_time: Option<f64>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub duration: Option<f64>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub cycle_time: Option<f64>,
     #[serde(default)]
     pub retention: Option<f64>,
@@ -209,7 +226,8 @@ pub struct RankComputed {
     pub skipped: usize,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct RankResponse {
     pub rows: Vec<RankRow>,

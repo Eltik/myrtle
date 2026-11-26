@@ -1,6 +1,7 @@
 import { createRouter as createTanStackRouter } from "@tanstack/react-router";
 import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query";
 import { NotFound } from "#/components/NotFound";
+import { RouteError } from "#/components/ui/route-error";
 import { DEFAULT_LOCALE, parseLocaleFromPath } from "#/lib/i18n/locale";
 import { loadSourceCatalog } from "#/lib/i18n/source";
 import { getContext } from "./integrations/tanstack-query/root-provider";
@@ -62,6 +63,8 @@ function createAppRouter() {
         defaultPreload: "intent",
         defaultPreloadStaleTime: 0,
         defaultNotFoundComponent: NotFound,
+        // Without it a throw renders TanStack's stock English box, with no way back but the address bar.
+        defaultErrorComponent: RouteError,
         // Client only, awaited before the first render: the production client
         // fetches the English source catalog rather than bundling it, and the
         // hydrated text has to match the server's. See `lib/i18n/source.ts`.

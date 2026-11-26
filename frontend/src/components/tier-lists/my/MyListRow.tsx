@@ -1,11 +1,12 @@
 import { Link } from "@tanstack/react-router";
-import { CopyIcon, ExternalLinkIcon, HeartIcon, LayoutGridIcon, MoreHorizontalIcon, PencilIcon, ShieldCheckIcon, TrashIcon } from "lucide-react";
+import { CopyIcon, ExternalLinkIcon, LayoutGridIcon, MoreHorizontalIcon, PencilIcon, ShieldCheckIcon, TrashIcon } from "lucide-react";
 import { Menu, MenuItem, MenuPopup, MenuTrigger } from "#/components/ui/menu";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import type { ITierListBrowseItem } from "#/lib/api/tier-lists";
 import { useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { CardEntityAvatar, cardEntityKey } from "../CardEntityAvatar";
+import { CardStat } from "../CardStat";
 import type { messages } from "./MyListRow.messages";
 
 interface IMyListRowProps {
@@ -57,14 +58,14 @@ export function MyListRow({ tl, onEdit, onDelete, onCopyLink }: IMyListRowProps)
                         {tl.title || t("my.row.untitled")}
                     </h3>
                     {isOfficial && (
-                        <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[oklch(0.92_0.13_85)] px-1.5 py-0.5 font-bold font-mono text-[9px] text-[oklch(0.32_0.12_75)] uppercase leading-none tracking-wider shadow-[0_1px_4px_oklch(0.6_0.16_75/0.4)]">
+                        <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[oklch(0.92_0.13_85)] px-1.5 py-0.5 font-bold font-mono text-[9px] text-[oklch(0.32_0.12_75)] leading-none shadow-[0_1px_4px_oklch(0.6_0.16_75/0.4)]">
                             <ShieldCheckIcon className="h-2 w-2" aria-hidden="true" />
                             {t("my.row.official")}
                         </span>
                     )}
                     {!isOfficial && tl.flairLabel && (
                         <span
-                            className="inline-flex shrink-0 items-center gap-1 rounded-full px-1.5 py-0.5 font-bold font-mono text-[9px] uppercase leading-none tracking-wider"
+                            className="inline-flex shrink-0 items-center gap-1 rounded-full px-1.5 py-0.5 font-bold font-mono text-[9px] leading-none"
                             style={
                                 tl.flairColor ? { background: `color-mix(in srgb, ${tl.flairColor} 25%, transparent)`, color: tl.flairColor, border: `1px solid color-mix(in srgb, ${tl.flairColor} 50%, transparent)` } : { background: "var(--muted)", color: "var(--muted-foreground)", border: "1px solid var(--border)" }
                             }
@@ -73,34 +74,22 @@ export function MyListRow({ tl, onEdit, onDelete, onCopyLink }: IMyListRowProps)
                             {tl.flairLabel}
                         </span>
                     )}
-                    {isEmpty && <span className="inline-flex shrink-0 items-center rounded-full border border-border border-dashed bg-transparent px-1.5 py-0.5 font-medium font-mono text-[9px] text-muted-foreground uppercase leading-none tracking-wider">{t("my.row.draft")}</span>}
+                    {isEmpty && <span className="inline-flex shrink-0 items-center rounded-full border border-border border-dashed bg-transparent px-1.5 py-0.5 font-medium font-mono text-[9px] text-muted-foreground leading-none">{t("my.row.draft")}</span>}
                 </div>
                 {tl.description && <p className="m-0 mt-0.5 truncate font-sans text-[11.5px] text-muted-foreground leading-snug">{tl.description}</p>}
             </Link>
 
             <div className="hidden shrink-0 items-center gap-4 font-mono text-[11px] text-muted-foreground tabular-nums leading-none sm:flex">
-                <Tooltip>
-                    <TooltipTrigger render={<span className="inline-flex items-center gap-1" />}>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3 opacity-70" aria-hidden="true">
-                            <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
-                            <circle cx="12" cy="12" r="3" />
-                        </svg>
-                        <span className="font-semibold text-foreground">{f.compact(tl.views)}</span>
-                    </TooltipTrigger>
-                    <TooltipPopup>{t("my.row.views", { count: f.number(tl.views) })}</TooltipPopup>
-                </Tooltip>
-                <Tooltip>
-                    <TooltipTrigger render={<span className="inline-flex items-center gap-1" />}>
-                        <HeartIcon className="h-2.75 w-2.75 fill-current opacity-70" aria-hidden="true" />
-                        <span className="font-semibold text-foreground">{f.compact(tl.favorites)}</span>
-                    </TooltipTrigger>
-                    <TooltipPopup>{t("my.row.favorites", { count: f.number(tl.favorites) })}</TooltipPopup>
-                </Tooltip>
-                <span className="w-16 shrink-0 text-right text-[10.5px] text-muted-foreground/80">{tl.updated}</span>
+                <CardStat kind="views" value={f.compact(tl.views)} title={t("my.row.views", { count: f.number(tl.views) })} />
+                <CardStat kind="favorites" value={f.compact(tl.favorites)} title={t("my.row.favorites", { count: f.number(tl.favorites) })} />
+                <span className="w-16 shrink-0 text-right text-[10.5px] text-subtle-foreground">{tl.updated}</span>
             </div>
 
             <Menu>
-                <MenuTrigger aria-label={t("my.row.actions")} className="inline-flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-md border border-transparent text-muted-foreground transition-colors hover:border-border hover:bg-accent hover:text-foreground max-sm:order-2">
+                <MenuTrigger
+                    aria-label={t("my.row.actions")}
+                    className="pointer-coarse:after:-translate-1/2 relative inline-flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-transparent text-muted-foreground transition-colors pointer-coarse:after:absolute pointer-coarse:after:top-1/2 pointer-coarse:after:left-1/2 pointer-coarse:after:size-11 hover:border-border hover:bg-accent hover:text-foreground max-sm:order-2"
+                >
                     <MoreHorizontalIcon className="h-4 w-4" />
                 </MenuTrigger>
                 <MenuPopup align="end" sideOffset={6} className="min-w-44">

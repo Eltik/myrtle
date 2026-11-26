@@ -24,7 +24,7 @@ export const messages = {
         description: "Tooltip on the M9 tile.",
     },
     "profile.stats.mastery.totalLevels": {
-        text: "Total Mastery Levels",
+        text: "Total mastery levels",
         description: "Label over the bar summing every mastery rank earned.",
     },
     "profile.stats.mastery.ofMax": {

@@ -9,7 +9,8 @@ use super::{require_locale, require_panel};
 use crate::policy::{Action, Permission, Resource, Subject};
 use crate::{AppContext, AppError};
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct TranslationGrant {
     pub locale: String,
     pub user_id: Uuid,

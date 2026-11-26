@@ -26,7 +26,8 @@ const STREAM_SAFETY: u64 = 5 * 60;
 const STREAM_FALLBACK_TTL: u64 = 30 * 60;
 const INSTRUMENTAL_MARK: &str = "instrumental";
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct SirenAlbum {
     pub cid: String,
@@ -40,7 +41,8 @@ pub struct SirenAlbum {
     pub added_on: Option<NaiveDate>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct SirenSong {
     pub cid: String,
@@ -54,7 +56,8 @@ pub struct SirenSong {
     pub track_order: i32,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct SirenCatalog {
     pub albums: Vec<SirenAlbum>,
@@ -63,7 +66,8 @@ pub struct SirenCatalog {
     pub bulk_import_day: Option<NaiveDate>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct SirenAlbumDetail {
     pub cid: String,

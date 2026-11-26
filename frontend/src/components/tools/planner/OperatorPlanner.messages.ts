@@ -27,6 +27,18 @@ export const messages = {
         text: "Sign in",
         description: "Button that opens the sign-in dialog.",
     },
+    "planner.plansLoadFailed": {
+        text: "Couldn't load your plans.",
+        description: "Shown in place of the plan list when the request for the user's plans failed, beside a retry button.",
+    },
+    "planner.requirementsLoadFailed": {
+        text: "Couldn't load the materials these plans need.",
+        description: "Shown in place of the requirements panel when the request for the selected plans' combined materials failed, beside a retry button.",
+    },
+    "planner.rosterLoadFailed": {
+        text: "Couldn't load your roster, so progress toward each plan isn't shown.",
+        description: "Shown above the plan list when the user's synced roster failed to load, beside a retry button. Plan progress is measured against the roster.",
+    },
     "planner.createPlan": {
         text: "Create plan",
         description: "Button that opens the dialog for adding a new operator plan.",
@@ -108,20 +120,12 @@ export const messages = {
         description: "Button on a plan card that deletes that plan.",
     },
     "planner.deleteFailed": {
-        text: "Failed to delete. Please try again.",
+        text: "Couldn't delete. Try again.",
         description: "Error shown in the delete dialog when the request failed.",
     },
     "planner.unknownOperator": {
         text: "Unknown operator",
         description: "Stands in for a plan's operator name when the operator could not be resolved.",
-    },
-    "planner.group.renamePrompt": {
-        text: "Enter new group name:",
-        description: "Prompt in the browser dialog that renames a group. Keep the colon.",
-    },
-    "planner.group.deleteConfirm": {
-        text: 'Are you sure you want to delete group "{name}"?',
-        description: "Question in the browser dialog confirming a group deletion; {name} is the group's own name, in quotes.",
     },
     "planner.group.none": {
         text: "No groups created yet.",
@@ -138,6 +142,34 @@ export const messages = {
     "planner.group.unpin": {
         text: "Unpin {name}",
         description: "Accessible name and tooltip of the button that unpins a pinned group; {name} is the player's own group name.",
+    },
+    "planner.group.expand": {
+        text: "Show plans in {name}",
+        description: "Accessible name of the chevron button that expands a collapsed group to list its plans; {name} is the player's own group name.",
+    },
+    "planner.group.collapse": {
+        text: "Hide plans in {name}",
+        description: "Accessible name of the chevron button that collapses an expanded group; {name} is the player's own group name.",
+    },
+    "planner.group.rename": {
+        text: "Rename {name}",
+        description: "Accessible name of the pencil button that renames a group; {name} is the player's own group name.",
+    },
+    "planner.group.delete": {
+        text: "Delete {name}",
+        description: "Accessible name of the bin button that deletes a group; {name} is the player's own group name.",
+    },
+    "planner.card.expand": {
+        text: "Show plan details",
+        description: "Accessible name of the chevron button that expands a plan card to show its level, skill and module targets.",
+    },
+    "planner.card.collapse": {
+        text: "Hide plan details",
+        description: "Accessible name of the chevron button that collapses an expanded plan card.",
+    },
+    "planner.card.moduleNone": {
+        text: "None",
+        description: "Screen-reader text for a module stage of 0 in a plan card's progress rows (shown visually as a hyphen): the module is not unlocked now, or is left out of the target.",
     },
     "planner.completed.check": {
         text: "Completed plans",

@@ -12,7 +12,7 @@ export const messages = {
         description: "Badge in the corner of the canvas while the animated illustration downloads.",
     },
     "scene.error": {
-        text: "Failed to load animation",
+        text: "Couldn't load the animation",
         description: "Badge in the corner of the canvas when the animated illustration could not be loaded.",
     },
 } satisfies MessageMap;

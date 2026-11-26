@@ -87,7 +87,7 @@ function SheetContent({ t, cell, index, cols, total, doneRef, onIndexChange, onP
             <div className="flex items-center gap-3 border-border border-b px-4 pt-[max(0.75rem,env(safe-area-inset-top,0px))] pb-3">
                 <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                     <DialogTitle className="text-lg">{t("sheet.title", position)}</DialogTitle>
-                    <span className="font-mono text-[10.5px] text-muted-foreground uppercase tabular-nums tracking-[0.12em]">{t("sheet.count", { n: index + 1, total })}</span>
+                    <span className="font-mono text-[10.5px] text-muted-foreground tabular-nums">{t("sheet.count", { n: index + 1, total })}</span>
                 </div>
                 <DialogDescription className="sr-only">{t("sheet.description")}</DialogDescription>
                 <DialogPrimitive.Close ref={doneRef} render={<Button type="button" className="min-w-20" />}>
@@ -96,7 +96,7 @@ function SheetContent({ t, cell, index, cols, total, doneRef, onIndexChange, onP
             </div>
 
             <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-4 py-4">
-                <div className="relative flex h-[34dvh] min-h-44 items-center justify-center overflow-hidden rounded-xl bg-[oklch(0.13_0.004_285)] text-white">
+                <div className="relative flex h-[34dvh] min-h-44 items-center justify-center overflow-hidden rounded-2xl bg-[oklch(0.13_0.004_285)] text-white">
                     {entity ? (
                         <CellHeroArt entity={entity} server={cell.server} size="sheet" />
                     ) : (
@@ -111,7 +111,7 @@ function SheetContent({ t, cell, index, cols, total, doneRef, onIndexChange, onP
                     <div className="flex min-w-0 flex-1 flex-col">
                         {entity && (
                             <>
-                                {entity.resolved && <span className="font-bold font-mono text-[10px] text-muted-foreground uppercase tracking-[0.14em]">{labels.singular(entity.kind)}</span>}
+                                {entity.resolved && <span className="font-bold font-mono text-[10px] text-muted-foreground">{labels.singular(entity.kind)}</span>}
                                 <span className="truncate font-sans font-semibold text-base">{entity.resolved ? entity.name : entity.id}</span>
                             </>
                         )}

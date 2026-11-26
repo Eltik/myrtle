@@ -1,6 +1,8 @@
 import { Link } from "@tanstack/react-router";
 import { CheckIcon, ChevronDownIcon, HistoryIcon, RotateCcwIcon } from "lucide-react";
 import { memo, useMemo } from "react";
+import { Button } from "#/components/ui/button";
+import { Kicker } from "#/components/ui/kicker";
 import { Menu, MenuItem, MenuPopup, MenuTrigger } from "#/components/ui/menu";
 import type { ITierListVersion } from "#/lib/api/tier-lists";
 import { type IFormatters, useFormatters, useT } from "#/lib/i18n";
@@ -67,15 +69,15 @@ export function VersionsBar({ slug, versions, selectedVersion, isLatestView }: I
 
     return (
         <section aria-label={t("detail.versions.sectionLabel")} className="page-gutter mt-4 [--page-max:1200px] sm:mt-6">
-            <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-card/60 px-3 py-2 backdrop-blur-sm">
-                <span className="inline-flex items-center gap-1.5 font-bold font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.14em]">
+            <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-border bg-card px-3 py-2">
+                <Kicker className="inline-flex items-center gap-1.5">
                     <HistoryIcon className="h-3.5 w-3.5" aria-hidden="true" />
                     {t("detail.versions.heading")}
-                </span>
+                </Kicker>
 
                 <Menu>
                     <MenuTrigger
-                        className="inline-flex h-8 min-w-44 cursor-pointer items-center justify-between gap-2 rounded-lg border border-border bg-popover px-2.5 font-medium font-sans text-foreground text-xs leading-none transition-colors hover:bg-accent"
+                        className="relative inline-flex h-8 min-w-44 cursor-pointer items-center justify-between gap-2 rounded-lg border border-border bg-popover px-2.5 font-medium font-sans text-foreground text-xs leading-none transition-colors pointer-coarse:after:absolute pointer-coarse:after:inset-x-0 pointer-coarse:after:top-1/2 pointer-coarse:after:h-11 pointer-coarse:after:-translate-y-1/2 hover:bg-accent"
                         aria-label={t("detail.versions.trigger", { version: triggerLabel })}
                     >
                         <span className="flex min-w-0 items-center gap-2">
@@ -105,24 +107,17 @@ export function VersionsBar({ slug, versions, selectedVersion, isLatestView }: I
                 </span>
 
                 {!isLatestView && (
-                    <Link
-                        to="/tier-lists/$id"
-                        params={{ id: slug }}
-                        search={{}}
-                        replace
-                        resetScroll={false}
-                        className="ml-auto inline-flex items-center gap-1 rounded-lg border border-border bg-popover px-2.5 py-1.5 font-medium font-sans text-[11.5px] text-foreground leading-none no-underline transition-colors hover:bg-accent"
-                    >
-                        <RotateCcwIcon className="h-3 w-3" aria-hidden="true" />
+                    <Button variant="outline" size="sm" className="ml-auto" render={<Link to="/tier-lists/$id" params={{ id: slug }} search={{}} replace resetScroll={false} />}>
+                        <RotateCcwIcon className="size-3.5" aria-hidden="true" />
                         {t("detail.versions.backToLatest")}
-                    </Link>
+                    </Button>
                 )}
             </div>
 
             {!isLatestView && selectedVersion && (
-                <output aria-live="polite" className="mt-2 block rounded-xl border border-[color-mix(in_srgb,var(--primary)_30%,transparent)] bg-[color-mix(in_srgb,var(--primary)_8%,transparent)] px-3 py-2.5">
+                <output aria-live="polite" className="mt-2 block rounded-2xl border border-[color-mix(in_srgb,var(--primary)_30%,transparent)] bg-[color-mix(in_srgb,var(--primary)_8%,transparent)] px-3 py-2.5">
                     <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 font-sans text-[12.5px] text-foreground">
-                        <span className="font-bold font-mono text-[10.5px] text-primary uppercase tracking-[0.12em]">{t("detail.versions.snapshot")}</span>
+                        <span className="kicker text-primary">{t("detail.versions.snapshot")}</span>
                         <span className="font-medium">
                             {t("detail.versions.snapshotLine", { version: selectedVersion.version })} <time dateTime={selectedVersion.publishedAt}>{formatPublishedAt(selectedVersion.publishedAt, f)}</time>
                         </span>

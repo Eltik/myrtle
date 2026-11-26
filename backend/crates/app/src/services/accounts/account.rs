@@ -24,7 +24,8 @@ pub fn user_key(uid: &str) -> String {
     format!("user:{uid}")
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct UserProfile {
     pub id: Uuid,
     pub uid: String,
@@ -49,20 +50,28 @@ pub struct UserProfile {
     pub max_sanity: Option<i16>,
     pub gacha_tickets: Option<i32>,
     pub ten_pull_tickets: Option<i32>,
+    #[ts(type = "number | null")]
     pub monthly_sub_end: Option<i64>,
+    #[ts(type = "number | null")]
     pub register_ts: Option<i64>,
+    #[ts(type = "number | null")]
     pub last_online_ts: Option<i64>,
     pub resume: Option<String>,
     pub friend_num_limit: Option<i16>,
     pub cumulative_signin: Option<i32>,
+    #[ts(type = "number | null")]
     pub operator_count: Option<i64>,
+    #[ts(type = "number | null")]
     pub item_count: Option<i64>,
+    #[ts(type = "number | null")]
     pub skin_count: Option<i64>,
+    #[ts(type = "number | null")]
     pub non_default_skin_count: Option<i64>,
     pub updated_at: DateTime<Utc>,
     pub originite: Option<i32>,
     pub profile_layout: Option<ProfileLayout>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub public_gacha: Option<bool>,
 }
 
@@ -110,7 +119,8 @@ impl From<ProfileRow> for UserProfile {
     }
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct VerifySession {
     pub valid: bool,
@@ -158,7 +168,8 @@ impl UserProfile {
     }
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct UserScore {
     pub user_id: Uuid,
     pub total_score: f64,
@@ -195,7 +206,8 @@ impl From<ScoreRow> for UserScore {
     }
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct UserCheckin {
     pub monthly_card_flags: Vec<i16>,
     pub claimed_this_month: i32,
@@ -203,7 +215,9 @@ pub struct UserCheckin {
     pub checkin_group_id: Option<String>,
     pub reward_index: i16,
     pub can_check_in: bool,
+    #[ts(type = "number | null")]
     pub register_ts: Option<i64>,
+    #[ts(type = "number | null")]
     pub last_online_ts: Option<i64>,
     pub updated_at: DateTime<Utc>,
 }
@@ -247,7 +261,8 @@ pub struct AdminUsersQuery {
     pub server: Option<Server>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct AdminUserEntry {
     pub id: Uuid,
     pub uid: String,
@@ -262,8 +277,11 @@ pub struct AdminUserEntry {
     pub public_profile: bool,
     pub total_score: Option<f64>,
     pub grade: Option<String>,
+    #[ts(type = "number")]
     pub operator_count: i64,
+    #[ts(type = "number")]
     pub item_count: i64,
+    #[ts(type = "number")]
     pub skin_count: i64,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
@@ -294,9 +312,11 @@ impl From<AdminUserRow> for AdminUserEntry {
     }
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct AdminUsersPage {
     pub users: Vec<AdminUserEntry>,
+    #[ts(type = "number")]
     pub total: i64,
 }
 

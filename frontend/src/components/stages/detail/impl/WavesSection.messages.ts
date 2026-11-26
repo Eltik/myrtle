@@ -5,7 +5,7 @@ export const namespace = "stages";
 export const messages = {
     "waves.title": {
         text: "Waves · {count}",
-        description: "Kicker over the wave cards, with how many waves the stage has.",
+        description: "Section heading over the wave cards, with how many waves the stage has.",
     },
     "waves.wave": {
         text: "Wave {index}",

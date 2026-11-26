@@ -2,7 +2,7 @@
 
 export type ArchiveEdge = {
     /**
-     * 0..=5; see `core::archives::network` for the geometry.
+     * 0..=5
      */
     direction: number;
     charId?: string;

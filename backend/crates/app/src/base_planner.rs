@@ -64,7 +64,8 @@ const TRAINER_CLASSES: [&str; 8] = [
     "Specialist",
 ];
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct DraftRoom {
     pub slot_id: String,
     pub room_type: String,
@@ -92,7 +93,8 @@ impl DraftRoom {
     }
 }
 
-#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+#[derive(Debug, Clone, Default, Deserialize, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct AccountFactsReq {
     #[serde(default)]
     pub open_recruit_slots: Option<u32>,
@@ -126,7 +128,8 @@ pub struct OptimizeRequest {
     pub facts: AccountFactsReq,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct RotationRequest {
     pub layout: Vec<DraftRoom>,
     #[serde(default)]
@@ -139,7 +142,8 @@ pub struct RotationRequest {
     pub facts: AccountFactsReq,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct LayoutResponse {
     pub rooms: Vec<DraftRoomDto>,
     pub presets: Vec<SlotPresetsDto>,
@@ -147,13 +151,15 @@ pub struct LayoutResponse {
     pub facts: AccountFactsReq,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct SlotPresetsDto {
     pub slot_id: String,
     pub shifts: Vec<Vec<String>>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct DraftRoomDto {
     pub slot_id: String,
     pub room_type: String,
@@ -163,7 +169,8 @@ pub struct DraftRoomDto {
     pub comfort: i32,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct EvaluateResponse {
     pub assignment: BaseAssignmentDto,
     pub power: PowerDto,
@@ -186,13 +193,15 @@ pub struct EvaluateResponse {
     pub drones: Option<DronesDto>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct TrainerHintDto {
     pub operator: AssignedOperator,
     pub value_pct: f64,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct DronesDto {
     pub current: f64,
     pub max: i32,
@@ -201,13 +210,15 @@ pub struct DronesDto {
     pub full_in_hours: Option<f64>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct ClaimDto {
     pub next_full_hours: f64,
     pub intervals: Vec<ClaimIntervalDto>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct ClaimIntervalDto {
     pub hours: f64,
     pub lost_lmd_per_day: f64,
@@ -215,7 +226,8 @@ pub struct ClaimIntervalDto {
     pub lost_exp_per_day: f64,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct DormsDto {
     pub count: usize,
     pub total_levels: i32,
@@ -224,7 +236,8 @@ pub struct DormsDto {
     pub per_dorm: Vec<DormDto>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct DormDto {
     pub slot_id: String,
     pub level: i32,
@@ -237,7 +250,8 @@ pub struct DormDto {
     pub comfort_upside_per_hour: f64,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct SustainEntryDto {
     pub operator_id: String,
     pub name: String,
@@ -250,14 +264,16 @@ pub struct SustainEntryDto {
     pub morale: Option<f64>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct PowerDto {
     pub generated: i32,
     pub consumed: i32,
     pub net: i32,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct OptimizeResponse {
     pub proposal: BaseAssignmentDto,
     pub baseline: BaseAssignmentDto,
@@ -265,7 +281,8 @@ pub struct OptimizeResponse {
     pub power: PowerDto,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct RoomDiffDto {
     pub slot_id: String,
     pub room_type: String,
@@ -277,7 +294,8 @@ pub struct RoomDiffDto {
     pub yield_after: f64,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct RotationResponse {
     pub rotation: ShiftRotationDto,
     pub shift_count: usize,
@@ -285,27 +303,31 @@ pub struct RotationResponse {
     pub cycle: Option<CycleDto>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct CycleDto {
     pub legs: Vec<CycleLegDto>,
     pub value: RotationValueDto,
     pub beats_rotation: bool,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct CycleLegDto {
     pub hours: f64,
     pub rooms: Vec<CycleRoomDto>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct CycleRoomDto {
     pub slot_id: String,
     pub room_type: String,
     pub operators: Vec<AssignedOperator>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct RotationComparisonDto {
     pub recommended: RotationValueDto,
     pub presets: Option<RotationValueDto>,
@@ -314,7 +336,8 @@ pub struct RotationComparisonDto {
     pub preset_legs_hours: Vec<f64>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct RotationValueDto {
     pub production_efficiency: f64,
     pub lmd_per_day: f64,
@@ -333,7 +356,8 @@ impl From<StaffingValue> for RotationValueDto {
     }
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct CatalogResponse {
     pub shift_count: usize,
     pub rooms: Vec<CatalogRoomDto>,
@@ -342,7 +366,8 @@ pub struct CatalogResponse {
     pub storeys: Vec<CatalogStoreyDto>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct CatalogSlotDto {
     pub slot_id: String,
     pub category: String,
@@ -353,13 +378,15 @@ pub struct CatalogSlotDto {
     pub size_row: i32,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct CatalogStoreyDto {
     pub storey_id: String,
     pub unlock_control_level: i32,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct CatalogRoomDto {
     pub room_type: String,
     pub name: String,
@@ -371,7 +398,8 @@ pub struct CatalogRoomDto {
     pub phases: Vec<CatalogPhaseDto>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct CatalogPhaseDto {
     pub level: i32,
     pub max_stationed: i32,
@@ -379,7 +407,8 @@ pub struct CatalogPhaseDto {
     pub manpower_cost: i32,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct CatalogFormulaDto {
     pub formula_type: String,
     pub label: String,

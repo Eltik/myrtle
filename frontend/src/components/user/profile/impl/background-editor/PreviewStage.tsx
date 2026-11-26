@@ -93,9 +93,9 @@ export function PreviewStage({ profile, background, viewportWidth, maxHeight, on
                     style={{ position: "absolute", left: header ? -header.left * scale : 0, top: header ? -header.top * scale : 0, transform: `scale(${scale})`, transformOrigin: "0 0" }}
                 >
                     {/* The page's own shell, so the header takes the width the page gives it at this viewport; no vertical rhythm, the frame shows the header alone. */}
-                    <main className="page-shell [--page-max:1440px]" style={{ paddingBlock: 0 }} data-preview-root="" inert>
+                    <div className="page-shell [--page-max:1440px]" style={{ paddingBlock: 0 }} data-preview-root="" inert>
                         <Hero profile={profile} background={background} />
-                    </main>
+                    </div>
                 </PreviewFrame>
                 {background && (
                     // A button: the one focusable element with no action of its own to fight the drag. Its keys are described by `aria-describedby`.

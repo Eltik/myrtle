@@ -40,7 +40,7 @@ export const messages = {
         description: "Heading of the Timeline order panel, which carries an explanation instead of a list.",
     },
     "reading.timeline.body": {
-        text: "A timeline order says when each story happens in Terra, and no field in the game's data says that. The reference site's timeline is written by hand, story by story, so this site would be copying a judgement rather than deriving one, and a wrong guess reads as a spoiler. Release order and storyline order below are both derived from the data and are shown instead.",
+        text: "A timeline order says when each story happens in Terra, and no field in the game's data says that. The reference site's timeline is written by hand, story by story, so this site would be copying a judgment rather than deriving one, and a wrong guess reads as a spoiler. Release order and storyline order below are both derived from the data and are shown instead.",
         description: "Explanation in the Timeline order panel of why the site offers no in-world timeline.",
     },
     "reading.section.undated": {
@@ -100,7 +100,7 @@ export const messages = {
         description: "Read fraction on a reading order row: stories read over stories that have a script.",
     },
     "reading.row.noneExtracted": {
-        text: "{count} not extracted",
+        text: "{count} not available yet",
         description: "Shown on a reading order row whose stories all lack a script.",
     },
 } satisfies MessageMap;

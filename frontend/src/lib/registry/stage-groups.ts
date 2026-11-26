@@ -36,8 +36,6 @@ export const STAGE_GROUPS: IStageGroup[] = [
     { key: "other", label: "Other Modes" },
 ];
 
-export const STAGE_GROUP_LABEL: Record<StageGroupKey, string> = Object.fromEntries(STAGE_GROUPS.map((g) => [g.key, g.label])) as Record<StageGroupKey, string>;
-
 /**
  * One-line blurb per group, shown in the stage-list detail dialog. These are
  * message KEYS, not text: this module has no React, so the dialog resolves
@@ -56,7 +54,7 @@ export const STAGE_GROUP_DESCRIPTION_KEY: Record<StageGroupKey, StageGroupMessag
     other: "stageGroup.other.desc",
 };
 
-/** The localised name of each group, a message key resolved with `t()` in the `nav` namespace. `label` above stays the English fallback for consumers not yet moved. */
+/** The localised name of each group, a message key resolved with `t()` in the `nav` namespace. Every rendered group name goes through it; `label` above is only the English search and sort key. */
 export const STAGE_GROUP_LABEL_KEY: Record<StageGroupKey, StageGroupMessageKey> = {
     story: "stageGroup.story.label",
     events: "stageGroup.events.label",
@@ -89,6 +87,20 @@ export const STAGE_GROUP_TONE: Record<StageGroupKey, string> = {
     sss: "#5a8fe8",
     paradox: "#bcabdb",
     cc: "#e8a23c",
+    supplies: "var(--muted-foreground)",
+    other: "var(--muted-foreground)",
+};
+
+/** Each group's tone for glyphs and text on the card or page: the plain hex tones measure 2.02 to 3.22 on the light card (events, RA, SSS, CC, IS, Paradox) and the dark destructive 1.91 on the dark card. */
+export const STAGE_GROUP_INK: Record<StageGroupKey, string> = {
+    story: "var(--primary)",
+    events: "var(--stage-events-ink)",
+    annihilation: "var(--destructive-foreground)",
+    is: "var(--dmg-magic-ink)",
+    ra: "var(--stage-ra-ink)",
+    sss: "var(--stage-sss-ink)",
+    paradox: "var(--rarity-4-ink)",
+    cc: "var(--stage-cc-ink)",
     supplies: "var(--muted-foreground)",
     other: "var(--muted-foreground)",
 };

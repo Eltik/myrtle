@@ -4,7 +4,7 @@ import { Card } from "#/components/ui/card";
 import { useFormatters, useLocale, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { cn, parseOperatorName } from "#/lib/utils";
-import { compareUpcoming, dayKey, daysUntil, isTodayMonthDay, monthNames, operatorRarity, rarityVar } from "../helpers";
+import { compareUpcoming, dayKey, daysUntil, isTodayMonthDay, monthNames, operatorRarity, rarityInkVar } from "../helpers";
 import type { IOperatorBirthday } from "../types";
 import { BirthdayEmpty } from "./BirthdayEmpty";
 import { OpChip } from "./OpChip";
@@ -56,13 +56,13 @@ export function UpcomingView({ items, today }: IUpcomingViewProps): React.ReactE
                 const weekday = f.calendarDay(new Date(today.getFullYear(), month - 1, day), { weekday: "long" });
 
                 return (
-                    <div key={dayKey(month, day)} className={cn("flex flex-col gap-2.5 rounded-[14px] border bg-card p-4 shadow-xs/5", isToday ? "border-primary/50 bg-primary/6" : "border-border")}>
+                    <div key={dayKey(month, day)} className={cn("flex flex-col gap-2.5 rounded-2xl border bg-card p-4 shadow-xs/5", isToday ? "border-primary/50 bg-primary/6" : "border-border")}>
                         <div className="flex items-baseline justify-between">
                             <div>
-                                <div className={cn("font-medium font-mono text-[11px] uppercase tracking-[0.08em]", isToday ? "text-primary" : "text-muted-foreground")}>{when}</div>
+                                <div className={cn("font-sans text-[12.5px]", isToday ? "text-primary" : "text-muted-foreground")}>{when}</div>
                                 <div className="font-bold font-sans text-[18px] text-foreground tracking-tight">{t("birthdays.upcoming.date", { month: monthLabels[month - 1], day })}</div>
                             </div>
-                            <span className="font-medium font-mono text-[11px] text-muted-foreground uppercase tracking-[0.08em]">{weekday}</span>
+                            <span className="font-sans text-[12.5px] text-muted-foreground">{weekday}</span>
                         </div>
                         <div className="flex flex-col gap-1.5">
                             {ops.map((b) => {
@@ -72,7 +72,7 @@ export function UpcomingView({ items, today }: IUpcomingViewProps): React.ReactE
                                     <div key={b.operator.id} className="grid grid-cols-[auto_1fr_auto] items-center gap-2.5">
                                         <OpChip operator={b.operator} />
                                         <span className="truncate font-medium font-sans text-[13px] text-foreground">{displayName}</span>
-                                        <span className="font-sans font-semibold text-[12px]" style={{ color: rarityVar(rarity) }}>
+                                        <span className="font-sans font-semibold text-[12px]" style={{ color: rarityInkVar(rarity) }}>
                                             {t("birthdays.upcoming.rarity", { rarity })}
                                         </span>
                                     </div>

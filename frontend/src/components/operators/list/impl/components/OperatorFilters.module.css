@@ -38,7 +38,7 @@
     overflow-x: hidden;
     padding: 18px 16px;
     border: 1px solid var(--border);
-    border-radius: var(--radius-xl);
+    border-radius: var(--radius-2xl);
     background: var(--card);
     display: flex;
     flex-direction: column;
@@ -90,18 +90,6 @@
 .fpHead h3 svg {
     color: var(--muted-foreground);
 }
-.fpHead .clear {
-    all: unset;
-    cursor: pointer;
-    font: 500 11.5px / 1 var(--font-sans);
-    color: var(--muted-foreground);
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-}
-.fpHead .clear:hover {
-    color: var(--foreground);
-}
 
 .sectionHead {
     display: flex;
@@ -120,12 +108,6 @@
     cursor: pointer;
     user-select: none;
 }
-.sectionHead .lbl {
-    font: 500 10.5px / 1 var(--font-mono);
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
-    color: var(--muted-foreground);
-}
 .sectionHead .line {
     flex: 1;
     height: 1px;
@@ -140,18 +122,6 @@
 .sectionHead.expandable.open .chev {
     transform: rotate(180deg);
 }
-.sectionHead .n {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 15px;
-    height: 15px;
-    padding: 0 4px;
-    background: var(--primary);
-    color: var(--primary-foreground);
-    border-radius: 999px;
-    font: 600 10px / 1 var(--font-mono);
-}
 
 .field {
     container-type: inline-size;
@@ -165,127 +135,8 @@
     margin-bottom: 8px;
 }
 
-.classRow {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 5px;
-}
-.classBtn {
-    all: unset;
-    cursor: pointer;
-    aspect-ratio: 1;
-    border-radius: var(--radius-md);
-    border: 1px solid var(--border);
-    background: color-mix(in oklch, var(--secondary) 50%, transparent);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--muted-foreground);
-    transition:
-        border-color 140ms ease,
-        background-color 140ms ease,
-        color 140ms ease;
-}
-.classBtn:hover {
-    border-color: color-mix(in oklch, var(--primary) 45%, var(--border));
-    color: var(--foreground);
-}
-.classBtn.on {
-    border-color: var(--primary);
-    background: color-mix(in oklch, var(--primary) 16%, transparent);
-    color: var(--primary);
-}
-
-.rarityRow {
-    display: grid;
-    grid-template-columns: repeat(6, minmax(0, 1fr));
-    gap: 5px;
-}
-@container (max-width: 240px) {
-    .rarityRow {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-}
-@container (max-width: 140px) {
-    .rarityRow {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-}
-.rarityBtn {
-    all: unset;
-    cursor: pointer;
-    height: 28px;
-    padding: 0 4px;
-    border-radius: var(--radius-md);
-    border: 1px solid var(--border);
-    background: color-mix(in oklch, var(--secondary) 50%, transparent);
-    font: 600 12.5px / 1 var(--font-sans);
-    color: var(--muted-foreground);
-    box-sizing: border-box;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    transition:
-        border-color 140ms ease,
-        background-color 140ms ease,
-        color 140ms ease;
-}
-.rarityBtn[data-rarity="6"] {
-    --rc: var(--rarity-6);
-}
-.rarityBtn[data-rarity="5"] {
-    --rc: var(--rarity-5);
-}
-.rarityBtn[data-rarity="4"] {
-    --rc: var(--rarity-4);
-}
-.rarityBtn[data-rarity="3"] {
-    --rc: var(--rarity-3);
-}
-.rarityBtn[data-rarity="2"] {
-    --rc: var(--rarity-2);
-}
-.rarityBtn[data-rarity="1"] {
-    --rc: var(--rarity-1);
-}
-.rarityBtn:hover {
-    border-color: color-mix(in oklch, var(--rc, var(--primary)) 55%, var(--border));
-    color: var(--foreground);
-}
-.rarityBtn.on {
-    background: color-mix(in oklch, var(--rc) 18%, transparent);
-    color: var(--rc);
-    border-color: var(--rc);
-}
-
 .tagRow {
     display: flex;
     flex-wrap: wrap;
     gap: 5px;
-}
-.tg {
-    all: unset;
-    cursor: pointer;
-    font: 500 11.5px / 1 var(--font-sans);
-    height: 26px;
-    padding: 0 10px;
-    border-radius: var(--radius-md);
-    border: 1px solid var(--border);
-    background: color-mix(in oklch, var(--secondary) 50%, transparent);
-    color: var(--muted-foreground);
-    display: inline-flex;
-    align-items: center;
-    transition:
-        border-color 140ms ease,
-        background-color 140ms ease,
-        color 140ms ease;
-}
-.tg:hover {
-    color: var(--foreground);
-}
-.tg.on {
-    background: color-mix(in oklch, var(--primary) 16%, transparent);
-    border-color: var(--primary);
-    color: var(--primary);
 }

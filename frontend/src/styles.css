@@ -1,4 +1,9 @@
-@import url("https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&display=swap");
+/* Fraunces is self-hosted with the opsz axis (the files also carry wght) and the
+   italic, the same axes the Google Fonts URL requested, so optical sizing and the
+   italic display moments (stats header, tier list preview quote) render as before
+   without a third-party CSS round trip ahead of first paint. */
+@import "@fontsource-variable/fraunces/opsz.css";
+@import "@fontsource-variable/fraunces/opsz-italic.css";
 @import "@fontsource-variable/inter";
 @import "@fontsource-variable/geist-mono";
 @import "@fontsource-variable/orbitron";
@@ -20,30 +25,18 @@
   --font-sans: "Inter Variable", ui-sans-serif, system-ui, var(--font-cjk), sans-serif;
   --font-heading: "Inter Variable", ui-sans-serif, system-ui, var(--font-cjk), sans-serif;
   --font-mono: "Geist Mono Variable", ui-monospace, SFMono-Regular, var(--font-cjk), monospace;
-  --font-display: "Fraunces", Georgia, var(--font-cjk), serif;
+  --font-display: "Fraunces Variable", Georgia, var(--font-cjk), serif;
   /* Squared-off technical numerals for RIIC readouts, not body copy. */
   --font-techno: "Orbitron Variable", var(--font-mono);
 }
 
 :root {
-  --sea-ink: #173a40;
   --sea-ink-soft: #416166;
   --lagoon: #4fb8b2;
   --lagoon-deep: #328f97;
   --palm: #2f6a4a;
-  --sand: #e7f0e8;
-  --foam: #f3faf5;
   --surface: rgba(255, 255, 255, 0.74);
-  --surface-strong: rgba(255, 255, 255, 0.9);
-  --line: rgba(23, 58, 64, 0.14);
-  --inset-glint: rgba(255, 255, 255, 0.82);
   --bg-base: #e7f3ec;
-  --header-bg: rgba(251, 255, 248, 0.84);
-  --chip-bg: rgba(255, 255, 255, 0.8);
-  --chip-line: rgba(47, 106, 74, 0.18);
-  --link-bg-hover: rgba(255, 255, 255, 0.9);
-  --hero-a: rgba(79, 184, 178, 0.36);
-  --hero-b: rgba(47, 106, 74, 0.2);
   --destructive-foreground: var(--color-red-700);
   --info: var(--color-blue-500);
   --info-foreground: var(--color-blue-700);
@@ -62,10 +55,22 @@
   --input: oklch(0.88 0.005 285);
   --muted: oklch(0.94 0.005 285);
   --muted-foreground: oklch(0.45 0.01 285);
+  /* The quieter step under muted-foreground, for meta text that used to be
+     muted-foreground at an alpha (/72 measured 3.56 to 3.69, /50 2.32).
+     On background / card / muted: 5.29 / 5.52 / 4.63. */
+  --subtle-foreground: oklch(0.52 0.01 285);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0.005 285);
   --primary: oklch(0.58 0.22 25);
   --primary-foreground: oklch(0.985 0.002 285);
+  /* `--primary` is the fill; `text-primary` reads `--primary-ink` and rings read
+     `--ring`, so a custom accent hex can keep its fill while text and ring get a
+     variant that clears 4.5 / 3 (lib/theme/accent-kit.ts). By default all three
+     are the same red: 4.59 page / 4.79 card. */
+  --primary-ink: oklch(0.58 0.22 25);
+  /* Hover/pressed moves the fill away from its label instead of thinning it:
+     /90 alpha measured 4.16 page / 4.14 card, this measures 6.08. */
+  --primary-hover: color-mix(in oklab, var(--primary) 88%, black);
   --ring: oklch(0.58 0.22 25);
   --secondary: oklch(0.94 0.005 285);
   --secondary-foreground: oklch(0.205 0.005 285);
@@ -96,6 +101,20 @@
   --rarity-2: #7ef2a3;
   --rarity-1: #b5b5b5;
 
+  /* The rarity hues as TEXT. On the white card every one of the six above
+     measures under 3:1 (1.39 to 2.52), so a rarity-coloured name or star count
+     was unreadable in light mode. Same oklch hue, lightness lowered until the
+     colour clears 4.5:1 on both #ffffff (card) and #fafafb (page), with chroma
+     trimmed only where the darker colour left the sRGB gamut. On the muted
+     surface (#ebebee) they measure 3.97 to 4.17, so they are not for text on
+     muted. Ratios: on #ffffff / on #fafafb. */
+  --rarity-6-ink: oklch(0.56 0.149 49.4); /* 4.93 / 4.73 */
+  --rarity-5-ink: oklch(0.55 0.112 94.9); /* 4.85 / 4.65 */
+  --rarity-4-ink: oklch(0.55 0.07 301); /* 4.98 / 4.77 */
+  --rarity-3-ink: oklch(0.54 0.075 226.3); /* 4.95 / 4.75 */
+  --rarity-2-ink: oklch(0.53 0.138 152.4); /* 4.95 / 4.74 */
+  --rarity-1-ink: oklch(0.55 0 0); /* 4.85 / 4.65 */
+
   --enemy-normal: oklch(0.65 0.01 285);
   --enemy-elite: oklch(0.72 0.14 75);
   --enemy-boss: oklch(0.58 0.22 25);
@@ -104,6 +123,36 @@
   --dmg-magic: #b78fe6;
   --dmg-heal: #7ed3a2;
   --dmg-none: #8a8a8a;
+
+  /* The other data hues as TEXT, built like the rarity inks: same oklch hue,
+     lightness lowered until the colour clears 4.6:1 on the page and the card
+     AND 4.5:1 on a 15% tint of its own plain hue (the badge and chip fills).
+     The plain hues stay for dots, bars, borders and tints. Ratios: on
+     background / on card / on the 15% tint over card. The plain hue on card
+     measured: enemy-normal 3.24, enemy-elite 2.53, physic 2.37, magic 2.60,
+     heal 1.79, none 3.45, events 2.02, ra 2.27, sss 3.22, cc 2.17, banner
+     active 1.88, upcoming 1.88, returning 2.08, featured 6★ 2.03. */
+  --enemy-normal-ink: oklch(0.53 0.01 285); /* 5.07 / 5.29 / 4.57 */
+  --enemy-elite-ink: oklch(0.53 0.111 75); /* 5.16 / 5.39 / 4.74 */
+  --enemy-boss-ink: oklch(0.53 0.214 25); /* 5.66 / 5.91 / 4.66 */
+  --dmg-physic-ink: oklch(0.54 0.093 65); /* 4.96 / 5.18 / 4.61 */
+  --dmg-magic-ink: oklch(0.54 0.13 304.5); /* 5.13 / 5.36 / 4.72 */
+  --dmg-heal-ink: oklch(0.53 0.109 157.5); /* 4.79 / 5.00 / 4.60 */
+  --dmg-none-ink: oklch(0.52 0 0); /* 5.27 / 5.51 / 4.72 */
+  /* Game rich-text spans (<@ba.kw>, <$ba.magic>, vup/vdown/rem) on the light page: the
+     game's #27e8e7 keyword cyan measured 1.5:1 here. bg / card / muted. */
+  --game-kw-ink: oklch(0.5 0.12 194.3); /* 5.14 / 5.37 / 4.50 */
+  --game-vup-ink: oklch(0.52 0.12 261.3); /* 5.34 / 5.57 / 4.67 */
+  --game-vdown-ink: oklch(0.53 0.12 24.7); /* 5.37 / 5.61 / 4.70 */
+  --game-rem-ink: oklch(0.53 0.12 70.8); /* 5.18 / 5.41 / 4.53 */
+  --stage-events-ink: oklch(0.54 0.123 62.9); /* 5.02 / 5.24 / 4.73 */
+  --stage-ra-ink: oklch(0.52 0.125 156.3); /* 4.96 / 5.18 / 4.62 */
+  --stage-sss-ink: oklch(0.53 0.145 260.2); /* 5.14 / 5.37 / 4.61 */
+  --stage-cc-ink: oklch(0.54 0.115 72.5); /* 4.96 / 5.18 / 4.64 */
+  --banner-active-ink: oklch(0.52 0.163 145); /* 4.92 / 5.14 / 4.67 */
+  --banner-upcoming-ink: oklch(0.53 0.096 220); /* 4.90 / 5.11 / 4.57 */
+  --banner-returning-ink: oklch(0.55 0.12 300); /* 4.88 / 5.09 / 4.61 */
+  --featured-six-ink: oklch(0.54 0.111 80); /* 4.92 / 5.14 / 4.61 */
 }
 
 * {
@@ -136,6 +185,13 @@ body {
 body:has([data-music-player-bar]) {
   --music-bar-reserve: calc(64px + env(safe-area-inset-bottom));
   padding-bottom: var(--music-bar-reserve);
+}
+/* Touch: the seek control is a 44 px hit area centred on the bar's top edge, so the
+   bar's top padding grows 10 -> 24 px to keep its lower half off the buttons. */
+@media (pointer: coarse) {
+  body:has([data-music-player-bar]) {
+    --music-bar-reserve: calc(78px + env(safe-area-inset-bottom));
+  }
 }
 body:has([data-music-player-bar]) [data-claims-bottom] {
   bottom: var(--music-bar-reserve);
@@ -196,9 +252,17 @@ pre code {
   --color-ring: var(--ring);
   --color-primary-foreground: var(--primary-foreground);
   --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  /* Namespace keys Tailwind reads before `--color-*`: text, underline, ring and
+     outline in "primary" take the ink/ring variants; bg, border, fill stay the fill. */
+  --text-color-primary: var(--primary-ink);
+  --text-decoration-color-primary: var(--primary-ink);
+  --ring-color-primary: var(--ring);
+  --outline-color-primary: var(--ring);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
   --color-muted-foreground: var(--muted-foreground);
+  --color-subtle-foreground: var(--subtle-foreground);
   --color-muted: var(--muted);
   --color-input: var(--input);
   --color-foreground: var(--foreground);
@@ -216,6 +280,27 @@ pre code {
   --color-info-foreground: var(--info-foreground);
   --color-info: var(--info);
   --color-destructive-foreground: var(--destructive-foreground);
+  --color-rarity-6-ink: var(--rarity-6-ink);
+  --color-rarity-5-ink: var(--rarity-5-ink);
+  --color-rarity-4-ink: var(--rarity-4-ink);
+  --color-rarity-3-ink: var(--rarity-3-ink);
+  --color-rarity-2-ink: var(--rarity-2-ink);
+  --color-rarity-1-ink: var(--rarity-1-ink);
+  --color-enemy-normal-ink: var(--enemy-normal-ink);
+  --color-enemy-elite-ink: var(--enemy-elite-ink);
+  --color-enemy-boss-ink: var(--enemy-boss-ink);
+  --color-dmg-physic-ink: var(--dmg-physic-ink);
+  --color-dmg-magic-ink: var(--dmg-magic-ink);
+  --color-dmg-heal-ink: var(--dmg-heal-ink);
+  --color-dmg-none-ink: var(--dmg-none-ink);
+  --color-stage-events-ink: var(--stage-events-ink);
+  --color-stage-ra-ink: var(--stage-ra-ink);
+  --color-stage-sss-ink: var(--stage-sss-ink);
+  --color-stage-cc-ink: var(--stage-cc-ink);
+  --color-banner-active-ink: var(--banner-active-ink);
+  --color-banner-upcoming-ink: var(--banner-upcoming-ink);
+  --color-banner-returning-ink: var(--banner-returning-ink);
+  --color-featured-six-ink: var(--featured-six-ink);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -313,24 +398,12 @@ pre code {
 }
 
 .dark {
-  --sea-ink: #d7ece8;
   --sea-ink-soft: #afcdc8;
   --lagoon: #60d7cf;
   --lagoon-deep: #8de5db;
   --palm: #6ec89a;
-  --sand: #0f1a1e;
-  --foam: #101d22;
   --surface: rgba(16, 30, 34, 0.8);
-  --surface-strong: rgba(15, 27, 31, 0.92);
-  --line: rgba(141, 229, 219, 0.18);
-  --inset-glint: rgba(194, 247, 238, 0.14);
   --bg-base: #0a1418;
-  --header-bg: rgba(10, 20, 24, 0.8);
-  --chip-bg: rgba(13, 28, 32, 0.9);
-  --chip-line: rgba(141, 229, 219, 0.24);
-  --link-bg-hover: rgba(24, 44, 49, 0.8);
-  --hero-a: rgba(96, 215, 207, 0.18);
-  --hero-b: rgba(110, 200, 154, 0.12);
   --destructive-foreground: var(--color-red-400);
   --info-foreground: var(--color-blue-400);
   --success-foreground: var(--color-emerald-400);
@@ -346,10 +419,19 @@ pre code {
   --input: oklch(0.22 0.005 285);
   --muted: oklch(0.22 0.005 285);
   --muted-foreground: oklch(0.65 0.01 285);
+  /* On background / card and popover / muted: 5.51 / 5.24 / 4.75. */
+  --subtle-foreground: oklch(0.62 0.01 285);
+  /* Scroll-edge hint: the light page's black 12% edge is invisible on the dark page
+     (browser review 2026-11-04: dark tab strips looked cut off with no hint). */
+  --scroll-shadow-edge: color-mix(in oklch, var(--foreground) 18%, transparent);
   --popover: oklch(0.17 0.005 285);
   --popover-foreground: oklch(0.97 0.005 285);
   --primary: oklch(0.75 0.15 25);
   --primary-foreground: oklch(0.13 0.005 285);
+  /* 8.49 page / 8.07 card. */
+  --primary-ink: oklch(0.75 0.15 25);
+  /* The label is dark here, so hover lightens: 9.46 (was 6.98 at /90). */
+  --primary-hover: color-mix(in oklab, var(--primary) 88%, white);
   --ring: oklch(0.75 0.15 25);
   --secondary: oklch(0.22 0.005 285);
   --secondary-foreground: oklch(0.97 0.005 285);
@@ -372,11 +454,66 @@ pre code {
   --glow-primary-intense: oklch(0.75 0.15 25 / 0.8);
   --enemy-normal: oklch(0.75 0.01 285);
   --enemy-boss: oklch(0.75 0.15 25);
+  /* The plain hues already read on the dark card, 7.58 to 13.28. */
+  --rarity-6-ink: var(--rarity-6);
+  --rarity-5-ink: var(--rarity-5);
+  --rarity-4-ink: var(--rarity-4);
+  --rarity-3-ink: var(--rarity-3);
+  --rarity-2-ink: var(--rarity-2);
+  --rarity-1-ink: var(--rarity-1);
+  /* The plain data hues already read on the dark card (5.54 to 10.68) and on
+     their own 15% tint over it (4.63 to 8.04), so dark text takes them as-is.
+     Ratios: on card / on the 15% tint. */
+  --enemy-normal-ink: var(--enemy-normal); /* 8.58 / 6.70 */
+  --enemy-elite-ink: var(--enemy-elite); /* 7.55 / 6.06 */
+  --enemy-boss-ink: var(--enemy-boss); /* 8.07 / 6.43 */
+  --dmg-physic-ink: var(--dmg-physic); /* 8.08 / 6.39 */
+  --dmg-magic-ink: var(--dmg-magic); /* 7.36 / 5.91 */
+  --dmg-heal-ink: var(--dmg-heal); /* 10.68 / 8.04 */
+  --dmg-none-ink: var(--dmg-none); /* 5.54 / 4.63 */
+  /* The game's own palette reads on the dark page. bg / card / muted. */
+  --game-kw-ink: #27e8e7; /* 13.21 / 12.55 / 11.37 */
+  --game-vup-ink: #6495ed; /* 6.77 / 6.43 / 5.83 */
+  --game-vdown-ink: #ff847d; /* 8.48 / 8.06 / 7.30 */
+  --game-rem-ink: #da9a46; /* 8.33 / 7.92 / 7.17 */
+  --stage-events-ink: #f7a452; /* 9.46 / 7.31 */
+  --stage-ra-ink: #5bbf86; /* 8.42 / 6.63 */
+  --stage-sss-ink: #5a8fe8; /* 5.95 / 4.94 */
+  --stage-cc-ink: #e8a23c; /* 8.80 / 6.89 */
+  --banner-active-ink: oklch(0.78 0.18 145); /* 10.18 / 7.77 */
+  --banner-upcoming-ink: oklch(0.78 0.16 220); /* 10.18 / 7.86 */
+  --banner-returning-ink: oklch(0.78 0.12 300); /* 9.20 / 7.11 */
+  --featured-six-ink: oklch(0.78 0.18 80); /* 9.40 / 7.30 */
 }
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border outline-ring;
+  }
+  /* The keyboard focus mark for anything that does not draw its own. The ring
+     at 50% alpha measured 2.29:1 on the light page and 2.80:1 on the dark one,
+     under the 3:1 a focus indicator needs; solid it measures 4.59 (light page) and 8.49 / 8.07 (dark page / card).
+     A kit control that draws a `focus-visible:ring-*` also sets
+     `outline-none`, and a utility beats this base rule, so it never gets two
+     marks. `:focus-visible` only, so a mouse click draws nothing. */
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+  /* Preflight leaves every control on the arrow cursor, so a Switch, a
+     Checkbox or a Select trigger did not read as clickable. `:where()` keeps
+     this at zero specificity: the disabled rule below always beats it, and so
+     does any `cursor-*` utility a component sets on purpose (the menu and
+     select rows keep `cursor-default`). The label clause names the toggles
+     only: `cursor` inherits, and a label around a text input would hand the
+     input a pointer in place of its text caret. */
+  :where(button, [role="button"], [role="switch"], [role="checkbox"], [role="radio"], [role="tab"], [role="option"], [role="menuitem"], summary, select, a[href], label:has(input[type="checkbox"], input[type="radio"], [role="checkbox"], [role="switch"], [role="radio"])) {
+    cursor: pointer;
+  }
+  :disabled,
+  [data-disabled],
+  [aria-disabled="true"] {
+    cursor: not-allowed;
   }
   body {
     @apply bg-background text-foreground;
@@ -385,7 +522,27 @@ pre code {
     font-family: var(--font-mono);
   }
   html {
-    @apply font-sans font-mono;
+    @apply font-sans;
+  }
+  /* Reduced motion collapses every transition and animation to an instant,
+     including the overlay, accordion and tooltip motion the kit never opted
+     out of. It sits in a layer on purpose: an `!important` in a layer
+     outranks an unlayered or utility `!important`, so no component can
+     reintroduce motion by accident. Spinners are the exception. A frozen
+     spinner reads as a hang, so they keep turning, slower. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+    [class*="animate-spin"] {
+      animation-duration: 1.5s !important;
+      animation-iteration-count: infinite !important;
+    }
   }
 }
 
@@ -557,8 +714,8 @@ pre code {
         background-image:
             linear-gradient(to bottom, var(--scroll-shadow-bg), transparent),
             linear-gradient(to top, var(--scroll-shadow-bg), transparent),
-            linear-gradient(to bottom, oklch(0 0 0 / 0.12), transparent),
-            linear-gradient(to top, oklch(0 0 0 / 0.12), transparent);
+            linear-gradient(to bottom, var(--scroll-shadow-edge, oklch(0 0 0 / 0.12)), transparent),
+            linear-gradient(to top, var(--scroll-shadow-edge, oklch(0 0 0 / 0.12)), transparent);
         background-position:
             0 0,
             0 100%,
@@ -573,4 +730,28 @@ pre code {
         /* The first two scroll with the content, the last two stay put. */
         background-attachment: local, local, scroll, scroll;
     }
+}
+
+/* The same affordance on a horizontal scroller (a tab strip that runs past a
+   phone's width): the shadow sits on the left and right edges instead. A
+   utility, not a component class, so a variant can switch it on
+   (`data-overflow:scroll-shadows-x` in the kit TabsList). */
+@utility scroll-shadows-x {
+    background-image:
+        linear-gradient(to right, var(--scroll-shadow-bg, var(--background)), transparent),
+        linear-gradient(to left, var(--scroll-shadow-bg, var(--background)), transparent),
+        linear-gradient(to right, var(--scroll-shadow-edge, oklch(0 0 0 / 0.12)), transparent),
+        linear-gradient(to left, var(--scroll-shadow-edge, oklch(0 0 0 / 0.12)), transparent);
+    background-position:
+        0 0,
+        100% 0,
+        0 0,
+        100% 0;
+    background-size:
+        1.25rem 100%,
+        1.25rem 100%,
+        0.5rem 100%,
+        0.5rem 100%;
+    background-repeat: no-repeat;
+    background-attachment: local, local, scroll, scroll;
 }

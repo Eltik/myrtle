@@ -38,7 +38,7 @@ export function ElitePromotionCard({ eliteBreakdown }: IElitePromotionCardProps)
                                         <span className="font-bold text-sm tabular-nums" style={isPrimary ? { color: PALETTE.elite } : undefined}>
                                             {count}
                                         </span>
-                                        <span className="font-mono text-[10px] text-muted-foreground/50 tabular-nums">{pct.toFixed(0)}%</span>
+                                        <span className="font-mono text-[10px] text-muted-foreground tabular-nums">{pct.toFixed(0)}%</span>
                                     </div>
                                 </div>
                                 <Bar color={PALETTE.elite} dim={!isPrimary} pct={pct} />

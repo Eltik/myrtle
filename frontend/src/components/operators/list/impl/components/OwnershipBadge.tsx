@@ -10,13 +10,14 @@ interface IOwnershipBadgeProps {
     /** Which community number to show. `owned` is the share of all sharing
      *  players; `e2` is the share OF OWNERS who promoted to E2. */
     metric: StatMetric;
-    /** Accent color. Decorative: the percentage text carries the value. */
+    /** Rarity hue for the dot. Decorative: the percentage text carries the value. */
     color: string;
     className?: string;
 }
 
 /** Compact pill showing a community rate for an operator; the exact figure and
- *  its denominator are available via the native title on hover.
+ *  its denominator are in the native title here and in visible text in the
+ *  hover preview, and the counts are in the accessible name.
  *
  *  Renders nothing on the `e2` metric when the operator has no conversion rate
  *  to report - nobody owns them, or they cannot be promoted to E2 at all. An
@@ -32,10 +33,14 @@ export const OwnershipBadge = memo(function OwnershipBadge({ info, metric, color
     const label = f.percent(pct);
     const exact = (pct * 100).toFixed(2);
     const title = isE2 ? t("ownership.e2.title", { e2Owners: f.number(info.e2Owners), owners: f.number(info.owners), exact }) : t("ownership.owned.title", { owners: f.number(info.owners), exact });
-    const ariaLabel = isE2 ? t("ownership.e2.aria", { pct: label }) : t("ownership.owned.aria", { pct: label });
+    // The counts go in the name too: the title reaches mouse users only.
+    const ariaLabel = isE2 ? t("ownership.e2.aria", { pct: label, e2Owners: f.number(info.e2Owners), owners: f.number(info.owners) }) : t("ownership.owned.aria", { pct: label, owners: f.number(info.owners) });
 
     return (
-        <span role="img" className={cn("inline-flex items-center rounded-full bg-background/85 px-1.5 py-px font-mono font-semibold text-[9px] uppercase tabular-nums tracking-wider shadow-sm", className)} style={{ color }} title={title} aria-label={ariaLabel}>
+        // The text is foreground, the rarity hue only a dot: as text it measured 1.38 (5★) to 2.42 (6★)
+        // on the light page.
+        <span role="img" className={cn("inline-flex items-center gap-1 rounded-full bg-background/85 px-1.5 py-px font-mono font-semibold text-[9px] text-foreground uppercase tabular-nums tracking-wider shadow-sm", className)} title={title} aria-label={ariaLabel}>
+            <span aria-hidden="true" className="size-1.5 shrink-0 rounded-full" style={{ backgroundColor: color }} />
             {label}
         </span>
     );

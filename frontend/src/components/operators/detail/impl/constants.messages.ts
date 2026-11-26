@@ -21,7 +21,7 @@ export const messages = {
         description: "Operator-detail tab: the operator's active skills. The skill names themselves come from the game data.",
     },
     "tab.levelup": {
-        text: "Level-Up Cost",
+        text: "Level-up cost",
         description: "Operator-detail tab: the materials needed to promote and upgrade.",
     },
     "tab.skins": {

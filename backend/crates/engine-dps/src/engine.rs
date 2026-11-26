@@ -22,20 +22,24 @@ use crate::{
 /// The skill entry for basic attack (`skill_index` 0)
 static BASIC_ATTACK: LazyLock<SkillFormula> = LazyLock::new(SkillFormula::default);
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct DpsResult {
     pub skill_dps: f64,
     pub total_damage: f64,
     pub average_dps: f64,
     /// Primary enemy's share, present when request set `secondary`.
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub primary: Option<DpsMetrics>,
     /// Secondary enemies' share, `f(1 + count) - f(1)` against
     /// secondary enemy. Present when the request set `secondary`
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub secondary: Option<DpsMetrics>,
     /// Skill shape. Present under `cycleModel: "v2"`.
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub category: Option<SkillCategory>,
     /// Seconds from deployment to the first activation: `(cost - initial SP)`
     /// at the skill's SP rate. Under `cycleModel: "v2"`
@@ -44,9 +48,11 @@ pub struct DpsResult {
         default,
         skip_serializing_if = "Option::is_none"
     )]
+    #[ts(optional)]
     pub startup_time: Option<f64>,
     /// Seconds per skill cycle (duration + charge). Under `cycleModel: "v2"`
     #[serde(rename = "cycleTime", default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub cycle_time: Option<f64>,
     /// The skill's SP type as the cycle saw it. Under `cycleModel: "v2"`
     #[serde(
@@ -54,6 +60,7 @@ pub struct DpsResult {
         default,
         skip_serializing_if = "Option::is_none"
     )]
+    #[ts(optional)]
     pub sp_recovery: Option<SpRecovery>,
     /// Where `average_dps` took the off-skill DPS from. Under `cycleModel: "v2"`
     /// for a skill that cycles.
@@ -62,6 +69,7 @@ pub struct DpsResult {
         default,
         skip_serializing_if = "Option::is_none"
     )]
+    #[ts(optional)]
     pub off_skill_source: Option<OffSkillSource>,
     /// `true` when a physical or arts fragility zone was requested and the
     /// formula's damage responds to both DEF and RES (or to neither).
@@ -71,6 +79,7 @@ pub struct DpsResult {
         default,
         skip_serializing_if = "Option::is_none"
     )]
+    #[ts(optional)]
     pub approximate_type_split: Option<bool>,
     /// `true` when `f(1 + count) - f(1)` came out negative on a metric and the
     /// secondary share was clamped to 0 there. Present only when it fired.
@@ -79,11 +88,13 @@ pub struct DpsResult {
         default,
         skip_serializing_if = "Option::is_none"
     )]
+    #[ts(optional)]
     pub secondary_clamped: Option<bool>,
 }
 
 /// The three damage numbers for one share of the targets
-#[derive(Debug, Clone, Copy, Default, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct DpsMetrics {
     pub skill_dps: f64,
     pub total_damage: f64,
@@ -119,7 +130,8 @@ impl DpsMetrics {
 /// `sustained`: skill's DPS is the DPS (no skill, passive, or permanent)
 /// `burst`: a timed or ammo window that recharges
 /// `instant`: zero-duration activation
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub enum SkillCategory {
     Sustained,
@@ -130,7 +142,8 @@ pub enum SkillCategory {
 /// Skill's SP type.
 /// TODO: `defensive` (SP on hit) and
 /// `none` (passive) are NOT modelled: their `average_dps` is the legacy one.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub enum SpRecovery {
     Auto,
@@ -141,7 +154,8 @@ pub enum SpRecovery {
 
 /// `formula`: the operator's own function at skill 0. `normalAttack`: the
 /// generic `atk / interval` attack, used when the function has no skill-0 path.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub enum OffSkillSource {
     Formula,

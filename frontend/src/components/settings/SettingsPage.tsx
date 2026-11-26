@@ -1,19 +1,23 @@
 import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { PaletteIcon, ShieldIcon, TriangleAlertIcon, UserRoundIcon } from "lucide-react";
+import { BlocksIcon, LogInIcon, PaletteIcon, ShieldIcon, TriangleAlertIcon, UserRoundIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { Button } from "#/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "#/components/ui/card";
 import { useErrorMessage } from "#/components/ui/error-message";
 import { toastManager } from "#/components/ui/toast";
 import { useAuth } from "#/hooks/use-auth";
 import { useInvalidateProfile, useResyncRoster } from "#/hooks/use-resync-roster";
 import { disconnectGameAccountFn, type IUpdateUserSettingsInput, updateUserSettingsFn } from "#/lib/api/auth";
 import { deleteAccountFn } from "#/lib/auth/server";
+import { authActions } from "#/lib/auth/store";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { forgetSession } from "#/lib/root-context";
 import type { IUserProfile } from "#/types/user";
 import { AccountPanel } from "./AccountPanel";
 import { AppearancePanel } from "./AppearancePanel";
+import { AppsPanel } from "./AppsPanel";
 import { DangerPanel } from "./DangerPanel";
 import { PrivacyPanel } from "./PrivacyPanel";
 import type { messages } from "./SettingsPage.messages";
@@ -28,6 +32,7 @@ const NAV = [
     { id: "account" as const, labelKey: "nav.account" as const, Icon: UserRoundIcon },
     { id: "appearance" as const, labelKey: "nav.appearance" as const, Icon: PaletteIcon },
     { id: "privacy" as const, labelKey: "nav.privacy" as const, Icon: ShieldIcon },
+    { id: "apps" as const, labelKey: "nav.apps" as const, Icon: BlocksIcon },
     { id: "danger" as const, labelKey: "nav.danger" as const, Icon: TriangleAlertIcon },
 ];
 
@@ -36,6 +41,8 @@ function initialSettings(user: IUserProfile | null): IUpdateUserSettingsInput {
         public_profile: user?.public_profile ?? true,
         store_gacha: user?.store_gacha ?? true,
         share_stats: user?.share_stats ?? true,
+        // Opt-in: only a profile read that says `true` is on.
+        public_gacha: user?.public_gacha === true,
     };
 }
 
@@ -121,8 +128,25 @@ export function SettingsPage({ user }: { user: IUserProfile | null }) {
     return (
         <SettingsShell nav={nav} active={active} onChange={setActive}>
             {user && active === "account" && <AccountPanel user={user} onResync={() => resyncMutation.mutate()} syncing={resyncMutation.isPending} onSignOut={handleSignOut} signingOut={signingOut} onDisconnect={() => disconnectMutation.mutate()} disconnecting={disconnectMutation.isPending} />}
+            {/* Signed out, the nav shows Appearance alone under a subtitle that promises
+                account settings, so the way to the rest has to be on the page. */}
+            {!user ? (
+                <Card className="mb-4">
+                    <CardHeader>
+                        <CardTitle>{t("signedOut.title")}</CardTitle>
+                        <CardDescription>{t("signedOut.desc")}</CardDescription>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                        <Button onClick={() => authActions.openLoginDialog()}>
+                            <LogInIcon aria-hidden="true" />
+                            {t("signedOut.action")}
+                        </Button>
+                    </CardContent>
+                </Card>
+            ) : null}
             {active === "appearance" && <AppearancePanel />}
             {user && active === "privacy" && <PrivacyPanel settings={settings} onChange={handleSettingsChange} saving={settingsMutation.isPending} />}
+            {user && active === "apps" && <AppsPanel userId={user.id} />}
             {user && active === "danger" && <DangerPanel onDelete={() => deleteMutation.mutate()} deleting={deleteMutation.isPending} errorMessage={deleteMutation.error ? describeError(deleteMutation.error) : null} onDialogClose={() => deleteMutation.reset()} />}
         </SettingsShell>
     );

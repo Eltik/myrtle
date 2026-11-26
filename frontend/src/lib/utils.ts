@@ -705,3 +705,11 @@ export const FALLBACK_TIER_COLORS = ["oklch(0.62 0.21 24)", "oklch(0.70 0.17 50)
 export function rarityStarColor(rarity: number): string {
     return RARITY_HEX_MUTED[rarity] ?? "#b5b5b5";
 }
+
+/** The rarity hue for TEXT and glyphs (names, star runs, counts): `--rarity-N-ink`
+ *  clears 4.5:1 on the card and the page in both themes, where the plain hue
+ *  measures 1.39 to 2.52 on the light card. Fills, borders and rings keep
+ *  `rarityStarColor` / `RARITY_HEX`. */
+export function rarityInk(rarity: number): string {
+    return `var(--rarity-${rarity >= 1 && rarity <= 6 ? Math.trunc(rarity) : 1}-ink)`;
+}

@@ -12,7 +12,7 @@ export const messages = {
         description: "Accessible name of those buttons.",
     },
     "profile.base.facts.recruitSlots.tooltip": {
-        text: "Recruitment slots you have purchased beyond the first - account state the sync cannot read. Declaring it prices skills like Lin’s Meritocracy (+10% HR speed per slot); left at +0 they honestly count as zero.",
+        text: "Recruitment slots you have purchased beyond the first. The sync cannot read this. Declaring it prices skills like Lin's Meritocracy (+10% HR speed per slot); left at +0 they honestly count as zero.",
         description: "Tooltip over the account-facts row. 'Lin' is an operator and 'Meritocracy' her base skill - both keep the game's names; 'HR' is the base's hiring office. The apostrophe is a typographic one.",
     },
     "profile.base.facts.training": {

@@ -37,7 +37,7 @@ export const messages = {
     },
     "squad.analysis.synergy.pill.unread": { text: "Not read", description: "Pill on a talent whose wording the page has no reading for yet (the operator is not on the EN server yet)." },
     "squad.analysis.synergy.lead.unread": {
-        text: "This operator is not on the EN server yet, so who this talent reaches is not read.",
+        text: "This operator is not on the EN server yet, so this talent's targets aren't known yet.",
         description: "A talent the page cannot place: its wording is read from the EN server's text, which does not have this operator yet.",
     },
     "squad.analysis.synergy.target.everyone": { text: "every ally", description: "Target of a talent that reaches all allies, inside a sentence such as 'Works on every ally, and nobody else in this squad counts.'" },

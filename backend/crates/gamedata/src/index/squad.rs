@@ -552,7 +552,8 @@ impl TagIndex {
     }
 }
 
-#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct ThreatThresholds {
     pub high_res: Option<f64>,
     pub high_def: Option<f64>,

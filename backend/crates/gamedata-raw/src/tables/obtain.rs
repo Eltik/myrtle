@@ -1,7 +1,8 @@
 use serde::{Deserialize, Serialize};
 
 /// Operator's `itemObtainApproach` category
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub enum ObtainChannel {
     Headhunting,
@@ -49,7 +50,8 @@ impl ObtainChannel {
 }
 
 /// Skin's shop channel, from `displaySkin.displayTagId`
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub enum SkinChannel {
     /// No tag: outfit store and default outfits

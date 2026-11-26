@@ -91,6 +91,10 @@ export const messages = {
         text: "Clear",
         description: "Button inside the complete-class filter popup that unsets the filter.",
     },
+    "search.toolbar.operatorsFailed": {
+        text: "Couldn't load the operator list for these filters.",
+        description: "Shown under the search filters, beside a Try again button, when the operator list behind the pickers failed to load.",
+    },
 } satisfies MessageMap;
 
 export const { keys } = defineMessages({ namespace, messages });

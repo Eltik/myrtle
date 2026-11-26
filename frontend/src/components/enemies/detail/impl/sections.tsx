@@ -1,5 +1,6 @@
 import type React from "react";
 import { useMemo, useState } from "react";
+import { Kicker } from "#/components/ui/kicker";
 import type { IEnemyAttributes, IEnemyLevelStats, IEnemySkill } from "#/lib/api/enemies";
 import { assetURL } from "#/lib/assets";
 import { emphasizeTagsHtml } from "#/lib/gamedata/richtext";
@@ -25,8 +26,8 @@ export function EnemyHero({ enemy }: { enemy: IEnemyView }) {
     const meta = [enemy.enemyIndex, enemy.race, enemy.applyWay ? tConst(APPLY_WAY_LABEL_KEY[enemy.applyWay]) : null].filter(Boolean).join(" · ");
 
     return (
-        <div className="flex gap-4 rounded-[14px] border border-border bg-card p-4 sm:gap-5 sm:p-5">
-            <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-[10px] border bg-[color-mix(in_oklch,var(--muted)_40%,transparent)] sm:h-28 sm:w-28" style={{ borderColor: enemy.enemyLevel === "NORMAL" ? "var(--border)" : tok.badgeBorder }}>
+        <div className="flex gap-4 rounded-2xl border border-border bg-card p-4 sm:gap-5 sm:p-5">
+            <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-lg border bg-[color-mix(in_oklch,var(--muted)_40%,transparent)] sm:h-28 sm:w-28" style={{ borderColor: enemy.enemyLevel === "NORMAL" ? "var(--border)" : tok.badgeBorder }}>
                 {hasPortrait && portraitSrc ? <img src={portraitSrc} alt={enemy.name} onError={() => setImgError(true)} className="absolute inset-0 h-full w-full object-contain" /> : <EnemyPlaceholder className="absolute inset-0 h-full w-full p-2.5" />}
                 {enemy.enemyLevel !== "NORMAL" && <span aria-hidden="true" className="absolute right-0 bottom-0 left-0 h-0.75" style={{ background: tok.accent }} />}
             </div>
@@ -36,7 +37,7 @@ export function EnemyHero({ enemy }: { enemy: IEnemyView }) {
                     <h1 className="m-0 font-bold font-sans text-[20px] text-foreground leading-[1.1] tracking-tight sm:text-[26px]">{enemy.name}</h1>
                     <LevelBadge level={enemy.enemyLevel} />
                 </div>
-                {meta && <div className="font-medium font-mono text-[10.5px] text-muted-foreground uppercase leading-none tracking-[0.14em] sm:text-[11px]">{meta}</div>}
+                {meta && <div className="font-medium font-mono text-[10.5px] text-muted-foreground leading-snug sm:text-[11px]">{meta}</div>}
 
                 {enemy.damageType.length > 0 && (
                     <div className="mt-1 flex flex-wrap gap-1.5">
@@ -63,15 +64,10 @@ export function EnemyHero({ enemy }: { enemy: IEnemyView }) {
     );
 }
 
-function Kicker({ children }: { children: React.ReactNode }) {
-    return <span className="font-medium font-mono text-[10.5px] text-muted-foreground uppercase leading-none tracking-[0.14em]">{children}</span>;
-}
-
 export function SectionHead({ children }: { children: React.ReactNode }) {
     return (
-        <div className="mb-3 flex items-center gap-2.5">
-            <Kicker>{children}</Kicker>
-            <span className="h-px flex-1 bg-border" />
+        <div className="mb-3">
+            <Kicker className="leading-none">{children}</Kicker>
         </div>
     );
 }
@@ -79,7 +75,7 @@ export function SectionHead({ children }: { children: React.ReactNode }) {
 function Meta({ label, value }: { label: string; value: string }) {
     return (
         <div className="rounded-md bg-[color-mix(in_oklch,var(--muted)_50%,transparent)] px-2.5 py-2">
-            <div className="mb-1.25 font-medium font-mono text-[10px] text-muted-foreground uppercase leading-none tracking-[0.12em]">{label}</div>
+            <Kicker className="mb-1.25 block leading-none">{label}</Kicker>
             <div className="break-all font-medium font-sans text-[12.5px] text-foreground leading-[1.2]">{value}</div>
         </div>
     );
@@ -110,8 +106,7 @@ export function OverviewTab({ enemy }: { enemy: IEnemyView }) {
     return (
         <div className="flex flex-col gap-5 sm:gap-5.5">
             {enemy.description && (
-                <section>
-                    <SectionHead>{t("overview.description")}</SectionHead>
+                <section aria-label={t("overview.description")}>
                     <p className="m-0 text-pretty font-sans text-[13.5px] text-foreground leading-relaxed">{enemy.description}</p>
                 </section>
             )}
@@ -122,7 +117,13 @@ export function OverviewTab({ enemy }: { enemy: IEnemyView }) {
                     <div className="flex flex-col gap-3.5">
                         {groups.map((g, gi) => (
                             <div key={g.title ?? `g-${gi}`}>
-                                {g.title && <h4 className="mb-1.5 font-sans font-semibold text-[12.5px] text-primary uppercase leading-none tracking-[0.04em]">{g.title}</h4>}
+                                {g.title && (
+                                    <h4 className="mb-1.5">
+                                        <Kicker tone="accent" className="leading-none">
+                                            {g.title}
+                                        </Kicker>
+                                    </h4>
+                                )}
                                 {g.items.length > 0 && (
                                     <ul className="m-0 flex list-none flex-col gap-1.5 p-0">
                                         {g.items.map((ab) => (
@@ -168,10 +169,10 @@ export function OverviewTab({ enemy }: { enemy: IEnemyView }) {
 
 function PhaseHeader({ phase, label }: { phase: IEnemyLevelStats; label: string }) {
     return (
-        <div className="flex items-center gap-2 rounded-md border border-[color-mix(in_oklch,var(--primary)_45%,transparent)] bg-[color-mix(in_oklch,var(--primary)_14%,transparent)] px-2.5 py-1.5 font-medium font-mono text-[10.5px] text-primary uppercase leading-none tracking-[0.14em]">
-            <span aria-hidden="true" className="inline-block h-1.25 w-1.25 rounded-full bg-primary" />
-            <span className="truncate">{label}</span>
-            <span className="ml-auto font-mono text-[9.5px] text-muted-foreground tracking-[0.12em]">L{phase.level}</span>
+        <div className="flex items-center gap-2 rounded-md border border-[color-mix(in_oklch,var(--primary)_45%,transparent)] bg-[color-mix(in_oklch,var(--primary)_14%,transparent)] px-2.5 py-1.5 leading-none">
+            <span aria-hidden="true" className="inline-block h-1.25 w-1.25 shrink-0 rounded-full bg-primary" />
+            <h4 className="m-0 truncate font-medium font-sans text-[13px] text-foreground">{label}</h4>
+            <span className="ml-auto font-mono text-[10px] text-muted-foreground tracking-[0.12em]">L{phase.level}</span>
         </div>
     );
 }
@@ -250,11 +251,11 @@ function PhaseStatsBlock({ phase, label }: { phase: IEnemyLevelStats; label: str
     return (
         <div className="flex flex-col gap-2">
             <PhaseHeader phase={phase} label={label} />
-            <div className="rounded-[10px] border border-border bg-[color-mix(in_oklch,var(--muted)_22%,transparent)] p-3">
-                <dl className="m-0 grid grid-cols-1 gap-1 sm:grid-cols-2">
+            <div className="rounded-2xl border border-border bg-[color-mix(in_oklch,var(--muted)_22%,transparent)] p-3">
+                <dl className="m-0 grid grid-cols-1 gap-y-1 sm:grid-cols-2 sm:gap-x-6">
                     {STAT_ROWS.map((row) => (
                         <div key={row.labelKey} className="flex items-baseline justify-between gap-2 border-border/40 border-b py-1 last:border-b-0 sm:nth-last-[2]:border-b-0">
-                            <dt className="font-medium font-mono text-[10px] text-muted-foreground uppercase leading-none tracking-[0.12em]">{t(row.labelKey)}</dt>
+                            <dt className="kicker leading-none">{t(row.labelKey)}</dt>
                             <dd className="m-0 font-mono font-semibold text-[13px] text-foreground tabular-nums leading-none">{row.format(row.pick(phase.attributes), f)}</dd>
                         </div>
                     ))}
@@ -283,7 +284,7 @@ function ImmunityIcon({ on }: { on: boolean }) {
 function ImmunityCompareGrid({ phases, labels }: { phases: IEnemyLevelStats[]; labels: string[] }) {
     const t: TypedT<typeof messages> = useT("enemies");
     return (
-        <div className="overflow-x-auto rounded-[10px] border border-border">
+        <div className="overflow-x-auto rounded-2xl border border-border">
             <table className="w-full border-collapse text-left">
                 <thead>
                     <tr className="border-border/60 border-b bg-[color-mix(in_oklch,var(--muted)_30%,transparent)]">
@@ -391,7 +392,7 @@ function skillsAreEqual(a: IEnemySkill[], b: IEnemySkill[]): boolean {
 function SkillCard({ skill }: { skill: IEnemySkill }) {
     const t: TypedT<typeof messages> = useT("enemies");
     return (
-        <div className="rounded-[10px] border border-border bg-[color-mix(in_oklch,var(--muted)_30%,transparent)] p-3 sm:p-3.5">
+        <div className="rounded-2xl border border-border bg-[color-mix(in_oklch,var(--muted)_30%,transparent)] p-3 sm:p-3.5">
             <div className="flex items-center justify-between gap-2">
                 <span className="truncate font-medium font-mono text-[12px] text-foreground leading-none">{skill.prefabKey}</span>
                 <span className="font-mono text-[10.5px] text-muted-foreground uppercase leading-none tracking-[0.12em]">P{skill.priority}</span>

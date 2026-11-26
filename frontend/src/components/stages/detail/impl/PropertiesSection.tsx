@@ -13,7 +13,7 @@ export function PropertiesSection({ stage, level }: { stage: IStage; level: ILev
             <section>
                 <SectionHead>{t("props.title")}</SectionHead>
                 <div className="flex flex-col gap-2.5">
-                    <div className="flex flex-col rounded-[10px] border border-border bg-card px-3.5 py-1.5">
+                    <div className="flex flex-col rounded-2xl border border-border bg-card px-3.5 py-1.5">
                         <FlagRow label={t("props.canPractice")} on={stage.canPractice} />
                         <FlagRow label={t("props.battleReplay")} on={stage.canBattleReplay} />
                         <FlagRow label={t("props.autoDeploy")} on={stage.canMultipleBattle} />

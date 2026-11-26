@@ -23,7 +23,8 @@ use serde::Serialize;
 
 const EQUIVALENT_LENIENCY: f64 = 0.05;
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct BaseAssignmentDto {
     pub rooms: Vec<RoomAssignmentDto>,
     pub total_production_efficiency: f64,
@@ -35,7 +36,8 @@ pub struct BaseAssignmentDto {
     pub drone_exp_per_day: f64,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct RoomAssignmentDto {
     pub slot_id: String,
     pub room_type: String,
@@ -60,13 +62,15 @@ pub struct RoomAssignmentDto {
     pub fill_hours: Option<f64>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct NonProdEffectDto {
     pub room_type: String,
     pub value: f64,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct SkillLineDto {
     pub operator_id: String,
     pub operator_name: String,
@@ -90,7 +94,8 @@ fn is_zero(v: &f64) -> bool {
     v.abs() < 1e-9
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct AssignedOperator {
     pub operator_id: String,
     pub name: String,
@@ -102,14 +107,16 @@ pub struct AssignedOperator {
     pub parked: bool,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct MovedOperator {
     pub operator: AssignedOperator,
     pub to_room_type: String,
     pub to_team_label: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct ShiftRotationDto {
     pub shifts: Vec<ShiftDto>,
     pub sustained: Vec<AssignedOperator>,
@@ -117,7 +124,8 @@ pub struct ShiftRotationDto {
     pub sustainability: SustainabilityDto,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct SustainabilityDto {
     pub verdict: String,
     pub horizon_hours: f64,
@@ -129,7 +137,8 @@ pub struct SustainabilityDto {
     pub facilities: Vec<FacilityOutputDto>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct FacilityOutputDto {
     pub slot_id: String,
     pub room_type: String,
@@ -140,7 +149,8 @@ pub struct FacilityOutputDto {
     pub idle_hours: f64,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct MoraleTimelineDto {
     pub operator: AssignedOperator,
     pub room_type: String,
@@ -149,20 +159,23 @@ pub struct MoraleTimelineDto {
     pub end: f64,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct DepletedOperatorDto {
     pub operator: AssignedOperator,
     pub at_hours: f64,
     pub room_type: String,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct ShiftDto {
     pub index: usize,
     pub rooms: Vec<ShiftRoomDto>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct ShiftRoomDto {
     pub slot_id: String,
     pub room_type: String,

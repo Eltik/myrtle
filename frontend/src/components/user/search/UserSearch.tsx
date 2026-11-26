@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { ArrowRight, Filter, Search, Trophy, Users, X } from "lucide-react";
+import { ArrowRight, Filter, RotateCwIcon, Search, Trophy, Users, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Pagination } from "#/components/operators/list/impl/components/Pagination";
 import { Button } from "#/components/ui/button";
@@ -96,6 +96,8 @@ export function UserSearch() {
     const totalCount = searchQuery.data?.total ?? null;
     const totalPages = Math.max(1, Math.ceil((totalCount ?? 0) / PAGE_SIZE));
     const showResults = !isLoading && users.length > 0;
+    // Checked before the empty states: a failed search has no entries, which read as "no users found".
+    const showError = !isLoading && searchQuery.isError && users.length === 0;
     const showEmpty = !isLoading && users.length === 0;
 
     const handlePageChange = (page: number) => {
@@ -170,7 +172,7 @@ export function UserSearch() {
                         )}
                     </span>
                     {totalCount !== null && (
-                        <span className="hidden font-mono text-[11px] uppercase leading-none tracking-[0.08em] sm:inline">
+                        <span className="hidden font-mono text-[11px] leading-none sm:inline">
                             <strong className="text-foreground">{f.number(totalCount)}</strong> {t("search.count.unit", { count: totalCount })}
                         </span>
                     )}
@@ -184,6 +186,18 @@ export function UserSearch() {
                             <UserCard key={`${user.uid}-${user.server}`} user={user} sort={sort} />
                         ))}
                     </div>
+                ) : showError ? (
+                    <Empty role="alert">
+                        <EmptyHeader>
+                            <EmptyTitle>{t("search.error.title")}</EmptyTitle>
+                        </EmptyHeader>
+                        <EmptyContent>
+                            <Button variant="outline" size="sm" onClick={() => void searchQuery.refetch()}>
+                                <RotateCwIcon aria-hidden="true" />
+                                {t("search.error.retry")}
+                            </Button>
+                        </EmptyContent>
+                    </Empty>
                 ) : showEmpty ? (
                     activeFilters > 0 ? (
                         <Empty>

@@ -72,7 +72,8 @@ pub const EARLY: &[&str] = &[
 
 const STORE_APPROACHES: &[&str] = &["采购中心", "Store"];
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct SkinPrice {
     pub price: i32,

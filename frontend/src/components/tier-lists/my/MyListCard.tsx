@@ -64,7 +64,10 @@ export function MyListCard({ tl, onEdit, onDelete, onCopyLink }: IMyListCardProp
                     </Link>
 
                     <Menu>
-                        <MenuTrigger aria-label={t("my.card.actions")} className="inline-flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-md border border-transparent text-muted-foreground transition-colors hover:border-border hover:bg-accent hover:text-foreground">
+                        <MenuTrigger
+                            aria-label={t("my.card.actions")}
+                            className="pointer-coarse:after:-translate-1/2 relative inline-flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-transparent text-muted-foreground transition-colors pointer-coarse:after:absolute pointer-coarse:after:top-1/2 pointer-coarse:after:left-1/2 pointer-coarse:after:size-11 hover:border-border hover:bg-accent hover:text-foreground"
+                        >
                             <MoreHorizontalIcon className="h-4 w-4" />
                         </MenuTrigger>
                         <MenuPopup align="end" sideOffset={6} className="min-w-44">
@@ -96,7 +99,7 @@ export function MyListCard({ tl, onEdit, onDelete, onCopyLink }: IMyListCardProp
                     <CardStat kind="views" value={f.compact(tl.views)} title={t("my.card.views", { count: f.number(tl.views) })} />
                     <CardStat kind="favorites" value={f.compact(tl.favorites)} title={t("my.card.favorites", { count: f.number(tl.favorites) })} />
                     {tl.views24h > 0 && <CardStat kind="views24h" value={f.compact(tl.views24h)} title={t("my.card.views24h", { count: f.number(tl.views24h) })} />}
-                    <span className="ml-auto shrink-0 text-[10.5px] text-muted-foreground/80">{tl.updated}</span>
+                    <span className="ml-auto shrink-0 text-[10.5px] text-subtle-foreground">{tl.updated}</span>
                 </div>
             </div>
         </article>

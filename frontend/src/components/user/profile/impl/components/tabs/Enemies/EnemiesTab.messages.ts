@@ -32,7 +32,7 @@ export const messages = {
         description: "Empty-state body when the filters and search leave nothing.",
     },
     "profile.enemies.search.placeholder": {
-        text: "Search enemies...",
+        text: "Search enemies…",
         description: "Prompt inside the empty handbook search box. Keep the three dots as written.",
     },
     "profile.enemies.status.all": {
@@ -48,7 +48,7 @@ export const messages = {
         description: "Filter chip: only enemies the account has never met.",
     },
     "profile.enemies.level.all": {
-        text: "All Tiers",
+        text: "All tiers",
         description: "Filter chip: every enemy tier.",
     },
     "profile.enemies.level.normal": {
@@ -106,6 +106,10 @@ export const messages = {
     "profile.enemies.card.locked": {
         text: "Not encountered",
         description: "Native tooltip on the padlock marking an enemy the account has never met.",
+    },
+    "profile.enemies.loadFailed": {
+        text: "Couldn't load the enemy handbook.",
+        description: "Shown in place of the enemies tab, beside a Retry button, when the handbook failed to load. Without it the tab read 0 of 0 encountered.",
     },
 } satisfies MessageMap;
 

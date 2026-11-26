@@ -15,9 +15,11 @@ import { values } from "#/lib/records";
 import { cn, downloadBlob } from "#/lib/utils";
 import { hasWebGL } from "#/lib/webgl";
 import type { IOperatorListItem } from "#/types/operators";
+import { useCnUpdatesContext } from "../../cnUpdates";
 import { sanitizeFilename } from "../../helpers";
 import { buildOperatorSkinList, chibiSkinKey, type IUISkin } from "../../skins";
 import type { messages as skinMessages } from "../../skins.messages";
+import { CnTag } from "../CnMarkers";
 import { DynamicChibiViewer } from "../chibi/ChibiViewer.lazy";
 import { DEFAULT_SPINE_FIT } from "../chibi/skin-data";
 import type { ISceneIllustHandle } from "../dynillust/SceneIllust";
@@ -36,9 +38,13 @@ export const SkinsContent = memo(function SkinsContent({ operator }: ISkinsConte
     const localeServer = useGamedataServer();
     const server = operatorGamedataServer(operator.server, localeServer);
     const { data: skinsResponse, isLoading: skinsLoading } = useQuery(operatorSkinsQueryOptions(operator.id ?? "", server));
+    // An operator CN has changed also shows the outfits only CN has, from CN's skin table.
+    const cnUpdates = useCnUpdatesContext();
+    const { data: cnSkinsResponse } = useQuery({ ...operatorSkinsQueryOptions(operator.id ?? "", "cn"), enabled: !!cnUpdates && server !== "cn" });
     // Chibi spine data is art, not text, so it stays on the operator's own
     // art tree rather than following the locale.
-    const { data: chibiCharacter } = useQuery(chibiByOperatorQueryOptions(operator.id ?? "", operator.server));
+    const { data: ownChibi } = useQuery(chibiByOperatorQueryOptions(operator.id ?? "", operator.server));
+    const { data: cnChibi } = useQuery({ ...chibiByOperatorQueryOptions(operator.id ?? "", "cn"), enabled: !!cnUpdates && !!operator.id && operator.server !== "cn" });
 
     const isBranchForm = !!operator.tmplDefault && operator.id !== operator.tmplDefault;
     const skins: IUISkin[] = useMemo(() => {
@@ -46,7 +52,9 @@ export const SkinsContent = memo(function SkinsContent({ operator }: ISkinsConte
         // For Amiya, every skin's `charId` is the base; `tmplId` identifies
         // the form. Match by tmplId when present so each form only shows its
         // own skins. Falls back to charId for regular operators.
-        const operatorSkins: ISkin[] = values(charSkins).filter((s) => (s.tmplId ? s.tmplId === operator.id : s.charId === operator.id));
+        const ownSkin = (s: ISkin) => (s.tmplId ? s.tmplId === operator.id : s.charId === operator.id);
+        const operatorSkins: ISkin[] = values(charSkins).filter(ownSkin);
+        const cnSkins: ISkin[] | undefined = cnUpdates && cnSkinsResponse ? values(cnSkinsResponse.charSkins ?? {}).filter(ownSkin) : undefined;
         return buildOperatorSkinList({
             skinsFromBackend: operatorSkins,
             operatorId: operator.id ?? "",
@@ -56,12 +64,18 @@ export const SkinsContent = memo(function SkinsContent({ operator }: ISkinsConte
             artistFallback: operator.artists?.[0],
             isBranchForm,
             server: operator.server,
+            cnSkins,
             t,
         });
-    }, [skinsResponse, operator.id, operator.skin, operator.portrait, operator.phases.length, operator.artists?.[0], isBranchForm, operator.server, t]);
+    }, [skinsResponse, cnSkinsResponse, cnUpdates, operator.id, operator.skin, operator.portrait, operator.phases.length, operator.artists?.[0], isBranchForm, operator.server, t]);
 
     const [selectedId, setSelectedId] = useState<string | null>(null);
     const selected = useMemo(() => skins.find((s) => s.id === selectedId) ?? skins[0] ?? null, [skins, selectedId]);
+
+    // A CN-only outfit's chibi and dynamic art exist only in CN's tree, so its record and server come from CN.
+    const fromCn = !!selected?.fromCn && !!cnChibi;
+    const chibiCharacter = fromCn ? cnChibi : ownChibi;
+    const artServer = fromCn ? "cn" : operator.server;
 
     const chibiSkin = useMemo(() => {
         if (!chibiCharacter || !selected) return null;
@@ -145,16 +159,19 @@ export const SkinsContent = memo(function SkinsContent({ operator }: ISkinsConte
                                 (aligned behind the spine) so the full painted vista fills in even
                                 when the dynamic asset omits it (sky/interior). */}
                             <img alt={selected.name} className={cn("absolute inset-0 h-full w-full object-contain transition-opacity duration-500", showDynamic && dynamicReady && !fullscreenOpen && "opacity-0")} decoding="async" loading="eager" src={selected.image} />
-                            {showDynamic && dynamicFiles && !fullscreenOpen && <SceneIllustPlayer files={dynamicFiles} server={operator.server} framing="authored" surface="panel" backdrop={selected.image} onReady={() => setReadySkel(dynSkel)} />}
+                            {showDynamic && dynamicFiles && !fullscreenOpen && <SceneIllustPlayer files={dynamicFiles} server={artServer} framing="authored" surface="panel" backdrop={selected.image} onReady={() => setReadySkel(dynSkel)} />}
                             <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-linear-to-t from-black/70 via-black/40 to-transparent" />
-                            <SkinViewerDialog imageSrc={selected.image} skinName={selected.name} dynamic={showDynamic && dynamicFiles ? { files: dynamicFiles, server: operator.server } : null} onOpenChange={onFullscreenChange}>
+                            <SkinViewerDialog imageSrc={selected.image} skinName={selected.name} dynamic={showDynamic && dynamicFiles ? { files: dynamicFiles, server: artServer } : null} onOpenChange={onFullscreenChange}>
                                 <button type="button" aria-label={t("outfits.fullscreen")} className="absolute top-3 right-3 inline-flex items-center justify-center rounded-md border border-white/20 bg-black/40 p-1.5 text-white backdrop-blur-md transition-colors hover:bg-black/60">
                                     <Maximize2 className="h-4 w-4" />
                                 </button>
                             </SkinViewerDialog>
                             <div className="absolute inset-x-0 bottom-0 p-4 md:p-5">
                                 <div className="font-mono text-[10px] text-white/70 uppercase tracking-wider">{selected.kicker}</div>
-                                <div className="mt-0.5 font-semibold text-2xl text-white drop-shadow-md">{selected.name}</div>
+                                <div className="mt-0.5 flex items-center gap-2 font-semibold text-2xl text-white drop-shadow-md">
+                                    <span lang={selected.fromCn ? "zh" : undefined}>{selected.name}</span>
+                                    {selected.fromCn && <CnTag className="bg-black/40 text-[10px]" />}
+                                </div>
                                 {selected.displaySkin?.drawerList?.join(", ") && <div className="mt-0.5 text-white/70 text-xs">{t("skins.artist", { artist: selected.displaySkin?.drawerList?.join(", ") })}</div>}
                             </div>
                         </div>
@@ -183,7 +200,12 @@ export const SkinsContent = memo(function SkinsContent({ operator }: ISkinsConte
                             </div>
                             <div className="min-w-0 flex-1">
                                 <div className="font-medium font-mono text-[10px] text-muted-foreground uppercase tracking-wider">{skin.kicker}</div>
-                                <div className="mt-0.5 truncate font-semibold text-foreground text-sm">{skin.name}</div>
+                                <div className="mt-0.5 flex min-w-0 items-center gap-1.5">
+                                    <span className="truncate font-semibold text-foreground text-sm" lang={skin.fromCn ? "zh" : undefined}>
+                                        {skin.name}
+                                    </span>
+                                    {skin.fromCn && <CnTag />}
+                                </div>
                                 <div className="mt-0.5 truncate text-muted-foreground text-xs">{skin.sub}</div>
                             </div>
                         </button>
@@ -259,7 +281,7 @@ export const SkinsContent = memo(function SkinsContent({ operator }: ISkinsConte
                         </div>
                     );
                 })()}
-            {chibiCharacter && <DynamicChibiViewer chibi={chibiCharacter} skin={chibiSkin} server={operator.server} />}
+            {chibiCharacter && <DynamicChibiViewer chibi={chibiCharacter} skin={chibiSkin} server={artServer} />}
         </div>
     );
 });

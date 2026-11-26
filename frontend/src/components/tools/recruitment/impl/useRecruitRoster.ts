@@ -10,6 +10,9 @@ export interface IRecruitRoster {
     loading: boolean;
     /** Operator id -> 0-based potential (0 = P1, 5 = P6). Empty until loaded or when signed out. */
     potentialByOperator: ReadonlyMap<string, number>;
+    /** The roster request failed: the empty map would read every operator as unowned, so nothing owned-dependent may show. */
+    failed: boolean;
+    refetch: () => void;
 }
 
 const EMPTY: ReadonlyMap<string, number> = new Map();
@@ -23,7 +26,7 @@ const EMPTY: ReadonlyMap<string, number> = new Map();
 export function useRecruitRoster(): IRecruitRoster {
     const { user } = useAuth();
     const uid = user?.uid ?? "";
-    const { data, isLoading } = useQuery({
+    const { data, isLoading, isError, refetch } = useQuery({
         ...userRosterQueryOptions(uid),
         enabled: uid.length > 0,
     });
@@ -35,5 +38,6 @@ export function useRecruitRoster(): IRecruitRoster {
         return out;
     }, [data]);
 
-    return { signedIn: uid.length > 0, loading: uid.length > 0 && isLoading, potentialByOperator };
+    const failed = uid.length > 0 && isError && !data;
+    return { signedIn: uid.length > 0, loading: uid.length > 0 && isLoading, potentialByOperator, failed, refetch: () => void refetch() };
 }

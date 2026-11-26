@@ -1,6 +1,9 @@
 import { useMemo } from "react";
 import type { IRange } from "#/lib/api/ranges";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
+import type { messages } from "./OperatorRange.messages";
 
 enum GridCell {
     empty = 0,
@@ -14,11 +17,17 @@ interface IOperatorRangeProps {
 }
 
 export function OperatorRange({ range, className }: IOperatorRangeProps) {
+    const t: TypedT<typeof messages> = useT("operators");
     const { rows, cols, grid } = useMemo(() => normalize(range), [range]);
+    const reach = useMemo(() => describe(range), [range]);
 
     return (
         <div className={cn("max-w-full overflow-x-auto", className)}>
-            <table className="border-separate border-spacing-1">
+            {/* A grid of empty cells has nothing to read, so the table is one image with its reach as
+                the name. The edge colour is darker in light mode: the game's #e8973c measured 2.35 on
+                the white card, oklch(0.6 0.14 65) measures 4.09 on the card, 3.92 on the page and 3.44
+                on muted. Dark keeps the original, 8.13 on the card. */}
+            <table aria-label={t("range.aria", reach)} className="border-separate border-spacing-1 [--range-edge:oklch(0.6_0.14_65)] dark:[--range-edge:#e8973c]" role="img">
                 <tbody>
                     {Array.from({ length: rows }).map((_, r) => (
                         // biome-ignore lint/suspicious/noArrayIndexKey: grid cells are positionally stable
@@ -31,8 +40,8 @@ export function OperatorRange({ range, className }: IOperatorRangeProps) {
                                         key={c}
                                         className={cn(
                                             "h-5 w-5 sm:h-6 sm:w-6",
-                                            cell === GridCell.empty && "border border-[#e8973c]/25 border-dashed",
-                                            cell === GridCell.active && "border border-[#e8973c] bg-[repeating-linear-gradient(135deg,#e8973c_0_3px,transparent_3px_7px)]",
+                                            cell === GridCell.empty && "border border-(--range-edge)/25 border-dashed",
+                                            cell === GridCell.active && "border border-(--range-edge) bg-[repeating-linear-gradient(135deg,var(--range-edge)_0_3px,transparent_3px_7px)]",
                                             cell === GridCell.operator && "border border-foreground bg-foreground",
                                         )}
                                     />
@@ -44,6 +53,20 @@ export function OperatorRange({ range, className }: IOperatorRangeProps) {
             </table>
         </div>
     );
+}
+
+/** Tiles hit and how far they reach from the operator, who faces +col. */
+function describe(range: IRange): { tiles: number; ahead: number; behind: number; side: number } {
+    const grids = range.grids ?? [];
+    let ahead = 0;
+    let behind = 0;
+    let side = 0;
+    for (const g of grids) {
+        ahead = Math.max(ahead, g.col);
+        behind = Math.max(behind, -g.col);
+        side = Math.max(side, Math.abs(g.row));
+    }
+    return { tiles: grids.length, ahead, behind, side };
 }
 
 function normalize(range: IRange): { rows: number; cols: number; grid: GridCell[][] } {

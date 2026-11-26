@@ -1,4 +1,4 @@
-import { atomicTagRegex, colorForTag, renderTags } from "#/lib/gamedata/richtext";
+import { atomicTagRegex, inkForTag, renderTags } from "#/lib/gamedata/richtext";
 import type { IBlackboard } from "#/types/operators";
 
 const interpolationRegex = /-?\{-?([^}:]+)(?::([^}]+))?\}/g;
@@ -21,7 +21,7 @@ function interpolateValues(text: string, blackboard: IBlackboard[] | { key: stri
 }
 
 function renderTagsAndNewlines(text: string): string {
-    return renderTags(text, (tag, content) => `<span style="color:${colorForTag(tag)}">${content}</span>`).replace(/\n/g, "<br/>");
+    return renderTags(text, (tag, content) => `<span style="color:${inkForTag(tag)}">${content}</span>`).replace(/\n/g, "<br/>");
 }
 
 export function descriptionToHtml(description: string, blackboard: IBlackboard[] | { key: string; value: number }[] = []): string {
@@ -30,6 +30,9 @@ export function descriptionToHtml(description: string, blackboard: IBlackboard[]
     // escaping up front would double-encode every `&` in the source.
     return renderTagsAndNewlines(interpolateValues(description, blackboard));
 }
+
+/** How a diff marks text the new side adds or changes. */
+export const DIFF_INSERT_CLASS = "rounded bg-emerald-500/15 px-0.5 text-success-foreground";
 
 type DiffOp = { type: "equal" | "delete" | "insert"; tokens: string[] };
 
@@ -113,8 +116,8 @@ export function renderDescriptionDiffHtml(oldDesc: string | null | undefined, ne
         .map((op) => {
             const html = renderTagsAndNewlines(op.tokens.join(""));
             if (op.type === "equal") return html;
-            if (op.type === "delete") return `<span class="rounded bg-red-500/15 px-0.5 text-red-300 line-through decoration-red-400/70">${html}</span>`;
-            return `<span class="rounded bg-emerald-500/15 px-0.5 text-emerald-300">${html}</span>`;
+            if (op.type === "delete") return `<span class="rounded bg-red-500/15 px-0.5 text-destructive-foreground line-through decoration-red-400/70">${html}</span>`;
+            return `<span class="${DIFF_INSERT_CLASS}">${html}</span>`;
         })
         .join("");
 }

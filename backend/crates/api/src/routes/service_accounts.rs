@@ -11,16 +11,21 @@ pub fn routes() -> ApiRouter {
     ApiRouter::new().route("/service-accounts", get(status))
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, ts_rs::TS)]
+#[ts(export)]
 struct ServiceAccountsStatus {
     accounts: Vec<ServiceAccountStatus>,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, ts_rs::TS)]
+#[ts(export)]
 struct ServiceAccountStatus {
     server: &'static str,
+    #[ts(type = "\"ok\" | \"refused\" | \"unknown\"")]
     state: &'static str,
+    #[ts(type = "number | null")]
     refused_since: Option<i64>,
+    #[ts(type = "number | null")]
     last_ok_at: Option<i64>,
 }
 

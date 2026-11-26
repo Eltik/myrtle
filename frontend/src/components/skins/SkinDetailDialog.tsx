@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { skinTexture } from "#/components/operators/detail/impl/assets";
 import { DialogClose, DialogContent, DialogTitle } from "#/components/ui/dialog";
+import { Kicker } from "#/components/ui/kicker";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { ScrollArea } from "#/components/ui/scroll-area";
 import { DynamicArtOverlay } from "#/components/user/profile/impl/DynamicArtOverlay";
@@ -63,7 +64,7 @@ export function SkinDetailContent({ skin, opName, skinName, avatarURL, server, p
                                 <OperatorAvatar charId={skin.charId} name={opName} server={server} />
                             </span>
                             <div className="min-w-0 flex-1">
-                                <p className="truncate font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.12em]">{opName}</p>
+                                <p className="truncate text-muted-foreground text-sm">{opName}</p>
                                 <h3 className="wrap-break-word font-heading font-semibold text-lg leading-tight">{skinName}</h3>
                                 {groupName && groupName !== skinName && <p className="truncate text-muted-foreground text-xs">{groupName}</p>}
                             </div>
@@ -72,7 +73,7 @@ export function SkinDetailContent({ skin, opName, skinName, avatarURL, server, p
                         <dl className="flex flex-col gap-3 text-sm">
                             {price?.label && (
                                 <DetailRow label={t("detail.row.price")}>
-                                    <span className={cn("font-semibold", price.kind === "free" && "text-emerald-600 dark:text-emerald-400")}>{price.label}</span>
+                                    <span className={cn("font-semibold", price.kind === "free" && "text-success-foreground")}>{price.label}</span>
                                     {price.tooltip && <span className="ml-2 text-muted-foreground text-xs">- {price.tooltip}</span>}
                                 </DetailRow>
                             )}
@@ -95,7 +96,7 @@ export function SkinDetailContent({ skin, opName, skinName, avatarURL, server, p
                             {extraRows}
                         </dl>
 
-                        <DialogClose className="mt-auto cursor-pointer rounded-md border border-border bg-muted/40 px-3 py-2 font-medium text-xs transition-colors hover:bg-muted md:hidden">{closeLabel ?? t("detail.back")}</DialogClose>
+                        <DialogClose className="mt-auto min-h-11 cursor-pointer rounded-lg border border-border bg-muted/40 px-3 py-2 font-medium text-xs transition-colors hover:bg-muted md:hidden">{closeLabel ?? t("detail.back")}</DialogClose>
                     </div>
                 </ScrollArea>
             </div>
@@ -106,7 +107,9 @@ export function SkinDetailContent({ skin, opName, skinName, avatarURL, server, p
 export function DetailRow({ label, children }: { label: string; children: React.ReactNode }) {
     return (
         <div className="space-y-1">
-            <dt className="font-mono font-semibold text-[10px] text-muted-foreground uppercase tracking-[0.12em]">{label}</dt>
+            <dt>
+                <Kicker>{label}</Kicker>
+            </dt>
             <dd className="text-foreground/85 text-sm leading-relaxed">{children}</dd>
         </div>
     );

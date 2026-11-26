@@ -1,7 +1,8 @@
 use serde::Serialize;
 use std::collections::{BTreeMap, HashMap};
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct EnemyStageRef {
     pub stage_id: String,
@@ -24,6 +25,7 @@ pub struct EnemyStageRef {
     /// Total spawned across every wave (sum of SPAWN action counts)
     pub count: u32,
     #[serde(skip)]
+    #[ts(skip)]
     pub battle: Option<StageEnemyBattle>,
 }
 
@@ -36,7 +38,8 @@ pub struct StageEnemyBattle {
 
 pub type EnemyStageIndex = HashMap<String, Vec<EnemyStageRef>>;
 
-#[derive(Debug, Clone, Serialize, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Serialize, PartialEq, Eq, Hash, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct EnemyStageInfo {
     pub stage_id: String,
@@ -49,7 +52,8 @@ pub struct EnemyStageInfo {
     pub is_hard: bool,
 }
 
-#[derive(Debug, Clone, Default, Serialize)]
+#[derive(Debug, Clone, Default, Serialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct EnemyStageTable {
     pub stages: Vec<EnemyStageInfo>,

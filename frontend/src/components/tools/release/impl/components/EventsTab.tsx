@@ -49,7 +49,7 @@ export function EventsTab({ today }: IEventsTabProps): React.ReactElement {
     }, [all, stageOnly, showPast, model, today]);
 
     if (events.isPending) return <ReleaseLoading />;
-    if (events.isError) return <ReleaseError error={events.error} onRetry={() => events.refetch()} />;
+    if (events.isError) return <ReleaseError onRetry={() => events.refetch()} />;
 
     return (
         <div className="flex flex-col gap-3">
@@ -95,7 +95,7 @@ function EventRow({ event, today, t, overridden, onOverride }: IEventRowProps): 
                 <Tag>{tagLabel(event.activityType)}</Tag>
             </CnName>
             <div className="font-mono text-[11.5px] text-muted-foreground tabular-nums">
-                <span className="mr-1 uppercase tracking-[0.06em]">{t("release.events.cn")}</span>
+                <span className="mr-1">{t("release.events.cn")}</span>
                 {formatDateRange(event.cnStart, event.cnEnd, locale, t)}
             </div>
             <FarmStages stages={event.farmStages} compact />

@@ -54,6 +54,7 @@ tracing.workspace = true
 urlencoding.workspace = true
 uuid.workspace = true
 walkdir.workspace = true
+ts-rs.workspace = true
 
 [dev-dependencies]
 myrtle-testkit.workspace = true

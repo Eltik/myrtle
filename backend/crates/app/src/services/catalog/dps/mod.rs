@@ -48,7 +48,8 @@ const CALC_TTL: Duration = Duration::from_hours(1);
 const LIST_TTL: Duration = Duration::from_hours(1);
 const RANK_GRID_TTL: Duration = Duration::from_hours(24);
 
-#[derive(Serialize)]
+#[derive(Serialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct ConditionalInfo {
     pub conditional_type: String,
@@ -59,7 +60,8 @@ pub struct ConditionalInfo {
     pub inverted: bool,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, ts_rs::TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct OperatorListEntry {
     pub id: String,

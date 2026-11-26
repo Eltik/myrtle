@@ -44,7 +44,7 @@ export const messages = {
         description: "Promotion stage shorthand: Elite 2. The game's own notation, which normally stays as-is.",
     },
     "levelup.section.operatorLevel": {
-        text: "Operator Level",
+        text: "Operator level",
         description: "Section heading: the cost of levelling, as opposed to promoting.",
     },
     "levelup.section.operatorLevel.desc": {
@@ -60,7 +60,7 @@ export const messages = {
         description: "Subtitle under the Elite Promotion heading.",
     },
     "levelup.section.skillLevels": {
-        text: "Skill Levels",
+        text: "Skill levels",
         description: "Section heading: the cost of raising all skills from level 1 to 7 together.",
     },
     "levelup.section.skillLevels.desc": {
@@ -84,7 +84,7 @@ export const messages = {
         description: "Subtitle under the Modules heading.",
     },
     "levelup.section.total": {
-        text: "Grand Total",
+        text: "Grand total",
         description: "Section heading: every material added together.",
     },
     "levelup.section.total.desc": {
@@ -118,6 +118,10 @@ export const messages = {
     "levelup.row.stage": {
         text: "Stage {stage}",
         description: "Row label for one module upgrade stage, e.g. 'Stage 2'.",
+    },
+    "levelup.materialsFailed": {
+        text: "Couldn't load item names, so tiles show item ids.",
+        description: "Shown above the cost rows, beside a Try again button, when the item table failed to load.",
     },
 } satisfies MessageMap;
 

@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { ChevronsDownUp, ChevronsUpDown, Download, HeartPulse, HelpCircle, RefreshCw } from "lucide-react";
+import { ChevronsDownUp, ChevronsUpDown, Download, HelpCircle, RefreshCw } from "lucide-react";
 import * as React from "react";
 import { AxisControls } from "#/components/tools/shared/AxisControls";
 import { CalcChart } from "#/components/tools/shared/CalcChart";
@@ -14,8 +14,10 @@ import type { messages as detailMessages } from "#/components/tools/shared/useOp
 import { AlertDialog, AlertDialogClose, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogPopup, AlertDialogTitle, AlertDialogTrigger } from "#/components/ui/alert-dialog";
 import { Button } from "#/components/ui/button";
 import { Card, CardHeader, CardPanel, CardTitle } from "#/components/ui/card";
+import { LoadFailed } from "#/components/ui/load-failed";
 import { PageHeader } from "#/components/ui/page-header";
 import { Popover, PopoverPopup, PopoverTrigger } from "#/components/ui/popover";
+import { toastManager } from "#/components/ui/toast";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { hpsOperatorsQueryOptions, type IHpsOperatorListEntry } from "#/lib/api/hps";
 import { operatorsIndexQueryOptions } from "#/lib/api/operators";
@@ -131,7 +133,7 @@ export function HpsCalculator({ shareParam, onShareParamChange }: IHpsCalculator
             await exportSvgAsPng(svg, { filename, title, legend, snapshot });
         } catch (err) {
             console.error("HPS chart export failed:", err);
-            if (typeof window !== "undefined") window.alert(t("hps.export.failed", { error: err instanceof Error ? err.message : String(err) }));
+            toastManager.add({ title: t("hps.export.failed", { error: err instanceof Error ? err.message : String(err) }), type: "error" });
         } finally {
             setIsExporting(false);
         }
@@ -185,7 +187,7 @@ export function HpsCalculator({ shareParam, onShareParamChange }: IHpsCalculator
                         {t("hps.intro")} <b>{t("hps.note.label")}</b>{" "}
                         {rt("hps.note.credit", {
                             link: (
-                                <a className="text-blue-500 hover:underline" href="https://github.com/WhoAteMyCQQkie/ArknightsDpsCompare" target="_blank" rel="noopener">
+                                <a className="text-primary hover:underline" href="https://github.com/WhoAteMyCQQkie/ArknightsDpsCompare" target="_blank" rel="noopener">
                                     {t("hps.note.creditLink")}
                                 </a>
                             ),
@@ -249,7 +251,7 @@ export function HpsCalculator({ shareParam, onShareParamChange }: IHpsCalculator
                     <BuffsPanel hydrationToken={hydrationToken} buffs={state.buffs} onChangeBuffs={(patch) => dispatch({ type: "SET_BUFFS", patch })} onChangeBuffValues={(patch) => dispatch({ type: "SET_BUFF_VALUES", patch })} />
                 </aside>
 
-                <main className="flex min-w-0 flex-col gap-4 xl:sticky xl:top-20 xl:col-start-2 xl:row-span-2 xl:row-start-1 xl:max-h-[calc(100vh-6rem)] xl:overflow-y-auto xl:pr-1">
+                <div className="flex min-w-0 flex-col gap-4 xl:sticky xl:top-20 xl:col-start-2 xl:row-span-2 xl:row-start-1 xl:max-h-[calc(100vh-6rem)] xl:overflow-y-auto xl:pr-1">
                     <Card>
                         <CardHeader className="pb-3">
                             <AxisControls
@@ -285,6 +287,7 @@ export function HpsCalculator({ shareParam, onShareParamChange }: IHpsCalculator
                             />
                         </CardHeader>
                         <CardPanel className="pt-0">
+                            {curves.isError && <LoadFailed layout="inline" className="mb-3" message={t("hps.chart.loadFailed")} onRetry={curves.refetch} />}
                             <CalcChart
                                 instances={state.instances}
                                 rows={curves.rows}
@@ -296,7 +299,6 @@ export function HpsCalculator({ shareParam, onShareParamChange }: IHpsCalculator
                                 isLoading={curves.isPending}
                                 onLegendClick={(uid) => dispatch({ type: "TOGGLE_VISIBILITY", uid })}
                                 containerRef={chartContainerRef}
-                                emptyIcon={<HeartPulse />}
                                 emptyTitle={t("hps.empty.title")}
                                 emptyDescription={rt("hps.empty.desc", { axis: <span className="font-medium text-foreground">{t(X_AXIS_LABEL_KEYS[state.xAxis])}</span> })}
                             />
@@ -304,7 +306,7 @@ export function HpsCalculator({ shareParam, onShareParamChange }: IHpsCalculator
                     </Card>
 
                     <KpiPanel instances={state.instances} snapshots={snapshots} leaderKey={state.yMetric} leaderLabel={t(Y_METRIC_LABEL_KEYS[state.yMetric])} columns={columns} />
-                </main>
+                </div>
 
                 <section aria-label={t("hps.configured")} className="flex min-w-0 flex-col gap-4 xl:col-start-1 xl:row-start-2">
                     {state.instances.map((inst, idx) => (

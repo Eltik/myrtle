@@ -1,6 +1,7 @@
 import { useRef } from "react";
 import { useFittedOpCount } from "#/hooks/use-fitted-op-count";
 import { CardEntityAvatar, cardEntityKey } from "./CardEntityAvatar";
+import { readableTextColor } from "./detail/contrast";
 import type { IThumbRow } from "./shared";
 
 interface IThumbTierRowProps {
@@ -19,9 +20,17 @@ export function ThumbTierRow({ row, styles, title }: IThumbTierRowProps) {
     const visibleCount = useFittedOpCount(opsRef, row.operators.length, row.fallbackVisible);
     const visible = row.operators.slice(0, visibleCount);
     const overflow = row.operators.length - visible.length;
+    const pillText = readableTextColor(row.color);
 
     return (
-        <div className={styles.tierRow} style={{ ["--row-color" as string]: row.color }}>
+        <div
+            className={styles.tierRow}
+            style={{
+                ["--row-color" as string]: row.color,
+                ["--tier-fg" as string]: pillText,
+                ["--tier-shadow" as string]: pillText === "white" ? "0 1px 0 oklch(0 0 0 / 0.25)" : "0 1px 0 oklch(1 0 0 / 0.5)",
+            }}
+        >
             <span className={styles.tierPill} title={title}>
                 {row.name}
             </span>

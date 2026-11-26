@@ -29,20 +29,23 @@ export function PrivacyPanel({ settings, onChange, saving }: IPrivacyPanelProps)
             <Card>
                 <CardHeader>
                     <CardTitle>{t("privacy.visibility.title")}</CardTitle>
-                    <CardDescription>{rt("privacy.visibility.desc", { column: <Mono>{t("privacy.visibility.column")}</Mono> })}</CardDescription>
+                    <CardDescription>{t("privacy.visibility.desc")}</CardDescription>
                 </CardHeader>
                 <CardContent className="pt-0">
-                    <SettingRow layout="inline" title={t("privacy.publicProfile.title")} description={t("privacy.publicProfile.desc")} control={<Switch checked={settings.public_profile} onCheckedChange={(v) => onChange({ ...settings, public_profile: v })} disabled={saving} />} />
+                    <SettingRow
+                        layout="inline"
+                        title={t("privacy.publicProfile.title")}
+                        description={t("privacy.publicProfile.desc")}
+                        control={<Switch checked={settings.public_profile} onCheckedChange={(v) => onChange({ ...settings, public_profile: v })} disabled={saving} aria-label={t("privacy.publicProfile.title")} />}
+                    />
                     <SettingRow
                         layout="inline"
                         title={t("privacy.leaderboards.title")}
-                        description={rt("privacy.leaderboards.desc", {
-                            path: <Mono>{t("privacy.leaderboards.path")}</Mono>,
-                            column: <Mono>{t("privacy.leaderboards.column")}</Mono>,
-                        })}
-                        control={<Switch checked={settings.share_stats} onCheckedChange={(v) => onChange({ ...settings, share_stats: v })} disabled={saving} />}
+                        description={rt("privacy.leaderboards.desc", { path: <Mono>{t("privacy.leaderboards.path")}</Mono> })}
+                        control={<Switch checked={settings.share_stats} onCheckedChange={(v) => onChange({ ...settings, share_stats: v })} disabled={saving} aria-label={t("privacy.leaderboards.title")} />}
                     />
-                    <SettingRow layout="inline" title={t("privacy.gacha.title")} description={rt("privacy.gacha.desc", { column: <Mono>{t("privacy.gacha.column")}</Mono> })} control={<Switch checked={settings.store_gacha} onCheckedChange={(v) => onChange({ ...settings, store_gacha: v })} disabled={saving} />} />
+                    <SettingRow layout="inline" title={t("privacy.gacha.title")} description={t("privacy.gacha.desc")} control={<Switch checked={settings.store_gacha} onCheckedChange={(v) => onChange({ ...settings, store_gacha: v })} disabled={saving} aria-label={t("privacy.gacha.title")} />} />
+                    <SettingRow layout="inline" title={t("privacy.publicGacha.title")} description={t("privacy.publicGacha.desc")} control={<Switch checked={settings.public_gacha} onCheckedChange={(v) => onChange({ ...settings, public_gacha: v })} disabled={saving} aria-label={t("privacy.publicGacha.title")} />} />
                 </CardContent>
             </Card>
         </div>

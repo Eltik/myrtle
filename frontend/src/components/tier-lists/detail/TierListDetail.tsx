@@ -1,6 +1,10 @@
 import { useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { Link, useParams } from "@tanstack/react-router";
+import { RotateCwIcon } from "lucide-react";
 import { useEffect, useMemo, useRef } from "react";
+import { Alert, AlertAction, AlertDescription, AlertTitle } from "#/components/ui/alert";
+import { Button } from "#/components/ui/button";
+import { Skeleton } from "#/components/ui/skeleton";
 import { type ITierListDetail, recordTierListViewFn, snapshotToTiers, tierListDetailQueryOptions, tierListVersionsQueryOptions } from "#/lib/api/tier-lists";
 import { useGamedataServer, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -17,7 +21,8 @@ export function TierListDetail() {
     const { v: requestedVersion } = DetailRoute.useSearch();
     const gamedataServer = useGamedataServer();
     const { data: detail } = useSuspenseQuery(tierListDetailQueryOptions(id, gamedataServer));
-    const { data: versionsData } = useQuery(tierListVersionsQueryOptions(id, gamedataServer));
+    const versionsQuery = useQuery(tierListVersionsQueryOptions(id, gamedataServer));
+    const versionsData = versionsQuery.data;
     const queryClient = useQueryClient();
 
     const versions = useMemo(() => versionsData ?? [], [versionsData]);
@@ -56,7 +61,7 @@ export function TierListDetail() {
 
     if (!detail) {
         return (
-            <main className="mx-auto w-[min(720px,calc(100%-2rem))] py-20 text-center">
+            <div className="mx-auto w-[min(720px,calc(100%-2rem))] py-20 text-center">
                 <h1 className="m-0 font-bold font-sans text-2xl text-foreground tracking-tight">{t("detail.notFound.title")}</h1>
                 <p className="mt-3 font-sans text-muted-foreground text-sm">{t("detail.notFound.body")}</p>
                 <Link to="/tier-lists" search={{ type: "all", sort: "recent", q: "", flair: [] }} className="mt-6 inline-flex items-center gap-1.5 rounded-lg border border-border bg-popover px-3.5 py-2 font-medium font-sans text-foreground text-sm leading-none no-underline transition-colors hover:bg-accent">
@@ -66,24 +71,44 @@ export function TierListDetail() {
                     </svg>
                     {t("detail.notFound.action")}
                 </Link>
-            </main>
+            </div>
         );
     }
 
     const boardDetail: ITierListDetail = snapshotTiers ? { ...detail, tiers: snapshotTiers } : detail;
+    // R-27: a `?v=` link whose versions query failed or missed used to render the latest board as if it were that snapshot.
+    const snapshotState = requestedVersion == null ? "none" : versionsQuery.isError ? "failed" : versionsQuery.isPending ? "loading" : selectedVersion ? "ok" : "missing";
 
     return (
-        <main className="min-h-dvh pb-20">
+        <div className="min-h-dvh pb-20">
             <TierListHero detail={detail} />
 
             <VersionsBar slug={detail.slug} versions={versions} selectedVersion={selectedVersion} isLatestView={isLatestView} />
 
             <div className="page-gutter mt-4 grid gap-4 [--page-max:1200px] sm:mt-6 sm:gap-6 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-start lg:gap-8">
-                <div className="min-w-0">
-                    <TierListBoard detail={boardDetail} />
+                <div className="flex min-w-0 flex-col gap-4">
+                    {snapshotState === "failed" && (
+                        <Alert variant="error">
+                            <AlertTitle>{t("detail.snapshot.failedTitle", { version: requestedVersion ?? 0 })}</AlertTitle>
+                            <AlertDescription>{t("detail.snapshot.failedBody")}</AlertDescription>
+                            <AlertAction>
+                                <Button variant="outline" size="sm" onClick={() => versionsQuery.refetch()} disabled={versionsQuery.isFetching}>
+                                    <RotateCwIcon aria-hidden="true" />
+                                    {t("detail.snapshot.retry")}
+                                </Button>
+                            </AlertAction>
+                        </Alert>
+                    )}
+                    {snapshotState === "missing" && (
+                        <Alert variant="warning">
+                            <AlertTitle>{t("detail.snapshot.missingTitle", { version: requestedVersion ?? 0 })}</AlertTitle>
+                            <AlertDescription>{t("detail.snapshot.missingBody")}</AlertDescription>
+                        </Alert>
+                    )}
+                    {snapshotState === "loading" ? <Skeleton className="h-96 rounded-2xl" /> : <TierListBoard detail={boardDetail} />}
                 </div>
                 <TierListStatsPanel detail={detail} />
             </div>
-        </main>
+        </div>
     );
 }

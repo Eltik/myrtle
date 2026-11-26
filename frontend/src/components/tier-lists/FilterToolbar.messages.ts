@@ -92,7 +92,7 @@ export const messages = {
         description: "Chip at the end of the flair row that deselects every flair.",
     },
     "browse.search.placeholder": {
-        text: "Search lists...",
+        text: "Search lists…",
         description: "Placeholder in the box that filters lists by title, description or author. Keep the three dots.",
     },
     "browse.search.label": {

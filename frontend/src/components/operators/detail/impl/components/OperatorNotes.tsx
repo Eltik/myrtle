@@ -3,6 +3,7 @@ import { ChevronDown, Lightbulb, Loader2, MessageSquareText, StickyNote, ThumbsD
 import { useLayoutEffect, useRef, useState } from "react";
 import { Badge } from "#/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "#/components/ui/collapsible";
+import { LoadFailed } from "#/components/ui/load-failed";
 import { operatorNoteQueryOptions } from "#/lib/api/operator-notes";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -52,7 +53,12 @@ function ExpandableText({ text, markdown = false }: { text: string; markdown?: b
 
 export function OperatorNotes({ operatorId }: IOperatorNotesProps) {
     const t: TypedT<typeof messages> = useT("operators");
-    const { data: note, isLoading } = useQuery({
+    const {
+        data: note,
+        isLoading,
+        isError,
+        refetch,
+    } = useQuery({
         ...operatorNoteQueryOptions(operatorId ?? ""),
         enabled: !!operatorId,
     });
@@ -60,11 +66,14 @@ export function OperatorNotes({ operatorId }: IOperatorNotesProps) {
 
     if (isLoading) {
         return (
-            <div className="flex items-center justify-center py-4">
-                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-            </div>
+            <output className="flex items-center justify-center py-4">
+                <Loader2 aria-hidden="true" className="h-5 w-5 animate-spin text-muted-foreground" />
+                <span className="sr-only">{t("notes.loading")}</span>
+            </output>
         );
     }
+
+    if (isError) return <LoadFailed layout="inline" message={t("notes.error")} onRetry={() => void refetch()} />;
 
     if (!note) return null;
 
@@ -88,7 +97,7 @@ export function OperatorNotes({ operatorId }: IOperatorNotesProps) {
         <Collapsible open={showNotes} onOpenChange={setShowNotes}>
             <CollapsibleTrigger className="flex w-full items-center justify-between rounded-lg border border-border bg-secondary/30 px-4 py-3 transition-colors hover:bg-secondary/50">
                 <span className="flex items-center gap-2">
-                    <MessageSquareText className="h-4 w-4 text-primary" />
+                    <MessageSquareText aria-hidden="true" className="h-4 w-4 text-primary" />
                     <span className="font-medium text-sm">{t("notes.title")}</span>
                 </span>
             </CollapsibleTrigger>
@@ -105,7 +114,7 @@ export function OperatorNotes({ operatorId }: IOperatorNotesProps) {
                             {hasPros && (
                                 <div className="rounded-lg border border-border bg-secondary/20 p-4">
                                     <div className="mb-2 flex items-center gap-2">
-                                        <ThumbsUp className="h-4 w-4 text-green-500" />
+                                        <ThumbsUp className="h-4 w-4 text-success-foreground" />
                                         <span className="font-medium text-sm">{t("notes.pros")}</span>
                                     </div>
                                     <ExpandableText text={pros} markdown />
@@ -114,7 +123,7 @@ export function OperatorNotes({ operatorId }: IOperatorNotesProps) {
                             {hasCons && (
                                 <div className="rounded-lg border border-border bg-secondary/20 p-4">
                                     <div className="mb-2 flex items-center gap-2">
-                                        <ThumbsDown className="h-4 w-4 text-red-500" />
+                                        <ThumbsDown className="h-4 w-4 text-destructive-foreground" />
                                         <span className="font-medium text-sm">{t("notes.cons")}</span>
                                     </div>
                                     <ExpandableText text={cons} markdown />
@@ -126,7 +135,7 @@ export function OperatorNotes({ operatorId }: IOperatorNotesProps) {
                     {hasNotes && (
                         <div className="rounded-lg border border-border bg-secondary/20 p-4">
                             <div className="mb-2 flex items-center gap-2">
-                                <StickyNote className="h-4 w-4 text-yellow-500" />
+                                <StickyNote aria-hidden="true" className="h-4 w-4 text-yellow-500" />
                                 <span className="font-medium text-sm">{t("notes.notes")}</span>
                             </div>
                             <ExpandableText text={notesText} markdown />
@@ -136,7 +145,7 @@ export function OperatorNotes({ operatorId }: IOperatorNotesProps) {
                     {hasTrivia && (
                         <div className="rounded-lg border border-border bg-secondary/20 p-4">
                             <div className="mb-2 flex items-center gap-2">
-                                <Lightbulb className="h-4 w-4 text-amber-500" />
+                                <Lightbulb aria-hidden="true" className="h-4 w-4 text-amber-500" />
                                 <span className="font-medium text-sm">{t("notes.trivia")}</span>
                             </div>
                             <ExpandableText text={trivia} markdown />

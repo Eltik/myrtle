@@ -7,6 +7,7 @@
 
 import type { Cut } from "#/types/generated/Cut";
 import type { EconomyBonus } from "#/types/generated/EconomyBonus";
+import type { EconomyNote } from "#/types/generated/EconomyNote";
 import type { EconomySeat } from "#/types/generated/EconomySeat";
 
 import { START_DP_MAX, START_DP_MIN } from "../constants";
@@ -54,10 +55,14 @@ export function baseDpFromLine(lineDp: number, bonus: number): number {
     return clampStartDp(lineDp - bonus);
 }
 
-/** Seats whose cost is at or under the starting DP, the same rule as `economy.openers`. */
-export function countOpeners(costs: ReadonlyArray<number>, startDp: number): number {
+/**
+ * Seats whose cost is at or under the starting DP, the same rule as
+ * `economy.openers`. `floor` is `economy.dp_lower_limit`: with a DP-debt
+ * talent DP may drop below zero, so a seat deploys with `-floor` DP to spare.
+ */
+export function countOpeners(costs: ReadonlyArray<number>, startDp: number, floor = 0): number {
     let n = 0;
-    for (const c of costs) if (c <= startDp) n++;
+    for (const c of costs) if (c <= startDp - floor) n++;
     return n;
 }
 
@@ -91,7 +96,7 @@ export function cutAmountText(cut: Pick<Cut, "amount" | "ratio">): string {
     return `${n > 0 ? "+" : n < 0 ? "-" : ""}${Math.abs(n)}`;
 }
 
-export type CutLabelKey = "potential" | "talent" | "module" | "squad";
+export type CutLabelKey = "potential" | "talent" | "module" | "trait" | "squad";
 
 export interface ICutLabelInput {
     key: CutLabelKey;
@@ -107,4 +112,14 @@ export interface ICutLabelInput {
  */
 export function cutLabelInput(cut: Cut, giverName: string | null): ICutLabelInput {
     return { key: cut.kind, name: cut.name ?? "", giver: giverName ?? "", amount: cutAmountText(cut) };
+}
+
+/**
+ * The cost or redeploy change a footnote is about, signed the way a cut's
+ * label is (`-1`, `-10%`), or `null` when the note carries none.
+ */
+export function noteChangeText(n: Pick<EconomyNote, "stat" | "amount" | "ratio">): { stat: "cost" | "respawn"; amount: string } | null {
+    if (n.stat === null) return null;
+    if (n.ratio === null && n.amount === null) return null;
+    return { stat: n.stat, amount: cutAmountText({ amount: n.amount ?? 0, ratio: n.ratio }) };
 }

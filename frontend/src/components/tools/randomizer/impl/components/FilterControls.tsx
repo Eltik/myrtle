@@ -1,5 +1,6 @@
 import { Lock } from "lucide-react";
 import type React from "react";
+import { Kicker } from "#/components/ui/kicker";
 import { Switch } from "#/components/ui/switch";
 import { cn } from "#/lib/utils";
 
@@ -7,7 +8,7 @@ import { cn } from "#/lib/utils";
 export function FieldGroup({ label, children }: { label: string; children: React.ReactNode }): React.ReactElement {
     return (
         <div className="flex flex-col gap-2.5">
-            <p className="font-mono text-[10.5px] text-muted-foreground/90 uppercase tracking-[0.18em]">{label}</p>
+            <Kicker>{label}</Kicker>
             {children}
         </div>
     );
@@ -30,7 +31,7 @@ export function SwitchRow({ label, description, checked, onChange, locked = fals
             <div className="min-w-0 flex-1">
                 <p className="flex items-center gap-1.5 font-medium text-[12.5px] text-foreground">
                     {label}
-                    {locked && <Lock aria-hidden="true" className="h-3 w-3 text-muted-foreground/70" />}
+                    {locked && <Lock aria-hidden="true" className="h-3 w-3 text-subtle-foreground" />}
                 </p>
                 <p className="mt-0.5 text-[11.5px] text-muted-foreground leading-snug">{description}</p>
             </div>

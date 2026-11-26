@@ -156,7 +156,7 @@ export const messages = {
         description: "Accessible name of a cross in the immunity table. {status} is a status effect and {phase} the stat block's heading.",
     },
     "stats.forms.note": {
-        text: "This enemy transforms across {forms} forms in-fight, but Hypergryph's data ships {count, plural, one {a single stat block} other {# stat blocks}}. Subsequent forms modify behavior through skill triggers rather than swapping the base HP/ATK/DEF - see {traits} for the form descriptions.",
+        text: "This enemy transforms across {forms} forms in-fight, but Hypergryph's data ships {count, plural, one {a single stat block} other {# stat blocks}}. Subsequent forms modify behavior through skill triggers rather than swapping the base HP/ATK/DEF; see {traits} for the form descriptions.",
         description: "Note explaining why an enemy with several narrative forms has fewer stat blocks. {forms} is the bold form count and {traits} the bold pointer labelled by stats.forms.note.traits; both may move wherever the sentence needs them. 'Hypergryph' is the game's developer; keep the name.",
     },
     "stats.forms.note.traits": {
