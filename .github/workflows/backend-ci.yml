@@ -21,9 +21,8 @@ env:
   CARGO_TERM_COLOR: always
   CARGO_INCREMENTAL: 0
   RUSTFLAGS: "-D warnings"
-  # All sqlx queries are runtime (sqlx::query(), not query!), so no .sqlx/ cache needed.
-  # This flag prevents sqlx from attempting to reach a database during compilation.
-  SQLX_OFFLINE: "true"
+  # No SQLX_OFFLINE: the .sqlx query cache is not committed, so every job that
+  # compiles crates/db gets a Postgres service and a DATABASE_URL instead.
   # Opt into Node.js 24 for GitHub Actions (avoids Node.js 20 deprecation warnings)
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
@@ -51,6 +50,20 @@ jobs:
   clippy:
     name: Clippy
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgres://postgres:password@localhost:5432/myrtle_sqlx
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_PASSWORD: password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - uses: actions/checkout@v5
 
@@ -64,9 +77,21 @@ jobs:
           key: clippy
           cache-on-failure: true
 
+      # The sqlx query macros in crates/db check every query against this
+      # schema at compile time (backend/.gitignore keeps .sqlx out of git).
+      - name: Load the migrated schema
+        env:
+          PGPASSWORD: password
+        run: |
+          psql -h localhost -U postgres -v ON_ERROR_STOP=1 -qc 'CREATE DATABASE myrtle_sqlx'
+          for f in backend/crates/db/migrations/*.sql; do
+            psql -h localhost -U postgres -d myrtle_sqlx -v ON_ERROR_STOP=1 -q -1 -f "$f"
+          done
+
       - name: Lint backend
         working-directory: backend
-        run: cargo clippy --all -- -W clippy::all -W clippy::pedantic -W clippy::nursery
+        # Lint levels come from [workspace.lints] in backend/Cargo.toml
+        run: cargo clippy --workspace -- -D warnings
 
   # ──────────────────────────────────────────────────────────────────────────────
   # Compilation check
@@ -74,6 +99,20 @@ jobs:
   check:
     name: Cargo Check
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgres://postgres:password@localhost:5432/myrtle_sqlx
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_PASSWORD: password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - uses: actions/checkout@v5
 
@@ -85,21 +124,43 @@ jobs:
           key: check
           cache-on-failure: true
 
+      # The sqlx query macros in crates/db check every query against this
+      # schema at compile time (backend/.gitignore keeps .sqlx out of git).
+      - name: Load the migrated schema
+        env:
+          PGPASSWORD: password
+        run: |
+          psql -h localhost -U postgres -v ON_ERROR_STOP=1 -qc 'CREATE DATABASE myrtle_sqlx'
+          for f in backend/crates/db/migrations/*.sql; do
+            psql -h localhost -U postgres -d myrtle_sqlx -v ON_ERROR_STOP=1 -q -1 -f "$f"
+          done
+
       - name: Check backend compilation
         working-directory: backend
-        run: cargo check --all-targets
+        run: cargo check --workspace --all-targets
 
   # ──────────────────────────────────────────────────────────────────────────────
-  # Tests (DPS engine validation — requires game data from assets pipeline)
+  # Tests (needs game data from the assets pipeline and a Postgres)
   # ──────────────────────────────────────────────────────────────────────────────
   test:
     name: Tests
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgres://postgres:password@localhost:5432/myrtle_sqlx
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_PASSWORD: password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - uses: actions/checkout@v5
-        with:
-          # generate_dps tests read the upstream formulas in external/ArknightsDpsCompare.
-          submodules: true
 
       - uses: dtolnay/rust-toolchain@stable
 
@@ -108,6 +169,17 @@ jobs:
           workspaces: backend -> target
           key: test
           cache-on-failure: true
+
+      # The sqlx query macros in crates/db check every query against this
+      # schema at compile time (backend/.gitignore keeps .sqlx out of git).
+      - name: Load the migrated schema
+        env:
+          PGPASSWORD: password
+        run: |
+          psql -h localhost -U postgres -v ON_ERROR_STOP=1 -qc 'CREATE DATABASE myrtle_sqlx'
+          for f in backend/crates/db/migrations/*.sql; do
+            psql -h localhost -U postgres -d myrtle_sqlx -v ON_ERROR_STOP=1 -q -1 -f "$f"
+          done
 
       # Produced by assets-ci.yml's Integration job on every non-PR run (see the
       # "Game data for backend CI" block there). The artifact root is the contents
@@ -138,7 +210,7 @@ jobs:
       - name: Verify game data exists
         run: |
           if [ ! -s "assets/output/en/gamedata/excel/character_table.json" ]; then
-            echo "::error::Game data not found — the DPS/HPS parity suites cannot run."
+            echo "::error::Game data not found; the DPS/HPS parity suites cannot run."
             echo "::error::Run assets-ci.yml (workflow_dispatch) on this branch, then re-run this job."
             find assets/output -maxdepth 4 | head -20
             exit 1
@@ -150,11 +222,12 @@ jobs:
         working-directory: backend
         env:
           MYRTLE_TEST_ASSETS: ${{ github.workspace }}/assets/output
-          # The artifact is tables only (no images, spine, or pool details), so
-          # api_shape_test compares against its gamedata-only snapshot.
-          API_SHAPE_PROFILE: gamedata-only
           RUST_BACKTRACE: 1
-        run: cargo test -- --nocapture
+        # sqlx::test and the testkit create a throwaway database per test on
+        # the server DATABASE_URL names. myrtle-dps-transpile is excluded: its
+        # tests read backend/external/ArknightsDpsCompare, a gitignored local
+        # checkout that CI does not have.
+        run: cargo test --workspace --exclude myrtle-dps-transpile -- --nocapture
 
   # ──────────────────────────────────────────────────────────────────────────────
   # Release build
@@ -162,6 +235,20 @@ jobs:
   build-release:
     name: Release Build
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgres://postgres:password@localhost:5432/myrtle_sqlx
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_PASSWORD: password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - uses: actions/checkout@v5
 
@@ -173,19 +260,29 @@ jobs:
           key: release
           cache-on-failure: true
 
-      - name: Build backend (release)
-        working-directory: backend
-        run: cargo build --release --bin backend
+      # The sqlx query macros in crates/db check every query against this
+      # schema at compile time (backend/.gitignore keeps .sqlx out of git).
+      - name: Load the migrated schema
+        env:
+          PGPASSWORD: password
+        run: |
+          psql -h localhost -U postgres -v ON_ERROR_STOP=1 -qc 'CREATE DATABASE myrtle_sqlx'
+          for f in backend/crates/db/migrations/*.sql; do
+            psql -h localhost -U postgres -d myrtle_sqlx -v ON_ERROR_STOP=1 -q -1 -f "$f"
+          done
 
-      - name: Build generate-dps (release)
+      # myrtle-cli builds the `myrtle` binary; myrtle-storage builds asset-sync,
+      # which vps-update.sh installs for the asset watchers.
+      - name: Build binaries (release)
         working-directory: backend
-        run: cargo build --release --bin generate-dps
+        run: cargo build --release -p myrtle-api -p myrtle-worker -p myrtle-cli -p myrtle-storage
 
       - name: Verify binaries exist
         run: |
-          test -f "backend/target/release/backend"
-          test -f "backend/target/release/generate-dps"
-          echo "Both binaries built successfully"
+          for bin in myrtle-api myrtle-worker myrtle asset-sync; do
+            test -x "backend/target/release/$bin"
+          done
+          echo "All binaries built successfully"
 
       - name: Upload binaries
         if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/v3'
@@ -193,8 +290,10 @@ jobs:
         with:
           name: backend-release-binaries
           path: |
-            backend/target/release/backend
-            backend/target/release/generate-dps
+            backend/target/release/myrtle-api
+            backend/target/release/myrtle-worker
+            backend/target/release/myrtle
+            backend/target/release/asset-sync
             !backend/target/release/.fingerprint/**
             !backend/target/release/build/**
             !backend/target/release/deps/**
@@ -202,27 +301,6 @@ jobs:
             !backend/target/release/incremental/**
             !backend/target/release/*.d
           retention-days: 7
-
-  # ──────────────────────────────────────────────────────────────────────────────
-  # Docker image build validation
-  # ──────────────────────────────────────────────────────────────────────────────
-  docker:
-    name: Docker Build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-
-      - uses: docker/setup-buildx-action@v4
-
-      - name: Build Docker image
-        uses: docker/build-push-action@v7
-        with:
-          context: ./backend
-          file: ./backend/Dockerfile
-          push: false
-          tags: backend:ci-${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
 
   # ──────────────────────────────────────────────────────────────────────────────
   # Security audit
@@ -248,7 +326,7 @@ jobs:
   ci-pass:
     name: CI Pass
     if: always()
-    needs: [fmt, clippy, check, test, build-release, docker, audit]
+    needs: [fmt, clippy, check, test, build-release, audit]
     runs-on: ubuntu-latest
     steps:
       - name: Check all jobs
@@ -259,7 +337,6 @@ jobs:
             "${{ needs.check.result }}"
             "${{ needs.test.result }}"
             "${{ needs.build-release.result }}"
-            "${{ needs.docker.result }}"
             "${{ needs.audit.result }}"
           )
           for result in "${results[@]}"; do

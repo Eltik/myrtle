@@ -122,7 +122,7 @@ pub async fn store(
         json!({ "ok": false, "error": "the account row was not found after the sync" });
     if let Some(user) = found.map(|row| UserId(row.id)) {
         import = progress::import_game_read(ctx, uid, user, &game_story).await;
-        if let Err(e) = grading::enqueue_regrade(ctx, user).await {
+        if let Err(e) = grading::enqueue_sync_regrade(ctx, user).await {
             tracing::error!(uid, error = %e, "the regrade was not queued; the roster sync stands");
         }
         if let Some(backfill) = sandbox::plan(user, &raw)
@@ -153,7 +153,9 @@ pub async fn after_grade(ctx: &AppContext, user: UserId) {
             .ok_or(AppError::NotFound(None))?;
         let server =
             Server::from_index(account.server_id).unwrap_or_else(|| ctx.snapshots.default_server());
-        lookback::record(ctx, user, server).await
+        let recorded = lookback::record(ctx, user, server).await;
+        invalidate_user(ctx, &account.uid).await;
+        recorded
     };
     if let Err(e) = recorded.await {
         tracing::error!(user = %user.0, error = %e, "the lookback snapshot failed; the grade stands");

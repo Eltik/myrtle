@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::str::FromStr;
 
 use serenity::all::{GuildId, RoleId, UserId};
@@ -1146,9 +1147,70 @@ pub async fn list_tts_voices(pool: &SqlitePool) -> Result<Vec<(UserId, String)>,
         .collect())
 }
 
+/// Every service account's last announced state, keyed by server code: `(state,
+/// refused_since)`.
+pub async fn list_service_account_states(
+    pool: &SqlitePool,
+) -> Result<HashMap<String, (String, Option<i64>)>, Error> {
+    let rows: Vec<(String, String, Option<i64>)> =
+        sqlx::query_as("SELECT server, state, refused_since FROM service_account_announced")
+            .fetch_all(pool)
+            .await?;
+    Ok(rows
+        .into_iter()
+        .map(|(server, state, since)| (server, (state, since)))
+        .collect())
+}
+
+/// Record the state just announced (or first seen) for the account on `server`.
+pub async fn set_service_account_state(
+    pool: &SqlitePool,
+    server: &str,
+    state: &str,
+    refused_since: Option<i64>,
+    now: i64,
+) -> Result<(), Error> {
+    sqlx::query(
+        "INSERT INTO service_account_announced (server, state, refused_since, updated_at) \
+         VALUES (?, ?, ?, ?) \
+         ON CONFLICT(server) DO UPDATE SET \
+            state = excluded.state, \
+            refused_since = excluded.refused_since, \
+            updated_at = excluded.updated_at",
+    )
+    .bind(server)
+    .bind(state)
+    .bind(refused_since)
+    .bind(now)
+    .execute(pool)
+    .await?;
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[tokio::test]
+    async fn service_account_state_round_trips_and_replaces() {
+        let pool = memory_pool().await;
+        assert!(list_service_account_states(&pool).await.unwrap().is_empty());
+
+        set_service_account_state(&pool, "en", "refused", Some(100), 150)
+            .await
+            .unwrap();
+        set_service_account_state(&pool, "bili", "ok", None, 150)
+            .await
+            .unwrap();
+        set_service_account_state(&pool, "en", "ok", None, 200)
+            .await
+            .unwrap();
+
+        let states = list_service_account_states(&pool).await.unwrap();
+        assert_eq!(states.len(), 2);
+        assert_eq!(states["en"], ("ok".to_string(), None));
+        assert_eq!(states["bili"], ("ok".to_string(), None));
+    }
 
     /// A fresh in-memory database with every migration applied. One connection, kept for the
     /// pool's lifetime: each `SQLite` `:memory:` connection is its own database.

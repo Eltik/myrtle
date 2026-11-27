@@ -404,7 +404,7 @@ pub fn write_hub_json(dir: &Path, hub: &Hub) -> std::io::Result<()> {
     std::fs::create_dir_all(dir)?;
     let mut json = serde_json::to_string_pretty(hub)?;
     json.push('\n');
-    std::fs::write(dir.join("hub.json"), json)
+    crate::export::failures::write(dir.join("hub.json"), json)
 }
 
 #[cfg(test)]

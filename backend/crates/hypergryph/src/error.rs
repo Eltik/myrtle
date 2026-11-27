@@ -108,6 +108,7 @@ pub enum UpstreamError {
     ServiceAccountRefused {
         server: Server,
         first_of_outage: bool,
+        reason: String,
     },
     #[error("session store: {}", .0.kind())]
     Store(#[from] SessionStoreError),

@@ -2,9 +2,11 @@ use axum::Json;
 use axum::extract::State;
 use axum::routing::get;
 use myrtle_app::AppContext;
+use myrtle_app::services::accounts::service_account::service_health;
 use myrtle_hypergryph::AccountState;
 use serde::Serialize;
 
+use crate::error::ApiResult;
 use crate::router::ApiRouter;
 
 pub fn routes() -> ApiRouter {
@@ -29,10 +31,9 @@ struct ServiceAccountStatus {
     last_ok_at: Option<i64>,
 }
 
-async fn status(State(ctx): State<AppContext>) -> Json<ServiceAccountsStatus> {
-    let accounts = ctx
-        .accounts
-        .health()
+async fn status(State(ctx): State<AppContext>) -> ApiResult<Json<ServiceAccountsStatus>> {
+    let accounts = service_health(&ctx)
+        .await?
         .into_iter()
         .map(|h| ServiceAccountStatus {
             server: h.server.as_str(),
@@ -45,5 +46,5 @@ async fn status(State(ctx): State<AppContext>) -> Json<ServiceAccountsStatus> {
             last_ok_at: h.last_ok_at,
         })
         .collect();
-    Json(ServiceAccountsStatus { accounts })
+    Ok(Json(ServiceAccountsStatus { accounts }))
 }

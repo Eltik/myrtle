@@ -2,7 +2,7 @@ use discord::{
     api::gamedata::GameData,
     birthday, cmds,
     config::Config,
-    db, handler, hooks,
+    db, handler, hooks, service_accounts,
     tts::Tts,
     types::Data,
     watcher::{self, AssetStatus, AssetsState},
@@ -188,6 +188,22 @@ async fn main() {
                         birthday_pool,
                         birthday_gamedata,
                         birthday_frontend,
+                    )
+                    .await;
+                });
+
+                let accounts_http = ctx.http.clone();
+                let accounts_pool = pool.clone();
+                let accounts_client = http_client.clone();
+                let accounts_backend = config.endpoints.public_backend.clone();
+                let accounts_config = config.service_accounts.clone();
+                tokio::spawn(async move {
+                    service_accounts::run(
+                        accounts_http,
+                        accounts_pool,
+                        accounts_client,
+                        accounts_backend,
+                        accounts_config,
                     )
                     .await;
                 });

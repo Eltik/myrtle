@@ -206,7 +206,10 @@ async fn a_sync_queues_the_grade_and_the_backfill() {
     let (ctx, db, user) = synced().await;
     let regrades = claim(&ctx, JobKind::RegradeUser).await;
     assert_eq!(regrades.len(), 1);
-    assert_eq!(regrades[0].payload, json!({ "user_id": user.0 }));
+    assert_eq!(
+        regrades[0].payload,
+        json!({ "user_id": user.0, "after_sync": true })
+    );
     let backfills = claim(&ctx, JobKind::SandboxBackfill).await;
     assert_eq!(backfills.len(), 1);
     let queued: SandboxBackfill = serde_json::from_value(backfills[0].payload.clone()).unwrap();
@@ -221,7 +224,7 @@ async fn a_regrade_already_queued_does_not_cost_the_sync_its_backfill() {
     let row = users::find_or_create(&mut ctx.db.conn().await.unwrap(), UID, Server::EN)
         .await
         .unwrap();
-    grading::enqueue_regrade(&ctx, UserId(row.id))
+    grading::enqueue_sync_regrade(&ctx, UserId(row.id))
         .await
         .unwrap();
     store(&ctx, UID, Server::EN, FIXTURE.to_owned())

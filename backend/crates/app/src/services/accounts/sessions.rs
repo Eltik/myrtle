@@ -2,6 +2,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use async_trait::async_trait;
+use chrono::{DateTime, Utc};
 use myrtle_db::repos::service_sessions::{self, SealedSessionRow};
 use myrtle_db::repos::{credentials, users};
 use myrtle_db::{Db, DbError};
@@ -160,9 +161,10 @@ impl Sessions {
         &self,
         server: Server,
         session: &AuthSession,
+        ok_at: Option<DateTime<Utc>>,
     ) -> Result<(), SessionStoreError> {
         let live = DurableCredential::of(session);
-        self.merge_service(server, |stored| {
+        self.merge_service(server, ok_at, |stored| {
             let seeded = stored.as_ref().and_then(DurableCredential::of);
             match seeded {
                 Some(seeded) if Some(&seeded) != live.as_ref() => None,
@@ -175,6 +177,7 @@ impl Sessions {
     async fn merge_service(
         &self,
         server: Server,
+        ok_at: Option<DateTime<Utc>>,
         merge: impl FnOnce(Option<AuthSession>) -> Option<AuthSession> + Send,
     ) -> Result<(), SessionStoreError> {
         let mut tx = self.db.begin().await.map_err(unavailable)?;
@@ -199,7 +202,9 @@ impl Sessions {
             return Ok(());
         };
         let (nonce, ciphertext) = self.seal_service(server, &merged)?;
-        if held.is_some() {
+        if let (Some(_), Some(at)) = (&held, ok_at) {
+            service_sessions::upsert_ok(&mut tx, server, &nonce, &ciphertext, at).await
+        } else if held.is_some() {
             service_sessions::upsert(&mut tx, server, &nonce, &ciphertext).await
         } else {
             service_sessions::insert_new(&mut tx, server, &nonce, &ciphertext)
@@ -230,7 +235,9 @@ impl SessionStore for Sessions {
                     .await;
                 Ok(())
             }
-            SessionKey::ServiceAccount { server } => self.persist_service(*server, session).await,
+            SessionKey::ServiceAccount { server } => {
+                self.persist_service(*server, session, None).await
+            }
         }
     }
 
@@ -282,7 +289,7 @@ impl SessionStore for Sessions {
                 self.seal_player(user, credential).await
             }
             SessionKey::ServiceAccount { server } => {
-                self.merge_service(*server, |stored| {
+                self.merge_service(*server, None, |stored| {
                     let mut session = stored.unwrap_or_default();
                     session.yostar_uid = credential.yostar_uid.as_str().into();
                     session.yostar_token = credential.yostar_token.as_str().into();
@@ -291,6 +298,27 @@ impl SessionStore for Sessions {
                 .await
             }
         }
+    }
+
+    async fn save_used(
+        &self,
+        server: Server,
+        session: &AuthSession,
+        ok_at: i64,
+    ) -> Result<(), SessionStoreError> {
+        self.persist_service(server, session, DateTime::from_timestamp(ok_at, 0))
+            .await
+    }
+
+    async fn save_refused(&self, server: Server, since: i64) -> Result<(), SessionStoreError> {
+        let Some(since) = DateTime::from_timestamp(since, 0) else {
+            return Ok(());
+        };
+        let mut conn = self.db.conn().await.map_err(unavailable)?;
+        service_sessions::mark_refused(&mut conn, server, since)
+            .await
+            .map(drop)
+            .map_err(unavailable)
     }
 
     async fn forget(&self, key: &SessionKey) -> Result<bool, SessionStoreError> {

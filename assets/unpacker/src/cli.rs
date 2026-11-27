@@ -91,6 +91,20 @@ pub struct ExtractArgs {
     /// Number of parallel threads (default: number of CPUs)
     #[arg(short = 'j', long = "jobs")]
     pub jobs: Option<usize>,
+
+    /// Server the bundles come from: `cn`, or a Yostar server (`en`, `jp`,
+    /// `kr`). On a Yostar server a table with a Yostar schema decodes under it
+    /// whenever it verifies, CN only as the fallback: an older Yostar client can
+    /// verify under a newer CN layout and read shifted fields. Omitted: CN
+    /// first, as for `cn`.
+    #[arg(long)]
+    pub server: Option<String>,
+}
+
+/// Whether `--server` names a Yostar server (anything but `cn`).
+#[must_use]
+pub fn is_yostar_server(server: Option<&str>) -> bool {
+    server.is_some_and(|s| !s.eq_ignore_ascii_case("cn"))
 }
 
 impl ExtractArgs {
@@ -118,6 +132,14 @@ pub struct VerifyArgs {
     /// Path to resource manifest .idx file (auto-detected in the input dir)
     #[arg(long)]
     pub idx: Option<PathBuf>,
+
+    /// Server the bundles come from: `cn`, or a Yostar server (`en`, `jp`,
+    /// `kr`). On a Yostar server a table with a Yostar schema is routed to it
+    /// whenever it verifies, CN only as the fallback: an older Yostar client can
+    /// verify under a newer CN layout and read shifted fields. Omitted: CN
+    /// first, as for `cn`.
+    #[arg(long)]
+    pub server: Option<String>,
 }
 
 /// `unpacker backfill-hubs` — the hub half of a texture extract on its own.

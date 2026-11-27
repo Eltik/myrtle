@@ -149,7 +149,7 @@ docker compose down -v
 
 ```text
 myrtle.moe/
-├── frontend/           # Next.js 15 web application (React 19, TypeScript, Tailwind CSS v4)
+├── frontend/           # TanStack Start web application (React 19, TypeScript, Tailwind CSS v4)
 ├── backend/            # Rust API server (Axum, PostgreSQL, Redis)
 ├── assets/             # Game asset processing toolkit
 │   ├── downloader/     # Multi-server asset downloader (Rust)
@@ -168,12 +168,11 @@ Each component has its own detailed README with specific documentation.
 
 | Technology                                          | Purpose                             |
 | --------------------------------------------------- | ----------------------------------- |
-| [Next.js 15](https://nextjs.org/)                   | React framework with App Router     |
+| [TanStack Start](https://tanstack.com/start)        | React framework, SSR on Vite        |
 | [React 19](https://react.dev/)                      | UI library                          |
 | [TypeScript](https://www.typescriptlang.org/)       | Type-safe JavaScript                |
 | [Tailwind CSS v4](https://tailwindcss.com/)         | Utility-first CSS with OKLCH colors |
-| [shadcn/ui](https://ui.shadcn.com/)                 | Radix-based component library       |
-| [Motion Primitives](https://motion-primitives.com/) | Motion-based component library      |
+| [shadcn/ui](https://ui.shadcn.com/)                 | Base UI-based component library     |
 | [PixiJS](https://pixijs.com/) + Pixi-Spine          | Spine animation rendering           |
 
 ### Backend
@@ -216,7 +215,7 @@ Each component has its own detailed README with specific documentation.
                                       │
 ┌─────────────────┐     ┌─────────────▼─────────────┐     ┌─────────────────┐
 │    Frontend     │◄────┤        Backend            │◄────┤   PostgreSQL    │
-│   (Next.js 15)  │     │      (Rust/Axum)          │     │    Database     │
+│ (TanStack Start)│     │      (Rust/Axum)          │     │    Database     │
 │                 │     │                           │     └─────────────────┘
 │  - Operators    │     │  - REST API               │
 │  - Profiles     │     │  - Authentication         │     ┌─────────────────┐

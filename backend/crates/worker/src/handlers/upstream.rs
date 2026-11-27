@@ -7,7 +7,6 @@ use myrtle_app::services::sync::sandbox::{self, SandboxBackfill};
 use myrtle_app::{AppContext, AppError, alerts};
 use myrtle_jobs::{Job, JobKind, JobSpec};
 use serde::Deserialize;
-use serde_json::json;
 
 use super::{Summary, payload, server};
 
@@ -60,16 +59,7 @@ pub async fn sandbox_backfill(ctx: &AppContext, job: &Job) -> Summary {
 pub async fn service_account_alert(ctx: &AppContext, job: &Job) -> Summary {
     let server = server(job)?.as_str();
     let Refusal { error } = payload(job)?;
-    let embed = json!({
-        "title": format!("Service account login refused ({server})"),
-        "description": format!(
-            "The stored `{server}` session no longer refreshes, so its pool details, event \
-             shops and probes are stalled.\n\nLog it in again with `myrtle session`.\n\n\
-             Upstream said: `{}`",
-            error.replace('`', "'")
-        ),
-        "color": 0x00D9_3F3F_u32,
-    });
+    let embed = alerts::service_account_refused_embed(server, &error);
     let webhook = ctx.secrets.discord_alert_webhook.as_deref();
     alerts::post(ctx.upstream.client(), webhook, embed).await;
     Ok(format!("{server}: refusal reported"))

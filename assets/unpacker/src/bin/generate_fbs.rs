@@ -1013,7 +1013,27 @@ fn emit_schema_verification(
     out.push_str("    }))\n    .ok()\n}\n\n");
 
     out.push_str(
-        r#"/// Pick CN or Yostar for `schema_type` by VERIFYING the buffer, before any
+        r#"/// Set once per `extract` run from `--server`: true for a Yostar server (EN,
+ /// JP, KR), where a table with a Yostar schema tries it FIRST.
+ static YOSTAR_FIRST: AtomicBool = AtomicBool::new(false);
+
+ /// Route Yostar-first (`true`, a Yostar server's bundles) or CN-first
+ /// (`false`, the default and CN itself) for the rest of the process.
+ ///
+ /// WHY: a buffer can verify under two schemas, and per buffer the verifier
+ /// cannot tell which one wrote it. An older Yostar client verifies under a
+ /// newer CN layout whenever the fields the newer one INSERTED shift only
+ /// default-valued slots. Measured on EN, JP and KR: `prts___levels` under the
+ /// CN schema read `isTrainingLevel` from `reachableCheckIgnoreStartTile`'s slot
+ /// (407 EN level files). The Yostar schema in the store is the one
+ /// `schema-sync` resolved (or a human pinned) for those servers, so on a
+ /// Yostar server it is the better first guess; CN keeps CN-first, because CN
+ /// buffers verify under the older Yostar layouts just as well.
+ pub fn set_yostar_first(on: bool) {
+     YOSTAR_FIRST.store(on, Ordering::Relaxed);
+ }
+
+ /// Pick CN or Yostar for `schema_type` by VERIFYING the buffer, before any
  /// decode runs.
  ///
  /// WHY: only a handful of tables have a Yostar (EN/Global) schema variant, and
@@ -1038,7 +1058,18 @@ fn emit_schema_verification(
  /// Silent on purpose: several callers ask the same question about the same
  /// buffer (the pre-decode skip check, the decode itself, `verify`), so the
  /// routing note is printed once by `decode_flatbuffer`, not here.
+ ///
+ /// On a Yostar server (`set_yostar_first`) a table with a Yostar variant
+ /// takes it whenever it verifies, and falls back to CN only when it does not.
  fn select_schema_by_verification(data: &[u8], schema_type: &str) -> SchemaChoice {
+     if YOSTAR_FIRST.load(Ordering::Relaxed) && has_yostar_schema(schema_type) {
+         return match verify_schemas(data, schema_type, true) {
+             None => SchemaChoice::Neither,
+             Some((_, YostarVerdict::Verified)) => SchemaChoice::Yostar,
+             Some((None, _)) => SchemaChoice::Cn,
+             Some((Some(_), _)) => SchemaChoice::Neither,
+         };
+     }
      match verify_schemas(data, schema_type, false) {
          None => SchemaChoice::Neither,
          Some((None, _)) => SchemaChoice::Cn,
@@ -1111,7 +1142,8 @@ fn generate_decode_dispatch(
     out.push_str("//! DO NOT EDIT - regenerate with: cargo run --bin generate-fbs\n\n");
     out.push_str("use crate::schema::opts::verifier_opts;\n");
     out.push_str("use serde_json::{Value, json};\n");
-    out.push_str("use std::panic::{self, AssertUnwindSafe};\n\n");
+    out.push_str("use std::panic::{self, AssertUnwindSafe};\n");
+    out.push_str("use std::sync::atomic::{AtomicBool, Ordering};\n\n");
 
     out.push_str(
         r"/// Check if data is likely a `FlatBuffer`

@@ -19,6 +19,33 @@ pub struct Config {
     pub assets: AssetsConfig,
     #[serde(default)]
     pub tts: TtsConfig,
+    #[serde(default)]
+    pub service_accounts: ServiceAccountsConfig,
+}
+
+/// The poller that announces a backend service account needing a re-login (see
+/// [`crate::service_accounts`]). It reads `endpoints.public_backend`.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ServiceAccountsConfig {
+    /// `false` turns the poller off. Defaults to on.
+    #[serde(default)]
+    pub enabled: Option<bool>,
+    /// Seconds between polls. Defaults to 300; anything under 30 is raised to 30.
+    #[serde(default)]
+    pub poll_secs: Option<u64>,
+}
+
+impl ServiceAccountsConfig {
+    #[must_use]
+    pub fn enabled(&self) -> bool {
+        self.enabled.unwrap_or(true)
+    }
+
+    #[must_use]
+    pub fn poll_secs(&self) -> u64 {
+        self.poll_secs.unwrap_or(300).max(30)
+    }
 }
 
 /// HTTP endpoints the status check pings.
@@ -233,6 +260,18 @@ mod tests {
         let off: Config = serde_json::from_str(r#"{"tts": {"enabled": false}}"#).unwrap();
         assert!(!off.tts.enabled());
         assert!(serde_json::from_str::<Config>(r#"{"tts": {"voice": "x"}}"#).is_err());
+    }
+
+    #[test]
+    fn service_account_poller_defaults_on_every_five_minutes() {
+        let config: Config = serde_json::from_str("{}").unwrap();
+        assert!(config.service_accounts.enabled());
+        assert_eq!(config.service_accounts.poll_secs(), 300);
+        let off: Config =
+            serde_json::from_str(r#"{"service_accounts": {"enabled": false, "poll_secs": 5}}"#)
+                .unwrap();
+        assert!(!off.service_accounts.enabled());
+        assert_eq!(off.service_accounts.poll_secs(), 30);
     }
 
     #[test]

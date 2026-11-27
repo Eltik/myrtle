@@ -393,10 +393,7 @@ pub fn compare_json(a: &Value, b: &Value, opts: &CompareOptions) -> Comparison {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Body {
     Json(Value),
-    Opaque {
-        sha256: String,
-        len: u64,
-    },
+    Opaque { sha256: String, len: u64 },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

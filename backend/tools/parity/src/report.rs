@@ -11,10 +11,7 @@ pub enum Outcome {
     Equal,
     Different(Comparison),
     Error(String),
-    RateLimited {
-        a: u16,
-        b: u16,
-    },
+    RateLimited { a: u16, b: u16 },
     Skipped(String),
 }
 

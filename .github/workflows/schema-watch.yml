@@ -209,7 +209,7 @@ jobs:
           dir="$RUNNER_TEMP/verify/before"
           mkdir -p "$dir"
           for s in $ACTIVE; do
-            assets/unpacker/target/release/unpacker verify -i "$RUNNER_TEMP/ark/$s" > "$dir/$s.txt" 2>&1
+            assets/unpacker/target/release/unpacker verify -i "$RUNNER_TEMP/ark/$s" --server "$s" > "$dir/$s.txt" 2>&1
             { grep 'chosen: none' "$dir/$s.txt" || true; } | awk '{print $1}' | sort > "$dir/$s.names"
             echo "$s: $(wc -l < "$dir/$s.names") table(s) verify under no schema" $(cat "$dir/$s.names")
           done
@@ -257,7 +257,7 @@ jobs:
           regressed=0
           : > "$RUNNER_TEMP/matrix.md"
           for s in $ACTIVE; do
-            assets/unpacker/target/release/unpacker verify -i "$RUNNER_TEMP/ark/$s" > "$after/$s.txt" 2>&1
+            assets/unpacker/target/release/unpacker verify -i "$RUNNER_TEMP/ark/$s" --server "$s" > "$after/$s.txt" 2>&1
             { grep 'chosen: none' "$after/$s.txt" || true; } | awk '{print $1}' | sort > "$after/$s.names"
             new=$(comm -13 "$before/$s.names" "$after/$s.names" | xargs)
             still=$(comm -12 "$before/$s.names" "$after/$s.names" | xargs)
@@ -282,7 +282,7 @@ jobs:
           for s in $ACTIVE; do
             idx=$(ls "$RUNNER_TEMP"/ark/$s/*.idx | head -1)
             assets/unpacker/target/release/unpacker extract -i "$RUNNER_TEMP/ark/$s" \
-              -o "$RUNNER_TEMP/out/$s" --gamedata --idx "$idx"
+              -o "$RUNNER_TEMP/out/$s" --gamedata --idx "$idx" --server "$s"
             python3 -I - "$s" "$RUNNER_TEMP/out/$s/gamedata/excel" "$RUNNER_TEMP/verify/after/$s.names" <<'PY'
           import json, pathlib, sys
           server, d, skipped = sys.argv[1], pathlib.Path(sys.argv[2]), set(pathlib.Path(sys.argv[3]).read_text().split())

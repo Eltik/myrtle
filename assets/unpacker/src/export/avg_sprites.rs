@@ -150,7 +150,7 @@ pub fn write_sprites_json(dir: &Path, sprites: &SpriteMetaMap) -> std::io::Resul
     std::fs::create_dir_all(dir)?;
     let mut json = serde_json::to_string_pretty(sprites)?;
     json.push('\n');
-    std::fs::write(dir.join("sprites.json"), json)
+    crate::export::failures::write(dir.join("sprites.json"), json)
 }
 
 #[cfg(test)]

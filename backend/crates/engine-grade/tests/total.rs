@@ -44,3 +44,31 @@ fn section_weights_give_the_documented_shares() {
     assert!(close(share(SECTION_WEIGHT_MEDAL), 0.08));
     assert!(close(share(SECTION_WEIGHT_SANDBOX), 0.08));
 }
+
+#[test]
+fn the_total_is_the_plain_weighted_sum_bit_for_bit() {
+    let cases = [
+        [0.0; 6],
+        [1.0; 6],
+        [0.731, 0.412, 0.0, 0.95, 0.588, 0.333],
+        [0.1, 0.2, 0.3, 0.4, 0.5, 0.6],
+    ];
+    for [op, base, rogue, medal, stage, sandbox] in cases {
+        let plain = (SECTION_WEIGHT_OPERATOR * op
+            + SECTION_WEIGHT_BASE * base
+            + SECTION_WEIGHT_ROGUELIKE * rogue
+            + SECTION_WEIGHT_MEDAL * medal
+            + SECTION_WEIGHT_STAGE * stage
+            + SECTION_WEIGHT_SANDBOX * sandbox)
+            / SECTION_WEIGHT_TOTAL;
+        assert_eq!(
+            total_from_sections(op, base, rogue, medal, stage, sandbox).to_bits(),
+            plain.to_bits(),
+            "{op} {base} {rogue} {medal} {stage} {sandbox}"
+        );
+    }
+    assert!(close(
+        total_from_sections(1.0, 1.0, 1.0, 1.0, 1.0, 1.0),
+        1.0
+    ));
+}

@@ -8,7 +8,7 @@ use reqwest::Url;
 use serde::{Deserialize, Serialize};
 
 use crate::services::catalog::announcements::{self, Board, MetaItem};
-use crate::{AppContext, AppError};
+use crate::{AppContext, AppError, alerts};
 
 pub use parse::{NoticeWindow, parse_notice};
 
@@ -272,6 +272,10 @@ async fn probe_game(ctx: &AppContext) -> Option<(bool, i64)> {
     match account.probe(&ctx.upstream).await {
         Ok(()) => Some((false, chrono::Utc::now().timestamp())),
         Err(UpstreamError::NotLoggedIn) => None,
+        Err(e @ UpstreamError::ServiceAccountRefused { .. }) => {
+            alerts::service_account_refused(ctx, &e).await; // a dead durable token says nothing about the game
+            None
+        }
         Err(e) => {
             tracing::info!(error = %e, "maintenance: EN login refused, still down");
             Some((true, chrono::Utc::now().timestamp()))

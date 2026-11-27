@@ -33,6 +33,8 @@ tikv-jemallocator.workspace = true
 
 [dev-dependencies]
 myrtle-db.workspace = true
+myrtle-gamedata.workspace = true
+myrtle-gamedata-raw.workspace = true
 myrtle-hypergryph.workspace = true
 myrtle-testkit.workspace = true
 futures-util.workspace = true

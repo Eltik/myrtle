@@ -38,6 +38,7 @@ const fn first_of_outage(err: &UpstreamError) -> Option<bool> {
         UpstreamError::ServiceAccountRefused {
             server: Server::EN,
             first_of_outage,
+            ..
         } => Some(*first_of_outage),
         _ => None,
     }

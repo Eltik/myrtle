@@ -163,7 +163,7 @@ pub async fn backfill(ctx: &AppContext, job: &SandboxBackfill) -> Result<usize, 
 
 pub async fn topics_stored(ctx: &AppContext, user: UserId, uid: &str) -> Result<(), AppError> {
     users::touch(&mut *ctx.db.conn().await?, user).await?;
-    grading::enqueue_regrade(ctx, user).await?;
+    grading::enqueue_sync_regrade(ctx, user).await?;
     invalidate_user(ctx, uid).await;
     Ok(())
 }

@@ -359,13 +359,19 @@ fn phase_embed(title: &str, version: Option<&str>) -> CreateEmbed {
     embed
 }
 
-async fn broadcast_one(http: &Arc<Http>, channel: ChannelId, embed: CreateEmbed) {
+/// Post `embed` to `channel`, crossposting it from an announcement channel. Returns whether the
+/// post went out; a failed crosspost still counts as sent.
+pub(crate) async fn broadcast_one(
+    http: &Arc<Http>,
+    channel: ChannelId,
+    embed: CreateEmbed,
+) -> bool {
     let msg = CreateMessage::new().embed(embed);
     let sent = match channel.send_message(http.as_ref(), msg).await {
         Ok(m) => m,
         Err(e) => {
             tracing::warn!("assets watcher: send to {channel}: {e}");
-            return;
+            return false;
         }
     };
 
@@ -377,6 +383,7 @@ async fn broadcast_one(http: &Arc<Http>, channel: ChannelId, embed: CreateEmbed)
             sent.id
         );
     }
+    true
 }
 
 /// Whether `channel` is an announcement channel, whose messages should be crossposted to

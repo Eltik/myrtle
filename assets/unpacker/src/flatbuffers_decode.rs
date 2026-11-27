@@ -4,6 +4,7 @@
 use crate::schema::opts::verifier_opts;
 use serde_json::{Value, json};
 use std::panic::{self, AssertUnwindSafe};
+use std::sync::atomic::{AtomicBool, Ordering};
 
 /// Check if data is likely a `FlatBuffer`
 #[must_use]
@@ -126,10 +127,16 @@ fn has_yostar_schema(schema_type: &str) -> bool {
         "activity_table"
             | "buff_table"
             | "building_data"
+            | "charm_table"
+            | "climb_tower_table"
+            | "crisis_v2_table"
             | "display_meta_table"
+            | "enemy_database"
             | "item_table"
+            | "prts___levels"
             | "retro_table"
             | "roguelike_topic_table"
+            | "sandbox_perm_table"
             | "stage_table"
     )
 }
@@ -337,7 +344,16 @@ fn verify_schemas(
                 use crate::generated_fbs::charm_table_generated::root_as_clz_torappu_charm_data_with_opts;
                 root_as_clz_torappu_charm_data_with_opts(&opts, data).err().map(|e| first_line(&e))
             };
-            (cn_err, YostarVerdict::NotRun)
+            if cn_err.is_none() && !full {
+                // The CN schema verified and the caller only wants
+                // the routing decision: skip the second verify.
+                return (None, YostarVerdict::NotRun);
+            }
+            let yostar_err = {
+                use crate::generated_fbs_yostar::charm_table_generated::root_as_clz_torappu_charm_data_with_opts;
+                root_as_clz_torappu_charm_data_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            (cn_err, yostar_err.into())
         }
         "charword_table" => {
             let cn_err = {
@@ -358,7 +374,16 @@ fn verify_schemas(
                 use crate::generated_fbs::climb_tower_table_generated::root_as_clz_torappu_climb_tower_table_with_opts;
                 root_as_clz_torappu_climb_tower_table_with_opts(&opts, data).err().map(|e| first_line(&e))
             };
-            (cn_err, YostarVerdict::NotRun)
+            if cn_err.is_none() && !full {
+                // The CN schema verified and the caller only wants
+                // the routing decision: skip the second verify.
+                return (None, YostarVerdict::NotRun);
+            }
+            let yostar_err = {
+                use crate::generated_fbs_yostar::climb_tower_table_generated::root_as_clz_torappu_climb_tower_table_with_opts;
+                root_as_clz_torappu_climb_tower_table_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            (cn_err, yostar_err.into())
         }
         "clue_data" => {
             let cn_err = {
@@ -386,7 +411,16 @@ fn verify_schemas(
                 use crate::generated_fbs::crisis_v2_table_generated::root_as_clz_torappu_crisis_v2_shared_data_with_opts;
                 root_as_clz_torappu_crisis_v2_shared_data_with_opts(&opts, data).err().map(|e| first_line(&e))
             };
-            (cn_err, YostarVerdict::NotRun)
+            if cn_err.is_none() && !full {
+                // The CN schema verified and the caller only wants
+                // the routing decision: skip the second verify.
+                return (None, YostarVerdict::NotRun);
+            }
+            let yostar_err = {
+                use crate::generated_fbs_yostar::crisis_v2_table_generated::root_as_clz_torappu_crisis_v2_shared_data_with_opts;
+                root_as_clz_torappu_crisis_v2_shared_data_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            (cn_err, yostar_err.into())
         }
         "display_meta_table" => {
             let cn_err = {
@@ -409,7 +443,16 @@ fn verify_schemas(
                 use crate::generated_fbs::enemy_database_generated::root_as_clz_torappu_enemy_database_with_opts;
                 root_as_clz_torappu_enemy_database_with_opts(&opts, data).err().map(|e| first_line(&e))
             };
-            (cn_err, YostarVerdict::NotRun)
+            if cn_err.is_none() && !full {
+                // The CN schema verified and the caller only wants
+                // the routing decision: skip the second verify.
+                return (None, YostarVerdict::NotRun);
+            }
+            let yostar_err = {
+                use crate::generated_fbs_yostar::enemy_database_generated::root_as_clz_torappu_enemy_database_with_opts;
+                root_as_clz_torappu_enemy_database_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            (cn_err, yostar_err.into())
         }
         "enemy_handbook_table" => {
             let cn_err = {
@@ -551,7 +594,16 @@ fn verify_schemas(
                 use crate::generated_fbs::prts___levels_generated::root_as_clz_torappu_level_data_with_opts;
                 root_as_clz_torappu_level_data_with_opts(&opts, data).err().map(|e| first_line(&e))
             };
-            (cn_err, YostarVerdict::NotRun)
+            if cn_err.is_none() && !full {
+                // The CN schema verified and the caller only wants
+                // the routing decision: skip the second verify.
+                return (None, YostarVerdict::NotRun);
+            }
+            let yostar_err = {
+                use crate::generated_fbs_yostar::prts___levels_generated::root_as_clz_torappu_level_data_with_opts;
+                root_as_clz_torappu_level_data_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            (cn_err, yostar_err.into())
         }
         "replicate_table" => {
             let cn_err = {
@@ -604,7 +656,16 @@ fn verify_schemas(
                 use crate::generated_fbs::sandbox_perm_table_generated::root_as_clz_torappu_sandbox_perm_table_with_opts;
                 root_as_clz_torappu_sandbox_perm_table_with_opts(&opts, data).err().map(|e| first_line(&e))
             };
-            (cn_err, YostarVerdict::NotRun)
+            if cn_err.is_none() && !full {
+                // The CN schema verified and the caller only wants
+                // the routing decision: skip the second verify.
+                return (None, YostarVerdict::NotRun);
+            }
+            let yostar_err = {
+                use crate::generated_fbs_yostar::sandbox_perm_table_generated::root_as_clz_torappu_sandbox_perm_table_with_opts;
+                root_as_clz_torappu_sandbox_perm_table_with_opts(&opts, data).err().map(|e| first_line(&e))
+            };
+            (cn_err, yostar_err.into())
         }
         "sandbox_table" => {
             let cn_err = {
@@ -711,6 +772,26 @@ fn verify_schemas(
     .ok()
 }
 
+/// Set once per `extract` run from `--server`: true for a Yostar server (EN,
+/// JP, KR), where a table with a Yostar schema tries it FIRST.
+static YOSTAR_FIRST: AtomicBool = AtomicBool::new(false);
+
+/// Route Yostar-first (`true`, a Yostar server's bundles) or CN-first
+/// (`false`, the default and CN itself) for the rest of the process.
+///
+/// WHY: a buffer can verify under two schemas, and per buffer the verifier
+/// cannot tell which one wrote it. An older Yostar client verifies under a
+/// newer CN layout whenever the fields the newer one INSERTED shift only
+/// default-valued slots. Measured on EN, JP and KR: `prts___levels` under the
+/// CN schema read `isTrainingLevel` from `reachableCheckIgnoreStartTile`'s slot
+/// (407 EN level files). The Yostar schema in the store is the one
+/// `schema-sync` resolved (or a human pinned) for those servers, so on a
+/// Yostar server it is the better first guess; CN keeps CN-first, because CN
+/// buffers verify under the older Yostar layouts just as well.
+pub fn set_yostar_first(on: bool) {
+    YOSTAR_FIRST.store(on, Ordering::Relaxed);
+}
+
 /// Pick CN or Yostar for `schema_type` by VERIFYING the buffer, before any
 /// decode runs.
 ///
@@ -736,7 +817,18 @@ fn verify_schemas(
 /// Silent on purpose: several callers ask the same question about the same
 /// buffer (the pre-decode skip check, the decode itself, `verify`), so the
 /// routing note is printed once by `decode_flatbuffer`, not here.
+///
+/// On a Yostar server (`set_yostar_first`) a table with a Yostar variant
+/// takes it whenever it verifies, and falls back to CN only when it does not.
 fn select_schema_by_verification(data: &[u8], schema_type: &str) -> SchemaChoice {
+    if YOSTAR_FIRST.load(Ordering::Relaxed) && has_yostar_schema(schema_type) {
+        return match verify_schemas(data, schema_type, true) {
+            None => SchemaChoice::Neither,
+            Some((_, YostarVerdict::Verified)) => SchemaChoice::Yostar,
+            Some((None, _)) => SchemaChoice::Cn,
+            Some((Some(_), _)) => SchemaChoice::Neither,
+        };
+    }
     match verify_schemas(data, schema_type, false) {
         None => SchemaChoice::Neither,
         Some((None, _)) => SchemaChoice::Cn,
@@ -818,14 +910,39 @@ fn decode_flatbuffer_yostar(data: &[u8], schema_type: &str) -> Result<Value, Str
                 let root = unsafe { root_as_clz_torappu_building_data_unchecked(data) };
                 Ok(root.to_json())
             }
+            "charm_table" => {
+                use crate::generated_fbs_yostar::charm_table_generated::root_as_clz_torappu_charm_data_unchecked;
+                let root = unsafe { root_as_clz_torappu_charm_data_unchecked(data) };
+                Ok(root.to_json())
+            }
+            "climb_tower_table" => {
+                use crate::generated_fbs_yostar::climb_tower_table_generated::root_as_clz_torappu_climb_tower_table_unchecked;
+                let root = unsafe { root_as_clz_torappu_climb_tower_table_unchecked(data) };
+                Ok(root.to_json())
+            }
+            "crisis_v2_table" => {
+                use crate::generated_fbs_yostar::crisis_v2_table_generated::root_as_clz_torappu_crisis_v2_shared_data_unchecked;
+                let root = unsafe { root_as_clz_torappu_crisis_v2_shared_data_unchecked(data) };
+                Ok(root.to_json())
+            }
             "display_meta_table" => {
                 use crate::generated_fbs_yostar::display_meta_table_generated::root_as_clz_torappu_display_meta_data_unchecked;
                 let root = unsafe { root_as_clz_torappu_display_meta_data_unchecked(data) };
                 Ok(root.to_json())
             }
+            "enemy_database" => {
+                use crate::generated_fbs_yostar::enemy_database_generated::root_as_clz_torappu_enemy_database_unchecked;
+                let root = unsafe { root_as_clz_torappu_enemy_database_unchecked(data) };
+                Ok(root.to_json())
+            }
             "item_table" => {
                 use crate::generated_fbs_yostar::item_table_generated::root_as_clz_torappu_inventory_data_unchecked;
                 let root = unsafe { root_as_clz_torappu_inventory_data_unchecked(data) };
+                Ok(root.to_json())
+            }
+            "prts___levels" => {
+                use crate::generated_fbs_yostar::prts___levels_generated::root_as_clz_torappu_level_data_unchecked;
+                let root = unsafe { root_as_clz_torappu_level_data_unchecked(data) };
                 Ok(root.to_json())
             }
             "retro_table" => {
@@ -836,6 +953,11 @@ fn decode_flatbuffer_yostar(data: &[u8], schema_type: &str) -> Result<Value, Str
             "roguelike_topic_table" => {
                 use crate::generated_fbs_yostar::roguelike_topic_table_generated::root_as_clz_torappu_roguelike_topic_table_unchecked;
                 let root = unsafe { root_as_clz_torappu_roguelike_topic_table_unchecked(data) };
+                Ok(root.to_json())
+            }
+            "sandbox_perm_table" => {
+                use crate::generated_fbs_yostar::sandbox_perm_table_generated::root_as_clz_torappu_sandbox_perm_table_unchecked;
+                let root = unsafe { root_as_clz_torappu_sandbox_perm_table_unchecked(data) };
                 Ok(root.to_json())
             }
             "stage_table" => {

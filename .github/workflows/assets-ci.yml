@@ -298,6 +298,14 @@ jobs:
         working-directory: assets
         run: node --check run.mjs
 
+      - name: Disk guard tests
+        working-directory: assets
+        run: node --test disk-guard.test.mjs
+
+      - name: Orphan sweep tests
+        working-directory: assets
+        run: node --test orphans.test.mjs
+
       - name: Validate imports resolve
         working-directory: assets
         run: |

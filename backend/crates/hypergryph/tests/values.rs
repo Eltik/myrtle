@@ -716,6 +716,7 @@ mod session {
                     UpstreamError::ServiceAccountRefused {
                         server: Server::EN,
                         first_of_outage: true,
+                        reason: String::new(),
                     },
                     false,
                 ),
@@ -740,8 +741,8 @@ mod session {
             let mut health = HealthTracker::default();
             assert_eq!(health.state(), AccountState::Unknown);
 
-            health.refused(100);
-            health.refused(200);
+            assert!(health.refused(100), "the outage starts");
+            assert!(!health.refused(200));
             assert_eq!(health.state(), AccountState::Refused);
             assert_eq!(
                 health.refused_since(),
@@ -754,7 +755,7 @@ mod session {
             assert_eq!(health.refused_since(), None);
             assert_eq!(health.last_ok_at(), Some(300));
 
-            health.refused(400);
+            assert!(health.refused(400));
             assert_eq!(
                 health.refused_since(),
                 Some(400),
