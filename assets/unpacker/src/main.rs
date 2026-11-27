@@ -2128,8 +2128,19 @@ fn debug_anim(sf: &SerializedFile) {
     for (pid, (cid, v)) in &objs {
         match cid {
             1 => {
-                go_name.insert(*pid, v.get("m_Name").and_then(|x| x.as_str()).unwrap_or("").to_string());
-                go_active.insert(*pid, v.get("m_IsActive").and_then(serde_json::Value::as_bool).unwrap_or(true));
+                go_name.insert(
+                    *pid,
+                    v.get("m_Name")
+                        .and_then(|x| x.as_str())
+                        .unwrap_or("")
+                        .to_string(),
+                );
+                go_active.insert(
+                    *pid,
+                    v.get("m_IsActive")
+                        .and_then(serde_json::Value::as_bool)
+                        .unwrap_or(true),
+                );
             }
             4 | 224 => {
                 if let Some(go) = v.get("m_GameObject").and_then(get_pid) {
@@ -2156,14 +2167,24 @@ fn debug_anim(sf: &SerializedFile) {
 
     // Build transform path -> go pid via CRC32 of slash-joined names.
     // path for a transform = join(root..self) of go names.
-    fn tr_path(tr: i64, tr_go: &HashMap<i64, i64>, tr_father: &HashMap<i64, i64>, go_name: &HashMap<i64, String>) -> String {
+    fn tr_path(
+        tr: i64,
+        tr_go: &HashMap<i64, i64>,
+        tr_father: &HashMap<i64, i64>,
+        go_name: &HashMap<i64, String>,
+    ) -> String {
         let mut chain: Vec<String> = Vec::new();
         let mut cur = tr;
         let mut guard = 0;
         loop {
             guard += 1;
-            if guard > 100 { break; }
-            let go = match tr_go.get(&cur) { Some(g) => *g, None => break };
+            if guard > 100 {
+                break;
+            }
+            let go = match tr_go.get(&cur) {
+                Some(g) => *g,
+                None => break,
+            };
             let nm = go_name.get(&go).cloned().unwrap_or_default();
             chain.push(nm);
             match tr_father.get(&cur) {
@@ -2185,10 +2206,19 @@ fn debug_anim(sf: &SerializedFile) {
         let mut cur = *tr;
         let mut guard = 0;
         loop {
-            guard += 1; if guard > 100 { break; }
-            let go = match tr_go.get(&cur) { Some(g) => *g, None => break };
+            guard += 1;
+            if guard > 100 {
+                break;
+            }
+            let go = match tr_go.get(&cur) {
+                Some(g) => *g,
+                None => break,
+            };
             chain.push(go_name.get(&go).cloned().unwrap_or_default());
-            match tr_father.get(&cur) { Some(f) if *f != 0 && tr_go.contains_key(f) => cur = *f, _ => break }
+            match tr_father.get(&cur) {
+                Some(f) if *f != 0 && tr_go.contains_key(f) => cur = *f,
+                _ => break,
+            }
         }
         chain.reverse();
         // for each start index, subpath = chain[start..].join("/")
@@ -2201,61 +2231,158 @@ fn debug_anim(sf: &SerializedFile) {
     }
     // path=0 => root GO(s): transforms whose father is not a known transform.
     for (tr, go) in &tr_go {
-        let is_root = tr_father.get(tr).map_or(true, |f| *f == 0 || !tr_go.contains_key(f));
-        if is_root { hash_to_go.entry(0).or_insert(*go); hash_to_path.entry(0).or_insert(String::from("<root>")); }
+        let is_root = tr_father
+            .get(tr)
+            .is_none_or(|f| *f == 0 || !tr_go.contains_key(f));
+        if is_root {
+            hash_to_go.entry(0).or_insert(*go);
+            hash_to_path.entry(0).or_insert(String::from("<root>"));
+        }
     }
     let _ = &tr_path;
 
     let total_mesh_quads = go_has_mesh.len();
     let total_ps = go_has_ps.len();
-    println!("  === ANIM DEBUG ===  mesh-quad GOs={total_mesh_quads}  particle GOs={total_ps}  GOs total={}", go_name.len());
-    let inactive: Vec<&String> = go_active.iter().filter(|(_, a)| !**a).filter_map(|(g, _)| go_name.get(g)).collect();
-    println!("  GameObjects starting m_IsActive=false: {} -> {:?}", inactive.len(), inactive);
+    println!(
+        "  === ANIM DEBUG ===  mesh-quad GOs={total_mesh_quads}  particle GOs={total_ps}  GOs total={}",
+        go_name.len()
+    );
+    let inactive: Vec<&String> = go_active
+        .iter()
+        .filter(|(_, a)| !**a)
+        .filter_map(|(g, _)| go_name.get(g))
+        .collect();
+    println!(
+        "  GameObjects starting m_IsActive=false: {} -> {:?}",
+        inactive.len(),
+        inactive
+    );
 
     for (pid, (cid, v)) in &objs {
-        if *cid != 74 { continue; }
+        if *cid != 74 {
+            continue;
+        }
         let name = v.get("m_Name").and_then(|x| x.as_str()).unwrap_or("");
         // legacy curves
-        let legacy_pos = v.get("m_PositionCurves").and_then(|x| x.as_array()).map_or(0, |a| a.len());
-        let legacy_rot = v.get("m_RotationCurves").and_then(|x| x.as_array()).map_or(0, |a| a.len());
-        let legacy_euler = v.get("m_EulerCurves").and_then(|x| x.as_array()).map_or(0, |a| a.len());
-        let legacy_scale = v.get("m_ScaleCurves").and_then(|x| x.as_array()).map_or(0, |a| a.len());
-        let legacy_float = v.get("m_FloatCurves").and_then(|x| x.as_array()).map_or(0, |a| a.len());
-        let legacy_pptr = v.get("m_PPtrCurves").and_then(|x| x.as_array()).map_or(0, |a| a.len());
+        let legacy_pos = v
+            .get("m_PositionCurves")
+            .and_then(|x| x.as_array())
+            .map_or(0, |a| a.len());
+        let legacy_rot = v
+            .get("m_RotationCurves")
+            .and_then(|x| x.as_array())
+            .map_or(0, |a| a.len());
+        let legacy_euler = v
+            .get("m_EulerCurves")
+            .and_then(|x| x.as_array())
+            .map_or(0, |a| a.len());
+        let legacy_scale = v
+            .get("m_ScaleCurves")
+            .and_then(|x| x.as_array())
+            .map_or(0, |a| a.len());
+        let legacy_float = v
+            .get("m_FloatCurves")
+            .and_then(|x| x.as_array())
+            .map_or(0, |a| a.len());
+        let legacy_pptr = v
+            .get("m_PPtrCurves")
+            .and_then(|x| x.as_array())
+            .map_or(0, |a| a.len());
 
         // optimized muscle clip
         let muscle = v.get("m_MuscleClip");
-        let clip = muscle.and_then(|m| m.get("m_Clip")).and_then(|c| c.get("data"));
-        let streamed = clip.and_then(|c| c.get("m_StreamedClip")).and_then(|s| s.get("data")).and_then(|d| d.as_array()).map_or(0, |a| a.len());
+        let clip = muscle
+            .and_then(|m| m.get("m_Clip"))
+            .and_then(|c| c.get("data"));
+        let streamed = clip
+            .and_then(|c| c.get("m_StreamedClip"))
+            .and_then(|s| s.get("data"))
+            .and_then(|d| d.as_array())
+            .map_or(0, |a| a.len());
         let dense = clip.and_then(|c| c.get("m_DenseClip"));
-        let dense_count = dense.and_then(|d| d.get("m_CurveCount")).and_then(serde_json::Value::as_i64).unwrap_or(0);
-        let const_clip = clip.and_then(|c| c.get("m_ConstantClip")).and_then(|s| s.get("data")).and_then(|d| d.as_array()).map_or(0, |a| a.len());
+        let dense_count = dense
+            .and_then(|d| d.get("m_CurveCount"))
+            .and_then(serde_json::Value::as_i64)
+            .unwrap_or(0);
+        let const_clip = clip
+            .and_then(|c| c.get("m_ConstantClip"))
+            .and_then(|s| s.get("data"))
+            .and_then(|d| d.as_array())
+            .map_or(0, |a| a.len());
         let has_muscle = muscle.is_some();
 
         println!("\n  CLIP '{name}' pid={pid}");
-        println!("    legacy: pos={legacy_pos} rot={legacy_rot} euler={legacy_euler} scale={legacy_scale} float={legacy_float} pptr={legacy_pptr}");
-        println!("    optimized: has_muscle={has_muscle} streamedData={streamed} denseCurveCount={dense_count} constData={const_clip}");
+        println!(
+            "    legacy: pos={legacy_pos} rot={legacy_rot} euler={legacy_euler} scale={legacy_scale} float={legacy_float} pptr={legacy_pptr}"
+        );
+        println!(
+            "    optimized: has_muscle={has_muscle} streamedData={streamed} denseCurveCount={dense_count} constData={const_clip}"
+        );
         if std::env::var("ANIM_KEYS").is_ok() {
             if let Some(c) = clip {
-                println!("    m_Clip keys: {:?}", c.as_object().map(|o| o.keys().cloned().collect::<Vec<_>>()));
-                if let Some(sc) = c.get("m_StreamedClip") { println!("      streamed keys: {:?} dataLen={:?}", sc.as_object().map(|o| o.keys().cloned().collect::<Vec<_>>()), sc.get("data").and_then(|d| d.as_array()).map(|a| a.len())); }
-                if let Some(dc) = c.get("m_DenseClip") { println!("      dense: {dc}"); }
-                if let Some(cc) = c.get("m_ConstantClip") { println!("      constant keys: {:?} dataLen={:?}", cc.as_object().map(|o| o.keys().cloned().collect::<Vec<_>>()), cc.get("data").and_then(|d| d.as_array()).map(|a| a.len())); }
+                println!(
+                    "    m_Clip keys: {:?}",
+                    c.as_object().map(|o| o.keys().cloned().collect::<Vec<_>>())
+                );
+                if let Some(sc) = c.get("m_StreamedClip") {
+                    println!(
+                        "      streamed keys: {:?} dataLen={:?}",
+                        sc.as_object()
+                            .map(|o| o.keys().cloned().collect::<Vec<_>>()),
+                        sc.get("data").and_then(|d| d.as_array()).map(|a| a.len())
+                    );
+                }
+                if let Some(dc) = c.get("m_DenseClip") {
+                    println!("      dense: {dc}");
+                }
+                if let Some(cc) = c.get("m_ConstantClip") {
+                    println!(
+                        "      constant keys: {:?} dataLen={:?}",
+                        cc.as_object()
+                            .map(|o| o.keys().cloned().collect::<Vec<_>>()),
+                        cc.get("data").and_then(|d| d.as_array()).map(|a| a.len())
+                    );
+                }
             }
             if let Some(m) = muscle {
-                let refpose = m.get("m_ValueArrayReferencePose").and_then(|x| x.as_array()).map_or(0, |a| a.len());
-                let idxarr = m.get("m_IndexArray").and_then(|x| x.as_array()).map_or(0, |a| a.len());
+                let refpose = m
+                    .get("m_ValueArrayReferencePose")
+                    .and_then(|x| x.as_array())
+                    .map_or(0, |a| a.len());
+                let idxarr = m
+                    .get("m_IndexArray")
+                    .and_then(|x| x.as_array())
+                    .map_or(0, |a| a.len());
                 let data = clip.and_then(|c| c.get("data"));
-                let data_kind = match data { Some(serde_json::Value::String(s)) => format!("string/blob len~{}", s.len()), Some(serde_json::Value::Array(a)) => format!("array len {}", a.len()), Some(o) => format!("obj keys {:?}", o.as_object().map(|m| m.keys().cloned().collect::<Vec<_>>())), None => "none".into() };
+                let data_kind = match data {
+                    Some(serde_json::Value::String(s)) => format!("string/blob len~{}", s.len()),
+                    Some(serde_json::Value::Array(a)) => format!("array len {}", a.len()),
+                    Some(o) => format!(
+                        "obj keys {:?}",
+                        o.as_object().map(|m| m.keys().cloned().collect::<Vec<_>>())
+                    ),
+                    None => "none".into(),
+                };
                 println!("    m_Clip.data={data_kind}  refPoseLen={refpose} indexArrLen={idxarr}");
             }
         }
 
         // generic bindings
-        let gb = v.get("m_ClipBindingConstant").and_then(|b| b.get("genericBindings")).and_then(|x| x.as_array());
-        let Some(gb) = gb else { println!("    no genericBindings"); continue; };
+        let gb = v
+            .get("m_ClipBindingConstant")
+            .and_then(|b| b.get("genericBindings"))
+            .and_then(|x| x.as_array());
+        let Some(gb) = gb else {
+            println!("    no genericBindings");
+            continue;
+        };
         if let Some(first) = gb.first() {
-            println!("    binding keys: {:?}", first.as_object().map(|o| o.keys().cloned().collect::<Vec<_>>()));
+            println!(
+                "    binding keys: {:?}",
+                first
+                    .as_object()
+                    .map(|o| o.keys().cloned().collect::<Vec<_>>())
+            );
         }
         // tally by (typeID, customType); collect attribute hashes for transforms
         let mut tally: HashMap<(i64, i64), usize> = HashMap::new();
@@ -2263,10 +2390,23 @@ fn debug_anim(sf: &SerializedFile) {
         let mut attr_counts: HashMap<i64, usize> = HashMap::new();
         let mut tr_unresolved = 0;
         for b in gb {
-            let type_id = b.get("typeID").or_else(|| b.get("classID")).and_then(serde_json::Value::as_i64).unwrap_or(-1);
-            let custom = b.get("customType").and_then(serde_json::Value::as_i64).unwrap_or(-1);
-            let attr = b.get("attribute").and_then(serde_json::Value::as_i64).unwrap_or(-1);
-            let path = b.get("path").and_then(serde_json::Value::as_i64).unwrap_or(-1);
+            let type_id = b
+                .get("typeID")
+                .or_else(|| b.get("classID"))
+                .and_then(serde_json::Value::as_i64)
+                .unwrap_or(-1);
+            let custom = b
+                .get("customType")
+                .and_then(serde_json::Value::as_i64)
+                .unwrap_or(-1);
+            let attr = b
+                .get("attribute")
+                .and_then(serde_json::Value::as_i64)
+                .unwrap_or(-1);
+            let path = b
+                .get("path")
+                .and_then(serde_json::Value::as_i64)
+                .unwrap_or(-1);
             *tally.entry((type_id, custom)).or_default() += 1;
             if type_id == 4 {
                 *attr_counts.entry(attr).or_default() += 1;
@@ -2277,7 +2417,9 @@ fn debug_anim(sf: &SerializedFile) {
                 }
             }
         }
-        if tr_unresolved > 0 { println!("    transform bindings UNRESOLVED path-hash: {tr_unresolved}"); }
+        if tr_unresolved > 0 {
+            println!("    transform bindings UNRESOLVED path-hash: {tr_unresolved}");
+        }
         let mut tally_v: Vec<_> = tally.into_iter().collect();
         tally_v.sort();
         println!("    binding tally (typeID,customType)->count: {tally_v:?}");
@@ -2291,14 +2433,30 @@ fn debug_anim(sf: &SerializedFile) {
             let mut resolved_ps = 0;
             let mut samples: Vec<String> = Vec::new();
             for (go, cnt) in &transform_targets {
-                if go_has_mesh.contains_key(go) { resolved_mesh += 1; }
-                if go_has_ps.contains_key(go) { resolved_ps += 1; }
+                if go_has_mesh.contains_key(go) {
+                    resolved_mesh += 1;
+                }
+                if go_has_ps.contains_key(go) {
+                    resolved_ps += 1;
+                }
                 if samples.len() < 8 {
-                    let kind = if go_has_mesh.contains_key(go) { "MESH" } else if go_has_ps.contains_key(go) { "PS" } else { "other" };
-                    samples.push(format!("{}[{kind}]x{cnt}", go_name.get(go).cloned().unwrap_or_default()));
+                    let kind = if go_has_mesh.contains_key(go) {
+                        "MESH"
+                    } else if go_has_ps.contains_key(go) {
+                        "PS"
+                    } else {
+                        "other"
+                    };
+                    samples.push(format!(
+                        "{}[{kind}]x{cnt}",
+                        go_name.get(go).cloned().unwrap_or_default()
+                    ));
                 }
             }
-            println!("    transform-target GOs: {} (mesh={resolved_mesh} ps={resolved_ps}) samples={samples:?}", transform_targets.len());
+            println!(
+                "    transform-target GOs: {} (mesh={resolved_mesh} ps={resolved_ps}) samples={samples:?}",
+                transform_targets.len()
+            );
         }
     }
 }

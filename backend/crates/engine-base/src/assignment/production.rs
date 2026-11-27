@@ -450,7 +450,7 @@ pub(super) fn poach_facility_partners(
                 };
                 new_auto.remove(weakest);
             }
-            new_auto.push(partner.clone());
+            new_auto.push(partner);
             let (auto_speed, _) = compute_team_efficiency(
                 &new_auto,
                 "MANUFACTURE",

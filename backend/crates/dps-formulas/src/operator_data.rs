@@ -296,7 +296,7 @@ impl OperatorData {
                     if data.key == "atk" {
                         atk_module.push(module_value);
                     } else if data.key == "attack_speed" {
-                        aspd_module.push(module_value.clone());
+                        aspd_module.push(module_value);
                     }
                 }
             }

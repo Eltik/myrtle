@@ -198,12 +198,19 @@ async fn the_en_library_galleries_and_sprites() {
     let started = Instant::now();
     let sprites = story::sprites_shared(&ctx, Server::EN).await.unwrap();
     eprintln!("story sprites: {} ms", started.elapsed().as_millis());
-    let first = &sprites.index.sprites[0];
-    let detail = story::get_story_sprite(&ctx, Server::EN, &first.base.to_ascii_uppercase())
-        .await
-        .unwrap();
-    assert_eq!(detail.sprite.base, first.base);
-    assert!(!scene_index(&sprites, &snapshot.story().unwrap().library.index).is_empty());
+    if myrtle_testkit::fixtures::assets_dir()
+        .join("en/textures/avg/characters")
+        .is_dir()
+    {
+        let first = &sprites.index.sprites[0];
+        let detail = story::get_story_sprite(&ctx, Server::EN, &first.base.to_ascii_uppercase())
+            .await
+            .unwrap();
+        assert_eq!(detail.sprite.base, first.base);
+        assert!(!scene_index(&sprites, &snapshot.story().unwrap().library.index).is_empty());
+    } else {
+        eprintln!("skipping the sprite checks: no en/textures/avg/characters");
+    }
 
     let art = story::story_art_shared(&ctx, Server::EN).await.unwrap();
     assert!(art.census(StoryArtKind::Scene).distinct > 0);

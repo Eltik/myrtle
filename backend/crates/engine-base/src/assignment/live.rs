@@ -426,7 +426,7 @@ pub fn align_rooms_to_current(building: &UserBuilding, proposal: &mut BaseAssign
             .iter()
             .filter(|u| u.room_type == room_type && u.level == level)
             .collect();
-        let mut pending = idxs.clone();
+        let mut pending = idxs;
         while !pending.is_empty() && !free_slots.is_empty() {
             let mut best: Option<(usize, usize, usize, bool)> = None;
             for (pi, &i) in pending.iter().enumerate() {
