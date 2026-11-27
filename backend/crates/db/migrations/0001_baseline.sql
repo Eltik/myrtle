@@ -1,0 +1,2001 @@
+SET LOCAL check_function_bodies = false;
+
+CREATE EXTENSION IF NOT EXISTS pg_trgm WITH SCHEMA public;
+
+CREATE FUNCTION public.fn_audit_log() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+    record_pk TEXT;
+    actor UUID;
+BEGIN
+    BEGIN
+        actor := current_setting('app.current_user_id', true)::UUID;
+    EXCEPTION WHEN OTHERS THEN
+        actor := NULL;
+    END;
+
+    IF TG_OP = 'DELETE' THEN
+        record_pk := COALESCE(
+            (to_jsonb(OLD)->>'id'),
+            (to_jsonb(OLD)->>'user_id'),
+            'unknown'
+        );
+        INSERT INTO audit_log (table_name, record_id, action, old_data, changed_by)
+        VALUES (TG_TABLE_NAME, record_pk, 'DELETE', to_jsonb(OLD), actor);
+        RETURN OLD;
+    ELSIF TG_OP = 'UPDATE' THEN
+        record_pk := COALESCE(
+            (to_jsonb(NEW)->>'id'),
+            (to_jsonb(NEW)->>'user_id'),
+            'unknown'
+        );
+        INSERT INTO audit_log (table_name, record_id, action, old_data, new_data, changed_by)
+        VALUES (TG_TABLE_NAME, record_pk, 'UPDATE', to_jsonb(OLD), to_jsonb(NEW), actor);
+        RETURN NEW;
+    ELSIF TG_OP = 'INSERT' THEN
+        record_pk := COALESCE(
+            (to_jsonb(NEW)->>'id'),
+            (to_jsonb(NEW)->>'user_id'),
+            'unknown'
+        );
+        INSERT INTO audit_log (table_name, record_id, action, new_data, changed_by)
+        VALUES (TG_TABLE_NAME, record_pk, 'INSERT', to_jsonb(NEW), actor);
+        RETURN NEW;
+    END IF;
+    RETURN NULL;
+END;
+$$;
+
+CREATE FUNCTION public.fn_bump_tier_list_from_placement() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+    target_id UUID;
+    lookup_tier UUID;
+BEGIN
+    IF TG_OP = 'DELETE' THEN
+        lookup_tier := OLD.tier_id;
+    ELSE
+        lookup_tier := NEW.tier_id;
+    END IF;
+
+    SELECT tier_list_id INTO target_id FROM tiers WHERE id = lookup_tier;
+
+    IF target_id IS NOT NULL THEN
+        UPDATE tier_lists SET updated_at = NOW() WHERE id = target_id;
+    END IF;
+
+    IF TG_OP = 'DELETE' THEN
+        RETURN OLD;
+    END IF;
+    RETURN NEW;
+END;
+$$;
+
+CREATE FUNCTION public.fn_bump_tier_list_from_tier() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+    target_id UUID;
+BEGIN
+    IF TG_OP = 'DELETE' THEN
+        target_id := OLD.tier_list_id;
+    ELSE
+        target_id := NEW.tier_list_id;
+    END IF;
+
+    UPDATE tier_lists SET updated_at = NOW() WHERE id = target_id;
+
+    IF TG_OP = 'DELETE' THEN
+        RETURN OLD;
+    END IF;
+    RETURN NEW;
+END;
+$$;
+
+CREATE FUNCTION public.fn_bump_tier_list_from_version() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    UPDATE tier_lists SET updated_at = NOW() WHERE id = NEW.tier_list_id;
+    RETURN NEW;
+END;
+$$;
+
+CREATE FUNCTION public.fn_update_timestamp() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    IF NEW.updated_at IS NOT DISTINCT FROM OLD.updated_at THEN
+        NEW.updated_at = NOW();
+    END IF;
+    RETURN NEW;
+END;
+$$;
+
+CREATE FUNCTION public.keep_unloaded_sandbox_topics() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+    tpl text;
+    topic text;
+    kept jsonb;
+BEGIN
+    IF jsonb_typeof(OLD.progress) IS DISTINCT FROM 'object'
+        OR jsonb_typeof(NEW.progress) IS DISTINCT FROM 'object' THEN
+        RETURN NEW;
+    END IF;
+    FOR tpl, topic, kept IN
+        SELECT t.key, tp.key, tp.value
+        FROM jsonb_each(
+                CASE WHEN jsonb_typeof(OLD.progress -> 'template') = 'object'
+                     THEN OLD.progress -> 'template' ELSE '{}'::jsonb END) t,
+             jsonb_each(
+                CASE WHEN jsonb_typeof(t.value) = 'object'
+                     THEN t.value ELSE '{}'::jsonb END) tp
+        WHERE jsonb_typeof(tp.value) = 'object'
+    LOOP
+        IF jsonb_typeof(NEW.progress #> ARRAY['template', tpl, topic]) IS DISTINCT FROM 'object' THEN
+            IF jsonb_typeof(NEW.progress -> 'template') IS DISTINCT FROM 'object' THEN
+                NEW.progress := jsonb_set(NEW.progress, '{template}', '{}'::jsonb);
+            END IF;
+            IF jsonb_typeof(NEW.progress -> 'template' -> tpl) IS DISTINCT FROM 'object' THEN
+                NEW.progress := jsonb_set(NEW.progress, ARRAY['template', tpl], '{}'::jsonb);
+            END IF;
+            NEW.progress := jsonb_set(NEW.progress, ARRAY['template', tpl, topic], kept);
+        END IF;
+    END LOOP;
+    RETURN NEW;
+END
+$$;
+
+CREATE PROCEDURE public.sp_insert_gacha_batch(IN p_user_id uuid, IN p_records jsonb)
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    DELETE FROM gacha_records gr
+    WHERE gr.user_id = p_user_id
+      AND (gr.pull_timestamp, gr.pool_id) IN (
+          SELECT DISTINCT (r->>'pull_timestamp')::BIGINT, r->>'pool_id'
+          FROM jsonb_array_elements(p_records) AS r
+      );
+
+    INSERT INTO gacha_records (
+        user_id, char_id, pool_id, rarity,
+        pull_timestamp, pool_name, gacha_type, batch_index
+    )
+    SELECT
+        p_user_id,
+        r->>'char_id',
+        r->>'pool_id',
+        (r->>'rarity')::SMALLINT,
+        (r->>'pull_timestamp')::BIGINT,
+        r->>'pool_name',
+        r->>'gacha_type',
+        (r->>'batch_index')::SMALLINT
+    FROM jsonb_array_elements(p_records) AS r;
+END;
+$$;
+
+CREATE PROCEDURE public.sp_sync_user_data(IN p_uid character varying, IN p_server_id smallint, IN p_nickname character varying, IN p_level smallint, IN p_avatar_id character varying, IN p_secretary character varying, IN p_secretary_skin_id character varying, IN p_resume_id character varying, IN p_operators jsonb, IN p_skills jsonb, IN p_modules jsonb, IN p_items jsonb, IN p_skins jsonb, IN p_status jsonb, IN p_stages jsonb, IN p_roguelike jsonb, IN p_sandbox jsonb, IN p_medals jsonb, IN p_building jsonb, IN p_checkin jsonb, IN p_supports jsonb, IN p_nick_number character varying, IN p_enemies jsonb)
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+    v_user_id UUID;
+BEGIN
+    INSERT INTO users (uid, server_id, nickname, nick_number, level, avatar_id, secretary, secretary_skin_id, resume_id)
+    VALUES (p_uid, p_server_id, p_nickname, p_nick_number, p_level, p_avatar_id, p_secretary, p_secretary_skin_id, p_resume_id)
+    ON CONFLICT (uid, server_id) DO UPDATE SET
+        nickname = EXCLUDED.nickname, nick_number = EXCLUDED.nick_number,
+        level = EXCLUDED.level,
+        avatar_id = EXCLUDED.avatar_id, secretary = EXCLUDED.secretary,
+        secretary_skin_id = EXCLUDED.secretary_skin_id, resume_id = EXCLUDED.resume_id
+    RETURNING id INTO v_user_id;
+
+    INSERT INTO user_settings (user_id) VALUES (v_user_id) ON CONFLICT DO NOTHING;
+
+    INSERT INTO user_status (user_id, exp, orundum, orundum_shard, lmd, sanity, max_sanity,
+        gacha_tickets, ten_pull_tickets, classic_gacha_tickets, classic_ten_pull_tickets,
+        recruit_permits, social_point, hgg_shard, lgg_shard, practice_tickets, gold,
+        monthly_sub_end, register_ts, last_online_ts, main_stage_progress, resume, friend_num_limit)
+    VALUES (v_user_id,
+        (p_status->>'exp')::INT, (p_status->>'orundum')::INT, (p_status->>'orundum_shard')::INT,
+        (p_status->>'lmd')::INT, (p_status->>'sanity')::SMALLINT, (p_status->>'max_sanity')::SMALLINT,
+        (p_status->>'gacha_tickets')::INT, (p_status->>'ten_pull_tickets')::INT,
+        (p_status->>'classic_gacha_tickets')::INT, (p_status->>'classic_ten_pull_tickets')::INT,
+        (p_status->>'recruit_permits')::INT, (p_status->>'social_point')::INT,
+        (p_status->>'hgg_shard')::INT, (p_status->>'lgg_shard')::INT,
+        (p_status->>'practice_tickets')::INT, (p_status->>'gold')::INT,
+        (p_status->>'monthly_sub_end')::BIGINT, (p_status->>'register_ts')::BIGINT,
+        (p_status->>'last_online_ts')::BIGINT, p_status->>'main_stage_progress',
+        p_status->>'resume', (p_status->>'friend_num_limit')::SMALLINT)
+    ON CONFLICT (user_id) DO UPDATE SET
+        exp = EXCLUDED.exp, orundum = EXCLUDED.orundum, orundum_shard = EXCLUDED.orundum_shard,
+        lmd = EXCLUDED.lmd, sanity = EXCLUDED.sanity, max_sanity = EXCLUDED.max_sanity,
+        gacha_tickets = EXCLUDED.gacha_tickets, ten_pull_tickets = EXCLUDED.ten_pull_tickets,
+        classic_gacha_tickets = EXCLUDED.classic_gacha_tickets,
+        classic_ten_pull_tickets = EXCLUDED.classic_ten_pull_tickets,
+        recruit_permits = EXCLUDED.recruit_permits, social_point = EXCLUDED.social_point,
+        hgg_shard = EXCLUDED.hgg_shard, lgg_shard = EXCLUDED.lgg_shard,
+        practice_tickets = EXCLUDED.practice_tickets, gold = EXCLUDED.gold,
+        monthly_sub_end = EXCLUDED.monthly_sub_end, register_ts = EXCLUDED.register_ts,
+        last_online_ts = EXCLUDED.last_online_ts, main_stage_progress = EXCLUDED.main_stage_progress,
+        resume = EXCLUDED.resume, friend_num_limit = EXCLUDED.friend_num_limit;
+
+    DELETE FROM user_operators WHERE user_id = v_user_id;
+    INSERT INTO user_operators (user_id, operator_id, elite, level, exp, potential, skill_level,
+        favor_point, skin_id, default_skill, voice_lan, current_equip, current_tmpl, obtained_at)
+    SELECT v_user_id, op->>'operator_id', (op->>'elite')::SMALLINT, (op->>'level')::SMALLINT,
+           COALESCE((op->>'exp')::INT, 0), (op->>'potential')::SMALLINT, (op->>'skill_level')::SMALLINT,
+           COALESCE((op->>'favor_point')::INT, 0), op->>'skin_id', COALESCE((op->>'default_skill')::SMALLINT, 0),
+           op->>'voice_lan', op->>'current_equip', op->>'current_tmpl', (op->>'obtained_at')::BIGINT
+    FROM jsonb_array_elements(p_operators) AS op;
+
+    INSERT INTO user_operator_skills (user_id, operator_id, skill_index, specialize_level)
+    SELECT v_user_id, sk->>'operator_id', (sk->>'skill_index')::SMALLINT, (sk->>'specialize_level')::SMALLINT
+    FROM jsonb_array_elements(p_skills) AS sk;
+
+    INSERT INTO user_operator_modules (user_id, operator_id, module_id, module_level, locked)
+    SELECT v_user_id, m->>'operator_id', m->>'module_id', (m->>'module_level')::SMALLINT,
+           COALESCE((m->>'locked')::BOOLEAN, false)
+    FROM jsonb_array_elements(p_modules) AS m;
+
+    DELETE FROM user_items WHERE user_id = v_user_id;
+    INSERT INTO user_items (user_id, item_id, quantity)
+    SELECT v_user_id, i->>'item_id', (i->>'quantity')::INT
+    FROM jsonb_array_elements(p_items) AS i
+    WHERE (i->>'quantity')::INT > 0;
+
+    DELETE FROM user_skins WHERE user_id = v_user_id;
+    INSERT INTO user_skins (user_id, skin_id, obtained_at)
+    SELECT v_user_id, sk->>'skin_id', (sk->>'obtained_at')::BIGINT
+    FROM jsonb_array_elements(p_skins) AS sk;
+
+    INSERT INTO user_stage_progress (user_id, stages) VALUES (v_user_id, p_stages)
+    ON CONFLICT (user_id) DO UPDATE SET stages = EXCLUDED.stages;
+
+    DELETE FROM user_roguelike_progress WHERE user_id = v_user_id;
+    INSERT INTO user_roguelike_progress (user_id, theme_id, progress)
+    SELECT v_user_id, r->>'theme_id', r->'progress'
+    FROM jsonb_array_elements(p_roguelike) AS r;
+
+    INSERT INTO user_sandbox_progress (user_id, progress) VALUES (v_user_id, p_sandbox)
+    ON CONFLICT (user_id) DO UPDATE SET progress = EXCLUDED.progress;
+
+    DELETE FROM user_medals WHERE user_id = v_user_id;
+    INSERT INTO user_medals (user_id, medal_id, val, first_ts, reach_ts)
+    SELECT v_user_id, m->>'medal_id', m->'val', (m->>'first_ts')::BIGINT, (m->>'reach_ts')::BIGINT
+    FROM jsonb_array_elements(p_medals) AS m;
+
+    INSERT INTO user_building (user_id, data) VALUES (v_user_id, p_building)
+    ON CONFLICT (user_id) DO UPDATE SET data = EXCLUDED.data;
+
+    INSERT INTO user_checkin (user_id, history, cumulative_signin, checkin_group_id, reward_index, can_check_in)
+    VALUES (v_user_id,
+        ARRAY(SELECT jsonb_array_elements_text(p_checkin->'history')::SMALLINT),
+        COALESCE((p_checkin->>'cumulative_signin')::INT, 0),
+        p_checkin->>'group_id',
+        COALESCE((p_checkin->>'reward_index')::SMALLINT, 0),
+        COALESCE((p_checkin->>'can_check_in')::BOOLEAN, false))
+    ON CONFLICT (user_id) DO UPDATE SET
+        history = EXCLUDED.history,
+        cumulative_signin = EXCLUDED.cumulative_signin,
+        checkin_group_id = EXCLUDED.checkin_group_id,
+        reward_index = EXCLUDED.reward_index,
+        can_check_in = EXCLUDED.can_check_in;
+
+    DELETE FROM user_support_units WHERE user_id = v_user_id;
+    INSERT INTO user_support_units (user_id, slot, operator_id, skin_id, skill_index, current_equip)
+    SELECT v_user_id,
+           (s->>'slot')::SMALLINT,
+           s->>'operator_id',
+           s->>'skin_id',
+           COALESCE((s->>'skill_index')::SMALLINT, 0),
+           s->>'current_equip'
+    FROM jsonb_array_elements(p_supports) AS s
+    WHERE s->>'operator_id' IS NOT NULL;
+
+    INSERT INTO user_enemy_progress (user_id, enemies) VALUES (v_user_id, p_enemies)
+    ON CONFLICT (user_id) DO UPDATE SET enemies = EXCLUDED.enemies;
+END;
+$$;
+
+CREATE TABLE public._migrations (
+    name character varying(100) NOT NULL,
+    applied_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+CREATE TABLE public.audit_log (
+    id bigint NOT NULL,
+    table_name character varying(50) NOT NULL,
+    record_id text NOT NULL,
+    action character varying(10) NOT NULL,
+    old_data jsonb,
+    new_data jsonb,
+    changed_by uuid,
+    changed_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+CREATE SEQUENCE public.audit_log_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+ALTER SEQUENCE public.audit_log_id_seq OWNED BY public.audit_log.id;
+
+CREATE TABLE public.content_audit_log (
+    id bigint NOT NULL,
+    actor_id uuid NOT NULL,
+    target_kind character varying(20) NOT NULL,
+    target_id uuid NOT NULL,
+    target_name text NOT NULL,
+    target_slug text,
+    owner_id uuid,
+    subject_id uuid,
+    action character varying(20) NOT NULL,
+    details jsonb DEFAULT '{}'::jsonb NOT NULL,
+    event_count integer DEFAULT 1 NOT NULL,
+    first_at timestamp with time zone DEFAULT now() NOT NULL,
+    changed_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+CREATE SEQUENCE public.content_audit_log_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+ALTER SEQUENCE public.content_audit_log_id_seq OWNED BY public.content_audit_log.id;
+
+CREATE TABLE public.gacha_records (
+    id bigint NOT NULL,
+    user_id uuid NOT NULL,
+    char_id character varying(50) NOT NULL,
+    pool_id character varying(50) NOT NULL,
+    rarity smallint NOT NULL,
+    pull_timestamp bigint NOT NULL,
+    pool_name character varying(100),
+    gacha_type character varying(50),
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    batch_index smallint DEFAULT 0 NOT NULL
+);
+
+CREATE SEQUENCE public.gacha_records_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+ALTER SEQUENCE public.gacha_records_id_seq OWNED BY public.gacha_records.id;
+
+CREATE TABLE public.gamedata_overrides (
+    locale character varying(16) NOT NULL,
+    kind character varying(32) NOT NULL,
+    entity_id text NOT NULL,
+    field character varying(64) NOT NULL,
+    value text NOT NULL,
+    updated_by uuid,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+CREATE TABLE public.gamedata_sightings (
+    server_id smallint NOT NULL,
+    kind text NOT NULL,
+    id text NOT NULL,
+    first_seen_at timestamp with time zone DEFAULT now() NOT NULL,
+    last_seen_at timestamp with time zone DEFAULT now() NOT NULL,
+    res_version text,
+    start_time bigint,
+    end_time bigint
+);
+
+CREATE TABLE public.grids (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    slug character varying(120) NOT NULL,
+    title character varying(100) NOT NULL,
+    description text,
+    created_by uuid NOT NULL,
+    rows smallint NOT NULL,
+    cols smallint NOT NULL,
+    cells jsonb NOT NULL,
+    is_listed boolean DEFAULT true NOT NULL,
+    template_of uuid,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    entity_kinds text[] DEFAULT '{operator,class,subclass,enemy,event,faction,stronghold_bond,skin,module,skill,integrated_strategies,story_sprite,main_story}'::text[] NOT NULL,
+    CONSTRAINT grids_cols_check CHECK (((cols >= 1) AND (cols <= 10))),
+    CONSTRAINT grids_entity_kinds_nonempty CHECK ((cardinality(entity_kinds) > 0)),
+    CONSTRAINT grids_rows_check CHECK (((rows >= 1) AND (rows <= 10)))
+);
+
+CREATE TABLE public.leaderboard_snapshot_entries (
+    snapshot_id bigint NOT NULL,
+    user_id uuid NOT NULL,
+    server_id smallint NOT NULL,
+    rank_global integer NOT NULL,
+    rank_server integer NOT NULL,
+    total_score double precision
+);
+
+CREATE TABLE public.leaderboard_snapshots (
+    id bigint NOT NULL,
+    taken_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+CREATE SEQUENCE public.leaderboard_snapshots_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+ALTER SEQUENCE public.leaderboard_snapshots_id_seq OWNED BY public.leaderboard_snapshots.id;
+
+CREATE TABLE public.locales (
+    code character varying(16) NOT NULL,
+    english_name text NOT NULL,
+    native_name text NOT NULL,
+    fallback_locale character varying(16),
+    gamedata_server character varying(8) DEFAULT 'en'::character varying NOT NULL,
+    enabled boolean DEFAULT false NOT NULL,
+    sort_order integer DEFAULT 100 NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    is_source boolean DEFAULT false NOT NULL
+);
+
+CREATE TABLE public.medal_ownership_stats (
+    server_id smallint NOT NULL,
+    medal_id character varying(50) NOT NULL,
+    owners integer DEFAULT 0 NOT NULL,
+    population integer DEFAULT 0 NOT NULL,
+    computed_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+CREATE TABLE public.music_history (
+    id bigint NOT NULL,
+    user_id uuid NOT NULL,
+    track_id text NOT NULL,
+    listened_seconds real DEFAULT 0 NOT NULL,
+    played_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+CREATE SEQUENCE public.music_history_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+ALTER SEQUENCE public.music_history_id_seq OWNED BY public.music_history.id;
+
+CREATE TABLE public.music_likes (
+    user_id uuid NOT NULL,
+    track_id text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+CREATE TABLE public.music_playlist_tracks (
+    playlist_id uuid NOT NULL,
+    track_id text NOT NULL,
+    "position" integer NOT NULL,
+    added_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+CREATE TABLE public.music_playlists (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    user_id uuid NOT NULL,
+    name character varying(60) NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+CREATE UNLOGGED TABLE public.music_stat_dedupe (
+    kind text NOT NULL,
+    client text NOT NULL,
+    track_id text NOT NULL,
+    counted_at timestamp with time zone NOT NULL
+);
+
+CREATE TABLE public.music_stat_events (
+    id bigint NOT NULL,
+    kind text NOT NULL,
+    track_id text NOT NULL,
+    user_id uuid,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT music_stat_events_kind_check CHECK ((kind = ANY (ARRAY['listen'::text, 'download'::text])))
+);
+
+CREATE SEQUENCE public.music_stat_events_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+ALTER SEQUENCE public.music_stat_events_id_seq OWNED BY public.music_stat_events.id;
+
+CREATE TABLE public.music_track_stats (
+    track_id text NOT NULL,
+    listens bigint DEFAULT 0 NOT NULL,
+    downloads bigint DEFAULT 0 NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+CREATE TABLE public.oauth_apps (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    owner_id uuid NOT NULL,
+    name character varying(64) NOT NULL,
+    description character varying(280) DEFAULT ''::character varying NOT NULL,
+    redirect_uris text[] NOT NULL,
+    secret_hash bytea NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+CREATE TABLE public.oauth_codes (
+    code_hash bytea NOT NULL,
+    grant_id uuid NOT NULL,
+    redirect_uri text NOT NULL,
+    scope text NOT NULL,
+    code_challenge text,
+    expires_at timestamp with time zone NOT NULL,
+    consumed_at timestamp with time zone
+);
+
+CREATE TABLE public.oauth_grants (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    app_id uuid NOT NULL,
+    user_id uuid NOT NULL,
+    scope text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    last_used_at timestamp with time zone
+);
+
+CREATE TABLE public.oauth_tokens (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    grant_id uuid NOT NULL,
+    access_hash bytea NOT NULL,
+    refresh_hash bytea NOT NULL,
+    scope text NOT NULL,
+    access_expires_at timestamp with time zone NOT NULL,
+    refresh_expires_at timestamp with time zone NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+CREATE TABLE public.operator_mastery_stats (
+    server_id smallint NOT NULL,
+    operator_id character varying(50) NOT NULL,
+    skill_index smallint NOT NULL,
+    mastery smallint NOT NULL,
+    users integer DEFAULT 0 NOT NULL,
+    computed_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+CREATE TABLE public.operator_module_choice_stats (
+    server_id smallint NOT NULL,
+    operator_id character varying(50) NOT NULL,
+    uni_equip_id character varying(50) NOT NULL,
+    users integer DEFAULT 0 NOT NULL,
+    computed_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+CREATE TABLE public.operator_module_level_stats (
+    server_id smallint NOT NULL,
+    operator_id character varying(50) NOT NULL,
+    uni_equip_id character varying(50) NOT NULL,
+    module_level smallint NOT NULL,
+    users integer DEFAULT 0 NOT NULL,
+    computed_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+CREATE TABLE public.operator_notes (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    operator_id character varying(50) NOT NULL,
+    pros text,
+    cons text,
+    notes text,
+    trivia text,
+    summary character varying(500),
+    tags jsonb DEFAULT '[]'::jsonb,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+CREATE TABLE public.operator_notes_audit_log (
+    id bigint NOT NULL,
+    note_id uuid NOT NULL,
+    field_name character varying(50) NOT NULL,
+    old_value text,
+    new_value text,
+    changed_by uuid NOT NULL,
+    changed_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+CREATE SEQUENCE public.operator_notes_audit_log_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+ALTER SEQUENCE public.operator_notes_audit_log_id_seq OWNED BY public.operator_notes_audit_log.id;
+
+CREATE TABLE public.operator_ownership_stats (
+    server_id smallint NOT NULL,
+    operator_id character varying(50) NOT NULL,
+    owners integer DEFAULT 0 NOT NULL,
+    population integer DEFAULT 0 NOT NULL,
+    computed_at timestamp with time zone DEFAULT now() NOT NULL,
+    e2_owners integer DEFAULT 0 NOT NULL
+);
+
+CREATE TABLE public.operator_plans (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    user_id uuid NOT NULL,
+    operator_id character varying(50) NOT NULL,
+    target_elite smallint DEFAULT 0 NOT NULL,
+    target_level smallint DEFAULT 1 NOT NULL,
+    target_skill_level smallint DEFAULT 1 NOT NULL,
+    target_skills jsonb DEFAULT '[]'::jsonb NOT NULL,
+    target_modules jsonb DEFAULT '[]'::jsonb NOT NULL,
+    display_on_profile boolean DEFAULT false NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+CREATE TABLE public.operator_skill_choice_stats (
+    server_id smallint NOT NULL,
+    operator_id character varying(50) NOT NULL,
+    skill_index smallint NOT NULL,
+    users integer DEFAULT 0 NOT NULL,
+    computed_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+CREATE TABLE public.plan_group_members (
+    plan_group_id uuid NOT NULL,
+    operator_plan_id uuid NOT NULL
+);
+
+CREATE TABLE public.plan_groups (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    user_id uuid NOT NULL,
+    name character varying(100) NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    pinned boolean DEFAULT false NOT NULL
+);
+
+CREATE TABLE public.plan_presets (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    user_id uuid NOT NULL,
+    name character varying(100) NOT NULL,
+    target jsonb NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+CREATE TABLE public.release_overrides (
+    kind text NOT NULL,
+    cn_id text NOT NULL,
+    en_id text,
+    en_start bigint,
+    en_end bigint,
+    source text DEFAULT 'manual'::text NOT NULL,
+    note text DEFAULT ''::text NOT NULL,
+    updated_by uuid,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    en_name text,
+    featured_chars text[]
+);
+
+CREATE TABLE public.release_plans (
+    user_id uuid NOT NULL,
+    initial integer DEFAULT 0 NOT NULL,
+    initial_manual boolean DEFAULT false NOT NULL,
+    picks jsonb DEFAULT '[]'::jsonb NOT NULL,
+    stages jsonb DEFAULT '{}'::jsonb NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+CREATE TABLE public.servers (
+    id smallint NOT NULL,
+    code character varying(4) NOT NULL,
+    name character varying(20) NOT NULL
+);
+
+CREATE TABLE public.siren_albums (
+    cid text NOT NULL,
+    name text NOT NULL,
+    intro text DEFAULT ''::text NOT NULL,
+    belong text DEFAULT ''::text NOT NULL,
+    cover_url text NOT NULL,
+    cover_de_url text,
+    artists text[] DEFAULT '{}'::text[] NOT NULL,
+    list_order integer NOT NULL,
+    fetched_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+CREATE TABLE public.siren_songs (
+    cid text NOT NULL,
+    album_cid text NOT NULL,
+    name text NOT NULL,
+    artists text[] DEFAULT '{}'::text[] NOT NULL,
+    lyric_url text,
+    mv_url text,
+    mv_cover_url text,
+    track_order integer DEFAULT 0 NOT NULL,
+    lyric_text text,
+    fetched_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+CREATE TABLE public.tier_list_favorites (
+    tier_list_id uuid NOT NULL,
+    user_id uuid NOT NULL,
+    favorited_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+CREATE TABLE public.tier_list_flairs (
+    id smallint NOT NULL,
+    code character varying(30) NOT NULL,
+    label character varying(50) NOT NULL,
+    color character varying(7),
+    display_order smallint DEFAULT 0 NOT NULL,
+    is_active boolean DEFAULT true NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+CREATE SEQUENCE public.tier_list_flairs_id_seq
+    AS smallint
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+ALTER SEQUENCE public.tier_list_flairs_id_seq OWNED BY public.tier_list_flairs.id;
+
+CREATE TABLE public.tier_list_permissions (
+    tier_list_id uuid NOT NULL,
+    user_id uuid NOT NULL,
+    permission character varying(20) NOT NULL,
+    granted_by uuid,
+    granted_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+CREATE TABLE public.tier_list_stats (
+    tier_list_id uuid NOT NULL,
+    view_count bigint DEFAULT 0 NOT NULL,
+    unique_view_count bigint DEFAULT 0 NOT NULL,
+    favorite_count integer DEFAULT 0 NOT NULL,
+    share_count integer DEFAULT 0 NOT NULL,
+    is_trending boolean DEFAULT false NOT NULL,
+    trending_score double precision DEFAULT 0 NOT NULL,
+    views_last_24h integer DEFAULT 0 NOT NULL,
+    views_last_7d integer DEFAULT 0 NOT NULL,
+    last_viewed_at timestamp with time zone,
+    stats_updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+CREATE TABLE public.tier_list_versions (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tier_list_id uuid NOT NULL,
+    version integer NOT NULL,
+    snapshot jsonb NOT NULL,
+    changelog text,
+    published_by uuid,
+    published_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+CREATE TABLE public.tier_list_view_events (
+    id bigint NOT NULL,
+    tier_list_id uuid NOT NULL,
+    user_id uuid,
+    session_hash character(64),
+    viewed_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+CREATE SEQUENCE public.tier_list_view_events_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+ALTER SEQUENCE public.tier_list_view_events_id_seq OWNED BY public.tier_list_view_events.id;
+
+CREATE TABLE public.tier_lists (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name character varying(100) NOT NULL,
+    slug character varying(100) NOT NULL,
+    description text,
+    list_type character varying(20) DEFAULT 'official'::character varying NOT NULL,
+    created_by uuid,
+    is_active boolean DEFAULT true NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    flair_id smallint,
+    is_listed boolean DEFAULT true NOT NULL,
+    entity_kinds text[] DEFAULT '{operator}'::text[] NOT NULL,
+    CONSTRAINT tier_lists_entity_kinds_nonempty CHECK ((cardinality(entity_kinds) > 0))
+);
+
+CREATE TABLE public.tier_placements (
+    tier_id uuid NOT NULL,
+    entity_id character varying(50) NOT NULL,
+    sub_order smallint DEFAULT 0 NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    description text,
+    entity_kind character varying(24) DEFAULT 'operator'::character varying NOT NULL
+);
+
+CREATE TABLE public.tiers (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tier_list_id uuid NOT NULL,
+    name character varying(40) NOT NULL,
+    display_order smallint NOT NULL,
+    color character varying(7),
+    description text
+);
+
+CREATE TABLE public.translation_permissions (
+    locale character varying(16) NOT NULL,
+    user_id uuid NOT NULL,
+    permission character varying(20) NOT NULL,
+    granted_by uuid,
+    granted_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+CREATE TABLE public.ui_documents (
+    slug text NOT NULL,
+    locale character varying(16) NOT NULL,
+    title text NOT NULL,
+    body text NOT NULL,
+    updated_by uuid,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+CREATE TABLE public.ui_message_audit_log (
+    id bigint NOT NULL,
+    message_key text NOT NULL,
+    locale character varying(16) NOT NULL,
+    old_value text,
+    new_value text,
+    changed_by uuid NOT NULL,
+    changed_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+CREATE SEQUENCE public.ui_message_audit_log_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+ALTER SEQUENCE public.ui_message_audit_log_id_seq OWNED BY public.ui_message_audit_log.id;
+
+CREATE TABLE public.ui_message_keys (
+    key text NOT NULL,
+    namespace text NOT NULL,
+    source_text text NOT NULL,
+    source_hash character varying(16) NOT NULL,
+    description text,
+    placeholders jsonb DEFAULT '[]'::jsonb NOT NULL,
+    first_seen_at timestamp with time zone DEFAULT now() NOT NULL,
+    last_seen_at timestamp with time zone DEFAULT now() NOT NULL,
+    is_active boolean DEFAULT true NOT NULL
+);
+
+CREATE TABLE public.ui_messages (
+    key text NOT NULL,
+    locale character varying(16) NOT NULL,
+    value text NOT NULL,
+    source_hash character varying(16) NOT NULL,
+    updated_by uuid,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    source_text text
+);
+
+CREATE TABLE public.user_building (
+    user_id uuid NOT NULL,
+    data jsonb DEFAULT '{}'::jsonb NOT NULL
+);
+
+CREATE TABLE public.user_checkin (
+    user_id uuid NOT NULL,
+    history smallint[] DEFAULT '{}'::smallint[] NOT NULL,
+    cumulative_signin integer DEFAULT 0 NOT NULL,
+    checkin_group_id character varying(32),
+    reward_index smallint DEFAULT 0 NOT NULL,
+    can_check_in boolean DEFAULT false NOT NULL
+);
+
+COMMENT ON COLUMN public.user_checkin.history IS 'Raw checkIn.checkInHistory: one flag per sign-in CLAIMED this month, in claim order; 1 = monthly-subscription Daily Supply granted with that claim. NOT a dated calendar - length is the claim count, and no entry maps to a calendar day.';
+
+COMMENT ON COLUMN public.user_checkin.cumulative_signin IS 'Lifetime cumulative sign-in days (checkIn.showCount), independent of the current month.';
+
+COMMENT ON COLUMN public.user_checkin.reward_index IS 'Raw checkIn.checkInRewardIndex: 0-based pointer into the month''s reward slots. Equals cardinality(history) while a claim is pending, one less just after a claim. Prefer cardinality(history) for the claim count.';
+
+CREATE TABLE public.user_enemy_progress (
+    user_id uuid NOT NULL,
+    enemies jsonb DEFAULT '{}'::jsonb NOT NULL
+);
+
+CREATE TABLE public.user_game_credentials (
+    user_id uuid NOT NULL,
+    nonce bytea NOT NULL,
+    ciphertext bytea NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+CREATE TABLE public.user_game_squads (
+    user_id uuid NOT NULL,
+    squad_index smallint NOT NULL,
+    name text NOT NULL,
+    slots jsonb NOT NULL,
+    synced_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+CREATE TABLE public.user_game_story_read (
+    user_id uuid NOT NULL,
+    story_id text NOT NULL,
+    reread_count integer DEFAULT 0 NOT NULL,
+    unlocked_at timestamp with time zone,
+    synced_at timestamp with time zone DEFAULT now() NOT NULL,
+    played boolean DEFAULT false NOT NULL,
+    archived boolean DEFAULT false NOT NULL,
+    cleared boolean DEFAULT false NOT NULL,
+    read_in_game boolean DEFAULT false NOT NULL
+);
+
+CREATE TABLE public.user_items (
+    user_id uuid NOT NULL,
+    item_id character varying(50) NOT NULL,
+    quantity integer DEFAULT 0 NOT NULL
+);
+
+CREATE TABLE public.user_lookback_snapshots (
+    user_id uuid NOT NULL,
+    period_start timestamp with time zone NOT NULL,
+    activity_id character varying(64),
+    activity_name text,
+    taken_at timestamp with time zone DEFAULT now() NOT NULL,
+    summary jsonb NOT NULL,
+    build jsonb NOT NULL
+);
+
+CREATE TABLE public.user_medals (
+    user_id uuid NOT NULL,
+    medal_id character varying(50) NOT NULL,
+    val jsonb,
+    first_ts bigint,
+    reach_ts bigint
+);
+
+CREATE TABLE public.user_operator_modules (
+    user_id uuid NOT NULL,
+    operator_id character varying(50) NOT NULL,
+    module_id character varying(50) NOT NULL,
+    module_level smallint DEFAULT 0 NOT NULL,
+    locked boolean DEFAULT false NOT NULL
+);
+
+CREATE TABLE public.user_operator_skills (
+    user_id uuid NOT NULL,
+    operator_id character varying(50) NOT NULL,
+    skill_index smallint NOT NULL,
+    specialize_level smallint DEFAULT 0 NOT NULL
+);
+
+CREATE TABLE public.user_operators (
+    user_id uuid NOT NULL,
+    operator_id character varying(50) NOT NULL,
+    elite smallint DEFAULT 0 NOT NULL,
+    level smallint DEFAULT 1 NOT NULL,
+    exp integer DEFAULT 0 NOT NULL,
+    potential smallint DEFAULT 0 NOT NULL,
+    skill_level smallint DEFAULT 1 NOT NULL,
+    favor_point integer DEFAULT 0 NOT NULL,
+    skin_id character varying(50),
+    default_skill smallint DEFAULT 0,
+    voice_lan character varying(20),
+    current_equip character varying(50),
+    current_tmpl character varying(50),
+    obtained_at bigint
+);
+
+CREATE TABLE public.user_roguelike_progress (
+    user_id uuid NOT NULL,
+    theme_id character varying(20) NOT NULL,
+    progress jsonb DEFAULT '{}'::jsonb NOT NULL
+);
+
+CREATE TABLE public.user_sandbox_progress (
+    user_id uuid NOT NULL,
+    progress jsonb DEFAULT '{}'::jsonb NOT NULL
+);
+
+CREATE TABLE public.user_scores (
+    user_id uuid NOT NULL,
+    total_score double precision DEFAULT 0 NOT NULL,
+    operator_score double precision DEFAULT 0 NOT NULL,
+    stage_score double precision DEFAULT 0 NOT NULL,
+    roguelike_score double precision DEFAULT 0 NOT NULL,
+    sandbox_score double precision DEFAULT 0 NOT NULL,
+    medal_score double precision DEFAULT 0 NOT NULL,
+    base_score double precision DEFAULT 0 NOT NULL,
+    skin_score double precision DEFAULT 0 NOT NULL,
+    grade character varying(5),
+    calculated_at timestamp with time zone DEFAULT now() NOT NULL,
+    base_utilization double precision,
+    base_infrastructure double precision
+);
+
+CREATE TABLE public.user_settings (
+    user_id uuid NOT NULL,
+    public_profile boolean DEFAULT true NOT NULL,
+    store_gacha boolean DEFAULT true NOT NULL,
+    share_stats boolean DEFAULT true NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    base_facts jsonb,
+    profile_layout jsonb,
+    public_gacha boolean DEFAULT false NOT NULL
+);
+
+CREATE TABLE public.user_skins (
+    user_id uuid NOT NULL,
+    skin_id character varying(50) NOT NULL,
+    obtained_at bigint
+);
+
+CREATE TABLE public.user_squads (
+    user_id uuid NOT NULL,
+    slot smallint NOT NULL,
+    name character varying(40) NOT NULL,
+    members jsonb NOT NULL,
+    support jsonb,
+    stage_id character varying(80),
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT user_squads_slot_check CHECK (((slot >= 1) AND (slot <= 4)))
+);
+
+CREATE TABLE public.user_stage_progress (
+    user_id uuid NOT NULL,
+    stages jsonb DEFAULT '{}'::jsonb NOT NULL
+);
+
+CREATE TABLE public.user_status (
+    user_id uuid NOT NULL,
+    exp integer DEFAULT 0 NOT NULL,
+    orundum integer DEFAULT 0 NOT NULL,
+    orundum_shard integer DEFAULT 0 NOT NULL,
+    lmd integer DEFAULT 0 NOT NULL,
+    sanity smallint DEFAULT 0 NOT NULL,
+    max_sanity smallint DEFAULT 0 NOT NULL,
+    gacha_tickets integer DEFAULT 0 NOT NULL,
+    ten_pull_tickets integer DEFAULT 0 NOT NULL,
+    classic_gacha_tickets integer DEFAULT 0 NOT NULL,
+    classic_ten_pull_tickets integer DEFAULT 0 NOT NULL,
+    recruit_permits integer DEFAULT 0 NOT NULL,
+    social_point integer DEFAULT 0 NOT NULL,
+    hgg_shard integer DEFAULT 0 NOT NULL,
+    lgg_shard integer DEFAULT 0 NOT NULL,
+    practice_tickets integer DEFAULT 0 NOT NULL,
+    gold integer DEFAULT 0 NOT NULL,
+    monthly_sub_end bigint,
+    register_ts bigint,
+    last_online_ts bigint,
+    main_stage_progress character varying(50),
+    resume text,
+    friend_num_limit smallint DEFAULT 0 NOT NULL,
+    originite integer
+);
+
+CREATE TABLE public.user_story_progress (
+    user_id uuid NOT NULL,
+    progress jsonb NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+CREATE TABLE public.user_support_units (
+    user_id uuid NOT NULL,
+    slot smallint NOT NULL,
+    operator_id character varying(50) NOT NULL,
+    skin_id character varying(50),
+    skill_index smallint DEFAULT 0 NOT NULL,
+    current_equip character varying(50)
+);
+
+CREATE TABLE public.users (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    uid character varying(20) NOT NULL,
+    server_id smallint NOT NULL,
+    nickname character varying(50),
+    level smallint DEFAULT 0,
+    role character varying(20) DEFAULT 'user'::character varying NOT NULL,
+    avatar_id character varying(50),
+    resume_id character varying(50),
+    secretary character varying(50),
+    secretary_skin_id character varying(50),
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    nick_number character varying(10)
+);
+
+CREATE VIEW public.v_gacha_stats AS
+ SELECT gacha_records.user_id,
+    count(*) AS total_pulls,
+    count(*) FILTER (WHERE (gacha_records.rarity = 6)) AS six_star_count,
+    count(*) FILTER (WHERE (gacha_records.rarity = 5)) AS five_star_count,
+    count(*) FILTER (WHERE (gacha_records.rarity = 4)) AS four_star_count,
+    min(gacha_records.pull_timestamp) AS first_pull,
+    max(gacha_records.pull_timestamp) AS last_pull
+   FROM public.gacha_records
+  GROUP BY gacha_records.user_id;
+
+CREATE VIEW public.v_leaderboard AS
+ SELECT u.id,
+    u.uid,
+    u.nickname,
+        CASE
+            WHEN (NOT (EXISTS ( SELECT 1
+               FROM public.user_settings hs
+              WHERE ((hs.user_id = u.id) AND (((hs.profile_layout -> 'header'::text) -> 'hidden'::text) @> '["level"]'::jsonb))))) THEN u.level
+            ELSE NULL::smallint
+        END AS level,
+    u.avatar_id,
+    u.secretary,
+    u.secretary_skin_id,
+    s.code AS server,
+    sc.total_score,
+    sc.grade,
+    sc.operator_score,
+    sc.stage_score,
+    sc.roguelike_score,
+    sc.sandbox_score,
+    sc.medal_score,
+    sc.base_score,
+    sc.skin_score,
+    rank() OVER (ORDER BY sc.total_score DESC NULLS LAST) AS rank_global,
+    rank() OVER (PARTITION BY u.server_id ORDER BY sc.total_score DESC NULLS LAST) AS rank_server,
+    u.nick_number
+   FROM ((public.users u
+     JOIN public.servers s ON ((u.server_id = s.id)))
+     LEFT JOIN public.user_scores sc ON ((u.id = sc.user_id)))
+  WHERE (EXISTS ( SELECT 1
+           FROM public.user_settings us
+          WHERE ((us.user_id = u.id) AND (us.public_profile = true) AND (NOT COALESCE(((us.profile_layout -> 'tabs'::text) @> '[{"id": "score", "visible": false}]'::jsonb), false)))));
+
+CREATE VIEW public.v_user_profile AS
+ SELECT u.id,
+    u.uid,
+    u.nickname,
+    u.level,
+    u.avatar_id,
+    u.secretary,
+    u.secretary_skin_id,
+    u.resume_id,
+    u.role,
+    s.code AS server,
+    sc.total_score,
+    sc.grade,
+    us.public_profile,
+    us.store_gacha,
+    us.share_stats,
+    st.exp,
+    st.orundum,
+    st.lmd,
+    st.sanity,
+    st.max_sanity,
+    st.gacha_tickets,
+    st.ten_pull_tickets,
+    st.monthly_sub_end,
+    st.register_ts,
+    st.last_online_ts,
+    st.resume,
+    st.friend_num_limit,
+    ( SELECT count(*) AS count
+           FROM public.user_operators uo
+          WHERE (uo.user_id = u.id)) AS operator_count,
+    ( SELECT count(*) AS count
+           FROM public.user_items ui
+          WHERE (ui.user_id = u.id)) AS item_count,
+    ( SELECT count(*) AS count
+           FROM public.user_skins sk
+          WHERE (sk.user_id = u.id)) AS skin_count,
+    u.nick_number,
+    ( SELECT count(*) AS count
+           FROM public.user_skins sk
+          WHERE ((sk.user_id = u.id) AND ((sk.skin_id)::text ~~ '%@%'::text))) AS non_default_skin_count,
+    ck.cumulative_signin,
+    u.updated_at,
+    st.originite,
+    us.profile_layout
+   FROM (((((public.users u
+     JOIN public.servers s ON ((u.server_id = s.id)))
+     LEFT JOIN public.user_scores sc ON ((u.id = sc.user_id)))
+     LEFT JOIN public.user_settings us ON ((us.user_id = u.id)))
+     LEFT JOIN public.user_status st ON ((st.user_id = u.id)))
+     LEFT JOIN public.user_checkin ck ON ((ck.user_id = u.id)));
+
+CREATE VIEW public.v_user_roster AS
+ SELECT uo.user_id,
+    uo.operator_id,
+    uo.elite,
+    uo.level,
+    uo.exp,
+    uo.potential,
+    uo.skill_level,
+    uo.favor_point,
+    uo.skin_id,
+    uo.default_skill,
+    uo.voice_lan,
+    uo.current_equip,
+    uo.current_tmpl,
+    uo.obtained_at,
+    COALESCE(( SELECT jsonb_agg(jsonb_build_object('index', s.skill_index, 'mastery', s.specialize_level) ORDER BY s.skill_index) AS jsonb_agg
+           FROM public.user_operator_skills s
+          WHERE ((s.user_id = uo.user_id) AND ((s.operator_id)::text = (uo.operator_id)::text))), '[]'::jsonb) AS masteries,
+    COALESCE(( SELECT jsonb_agg(jsonb_build_object('id', m.module_id, 'level', m.module_level, 'locked', m.locked)) AS jsonb_agg
+           FROM public.user_operator_modules m
+          WHERE ((m.user_id = uo.user_id) AND ((m.operator_id)::text = (uo.operator_id)::text))), '[]'::jsonb) AS modules
+   FROM public.user_operators uo;
+
+ALTER TABLE ONLY public.audit_log ALTER COLUMN id SET DEFAULT nextval('public.audit_log_id_seq'::regclass);
+
+ALTER TABLE ONLY public.content_audit_log ALTER COLUMN id SET DEFAULT nextval('public.content_audit_log_id_seq'::regclass);
+
+ALTER TABLE ONLY public.gacha_records ALTER COLUMN id SET DEFAULT nextval('public.gacha_records_id_seq'::regclass);
+
+ALTER TABLE ONLY public.leaderboard_snapshots ALTER COLUMN id SET DEFAULT nextval('public.leaderboard_snapshots_id_seq'::regclass);
+
+ALTER TABLE ONLY public.music_history ALTER COLUMN id SET DEFAULT nextval('public.music_history_id_seq'::regclass);
+
+ALTER TABLE ONLY public.music_stat_events ALTER COLUMN id SET DEFAULT nextval('public.music_stat_events_id_seq'::regclass);
+
+ALTER TABLE ONLY public.operator_notes_audit_log ALTER COLUMN id SET DEFAULT nextval('public.operator_notes_audit_log_id_seq'::regclass);
+
+ALTER TABLE ONLY public.tier_list_flairs ALTER COLUMN id SET DEFAULT nextval('public.tier_list_flairs_id_seq'::regclass);
+
+ALTER TABLE ONLY public.tier_list_view_events ALTER COLUMN id SET DEFAULT nextval('public.tier_list_view_events_id_seq'::regclass);
+
+ALTER TABLE ONLY public.ui_message_audit_log ALTER COLUMN id SET DEFAULT nextval('public.ui_message_audit_log_id_seq'::regclass);
+
+ALTER TABLE ONLY public._migrations
+    ADD CONSTRAINT _migrations_pkey PRIMARY KEY (name);
+
+ALTER TABLE ONLY public.audit_log
+    ADD CONSTRAINT audit_log_pkey PRIMARY KEY (id);
+
+ALTER TABLE ONLY public.content_audit_log
+    ADD CONSTRAINT content_audit_log_pkey PRIMARY KEY (id);
+
+ALTER TABLE ONLY public.gacha_records
+    ADD CONSTRAINT gacha_records_batch_unique UNIQUE (user_id, pull_timestamp, char_id, pool_id, batch_index);
+
+ALTER TABLE ONLY public.gacha_records
+    ADD CONSTRAINT gacha_records_pkey PRIMARY KEY (id);
+
+ALTER TABLE ONLY public.gamedata_overrides
+    ADD CONSTRAINT gamedata_overrides_pkey PRIMARY KEY (locale, kind, entity_id, field);
+
+ALTER TABLE ONLY public.gamedata_sightings
+    ADD CONSTRAINT gamedata_sightings_pkey PRIMARY KEY (server_id, kind, id);
+
+ALTER TABLE ONLY public.grids
+    ADD CONSTRAINT grids_pkey PRIMARY KEY (id);
+
+ALTER TABLE ONLY public.grids
+    ADD CONSTRAINT grids_slug_key UNIQUE (slug);
+
+ALTER TABLE ONLY public.leaderboard_snapshot_entries
+    ADD CONSTRAINT leaderboard_snapshot_entries_pkey PRIMARY KEY (snapshot_id, user_id);
+
+ALTER TABLE ONLY public.leaderboard_snapshots
+    ADD CONSTRAINT leaderboard_snapshots_pkey PRIMARY KEY (id);
+
+ALTER TABLE ONLY public.locales
+    ADD CONSTRAINT locales_pkey PRIMARY KEY (code);
+
+ALTER TABLE ONLY public.medal_ownership_stats
+    ADD CONSTRAINT medal_ownership_stats_pkey PRIMARY KEY (server_id, medal_id);
+
+ALTER TABLE ONLY public.music_history
+    ADD CONSTRAINT music_history_pkey PRIMARY KEY (id);
+
+ALTER TABLE ONLY public.music_likes
+    ADD CONSTRAINT music_likes_pkey PRIMARY KEY (user_id, track_id);
+
+ALTER TABLE ONLY public.music_playlist_tracks
+    ADD CONSTRAINT music_playlist_tracks_pkey PRIMARY KEY (playlist_id, track_id);
+
+ALTER TABLE ONLY public.music_playlists
+    ADD CONSTRAINT music_playlists_pkey PRIMARY KEY (id);
+
+ALTER TABLE ONLY public.music_stat_dedupe
+    ADD CONSTRAINT music_stat_dedupe_pkey PRIMARY KEY (kind, client, track_id);
+
+ALTER TABLE ONLY public.music_stat_events
+    ADD CONSTRAINT music_stat_events_pkey PRIMARY KEY (id);
+
+ALTER TABLE ONLY public.music_track_stats
+    ADD CONSTRAINT music_track_stats_pkey PRIMARY KEY (track_id);
+
+ALTER TABLE ONLY public.oauth_apps
+    ADD CONSTRAINT oauth_apps_pkey PRIMARY KEY (id);
+
+ALTER TABLE ONLY public.oauth_codes
+    ADD CONSTRAINT oauth_codes_pkey PRIMARY KEY (code_hash);
+
+ALTER TABLE ONLY public.oauth_grants
+    ADD CONSTRAINT oauth_grants_app_id_user_id_key UNIQUE (app_id, user_id);
+
+ALTER TABLE ONLY public.oauth_grants
+    ADD CONSTRAINT oauth_grants_pkey PRIMARY KEY (id);
+
+ALTER TABLE ONLY public.oauth_tokens
+    ADD CONSTRAINT oauth_tokens_access_hash_key UNIQUE (access_hash);
+
+ALTER TABLE ONLY public.oauth_tokens
+    ADD CONSTRAINT oauth_tokens_pkey PRIMARY KEY (id);
+
+ALTER TABLE ONLY public.oauth_tokens
+    ADD CONSTRAINT oauth_tokens_refresh_hash_key UNIQUE (refresh_hash);
+
+ALTER TABLE ONLY public.operator_mastery_stats
+    ADD CONSTRAINT operator_mastery_stats_pkey PRIMARY KEY (server_id, operator_id, skill_index, mastery);
+
+ALTER TABLE ONLY public.operator_module_choice_stats
+    ADD CONSTRAINT operator_module_choice_stats_pkey PRIMARY KEY (server_id, operator_id, uni_equip_id);
+
+ALTER TABLE ONLY public.operator_module_level_stats
+    ADD CONSTRAINT operator_module_level_stats_pkey PRIMARY KEY (server_id, operator_id, uni_equip_id, module_level);
+
+ALTER TABLE ONLY public.operator_notes_audit_log
+    ADD CONSTRAINT operator_notes_audit_log_pkey PRIMARY KEY (id);
+
+ALTER TABLE ONLY public.operator_notes
+    ADD CONSTRAINT operator_notes_operator_id_key UNIQUE (operator_id);
+
+ALTER TABLE ONLY public.operator_notes
+    ADD CONSTRAINT operator_notes_pkey PRIMARY KEY (id);
+
+ALTER TABLE ONLY public.operator_ownership_stats
+    ADD CONSTRAINT operator_ownership_stats_pkey PRIMARY KEY (server_id, operator_id);
+
+ALTER TABLE ONLY public.operator_plans
+    ADD CONSTRAINT operator_plans_pkey PRIMARY KEY (id);
+
+ALTER TABLE ONLY public.operator_plans
+    ADD CONSTRAINT operator_plans_user_id_operator_id_key UNIQUE (user_id, operator_id);
+
+ALTER TABLE ONLY public.operator_skill_choice_stats
+    ADD CONSTRAINT operator_skill_choice_stats_pkey PRIMARY KEY (server_id, operator_id, skill_index);
+
+ALTER TABLE ONLY public.plan_group_members
+    ADD CONSTRAINT plan_group_members_pkey PRIMARY KEY (plan_group_id, operator_plan_id);
+
+ALTER TABLE ONLY public.plan_groups
+    ADD CONSTRAINT plan_groups_pkey PRIMARY KEY (id);
+
+ALTER TABLE ONLY public.plan_groups
+    ADD CONSTRAINT plan_groups_user_id_name_key UNIQUE (user_id, name);
+
+ALTER TABLE ONLY public.plan_presets
+    ADD CONSTRAINT plan_presets_pkey PRIMARY KEY (id);
+
+ALTER TABLE ONLY public.plan_presets
+    ADD CONSTRAINT plan_presets_user_id_name_key UNIQUE (user_id, name);
+
+ALTER TABLE ONLY public.release_overrides
+    ADD CONSTRAINT release_overrides_pkey PRIMARY KEY (kind, cn_id);
+
+ALTER TABLE ONLY public.release_plans
+    ADD CONSTRAINT release_plans_pkey PRIMARY KEY (user_id);
+
+ALTER TABLE ONLY public.servers
+    ADD CONSTRAINT servers_code_key UNIQUE (code);
+
+ALTER TABLE ONLY public.servers
+    ADD CONSTRAINT servers_pkey PRIMARY KEY (id);
+
+ALTER TABLE ONLY public.siren_albums
+    ADD CONSTRAINT siren_albums_pkey PRIMARY KEY (cid);
+
+ALTER TABLE ONLY public.siren_songs
+    ADD CONSTRAINT siren_songs_pkey PRIMARY KEY (cid);
+
+ALTER TABLE ONLY public.tier_list_favorites
+    ADD CONSTRAINT tier_list_favorites_pkey PRIMARY KEY (tier_list_id, user_id);
+
+ALTER TABLE ONLY public.tier_list_flairs
+    ADD CONSTRAINT tier_list_flairs_code_key UNIQUE (code);
+
+ALTER TABLE ONLY public.tier_list_flairs
+    ADD CONSTRAINT tier_list_flairs_pkey PRIMARY KEY (id);
+
+ALTER TABLE ONLY public.tier_list_permissions
+    ADD CONSTRAINT tier_list_permissions_pkey PRIMARY KEY (tier_list_id, user_id, permission);
+
+ALTER TABLE ONLY public.tier_list_stats
+    ADD CONSTRAINT tier_list_stats_pkey PRIMARY KEY (tier_list_id);
+
+ALTER TABLE ONLY public.tier_list_versions
+    ADD CONSTRAINT tier_list_versions_pkey PRIMARY KEY (id);
+
+ALTER TABLE ONLY public.tier_list_versions
+    ADD CONSTRAINT tier_list_versions_tier_list_id_version_key UNIQUE (tier_list_id, version);
+
+ALTER TABLE ONLY public.tier_list_view_events
+    ADD CONSTRAINT tier_list_view_events_pkey PRIMARY KEY (id);
+
+ALTER TABLE ONLY public.tier_lists
+    ADD CONSTRAINT tier_lists_pkey PRIMARY KEY (id);
+
+ALTER TABLE ONLY public.tier_lists
+    ADD CONSTRAINT tier_lists_slug_key UNIQUE (slug);
+
+ALTER TABLE ONLY public.tier_placements
+    ADD CONSTRAINT tier_placements_pkey PRIMARY KEY (tier_id, entity_kind, entity_id);
+
+ALTER TABLE ONLY public.tiers
+    ADD CONSTRAINT tiers_pkey PRIMARY KEY (id);
+
+ALTER TABLE ONLY public.tiers
+    ADD CONSTRAINT tiers_tier_list_id_display_order_key UNIQUE (tier_list_id, display_order);
+
+ALTER TABLE ONLY public.translation_permissions
+    ADD CONSTRAINT translation_permissions_pkey PRIMARY KEY (locale, user_id, permission);
+
+ALTER TABLE ONLY public.ui_documents
+    ADD CONSTRAINT ui_documents_pkey PRIMARY KEY (slug, locale);
+
+ALTER TABLE ONLY public.ui_message_audit_log
+    ADD CONSTRAINT ui_message_audit_log_pkey PRIMARY KEY (id);
+
+ALTER TABLE ONLY public.ui_message_keys
+    ADD CONSTRAINT ui_message_keys_pkey PRIMARY KEY (key);
+
+ALTER TABLE ONLY public.ui_messages
+    ADD CONSTRAINT ui_messages_pkey PRIMARY KEY (key, locale);
+
+ALTER TABLE ONLY public.user_building
+    ADD CONSTRAINT user_building_pkey PRIMARY KEY (user_id);
+
+ALTER TABLE ONLY public.user_checkin
+    ADD CONSTRAINT user_checkin_pkey PRIMARY KEY (user_id);
+
+ALTER TABLE ONLY public.user_enemy_progress
+    ADD CONSTRAINT user_enemy_progress_pkey PRIMARY KEY (user_id);
+
+ALTER TABLE ONLY public.user_game_credentials
+    ADD CONSTRAINT user_game_credentials_pkey PRIMARY KEY (user_id);
+
+ALTER TABLE ONLY public.user_game_squads
+    ADD CONSTRAINT user_game_squads_pkey PRIMARY KEY (user_id, squad_index);
+
+ALTER TABLE ONLY public.user_game_story_read
+    ADD CONSTRAINT user_game_story_read_pkey PRIMARY KEY (user_id, story_id);
+
+ALTER TABLE ONLY public.user_items
+    ADD CONSTRAINT user_items_pkey PRIMARY KEY (user_id, item_id);
+
+ALTER TABLE ONLY public.user_lookback_snapshots
+    ADD CONSTRAINT user_lookback_snapshots_pkey PRIMARY KEY (user_id, period_start);
+
+ALTER TABLE ONLY public.user_medals
+    ADD CONSTRAINT user_medals_pkey PRIMARY KEY (user_id, medal_id);
+
+ALTER TABLE ONLY public.user_operator_modules
+    ADD CONSTRAINT user_operator_modules_pkey PRIMARY KEY (user_id, operator_id, module_id);
+
+ALTER TABLE ONLY public.user_operator_skills
+    ADD CONSTRAINT user_operator_skills_pkey PRIMARY KEY (user_id, operator_id, skill_index);
+
+ALTER TABLE ONLY public.user_operators
+    ADD CONSTRAINT user_operators_pkey PRIMARY KEY (user_id, operator_id);
+
+ALTER TABLE ONLY public.user_roguelike_progress
+    ADD CONSTRAINT user_roguelike_progress_pkey PRIMARY KEY (user_id, theme_id);
+
+ALTER TABLE ONLY public.user_sandbox_progress
+    ADD CONSTRAINT user_sandbox_progress_pkey PRIMARY KEY (user_id);
+
+ALTER TABLE ONLY public.user_scores
+    ADD CONSTRAINT user_scores_pkey PRIMARY KEY (user_id);
+
+ALTER TABLE ONLY public.user_settings
+    ADD CONSTRAINT user_settings_pkey PRIMARY KEY (user_id);
+
+ALTER TABLE ONLY public.user_skins
+    ADD CONSTRAINT user_skins_pkey PRIMARY KEY (user_id, skin_id);
+
+ALTER TABLE ONLY public.user_squads
+    ADD CONSTRAINT user_squads_pkey PRIMARY KEY (user_id, slot);
+
+ALTER TABLE ONLY public.user_stage_progress
+    ADD CONSTRAINT user_stage_progress_pkey PRIMARY KEY (user_id);
+
+ALTER TABLE ONLY public.user_status
+    ADD CONSTRAINT user_status_pkey PRIMARY KEY (user_id);
+
+ALTER TABLE ONLY public.user_story_progress
+    ADD CONSTRAINT user_story_progress_pkey PRIMARY KEY (user_id);
+
+ALTER TABLE ONLY public.user_support_units
+    ADD CONSTRAINT user_support_units_pkey PRIMARY KEY (user_id, slot);
+
+ALTER TABLE ONLY public.users
+    ADD CONSTRAINT users_pkey PRIMARY KEY (id);
+
+ALTER TABLE ONLY public.users
+    ADD CONSTRAINT users_uid_server_id_key UNIQUE (uid, server_id);
+
+CREATE INDEX gamedata_sightings_first_seen_idx ON public.gamedata_sightings USING btree (server_id, kind, first_seen_at);
+
+CREATE INDEX idx_audit_table_time ON public.audit_log USING btree (table_name, changed_at DESC);
+
+CREATE INDEX idx_content_audit_actor ON public.content_audit_log USING btree (actor_id, changed_at DESC);
+
+CREATE INDEX idx_content_audit_changed_at ON public.content_audit_log USING btree (changed_at DESC);
+
+CREATE INDEX idx_content_audit_target ON public.content_audit_log USING btree (target_kind, target_id, changed_at DESC);
+
+CREATE INDEX idx_gacha_records_user_id ON public.gacha_records USING btree (user_id);
+
+CREATE INDEX idx_gacha_user_rarity ON public.gacha_records USING btree (user_id, rarity);
+
+CREATE INDEX idx_gacha_user_time ON public.gacha_records USING btree (user_id, pull_timestamp DESC);
+
+CREATE INDEX idx_gamedata_overrides_locale_kind ON public.gamedata_overrides USING btree (locale, kind);
+
+CREATE INDEX idx_grids_created_by ON public.grids USING btree (created_by);
+
+CREATE INDEX idx_grids_listed_updated ON public.grids USING btree (is_listed, updated_at DESC);
+
+CREATE INDEX idx_grids_template_of ON public.grids USING btree (template_of);
+
+CREATE INDEX idx_lb_entries_snapshot_server ON public.leaderboard_snapshot_entries USING btree (snapshot_id, server_id);
+
+CREATE INDEX idx_lb_entries_user_snapshot ON public.leaderboard_snapshot_entries USING btree (user_id, snapshot_id DESC);
+
+CREATE INDEX idx_lb_snapshots_taken_at ON public.leaderboard_snapshots USING btree (taken_at DESC);
+
+CREATE UNIQUE INDEX idx_locales_single_source ON public.locales USING btree (is_source) WHERE is_source;
+
+CREATE INDEX idx_music_history_time ON public.music_history USING btree (played_at) INCLUDE (user_id, track_id, listened_seconds);
+
+CREATE INDEX idx_music_history_track_time ON public.music_history USING btree (track_id, played_at) INCLUDE (user_id, listened_seconds);
+
+CREATE INDEX idx_music_history_user_time ON public.music_history USING btree (user_id, played_at DESC);
+
+CREATE INDEX idx_music_playlists_user ON public.music_playlists USING btree (user_id, created_at);
+
+CREATE INDEX idx_music_stat_dedupe_counted ON public.music_stat_dedupe USING btree (counted_at);
+
+CREATE INDEX idx_music_stat_events_listen_time ON public.music_stat_events USING btree (created_at) INCLUDE (track_id, user_id) WHERE (kind = 'listen'::text);
+
+CREATE INDEX idx_music_stat_events_track_listen ON public.music_stat_events USING btree (track_id, created_at) INCLUDE (user_id) WHERE ((kind = 'listen'::text) AND (user_id IS NOT NULL));
+
+CREATE INDEX idx_music_stat_events_user_time ON public.music_stat_events USING btree (user_id, created_at) INCLUDE (kind, track_id) WHERE (user_id IS NOT NULL);
+
+CREATE INDEX idx_oauth_apps_owner ON public.oauth_apps USING btree (owner_id);
+
+CREATE INDEX idx_oauth_codes_expiry ON public.oauth_codes USING btree (expires_at);
+
+CREATE INDEX idx_oauth_grants_user ON public.oauth_grants USING btree (user_id);
+
+CREATE INDEX idx_oauth_tokens_expiry ON public.oauth_tokens USING btree (refresh_expires_at);
+
+CREATE INDEX idx_oauth_tokens_grant ON public.oauth_tokens USING btree (grant_id, created_at);
+
+CREATE INDEX idx_omcs_operator ON public.operator_module_choice_stats USING btree (operator_id);
+
+CREATE INDEX idx_omls_operator ON public.operator_module_level_stats USING btree (operator_id);
+
+CREATE INDEX idx_oms_operator ON public.operator_mastery_stats USING btree (operator_id);
+
+CREATE INDEX idx_oos_operator ON public.operator_ownership_stats USING btree (operator_id);
+
+CREATE INDEX idx_operator_notes_audit_note_id ON public.operator_notes_audit_log USING btree (note_id);
+
+CREATE INDEX idx_oscs_operator ON public.operator_skill_choice_stats USING btree (operator_id);
+
+CREATE INDEX idx_scores_total ON public.user_scores USING btree (total_score DESC);
+
+CREATE INDEX idx_siren_songs_album ON public.siren_songs USING btree (album_cid, track_order);
+
+CREATE INDEX idx_tier_lists_active_listed_updated ON public.tier_lists USING btree (is_active, is_listed, updated_at DESC) WHERE (is_active AND is_listed);
+
+CREATE INDEX idx_tier_lists_flair ON public.tier_lists USING btree (flair_id) WHERE (is_active = true);
+
+CREATE INDEX idx_tier_lists_is_listed ON public.tier_lists USING btree (is_listed) WHERE (is_active = true);
+
+CREATE INDEX idx_tier_lists_slug ON public.tier_lists USING btree (slug);
+
+CREATE INDEX idx_tier_lists_type ON public.tier_lists USING btree (list_type) WHERE (is_active = true);
+
+CREATE INDEX idx_tier_placements_tier_sub_order ON public.tier_placements USING btree (tier_id, sub_order);
+
+CREATE INDEX idx_tl_favorites_user ON public.tier_list_favorites USING btree (user_id);
+
+CREATE INDEX idx_tl_stats_trending ON public.tier_list_stats USING btree (is_trending, trending_score DESC) WHERE (is_trending = true);
+
+CREATE INDEX idx_tl_stats_views ON public.tier_list_stats USING btree (view_count DESC);
+
+CREATE INDEX idx_tl_view_events_dedupe_sess ON public.tier_list_view_events USING btree (tier_list_id, session_hash, viewed_at DESC) WHERE (session_hash IS NOT NULL);
+
+CREATE INDEX idx_tl_view_events_dedupe_user ON public.tier_list_view_events USING btree (tier_list_id, user_id, viewed_at DESC) WHERE (user_id IS NOT NULL);
+
+CREATE INDEX idx_tl_view_events_list_time ON public.tier_list_view_events USING btree (tier_list_id, viewed_at DESC);
+
+CREATE INDEX idx_translation_permissions_user ON public.translation_permissions USING btree (user_id);
+
+CREATE INDEX idx_ui_message_audit_changed_at ON public.ui_message_audit_log USING btree (changed_at DESC);
+
+CREATE INDEX idx_ui_message_audit_key ON public.ui_message_audit_log USING btree (message_key, locale, changed_at DESC);
+
+CREATE INDEX idx_ui_message_keys_namespace ON public.ui_message_keys USING btree (namespace) WHERE is_active;
+
+CREATE INDEX idx_ui_messages_locale ON public.ui_messages USING btree (locale);
+
+CREATE INDEX idx_user_items_item_quantity ON public.user_items USING btree (item_id, quantity DESC);
+
+CREATE INDEX idx_user_medals_user ON public.user_medals USING btree (user_id);
+
+CREATE INDEX idx_user_ops_operator ON public.user_operators USING btree (operator_id);
+
+CREATE INDEX idx_user_skins_user ON public.user_skins USING btree (user_id);
+
+CREATE INDEX idx_user_support_units_operator ON public.user_support_units USING btree (operator_id);
+
+CREATE INDEX idx_users_nickname ON public.users USING gin (nickname public.gin_trgm_ops);
+
+CREATE INDEX idx_users_server ON public.users USING btree (server_id);
+
+CREATE TRIGGER trg_audit_scores AFTER INSERT OR DELETE OR UPDATE ON public.user_scores FOR EACH ROW EXECUTE FUNCTION public.fn_audit_log();
+
+CREATE TRIGGER trg_audit_tier_lists AFTER INSERT OR DELETE OR UPDATE ON public.tier_lists FOR EACH ROW EXECUTE FUNCTION public.fn_audit_log();
+
+CREATE TRIGGER trg_audit_tier_placements AFTER INSERT OR DELETE OR UPDATE ON public.tier_placements FOR EACH ROW EXECUTE FUNCTION public.fn_audit_log();
+
+CREATE TRIGGER trg_audit_users AFTER INSERT OR DELETE OR UPDATE ON public.users FOR EACH ROW EXECUTE FUNCTION public.fn_audit_log();
+
+CREATE TRIGGER trg_grids_timestamp BEFORE UPDATE ON public.grids FOR EACH ROW EXECUTE FUNCTION public.fn_update_timestamp();
+
+CREATE TRIGGER trg_music_playlists_timestamp BEFORE UPDATE ON public.music_playlists FOR EACH ROW EXECUTE FUNCTION public.fn_update_timestamp();
+
+CREATE TRIGGER trg_oauth_apps_timestamp BEFORE UPDATE ON public.oauth_apps FOR EACH ROW EXECUTE FUNCTION public.fn_update_timestamp();
+
+CREATE TRIGGER trg_operator_plans_timestamp BEFORE UPDATE ON public.operator_plans FOR EACH ROW EXECUTE FUNCTION public.fn_update_timestamp();
+
+CREATE TRIGGER trg_plan_groups_timestamp BEFORE UPDATE ON public.plan_groups FOR EACH ROW EXECUTE FUNCTION public.fn_update_timestamp();
+
+CREATE TRIGGER trg_plan_presets_timestamp BEFORE UPDATE ON public.plan_presets FOR EACH ROW EXECUTE FUNCTION public.fn_update_timestamp();
+
+CREATE TRIGGER trg_tier_list_versions_bump_tier_list AFTER INSERT ON public.tier_list_versions FOR EACH ROW EXECUTE FUNCTION public.fn_bump_tier_list_from_version();
+
+CREATE TRIGGER trg_tier_lists_timestamp BEFORE UPDATE ON public.tier_lists FOR EACH ROW EXECUTE FUNCTION public.fn_update_timestamp();
+
+CREATE TRIGGER trg_tier_placements_bump_tier_list AFTER INSERT OR DELETE OR UPDATE ON public.tier_placements FOR EACH ROW EXECUTE FUNCTION public.fn_bump_tier_list_from_placement();
+
+CREATE TRIGGER trg_tier_placements_timestamp BEFORE UPDATE ON public.tier_placements FOR EACH ROW EXECUTE FUNCTION public.fn_update_timestamp();
+
+CREATE TRIGGER trg_tiers_bump_tier_list AFTER INSERT OR DELETE OR UPDATE ON public.tiers FOR EACH ROW EXECUTE FUNCTION public.fn_bump_tier_list_from_tier();
+
+CREATE TRIGGER trg_user_settings_timestamp BEFORE UPDATE ON public.user_settings FOR EACH ROW EXECUTE FUNCTION public.fn_update_timestamp();
+
+CREATE TRIGGER trg_user_squads_timestamp BEFORE UPDATE ON public.user_squads FOR EACH ROW EXECUTE FUNCTION public.fn_update_timestamp();
+
+CREATE TRIGGER trg_users_timestamp BEFORE UPDATE ON public.users FOR EACH ROW EXECUTE FUNCTION public.fn_update_timestamp();
+
+CREATE TRIGGER user_sandbox_progress_keep_unloaded BEFORE UPDATE ON public.user_sandbox_progress FOR EACH ROW EXECUTE FUNCTION public.keep_unloaded_sandbox_topics();
+
+ALTER TABLE ONLY public.content_audit_log
+    ADD CONSTRAINT content_audit_log_actor_id_fkey FOREIGN KEY (actor_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY public.content_audit_log
+    ADD CONSTRAINT content_audit_log_owner_id_fkey FOREIGN KEY (owner_id) REFERENCES public.users(id) ON DELETE SET NULL;
+
+ALTER TABLE ONLY public.content_audit_log
+    ADD CONSTRAINT content_audit_log_subject_id_fkey FOREIGN KEY (subject_id) REFERENCES public.users(id) ON DELETE SET NULL;
+
+ALTER TABLE ONLY public.gacha_records
+    ADD CONSTRAINT gacha_records_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY public.gamedata_overrides
+    ADD CONSTRAINT gamedata_overrides_locale_fkey FOREIGN KEY (locale) REFERENCES public.locales(code) ON DELETE CASCADE;
+
+ALTER TABLE ONLY public.gamedata_overrides
+    ADD CONSTRAINT gamedata_overrides_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES public.users(id) ON DELETE SET NULL;
+
+ALTER TABLE ONLY public.grids
+    ADD CONSTRAINT grids_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY public.grids
+    ADD CONSTRAINT grids_template_of_fkey FOREIGN KEY (template_of) REFERENCES public.grids(id) ON DELETE SET NULL;
+
+ALTER TABLE ONLY public.leaderboard_snapshot_entries
+    ADD CONSTRAINT leaderboard_snapshot_entries_server_id_fkey FOREIGN KEY (server_id) REFERENCES public.servers(id);
+
+ALTER TABLE ONLY public.leaderboard_snapshot_entries
+    ADD CONSTRAINT leaderboard_snapshot_entries_snapshot_id_fkey FOREIGN KEY (snapshot_id) REFERENCES public.leaderboard_snapshots(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY public.leaderboard_snapshot_entries
+    ADD CONSTRAINT leaderboard_snapshot_entries_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY public.locales
+    ADD CONSTRAINT locales_fallback_locale_fkey FOREIGN KEY (fallback_locale) REFERENCES public.locales(code) ON DELETE SET NULL;
+
+ALTER TABLE ONLY public.music_history
+    ADD CONSTRAINT music_history_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY public.music_likes
+    ADD CONSTRAINT music_likes_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY public.music_playlist_tracks
+    ADD CONSTRAINT music_playlist_tracks_playlist_id_fkey FOREIGN KEY (playlist_id) REFERENCES public.music_playlists(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY public.music_playlists
+    ADD CONSTRAINT music_playlists_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY public.music_stat_events
+    ADD CONSTRAINT music_stat_events_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE SET NULL;
+
+ALTER TABLE ONLY public.oauth_apps
+    ADD CONSTRAINT oauth_apps_owner_id_fkey FOREIGN KEY (owner_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY public.oauth_codes
+    ADD CONSTRAINT oauth_codes_grant_id_fkey FOREIGN KEY (grant_id) REFERENCES public.oauth_grants(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY public.oauth_grants
+    ADD CONSTRAINT oauth_grants_app_id_fkey FOREIGN KEY (app_id) REFERENCES public.oauth_apps(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY public.oauth_grants
+    ADD CONSTRAINT oauth_grants_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY public.oauth_tokens
+    ADD CONSTRAINT oauth_tokens_grant_id_fkey FOREIGN KEY (grant_id) REFERENCES public.oauth_grants(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY public.operator_notes_audit_log
+    ADD CONSTRAINT operator_notes_audit_log_changed_by_fkey FOREIGN KEY (changed_by) REFERENCES public.users(id);
+
+ALTER TABLE ONLY public.operator_notes_audit_log
+    ADD CONSTRAINT operator_notes_audit_log_note_id_fkey FOREIGN KEY (note_id) REFERENCES public.operator_notes(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY public.operator_ownership_stats
+    ADD CONSTRAINT operator_ownership_stats_server_id_fkey FOREIGN KEY (server_id) REFERENCES public.servers(id);
+
+ALTER TABLE ONLY public.operator_plans
+    ADD CONSTRAINT operator_plans_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY public.plan_group_members
+    ADD CONSTRAINT plan_group_members_operator_plan_id_fkey FOREIGN KEY (operator_plan_id) REFERENCES public.operator_plans(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY public.plan_group_members
+    ADD CONSTRAINT plan_group_members_plan_group_id_fkey FOREIGN KEY (plan_group_id) REFERENCES public.plan_groups(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY public.plan_groups
+    ADD CONSTRAINT plan_groups_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY public.plan_presets
+    ADD CONSTRAINT plan_presets_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY public.release_plans
+    ADD CONSTRAINT release_plans_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY public.siren_songs
+    ADD CONSTRAINT siren_songs_album_cid_fkey FOREIGN KEY (album_cid) REFERENCES public.siren_albums(cid) ON DELETE CASCADE;
+
+ALTER TABLE ONLY public.tier_list_favorites
+    ADD CONSTRAINT tier_list_favorites_tier_list_id_fkey FOREIGN KEY (tier_list_id) REFERENCES public.tier_lists(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY public.tier_list_favorites
+    ADD CONSTRAINT tier_list_favorites_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY public.tier_list_permissions
+    ADD CONSTRAINT tier_list_permissions_granted_by_fkey FOREIGN KEY (granted_by) REFERENCES public.users(id);
+
+ALTER TABLE ONLY public.tier_list_permissions
+    ADD CONSTRAINT tier_list_permissions_tier_list_id_fkey FOREIGN KEY (tier_list_id) REFERENCES public.tier_lists(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY public.tier_list_permissions
+    ADD CONSTRAINT tier_list_permissions_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY public.tier_list_stats
+    ADD CONSTRAINT tier_list_stats_tier_list_id_fkey FOREIGN KEY (tier_list_id) REFERENCES public.tier_lists(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY public.tier_list_versions
+    ADD CONSTRAINT tier_list_versions_published_by_fkey FOREIGN KEY (published_by) REFERENCES public.users(id) ON DELETE SET NULL;
+
+ALTER TABLE ONLY public.tier_list_versions
+    ADD CONSTRAINT tier_list_versions_tier_list_id_fkey FOREIGN KEY (tier_list_id) REFERENCES public.tier_lists(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY public.tier_list_view_events
+    ADD CONSTRAINT tier_list_view_events_tier_list_id_fkey FOREIGN KEY (tier_list_id) REFERENCES public.tier_lists(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY public.tier_list_view_events
+    ADD CONSTRAINT tier_list_view_events_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE SET NULL;
+
+ALTER TABLE ONLY public.tier_lists
+    ADD CONSTRAINT tier_lists_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id) ON DELETE SET NULL;
+
+ALTER TABLE ONLY public.tier_lists
+    ADD CONSTRAINT tier_lists_flair_id_fkey FOREIGN KEY (flair_id) REFERENCES public.tier_list_flairs(id) ON DELETE SET NULL;
+
+ALTER TABLE ONLY public.tier_placements
+    ADD CONSTRAINT tier_placements_tier_id_fkey FOREIGN KEY (tier_id) REFERENCES public.tiers(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY public.tiers
+    ADD CONSTRAINT tiers_tier_list_id_fkey FOREIGN KEY (tier_list_id) REFERENCES public.tier_lists(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY public.translation_permissions
+    ADD CONSTRAINT translation_permissions_granted_by_fkey FOREIGN KEY (granted_by) REFERENCES public.users(id) ON DELETE SET NULL;
+
+ALTER TABLE ONLY public.translation_permissions
+    ADD CONSTRAINT translation_permissions_locale_fkey FOREIGN KEY (locale) REFERENCES public.locales(code) ON DELETE CASCADE;
+
+ALTER TABLE ONLY public.translation_permissions
+    ADD CONSTRAINT translation_permissions_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY public.ui_documents
+    ADD CONSTRAINT ui_documents_locale_fkey FOREIGN KEY (locale) REFERENCES public.locales(code) ON DELETE CASCADE;
+
+ALTER TABLE ONLY public.ui_documents
+    ADD CONSTRAINT ui_documents_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES public.users(id) ON DELETE SET NULL;
+
+ALTER TABLE ONLY public.ui_message_audit_log
+    ADD CONSTRAINT ui_message_audit_log_changed_by_fkey FOREIGN KEY (changed_by) REFERENCES public.users(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY public.ui_messages
+    ADD CONSTRAINT ui_messages_key_fkey FOREIGN KEY (key) REFERENCES public.ui_message_keys(key) ON DELETE CASCADE;
+
+ALTER TABLE ONLY public.ui_messages
+    ADD CONSTRAINT ui_messages_locale_fkey FOREIGN KEY (locale) REFERENCES public.locales(code) ON DELETE CASCADE;
+
+ALTER TABLE ONLY public.ui_messages
+    ADD CONSTRAINT ui_messages_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES public.users(id) ON DELETE SET NULL;
+
+ALTER TABLE ONLY public.user_building
+    ADD CONSTRAINT user_building_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY public.user_checkin
+    ADD CONSTRAINT user_checkin_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY public.user_enemy_progress
+    ADD CONSTRAINT user_enemy_progress_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY public.user_game_credentials
+    ADD CONSTRAINT user_game_credentials_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY public.user_game_squads
+    ADD CONSTRAINT user_game_squads_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY public.user_game_story_read
+    ADD CONSTRAINT user_game_story_read_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY public.user_items
+    ADD CONSTRAINT user_items_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY public.user_lookback_snapshots
+    ADD CONSTRAINT user_lookback_snapshots_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY public.user_medals
+    ADD CONSTRAINT user_medals_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY public.user_operator_modules
+    ADD CONSTRAINT user_operator_modules_user_id_operator_id_fkey FOREIGN KEY (user_id, operator_id) REFERENCES public.user_operators(user_id, operator_id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY public.user_operator_skills
+    ADD CONSTRAINT user_operator_skills_user_id_operator_id_fkey FOREIGN KEY (user_id, operator_id) REFERENCES public.user_operators(user_id, operator_id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY public.user_operators
+    ADD CONSTRAINT user_operators_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY public.user_roguelike_progress
+    ADD CONSTRAINT user_roguelike_progress_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY public.user_sandbox_progress
+    ADD CONSTRAINT user_sandbox_progress_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY public.user_scores
+    ADD CONSTRAINT user_scores_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY public.user_settings
+    ADD CONSTRAINT user_settings_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY public.user_skins
+    ADD CONSTRAINT user_skins_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY public.user_squads
+    ADD CONSTRAINT user_squads_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY public.user_stage_progress
+    ADD CONSTRAINT user_stage_progress_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY public.user_status
+    ADD CONSTRAINT user_status_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY public.user_story_progress
+    ADD CONSTRAINT user_story_progress_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY public.user_support_units
+    ADD CONSTRAINT user_support_units_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY public.users
+    ADD CONSTRAINT users_server_id_fkey FOREIGN KEY (server_id) REFERENCES public.servers(id);
+
+INSERT INTO public.locales (code, english_name, native_name, fallback_locale, gamedata_server, enabled, sort_order, created_at, is_source) VALUES ('en', 'English', 'English', NULL, 'en', true, 0, '2026-11-16 16:08:22.825944-08', true);
+
+SELECT pg_catalog.setval('public.audit_log_id_seq', 1, false);
+
+SELECT pg_catalog.setval('public.content_audit_log_id_seq', 1, false);
+
+SELECT pg_catalog.setval('public.gacha_records_id_seq', 1, false);
+
+SELECT pg_catalog.setval('public.leaderboard_snapshots_id_seq', 1, false);
+
+SELECT pg_catalog.setval('public.music_history_id_seq', 1, false);
+
+SELECT pg_catalog.setval('public.music_stat_events_id_seq', 1, false);
+
+SELECT pg_catalog.setval('public.operator_notes_audit_log_id_seq', 1, false);
+
+SELECT pg_catalog.setval('public.tier_list_flairs_id_seq', 1, false);
+
+SELECT pg_catalog.setval('public.tier_list_view_events_id_seq', 1, false);
+
+SELECT pg_catalog.setval('public.ui_message_audit_log_id_seq', 1, false);
+
+INSERT INTO public._migrations (name) VALUES
+    ('v001_initial'),
+    ('v002_views'),
+    ('v003_triggers'),
+    ('v004_procedures'),
+    ('v005_indexes'),
+    ('v006_cumulative_signin'),
+    ('v007_performance_indexes'),
+    ('v008_medal_ownership'),
+    ('v009_profile_sync_ts'),
+    ('v010_base_facts'),
+    ('v011_base_grade_components'),
+    ('v012_game_credentials'),
+    ('v013_checkin_semantics'),
+    ('v014_build_stats'),
+    ('v015_investment_levels'),
+    ('v016_release_ledger'),
+    ('v017_release_override_names'),
+    ('v018_release_override_rosters'),
+    ('v019_user_status_originite'),
+    ('v020_release_plans'),
+    ('v021_i18n'),
+    ('v022_source_locale'),
+    ('v023_translation_source_snapshot'),
+    ('v024_user_items_leaderboard_index'),
+    ('v025_user_story_progress'),
+    ('v026_user_game_story_read'),
+    ('v027_game_story_read_semantics'),
+    ('v028_game_story_read_verdict'),
+    ('v029_tier_entities'),
+    ('v030_planner_pins_presets'),
+    ('v031_grids'),
+    ('v032_grid_entity_kinds'),
+    ('v033_profile_layout'),
+    ('v034_leaderboard_private_score'),
+    ('v035_user_squads'),
+    ('v036_music_library'),
+    ('v037_music_stats'),
+    ('v038_leaderboard_hidden_level'),
+    ('v041_leaderboard_unscored_last'),
+    ('v042_public_gacha_history'),
+    ('v043_account_lookback'),
+    ('v044_content_audit_log'),
+    ('v045_sandbox_keep_unloaded_topics'),
+    ('v046_oauth');

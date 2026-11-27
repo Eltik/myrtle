@@ -10,7 +10,7 @@ export type ShopGood = {
     count: number;
     price: number;
     /**
-     * Purchase limit; `-1` is unlimited stock, which the buy-out leaves out.
+     * Purchase limit; `-1` is unlimited stock
      */
     availCount: number;
 };

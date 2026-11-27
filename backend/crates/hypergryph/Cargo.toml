@@ -1,0 +1,39 @@
+[package]
+name = "myrtle-hypergryph"
+description = "L3: game server clients (Yostar, Hypergryph passport, Bilibili, Monster Siren)"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+license.workspace = true
+
+[dependencies]
+myrtle-types.workspace = true
+arc-swap.workspace = true
+async-trait.workspace = true
+base64.workspace = true
+chrono.workspace = true
+hex.workspace = true
+hmac.workspace = true
+md-5.workspace = true
+rand.workspace = true
+regex.workspace = true
+reqwest = { workspace = true, features = ["charset", "http2", "system-proxy"] }
+rsa.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sha1.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+urlencoding.workspace = true
+zip.workspace = true
+
+[dev-dependencies]
+myrtle-testkit.workspace = true
+http = "1.5.0"
+tokio = { workspace = true, features = ["net", "io-util"] }
+rustls = { version = "0.23.46", default-features = false, features = ["ring", "std", "tls12"] }
+
+[lints]
+workspace = true

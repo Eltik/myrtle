@@ -1,0 +1,26 @@
+[package]
+name = "myrtle-engine-story"
+description = "Story scripts: parsing, speaker attribution, asset resolution, the library and its galleries"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+license.workspace = true
+
+[dependencies]
+myrtle-gamedata.workspace = true
+myrtle-gamedata-raw.workspace = true
+image.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+ts-rs.workspace = true
+
+[dev-dependencies]
+myrtle-testkit.workspace = true
+myrtle-types.workspace = true
+tempfile.workspace = true
+
+[lints]
+workspace = true

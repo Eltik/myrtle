@@ -3,9 +3,6 @@ import type { ArchiveFactionRef } from "./ArchiveFactionRef";
 import type { ArchiveGender } from "./ArchiveGender";
 import type { InfectionState } from "./InfectionState";
 
-/**
- * One row of the Dossiers table.
- */
 export type ArchiveDossier = {
     id: string;
     name: string;
@@ -14,15 +11,8 @@ export type ArchiveDossier = {
     subProfessionId: string;
     subProfessionName?: string;
     factionId?: string;
-    /**
-     * The operator's nation, and its group and team (in that order), as the
-     * character table lists them; the Dossiers filters read these.
-     */
     nation?: ArchiveFactionRef;
     affiliations: Array<ArchiveFactionRef>;
-    /**
-     * The file's gender word as written, and the gender it reads as.
-     */
     gender?: string;
     genderKey?: ArchiveGender;
     race?: string;
@@ -35,15 +25,15 @@ export type ArchiveDossier = {
     assimilation?: string;
     assimilationPct?: number;
     /**
-     * Stories the operator speaks in.
+     * Stories the operator speaks in
      */
     storyCount: number;
     /**
-     * Operator Record story sets.
+     * Operator Record story sets
      */
     recordCount: number;
     /**
-     * Characters the network links this operator to.
+     * Characters the network links this operator to
      */
     linkCount: number;
 };

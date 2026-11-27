@@ -1,23 +1,17 @@
-//! Brings evicted stubs back: the way out of eviction.
-//!
-//! For every manifest record marked evicted whose local file exists with 0
-//! bytes, the object is fetched from the store into `<file>.<pid>.tmp` in the
-//! same directory, its size and MD5 are checked against the record, and the
-//! temp file is renamed over the stub, unless the stub gained bytes in the
-//! meantime (an extract rewrote it), in which case the download is dropped.
-//! A missing file is not restored: the orphan sweep deleted it on purpose,
-//! and the next sync deletes its object. The manifest is saved once at the
-//! end, under the same per-server lock `sync` takes; a run that dies part
-//! way leaves the remaining records marked, so running it again picks up
-//! where it stopped. It does not read `S3_EVICT_LOCAL`, so it works with
-//! eviction switched off.
+//! Brings evicted stubs back
 
+use std::fs;
 use std::path::{Path, PathBuf};
+use std::process::id;
 use std::time::{Duration, Instant};
 
 use futures::StreamExt;
+use futures::stream::iter;
+use hex::encode;
 use serde::Serialize;
+use tokio::fs::{File, metadata, remove_file, rename};
 use tokio::io::AsyncWriteExt;
+use tokio::time::sleep;
 use tracing::{info, warn};
 
 use crate::key::server_prefix;
@@ -26,15 +20,15 @@ use crate::sync::{MANIFEST_VERSION, Manifest, OBJECT_RETRIES, RETRY_BASE, Server
 
 #[derive(Debug, Clone)]
 pub struct RestoreOptions {
-    /// The `assets/output` directory holding one tree per server.
+    /// The `assets/output` directory holding one tree per server
     pub root: PathBuf,
     pub server: String,
-    /// `S3_BUCKET`, checked against the manifest's.
+    /// `CLOUDFLARE_BUCKET` checked against manifest
     pub bucket: String,
     pub prefix: String,
     pub concurrency: usize,
     pub dry_run: bool,
-    /// Rel-path prefixes to restore; empty restores every stub.
+    /// Rel-path prefixes to restore
     pub only: Vec<String>,
     pub retry_base: Duration,
 }
@@ -64,17 +58,16 @@ impl RestoreOptions {
 #[derive(Debug, Clone, Serialize)]
 pub struct RestoreReport {
     pub server: String,
-    /// Restored, or in a dry run, would be restored.
     pub restored: usize,
     pub restored_bytes: u64,
     pub failed: usize,
-    /// Evicted records whose local file is gone: left marked, not restored.
+    /// Evicted records whose local file is gone
     pub missing: usize,
-    /// Stubs that gained bytes while their object downloaded: left alone.
+    /// Stubs that gained bytes while their object downloaded
     pub skipped: usize,
     pub dry_run: bool,
     pub elapsed_secs: f64,
-    /// The first failures, `rel: error`, for the log.
+    /// The first failures, `rel: error` for the log
     pub failures: Vec<String>,
 }
 
@@ -82,14 +75,12 @@ pub struct RestoreReport {
 const MAX_REPORTED_FAILURES: usize = 20;
 
 impl RestoreReport {
-    /// 0 all restored, 1 one or more failed.
+    /// 0 all restored, 1 one or more failed
     #[must_use]
     pub const fn exit_code(&self) -> i32 {
         if self.failed > 0 { 1 } else { 0 }
     }
 
-    /// `asset-sync: restore server=en restored=N (B bytes) failed=N elapsed=S.s`,
-    /// with ` missing=N skipped=N` appended when either is above 0.
     #[must_use]
     pub fn summary_line(&self) -> String {
         let extra = if self.missing > 0 || self.skipped > 0 {
@@ -117,9 +108,7 @@ struct Stub {
     md5: String,
 }
 
-/// The stubs `opts` selects (records marked evicted, under the server's key
-/// prefix and an `--only` prefix, whose local file exists with 0 bytes), and
-/// how many selected records have no local file at all.
+/// The stubs `opts` selects and how many selected records have no local file at all
 fn stubs(manifest: &Manifest, opts: &RestoreOptions, server_dir: &Path) -> (Vec<Stub>, usize) {
     let key_prefix = server_prefix(&opts.prefix, &opts.server);
     let mut missing = 0usize;
@@ -138,7 +127,7 @@ fn stubs(manifest: &Manifest, opts: &RestoreOptions, server_dir: &Path) -> (Vec<
             continue;
         }
         let path = server_dir.join(rel);
-        match std::fs::metadata(&path) {
+        match fs::metadata(&path) {
             Ok(m) if m.is_file() && m.len() == 0 => out.push(Stub {
                 key: key.clone(),
                 rel: rel.to_owned(),
@@ -148,8 +137,6 @@ fn stubs(manifest: &Manifest, opts: &RestoreOptions, server_dir: &Path) -> (Vec<
             }),
             Ok(_) => {}
             Err(_) => {
-                // Deleted on purpose by the orphan sweep: the next sync
-                // deletes the object, and the record goes with it.
                 info!(rel, "evicted record with no local file; not restored");
                 missing += 1;
             }
@@ -158,15 +145,15 @@ fn stubs(manifest: &Manifest, opts: &RestoreOptions, server_dir: &Path) -> (Vec<
     (out, missing)
 }
 
-/// What one fetch ended as, when it did not fail.
+/// What one fetch ended as, when it did not fail
 enum Fetched {
     Restored,
-    /// The stub gained bytes before the rename; the download was dropped.
+    /// The stub gained bytes before the rename
     Skipped,
 }
 
 /// Downloads `stub` into a temp file beside it, checks size and MD5 against
-/// the record, and renames it over the stub.
+/// the record, and renames it over the stub
 async fn fetch_once(store: &dyn ObjectStore, stub: &Stub) -> Result<Fetched, StorageError> {
     use md5::{Digest, Md5};
     let got = store.get(&stub.key, GetOptions::default()).await?;
@@ -183,9 +170,9 @@ async fn fetch_once(store: &dyn ObjectStore, stub: &Stub) -> Result<Fetched, Sto
         .unwrap_or_default();
     let tmp = stub
         .path
-        .with_file_name(format!("{file_name}.{}.tmp", std::process::id()));
+        .with_file_name(format!("{file_name}.{}.tmp", id()));
     let result = async {
-        let mut file = tokio::fs::File::create(&tmp).await?;
+        let mut file = File::create(&tmp).await?;
         let mut hasher = Md5::new();
         let mut written = 0u64;
         let mut body = got.body;
@@ -203,22 +190,20 @@ async fn fetch_once(store: &dyn ObjectStore, stub: &Stub) -> Result<Fetched, Sto
                 stub.size
             )));
         }
-        let md5 = hex::encode(hasher.finalize());
+        let md5 = encode(hasher.finalize());
         if !md5.eq_ignore_ascii_case(&stub.md5) {
             return Err(StorageError::Request(format!(
                 "got MD5 {md5}, the manifest records {}",
                 stub.md5
             )));
         }
-        // An extract may have rewritten the stub while the object
-        // downloaded; its bytes win over the bucket's.
-        match tokio::fs::metadata(&stub.path).await {
+        match metadata(&stub.path).await {
             Ok(m) if m.is_file() && m.len() == 0 => {}
             _ => return Ok(Fetched::Skipped),
         }
-        tokio::fs::rename(&tmp, &stub.path).await?;
+        rename(&tmp, &stub.path).await?;
         if let Some(parent) = stub.path.parent()
-            && let Ok(dir) = tokio::fs::File::open(parent).await
+            && let Ok(dir) = File::open(parent).await
         {
             let _ = dir.sync_all().await;
         }
@@ -226,7 +211,7 @@ async fn fetch_once(store: &dyn ObjectStore, stub: &Stub) -> Result<Fetched, Sto
     }
     .await;
     if !matches!(result, Ok(Fetched::Restored)) {
-        let _ = tokio::fs::remove_file(&tmp).await;
+        let _ = remove_file(&tmp).await;
     }
     result
 }
@@ -240,12 +225,11 @@ async fn fetch_with_retry(
     loop {
         match fetch_once(store, stub).await {
             Ok(done) => return Ok(done),
-            // A missing object will not come back by waiting.
             Err(e @ StorageError::NotFound(_)) => return Err(e),
             Err(e) if attempt < OBJECT_RETRIES => {
                 let wait = retry_base * 2u32.pow(attempt);
                 warn!(key = %stub.key, attempt = attempt + 1, error = %e, ?wait, "restore failed, retrying");
-                tokio::time::sleep(wait).await;
+                sleep(wait).await;
                 attempt += 1;
             }
             Err(e) => return Err(e),
@@ -258,7 +242,7 @@ async fn fetch_with_retry(
 /// # Errors
 /// The server directory is missing, another run holds the server's lock, the
 /// manifest exists but cannot be read, or it was written for another bucket
-/// or prefix. Per-object failures are counted in the report instead.
+/// or prefix.
 pub async fn run_restore(
     store: &dyn ObjectStore,
     opts: &RestoreOptions,
@@ -268,7 +252,6 @@ pub async fn run_restore(
     if !server_dir.is_dir() {
         return Err(SyncError::MissingServerDir(server_dir));
     }
-    // Held until the manifest is saved, so a sync cannot interleave.
     let _lock = if opts.dry_run {
         None
     } else {
@@ -303,7 +286,7 @@ pub async fn run_restore(
         return Ok(report);
     }
 
-    let mut results = futures::stream::iter(todo.into_iter().map(|stub| async move {
+    let mut results = iter(todo.into_iter().map(|stub| async move {
         let result = fetch_with_retry(store, &stub, opts.retry_base).await;
         (stub, result)
     }))
@@ -337,9 +320,6 @@ pub async fn run_restore(
         manifest.bucket.clone_from(&opts.bucket);
         manifest.prefix.clone_from(&opts.prefix);
         if let Err(e) = manifest.save(&manifest_path) {
-            // The restored files have their bytes; their records still say
-            // evicted, which sync treats as ordinary files and a re-run of
-            // restore skips.
             warn!(path = %manifest_path.display(), error = %e, "manifest not written");
         }
     }

@@ -1,0 +1,30 @@
+{
+ "CharSkins": [
+  {
+   "Key": "char_002_amiya@winter#1",
+   "Value": {}
+  },
+  {
+   "Key": "char_003_kalts@test#2",
+   "Value": {}
+  }
+ ],
+ "BrandList": [
+  {
+   "Key": "winter",
+   "Value": {
+    "BrandId": "winter",
+    "KvImgIdList": [
+     {
+      "KvImgId": "kv_winter_1",
+      "LinkedSkinGroupId": "g"
+     },
+     {
+      "KvImgId": "kv_winter_2",
+      "LinkedSkinGroupId": "g"
+     }
+    ]
+   }
+  }
+ ]
+}

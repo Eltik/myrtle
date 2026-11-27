@@ -3,12 +3,8 @@ import type { SandboxTopic } from "./SandboxTopic";
 
 export type SandboxImprovements = {
     /**
-     * Overall RA score (0..1), the equal-weight mean of the topics below. The
-     * headline percentage is computed from it.
+     * Equal-weight mean of each RA
      */
     total: number;
-    /**
-     * One entry per graded RA topic, in release order.
-     */
     topics: Array<SandboxTopic>;
 };

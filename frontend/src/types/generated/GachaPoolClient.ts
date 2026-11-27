@@ -26,31 +26,23 @@ export type GachaPoolClient = {
     featured6: Array<string>;
     featured5: Array<string>;
     /**
-     * Rate-boosted operators, merged in from the pool-detail sidecar.
-     *
-     * Kept separate from `featured6` on purpose: a weight-up operator keeps the
-     * band's base rate and merely takes a larger share of it, which is a
-     * different promise to the player than a rate-up.
+     * Rate-boosted operators, from the pool-detail sidecar
      */
     weightUp: Array<WeightUpChar>;
     /**
-     * Headline per-rarity rates for this banner.
+     * Headline per-rarity rates
      */
     availRates: Array<RarityRate>;
     /**
-     * Selectable 6* candidates on player-pick banners. Empty elsewhere.
+     * Selectable 6* candidates on player-pick banners
      */
     pickup6: Array<string>;
     /**
-     * Provenance of the featured lists: `"static"` when only the BSON blobs
-     * were available, `"static+api"` once pool detail has been merged in.
+     * Featured list source: `"static"` (BSON blobs only) or `"static+api"` (pool detail merged)
      */
     featuredSource: string;
     /**
-     * Shown only to returning players: a pool some `open_server_table`
-     * `PlayerReturn` tier grants (see `open_server`). Its `gacha_table` window
-     * is years long because the game times it per player, so it is never
-     * "running now for everyone" and its `end_time` is not a real end date.
+     * Returning-player pool; `end_time` is not a real end date
      */
     returning: boolean;
 };

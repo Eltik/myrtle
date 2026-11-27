@@ -1,0 +1,80 @@
+use std::collections::{HashMap, HashSet};
+
+use myrtle_gamedata_raw::tables::character::Skin;
+
+use crate::assets::{AssetIndex, AssetKind};
+use crate::model::skin::{EnrichedSkin, SkinData, SkinImages};
+
+#[must_use]
+pub fn get_artists(char_id: &str, skins: &SkinData) -> Vec<String> {
+    let mut own: Vec<&Skin> = skins
+        .char_skins
+        .values()
+        .filter(|skin| match skin.tmpl_id.as_deref() {
+            Some(tmpl) => tmpl == char_id,
+            None => skin.char_id == char_id,
+        })
+        .collect();
+    own.sort_by(|a, b| a.skin_id.cmp(&b.skin_id));
+    let mut seen = HashSet::new();
+    own.into_iter()
+        .flat_map(|skin| &skin.display_skin.drawer_list)
+        .filter(|artist| seen.insert((*artist).clone()))
+        .cloned()
+        .collect()
+}
+
+#[must_use]
+pub fn enrich_all_skins(
+    char_skins: &HashMap<String, Skin>,
+    assets: &AssetIndex,
+) -> HashMap<String, EnrichedSkin> {
+    char_skins
+        .iter()
+        .map(|(id, skin)| {
+            let images = get_skin_images(skin, assets);
+            let enriched = EnrichedSkin {
+                id: id.clone(),
+                skin: skin.clone(),
+                images,
+            };
+            (id.clone(), enriched)
+        })
+        .collect()
+}
+
+fn get_skin_images(skin: &Skin, assets: &AssetIndex) -> SkinImages {
+    let avatar = assets
+        .path(AssetKind::Avatar, &skin.avatar_id)
+        .map(str::to_owned);
+
+    let portrait = if skin.skin_id.contains('@') || skin.skin_id.contains('#') {
+        assets
+            .path(AssetKind::SkinPortrait, &skin.portrait_id)
+            .map(str::to_owned)
+    } else {
+        assets
+            .path(AssetKind::Avatar, &skin.portrait_id)
+            .map(str::to_owned)
+    };
+
+    let skin_url = format_skin_url(&skin.skin_id, &skin.char_id);
+
+    SkinImages {
+        avatar: avatar.unwrap_or_default(),
+        portrait: portrait.unwrap_or_default(),
+        skin: skin_url,
+    }
+}
+
+fn format_skin_url(skin_id: &str, char_id: &str) -> String {
+    if skin_id.contains('@') {
+        let formatted = skin_id.replace('@', "_");
+        format!("/textures/skinpack/{char_id}/{formatted}.png")
+    } else if skin_id.contains('#') {
+        let formatted = skin_id.replace('#', "_");
+        format!("/textures/chararts/{char_id}/{formatted}.png")
+    } else {
+        format!("/textures/chararts/{char_id}/{skin_id}.png")
+    }
+}

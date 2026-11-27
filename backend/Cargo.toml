@@ -1,132 +1,218 @@
 [workspace]
-members = ["crates/storage"]
+resolver = "3"
+members = [
+    "crates/dps-formulas",
+    "crates/engine-archives",
+    "crates/engine-base", "crates/engine-dps", "crates/engine-grade", "crates/engine-squad",
+    "crates/engine-planner",
+    "crates/engine-release",
+    "crates/engine-story",
+    "crates/gamedata",
+    "crates/gamedata-raw",
+    "crates/storage",
+    "crates/types",
+    "tools/dps-transpile",
+    "tools/parity",
+    "xtask",
+    "crates/engine-music",
+    "crates/hypergryph", "crates/db", "crates/jobs", "crates/app", "crates/api", "crates/cli", "crates/worker",
+]
+# default-members = ["crates/api", "crates/worker", "crates/cli"]
 
-[package]
-name = "backend"
+[workspace.package]
 version = "0.1.0"
 edition = "2024"
+rust-version = "1.94"
+publish = false
+license = "UNLICENSED"
+repository = "https://github.com/Eltik/myrtle"
 
-[[bin]]
-name = "generate-dps"
-path = "src/bin/generate_dps.rs"
-
-[[bin]]
-name = "export-database"
-path = "src/bin/export_database.rs"
-
-[[bin]]
-name = "import-database"
-path = "src/bin/import_database.rs"
-
-[[bin]]
-name = "translate-backup"
-path = "src/bin/translate_backup.rs"
-
-[[bin]]
-name = "regrade-users"
-path = "src/bin/regrade_users.rs"
-
-[[bin]]
-name = "base-regression"
-path = "src/bin/base_regression.rs"
-
-[[bin]]
-name = "manage-permissions"
-path = "src/bin/manage_permissions.rs"
-
-[[bin]]
-name = "set-tier-list-official"
-path = "src/bin/set_tier_list_official.rs"
-
-[[bin]]
-name = "resync-gacha"
-path = "src/bin/resync_gacha.rs"
-
-[[bin]]
-name = "refresh-stats"
-path = "src/bin/refresh_stats.rs"
-
-[[bin]]
-name = "export-gacha"
-path = "src/bin/export_gacha.rs"
-
-[[bin]]
-name = "set-session"
-path = "src/bin/set_session.rs"
-
-[[bin]]
-name = "user-data"
-path = "src/bin/user_data.rs"
-
-# jemalloc: glibc malloc retains freed memory across tokio's many per-thread arenas,
-# so transient load spikes (daily regrade, cache-miss recomputes, login parsing) leave
-# the server's RSS permanently inflated to 1-2GB. jemalloc fragments far less and returns
-# freed pages to the OS, keeping the long-running server near its ~255MB baseline.
-# Only the `backend` server binary installs it (see src/main.rs). Unsupported on MSVC.
-[target.'cfg(not(target_env = "msvc"))'.dependencies]
-tikv-jemallocator = "0.6"
-
-[dependencies]
-anyhow = "1.0.102"
-arc-swap = "1"
-base64 = "0.22"
-brotli = "9.0.0"
-bson = "3.1.0"
-axum = "0.8.8"
-chacha20poly1305 = "0.10"
-chrono = { version = "0.4.44", features = ["serde"] }
-dashmap = "6"
-# Table picker in `export-database`.
-dialoguer = { version = "0.12", default-features = false }
-dotenv = "0.15.0"
-futures-util = "0.3"
-hex = "0.4"
-hmac = "0.12.1"
-# Story sprite thumbnails (`app::services::story_sprite_thumb`): decode, crop, resize, encode.
-image = { version = "0.25.9", default-features = false, features = ["png", "webp", "jpeg"] }
-indicatif = "0.18"
-jsonwebtoken = { version = "10.3.0", features = ["rust_crypto"] }
-md-5 = "0.10.6"
-mime_guess = "2.0.5"
-# S3-compatible delivery tier for the served asset roots (`crates/storage`).
+[workspace.dependencies]
+# internal
+myrtle-types = { path = "crates/types" }
+myrtle-gamedata-raw = { path = "crates/gamedata-raw" }
 myrtle-storage = { path = "crates/storage" }
-rand = "0.10.1"
-rayon = "1.11.0"
-redis = { version = "1.1.0", features = ["tokio-comp", "connection-manager"] }
-regex = "1.12.3"
-reqwest = { version = "0.13", features = ["json"] }
-rsa = "0.9"
-serde = { version = "1.0.228", features = ["derive"] }
-# float_roundtrip: parse every float back to the exact f64 it was printed from,
-# so a value read from the JSON cache matches the one computed on the miss.
-serde_json = { version = "1.0.149", features = ["float_roundtrip"] }
-ts-rs = { version = "11", features = ["chrono-impl", "uuid-impl", "serde-json-impl", "no-serde-warnings"] }
+myrtle-gamedata = { path = "crates/gamedata" }
+myrtle-engine-dps = { path = "crates/engine-dps" }
+myrtle-dps-formulas = { path = "crates/dps-formulas" }
+myrtle-engine-grade = { path = "crates/engine-grade" }
+myrtle-engine-base = { path = "crates/engine-base" }
+myrtle-engine-squad = { path = "crates/engine-squad" }
+myrtle-engine-story = { path = "crates/engine-story" }
+myrtle-engine-archives = { path = "crates/engine-archives" }
+myrtle-engine-release = { path = "crates/engine-release" }
+myrtle-engine-planner = { path = "crates/engine-planner" }
+myrtle-engine-music = { path = "crates/engine-music" }
+myrtle-hypergryph = { path = "crates/hypergryph" }
+myrtle-db = { path = "crates/db" }
+myrtle-jobs = { path = "crates/jobs" }
+myrtle-app = { path = "crates/app" }
+myrtle-testkit = { path = "crates/testkit" }
+
+# external
+ammonia = "4.2.3"
+anyhow = "1.0.104"
+arc-swap = "1.9.2"
+async-trait = "0.1.92"
+axum = "0.8.9"
+base64 = "0.22.1"
+bson = "3.1.0"
+bytes = "1.12.1"
+chacha20poly1305 = "0.10.1"
+chrono = { version = "0.4.45", default-features = false, features = ["std", "clock", "serde"] }
+clap = { version = "4.6.7", features = ["derive"] }
+dashmap = "6.2.1"
+dotenvy = "0.15.7"
+futures-util = "0.3.34"
+hex = "0.4.3"
+indicatif = "0.18.6"
+hmac = "0.12.1"
+image = { version = "0.25.9", default-features = false, features = ["png", "webp", "jpeg"] }
+jsonwebtoken = { version = "10.4.0", features = ["rust_crypto"] }
+md-5 = "0.10.6"
+rand = "0.10.3"
+rayon = "1.12.0"
+redis = { version = "1.7.1", features = ["tokio-comp", "connection-manager"] }
+regex = "1.13.1"
+reqwest = { version = "0.13.5", default-features = false, features = ["rustls-no-provider", "json"] }
+rsa = "0.9.10"
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = { version = "1.0.151", features = ["float_roundtrip"] }
 sha1 = "0.10.6"
-sha2 = "0.10"
-sqlx = { version = "0.8.6", features = ["postgres", "runtime-tokio", "uuid", "chrono", "json"] }
-subtle = "2"
-thiserror = "2.0.18"
-tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "signal"] }
-tokio-tungstenite = { version = "0.26", features = ["connect"] }
-tokio-util = { version = "0.7.18", features = ["io"] }
-tower-http = { version = "0.6.8", features = ["cors", "compression-gzip", "compression-br"] }
+sha2 = "0.10.9"
+sqlx = { version = "0.9.0", default-features = false, features = ["postgres", "runtime-tokio", "uuid", "chrono", "json", "migrate", "macros"] }
+subtle = "2.6.1"
+tempfile = "3.27.0"
+thiserror = "2.0.21"
+tikv-jemallocator = "0.6.1"
+tokio = { version = "1.53.2", features = ["rt-multi-thread", "macros", "sync", "signal", "time"] }
+tokio-tungstenite = "0.26.2"
+tokio-util = "0.7.20"
+tower = { version = "0.5.3", features = ["util"] }
+tower-http = { version = "0.6.11", features = ["cors", "compression-gzip", "compression-br", "trace"] }
 tracing = "0.1.44"
 tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
-urlencoding = "2"
-utoipa = { version = "5.5", features = ["axum_extras", "chrono", "uuid"] }
-utoipa-axum = "0.2"
-utoipa-scalar = { version = "0.3", features = ["axum"] }
-uuid = { version = "1.22.0", features = ["serde", "v4"] }
+urlencoding = "2.1.3"
+uuid = { version = "1.27.0", features = ["serde", "v4"] }
 validator = { version = "0.20.0", features = ["derive"] }
 walkdir = "2.5.0"
 zip = "8.6.0"
-ammonia = "4.2.3"
+flate2 = "1.1.11"
+toml = "0.8.19"
+ts-rs = { version = "11.1.0", features = ["chrono-impl", "uuid-impl", "serde-json-impl", "no-serde-warnings"] }
 
-[dev-dependencies]
-tempfile = "3.27.0"
-tower = { version = "0.5.3", features = ["util"] }
+[workspace.lints.rust]
+unsafe_code = "deny"
+unused_must_use = "deny"
+rust_2018_idioms = { level = "warn", priority = -1 }
+unreachable_pub = "allow"
+
+[workspace.lints.clippy]
+all = { level = "warn", priority = -1 }
+pedantic = { level = "warn", priority = -1 }
+nursery = { level = "warn", priority = -1 }
+unwrap_used = "warn"
+dbg_macro = "warn"
+undocumented_unsafe_blocks = "warn"
+missing_errors_doc = "allow"
+missing_panics_doc = "allow"
+too_long_first_doc_paragraph = "allow"
+doc_link_with_quotes = "allow"
+must_use_candidate = "allow"
+implicit_hasher = "allow"
+ref_option = "allow"
+cast_possible_truncation = "allow"
+cast_precision_loss = "allow"
+cast_sign_loss = "allow"
+cast_possible_wrap = "allow"
+option_if_let_else = "allow"
+match_same_arms = "allow"
+assigning_clones = "allow"
+bool_to_int_with_if = "allow"
+trait_duplication_in_bounds = "allow"
+items_after_statements = "allow"
+useless_let_if_seq = "allow"
+needless_pass_by_value = "allow"
+future_not_send = "allow"
+unchecked_time_subtraction = "allow"
+manual_midpoint = "allow"
+similar_names = "allow"
+struct_field_names = "allow"
+struct_excessive_bools = "allow"
+too_many_lines = "allow"
+suboptimal_flops = "allow"
+imprecise_flops = "allow"
 
 [profile.release]
 lto = "thin"
 codegen-units = 1
 strip = true
+
+[[workspace.metadata.layers]]
+level = 0
+name = "types"
+crates = ["myrtle-types"]
+
+[[workspace.metadata.layers]]
+level = 1
+name = "raw data, object store"
+crates = ["myrtle-gamedata-raw", "myrtle-storage"]
+
+[[workspace.metadata.layers]]
+level = 2
+name = "game model"
+crates = ["myrtle-gamedata"]
+
+[[workspace.metadata.layers]]
+level = 3
+name = "engines, upstream"
+crates = [
+    "myrtle-engine-dps",
+    "myrtle-dps-formulas",
+    "myrtle-engine-grade",
+    "myrtle-engine-base",
+    "myrtle-engine-squad",
+    "myrtle-engine-story",
+    "myrtle-engine-archives",
+    "myrtle-engine-release",
+    "myrtle-engine-planner",
+    "myrtle-engine-music",
+    "myrtle-hypergryph",
+]
+
+[[workspace.metadata.layers]]
+level = 4
+name = "persistence, queue"
+crates = ["myrtle-db", "myrtle-jobs"]
+
+[[workspace.metadata.layers]]
+level = 5
+name = "use cases"
+crates = ["myrtle-app"]
+
+[[workspace.metadata.layers]]
+level = 6
+name = "binaries"
+crates = ["myrtle-api", "myrtle-worker", "myrtle-cli"]
+
+[workspace.metadata.layer-rules]
+tools = ["myrtle-testkit", "myrtle-dps-transpile", "myrtle-parity", "xtask"]
+dev-only = ["myrtle-testkit"]
+pure = [
+    "myrtle-types",
+    "myrtle-gamedata-raw",
+    "myrtle-gamedata",
+    "myrtle-engine-*",
+    "myrtle-dps-formulas",
+]
+pure-forbidden = [
+    "myrtle-hypergryph",
+    "myrtle-storage",
+    "sqlx",
+    "tokio",
+    "reqwest",
+    "axum",
+    "redis",
+    "hyper",
+    "rusty-s3",
+]

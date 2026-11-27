@@ -2,22 +2,4 @@
 import type { ThemeShare } from "./ThemeShare";
 import type { ThemeStats } from "./ThemeStats";
 
-export type Themes = {
-    stats: ThemeStats;
-    /**
-     * Shared by every squad seat.
-     */
-    labels: Array<ThemeShare>;
-    /**
-     * Shared by all but one or two.
-     */
-    close: Array<ThemeShare>;
-    /**
-     * Shared by two or more.
-     */
-    shared: Array<ThemeShare>;
-    /**
-     * The voice language the `voice` rows used.
-     */
-    dub: string;
-};
+export type Themes = { stats: ThemeStats; labels: Array<ThemeShare>; close: Array<ThemeShare>; shared: Array<ThemeShare>; dub: string };

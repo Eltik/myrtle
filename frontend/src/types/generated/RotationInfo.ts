@@ -2,7 +2,7 @@
 
 export type RotationInfo = {
     /**
-     * "active" (playable now), "past" (rotated out), or "future" (not yet open).
+     * `active`, `past` or `future`
      */
     status: string;
     startTs: number;

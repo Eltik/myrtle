@@ -1,0 +1,29 @@
+{
+ "Characters": [
+  {
+   "Key": "char_002_amiya",
+   "Value": {
+    "Name": "Amiya",
+    "Appellation": "broken \ud83d here"
+   }
+  },
+  {
+   "Key": "char_003_kalts",
+   "Value": {
+    "Name": "Kal'tsit"
+   }
+  },
+  {
+   "Key": "token_10000_silent_healrb",
+   "Value": {
+    "Name": "token"
+   }
+  },
+  {
+   "Key": "trap_001_crate",
+   "Value": {
+    "Name": "crate"
+   }
+  }
+ ]
+}

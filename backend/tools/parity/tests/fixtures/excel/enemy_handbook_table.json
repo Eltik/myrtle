@@ -1,0 +1,14 @@
+{
+ "EnemyData": [
+  {
+   "Key": "enemy_1007_slime",
+   "Value": {}
+  },
+  {
+   "Key": "enemy_1000_gopro",
+   "Value": {}
+  }
+ ],
+ "LevelInfoList": [],
+ "RaceData": []
+}

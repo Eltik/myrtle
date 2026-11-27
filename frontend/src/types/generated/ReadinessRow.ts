@@ -9,11 +9,11 @@ export type ReadinessRow = {
     phase: number;
     level: number;
     /**
-     * The promotion's `maxLevel`.
+     * Promotion's `maxLevel`
      */
     level_cap: number;
     /**
-     * The highest promotion the rarity allows.
+     * Highest promotion based on rarity
      */
     max_phase: number;
     potential: number;

@@ -2,15 +2,9 @@
 import type { ShopGood } from "./ShopGood";
 import type { ShopItem } from "./ShopItem";
 
-/**
- * An event's token shop as the planner shows it: the game server's goods
- * (see `gamedata::types::event_shop`) with the names and icons the client
- * tables give them.
- */
 export type EventShop = {
     /**
-     * Which server's shop this is: CN when that account has fetched it,
-     * else EN.
+     * Which server's shop this is
      */
     server: string;
     shopName: string;
@@ -18,7 +12,7 @@ export type EventShop = {
     startTime: number;
     endTime: number;
     /**
-     * Token cost of every limited good at full stock, the server's figure.
+     * Token cost of every limited good
      */
     maxPrice: number;
     goods: Array<ShopGood>;

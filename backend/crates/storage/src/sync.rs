@@ -1,81 +1,72 @@
-//! Mirrors the served roots of one server's local tree into the store.
-//!
-//! The diff is content-hashed: every extract rewrites every file, so mtimes
-//! say nothing. A remote object of the same size whose `ETag` equals the local
-//! MD5 is unchanged. A multipart `ETag` (it contains `-`) is not an MD5, so
-//! those objects are compared through the manifest at
-//! `<root>/<server>/.asset-sync.json`, which records the MD5 and `ETag` of what
-//! was uploaded. Uploads finish before any delete starts, so a reader
-//! following a fresh reference never finds a gap.
-//!
-//! With eviction on (`S3_EVICT_LOCAL`, see [`crate::evict`]), a file the
-//! bucket is confirmed to hold is truncated to 0 bytes in place and its
-//! record marked `evicted`. The manifest is therefore correctness-relevant:
-//! it is the only thing that says a 0-byte file is a stub of a real object
-//! rather than an empty asset to upload. It holds a record for every key that
-//! ends a run unchanged or uploaded, an unreadable manifest stops the sync
-//! instead of being treated as empty, and records under roots a run did not
-//! walk are carried forward untouched. A writing run (not a dry run) holds
-//! the per-server lock `<root>/<server>/.asset-sync.lock` from before it
-//! reads the manifest until after it saves it, so two runs never overwrite
-//! each other's marks. The manifest also names the bucket and prefix its
-//! keys belong to; with stubs present, a run under different settings stops.
+//! Mirrors one server's served and backup roots into the store
 
 use std::collections::{BTreeMap, HashMap, HashSet};
+use std::fs::{File, OpenOptions, TryLockError, metadata, read, rename};
+use std::io::{self, Error, ErrorKind};
 use std::path::{Path, PathBuf};
+use std::process::id;
 use std::sync::Arc;
 use std::time::{Duration, Instant, SystemTime};
 
 use base64::Engine;
+use base64::engine::general_purpose::STANDARD;
 use futures::StreamExt;
+use futures::stream::iter;
+use hex::encode;
 use serde::{Deserialize, Serialize};
+use serde_json::{from_slice, to_vec_pretty};
+use thiserror::Error;
 use tokio::sync::Semaphore;
+use tokio::task::spawn_blocking;
+use tokio::time::sleep;
 use tracing::{info, warn};
+use walkdir::WalkDir;
 
 use crate::config::StorageConfig;
 use crate::evict::{EvictPolicy, truncate_in_place};
 use crate::key::{object_key, server_prefix};
 use crate::store::{ObjectStore, PutBody, PutObject, StorageError, content_type_for, md5_file};
 
-/// The extensions the backend serves (`ALLOWED_EXTENSIONS` in
-/// `routes/assets.rs`); nothing else is worth a bucket slot.
+/// Extensions the backend serves (`ALLOWED_EXTENSIONS` in
+/// `routes/assets.rs`)
 pub const SERVED_EXTENSIONS: &[&str] = &[
     "png", "jpg", "jpeg", "webp", "svg", "mp3", "ogg", "wav", "m4a", "mp4", "webm", "skel",
     "atlas", "json", "txt",
 ];
-/// Manifest file name, under `<root>/<server>/`.
+/// Manifest file name under `<root>/<server>/`
 pub const MANIFEST_NAME: &str = ".asset-sync.json";
-/// Advisory lock file, under `<root>/<server>/`. A dot file, so never synced.
+/// Advisory lock file under `<root>/<server>/`
 pub const LOCK_NAME: &str = ".asset-sync.lock";
 /// Manifest format written: 2 adds `evicted` to each record. A version 1 file
-/// loads unchanged, every record not evicted.
+/// loads unchanged
 pub const MANIFEST_VERSION: u32 = 2;
-/// The error a stub whose object has left the bucket fails with.
+/// The error a stub whose object has left the bucket fails with
 pub const STUB_GONE: &str =
     "evicted stub but the object is gone from the store; re-extract to recover";
-/// The error a stub whose object no longer matches its record fails with.
+/// The error a stub whose object no longer matches its record fails with
 pub const STUB_CHANGED: &str = "evicted stub but the stored object no longer matches its manifest record (size or etag); re-extract to recover";
 /// The error a 0-byte file without a stub record fails with when the bucket
-/// holds a non-empty object under its key.
+/// holds a non-empty object under its key
 pub const EMPTY_OVER_OBJECT: &str = "0-byte local file over a non-empty object, and no manifest record marks it an evicted stub (was the manifest lost?); not uploaded. Restore the manifest, re-extract the file, or delete the object if the file really is empty";
-/// Retries per object on top of the SDK's own: 3.
+/// Retries per object
 pub const OBJECT_RETRIES: u32 = 3;
-/// First retry waits 500 ms, doubling each time.
+/// First retry waits 500 ms, doubling each time
 pub const RETRY_BASE: Duration = Duration::from_millis(500);
-/// Deletes refuse to run when the local count is under 90 % of the remote.
+/// Deletes refuse to run when the local count is under 90% of the remote
 pub const SHRINK_FLOOR_PERCENT: usize = 90;
-/// Progress is logged every 1000 files.
+/// Progress is logged every 1000 files
 const PROGRESS_EVERY: usize = 1000;
-/// Keys per delete request.
+/// Keys per delete request
 const DELETE_BATCH: usize = 1000;
 
 #[derive(Debug, Clone)]
 pub struct SyncOptions {
-    /// The `assets/output` directory holding one tree per server.
+    /// The `assets/output` directory holding one tree per server
     pub root: PathBuf,
     pub server: String,
     pub prefix: String,
     pub roots: Vec<String>,
+    pub backup_roots: Vec<String>,
     pub delete: bool,
     pub dry_run: bool,
     pub allow_shrink: bool,
@@ -85,14 +76,14 @@ pub struct SyncOptions {
     pub part_size: u64,
     pub cache_control: String,
     pub retry_base: Duration,
-    /// `S3_BUCKET`, recorded in the manifest beside the prefix.
+    /// `CLOUDFLARE_BUCKET`, recorded in the manifest beside the prefix
     pub bucket: String,
-    /// Truncate files the bucket holds; off unless `S3_EVICT_LOCAL` or `--evict`.
+    /// Truncate files the bucket holds; off unless `STORAGE_EVICT_LOCAL` or `--evict`
     pub evict: EvictPolicy,
 }
 
 impl SyncOptions {
-    /// Options with every tunable taken from `config`.
+    /// Options with every tunable taken from `config`
     #[must_use]
     pub fn from_config(config: &StorageConfig, root: PathBuf, server: String) -> Self {
         Self {
@@ -100,6 +91,7 @@ impl SyncOptions {
             server,
             prefix: config.prefix.clone(),
             roots: config.roots.clone(),
+            backup_roots: config.backup_roots.clone(),
             delete: true,
             dry_run: false,
             allow_shrink: false,
@@ -113,15 +105,26 @@ impl SyncOptions {
             evict: config.evict.clone(),
         }
     }
+
+    #[must_use]
+    pub fn walk_roots(&self) -> Vec<String> {
+        let mut roots = self.roots.clone();
+        for root in &self.backup_roots {
+            if !roots.contains(root) {
+                roots.push(root.clone());
+            }
+        }
+        roots
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub enum SyncOutcome {
     Ok,
-    /// One or more objects failed to upload or delete.
+    /// One or more objects failed to upload or delete
     Failed,
-    /// Deletes were skipped because the local tree looks truncated.
+    /// Deletes were skipped because the local tree looks truncated
     ShrinkRefused {
         local: usize,
         remote: usize,
@@ -133,38 +136,34 @@ pub struct SyncReport {
     pub server: String,
     pub scanned: usize,
     pub unchanged: usize,
-    /// Uploaded, or in a dry run, would be uploaded.
     pub uploaded: usize,
     pub uploaded_bytes: u64,
-    /// Deleted, or in a dry run, would be deleted.
     pub deleted: usize,
     pub failed: usize,
-    /// 0-byte stubs whose object is in the bucket; also counted in `unchanged`.
+    /// 0-byte stubs whose object is in the bucket
     pub stubs: usize,
-    /// Whether eviction was on for this run.
+    /// Whether eviction was on for this run
     pub evict: bool,
-    /// Files truncated to stubs, or in a dry run, that would be.
+    /// Files truncated to stubs
     pub evicted: usize,
-    /// Bytes those truncations freed (or would free).
+    /// Bytes those truncations freed
     pub freed_bytes: u64,
-    /// Truncations that failed. The bytes are in the bucket and still on
-    /// disk, so these do not change the exit code.
+    /// Truncations that failed
     pub evict_failed: usize,
-    /// Files under the roots left out by the skip rules.
+    /// Files under the roots left out by the skip rules
     pub skipped: usize,
     pub missing_roots: Vec<String>,
     pub dry_run: bool,
     pub outcome: SyncOutcome,
     pub elapsed_secs: f64,
-    /// The first failures, `key: error`, for the log.
+    /// The first failures, `key: error` for the log
     pub failures: Vec<String>,
 }
 
-/// At most this many failure messages ride in the report.
+/// At most this many failure messages ride in the report
 const MAX_REPORTED_FAILURES: usize = 20;
 
 impl SyncReport {
-    /// 0 all good, 2 an object failed, 3 deletes refused by the shrink check.
     #[must_use]
     pub const fn exit_code(&self) -> i32 {
         match self.outcome {
@@ -174,8 +173,7 @@ impl SyncReport {
         }
     }
 
-    /// True when the remote differs from the local tree: something was (or
-    /// would be) uploaded or deleted, failed, or a delete was refused.
+    /// True when the remote differs from the local tree
     #[must_use]
     pub const fn drifted(&self) -> bool {
         self.uploaded > 0
@@ -185,7 +183,7 @@ impl SyncReport {
     }
 
     /// `asset-sync: server=en scanned=N unchanged=N uploaded=N (B bytes) deleted=N failed=N elapsed=S.s`,
-    /// with `evicted=N (B bytes freed)` before `failed` when eviction is on.
+    /// with `evicted=N (B bytes freed)` before `failed` when eviction is on
     #[must_use]
     pub fn summary_line(&self) -> String {
         let evicted = if self.evict {
@@ -211,7 +209,7 @@ impl SyncReport {
     }
 }
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, Error)]
 pub enum SyncError {
     #[error("{0} is not a directory; check --root and --server")]
     MissingServerDir(PathBuf),
@@ -231,28 +229,26 @@ pub enum SyncError {
     StoreMoved(String),
 }
 
-/// One manifest row: what the bucket holds for a key.
+/// What the bucket holds for a key
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ManifestRecord {
     pub size: u64,
-    /// MD5 of the content, hashed locally.
+    /// MD5 of the content
     pub md5: String,
     pub etag: String,
-    /// The local file is a 0-byte stub of this object. Absent in version 1
-    /// files, and left out when false.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub evicted: bool,
 }
 
+/// `<root>/<server>/.asset-sync.json`: last run's record of what the
+/// bucket holds
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct Manifest {
     pub version: u32,
-    /// `S3_BUCKET` the records belong to; empty in files written before it
-    /// was recorded (and for `S3_TYPE=local`).
+    /// `CLOUDFLARE_BUCKET` the records belong to
     #[serde(default)]
     pub bucket: String,
-    /// `S3_PREFIX` the record keys were built with; empty in files written
-    /// before it was recorded, or when the prefix is empty.
+    /// `CLOUDFLARE_PREFIX` the record keys were built with
     #[serde(default)]
     pub prefix: String,
     pub objects: BTreeMap<String, ManifestRecord>,
@@ -264,16 +260,14 @@ impl Manifest {
         root.join(server).join(MANIFEST_NAME)
     }
 
-    /// Records whose local file is an evicted stub.
+    /// Records whose local file is an evicted stub
     #[must_use]
     pub fn evicted_count(&self) -> usize {
         self.objects.values().filter(|r| r.evicted).count()
     }
 
     /// Evicted records whose key is not under `key_prefix` (`[prefix/]server/`)
-    /// or whose rel's first component is not in `roots`: stubs the store
-    /// would not deliver under the current settings, so the backend would
-    /// serve them empty from disk.
+    /// or whose rel's first component is not in `roots`
     #[must_use]
     pub fn evicted_outside_roots(&self, key_prefix: &str, roots: &[String]) -> usize {
         self.objects
@@ -288,13 +282,10 @@ impl Manifest {
     }
 
     /// Refuses when stubs exist and the manifest was written for another
-    /// bucket or prefix: its keys would not match, so every stub would look
-    /// like an ordinary empty file. An empty recorded bucket is unknown and
-    /// passes; the prefix is also checked through the evicted keys
-    /// themselves, which works for manifests that predate the header.
+    /// bucket or prefix
     ///
     /// # Errors
-    /// The message names both settings and the way out.
+    /// Stubs exist and the manifest names another bucket or prefix
     pub fn check_store(&self, bucket: &str, prefix: &str, server: &str) -> Result<(), String> {
         let evicted = self.evicted_count();
         if evicted == 0 {
@@ -318,7 +309,7 @@ impl Manifest {
             }
         };
         Err(format!(
-            "{evicted} evicted stubs were synced with S3_BUCKET={} S3_PREFIX={}, but the settings now are S3_BUCKET={} S3_PREFIX={}; run asset-sync restore under the old settings first",
+            "{evicted} evicted stubs were synced with CLOUDFLARE_BUCKET={} CLOUDFLARE_PREFIX={}, but the settings now are CLOUDFLARE_BUCKET={} CLOUDFLARE_PREFIX={}; run asset-sync restore under the old settings first",
             shown(&self.bucket),
             shown(&self.prefix),
             shown(bucket),
@@ -326,29 +317,25 @@ impl Manifest {
         ))
     }
 
-    /// The manifest at `path`; empty when absent. Unlike [`Manifest::load`],
-    /// an unreadable file is an error, because only the manifest tells a stub
-    /// from an empty file.
+    /// The manifest at `path`, empty when absent
     ///
     /// # Errors
     /// The file exists but cannot be read or parsed.
     pub fn read(path: &Path) -> Result<Self, String> {
-        match std::fs::read(path) {
-            Ok(raw) => serde_json::from_slice(&raw).map_err(|e| e.to_string()),
-            Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(Self::default()),
+        match read(path) {
+            Ok(raw) => from_slice(&raw).map_err(|e| e.to_string()),
+            Err(e) if e.kind() == ErrorKind::NotFound => Ok(Self::default()),
             Err(e) => Err(e.to_string()),
         }
     }
 
-    /// The manifest at `path`; empty when absent or unreadable, logged at
-    /// warn. For readers that only report (the backend's startup check);
-    /// `sync` and `restore` use [`Manifest::read`].
+    /// The manifest at `path`, empty when absent or unreadable
     #[must_use]
     pub fn load(path: &Path) -> Self {
-        std::fs::read(path).map_or_else(
+        read(path).map_or_else(
             |_| Self::default(),
             |raw| {
-                serde_json::from_slice(&raw).unwrap_or_else(|e| {
+                from_slice(&raw).unwrap_or_else(|e| {
                     warn!(path = %path.display(), error = %e, "manifest unreadable, starting empty");
                     Self::default()
                 })
@@ -356,50 +343,48 @@ impl Manifest {
         )
     }
 
-    /// Writes through a temp file, fsync and rename, so a crash leaves the
-    /// old manifest or the new one, never half of either.
+    /// Writes through a temp file, fsync and rename
     ///
     /// # Errors
     /// The temp file cannot be written or renamed.
-    pub fn save(&self, path: &Path) -> std::io::Result<()> {
+    pub fn save(&self, path: &Path) -> io::Result<()> {
         use std::io::Write;
-        let tmp = path.with_file_name(format!("{MANIFEST_NAME}.{}.tmp", std::process::id()));
-        let raw = serde_json::to_vec_pretty(self).map_err(std::io::Error::other)?;
-        let mut file = std::fs::File::create(&tmp)?;
+        let tmp = path.with_file_name(format!("{MANIFEST_NAME}.{}.tmp", id()));
+        let raw = to_vec_pretty(self).map_err(Error::other)?;
+        let mut file = File::create(&tmp)?;
         file.write_all(&raw)?;
         file.sync_all()?;
         drop(file);
-        std::fs::rename(&tmp, path)?;
+        rename(&tmp, path)?;
         sync_parent_dir(path);
         Ok(())
     }
 }
 
-/// Flushes the directory holding `path`, so a rename into it survives a
-/// crash. Best effort: some platforms cannot open a directory for this.
+/// Flushes the directory holding `path`
 pub fn sync_parent_dir(path: &Path) {
     if let Some(dir) = path.parent()
-        && let Ok(handle) = std::fs::File::open(dir)
+        && let Ok(handle) = File::open(dir)
     {
         let _ = handle.sync_all();
     }
 }
 
-/// The per-server advisory lock, held while the value lives.
+/// Per-server advisory lock
 #[derive(Debug)]
 pub struct ServerLock {
-    _file: std::fs::File,
+    _file: File,
 }
 
 impl ServerLock {
-    /// Takes `<server_dir>/.asset-sync.lock` without waiting.
+    /// Takes `<server_dir>/.asset-sync.lock` without waiting
     ///
     /// # Errors
     /// [`SyncError::Locked`] when another process holds it, or
     /// [`SyncError::Walk`] when the lock file cannot be opened.
     pub fn acquire(server_dir: &Path) -> Result<Self, SyncError> {
         let path = server_dir.join(LOCK_NAME);
-        let file = std::fs::OpenOptions::new()
+        let file = OpenOptions::new()
             .create(true)
             .truncate(false)
             .write(true)
@@ -407,48 +392,52 @@ impl ServerLock {
             .map_err(|e| SyncError::Walk(format!("opening the lock {}: {e}", path.display())))?;
         match file.try_lock() {
             Ok(()) => Ok(Self { _file: file }),
-            Err(std::fs::TryLockError::WouldBlock) => Err(SyncError::Locked(path)),
-            Err(std::fs::TryLockError::Error(e)) => {
+            Err(TryLockError::WouldBlock) => Err(SyncError::Locked(path)),
+            Err(TryLockError::Error(e)) => {
                 Err(SyncError::Walk(format!("locking {}: {e}", path.display())))
             }
         }
     }
 }
 
-#[derive(Debug, Clone)]
-struct LocalFile {
-    /// Path under `<root>/<server>/`, forward slashes.
-    rel: String,
-    path: PathBuf,
-    size: u64,
-    /// Seen at walk time; a truncation is skipped when it changed since.
-    modified: Option<SystemTime>,
+#[must_use]
+pub fn in_roots(rel: &str, roots: &[String]) -> bool {
+    rel.split_once('/')
+        .is_some_and(|(first, _)| roots.iter().any(|r| r == first))
 }
 
-struct Walked {
-    files: Vec<LocalFile>,
-    skipped: usize,
-    missing_roots: Vec<String>,
-    roots: Vec<String>,
+#[derive(Debug, Clone)]
+pub(crate) struct LocalFile {
+    /// Path under `<root>/<server>/`
+    pub(crate) rel: String,
+    pub(crate) path: PathBuf,
+    pub(crate) size: u64,
+    pub(crate) modified: Option<SystemTime>,
+}
+
+pub(crate) struct Walked {
+    pub(crate) files: Vec<LocalFile>,
+    pub(crate) skipped: usize,
+    pub(crate) missing_roots: Vec<String>,
+    pub(crate) roots: Vec<String>,
 }
 
 fn is_skipped_name(name: &str) -> bool {
     name.starts_with('.')
-        || std::path::Path::new(name)
+        || Path::new(name)
             .extension()
             .is_some_and(|e| e.eq_ignore_ascii_case("tmp"))
 }
 
 fn has_served_extension(name: &str) -> bool {
-    std::path::Path::new(name)
+    Path::new(name)
         .extension()
         .and_then(|e| e.to_str())
         .is_some_and(|e| SERVED_EXTENSIONS.contains(&e))
 }
 
-/// Every syncable file under `server_dir/<root>` for each root. Symlinks are
-/// not followed and never synced; dot directories are not entered.
-fn walk_local(server_dir: &Path, roots: &[String]) -> Result<Walked, String> {
+/// Every syncable file under `server_dir/<root>` for each root
+pub(crate) fn walk_local(server_dir: &Path, roots: &[String]) -> Result<Walked, String> {
     let mut walked = Walked {
         files: Vec::new(),
         skipped: 0,
@@ -463,7 +452,7 @@ fn walk_local(server_dir: &Path, roots: &[String]) -> Result<Walked, String> {
             continue;
         }
         walked.roots.push(root.clone());
-        let entries = walkdir::WalkDir::new(&dir)
+        let entries = WalkDir::new(&dir)
             .follow_links(false)
             .into_iter()
             .filter_entry(|e| e.depth() == 0 || !e.file_name().to_string_lossy().starts_with('.'));
@@ -511,46 +500,42 @@ enum FileResult {
     Unchanged {
         rel: String,
         record: ManifestRecord,
-        /// The file, when the policy evicts it.
         evict: Option<LocalFile>,
     },
-    /// An evicted stub whose object is in the bucket.
+    /// An evicted stub whose object is in the bucket
     Stub { rel: String, record: ManifestRecord },
     Uploaded {
         rel: String,
         bytes: u64,
         record: ManifestRecord,
-        /// The file, when the policy evicts it.
         evict: Option<LocalFile>,
     },
     Failed {
         rel: String,
         error: String,
-        /// A stub's record, carried forward so the stub keeps failing loudly
-        /// instead of being uploaded as an empty object next run.
         record: Option<ManifestRecord>,
     },
 }
 
-/// `file` when the policy evicts it. Only asked once the bucket holds the
-/// file's bytes: an unchanged result, or an upload whose put returned.
+/// `file` when the policy evicts it
 fn eviction_candidate(opts: &SyncOptions, file: &LocalFile) -> Option<LocalFile> {
-    (opts.evict.enabled && file.size > 0 && !opts.evict.keeps(&file.rel)).then(|| file.clone())
+    (opts.evict.enabled
+        && file.size > 0
+        && !opts.evict.keeps(&file.rel)
+        && !in_roots(&file.rel, &opts.backup_roots))
+    .then(|| file.clone())
 }
 
-/// Truncates `file` in place unless it changed since the walk: an extract
-/// rewriting it after it was hashed would put bytes on disk the bucket does
-/// not hold. Blocking.
-fn truncate_unchanged(file: &LocalFile) -> std::io::Result<()> {
-    let meta = std::fs::metadata(&file.path)?;
+/// Truncates `file` in place unless it changed since walk
+pub(crate) fn truncate_unchanged(file: &LocalFile) -> io::Result<()> {
+    let meta = metadata(&file.path)?;
     if meta.len() != file.size || meta.modified().ok() != file.modified {
-        return Err(std::io::Error::other("changed since it was hashed"));
+        return Err(Error::other("changed since it was hashed"));
     }
     truncate_in_place(&file.path)
 }
 
-/// The result for a 0-byte file whose record says it is an evicted stub:
-/// in sync when the bucket holds the recorded object, failed otherwise.
+/// Result for 0-byte file whose record says it is an evicted stub
 fn stub_result(
     rel: String,
     record: ManifestRecord,
@@ -584,7 +569,7 @@ async fn hash(path: &Path, hash_sem: &Semaphore) -> Result<[u8; 16], StorageErro
         .await
         .map_err(|e| StorageError::Request(e.to_string()))?;
     let p = path.to_path_buf();
-    tokio::task::spawn_blocking(move || md5_file(&p))
+    spawn_blocking(move || md5_file(&p))
         .await
         .map_err(|e| StorageError::Request(e.to_string()))?
         .map_err(StorageError::from)
@@ -620,7 +605,7 @@ async fn upload_once(
                     },
                     content_type,
                     cache_control: Some(opts.cache_control.clone()),
-                    content_md5: Some(base64::engine::general_purpose::STANDARD.encode(md5)),
+                    content_md5: Some(STANDARD.encode(md5)),
                 },
             )
             .await
@@ -641,7 +626,7 @@ async fn upload_with_retry(
             Err(e) if attempt < OBJECT_RETRIES => {
                 let wait = opts.retry_base * 2u32.pow(attempt);
                 warn!(key, attempt = attempt + 1, error = %e, ?wait, "upload failed, retrying");
-                tokio::time::sleep(wait).await;
+                sleep(wait).await;
                 attempt += 1;
             }
             Err(e) => return Err(e),
@@ -688,7 +673,7 @@ async fn process_file(
             };
         }
     };
-    let md5_hex = hex::encode(md5);
+    let md5_hex = encode(md5);
 
     if let Some((size, Some(etag))) = &remote
         && *size == file.size
@@ -742,7 +727,6 @@ async fn process_file(
         upload_with_retry(store, opts, &key, &file, &md5).await
     };
     match upload {
-        // The put returned, so the bucket holds these bytes: safe to evict.
         Ok(etag) => {
             let evict = eviction_candidate(opts, &file);
             FileResult::Uploaded {
@@ -789,17 +773,18 @@ async fn delete_with_retry(
         if failed.is_empty() {
             return done;
         }
-        tokio::time::sleep(retry_base * 2u32.pow(attempt)).await;
+        sleep(retry_base * 2u32.pow(attempt)).await;
         attempt += 1;
         pending = failed;
     }
 }
 
-/// Mirrors `opts.roots` of `<opts.root>/<opts.server>` into `store`.
+/// Mirrors `opts.roots` and `opts.backup_roots` of `<opts.root>/<opts.server>`
+/// into `store`.
 ///
 /// # Errors
 /// The server directory is missing, the local walk fails, or the remote
-/// cannot be listed. Per-object failures are counted in the report instead.
+/// cannot be listed.
 #[allow(clippy::too_many_lines)]
 pub async fn run_sync(
     store: &dyn ObjectStore,
@@ -810,7 +795,6 @@ pub async fn run_sync(
     if !server_dir.is_dir() {
         return Err(SyncError::MissingServerDir(server_dir));
     }
-    // A dry run writes nothing, so it neither needs nor blocks on the lock.
     let _lock = if opts.dry_run {
         None
     } else {
@@ -818,8 +802,8 @@ pub async fn run_sync(
     };
 
     let walk_dir = server_dir.clone();
-    let roots = opts.roots.clone();
-    let walked = tokio::task::spawn_blocking(move || walk_local(&walk_dir, &roots))
+    let roots = opts.walk_roots();
+    let walked = spawn_blocking(move || walk_local(&walk_dir, &roots))
         .await
         .map_err(|e| SyncError::Walk(e.to_string()))?
         .map_err(SyncError::Walk)?;
@@ -876,8 +860,6 @@ pub async fn run_sync(
         elapsed_secs: 0.0,
         failures: Vec::new(),
     };
-    // Records under a root this run did not walk (a narrower `--roots`, a
-    // root missing locally) stay as they were: their stubs still need them.
     let walked_roots: HashSet<&str> = walked.roots.iter().map(String::as_str).collect();
     let in_walked_root = |rel: &str| {
         rel.split_once('/')
@@ -894,7 +876,7 @@ pub async fn run_sync(
         .collect();
 
     let in_flight = opts.concurrency.max(1) + opts.hash_threads.max(1);
-    let mut results = futures::stream::iter(walked.files.into_iter().map(|file| {
+    let mut results = iter(walked.files.into_iter().map(|file| {
         let remote_entry = remote.get(&file.rel).cloned();
         let key = object_key(&opts.prefix, &opts.server, &file.rel);
         let record = old_manifest.objects.get(&key).cloned();
@@ -966,11 +948,12 @@ pub async fn run_sync(
     }
     drop(results);
 
-    // Deletes: remote keys under a root that was walked, with no local file.
     let remote_in_roots = remote.keys().filter(|rel| in_walked_root(rel)).count();
     let mut doomed: Vec<String> = remote
         .keys()
-        .filter(|rel| in_walked_root(rel) && !local_rels.contains(*rel))
+        .filter(|rel| {
+            in_walked_root(rel) && !in_roots(rel, &opts.backup_roots) && !local_rels.contains(*rel)
+        })
         .map(|rel| object_key(&opts.prefix, &opts.server, rel))
         .collect();
     doomed.sort();
@@ -992,7 +975,7 @@ pub async fn run_sync(
         } else if opts.dry_run {
             report.deleted = doomed.len();
         } else {
-            let mut deleted = futures::stream::iter(
+            let mut deleted = iter(
                 doomed
                     .chunks(DELETE_BATCH)
                     .map(|batch| delete_with_retry(store, batch.to_vec(), opts.retry_base)),
@@ -1033,64 +1016,85 @@ pub async fn run_sync(
     Ok(report)
 }
 
-/// Saves the manifest, then truncates `candidates`.
-///
-/// The manifest marks every candidate evicted BEFORE any file is truncated,
-/// so an interrupted run never leaves an unmarked stub (which the next sync
-/// would upload as an empty object over the real one). A record marked
-/// evicted over a file that still has its bytes is harmless: sync sees a
-/// non-empty file and takes the normal path, and restore skips it. Failed
-/// truncations are unmarked and the manifest saved again.
+/// Saves the manifest, then truncates `candidates`
 async fn evict_and_save(
     opts: &SyncOptions,
     manifest_path: &Path,
-    mut records: BTreeMap<String, ManifestRecord>,
+    records: BTreeMap<String, ManifestRecord>,
     candidates: Vec<LocalFile>,
     report: &mut SyncReport,
 ) {
-    let key_of = |file: &LocalFile| object_key(&opts.prefix, &opts.server, &file.rel);
-    for file in &candidates {
-        if let Some(record) = records.get_mut(&key_of(file)) {
-            record.evicted = true;
-        }
-    }
-    let mut manifest = Manifest {
+    let manifest = Manifest {
         version: MANIFEST_VERSION,
         bucket: opts.bucket.clone(),
         prefix: opts.prefix.clone(),
         objects: records,
     };
+    let done = save_and_truncate(
+        manifest_path,
+        manifest,
+        &opts.prefix,
+        &opts.server,
+        candidates,
+        opts.hash_threads,
+    )
+    .await;
+    report.evicted = done.evicted;
+    report.freed_bytes = done.freed_bytes;
+    report.evict_failed += done.failed;
+}
+
+/// What [`save_and_truncate`] did
+#[derive(Debug, Default)]
+pub(crate) struct Truncated {
+    pub(crate) evicted: usize,
+    pub(crate) freed_bytes: u64,
+    pub(crate) failed: usize,
+}
+
+pub(crate) async fn save_and_truncate(
+    manifest_path: &Path,
+    mut manifest: Manifest,
+    prefix: &str,
+    server: &str,
+    candidates: Vec<LocalFile>,
+    threads: usize,
+) -> Truncated {
+    let mut done = Truncated::default();
+    let key_of = |file: &LocalFile| object_key(prefix, server, &file.rel);
+    for file in &candidates {
+        if let Some(record) = manifest.objects.get_mut(&key_of(file)) {
+            record.evicted = true;
+        }
+    }
     if let Err(e) = manifest.save(manifest_path) {
-        // Without a saved record a stub could not be told from an empty
-        // file, so nothing is truncated. The bucket holds every byte either
-        // way; a lost manifest costs multipart re-uploads, not correctness.
         warn!(path = %manifest_path.display(), error = %e, "manifest not written; nothing evicted");
-        report.evict_failed += candidates.len();
-        return;
+        done.failed = candidates.len();
+        return done;
     }
     if candidates.is_empty() {
-        return;
+        return done;
     }
 
-    let mut truncations = futures::stream::iter(candidates.into_iter().map(|file| async move {
+    let mut truncations = iter(candidates.into_iter().map(|file| async move {
         let blocking = file.clone();
-        let result = tokio::task::spawn_blocking(move || truncate_unchanged(&blocking))
+        let result = spawn_blocking(move || truncate_unchanged(&blocking))
             .await
-            .map_err(std::io::Error::other)
+            .map_err(Error::other)
             .and_then(|r| r);
         (file, result)
     }))
-    .buffer_unordered(opts.hash_threads.max(1));
+    .buffer_unordered(threads.max(1));
     let mut unmarked = 0usize;
     while let Some((file, result)) = truncations.next().await {
         match result {
             Ok(()) => {
-                report.evicted += 1;
-                report.freed_bytes += file.size;
+                done.evicted += 1;
+                done.freed_bytes += file.size;
             }
             Err(e) => {
                 warn!(rel = %file.rel, error = %e, "eviction failed; the file keeps its bytes");
-                report.evict_failed += 1;
+                done.failed += 1;
                 if let Some(record) = manifest.objects.get_mut(&key_of(&file)) {
                     record.evicted = false;
                     unmarked += 1;
@@ -1102,75 +1106,7 @@ async fn evict_and_save(
     if unmarked > 0
         && let Err(e) = manifest.save(manifest_path)
     {
-        // The saved manifest marks those files evicted while they keep their
-        // bytes, which the next sync handles as ordinary files.
         warn!(path = %manifest_path.display(), error = %e, "manifest not rewritten after failed evictions");
     }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn evicted_count_counts_marked_records_and_v1_rows_parse() {
-        let raw = br#"{"version":2,"objects":{
-            "a/en/x.png":{"size":1,"md5":"m","etag":"e","evicted":true},
-            "a/en/y.png":{"size":2,"md5":"m","etag":"e","evicted":false},
-            "a/en/z.png":{"size":3,"md5":"m","etag":"e"}}}"#;
-        let m: Manifest = serde_json::from_slice(raw).unwrap();
-        assert_eq!(m.evicted_count(), 1);
-        assert_eq!(Manifest::default().evicted_count(), 0);
-        // `evicted: false` is left out, so an unevicted row reads as in v1.
-        let row = serde_json::to_string(&m.objects["a/en/y.png"]).unwrap();
-        assert_eq!(row, r#"{"size":2,"md5":"m","etag":"e"}"#);
-        assert_eq!((m.bucket.as_str(), m.prefix.as_str()), ("", ""));
-    }
-
-    #[test]
-    fn evicted_outside_roots_counts_stubs_the_store_would_not_serve() {
-        let raw = br#"{"version":2,"bucket":"b","prefix":"a","objects":{
-            "a/en/textures/x.png":{"size":1,"md5":"m","etag":"e","evicted":true},
-            "a/en/spine/y.json":{"size":1,"md5":"m","etag":"e","evicted":true},
-            "a/en/video/z.mp4":{"size":1,"md5":"m","etag":"e","evicted":true},
-            "a/en/video/kept.mp4":{"size":1,"md5":"m","etag":"e"},
-            "old/en/textures/w.png":{"size":1,"md5":"m","etag":"e","evicted":true},
-            "a/en/loose.png":{"size":1,"md5":"m","etag":"e","evicted":true}}}"#;
-        let m: Manifest = serde_json::from_slice(raw).unwrap();
-        let roots = ["textures".to_owned(), "spine".to_owned()];
-        // video/z.mp4 (root not served), old/... (other prefix), loose.png (no root).
-        assert_eq!(m.evicted_outside_roots("a/en/", &roots), 3);
-        assert_eq!(m.evicted_outside_roots("a/en/", &[]), 5);
-        assert_eq!(
-            Manifest::default().evicted_outside_roots("a/en/", &roots),
-            0
-        );
-    }
-
-    #[test]
-    fn check_store_only_refuses_with_stubs_present() {
-        let mut m = Manifest {
-            version: MANIFEST_VERSION,
-            bucket: "b".into(),
-            prefix: "a".into(),
-            objects: BTreeMap::new(),
-        };
-        let rec = |evicted| ManifestRecord {
-            size: 1,
-            md5: "m".into(),
-            etag: "e".into(),
-            evicted,
-        };
-        m.objects.insert("a/en/textures/x.png".into(), rec(false));
-        assert!(m.check_store("other", "z", "en").is_ok());
-        m.objects.insert("a/en/textures/y.png".into(), rec(true));
-        assert!(m.check_store("b", "a", "en").is_ok());
-        assert!(m.check_store("other", "a", "en").is_err());
-        assert!(m.check_store("b", "z", "en").is_err());
-        // An unrecorded bucket is unknown and passes; the keys still guard the prefix.
-        m.bucket.clear();
-        m.prefix.clear();
-        assert!(m.check_store("any", "a", "en").is_ok());
-        assert!(m.check_store("any", "z", "en").is_err());
-    }
+    done
 }

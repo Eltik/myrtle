@@ -4,14 +4,4 @@ import type { StoryGroup } from "./StoryGroup";
 import type { Storyline } from "./Storyline";
 import type { StoryTotals } from "./StoryTotals";
 
-export type StoryIndex = {
-    groups: Array<StoryGroup>;
-    records: Array<OperatorRecordGroup>;
-    /**
-     * The game's themed shelves, in `SortId` order. Empty when the loaded
-     * `stage_table` carries no `Storylines` (every CN/EN tree since 2024
-     * does).
-     */
-    storylines: Array<Storyline>;
-    totals: StoryTotals;
-};
+export type StoryIndex = { groups: Array<StoryGroup>; records: Array<OperatorRecordGroup>; storylines: Array<Storyline>; totals: StoryTotals };

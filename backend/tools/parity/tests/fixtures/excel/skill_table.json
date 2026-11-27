@@ -1,0 +1,18 @@
+{
+ "Skills": [
+  {
+   "Key": "skcom_magic_rage[3]",
+   "Value": {
+    "SkillId": "skcom_magic_rage[3]",
+    "IconId": "skcom_magic_rage[2]"
+   }
+  },
+  {
+   "Key": "skchr_amiya_2",
+   "Value": {
+    "SkillId": "skchr_amiya_2",
+    "IconId": null
+   }
+  }
+ ]
+}

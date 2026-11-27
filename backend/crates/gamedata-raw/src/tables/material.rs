@@ -1,0 +1,430 @@
+use std::collections::HashMap;
+
+use serde::{Deserialize, Serialize};
+use serde_json::Value;
+
+use crate::serde_helpers::deserialize_fb_map;
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default, ts_rs::TS)]
+#[ts(export)]
+pub enum ItemRarity {
+    #[serde(rename = "TIER_1")]
+    #[default]
+    Tier1,
+    #[serde(rename = "TIER_2")]
+    Tier2,
+    #[serde(rename = "TIER_3")]
+    Tier3,
+    #[serde(rename = "TIER_4")]
+    Tier4,
+    #[serde(rename = "TIER_5")]
+    Tier5,
+    #[serde(rename = "TIER_6")]
+    Tier6,
+}
+
+impl ItemRarity {
+    #[must_use]
+    pub const fn tier(&self) -> u8 {
+        match self {
+            Self::Tier1 => 1,
+            Self::Tier2 => 2,
+            Self::Tier3 => 3,
+            Self::Tier4 => 4,
+            Self::Tier5 => 5,
+            Self::Tier6 => 6,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default, ts_rs::TS)]
+#[ts(export)]
+pub enum ItemClass {
+    #[serde(rename = "MATERIAL")]
+    Material,
+    #[serde(rename = "CONSUME")]
+    Consumable,
+    #[serde(rename = "NORMAL")]
+    Normal,
+    #[serde(rename = "NONE")]
+    None,
+    /// Catch-all for unknown classify types (e.g. `MEMENTO`)
+    #[serde(rename = "UNKNOWN", other)]
+    #[default]
+    Unknown,
+}
+
+/// `rename_all` puts no underscore before a digit (`TktGacha10` -> `TKT_GACHA10`), so a name ending
+/// in a number carries an explicit rename; one that misses falls to `Unknown`
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[derive(Default, ts_rs::TS)]
+#[ts(export)]
+pub enum ItemType {
+    Gold,
+    CardExp,
+    #[default]
+    Material,
+    Diamond,
+    DiamondShd,
+    HggShd,
+    LggShd,
+    ExpPlayer,
+    PlayerAvatar,
+    TktTry,
+    TktryRecruit,
+    TktRecruit,
+    TktInstFin,
+    TktGacha,
+    #[serde(rename = "TKT_GACHA_10")]
+    TktGacha10,
+    SocialPt,
+    ApGameplay,
+    ApBase,
+    TktGachaPrsv,
+    LmtgsCoin,
+    EpgsCoin,
+    RepCoin,
+    CrsShopCoin,
+    CrsShopCoinV2,
+    RetroCoin,
+    RenamingCard,
+    ApSupply,
+    ExterminationAgent,
+    #[serde(rename = "LIMITED_TKT_GACHA_10")]
+    LimitedTktGacha10,
+    LinkageTktGacha,
+    #[serde(rename = "LINKAGE_TKT_GACHA_10")]
+    LinkageTktGacha10,
+    VoucherPick,
+    #[serde(rename = "VOUCHER_LEVELMAX_6")]
+    VoucherLevelmax6,
+    #[serde(rename = "VOUCHER_LEVELMAX_5")]
+    VoucherLevelmax5,
+    #[serde(rename = "VOUCHER_LEVELMAX_4")]
+    VoucherLevelmax4,
+    #[serde(rename = "VOUCHER_ELITE_II_6")]
+    VoucherEliteIi6,
+    #[serde(rename = "VOUCHER_ELITE_II_5")]
+    VoucherEliteIi5,
+    #[serde(rename = "VOUCHER_ELITE_II_4")]
+    VoucherEliteIi4,
+    #[serde(rename = "VOUCHER_SKILL_SPECIALLEVELMAX_6")]
+    VoucherSkillSpeciallevelmax6,
+    #[serde(rename = "VOUCHER_SKILL_SPECIALLEVELMAX_5")]
+    VoucherSkillSpeciallevelmax5,
+    #[serde(rename = "VOUCHER_SKILL_SPECIALLEVELMAX_4")]
+    VoucherSkillSpeciallevelmax4,
+    VoucherSkin,
+    #[serde(rename = "VOUCHER_SKIN_V2")]
+    VoucherSkinV2,
+    RandomVoucherSkin,
+    VoucherCgacha,
+    OptionalVoucherPick,
+    ItemPack,
+    VoucherMgacha,
+    VoucherFullPotential,
+    UniCollection,
+    ApItem,
+    CrsRuneCoin,
+    ActivityCoin,
+    ActivityItem,
+    EtStage,
+    RlCoin,
+    ReturnCredit,
+    Medal,
+    ActivityPotential,
+    FavorAddItem,
+    ClassicShd,
+    ClassicTktGacha,
+    #[serde(rename = "CLASSIC_TKT_GACHA_10")]
+    ClassicTktGacha10,
+    LimitedBuff,
+    #[serde(rename = "CLASSIC_FES_PICK_TIER_5")]
+    ClassicFesPickTier5,
+    #[serde(rename = "CLASSIC_FES_PICK_TIER_6")]
+    ClassicFesPickTier6,
+    ReturnProgress,
+    NewProgress,
+    McardVoucher,
+    MaterialIssueVoucher,
+    SandboxToken,
+    ExclusiveTktGacha,
+    #[serde(rename = "EXCLUSIVE_TKT_GACHA_10")]
+    ExclusiveTktGacha10,
+    GiftpackageTkt,
+    EmoticonSet,
+    SoCharExp,
+    PlotItem,
+    #[serde(other)]
+    Unknown,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "UPPERCASE")]
+#[derive(Default, ts_rs::TS)]
+#[ts(export)]
+pub enum ItemOccPer {
+    #[default]
+    Usual,
+    Almost,
+    Always,
+    Sometimes,
+    Often,
+    /// Catch-all for unknown values
+    #[serde(other)]
+    Unknown,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "UPPERCASE")]
+#[derive(Default, ts_rs::TS)]
+#[ts(export)]
+pub enum BuildingRoomType {
+    #[default]
+    Workshop,
+    Manufacture,
+    /// Catch-all for unknown values
+    #[serde(other)]
+    Unknown,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[derive(Default, ts_rs::TS)]
+#[ts(export)]
+pub enum VoucherItemType {
+    #[default]
+    OptionalVoucherPick,
+    MaterialIssueVoucher,
+    /// Catch-all for unknown values
+    #[serde(other)]
+    Unknown,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "UPPERCASE")]
+#[derive(Default, ts_rs::TS)]
+#[ts(export)]
+pub enum VoucherDisplayType {
+    #[default]
+    None,
+    Divide,
+    /// Catch-all for unknown values
+    #[serde(other)]
+    Unknown,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
+#[serde(rename_all = "camelCase")]
+pub struct StageDrop {
+    #[serde(alias = "StageId")]
+    pub stage_id: String,
+    #[serde(alias = "OccPer")]
+    pub occ_per: ItemOccPer,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
+#[serde(rename_all = "camelCase")]
+pub struct BuildingProduct {
+    #[serde(alias = "RoomType")]
+    pub room_type: BuildingRoomType,
+    #[serde(alias = "FormulaId")]
+    pub formula_id: String,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
+#[serde(rename_all = "camelCase")]
+pub struct VoucherRelate {
+    #[serde(alias = "VoucherId")]
+    pub voucher_id: String,
+    #[serde(alias = "VoucherItemType")]
+    pub voucher_item_type: VoucherItemType,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
+#[serde(rename_all = "camelCase")]
+pub struct UniqueItem {
+    #[serde(alias = "Id")]
+    pub id: String,
+    #[serde(alias = "Count")]
+    pub count: i32,
+    #[serde(rename = "type", alias = "Type_")]
+    pub item_type: String,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
+#[serde(rename_all = "camelCase")]
+pub struct UniCollectionInfo {
+    #[serde(alias = "UniCollectionItemId")]
+    pub uni_collection_item_id: String,
+    #[serde(alias = "UniqueItem")]
+    pub unique_item: Vec<UniqueItem>,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
+#[serde(rename_all = "camelCase")]
+pub struct ItemPackContent {
+    #[serde(alias = "Id")]
+    pub id: String,
+    #[serde(alias = "Count")]
+    pub count: i32,
+    #[serde(rename = "type", alias = "Type_")]
+    pub item_type: ItemType,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
+#[serde(rename_all = "camelCase")]
+pub struct ItemPackInfo {
+    #[serde(alias = "PackId")]
+    pub pack_id: String,
+    #[serde(alias = "Content")]
+    pub content: Vec<ItemPackContent>,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
+#[serde(rename_all = "camelCase")]
+pub struct FullPotentialCharacter {
+    #[serde(alias = "ItemId")]
+    pub item_id: String,
+    #[serde(alias = "Ts")]
+    #[ts(type = "number")]
+    pub ts: i64,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
+#[serde(rename_all = "camelCase")]
+pub struct ActivityPotentialCharacter {
+    #[serde(alias = "CharId")]
+    pub char_id: String,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
+#[serde(rename_all = "camelCase")]
+pub struct FavorCharacter {
+    #[serde(alias = "ItemId")]
+    pub item_id: String,
+    #[serde(alias = "CharId")]
+    pub char_id: String,
+    #[serde(alias = "FavorAddAmt")]
+    pub favor_add_amt: i32,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
+#[serde(rename_all = "camelCase")]
+pub struct ExpItem {
+    #[serde(alias = "Id")]
+    pub id: String,
+    #[serde(alias = "GainExp")]
+    pub gain_exp: i32,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
+#[serde(rename_all = "camelCase")]
+pub struct ApSupply {
+    #[serde(alias = "Id")]
+    pub id: String,
+    #[serde(alias = "Ap")]
+    pub ap: i32,
+    #[serde(alias = "HasTs")]
+    pub has_ts: bool,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
+#[serde(rename_all = "camelCase")]
+pub struct CharVoucherItem {
+    #[serde(alias = "Id")]
+    pub id: String,
+    #[serde(alias = "DisplayType")]
+    pub display_type: VoucherDisplayType,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
+#[serde(rename_all = "camelCase")]
+pub struct Item {
+    #[serde(alias = "ItemId", default)]
+    pub item_id: String,
+    #[serde(alias = "Name", default)]
+    pub name: String,
+    #[serde(alias = "Description", default)]
+    pub description: String,
+    #[serde(alias = "Rarity", default)]
+    pub rarity: ItemRarity,
+    #[serde(alias = "IconId", default)]
+    pub icon_id: String,
+    #[serde(alias = "OverrideBkg")]
+    pub override_bkg: Option<String>,
+    #[serde(alias = "StackIconId")]
+    pub stack_icon_id: Option<String>,
+    #[serde(alias = "SortId", default)]
+    pub sort_id: i32,
+    #[serde(alias = "Usage", default)]
+    pub usage: String,
+    #[serde(alias = "ObtainApproach")]
+    pub obtain_approach: Option<String>,
+    #[serde(alias = "HideInItemGet", default)]
+    pub hide_in_item_get: bool,
+    #[serde(alias = "ClassifyType", default)]
+    pub classify_type: ItemClass,
+    #[serde(alias = "ItemType", default)]
+    pub item_type: ItemType,
+    #[serde(alias = "StageDropList", default)]
+    pub stage_drop_list: Vec<StageDrop>,
+    #[serde(alias = "BuildingProductList", default)]
+    pub building_product_list: Vec<BuildingProduct>,
+    #[serde(alias = "VoucherRelateList")]
+    pub voucher_relate_list: Option<Vec<VoucherRelate>>,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
+#[serde(rename_all = "camelCase")]
+pub struct Materials {
+    pub items: HashMap<String, Item>,
+    pub exp_items: HashMap<String, ExpItem>,
+    pub potential_items: HashMap<String, HashMap<String, String>>,
+    pub ap_supplies: HashMap<String, ApSupply>,
+    pub char_voucher_items: HashMap<String, CharVoucherItem>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct ItemTableFile {
+    #[serde(deserialize_with = "deserialize_fb_map")]
+    pub items: HashMap<String, Item>,
+    #[serde(deserialize_with = "deserialize_fb_map", default)]
+    pub exp_items: HashMap<String, ExpItem>,
+    #[serde(default)]
+    pub potential_items: Vec<Value>,
+    #[serde(deserialize_with = "deserialize_fb_map", default)]
+    pub ap_supply_out_of_date_dict: HashMap<String, ApSupply>,
+    #[serde(deserialize_with = "deserialize_fb_map", default)]
+    pub char_voucher_items: HashMap<String, CharVoucherItem>,
+}
+
+impl ItemTableFile {
+    #[must_use]
+    pub fn into_materials(self) -> Materials {
+        Materials {
+            items: self.items,
+            exp_items: self.exp_items,
+            potential_items: HashMap::new(),
+            ap_supplies: self.ap_supply_out_of_date_dict,
+            char_voucher_items: self.char_voucher_items,
+        }
+    }
+}

@@ -8,18 +8,6 @@ import type { ArchivePicture } from "./ArchivePicture";
 import type { ArchiveRecordingNode } from "./ArchiveRecordingNode";
 import type { ArchiveTrack } from "./ArchiveTrack";
 
-/**
- * One item of a group's archive: a log entry, a landmark, a news story, a
- * file, a gallery picture, a track or a recording.
- *
- * The sections are a TAGGED list rather than a fixed record because an
- * archive carries two or three of them and never all seven: on EN
- * `act13side` is news, files and a gallery, `act17side` is logs, landmarks
- * and a gallery, `act25side` is files and a gallery, `main_14` is nothing
- * but recordings. `count` is the LEAF count, the number of rows the game's
- * own screen lists, so `logs` counts logs and not the chapters they are
- * grouped into, and `recordings` counts clips and not nodes.
- */
 export type StoryArchiveSection =
     | { kind: "logs"; count: number; chapters: Array<ArchiveLogChapter> }
     | { kind: "landmarks"; count: number; landmarks: Array<ArchiveLandmark> }
@@ -27,13 +15,4 @@ export type StoryArchiveSection =
     | { kind: "files"; count: number; files: Array<ArchiveFile> }
     | { kind: "gallery"; count: number; pictures: Array<ArchivePicture> }
     | { kind: "music"; count: number; tracks: Array<ArchiveTrack> }
-    | {
-          kind: "recordings";
-          count: number;
-          nodes: Array<ArchiveRecordingNode>;
-          /**
-           * The clips the shelf hides until they are unlocked, which belong to
-           * no node (8 of `main_14`'s 43).
-           */
-          hidden: Array<ArchiveClip>;
-      };
+    | { kind: "recordings"; count: number; nodes: Array<ArchiveRecordingNode>; hidden: Array<ArchiveClip> };

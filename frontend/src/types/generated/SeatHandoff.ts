@@ -3,11 +3,4 @@ import type { HandoffBuffs } from "./HandoffBuffs";
 import type { HandoffLeftOut } from "./HandoffLeftOut";
 import type { HandoffSource } from "./HandoffSource";
 
-/**
- * What the DPS calculator can take from the squad for one seat:
- * the flat buffs its request accepts, from squadmates' talents that reach
- * this seat and work by being in the squad or once deployed. Placement-bound
- * and skill-bound effects, and anything that is not an ATK, flat ATK or ASPD
- * number, are listed in `left_out`.
- */
 export type SeatHandoff = { seat: number; char_id: string; buffs: HandoffBuffs; counted: Array<HandoffSource>; left_out: Array<HandoffLeftOut> };

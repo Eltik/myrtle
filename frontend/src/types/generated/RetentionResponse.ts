@@ -3,31 +3,4 @@ import type { RetentionRoster } from "./RetentionRoster";
 import type { RetentionRow } from "./RetentionRow";
 import type { RetentionStatus } from "./RetentionStatus";
 
-/**
- * `GET /dps/retention`.
- */
-export type RetentionResponse = {
-    status: RetentionStatus;
-    /**
-     * The game-data identity (a hash of the operator table; the enemy
-     * tables are not in it, the in-process table is keyed by the load).
-     */
-    data: string;
-    /**
-     * The context every `dps` value is computed at.
-     */
-    reference: string;
-    /**
-     * `null` until `status` is `ready`.
-     */
-    roster: RetentionRoster | null;
-    /**
-     * Wall time of the computation, milliseconds; `null` until ready.
-     */
-    computeMs: number | null;
-    /**
-     * Every ranked (operator, skill, module) of the reference context, in
-     * operator, skill, module order. Empty until ready.
-     */
-    rows: Array<RetentionRow>;
-};
+export type RetentionResponse = { status: RetentionStatus; data: string; reference: string; roster: RetentionRoster | null; computeMs: number | null; rows: Array<RetentionRow> };

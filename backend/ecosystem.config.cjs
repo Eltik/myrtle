@@ -1,33 +1,49 @@
-// PM2 config for the backend server.
+// PM2 config for the backend: the HTTP API and the job worker.
 //
-// Runs the compiled binary directly, not `cargo run --release`. `cargo run` spawns the
-// binary as a child and waits, so pm2 ends up monitoring `cargo` (a wrapper) instead of
-// the server.
+// Both run the compiled binaries directly. Both read config/myrtle.toml relative
+// to the working directory, and resolve its env: secrets from the process env,
+// then the first .env found walking up from it (backend/.env, or the repo-root
+// .env only when backend/.env is missing), so `cwd` must be the backend dir.
+// Start the API first: it runs the database migrations at boot and the worker
+// does not.
 //
-// The binary loads backend/.env via dotenv, so `cwd` must be the backend dir.
+// Run exactly ONE worker. Each worker holds its own in-memory game
+// service-account sessions and re-mints them on its own, so a second one signs
+// the first out; schedules, the regrade and the stats rebuilds also assume a
+// single consumer. The old backend's jobs must not run beside it either.
+//
+// max_memory_restart: the old single backend ran under 3G (steady 0.2 to 0.6 GB,
+// boot peak 1.76 GiB with EN and CN loaded). Each of these two loads all game
+// data, so each gets the same cap; neither has been measured on the VPS yet.
 module.exports = {
     apps: [
         {
-            name: "myrtle-backend",
-            script: "target/release/backend",
+            name: "myrtle-api",
+            script: "target/release/myrtle-api",
+            args: "config/myrtle.toml",
             cwd: "/var/www/myrtle.moe/backend",
             max_memory_restart: "3G",
+            exp_backoff_restart_delay: 200,
+            // SHUTDOWN_GRACE (5s, crates/api/src/lib.rs) plus the 2s runtime shutdown
+            kill_timeout: 10000,
             env: {
-                RUST_LOG: "backend=info,tower_http=info",
-                // The default permit formula is (cores / 2).max(1), which on this
-                // 3 vCPU box yields ONE, so a second reader of a CPU-bound route
-                // was refused while the first was still computing. Two gives real
-                // concurrency and still leaves a core for the async workers,
-                // postgres and everything else on the box. A TRADE, not a derived
-                // number: raise it only if /admin/stats shows rejections with the
-                // box not actually busy.
-                CPU_TASK_PERMITS: "2",
-                // How long a request waits for a permit before it is refused.
-                // Size it from /admin/stats: sum_micros / started for a kind is
-                // its mean hold time, and the wait wants to be a small multiple of
-                // that so a burst drains instead of shedding. Must stay well under
-                // the 30s handler timeout. 0 restores instant refusal.
-                CPU_TASK_WAIT_MS: "2500",
+                RUST_LOG: "info",
+            },
+        },
+        {
+            name: "myrtle-worker",
+            script: "target/release/myrtle-worker",
+            args: "config/myrtle.toml",
+            cwd: "/var/www/myrtle.moe/backend",
+            instances: 1,
+            exec_mode: "fork",
+            max_memory_restart: "3G",
+            exp_backoff_restart_delay: 200,
+            // DRAIN (30s, crates/worker/src/runtime.rs) plus the 2s runtime
+            // shutdown; a SIGKILL before that leaves jobs for the reaper to requeue
+            kill_timeout: 40000,
+            env: {
+                RUST_LOG: "info",
             },
         },
     ],

@@ -3,25 +3,4 @@ import type { AccountFactsReq } from "./AccountFactsReq";
 import type { DraftRoomDto } from "./DraftRoomDto";
 import type { SlotPresetsDto } from "./SlotPresetsDto";
 
-/**
- * The player's real base, every built slot of it.
- *
- * A `BaseAssignment` is deliberately NOT a layout: it carries only the rooms
- * the plan has something to say about (production, plus a staffed Control
- * Center). Seeding a planner from it drops dormitories, power plants and every
- * support facility, which breaks the power balance AND the scoring (dorm levels
- * and facility counts feed the clause engine).
- */
-export type LayoutResponse = {
-    rooms: Array<DraftRoomDto>;
-    /**
-     * The player's own saved shift rotation, straight out of `presetQueue`.
-     * Separate from `rooms` because that is the round-trip shape the client
-     * posts back; presets are read-only context and never travel with a draft.
-     */
-    presets: Array<SlotPresetsDto>;
-    /**
-     * The owner's saved account facts, so every viewer scores with them.
-     */
-    facts: AccountFactsReq;
-};
+export type LayoutResponse = { rooms: Array<DraftRoomDto>; presets: Array<SlotPresetsDto>; facts: AccountFactsReq };

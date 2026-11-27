@@ -8,8 +8,8 @@
   "packageManager": "bun@1.4.2",
   "scripts": {
     "dev": "vite dev --port 3000",
-    "gen:types": "rm -rf src/types/generated && cd ../backend && cargo test export_bindings && cargo test --test bindings_shape_test && cd ../frontend && bunx --bun biome check --write src/types/generated",
-    "gen:check": "cd ../backend && cargo test export_bindings >/dev/null && cd .. && git diff --exit-code --stat frontend/src/types/generated || (echo 'Generated bindings are stale. Run: bun run gen:types' >&2 && exit 1)",
+    "gen:types": "cd ../backend && cargo run -q -p xtask -- gen-ts",
+    "gen:check": "cd ../backend && cargo run -q -p xtask -- gen-ts --check",
     "build": "NODE_OPTIONS=--max-old-space-size=6144 vite build",
     "preview": "vite preview",
     "start": "bun .output/server/index.mjs",

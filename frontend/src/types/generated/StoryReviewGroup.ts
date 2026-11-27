@@ -2,21 +2,21 @@
 import type { StoryUnlockData } from "./StoryUnlockData";
 
 /**
- * One Archives group: a main chapter, an event, or an operator record set.
+ * Archives group: main chapter, event or operator record set
  */
 export type StoryReviewGroup = {
     id: string;
     name: string;
     /**
-     * `MAINLINE`, `ACTIVITY`, `MINI_ACTIVITY` or `NONE`.
+     * `MAINLINE`, `ACTIVITY`, `MINI_ACTIVITY` or `NONE`
      */
     entryType: string;
     /**
-     * `MAIN_STORY`, `ACTIVITY_STORY`, `MINI_STORY` or `NONE`.
+     * `MAIN_STORY`, `ACTIVITY_STORY`, `MINI_STORY` or `NONE`
      */
     actType: string;
     /**
-     * `storyEntryPic_{id}`, the Archives cover; 70 of 451 groups carry one on EN.
+     * `storyEntryPic_{id}`, the Archives cover
      */
     storyEntryPicId: string | null;
     startTime: number;

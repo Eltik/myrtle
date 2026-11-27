@@ -23,9 +23,7 @@ export type Skin = {
     voiceType: string;
     displaySkin: DisplaySkin;
     /**
-     * `displaySkin.displayTagId` as a category, so a client can group skins
-     * without matching the server's wording. Set when the table loads, and on
-     * KR and JP from a reference server by skin id.
+     * `displaySkin.displayTagId` as a category
      */
     obtainChannel: SkinChannel;
 };

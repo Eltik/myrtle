@@ -2,10 +2,4 @@
 import type { DpsResult } from "./DpsResult";
 import type { SweepPoint } from "./SweepPoint";
 
-/**
- * One request's outcome. Exactly one of the three fields is present: `result`
- * without a sweep, `points` with one, `error` when this request failed (an
- * unknown operator, a configuration the engine cannot compute). One failed
- * request does not fail the batch.
- */
 export type BatchItem = { result?: DpsResult; points?: Array<SweepPoint>; error?: string };

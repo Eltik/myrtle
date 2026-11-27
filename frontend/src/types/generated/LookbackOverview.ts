@@ -2,18 +2,4 @@
 import type { LookbackSnapshot } from "./LookbackSnapshot";
 import type { OwnershipPoint } from "./OwnershipPoint";
 
-/**
- * `GET /lookback`: the timeline.
- */
-export type LookbackOverview = {
-    /**
-     * Oldest first.
-     */
-    snapshots: Array<LookbackSnapshot>;
-    /**
-     * One point per day an operator was obtained, oldest first. Reconstructed,
-     * not recorded: it counts today's roster by obtain time, and every Amiya
-     * form carries the base Amiya's time.
-     */
-    ownership: Array<OwnershipPoint>;
-};
+export type LookbackOverview = { snapshots: Array<LookbackSnapshot>; ownership: Array<OwnershipPoint> };

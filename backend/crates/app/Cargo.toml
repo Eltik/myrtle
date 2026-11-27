@@ -1,0 +1,67 @@
+[package]
+name = "myrtle-app"
+description = "Core app of the backend"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+license.workspace = true
+
+[dependencies]
+myrtle-types.workspace = true
+myrtle-gamedata-raw.workspace = true
+myrtle-gamedata.workspace = true
+myrtle-engine-dps.workspace = true
+myrtle-dps-formulas.workspace = true
+myrtle-engine-grade.workspace = true
+myrtle-engine-base.workspace = true
+myrtle-engine-squad.workspace = true
+myrtle-engine-story.workspace = true
+myrtle-engine-archives.workspace = true
+myrtle-engine-release.workspace = true
+myrtle-engine-planner.workspace = true
+myrtle-engine-music.workspace = true
+myrtle-hypergryph.workspace = true
+myrtle-storage.workspace = true
+myrtle-db.workspace = true
+myrtle-jobs.workspace = true
+ammonia.workspace = true
+arc-swap.workspace = true
+async-trait.workspace = true
+base64.workspace = true
+chacha20poly1305.workspace = true
+chrono.workspace = true
+dashmap.workspace = true
+dotenvy.workspace = true
+flate2.workspace = true
+futures-util.workspace = true
+hex.workspace = true
+hmac.workspace = true
+jsonwebtoken.workspace = true
+rand.workspace = true
+redis.workspace = true
+regex.workspace = true
+reqwest.workspace = true
+rustls = { version = "0.23.46", default-features = false, features = ["ring", "std", "tls12"] }
+serde = { workspace = true, features = ["rc"] }
+serde_json.workspace = true
+sha2.workspace = true
+subtle.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+tokio-tungstenite.workspace = true
+toml.workspace = true
+tracing.workspace = true
+urlencoding.workspace = true
+uuid.workspace = true
+walkdir.workspace = true
+ts-rs.workspace = true
+
+[dev-dependencies]
+myrtle-testkit.workspace = true
+sqlx.workspace = true
+tempfile.workspace = true
+tokio = { workspace = true, features = ["test-util"] }
+
+[lints]
+workspace = true

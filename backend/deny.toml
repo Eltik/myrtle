@@ -1,0 +1,59 @@
+[graph]
+all-features = false
+
+[advisories]
+version = 2
+yanked = "deny"
+ignore = []
+
+[licenses]
+version = 2
+confidence-threshold = 0.9
+allow = [
+    "MIT",
+    "Apache-2.0",
+    "Apache-2.0 WITH LLVM-exception",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC",
+    "Unicode-3.0",
+    "Zlib",
+    "MPL-2.0",
+    "CDLA-Permissive-2.0",
+    "BSL-1.0",
+]
+# Workspace crates are publish = false; the repo has no LICENSE file.
+private = { ignore = true }
+
+[bans]
+multiple-versions = "warn"
+wildcards = "deny"
+allow-wildcard-paths = true
+highlight = "all"
+# Upward dependencies, where cargo-deny can express them: `wrappers` is the
+# complete list of crates allowed to depend DIRECTLY on the banned crate.
+# xtask check-layers is the full check (every edge, every layer); this is a
+# second net that also runs in the deny job. Keep both in sync with
+# [workspace.metadata.layers] in Cargo.toml.
+deny = [
+    # L5 app: only the L6 binaries.
+    { crate = "myrtle-app", wrappers = ["myrtle-api", "myrtle-worker", "myrtle-cli", "myrtle-testkit", "myrtle-parity"], reason = "L5 is linked only by L6 binaries" },
+    # L4: only L4 siblings, L5, L6 and tools.
+    { crate = "myrtle-db", wrappers = ["myrtle-jobs", "myrtle-app", "myrtle-api", "myrtle-worker", "myrtle-cli", "myrtle-testkit"], reason = "L4 is never linked by L0-L3" },
+    { crate = "myrtle-jobs", wrappers = ["myrtle-app", "myrtle-api", "myrtle-worker", "myrtle-cli", "myrtle-testkit"], reason = "L4 is never linked by L0-L3" },
+    # L3 upstream client: only app talks to Hypergryph.
+    { crate = "myrtle-hypergryph", wrappers = ["myrtle-app", "myrtle-cli", "myrtle-testkit"], reason = "engines never call upstream" },
+    # Purity: SQL lives in db and jobs only; HTTP serving lives in api only.
+    { crate = "sqlx", wrappers = ["myrtle-db", "myrtle-jobs", "myrtle-testkit"], reason = "343 query sites are spread over the current tree; the rewrite keeps them in db" },
+    { crate = "axum", wrappers = ["myrtle-api", "utoipa-axum", "utoipa-scalar"], reason = "AppState in 47/77 services today; HTTP types stop at the api crate" },
+    # TLS: rustls only, as today.
+    { crate = "openssl-sys", reason = "rustls only" },
+]
+skip = []
+skip-tree = []
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]
+allow-git = []

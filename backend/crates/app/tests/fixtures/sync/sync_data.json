@@ -1,0 +1,637 @@
+{
+ "result": 0,
+ "ts": 1793234745,
+ "user": {
+  "building": {
+   "status": {
+    "labor": {
+     "buffSpeed": 0.68,
+     "lastUpdateTime": 1793230350,
+     "maxValue": 235,
+     "processPoint": 269.73,
+     "value": 11
+    },
+    "workshop": {
+     "bonus": {
+      "ws_bonus1_40": [
+       12,
+       40
+      ]
+     },
+     "bonusActive": 0
+    }
+   }
+  },
+  "campaignsV2": {
+   "instances": {
+    "camp_01": {
+     "maxKills": 400
+    },
+    "camp_r_01": {
+     "maxKills": 250
+    }
+   }
+  },
+  "checkIn": {
+   "canCheckIn": 0,
+   "checkInGroupId": "signin82",
+   "checkInHistory": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "checkInRewardIndex": 27,
+   "showCount": 1047
+  },
+  "consumable": {
+   "voucher_elite_II_4": {
+    "1": {
+     "count": 2,
+     "ts": -1
+    },
+    "2": {
+     "count": 7,
+     "ts": 1
+    }
+   },
+   "voucher_item_4pick1_1803": {
+    "0": {
+     "count": 0,
+     "ts": -1
+    }
+   }
+  },
+  "dexNav": {
+   "enemy": {
+    "enemies": {
+     "enemy_1002_nsabr": 1,
+     "enemy_1006_shield": 1,
+     "enemy_1033_handax": 1
+    }
+   }
+  },
+  "dungeon": {
+   "cowLevel": {
+    "spst_08-02": {
+     "fts": 1708217805,
+     "id": "spst_08-02",
+     "rts": 1708218080,
+     "type": "STAGE",
+     "val": [
+      true
+     ]
+    }
+   },
+   "stages": {
+    "guide_01": {
+     "completeTimes": 1,
+     "hasBattleReplay": 0,
+     "practiceTimes": 0,
+     "stageId": "guide_01",
+     "startTimes": 1,
+     "state": 3
+    },
+    "main_00-01": {
+     "completeTimes": 1,
+     "hasBattleReplay": 1,
+     "practiceTimes": 5,
+     "stageId": "main_00-01",
+     "startTimes": 6,
+     "state": 3
+    },
+    "spst_08-02": {
+     "completeTimes": 0,
+     "hasBattleReplay": 0,
+     "practiceTimes": 0,
+     "stageId": "spst_08-02",
+     "startTimes": 0,
+     "state": 3
+    }
+   }
+  },
+  "inventory": {
+   "30011": 26,
+   "30012": 22,
+   "3301": 51,
+   "4006": 1417
+  },
+  "medal": {
+   "medals": {
+    "medal_player_charnum_01": {
+     "fts": 1702381872,
+     "id": "medal_player_charnum_01",
+     "rts": -1,
+     "val": [
+      [
+       30,
+       30
+      ]
+     ]
+    },
+    "medal_player_charnum_02": {
+     "fts": 1702860237,
+     "id": "medal_player_charnum_02",
+     "rts": -1,
+     "val": [
+      [
+       60,
+       60
+      ]
+     ]
+    },
+    "medal_player_recruitcount_03": {
+     "fts": 1708673269,
+     "id": "medal_player_recruitcount_03",
+     "reward": "default",
+     "rts": 1708673503,
+     "val": [
+      [
+       300,
+       300
+      ]
+     ]
+    },
+    "medal_unearned_fixture": {
+     "fts": 0,
+     "id": "medal_unearned_fixture",
+     "rts": 0,
+     "val": [
+      [
+       200,
+       300
+      ]
+     ]
+    }
+   }
+  },
+  "rlv2": {
+   "outer": {
+    "rogue_1": {
+     "activity": {},
+     "bank": {
+      "current": 195,
+      "record": 195,
+      "reward": {
+       "bank_reward_1": 1,
+       "bank_reward_2": 1
+      },
+      "show": true,
+      "totalPut": 195
+     },
+     "mission": {
+      "list": [],
+      "refresh": 0,
+      "updateId": ""
+     }
+    }
+   }
+  },
+  "sandboxPerm": {
+   "summary": {
+    "SANDBOX_V2": {
+     "sandbox_1": {
+      "day": 42,
+      "inChallenge": false
+     }
+    },
+    "SANDBOX_V3": {
+     "sandbox_2": {
+      "baseLv": 2,
+      "inCurrent": true
+     }
+    }
+   },
+   "template": {
+    "SANDBOX_V2": {
+     "sandbox_1": null
+    },
+    "SANDBOX_V3": {
+     "sandbox_2": {
+      "base": {
+       "level": 2
+      }
+     }
+    }
+   },
+   "topic": "sandbox_2"
+  },
+  "skin": {
+   "characterSkins": {
+    "char_123_fang@winter#1": 1,
+    "char_212_ansel@summer#1": 1,
+    "char_4041_chnut@summer#12": 1
+   }
+  },
+  "social": {
+   "assistCharList": [
+    null,
+    {
+     "charInstId": 293,
+     "currentEquip": "uniequip_002_lemuen",
+     "skillIndex": 1
+    },
+    {
+     "charInstId": 329,
+     "currentEquip": null,
+     "skillIndex": 0
+    }
+   ]
+  },
+  "status": {
+   "ap": 59,
+   "avatar": {
+    "id": "avatar_def_01",
+    "type": "ICON"
+   },
+   "classicGachaTicket": 0,
+   "classicShard": 529,
+   "classicTenGachaTicket": 0,
+   "diamondShard": 198545,
+   "exp": 0,
+   "flags": {
+    "Obt/SandboxPerm/sandbox_1/sandbox_1_ending_1": 1,
+    "Obt/SandboxPerm/sandbox_1/sandbox_1_entry": 1,
+    "Obt/SandboxPerm/sandbox_2/sandbox_2_entry": 1,
+    "activities/act9inv/level_act9inv_st01": 1
+   },
+   "freeDiamond": 1,
+   "friendNumLimit": 125,
+   "gachaTicket": 33,
+   "gold": 6217576,
+   "hggShard": 101,
+   "instantFinishTicket": 169,
+   "lastOnlineTs": 1793234744,
+   "level": 120,
+   "lggShard": 312,
+   "mainStageProgress": "main_16-04",
+   "maxAp": 210,
+   "monthlySubscriptionEndTime": 1795085999,
+   "nickName": "Doctor",
+   "nickNumber": "0001",
+   "payDiamond": 0,
+   "practiceTicket": 999,
+   "recruitLicense": 2,
+   "registerTs": 1702378073,
+   "resume": "Hello",
+   "secretary": "char_4193_lemuen",
+   "secretarySkinId": "char_4193_lemuen@ambienceSynesthesia#7",
+   "socialPoint": 220,
+   "tenGachaTicket": 3,
+   "uid": "10000001"
+  },
+  "storyreview": {
+   "groups": {
+    "act9inv": {
+     "stories": [
+      {
+       "id": "act9inv_level_act9inv_st02",
+       "rc": 0,
+       "uts": 1793200000
+      }
+     ]
+    }
+   }
+  },
+  "troop": {
+   "chars": {
+    "1": {
+     "charId": "char_002_amiya",
+     "currentEquip": null,
+     "currentTmpl": "char_1037_amiya3",
+     "defaultSkillIndex": -1,
+     "equip": {},
+     "evolvePhase": 2,
+     "exp": 64,
+     "favorPoint": 25570,
+     "gainTime": 1702378073,
+     "instId": 1,
+     "level": 40,
+     "mainSkillLvl": 7,
+     "potentialRank": 5,
+     "skills": [],
+     "skin": null,
+     "starMark": 0,
+     "tmpl": {
+      "char_002_amiya": {
+       "currentEquip": "uniequip_001_amiya",
+       "defaultSkillIndex": 1,
+       "equip": {
+        "uniequip_001_amiya": {
+         "hide": 0,
+         "level": 1,
+         "locked": 0
+        },
+        "uniequip_002_amiya": {
+         "hide": 0,
+         "level": 1,
+         "locked": 1
+        }
+       },
+       "skills": [
+        {
+         "completeUpgradeTime": -1,
+         "skillId": "skcom_magic_rage[3]",
+         "specializeLevel": 0,
+         "state": 0,
+         "unlock": 1
+        },
+        {
+         "completeUpgradeTime": -1,
+         "skillId": "skchr_amiya_2",
+         "specializeLevel": 0,
+         "state": 0,
+         "unlock": 1
+        },
+        {
+         "completeUpgradeTime": -1,
+         "skillId": "skchr_amiya_3",
+         "specializeLevel": 0,
+         "state": 0,
+         "unlock": 1
+        }
+       ],
+       "skinId": "char_002_amiya@winter#1"
+      },
+      "char_1001_amiya2": {
+       "currentEquip": "uniequip_001_amiya2",
+       "defaultSkillIndex": 0,
+       "equip": {
+        "uniequip_001_amiya2": {
+         "hide": 0,
+         "level": 1,
+         "locked": 0
+        },
+        "uniequip_002_amiya2": {
+         "hide": 0,
+         "level": 1,
+         "locked": 1
+        }
+       },
+       "skills": [
+        {
+         "completeUpgradeTime": -1,
+         "skillId": "skchr_amiya2_1",
+         "specializeLevel": 3,
+         "state": 0,
+         "unlock": 1
+        },
+        {
+         "completeUpgradeTime": -1,
+         "skillId": "skchr_amiya2_2",
+         "specializeLevel": 3,
+         "state": 0,
+         "unlock": 1
+        }
+       ],
+       "skinId": "char_1001_amiya2@sale#16"
+      },
+      "char_1037_amiya3": {
+       "currentEquip": "uniequip_001_amiya3",
+       "defaultSkillIndex": 0,
+       "equip": {
+        "uniequip_001_amiya3": {
+         "hide": 0,
+         "level": 1,
+         "locked": 0
+        },
+        "uniequip_002_amiya3": {
+         "hide": 0,
+         "level": 1,
+         "locked": 1
+        }
+       },
+       "skills": [
+        {
+         "completeUpgradeTime": -1,
+         "skillId": "skchr_amiya3_1",
+         "specializeLevel": 0,
+         "state": 0,
+         "unlock": 1
+        },
+        {
+         "completeUpgradeTime": -1,
+         "skillId": "skchr_amiya3_2",
+         "specializeLevel": 0,
+         "state": 0,
+         "unlock": 1
+        }
+       ],
+       "skinId": "char_1037_amiya3@sale#13"
+      }
+     },
+     "voiceLan": "JP"
+    },
+    "236": {
+     "charId": "char_1028_texas2",
+     "currentEquip": null,
+     "defaultSkillIndex": 0,
+     "equip": {
+      "uniequip_001_texas2": {
+       "hide": 1,
+       "level": 1,
+       "locked": 0
+      },
+      "uniequip_002_texas2": {
+       "hide": 1,
+       "level": 1,
+       "locked": 1
+      },
+      "uniequip_003_texas2": {
+       "hide": 1,
+       "level": 1,
+       "locked": 1
+      }
+     },
+     "evolvePhase": 0,
+     "exp": 0,
+     "favorPoint": 25570,
+     "gainTime": 1730396821,
+     "instId": 236,
+     "level": 1,
+     "mainSkillLvl": 1,
+     "potentialRank": 0,
+     "skills": [
+      {
+       "completeUpgradeTime": -1,
+       "skillId": "skchr_texas2_1",
+       "specializeLevel": 0,
+       "state": 0,
+       "unlock": 1
+      },
+      {
+       "completeUpgradeTime": -1,
+       "skillId": "skchr_texas2_2",
+       "specializeLevel": 0,
+       "state": 0,
+       "unlock": 0
+      },
+      {
+       "completeUpgradeTime": -1,
+       "skillId": "skchr_texas2_3",
+       "specializeLevel": 0,
+       "state": 0,
+       "unlock": 0
+      }
+     ],
+     "skin": "char_1028_texas2#1",
+     "voiceLan": "JP"
+    },
+    "293": {
+     "charId": "char_4193_lemuen",
+     "currentEquip": "uniequip_002_lemuen",
+     "defaultSkillIndex": 1,
+     "equip": {
+      "uniequip_001_lemuen": {
+       "hide": 0,
+       "level": 1,
+       "locked": 0
+      },
+      "uniequip_002_lemuen": {
+       "hide": 0,
+       "level": 3,
+       "locked": 0
+      }
+     },
+     "evolvePhase": 2,
+     "exp": 0,
+     "favorPoint": 25570,
+     "gainTime": 1760494848,
+     "instId": 293,
+     "level": 90,
+     "mainSkillLvl": 7,
+     "potentialRank": 5,
+     "skills": [
+      {
+       "completeUpgradeTime": -1,
+       "skillId": "skchr_lemuen_1",
+       "specializeLevel": 3,
+       "state": 0,
+       "unlock": 1
+      },
+      {
+       "completeUpgradeTime": -1,
+       "skillId": "skchr_lemuen_2",
+       "specializeLevel": 3,
+       "state": 0,
+       "unlock": 1
+      },
+      {
+       "completeUpgradeTime": -1,
+       "skillId": "skchr_lemuen_3",
+       "specializeLevel": 3,
+       "state": 0,
+       "unlock": 1
+      }
+     ],
+     "skin": "char_4193_lemuen@ambienceSynesthesia#7",
+     "starMark": 1,
+     "voiceLan": "EN"
+    },
+    "329": {
+     "charId": "char_4080_lin",
+     "currentEquip": null,
+     "defaultSkillIndex": 0,
+     "equip": {
+      "uniequip_001_lin": {
+       "hide": 1,
+       "level": 1,
+       "locked": 0
+      },
+      "uniequip_002_lin": {
+       "hide": 1,
+       "level": 1,
+       "locked": 1
+      },
+      "uniequip_003_lin": {
+       "hide": 1,
+       "level": 1,
+       "locked": 1
+      }
+     },
+     "evolvePhase": 0,
+     "exp": 0,
+     "favorPoint": 25570,
+     "gainTime": 1776230399,
+     "instId": 329,
+     "level": 1,
+     "mainSkillLvl": 1,
+     "potentialRank": 0,
+     "skills": [
+      {
+       "completeUpgradeTime": -1,
+       "skillId": "skchr_lin_1",
+       "specializeLevel": 0,
+       "state": 0,
+       "unlock": 1
+      },
+      {
+       "completeUpgradeTime": -1,
+       "skillId": "skchr_lin_2",
+       "specializeLevel": 0,
+       "state": 0,
+       "unlock": 0
+      },
+      {
+       "completeUpgradeTime": -1,
+       "skillId": "skchr_lin_3",
+       "specializeLevel": 0,
+       "state": 0,
+       "unlock": 0
+      }
+     ],
+     "skin": "char_4080_lin#1",
+     "voiceLan": "JP"
+    }
+   },
+   "squads": {
+    "0": {
+     "name": "I",
+     "slots": [
+      {
+       "charInstId": 293,
+       "currentEquip": "uniequip_002_lemuen",
+       "skillIndex": 1
+      },
+      null,
+      {
+       "charInstId": 999,
+       "currentEquip": null,
+       "skillIndex": 2
+      },
+      {
+       "charInstId": 329,
+       "currentEquip": "uniequip_001_lin",
+       "skillIndex": 0
+      }
+     ],
+     "squadId": "0"
+    }
+   }
+  }
+ }
+}

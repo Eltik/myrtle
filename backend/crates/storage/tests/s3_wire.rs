@@ -61,11 +61,11 @@ async fn canned(response: &'static str) -> (String, Arc<Mutex<Vec<String>>>) {
 
 fn r2_config(endpoint: &str) -> StorageConfig {
     let vars = [
-        ("S3_TYPE", "cloudflare"),
-        ("S3_BUCKET", "myrtle"),
-        ("S3_ENDPOINT", endpoint),
-        ("S3_ACCESS_KEY_ID", "id"),
-        ("S3_SECRET_ACCESS_KEY", "secret"),
+        ("STORAGE_TYPE", "cloudflare"),
+        ("CLOUDFLARE_BUCKET", "myrtle"),
+        ("CLOUDFLARE_S3_API", endpoint),
+        ("CLOUDFLARE_API_ACCESS_KEY", "id"),
+        ("CLOUDFLARE_API_SECRET_KEY", "secret"),
         // Path-style keeps the bucket out of the host name, so the canned
         // server's 127.0.0.1 address resolves.
         ("S3_FORCE_PATH_STYLE", "1"),

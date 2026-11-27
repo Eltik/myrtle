@@ -1,71 +1,63 @@
-//! Local eviction: freeing the bytes of a file once the bucket holds it.
-//!
-//! An evicted file is a STUB: the same path and inode, truncated to 0 bytes,
-//! with its mtime PRESERVED, never unlinked. The backend reads the names of
-//! files under the served roots to build its indexes and uses local existence
-//! as the redirect oracle, the pipeline compares file counts between
-//! extracts, and the unpacker skips expensive work when an output exists and
-//! is newer than its source. A 0-byte file keeps every one of those working;
-//! a deleted file breaks all of them. The mtime is the one the extract wrote,
-//! already newer than the source, so the skip checks still pass; stamping it
-//! with now instead would make a subtree look freshly written to the orphan
-//! sweep (`orphans.mjs` `subtreeWasWritten`) during a filtered extract, which
-//! then sweeps every older file under it. The manifest marks which
-//! 0-byte files are stubs (`ManifestRecord::evicted`).
-//!
-//! Some files are read for their BYTES by the backend or the unpacker; those
-//! are on the keep list and never evicted.
+//! Local eviction: clears files once uploaded to bucket
 
-use std::path::Path;
+use std::collections::HashMap;
+use std::fs::{OpenOptions, metadata};
+use std::io;
+use std::path::{Path, PathBuf};
+use std::time::Instant;
 
-use crate::config::{ConfigError, get as get_var};
+use futures::StreamExt;
+use futures::stream::iter;
+use hex::encode;
+use serde::Serialize;
+use tokio::task::spawn_blocking;
+use tracing::{info, warn};
 
-/// Rel-path prefixes (under `<root>/<server>/`, forward slashes) that are
-/// never evicted, because a local reader needs the bytes. `S3_EVICT_KEEP`
+use crate::config::{ConfigError, StorageConfig, get as get_var};
+use crate::key::{object_key, server_prefix};
+use crate::store::{ObjectStore, md5_file};
+use crate::sync::{
+    LocalFile, MANIFEST_VERSION, Manifest, ManifestRecord, ServerLock, SyncError, in_roots,
+    save_and_truncate, walk_local,
+};
+
+/// Rel-path prefixes (under `<root>/<server>/`) that are
+/// never evicted. `STORAGE_EVICT_KEEP`
 /// adds to this list and cannot remove from it.
-///
-/// One built-in rule is not a plain prefix and lives in
-/// [`is_server_home_banner`]: `textures/[[<server>]]/arts/ui/homebanners/`
-/// (the `home_banner_gacha_hub` gacha banner source, which
-/// `core/release/art.rs` copies into `derived/release-art`).
 pub const BUILTIN_KEEP: &[&str] = &[
     // Story sprites: hub.json, sprites.json, PNG headers, thumbnail renders,
-    // gallery variants.
+    // gallery variants
     "textures/avg/",
-    // Story art variants.
+    // Story art variants
     "textures/spritepack/cutin_char_",
-    // `core/release/art.rs` copies these into `derived/release-art`.
+    // `core/release/art.rs` copies these into `derived/release-art`
     "textures/spritepack/ui_home_act_banner_gacha_",
     "textures/spritepack/ui_zone_home_theme_",
     "textures/arts/ui/stage/[uc]homeentry/",
-    // `event_banner.rs` composes the generated event banners from the Story
-    // Collection key visuals and titles.
+    // `event_banner.rs` composes generated event banners from Story
+    // Collection key visuals and titles
     "textures/spritepack/mixstory_",
-    // The unpacker reads it (`music_m4a.rs`).
+    // Unpacker reads this
     "audio/m4a_sources.json",
 ];
 
-/// Whether `sync` evicts, and what it keeps on top of [`BUILTIN_KEEP`].
+/// Whether `sync` evicts, and what it keeps on top of [`BUILTIN_KEEP`]
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct EvictPolicy {
-    /// `S3_EVICT_LOCAL`; off by default.
+    /// `STORAGE_EVICT_LOCAL`; off by default
     pub enabled: bool,
-    /// `S3_EVICT_KEEP`: extra rel-path prefixes to keep.
+    /// `STORAGE_EVICT_KEEP`: extra rel-path prefixes to keep
     pub extra_keep: Vec<String>,
 }
 
 impl EvictPolicy {
-    /// `S3_EVICT_LOCAL` and `S3_EVICT_KEEP` through `lookup`; empty values
-    /// count as unset. `S3_EVICT_LOCAL` is on only for `1`, `true`, `yes` or
-    /// `on` (any case); every other value is off, so a typo never truncates.
-    ///
     /// # Errors
-    /// An `S3_EVICT_KEEP` entry containing a backslash.
+    /// An `STORAGE_EVICT_KEEP` entry containing a backslash.
     pub fn from_lookup(lookup: &dyn Fn(&str) -> Option<String>) -> Result<Self, ConfigError> {
-        let enabled = get_var(lookup, "S3_EVICT_LOCAL").is_some_and(|v| {
+        let enabled = get_var(lookup, "STORAGE_EVICT_LOCAL").is_some_and(|v| {
             matches!(v.to_ascii_lowercase().as_str(), "1" | "true" | "yes" | "on")
         });
-        let extra_keep = match get_var(lookup, "S3_EVICT_KEEP") {
+        let extra_keep = match get_var(lookup, "STORAGE_EVICT_KEEP") {
             None => Vec::new(),
             Some(raw) => parse_keep(&raw)?,
         };
@@ -76,7 +68,7 @@ impl EvictPolicy {
     }
 
     /// True when `rel` lies under a built-in or an extra keep prefix, or is a
-    /// server-tagged home banner ([`is_server_home_banner`]).
+    /// server-tagged home banner ([`is_server_home_banner`])
     #[must_use]
     pub fn keeps(&self, rel: &str) -> bool {
         BUILTIN_KEEP.iter().any(|p| rel.starts_with(p))
@@ -85,9 +77,8 @@ impl EvictPolicy {
     }
 }
 
-/// `textures/[[<anything>]]/arts/ui/homebanners/...`: the gacha banners
-/// under a server-tagged texture tree (only `[[en]]` exists today), read as
-/// bytes by `core/release/art.rs`.
+/// `textures/[[<anything>]]/arts/ui/homebanners/...`: gacha banners
+/// under a server-tagged texture tree
 #[must_use]
 pub fn is_server_home_banner(rel: &str) -> bool {
     rel.strip_prefix("textures/[[")
@@ -95,9 +86,6 @@ pub fn is_server_home_banner(rel: &str) -> bool {
         .is_some_and(|(_, tail)| tail.starts_with("arts/ui/homebanners/"))
 }
 
-/// Splits `S3_EVICT_KEEP`: comma separated, entries trimmed, a leading `/`
-/// dropped, empty entries ignored.
-///
 /// # Errors
 /// An entry with a backslash: keys and rels use forward slashes only.
 pub fn parse_keep(raw: &str) -> Result<Vec<String>, ConfigError> {
@@ -109,7 +97,7 @@ pub fn parse_keep(raw: &str) -> Result<Vec<String>, ConfigError> {
         }
         if entry.contains('\\') {
             return Err(ConfigError::Invalid {
-                var: "S3_EVICT_KEEP",
+                var: "STORAGE_EVICT_KEEP",
                 value: raw.to_owned(),
                 reason: "prefixes use forward slashes",
             });
@@ -119,150 +107,279 @@ pub fn parse_keep(raw: &str) -> Result<Vec<String>, ConfigError> {
     Ok(out)
 }
 
-/// Truncates the file at `path` to 0 bytes in place and puts its mtime back
-/// to what it was.
-///
-/// Truncation would otherwise stamp it with now; see the module doc for why
-/// that matters. The file is opened for writing with
-/// truncation, never removed or recreated, so its inode and any open handle
-/// stay valid. Blocking: call it from `spawn_blocking`.
-///
 /// # Errors
 /// The file's metadata cannot be read, it cannot be opened for writing, or
 /// its mtime cannot be set.
-pub fn truncate_in_place(path: &Path) -> std::io::Result<()> {
-    let modified = std::fs::metadata(path)?.modified()?;
-    let file = std::fs::OpenOptions::new()
-        .write(true)
-        .truncate(true)
-        .open(path)?;
+pub fn truncate_in_place(path: &Path) -> io::Result<()> {
+    let modified = metadata(path)?.modified()?;
+    let file = OpenOptions::new().write(true).truncate(true).open(path)?;
     file.set_modified(modified)
 }
 
-#[cfg(test)]
-mod tests {
-    use std::collections::HashMap;
+#[derive(Debug, Clone)]
+pub struct EvictOptions {
+    /// The `assets/output` directory holding one tree per server
+    pub root: PathBuf,
+    pub server: String,
+    /// `CLOUDFLARE_BUCKET`
+    pub bucket: String,
+    pub prefix: String,
+    /// Served roots whose files may be stubbed
+    pub roots: Vec<String>,
+    pub backup_roots: Vec<String>,
+    /// Keep list on top of [`BUILTIN_KEEP`]
+    pub keep: EvictPolicy,
+    pub hash_threads: usize,
+    pub dry_run: bool,
+}
 
-    use super::*;
+impl EvictOptions {
+    /// Options with every tunable taken from `config`
+    #[must_use]
+    pub fn from_config(config: &StorageConfig, root: PathBuf, server: String) -> Self {
+        Self {
+            root,
+            server,
+            bucket: config.bucket.clone(),
+            prefix: config.prefix.clone(),
+            roots: config.roots.clone(),
+            backup_roots: config.backup_roots.clone(),
+            keep: config.evict.clone(),
+            hash_threads: config.hash_threads,
+            dry_run: false,
+        }
+    }
+}
 
-    fn policy(pairs: &[(&str, &str)]) -> Result<EvictPolicy, ConfigError> {
-        let map: HashMap<String, String> = pairs
-            .iter()
-            .map(|(k, v)| ((*k).to_owned(), (*v).to_owned()))
-            .collect();
-        EvictPolicy::from_lookup(&|k| map.get(k).cloned())
+#[derive(Debug, Clone, Serialize)]
+pub struct EvictReport {
+    pub server: String,
+    /// Files walked under the served roots
+    pub scanned: usize,
+    /// Files truncated to stubs
+    pub stubbed: usize,
+    /// Bytes those truncations freed
+    pub freed_bytes: u64,
+    /// Files whose size or MD5 differs from the stored object, or whose object
+    /// has a multipart `ETag`
+    pub mismatched: usize,
+    /// Files with no object in the bucket
+    pub missing: usize,
+    /// Files the keep list or a backup root protects
+    pub kept: usize,
+    /// Files already 0 bytes
+    pub empty: usize,
+    /// Hashes or truncations that failed
+    pub failed: usize,
+    pub missing_roots: Vec<String>,
+    pub dry_run: bool,
+    pub elapsed_secs: f64,
+}
+
+impl EvictReport {
+    /// 0 done, 2 one or more files failed
+    #[must_use]
+    pub const fn exit_code(&self) -> i32 {
+        if self.failed > 0 { 2 } else { 0 }
     }
 
-    #[test]
-    fn eviction_is_off_unless_switched_on() {
-        assert_eq!(policy(&[]), Ok(EvictPolicy::default()));
-        for off in ["", "  ", "0", "false", "no", "off", "enable", "2"] {
-            assert!(
-                !policy(&[("S3_EVICT_LOCAL", off)]).unwrap().enabled,
-                "{off:?}"
-            );
-        }
-        for on in ["1", "true", "TRUE", "yes", "On", " on "] {
-            assert!(policy(&[("S3_EVICT_LOCAL", on)]).unwrap().enabled, "{on:?}");
+    /// `asset-sync: evict server=en scanned=N stubbed=N (B bytes freed) mismatched=N missing=N kept=N empty=N failed=N elapsed=S.s`
+    #[must_use]
+    pub fn summary_line(&self) -> String {
+        format!(
+            "asset-sync: evict server={} scanned={} stubbed={} ({} bytes freed) mismatched={} missing={} kept={} empty={} failed={} elapsed={:.1}s{}",
+            self.server,
+            self.scanned,
+            self.stubbed,
+            self.freed_bytes,
+            self.mismatched,
+            self.missing,
+            self.kept,
+            self.empty,
+            self.failed,
+            self.elapsed_secs,
+            if self.dry_run { " (dry run)" } else { "" },
+        )
+    }
+}
+
+/// Stubs each file under `opts.roots` whose size and MD5 match the object the
+/// store already holds
+///
+/// # Errors
+/// The server directory is missing, another run holds the server's lock, the
+/// local walk fails, the remote cannot be listed, or the manifest is
+/// unreadable or was written for another bucket or prefix.
+#[allow(clippy::too_many_lines)]
+pub async fn run_evict(
+    store: &dyn ObjectStore,
+    opts: &EvictOptions,
+) -> Result<EvictReport, SyncError> {
+    let started = Instant::now();
+    let server_dir = opts.root.join(&opts.server);
+    if !server_dir.is_dir() {
+        return Err(SyncError::MissingServerDir(server_dir));
+    }
+    let _lock = if opts.dry_run {
+        None
+    } else {
+        Some(ServerLock::acquire(&server_dir)?)
+    };
+
+    let manifest_path = Manifest::path(&opts.root, &opts.server);
+    let old_manifest = Manifest::read(&manifest_path).map_err(|error| SyncError::Manifest {
+        path: manifest_path.clone(),
+        error,
+    })?;
+    old_manifest
+        .check_store(&opts.bucket, &opts.prefix, &opts.server)
+        .map_err(SyncError::StoreMoved)?;
+
+    let walk_dir = server_dir.clone();
+    let roots: Vec<String> = opts
+        .roots
+        .iter()
+        .filter(|r| !opts.backup_roots.contains(r))
+        .cloned()
+        .collect();
+    let walked = spawn_blocking(move || walk_local(&walk_dir, &roots))
+        .await
+        .map_err(|e| SyncError::Walk(e.to_string()))?
+        .map_err(SyncError::Walk)?;
+
+    let remote_prefix = server_prefix(&opts.prefix, &opts.server);
+    let mut remote: HashMap<String, (u64, Option<String>)> = HashMap::new();
+    let mut listing = store.list(&remote_prefix);
+    while let Some(item) = listing.next().await {
+        let meta = item.map_err(SyncError::List)?;
+        if let Some(rel) = meta.key.strip_prefix(&remote_prefix) {
+            remote.insert(rel.to_owned(), (meta.size, meta.etag));
         }
     }
+    drop(listing);
+    info!(server = %opts.server, files = walked.files.len(), objects = remote.len(), "evict: tree walked and remote listed");
 
-    #[test]
-    fn extra_keep_prefixes_parse() {
-        let p = policy(&[("S3_EVICT_KEEP", " /textures/ui/ , ,audio/bgm/x.m4a,")]).unwrap();
-        assert_eq!(p.extra_keep, ["textures/ui/", "audio/bgm/x.m4a"]);
-        assert_eq!(
-            policy(&[("S3_EVICT_KEEP", "")]).unwrap().extra_keep,
-            Vec::<String>::new()
-        );
-        assert!(matches!(
-            policy(&[("S3_EVICT_KEEP", "textures\\avg")]),
-            Err(ConfigError::Invalid {
-                var: "S3_EVICT_KEEP",
-                ..
-            })
-        ));
-    }
-
-    #[test]
-    fn the_keep_list_matches_by_prefix() {
-        let p = EvictPolicy::default();
-        for kept in [
-            "textures/avg/characters/x.png",
-            "textures/avg/hub.json",
-            "textures/spritepack/cutin_char_amiya_1.png",
-            "textures/spritepack/ui_home_act_banner_gacha_1.png",
-            "textures/spritepack/ui_zone_home_theme_2.png",
-            "textures/arts/ui/stage/[uc]homeentry/a.png",
-            "textures/spritepack/mixstory_kv_0/kv_act17side.png",
-            "audio/m4a_sources.json",
-            "textures/[[en]]/arts/ui/homebanners/a.png",
-            "textures/[[cn]]/arts/ui/homebanners/sub/b.png",
-        ] {
-            assert!(p.keeps(kept), "{kept}");
+    let mut report = EvictReport {
+        server: opts.server.clone(),
+        scanned: walked.files.len(),
+        stubbed: 0,
+        freed_bytes: 0,
+        mismatched: 0,
+        missing: 0,
+        kept: 0,
+        empty: 0,
+        failed: 0,
+        missing_roots: walked.missing_roots,
+        dry_run: opts.dry_run,
+        elapsed_secs: 0.0,
+    };
+    let key_of = |rel: &str| object_key(&opts.prefix, &opts.server, rel);
+    let mut records = old_manifest.objects;
+    let mut changed = false;
+    let mut to_hash: Vec<(LocalFile, String)> = Vec::new();
+    for file in walked.files {
+        if file.size == 0 {
+            report.empty += 1;
+            continue;
         }
-        for evicted in [
-            "textures/avgx/a.png",
-            "textures/spritepack/ui_other.png",
-            "textures/arts/ui/stage/[uc]mappreviewsspecial/a.png",
-            "spine/DynIllust/x/[scene].json",
-            "audio/sound_beta_2/m.m4a",
-            "portraits/a.png",
-            "textures/[[en]]/arts/ui/other/a.png",
-            "textures/[[en]]/x/arts/ui/homebanners/a.png",
-            "textures/arts/ui/homebanners/a.png",
-            "textures/[[en]arts/ui/homebanners/a.png",
-            "spine/[[en]]/arts/ui/homebanners/a.png",
-        ] {
-            assert!(!p.keeps(evicted), "{evicted}");
-        }
-        let extra = EvictPolicy {
-            enabled: true,
-            extra_keep: vec!["portraits/".into()],
+        let etag = if opts.keep.keeps(&file.rel) || in_roots(&file.rel, &opts.backup_roots) {
+            report.kept += 1;
+            None
+        } else {
+            match remote.get(&file.rel) {
+                None => {
+                    report.missing += 1;
+                    None
+                }
+                Some((size, Some(etag))) if *size == file.size && !etag.contains('-') => {
+                    Some(etag.clone())
+                }
+                Some(_) => {
+                    report.mismatched += 1;
+                    None
+                }
+            }
         };
-        assert!(extra.keeps("portraits/a.png"));
-        assert!(extra.keeps("textures/avg/a.png"));
-    }
-
-    #[test]
-    fn truncation_preserves_the_mtime() {
-        let dir = tempfile::tempdir().unwrap();
-        let path = dir.path().join("a.png");
-        std::fs::write(&path, b"bytes").unwrap();
-        let old = std::time::SystemTime::UNIX_EPOCH + std::time::Duration::from_secs(1_700_000_000);
-        std::fs::File::options()
-            .write(true)
-            .open(&path)
-            .unwrap()
-            .set_modified(old)
-            .unwrap();
-        let before = std::fs::metadata(&path).unwrap().modified().unwrap();
-        truncate_in_place(&path).unwrap();
-        let after = std::fs::metadata(&path).unwrap();
-        assert_eq!(after.len(), 0);
-        assert_eq!(after.modified().unwrap(), before);
-        assert_eq!(before, old);
-    }
-
-    #[test]
-    fn truncation_keeps_the_inode() {
-        let dir = tempfile::tempdir().unwrap();
-        let path = dir.path().join("a.png");
-        std::fs::write(&path, b"bytes").unwrap();
-        #[cfg(unix)]
-        let ino = {
-            use std::os::unix::fs::MetadataExt;
-            std::fs::metadata(&path).unwrap().ino()
-        };
-        truncate_in_place(&path).unwrap();
-        let meta = std::fs::metadata(&path).unwrap();
-        assert_eq!(meta.len(), 0);
-        #[cfg(unix)]
-        {
-            use std::os::unix::fs::MetadataExt;
-            assert_eq!(meta.ino(), ino);
+        match etag {
+            Some(etag) => to_hash.push((file, etag)),
+            None => {
+                if let Some(record) = records.get_mut(&key_of(&file.rel))
+                    && record.evicted
+                {
+                    record.evicted = false;
+                    changed = true;
+                }
+            }
         }
-        assert!(truncate_in_place(&dir.path().join("missing.png")).is_err());
-        assert!(!dir.path().join("missing.png").exists());
     }
+
+    let mut hashed = iter(to_hash.into_iter().map(|(file, etag)| async move {
+        let path = file.path.clone();
+        let md5 = spawn_blocking(move || md5_file(&path))
+            .await
+            .map_err(io::Error::other)
+            .and_then(|r| r)
+            .map(encode);
+        (file, etag, md5)
+    }))
+    .buffer_unordered(opts.hash_threads.max(1));
+    let mut candidates: Vec<LocalFile> = Vec::new();
+    while let Some((file, etag, md5)) = hashed.next().await {
+        let key = key_of(&file.rel);
+        match md5 {
+            Ok(md5) if etag.eq_ignore_ascii_case(&md5) => {
+                records.insert(
+                    key,
+                    ManifestRecord {
+                        size: file.size,
+                        md5,
+                        etag,
+                        evicted: false,
+                    },
+                );
+                candidates.push(file);
+            }
+            other => {
+                if let Err(e) = other {
+                    warn!(rel = %file.rel, error = %e, "hashing failed; the file keeps its bytes");
+                    report.failed += 1;
+                } else {
+                    report.mismatched += 1;
+                }
+                if let Some(record) = records.get_mut(&key)
+                    && record.evicted
+                {
+                    record.evicted = false;
+                    changed = true;
+                }
+            }
+        }
+    }
+    drop(hashed);
+
+    if opts.dry_run {
+        report.stubbed = candidates.len();
+        report.freed_bytes = candidates.iter().map(|f| f.size).sum();
+    } else if changed || !candidates.is_empty() {
+        let manifest = Manifest {
+            version: MANIFEST_VERSION,
+            bucket: opts.bucket.clone(),
+            prefix: opts.prefix.clone(),
+            objects: records,
+        };
+        let done = save_and_truncate(
+            &manifest_path,
+            manifest,
+            &opts.prefix,
+            &opts.server,
+            candidates,
+            opts.hash_threads,
+        )
+        .await;
+        report.stubbed = done.evicted;
+        report.freed_bytes = done.freed_bytes;
+        report.failed += done.failed;
+    }
+    report.elapsed_secs = started.elapsed().as_secs_f64();
+    Ok(report)
 }

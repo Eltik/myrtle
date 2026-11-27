@@ -2,6 +2,6 @@
 import type { OperatorChange } from "./OperatorChange";
 
 /**
- * Every difference found on one operator, in a fixed order.
+ * Every difference found on one operator
  */
 export type OperatorCnChanges = { id: string; changes: Array<OperatorChange> };

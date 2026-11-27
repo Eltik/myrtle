@@ -1,35 +1,37 @@
-//! Cloudflare R2, Amazon S3 and generic S3-compatible servers, through the
-//! AWS SDK.
-//!
-//! Per kind:
-//! * `cloudflare`: region `auto`, checksums only when an operation requires
-//!   them (R2 rejects the SDK's default aws-chunked CRC32 trailers), never an
-//!   ACL (R2 has none).
-//! * `aws`: SDK defaults; static credentials, or the default credential chain
-//!   when none are configured.
-//! * `s3`: path-style by default, checksums only when required.
-//!
-//! Every single-part put carries `Content-MD5`.
+//! Cloudflare R2 over its S3 API
 
+use std::collections::HashMap;
+use std::error;
+use std::io::{self, SeekFrom};
+use std::iter::{empty, once};
 use std::path::Path;
+use std::sync::Arc;
+use std::time::Duration;
 
 use async_trait::async_trait;
-use aws_credential_types::Credentials;
-use aws_credential_types::provider::{
-    ProvideCredentials, SharedCredentialsProvider, future as cred_future,
+use base64::engine::general_purpose::STANDARD;
+use futures::stream::{self, BoxStream, iter, try_unfold};
+use futures::{StreamExt, TryStreamExt};
+use jiff::Timestamp;
+use reqwest::header::{
+    CACHE_CONTROL, CONTENT_LENGTH, CONTENT_RANGE, CONTENT_TYPE, ETAG, HeaderMap, HeaderName,
+    IF_NONE_MATCH, RANGE,
 };
-use aws_sdk_s3::Client;
-use aws_sdk_s3::config::{
-    BehaviorVersion, Region, RequestChecksumCalculation, ResponseChecksumValidation,
+use reqwest::{Body, Client, Error, RequestBuilder, Response, StatusCode};
+use rustls::ClientConfig;
+use rustls::crypto::ring::default_provider;
+use rusty_s3::actions::{
+    AbortMultipartUpload, CompleteMultipartUpload, CreateMultipartUpload, DeleteObjects,
+    DeleteObjectsResponse, GetObject, HeadObject, ListObjectsV2, ObjectIdentifier,
+    PutObject as PutObjectAction, UploadPart,
 };
-use aws_sdk_s3::error::{ProvideErrorMetadata, SdkError};
-use aws_sdk_s3::primitives::{ByteStream, Length};
-use aws_sdk_s3::types::{
-    CompletedMultipartUpload, CompletedPart, CorsConfiguration, CorsRule, Delete, ObjectIdentifier,
-};
-use bytes::Bytes;
-use futures::StreamExt;
-use futures::stream::{self, BoxStream};
+use rusty_s3::signing::sign;
+use rusty_s3::{Bucket, Credentials, Method, S3Action, UrlStyle};
+use tokio::fs::File;
+use tokio::io::{AsyncReadExt, AsyncSeekExt};
+use tokio::time::sleep;
+use tokio_util::io::ReaderStream;
+use tracing::warn;
 
 use crate::config::{StorageConfig, StorageKind};
 use crate::store::{
@@ -39,115 +41,176 @@ use crate::store::{
 /// `DeleteObjects` takes at most 1000 keys per request.
 const DELETE_BATCH: usize = 1000;
 /// How long browsers may cache a CORS preflight: 86400 s, one day.
-const CORS_MAX_AGE_SECONDS: i32 = 86_400;
+const CORS_MAX_AGE_SECONDS: u32 = 86_400;
+/// Lifetime of a presigned request
+const SIGN_TTL: Duration = Duration::from_secs(3600);
+/// R2's smallest part
+const MIN_PART_SIZE: u64 = 5 * 1024 * 1024;
+const CONTENT_MD5: HeaderName = HeaderName::from_static("content-md5");
+/// Attempts for a bodiless read (HEAD, GET, a list page)
+const READ_ATTEMPTS: u32 = 3;
+/// First read retry waits 200 ms, doubling each time
+const READ_RETRY_BASE: Duration = Duration::from_millis(200);
 
 pub struct S3Store {
-    client: Client,
-    bucket: String,
+    http: Client,
+    bucket: Bucket,
+    credentials: Credentials,
     kind: StorageKind,
 }
 
-/// The AWS default credential chain, built on the first request so the store
-/// itself can be constructed outside an async context.
-#[derive(Debug, Default)]
-struct LazyDefaultChain {
-    chain:
-        tokio::sync::OnceCell<aws_config::default_provider::credentials::DefaultCredentialsChain>,
+fn http_client() -> Result<Client, StorageError> {
+    use rustls_platform_verifier::BuilderVerifierExt;
+    let tls_error = |e: rustls::Error| StorageError::Config(format!("TLS setup: {e}"));
+    let tls = ClientConfig::builder_with_provider(Arc::new(default_provider()))
+        .with_safe_default_protocol_versions()
+        .map_err(tls_error)?
+        .with_platform_verifier()
+        .map_err(tls_error)?
+        .with_no_client_auth();
+    Client::builder()
+        .tls_backend_preconfigured(tls)
+        .build()
+        .map_err(|e| StorageError::Config(format!("HTTP client: {e}")))
 }
 
-impl ProvideCredentials for LazyDefaultChain {
-    fn provide_credentials<'a>(&'a self) -> cred_future::ProvideCredentials<'a>
-    where
-        Self: 'a,
-    {
-        cred_future::ProvideCredentials::new(async move {
-            let chain = self
-                .chain
-                .get_or_init(|| async {
-                    aws_config::default_provider::credentials::DefaultCredentialsChain::builder()
-                        .build()
-                        .await
-                })
-                .await;
-            chain.provide_credentials().await
-        })
+fn transport_error(err: &Error) -> StorageError {
+    StorageError::Request(format!("{err}: {:?}", error::Error::source(err)))
+}
+
+/// The text of the first `<tag>` element in `xml`
+fn xml_text(xml: &str, tag: &str) -> Option<String> {
+    let open = format!("<{tag}>");
+    let start = xml.find(&open)? + open.len();
+    let end = start + xml[start..].find(&format!("</{tag}>"))?;
+    Some(
+        xml[start..end]
+            .replace("&quot;", "\"")
+            .replace("&apos;", "'")
+            .replace("&lt;", "<")
+            .replace("&gt;", ">")
+            .replace("&amp;", "&"),
+    )
+}
+
+/// `Code: Message` from an S3 error body, else HTTP status
+fn error_detail(status: StatusCode, body: &str) -> StorageError {
+    StorageError::Request(match xml_text(body, "Code") {
+        Some(code) => format!("{code}: {}", xml_text(body, "Message").unwrap_or_default()),
+        None => format!("HTTP {status}"),
+    })
+}
+
+/// The response when it succeeded, else its error body as a [`StorageError`]
+async fn ok_or_error(resp: Response) -> Result<Response, StorageError> {
+    if resp.status().is_success() {
+        return Ok(resp);
+    }
+    let status = resp.status();
+    let body = resp.text().await.unwrap_or_default();
+    Err(error_detail(status, &body))
+}
+
+async fn ok_text(resp: Response) -> Result<String, StorageError> {
+    ok_or_error(resp)
+        .await?
+        .text()
+        .await
+        .map_err(|e| transport_error(&e))
+}
+
+/// Sends the request `build` makes, again after a transport error, a 5xx or
+/// a 429, up to [`READ_ATTEMPTS`] times. Last answer is returned as is.
+async fn send_read(build: impl Fn() -> RequestBuilder) -> Result<Response, StorageError> {
+    let mut attempt = 1;
+    loop {
+        let sent = build().send().await;
+        let retry = match &sent {
+            Ok(resp) => {
+                resp.status().is_server_error() || resp.status() == StatusCode::TOO_MANY_REQUESTS
+            }
+            Err(e) => !e.is_builder(),
+        };
+        if !retry || attempt == READ_ATTEMPTS {
+            return sent.map_err(|e| transport_error(&e));
+        }
+        sleep(READ_RETRY_BASE * 2u32.pow(attempt - 1)).await;
+        attempt += 1;
     }
 }
 
-fn request_error<E, R>(err: &SdkError<E, R>) -> StorageError
-where
-    E: ProvideErrorMetadata + std::error::Error + 'static,
-    R: std::fmt::Debug,
-{
-    let detail = match err {
-        SdkError::ServiceError(se) => {
-            let e = se.err();
-            format!(
-                "{}: {}",
-                e.code().unwrap_or("service error"),
-                e.message().unwrap_or("no message")
-            )
-        }
-        other => format!("{other}: {:?}", std::error::Error::source(other)),
-    };
-    StorageError::Request(detail)
-}
-
-/// The HTTP status of a service error, when the request got that far.
-fn status_of<E>(err: &SdkError<E, aws_sdk_s3::config::http::HttpResponse>) -> Option<u16> {
-    err.raw_response().map(|r| r.status().as_u16())
-}
-
-fn header_of<E>(
-    err: &SdkError<E, aws_sdk_s3::config::http::HttpResponse>,
-    name: &str,
-) -> Option<String> {
-    err.raw_response()
-        .and_then(|r| r.headers().get(name))
+fn header(headers: &HeaderMap, name: HeaderName) -> Option<String> {
+    headers
+        .get(name)
+        .and_then(|v| v.to_str().ok())
         .map(ToOwned::to_owned)
 }
 
-fn byte_stream_body(body: ByteStream) -> BoxStream<'static, Result<Bytes, std::io::Error>> {
-    stream::unfold(body, |mut body| async move {
-        match body.next().await {
-            Some(Ok(chunk)) => Some((Ok(chunk), body)),
-            Some(Err(e)) => Some((Err(std::io::Error::other(e)), body)),
-            None => None,
-        }
-    })
-    .boxed()
+fn content_length(headers: &HeaderMap) -> Option<u64> {
+    header(headers, CONTENT_LENGTH).and_then(|v| v.parse().ok())
+}
+
+/// `len` bytes of the file at `path` from `offset`
+async fn file_body(path: &Path, offset: u64, len: u64) -> Result<Body, StorageError> {
+    let mut file = File::open(path).await?;
+    if offset > 0 {
+        file.seek(SeekFrom::Start(offset)).await?;
+    }
+    Ok(Body::wrap_stream(ReaderStream::new(file.take(len))))
+}
+
+/// The `PutBucketCors` body: browser GET and HEAD from `origins`
+fn cors_xml(origins: &[String]) -> String {
+    let origins = origins.iter().fold(String::new(), |mut out, o| {
+        let o = o
+            .replace('&', "&amp;")
+            .replace('<', "&lt;")
+            .replace('>', "&gt;");
+        out.push_str("<AllowedOrigin>");
+        out.push_str(&o);
+        out.push_str("</AllowedOrigin>");
+        out
+    });
+    format!(
+        "<CORSConfiguration><CORSRule>{origins}\
+         <AllowedMethod>GET</AllowedMethod><AllowedMethod>HEAD</AllowedMethod>\
+         <AllowedHeader>*</AllowedHeader>\
+         <ExposeHeader>ETag</ExposeHeader><ExposeHeader>Content-Range</ExposeHeader>\
+         <ExposeHeader>Content-Length</ExposeHeader><ExposeHeader>Accept-Ranges</ExposeHeader>\
+         <MaxAgeSeconds>{CORS_MAX_AGE_SECONDS}</MaxAgeSeconds>\
+         </CORSRule></CORSConfiguration>"
+    )
+}
+
+/// Base64 of the body's raw MD5, for `Content-MD5`
+fn md5_base64(body: &[u8]) -> String {
+    use base64::Engine;
+    use md5::{Digest, Md5};
+    STANDARD.encode(Md5::digest(body))
 }
 
 impl S3Store {
     /// # Errors
-    /// None today; kept fallible so a provider check can refuse a config.
+    /// A config without an endpoint or both credentials
     pub fn new(config: &StorageConfig) -> Result<Self, StorageError> {
-        let credentials = match (&config.access_key_id, &config.secret_access_key) {
-            (Some(id), Some(secret)) => SharedCredentialsProvider::new(Credentials::new(
-                id.clone(),
-                secret.clone(),
-                None,
-                None,
-                "myrtle-s3-env",
-            )),
-            _ => SharedCredentialsProvider::new(LazyDefaultChain::default()),
+        let (Some(endpoint), Some(id), Some(secret)) = (
+            &config.endpoint,
+            &config.access_key_id,
+            &config.secret_access_key,
+        ) else {
+            return Err(StorageError::Config(
+                "R2 needs an endpoint, an access key id and a secret access key".into(),
+            ));
         };
-        let mut builder = aws_sdk_s3::Config::builder()
-            .behavior_version(BehaviorVersion::latest())
-            .region(Region::new(config.region.clone()))
-            .credentials_provider(credentials)
-            .force_path_style(config.force_path_style);
-        if let Some(endpoint) = &config.endpoint {
-            builder = builder.endpoint_url(endpoint);
-        }
-        if matches!(config.kind, StorageKind::Cloudflare | StorageKind::S3) {
-            builder = builder
-                .request_checksum_calculation(RequestChecksumCalculation::WhenRequired)
-                .response_checksum_validation(ResponseChecksumValidation::WhenRequired);
-        }
+        let url = endpoint
+            .parse()
+            .map_err(|e| StorageError::Config(format!("CLOUDFLARE_S3_API {endpoint:?}: {e}")))?;
+        let bucket = Bucket::new(url, UrlStyle::Path, config.bucket.clone(), "auto")
+            .map_err(|e| StorageError::Config(format!("bucket {:?}: {e}", config.bucket)))?;
         Ok(Self {
-            client: Client::from_conf(builder.build()),
-            bucket: config.bucket.clone(),
+            http: http_client()?,
+            bucket,
+            credentials: Credentials::new(id.clone(), secret.clone()),
             kind: config.kind,
         })
     }
@@ -159,42 +222,111 @@ impl S3Store {
         path: &Path,
         size: u64,
         part_size: u64,
-    ) -> Result<Vec<CompletedPart>, StorageError> {
-        let part_size = part_size.max(5 * 1024 * 1024);
-        let mut parts = Vec::new();
+    ) -> Result<Vec<String>, StorageError> {
+        let part_size = part_size.max(MIN_PART_SIZE);
+        let mut etags = Vec::new();
         let mut offset = 0u64;
-        let mut number = 1i32;
+        let mut number = 1u16;
         while offset < size {
             let len = part_size.min(size - offset);
-            let body = ByteStream::read_from()
-                .path(path)
-                .offset(offset)
-                .length(Length::Exact(len))
-                .build()
-                .await
-                .map_err(|e| StorageError::Request(e.to_string()))?;
-            let out = self
-                .client
-                .upload_part()
-                .bucket(&self.bucket)
-                .key(key)
-                .upload_id(upload_id)
-                .part_number(number)
-                .content_length(i64::try_from(len).unwrap_or(i64::MAX))
-                .body(body)
+            let url = UploadPart::new(
+                &self.bucket,
+                Some(&self.credentials),
+                key,
+                number,
+                upload_id,
+            )
+            .sign(SIGN_TTL);
+            let resp = self
+                .http
+                .put(url)
+                .header(CONTENT_LENGTH, len)
+                .body(file_body(path, offset, len).await?)
                 .send()
                 .await
-                .map_err(|e| request_error(&e))?;
-            parts.push(
-                CompletedPart::builder()
-                    .part_number(number)
-                    .set_e_tag(out.e_tag)
-                    .build(),
-            );
+                .map_err(|e| transport_error(&e))?;
+            let resp = ok_or_error(resp).await?;
+            etags.push(header(resp.headers(), ETAG).unwrap_or_default());
             offset += len;
-            number += 1;
+            number = number
+                .checked_add(1)
+                .ok_or_else(|| StorageError::Request(format!("{key}: more than 65535 parts")))?;
         }
-        Ok(parts)
+        Ok(etags)
+    }
+
+    /// Completes the upload
+    async fn complete(
+        &self,
+        key: &str,
+        upload_id: &str,
+        etags: &[String],
+    ) -> Result<String, StorageError> {
+        let action = CompleteMultipartUpload::new(
+            &self.bucket,
+            Some(&self.credentials),
+            key,
+            upload_id,
+            etags.iter().map(String::as_str),
+        );
+        let url = action.sign(SIGN_TTL);
+        let resp = self
+            .http
+            .post(url)
+            .body(action.body())
+            .send()
+            .await
+            .map_err(|e| transport_error(&e))?;
+        let status = resp.status();
+        let text = ok_text(resp).await?;
+        if text.contains("<Error>") {
+            return Err(error_detail(status, &text));
+        }
+        Ok(xml_text(&text, "ETag")
+            .as_deref()
+            .map(unquote_etag)
+            .unwrap_or_default())
+    }
+
+    async fn abort(&self, key: &str, upload_id: &str) -> Result<(), StorageError> {
+        let url = AbortMultipartUpload::new(&self.bucket, Some(&self.credentials), key, upload_id)
+            .sign(SIGN_TTL);
+        let resp = self
+            .http
+            .delete(url)
+            .send()
+            .await
+            .map_err(|e| transport_error(&e))?;
+        ok_or_error(resp).await.map(drop)
+    }
+
+    /// Keys R2 refused
+    async fn delete_batch(&self, batch: &[String]) -> Result<Vec<(String, String)>, StorageError> {
+        let ids: Vec<ObjectIdentifier> = batch
+            .iter()
+            .map(|k| ObjectIdentifier::new(k.clone()))
+            .collect();
+        let mut action = DeleteObjects::new(&self.bucket, Some(&self.credentials), ids.iter());
+        // Quiet mode lists only the failures.
+        action.set_quiet(true);
+        let url = action.sign(SIGN_TTL);
+        let (body, md5) = action.body_with_md5();
+        let resp = self
+            .http
+            .post(url)
+            .header(CONTENT_MD5, md5)
+            .body(body)
+            .send()
+            .await
+            .map_err(|e| transport_error(&e))?;
+        let text = ok_text(resp).await?;
+        let parsed = DeleteObjectsResponse::parse(&text)
+            .map_err(|e| StorageError::Request(format!("DeleteObjects response: {e}")))?;
+        Ok(parsed
+            .errors
+            .into_iter()
+            .map(|e| (e.key, format!("{}: {}", e.code, e.message)))
+            .collect())
     }
 }
 
@@ -205,63 +337,66 @@ impl ObjectStore for S3Store {
     }
 
     async fn head(&self, key: &str) -> Result<Option<ObjectMeta>, StorageError> {
-        match self
-            .client
-            .head_object()
-            .bucket(&self.bucket)
-            .key(key)
-            .send()
-            .await
-        {
-            Ok(out) => Ok(Some(ObjectMeta {
-                key: key.to_owned(),
-                size: out
-                    .content_length
-                    .and_then(|n| u64::try_from(n).ok())
-                    .unwrap_or(0),
-                etag: out.e_tag.as_deref().map(unquote_etag),
-                content_type: out.content_type,
-            })),
-            Err(e) if status_of(&e) == Some(404) => Ok(None),
-            Err(e) => Err(request_error(&e)),
+        let url = HeadObject::new(&self.bucket, Some(&self.credentials), key).sign(SIGN_TTL);
+        let resp = send_read(|| self.http.head(url.clone())).await?;
+        if resp.status() == StatusCode::NOT_FOUND {
+            return Ok(None);
         }
+        let resp = ok_or_error(resp).await?;
+        let headers = resp.headers();
+        Ok(Some(ObjectMeta {
+            key: key.to_owned(),
+            size: content_length(headers).unwrap_or(0),
+            etag: header(headers, ETAG).as_deref().map(unquote_etag),
+            content_type: header(headers, CONTENT_TYPE),
+        }))
     }
 
     async fn get(&self, key: &str, opts: GetOptions) -> Result<GetResult, StorageError> {
-        let sent = self
-            .client
-            .get_object()
-            .bucket(&self.bucket)
-            .key(key)
-            .set_range(opts.range)
-            .set_if_none_match(opts.if_none_match)
-            .send()
-            .await;
-        match sent {
-            Ok(out) => Ok(GetResult {
-                status: if out.content_range.is_some() {
-                    206
+        let url = GetObject::new(&self.bucket, Some(&self.credentials), key).sign(SIGN_TTL);
+        let resp = send_read(|| {
+            let mut req = self.http.get(url.clone());
+            if let Some(range) = &opts.range {
+                req = req.header(RANGE, range);
+            }
+            if let Some(tag) = &opts.if_none_match {
+                req = req.header(IF_NONE_MATCH, tag);
+            }
+            req
+        })
+        .await?;
+        let status = resp.status().as_u16();
+        match status {
+            404 => Err(StorageError::NotFound(key.to_owned())),
+            200 | 206 | 304 | 416 => {
+                let has_body = matches!(status, 200 | 206);
+                let headers = resp.headers();
+                let etag = header(headers, ETAG);
+                let content_range = header(headers, CONTENT_RANGE);
+                let (content_type, content_length) = if has_body {
+                    (header(headers, CONTENT_TYPE), content_length(headers))
                 } else {
-                    200
-                },
-                etag: out.e_tag,
-                content_type: out.content_type,
-                content_length: out.content_length.and_then(|n| u64::try_from(n).ok()),
-                content_range: out.content_range,
-                body: byte_stream_body(out.body),
-            }),
-            // The SDK surfaces both 304 and 416 as errors; they are answers.
-            Err(e) => match status_of(&e) {
-                Some(404) => Err(StorageError::NotFound(key.to_owned())),
-                Some(status @ (304 | 416)) => Ok(GetResult {
+                    (None, None)
+                };
+                let body = if has_body {
+                    resp.bytes_stream().map_err(io::Error::other).boxed()
+                } else {
+                    stream::empty().boxed()
+                };
+                Ok(GetResult {
                     status,
-                    etag: header_of(&e, "etag"),
-                    content_type: None,
-                    content_length: None,
-                    content_range: header_of(&e, "content-range"),
-                    body: stream::empty().boxed(),
-                }),
-                _ => Err(request_error(&e)),
+                    etag,
+                    content_type,
+                    content_length,
+                    content_range,
+                    body,
+                })
+            }
+            _ => match ok_or_error(resp).await {
+                Err(e) => Err(e),
+                Ok(_) => Err(StorageError::Request(format!(
+                    "GET {key}: unexpected HTTP {status}"
+                ))),
             },
         }
     }
@@ -270,29 +405,29 @@ impl ObjectStore for S3Store {
         let (body, len) = match object.body {
             PutBody::Bytes(b) => {
                 let len = b.len() as u64;
-                (ByteStream::from(b), len)
+                (Body::from(b), len)
             }
-            PutBody::File { path, size } => (
-                ByteStream::from_path(&path)
-                    .await
-                    .map_err(|e| StorageError::Request(e.to_string()))?,
-                size,
-            ),
+            PutBody::File { path, size } => (file_body(&path, 0, size).await?, size),
         };
-        let out = self
-            .client
-            .put_object()
-            .bucket(&self.bucket)
-            .key(key)
-            .content_type(object.content_type)
-            .set_cache_control(object.cache_control)
-            .set_content_md5(object.content_md5)
-            .content_length(i64::try_from(len).unwrap_or(i64::MAX))
-            .body(body)
-            .send()
-            .await
-            .map_err(|e| request_error(&e))?;
-        Ok(out.e_tag.as_deref().map(unquote_etag).unwrap_or_default())
+        let url = PutObjectAction::new(&self.bucket, Some(&self.credentials), key).sign(SIGN_TTL);
+        let mut req = self
+            .http
+            .put(url)
+            .header(CONTENT_TYPE, object.content_type)
+            .header(CONTENT_LENGTH, len)
+            .body(body);
+        if let Some(cache) = object.cache_control {
+            req = req.header(CACHE_CONTROL, cache);
+        }
+        if let Some(md5) = object.content_md5 {
+            req = req.header(CONTENT_MD5, md5);
+        }
+        let resp = req.send().await.map_err(|e| transport_error(&e))?;
+        let resp = ok_or_error(resp).await?;
+        Ok(header(resp.headers(), ETAG)
+            .as_deref()
+            .map(unquote_etag)
+            .unwrap_or_default())
     }
 
     async fn put_multipart_file(
@@ -304,104 +439,38 @@ impl ObjectStore for S3Store {
         content_type: &str,
         cache_control: Option<&str>,
     ) -> Result<String, StorageError> {
-        let created = self
-            .client
-            .create_multipart_upload()
-            .bucket(&self.bucket)
-            .key(key)
-            .content_type(content_type)
-            .set_cache_control(cache_control.map(ToOwned::to_owned))
-            .send()
-            .await
-            .map_err(|e| request_error(&e))?;
-        let upload_id = created.upload_id.ok_or_else(|| {
-            StorageError::Request("CreateMultipartUpload returned no upload id".into())
-        })?;
+        let url =
+            CreateMultipartUpload::new(&self.bucket, Some(&self.credentials), key).sign(SIGN_TTL);
+        let mut req = self.http.post(url).header(CONTENT_TYPE, content_type);
+        if let Some(cache) = cache_control {
+            req = req.header(CACHE_CONTROL, cache);
+        }
+        let text = ok_text(req.send().await.map_err(|e| transport_error(&e))?).await?;
+        let created = CreateMultipartUpload::parse_response(&text)
+            .map_err(|e| StorageError::Request(format!("CreateMultipartUpload response: {e}")))?;
+        let upload_id = created.upload_id();
 
         let completed = match self
-            .upload_parts(key, &upload_id, path, size, part_size)
+            .upload_parts(key, upload_id, path, size, part_size)
             .await
         {
-            Ok(parts) => self
-                .client
-                .complete_multipart_upload()
-                .bucket(&self.bucket)
-                .key(key)
-                .upload_id(&upload_id)
-                .multipart_upload(
-                    CompletedMultipartUpload::builder()
-                        .set_parts(Some(parts))
-                        .build(),
-                )
-                .send()
-                .await
-                .map_err(|e| request_error(&e)),
+            Ok(etags) => self.complete(key, upload_id, &etags).await,
             Err(e) => Err(e),
         };
-        match completed {
-            Ok(out) => Ok(out.e_tag.as_deref().map(unquote_etag).unwrap_or_default()),
-            Err(e) => {
-                // Parts of an unfinished upload are stored and billed until aborted.
-                if let Err(abort) = self
-                    .client
-                    .abort_multipart_upload()
-                    .bucket(&self.bucket)
-                    .key(key)
-                    .upload_id(&upload_id)
-                    .send()
-                    .await
-                {
-                    tracing::warn!(key, error = %request_error(&abort), "abort of a failed multipart upload failed");
-                }
-                Err(e)
-            }
+        if completed.is_err()
+            && let Err(abort) = self.abort(key, upload_id).await
+        {
+            warn!(key, error = %abort, "abort of a failed multipart upload failed");
         }
+        completed
     }
 
     async fn delete_many(&self, keys: &[String]) -> Vec<(String, Result<(), StorageError>)> {
         let mut out = Vec::with_capacity(keys.len());
         for batch in keys.chunks(DELETE_BATCH) {
-            let ids: Result<Vec<ObjectIdentifier>, _> = batch
-                .iter()
-                .map(|k| ObjectIdentifier::builder().key(k).build())
-                .collect();
-            let delete =
-                ids.and_then(|ids| Delete::builder().set_objects(Some(ids)).quiet(true).build());
-            let delete = match delete {
-                Ok(d) => d,
-                Err(e) => {
-                    let msg = e.to_string();
-                    out.extend(
-                        batch
-                            .iter()
-                            .map(|k| (k.clone(), Err(StorageError::Request(msg.clone())))),
-                    );
-                    continue;
-                }
-            };
-            match self
-                .client
-                .delete_objects()
-                .bucket(&self.bucket)
-                .delete(delete)
-                .send()
-                .await
-            {
-                Ok(resp) => {
-                    // Quiet mode lists only the failures.
-                    let failed: std::collections::HashMap<String, String> = resp
-                        .errors
-                        .unwrap_or_default()
-                        .into_iter()
-                        .filter_map(|e| {
-                            let msg = format!(
-                                "{}: {}",
-                                e.code.as_deref().unwrap_or("error"),
-                                e.message.as_deref().unwrap_or("")
-                            );
-                            e.key.map(|k| (k, msg))
-                        })
-                        .collect();
+            match self.delete_batch(batch).await {
+                Ok(errors) => {
+                    let failed: HashMap<String, String> = errors.into_iter().collect();
                     out.extend(batch.iter().map(|k| {
                         let r = failed
                             .get(k)
@@ -410,7 +479,7 @@ impl ObjectStore for S3Store {
                     }));
                 }
                 Err(e) => {
-                    let msg = request_error(&e).to_string();
+                    let msg = e.to_string();
                     out.extend(
                         batch
                             .iter()
@@ -424,72 +493,64 @@ impl ObjectStore for S3Store {
 
     fn list<'a>(&'a self, prefix: &'a str) -> BoxStream<'a, Result<ObjectMeta, StorageError>> {
         // State: the continuation token, or `None` once the last page is in.
-        let pages = stream::try_unfold(Some(None::<String>), move |state| async move {
+        let pages = try_unfold(Some(None::<String>), move |state| async move {
             let Some(token) = state else {
                 return Ok(None);
             };
-            let out = self
-                .client
-                .list_objects_v2()
-                .bucket(&self.bucket)
-                .prefix(prefix)
-                .set_continuation_token(token)
-                .send()
-                .await
-                .map_err(|e| request_error(&e))?;
+            let mut action = ListObjectsV2::new(&self.bucket, Some(&self.credentials));
+            action.with_prefix(prefix);
+            if let Some(token) = token {
+                action.with_continuation_token(token);
+            }
+            let url = action.sign(SIGN_TTL);
+            let resp = send_read(|| self.http.get(url.clone())).await?;
+            let text = ok_text(resp).await?;
+            let out = ListObjectsV2::parse_response(&text)
+                .map_err(|e| StorageError::Request(format!("ListObjectsV2 response: {e}")))?;
             let items: Vec<ObjectMeta> = out
                 .contents
-                .unwrap_or_default()
                 .into_iter()
-                .filter_map(|o| {
-                    Some(ObjectMeta {
-                        key: o.key?,
-                        size: o.size.and_then(|n| u64::try_from(n).ok()).unwrap_or(0),
-                        etag: o.e_tag.as_deref().map(unquote_etag),
-                        content_type: None,
-                    })
+                .map(|o| ObjectMeta {
+                    etag: Some(unquote_etag(&o.etag)).filter(|e| !e.is_empty()),
+                    key: o.key,
+                    size: o.size,
+                    content_type: None,
                 })
                 .collect();
-            let next = if out.is_truncated == Some(true) {
-                out.next_continuation_token.map(Some)
-            } else {
-                None
-            };
-            Ok::<_, StorageError>(Some((items, next)))
+            Ok::<_, StorageError>(Some((items, out.next_continuation_token.map(Some))))
         });
         pages
             .map(|page| match page {
-                Ok(items) => stream::iter(items.into_iter().map(Ok)).boxed(),
-                Err(e) => stream::iter([Err(e)]).boxed(),
+                Ok(items) => iter(items.into_iter().map(Ok)).boxed(),
+                Err(e) => iter([Err(e)]).boxed(),
             })
             .flatten()
             .boxed()
     }
 
     async fn put_bucket_cors(&self, origins: &[String]) -> Result<(), StorageError> {
-        let rule = CorsRule::builder()
-            .set_allowed_origins(Some(origins.to_vec()))
-            .allowed_methods("GET")
-            .allowed_methods("HEAD")
-            .allowed_headers("*")
-            .expose_headers("ETag")
-            .expose_headers("Content-Range")
-            .expose_headers("Content-Length")
-            .expose_headers("Accept-Ranges")
-            .max_age_seconds(CORS_MAX_AGE_SECONDS)
-            .build()
-            .map_err(|e| StorageError::Config(e.to_string()))?;
-        let cors = CorsConfiguration::builder()
-            .cors_rules(rule)
-            .build()
-            .map_err(|e| StorageError::Config(e.to_string()))?;
-        self.client
-            .put_bucket_cors()
-            .bucket(&self.bucket)
-            .cors_configuration(cors)
+        let url = sign(
+            &Timestamp::now(),
+            Method::Put,
+            self.bucket.base_url().clone(),
+            self.credentials.key(),
+            self.credentials.secret(),
+            self.credentials.token(),
+            self.bucket.region(),
+            SIGN_TTL.as_secs(),
+            once(("cors", "")),
+            empty(),
+        );
+        let body = cors_xml(origins);
+        let resp = self
+            .http
+            .put(url)
+            .header(CONTENT_MD5, md5_base64(body.as_bytes()))
+            .header(CONTENT_TYPE, "application/xml")
+            .body(body)
             .send()
             .await
-            .map_err(|e| request_error(&e))?;
-        Ok(())
+            .map_err(|e| transport_error(&e))?;
+        ok_or_error(resp).await.map(drop)
     }
 }

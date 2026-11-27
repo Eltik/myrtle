@@ -1,0 +1,22 @@
+use std::collections::HashMap;
+
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export, rename = "RangeGrid")]
+#[serde(rename_all = "camelCase")]
+pub struct Grid {
+    pub row: i32,
+    pub col: i32,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
+#[serde(rename_all = "camelCase")]
+pub struct Range {
+    pub id: String,
+    pub direction: i32,
+    pub grids: Vec<Grid>,
+}
+
+pub type Ranges = HashMap<String, Range>;

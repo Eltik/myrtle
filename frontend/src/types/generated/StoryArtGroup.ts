@@ -2,15 +2,4 @@
 import type { StoryArtPicture } from "./StoryArtPicture";
 import type { StoryCategory } from "./StoryCategory";
 
-/**
- * One library group's newly seen pictures.
- */
-export type StoryArtGroup = {
-    /**
-     * The `StoryGroup.id`.
-     */
-    id: string;
-    name: string;
-    category: StoryCategory;
-    pictures: Array<StoryArtPicture>;
-};
+export type StoryArtGroup = { id: string; name: string; category: StoryCategory; pictures: Array<StoryArtPicture> };

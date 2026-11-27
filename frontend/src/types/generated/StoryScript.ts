@@ -2,9 +2,6 @@
 import type { StoryAssets } from "./StoryAssets";
 import type { StoryCommand } from "./StoryCommand";
 
-/**
- * One story, parsed, with every asset it references resolved.
- */
 export type StoryScript = {
     id: string;
     name: string;
@@ -13,11 +10,7 @@ export type StoryScript = {
     assets: StoryAssets;
     wordCount: number;
     /**
-     * The game's own "story summary" for this story, the text its Skip
-     * dialog shows: the `[uc]info` file `StoryInfo` names, trimmed. Absent
-     * when the table names none or the file is not on disk. It rides the
-     * SCRIPT response and not the library index, because the index would
-     * carry all 1,881 of them on every library load.
+     * The `[uc]info` summary Skip dialog shows
      */
     synopsis?: string;
 };

@@ -4,25 +4,17 @@ import type { OffSkillSource } from "./OffSkillSource";
 import type { SkillCategory } from "./SkillCategory";
 import type { SpRecovery } from "./SpRecovery";
 
-/**
- * One operator configuration's damage.
- *
- * The three `snake_case` fields are the original response and keep their names
- * and meaning. Every field after them is optional, camelCase, and present
- * only when the request asked for the behaviour that produces it.
- */
 export type DpsResult = {
     skill_dps: number;
     total_damage: number;
     average_dps: number;
     /**
-     * The primary enemy's share. Present when the request set `secondary`.
+     * Primary enemy's share, present when request set `secondary`.
      */
     primary?: DpsMetrics;
     /**
-     * The secondary enemies' share, `f(1 + count) - f(1)` against the
-     * secondary enemy. Present when the request set `secondary`; the three
-     * top-level fields are then `primary + secondary`.
+     * Secondary enemies' share, `f(1 + count) - f(1)` against
+     * secondary enemy. Present when the request set `secondary`
      */
     secondary?: DpsMetrics;
     /**
@@ -31,17 +23,15 @@ export type DpsResult = {
     category?: SkillCategory;
     /**
      * Seconds from deployment to the first activation: `(cost - initial SP)`
-     * at the skill's SP rate. Under `cycleModel: "v2"`, for a skill whose SP
-     * type the engine models.
+     * at the skill's SP rate. Under `cycleModel: "v2"`
      */
     startupTime?: number;
     /**
-     * Seconds per skill cycle (duration + charge). Under `cycleModel: "v2"`,
-     * for a modelled SP type and a skill that cycles.
+     * Seconds per skill cycle (duration + charge). Under `cycleModel: "v2"`
      */
     cycleTime?: number;
     /**
-     * The skill's SP type as the cycle saw it. Under `cycleModel: "v2"`.
+     * The skill's SP type as the cycle saw it. Under `cycleModel: "v2"`
      */
     spRecovery?: SpRecovery;
     /**
@@ -51,8 +41,7 @@ export type DpsResult = {
     offSkillSource?: OffSkillSource;
     /**
      * `true` when a physical or arts fragility zone was requested and the
-     * formula's damage responds to both DEF and RES (or to neither), so only
-     * the generic group and the operator's `is_physical` group were applied.
+     * formula's damage responds to both DEF and RES (or to neither).
      * Present only when a typed fragility zone was requested.
      */
     approximateTypeSplit?: boolean;

@@ -1,0 +1,49 @@
+[package]
+name = "myrtle-worker"
+description = "Job worker binary"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+license.workspace = true
+
+[lib]
+name = "myrtle_worker"
+path = "src/lib.rs"
+
+[[bin]]
+name = "myrtle-worker"
+path = "src/main.rs"
+
+[dependencies]
+myrtle-types.workspace = true
+myrtle-app.workspace = true
+myrtle-jobs.workspace = true
+chrono.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+uuid.workspace = true
+
+[target.'cfg(not(target_env = "msvc"))'.dependencies]
+tikv-jemallocator.workspace = true
+
+[dev-dependencies]
+myrtle-db.workspace = true
+myrtle-gamedata.workspace = true
+myrtle-gamedata-raw.workspace = true
+myrtle-hypergryph.workspace = true
+myrtle-testkit.workspace = true
+futures-util.workspace = true
+reqwest.workspace = true
+rustls = { version = "0.23.46", default-features = false, features = ["ring", "std", "tls12"] }
+sqlx.workspace = true
+tokio = { workspace = true, features = ["net"] }
+tokio-tungstenite.workspace = true
+toml.workspace = true
+
+[lints]
+workspace = true

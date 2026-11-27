@@ -3,68 +3,41 @@ import type { StatReduction } from "./StatReduction";
 
 export type BuffZones = {
     /**
-     * Zone A, flat ATK before percentages, additive: added to the operator's
-     * base ATK, so zone B and the formula's own ATK% scale it.
+     * Added to the operator's base ATK
      */
     atkFlat?: number;
     /**
-     * Zone B, ATK %, additive into `buff_atk` (same slot as `buffs.atk`).
+     * Additive into `buff_atk`
      */
     atkPercent?: number;
-    /**
-     * Zone C, Inspire (flat ATK after percentages), MAX across sources, into
-     * `buff_atk_flat`. A legacy `buffs.flatAtk`, when set, is one more source.
-     */
     inspire: Array<number>;
     /**
-     * Zone D, final ATK multiplier, every source multiplies. Resolved as
-     * `atk *= D; buff_atk_flat *= D` (drone and clone ATK too, the way the
-     * formulas already pass external buffs to summons).
-     *
-     * TRADE: exact for formulas shaped `(atk * (1 + b) + c) * scale`. Wrong
-     * for the three functions that add their own flat ATK, which D then
-     * misses: `ines` (+ stolen ATK after %), `narantuya` (+ stolen ATK after
-     * %) and `twelve_f` (+12 before %). Counted 2026-10-24.
+     * Final ATK multiplier
+     * Resolved as `atk *= D; buff_atk_flat *= D`
      */
     atkMultiplier: Array<number>;
     /**
-     * ASPD, additive into `attack_speed` (same slot as `buffs.aspd`).
+     * Additive into `attack_speed`
      */
     aspd?: number;
     /**
-     * SP recovery per second, additive into `sp_boost` (same slot as `spBoost`).
+     * SP recovery per second, additive into `sp_boost`
      */
     spRecovery?: number;
     /**
-     * SP aura per second, MAX across sources, added to `sp_boost` after
-     * `sp_recovery`.
+     * Added to `sp_boost` after `sp_recovery`
      */
     spAura: Array<number>;
-    /**
-     * Zone F, generic damage taken (Fragile), MAX across sources. A legacy
-     * `buffs.fragile`, when set, is one more source.
-     */
     fragile: Array<number>;
-    /**
-     * Zone F, physical damage taken, MAX across sources. Multiplies with the
-     * generic group.
-     */
     physicalFragile: Array<number>;
-    /**
-     * Zone F, arts damage taken, MAX across sources. Multiplies with the
-     * generic group.
-     */
     artsFragile: Array<number>;
-    /**
-     * Zone G, enemy damage reduction, every source multiplies `(1 - x)`.
-     */
     damageReduction: Array<number>;
     /**
-     * Enemy DEF reduction and ignore.
+     * Enemy DEF reduction and ignore
      */
     def: StatReduction;
     /**
-     * Enemy RES reduction and ignore. The result is capped at 100.
+     * Enemy RES reduction and ignore
      */
     res: StatReduction;
 };

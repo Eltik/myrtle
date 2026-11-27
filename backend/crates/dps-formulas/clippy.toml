@@ -1,0 +1,16 @@
+allow-unwrap-in-tests = true
+allow-expect-in-tests = true
+allow-dbg-in-tests = true
+disallowed-methods = [
+    { path = "std::env::var", reason = "engines take configuration as an input value" },
+    { path = "std::env::var_os", reason = "engines take configuration as an input value" },
+    { path = "std::fs::read", reason = "engines take game data or bytes, never a path" },
+    { path = "std::fs::read_to_string", reason = "engines take game data or bytes, never a path" },
+    { path = "std::fs::read_dir", reason = "engines take game data or bytes, never a path" },
+    { path = "std::fs::write", reason = "engines return values; the caller persists them" },
+    { path = "std::time::SystemTime::now", reason = "pass `now` in the inputs so results are reproducible" },
+    { path = "std::time::Instant::now", reason = "timing belongs to the caller" },
+]
+disallowed-types = [
+    { path = "std::fs::File", reason = "engines take game data or bytes, never a path" },
+]

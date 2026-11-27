@@ -1,0 +1,9 @@
+use serde_json::Value;
+
+#[derive(Debug, Default)]
+pub struct SandboxTables {
+    /// `sandbox_perm_table`, untyped
+    pub perm: Value,
+    /// `sandbox_table`, untyped
+    pub table: Value,
+}

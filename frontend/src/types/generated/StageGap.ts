@@ -9,9 +9,7 @@ export type StageGap = {
     weight: number;
     state: number;
     /**
-     * Rotation window for rotating Annihilation maps (`camp_r_*`). `None` for
-     * permanent Annihilation and every non-Annihilation stage. Lets the client
-     * separate the currently-playable rotation from maps that have rotated out.
+     * Rotating Annihilation (`camp_r_*`) only
      */
     rotation?: RotationInfo | null;
 };

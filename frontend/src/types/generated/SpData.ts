@@ -3,8 +3,7 @@
 export type SpData = {
     SpType: string;
     /**
-     * Always empty in the game data. The element type is therefore unknown,
-     * so the schema says "array of anything" rather than inventing one.
+     * Always empty in game data
      */
     LevelUpCost: Array<null>;
     MaxChargeTime: number;

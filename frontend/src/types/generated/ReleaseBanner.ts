@@ -10,8 +10,7 @@ export type ReleaseBanner = {
     cnOpen: number;
     cnEnd: number;
     /**
-     * Shown only to returning players (`GachaPoolClient::returning`). Its
-     * `cn_end` is the table's placeholder years out, not a real end date.
+     * Returning players (`GachaPoolClient::returning`)
      */
     returning: boolean;
     featured6: Array<string>;
@@ -25,17 +24,12 @@ export type ReleaseBanner = {
     imagePath: string | null;
     resolution: Resolution;
     /**
-     * The 6★ rate-up share each featured operator takes, a 0..1 fraction of the
-     * 6★ band, as the pool detail publishes it (`GachaPoolClient::declared_share6`).
-     * Read from the aligned EN pool when it has one, else the CN pool. `None` when
-     * neither sidecar covers the pool or it has no 6★ rate-up; the planner then
-     * infers the share from the rule type.
+     * The 6 star rate-up share each featured operator takes.
+     * Read from the aligned EN pool when it has one, else CN pool
      */
     declaredShareEach: number | null;
     /**
-     * Rolls per cycle when the collab handover REPEATS (`LINKAGE_LOOP6_NEW5`),
-     * `None` on a once-only collab and every other rule type. The aligned EN pool's
-     * table decides when there is one, else the CN pool's.
+     * Pulls per cycle when the collab handover repeats (`LINKAGE_LOOP6_NEW5`)
      */
     linkageLoopAt: number | null;
 };

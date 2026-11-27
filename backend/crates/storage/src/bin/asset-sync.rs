@@ -1,20 +1,20 @@
-//! `asset-sync`: mirrors the served asset roots into the object store.
-//!
-//! Exit codes: 0 all good (or storage disabled), 1 usage or config (an
-//! eviction the delivery guard refuses included), 2 one or more objects
-//! failed (or `verify` found drift), 3 deletes refused by the shrink check.
-//! `restore` exits 0 when every stub came back and 1 otherwise.
-
+use std::io::stderr;
 use std::path::PathBuf;
 use std::process::ExitCode;
 
 use clap::{Args, Parser, Subcommand};
+use dotenvy::from_path;
 use futures::StreamExt;
 use myrtle_storage::config::parse_roots;
+use myrtle_storage::evict::{EvictOptions, run_evict};
 use myrtle_storage::key::server_prefix;
 use myrtle_storage::restore::{RestoreOptions, run_restore};
-use myrtle_storage::sync::{SyncOptions, run_sync};
-use myrtle_storage::{DeliveryMode, StorageConfig, open_store};
+use myrtle_storage::sync::{SyncError, SyncOptions, run_sync};
+use myrtle_storage::{DeliveryMode, ObjectStore, StorageConfig, open_store};
+use serde_json::to_string;
+use tokio::runtime::Builder;
+use tracing::info;
+use tracing_subscriber::{EnvFilter, fmt};
 
 const EXIT_CONFIG: u8 = 1;
 const EXIT_FAILED: u8 = 2;
@@ -31,10 +31,6 @@ struct Cli {
 
 #[derive(Args)]
 struct EnvArgs {
-    /// Env file with the `S3_*` variables; repeatable. Files load in order and
-    /// never override a variable already set, so the first file to set a
-    /// variable wins (and the real environment beats every file). A missing
-    /// file is an error. Default: `.env` then `../.env`, each if present.
     #[arg(long = "env-file", global = true)]
     env_file: Vec<PathBuf>,
 }
@@ -47,13 +43,13 @@ struct TreeArgs {
     /// Server directory under the root: en, cn, jp, kr.
     #[arg(long)]
     server: String,
-    /// Comma list of roots, overriding `S3_ROOTS`.
+    /// Comma list of roots, overrides `STORAGE_ROOTS`
     #[arg(long)]
     roots: Option<String>,
-    /// Concurrent uploads and deletes, overriding `S3_SYNC_CONCURRENCY`.
+    /// Concurrent uploads and deletes, overrides `STORAGE_SYNC_CONCURRENCY`
     #[arg(long)]
     concurrency: Option<usize>,
-    /// Concurrent hashing tasks, overriding `S3_SYNC_HASH_THREADS`.
+    /// Concurrent hashing tasks, overrides `STORAGE_SYNC_HASH_THREADS`
     #[arg(long)]
     hash_threads: Option<usize>,
     /// Print the summary as one JSON object.
@@ -63,81 +59,100 @@ struct TreeArgs {
 
 #[derive(Subcommand)]
 enum Command {
-    /// Upload new and changed files, then delete remote keys with no local file.
+    /// Upload new and changed files, then delete remote keys with no local file
     Sync {
         #[command(flatten)]
         tree: TreeArgs,
-        /// Upload only; never delete.
+        /// Don't delete when uploading
         #[arg(long)]
         no_delete: bool,
-        /// Report what would change without changing anything.
+        /// Dry run
         #[arg(long)]
         dry_run: bool,
-        /// Delete even when the local tree is under 90% of the remote.
+        /// Delete even when the local tree is under 90% of the remote
         #[arg(long)]
         allow_shrink: bool,
         /// Truncate files the bucket holds to 0-byte stubs, overriding
-        /// `S3_EVICT_LOCAL`.
+        /// `STORAGE_EVICT_LOCAL`
         #[arg(long, conflicts_with = "no_evict")]
         evict: bool,
-        /// Never truncate, overriding `S3_EVICT_LOCAL`.
+        /// Never truncate, overriding `STORAGE_EVICT_LOCAL`
         #[arg(long)]
         no_evict: bool,
-        /// Evict even when asset delivery resolves to `local`, where the
-        /// backend would serve the 0-byte stubs. Does not turn eviction on.
+        /// Evict even when asset delivery resolves to `local`
         #[arg(long)]
         force_evict: bool,
         #[command(flatten)]
         env: EnvArgs,
     },
     /// Download every evicted stub back from the store; run before turning
-    /// storage off. Works with `S3_EVICT_LOCAL` unset.
+    /// storage off. Works with `STORAGE_EVICT_LOCAL` unset.
     Restore {
-        /// The `assets/output` directory holding one tree per server.
+        /// `assets/output` directory holding one tree per server.
         #[arg(long)]
         root: PathBuf,
-        /// Server directory under the root: en, cn, jp, kr.
+        /// Server directory (en, cn, jp, kr)
         #[arg(long)]
         server: String,
-        /// Report how many stubs and bytes would come back, changing nothing.
+        /// Dry run
         #[arg(long)]
         dry_run: bool,
-        /// Restore only stubs under this rel-path prefix; repeatable.
+        /// Restore only stubs under this rel-path prefix
         #[arg(long)]
         only: Vec<String>,
-        /// Concurrent downloads, overriding `S3_SYNC_CONCURRENCY`.
+        /// Concurrent downloads, overrides `STORAGE_SYNC_CONCURRENCY`
         #[arg(long)]
         concurrency: Option<usize>,
-        /// Print the summary as one JSON object.
+        /// Print summary as JSON object
         #[arg(long)]
         json: bool,
         #[command(flatten)]
         env: EnvArgs,
     },
-    /// Dry-run diff; exits 2 when the remote differs from the local tree.
+    /// Truncate files the bucket already holds
+    Evict {
+        #[arg(long)]
+        root: PathBuf,
+        /// Server directory (en, cn, jp, kr)
+        #[arg(long)]
+        server: String,
+        /// Comma list of roots, overrides `STORAGE_ROOTS`
+        #[arg(long)]
+        roots: Option<String>,
+        /// Concurrent hashing tasks, overrides `STORAGE_SYNC_HASH_THREADS`
+        #[arg(long)]
+        hash_threads: Option<usize>,
+        /// Dry run
+        #[arg(long)]
+        dry_run: bool,
+        /// Evict even when asset delivery resolves to `local`
+        #[arg(long)]
+        force_evict: bool,
+        /// Print summary as JSON object
+        #[arg(long)]
+        json: bool,
+        #[command(flatten)]
+        env: EnvArgs,
+    },
+    /// Dry-run diff; exits 2 when the remote differs from the local tree
     Verify {
         #[command(flatten)]
         tree: TreeArgs,
         #[command(flatten)]
         env: EnvArgs,
     },
-    /// List remote keys as `size etag key`.
+    /// List remote keys as `size etag key`
     Ls {
         #[arg(long)]
         server: Option<String>,
-        /// Key prefix under the server (or under `S3_PREFIX` without one).
+        /// Key prefix under the server (or under `CLOUDFLARE_PREFIX`)
         #[arg(long)]
         prefix: Option<String>,
         #[command(flatten)]
         env: EnvArgs,
     },
     /// Set the bucket's CORS rule: GET and HEAD from these origins, or from
-    /// any origin (`*`) when none is given.
-    ///
-    /// `*` is the default because a CORS fetch that the backend redirects to
-    /// the bucket arrives with `Origin: null` (the origin is tainted by the
-    /// cross-origin redirect), which an origin list rejects. The objects are
-    /// public and fetched without credentials.
+    /// any origin (`*`) when none is given
     Cors {
         /// Allowed origin; repeatable. Default `*`.
         #[arg(long = "allow-origin")]
@@ -152,6 +167,7 @@ impl Command {
         match self {
             Self::Sync { env, .. }
             | Self::Restore { env, .. }
+            | Self::Evict { env, .. }
             | Self::Verify { env, .. }
             | Self::Ls { env, .. }
             | Self::Cors { env, .. } => &env.env_file,
@@ -159,10 +175,6 @@ impl Command {
     }
 }
 
-/// Loads `explicit` in order, each required to exist; with none given,
-/// `.env` then `../.env`, each if present. dotenv never overrides a variable
-/// that is already set, so the first file to set a variable wins and the
-/// real environment beats every file.
 fn load_env(explicit: &[PathBuf]) -> Result<(), String> {
     let files: Vec<PathBuf> = if explicit.is_empty() {
         [PathBuf::from(".env"), PathBuf::from("../.env")]
@@ -176,13 +188,11 @@ fn load_env(explicit: &[PathBuf]) -> Result<(), String> {
         explicit.to_vec()
     };
     if files.is_empty() {
-        tracing::info!("no env file found (.env, ../.env); using the environment only");
+        info!("no env file found (.env, ../.env); using the environment only");
     }
     for path in &files {
-        // dotenv stops at the first unparsable line and drops every key after
-        // it, so a parse error fails the run rather than syncing half-configured.
-        dotenv::from_path(path).map_err(|e| format!("env file {}: {e}", path.display()))?;
-        tracing::info!(path = %path.display(), "env file loaded");
+        from_path(path).map_err(|e| format!("env file {}: {e}", path.display()))?;
+        info!(path = %path.display(), "env file loaded");
     }
     Ok(())
 }
@@ -219,9 +229,7 @@ fn check_server(server: &str) -> Result<(), String> {
     Ok(())
 }
 
-/// Refuses eviction when the backend would serve the stubs: delivery
-/// resolved from the same environment is `local` (storage disabled never
-/// reaches here). A delivery setting that does not parse refuses too.
+/// Refuses eviction when the backend would serve the stubs
 fn delivery_guard(config: &StorageConfig) -> Result<(), String> {
     match DeliveryMode::from_env(Some(config)) {
         Ok(DeliveryMode::Local) => Err(
@@ -246,7 +254,7 @@ async fn run(cli: Cli) -> u8 {
     let config = match StorageConfig::from_env() {
         Ok(Some(c)) => c,
         Ok(None) => {
-            println!("asset-sync: storage disabled (S3_TYPE unset), nothing to do");
+            println!("asset-sync: storage disabled (STORAGE_TYPE unset), nothing to do");
             return 0;
         }
         Err(e) => {
@@ -329,6 +337,44 @@ async fn run(cli: Cli) -> u8 {
             opts.only = only;
             restore_and_report(store.as_ref(), &opts, json).await
         }
+        Command::Evict {
+            root,
+            server,
+            roots,
+            hash_threads,
+            dry_run,
+            force_evict,
+            json,
+            ..
+        } => {
+            if let Err(e) = check_server(&server) {
+                eprintln!("asset-sync: {e}");
+                return EXIT_CONFIG;
+            }
+            let mut opts = EvictOptions::from_config(&config, root, server);
+            if let Some(raw) = roots {
+                let roots = parse_roots(&raw);
+                if roots.is_empty() {
+                    eprintln!("asset-sync: --roots {raw:?} names no directory");
+                    return EXIT_CONFIG;
+                }
+                opts.roots = roots;
+            }
+            match hash_threads {
+                Some(0) => {
+                    eprintln!("asset-sync: --hash-threads must be at least 1");
+                    return EXIT_CONFIG;
+                }
+                Some(n) => opts.hash_threads = n,
+                None => {}
+            }
+            opts.dry_run = dry_run;
+            if !force_evict && let Err(e) = delivery_guard(&config) {
+                eprintln!("asset-sync: {e}");
+                return EXIT_CONFIG;
+            }
+            evict_and_report(store.as_ref(), &opts, json).await
+        }
         Command::Verify { tree, .. } => {
             let mut opts = match options(&config, &tree) {
                 Ok(o) => o,
@@ -398,14 +444,14 @@ async fn run(cli: Cli) -> u8 {
 }
 
 async fn sync_and_report(
-    store: &dyn myrtle_storage::ObjectStore,
+    store: &dyn ObjectStore,
     opts: &SyncOptions,
     json: bool,
     verify: bool,
 ) -> u8 {
     let report = match run_sync(store, opts).await {
         Ok(r) => r,
-        Err(e @ myrtle_storage::sync::SyncError::MissingServerDir(_)) => {
+        Err(e @ SyncError::MissingServerDir(_)) => {
             eprintln!("asset-sync: {e}");
             return EXIT_CONFIG;
         }
@@ -415,7 +461,7 @@ async fn sync_and_report(
         }
     };
     if json {
-        match serde_json::to_string(&report) {
+        match to_string(&report) {
             Ok(line) => println!("{line}"),
             Err(e) => eprintln!("asset-sync: report not serializable: {e}"),
         }
@@ -437,11 +483,7 @@ async fn sync_and_report(
     u8::try_from(report.exit_code()).unwrap_or(EXIT_FAILED)
 }
 
-async fn restore_and_report(
-    store: &dyn myrtle_storage::ObjectStore,
-    opts: &RestoreOptions,
-    json: bool,
-) -> u8 {
+async fn restore_and_report(store: &dyn ObjectStore, opts: &RestoreOptions, json: bool) -> u8 {
     // Restore exits 1 on any failure, so a caller has one code to test.
     let report = match run_restore(store, opts).await {
         Ok(r) => r,
@@ -451,7 +493,7 @@ async fn restore_and_report(
         }
     };
     if json {
-        match serde_json::to_string(&report) {
+        match to_string(&report) {
             Ok(line) => println!("{line}"),
             Err(e) => eprintln!("asset-sync: report not serializable: {e}"),
         }
@@ -464,6 +506,35 @@ async fn restore_and_report(
     u8::try_from(report.exit_code()).unwrap_or(EXIT_CONFIG)
 }
 
+async fn evict_and_report(store: &dyn ObjectStore, opts: &EvictOptions, json: bool) -> u8 {
+    let report = match run_evict(store, opts).await {
+        Ok(r) => r,
+        Err(e @ SyncError::MissingServerDir(_)) => {
+            eprintln!("asset-sync: {e}");
+            return EXIT_CONFIG;
+        }
+        Err(e) => {
+            eprintln!("asset-sync: {e}");
+            return EXIT_FAILED;
+        }
+    };
+    if json {
+        match to_string(&report) {
+            Ok(line) => println!("{line}"),
+            Err(e) => eprintln!("asset-sync: report not serializable: {e}"),
+        }
+    } else {
+        println!("{}", report.summary_line());
+    }
+    if report.failed > 0 {
+        eprintln!(
+            "asset-sync: {} files could not be evicted and keep their bytes (see the warnings above)",
+            report.failed
+        );
+    }
+    u8::try_from(report.exit_code()).unwrap_or(EXIT_FAILED)
+}
+
 fn main() -> ExitCode {
     let cli = match Cli::try_parse() {
         Ok(cli) => cli,
@@ -474,16 +545,11 @@ fn main() -> ExitCode {
             return ExitCode::from(code);
         }
     };
-    tracing_subscriber::fmt()
-        .with_env_filter(
-            tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| "info".into()),
-        )
-        .with_writer(std::io::stderr)
+    fmt()
+        .with_env_filter(EnvFilter::try_from_default_env().unwrap_or_else(|_| "info".into()))
+        .with_writer(stderr)
         .init();
-    let runtime = match tokio::runtime::Builder::new_multi_thread()
-        .enable_all()
-        .build()
-    {
+    let runtime = match Builder::new_multi_thread().enable_all().build() {
         Ok(rt) => rt,
         Err(e) => {
             eprintln!("asset-sync: cannot start the runtime: {e}");

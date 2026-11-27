@@ -2064,6 +2064,11 @@ fn cmd_list(args: &cli::ListArgs) {
             sf.objects.len()
         );
 
+        if std::env::var("ANIM_DEBUG").is_ok() {
+            debug_anim(&sf);
+            continue;
+        }
+
         for obj in &sf.objects {
             let class_name = class_id_name(obj.class_id);
             let name = match read_object(&sf, obj) {
@@ -2075,6 +2080,225 @@ fn cmd_list(args: &cli::ListArgs) {
                 "  [{:>4}] {:<20} path_id={:<12} size={:>8}  {}",
                 obj.class_id, class_name, obj.path_id, obj.byte_size, name
             );
+        }
+    }
+}
+
+fn crc32(bytes: &[u8]) -> u32 {
+    let mut crc: u32 = 0xFFFF_FFFF;
+    for &b in bytes {
+        crc ^= b as u32;
+        for _ in 0..8 {
+            if crc & 1 != 0 {
+                crc = (crc >> 1) ^ 0xEDB8_8320;
+            } else {
+                crc >>= 1;
+            }
+        }
+    }
+    !crc
+}
+
+fn get_pid(v: &serde_json::Value) -> Option<i64> {
+    v.get("m_PathID").and_then(serde_json::Value::as_i64)
+}
+
+fn debug_anim(sf: &SerializedFile) {
+    use std::collections::HashMap;
+    // pid -> (class_id, value)
+    let mut objs: HashMap<i64, (i32, serde_json::Value)> = HashMap::new();
+    for obj in &sf.objects {
+        if let Ok(v) = read_object(sf, obj) {
+            objs.insert(obj.path_id, (obj.class_id, v));
+        }
+    }
+
+    // GameObject pid -> name
+    let mut go_name: HashMap<i64, String> = HashMap::new();
+    // Transform pid -> (go pid, father transform pid)
+    let mut tr_go: HashMap<i64, i64> = HashMap::new();
+    let mut tr_father: HashMap<i64, i64> = HashMap::new();
+    let mut go_to_tr: HashMap<i64, i64> = HashMap::new();
+    // GameObject pid -> m_IsActive
+    let mut go_active: HashMap<i64, bool> = HashMap::new();
+    // GameObject pid -> set of class ids of its components (we care about 23,198,199,137)
+    let mut go_has_mesh: HashMap<i64, bool> = HashMap::new();
+    let mut go_has_ps: HashMap<i64, bool> = HashMap::new();
+
+    for (pid, (cid, v)) in &objs {
+        match cid {
+            1 => {
+                go_name.insert(*pid, v.get("m_Name").and_then(|x| x.as_str()).unwrap_or("").to_string());
+                go_active.insert(*pid, v.get("m_IsActive").and_then(serde_json::Value::as_bool).unwrap_or(true));
+            }
+            4 | 224 => {
+                if let Some(go) = v.get("m_GameObject").and_then(get_pid) {
+                    tr_go.insert(*pid, go);
+                    go_to_tr.insert(go, *pid);
+                }
+                if let Some(f) = v.get("m_Father").and_then(get_pid) {
+                    tr_father.insert(*pid, f);
+                }
+            }
+            23 => {
+                if let Some(go) = v.get("m_GameObject").and_then(get_pid) {
+                    go_has_mesh.insert(go, true);
+                }
+            }
+            198 | 199 => {
+                if let Some(go) = v.get("m_GameObject").and_then(get_pid) {
+                    go_has_ps.insert(go, true);
+                }
+            }
+            _ => {}
+        }
+    }
+
+    // Build transform path -> go pid via CRC32 of slash-joined names.
+    // path for a transform = join(root..self) of go names.
+    fn tr_path(tr: i64, tr_go: &HashMap<i64, i64>, tr_father: &HashMap<i64, i64>, go_name: &HashMap<i64, String>) -> String {
+        let mut chain: Vec<String> = Vec::new();
+        let mut cur = tr;
+        let mut guard = 0;
+        loop {
+            guard += 1;
+            if guard > 100 { break; }
+            let go = match tr_go.get(&cur) { Some(g) => *g, None => break };
+            let nm = go_name.get(&go).cloned().unwrap_or_default();
+            chain.push(nm);
+            match tr_father.get(&cur) {
+                Some(f) if *f != 0 && tr_go.contains_key(f) => cur = *f,
+                _ => break,
+            }
+        }
+        chain.reverse();
+        chain.join("/")
+    }
+
+    // Register every ancestor-relative subpath so we match whatever root Unity
+    // hashed against. Also path=0 (empty string) -> the animator/root GO.
+    let mut hash_to_go: HashMap<u32, i64> = HashMap::new();
+    let mut hash_to_path: HashMap<u32, String> = HashMap::new();
+    for tr in tr_go.keys() {
+        // build full name chain root..self
+        let mut chain: Vec<String> = Vec::new();
+        let mut cur = *tr;
+        let mut guard = 0;
+        loop {
+            guard += 1; if guard > 100 { break; }
+            let go = match tr_go.get(&cur) { Some(g) => *g, None => break };
+            chain.push(go_name.get(&go).cloned().unwrap_or_default());
+            match tr_father.get(&cur) { Some(f) if *f != 0 && tr_go.contains_key(f) => cur = *f, _ => break }
+        }
+        chain.reverse();
+        // for each start index, subpath = chain[start..].join("/")
+        for start in 0..chain.len() {
+            let p = chain[start..].join("/");
+            let h = crc32(p.as_bytes());
+            hash_to_go.entry(h).or_insert(tr_go[tr]);
+            hash_to_path.entry(h).or_insert(p);
+        }
+    }
+    // path=0 => root GO(s): transforms whose father is not a known transform.
+    for (tr, go) in &tr_go {
+        let is_root = tr_father.get(tr).map_or(true, |f| *f == 0 || !tr_go.contains_key(f));
+        if is_root { hash_to_go.entry(0).or_insert(*go); hash_to_path.entry(0).or_insert(String::from("<root>")); }
+    }
+    let _ = &tr_path;
+
+    let total_mesh_quads = go_has_mesh.len();
+    let total_ps = go_has_ps.len();
+    println!("  === ANIM DEBUG ===  mesh-quad GOs={total_mesh_quads}  particle GOs={total_ps}  GOs total={}", go_name.len());
+    let inactive: Vec<&String> = go_active.iter().filter(|(_, a)| !**a).filter_map(|(g, _)| go_name.get(g)).collect();
+    println!("  GameObjects starting m_IsActive=false: {} -> {:?}", inactive.len(), inactive);
+
+    for (pid, (cid, v)) in &objs {
+        if *cid != 74 { continue; }
+        let name = v.get("m_Name").and_then(|x| x.as_str()).unwrap_or("");
+        // legacy curves
+        let legacy_pos = v.get("m_PositionCurves").and_then(|x| x.as_array()).map_or(0, |a| a.len());
+        let legacy_rot = v.get("m_RotationCurves").and_then(|x| x.as_array()).map_or(0, |a| a.len());
+        let legacy_euler = v.get("m_EulerCurves").and_then(|x| x.as_array()).map_or(0, |a| a.len());
+        let legacy_scale = v.get("m_ScaleCurves").and_then(|x| x.as_array()).map_or(0, |a| a.len());
+        let legacy_float = v.get("m_FloatCurves").and_then(|x| x.as_array()).map_or(0, |a| a.len());
+        let legacy_pptr = v.get("m_PPtrCurves").and_then(|x| x.as_array()).map_or(0, |a| a.len());
+
+        // optimized muscle clip
+        let muscle = v.get("m_MuscleClip");
+        let clip = muscle.and_then(|m| m.get("m_Clip")).and_then(|c| c.get("data"));
+        let streamed = clip.and_then(|c| c.get("m_StreamedClip")).and_then(|s| s.get("data")).and_then(|d| d.as_array()).map_or(0, |a| a.len());
+        let dense = clip.and_then(|c| c.get("m_DenseClip"));
+        let dense_count = dense.and_then(|d| d.get("m_CurveCount")).and_then(serde_json::Value::as_i64).unwrap_or(0);
+        let const_clip = clip.and_then(|c| c.get("m_ConstantClip")).and_then(|s| s.get("data")).and_then(|d| d.as_array()).map_or(0, |a| a.len());
+        let has_muscle = muscle.is_some();
+
+        println!("\n  CLIP '{name}' pid={pid}");
+        println!("    legacy: pos={legacy_pos} rot={legacy_rot} euler={legacy_euler} scale={legacy_scale} float={legacy_float} pptr={legacy_pptr}");
+        println!("    optimized: has_muscle={has_muscle} streamedData={streamed} denseCurveCount={dense_count} constData={const_clip}");
+        if std::env::var("ANIM_KEYS").is_ok() {
+            if let Some(c) = clip {
+                println!("    m_Clip keys: {:?}", c.as_object().map(|o| o.keys().cloned().collect::<Vec<_>>()));
+                if let Some(sc) = c.get("m_StreamedClip") { println!("      streamed keys: {:?} dataLen={:?}", sc.as_object().map(|o| o.keys().cloned().collect::<Vec<_>>()), sc.get("data").and_then(|d| d.as_array()).map(|a| a.len())); }
+                if let Some(dc) = c.get("m_DenseClip") { println!("      dense: {dc}"); }
+                if let Some(cc) = c.get("m_ConstantClip") { println!("      constant keys: {:?} dataLen={:?}", cc.as_object().map(|o| o.keys().cloned().collect::<Vec<_>>()), cc.get("data").and_then(|d| d.as_array()).map(|a| a.len())); }
+            }
+            if let Some(m) = muscle {
+                let refpose = m.get("m_ValueArrayReferencePose").and_then(|x| x.as_array()).map_or(0, |a| a.len());
+                let idxarr = m.get("m_IndexArray").and_then(|x| x.as_array()).map_or(0, |a| a.len());
+                let data = clip.and_then(|c| c.get("data"));
+                let data_kind = match data { Some(serde_json::Value::String(s)) => format!("string/blob len~{}", s.len()), Some(serde_json::Value::Array(a)) => format!("array len {}", a.len()), Some(o) => format!("obj keys {:?}", o.as_object().map(|m| m.keys().cloned().collect::<Vec<_>>())), None => "none".into() };
+                println!("    m_Clip.data={data_kind}  refPoseLen={refpose} indexArrLen={idxarr}");
+            }
+        }
+
+        // generic bindings
+        let gb = v.get("m_ClipBindingConstant").and_then(|b| b.get("genericBindings")).and_then(|x| x.as_array());
+        let Some(gb) = gb else { println!("    no genericBindings"); continue; };
+        if let Some(first) = gb.first() {
+            println!("    binding keys: {:?}", first.as_object().map(|o| o.keys().cloned().collect::<Vec<_>>()));
+        }
+        // tally by (typeID, customType); collect attribute hashes for transforms
+        let mut tally: HashMap<(i64, i64), usize> = HashMap::new();
+        let mut transform_targets: HashMap<i64, usize> = HashMap::new(); // go pid -> curve count
+        let mut attr_counts: HashMap<i64, usize> = HashMap::new();
+        let mut tr_unresolved = 0;
+        for b in gb {
+            let type_id = b.get("typeID").or_else(|| b.get("classID")).and_then(serde_json::Value::as_i64).unwrap_or(-1);
+            let custom = b.get("customType").and_then(serde_json::Value::as_i64).unwrap_or(-1);
+            let attr = b.get("attribute").and_then(serde_json::Value::as_i64).unwrap_or(-1);
+            let path = b.get("path").and_then(serde_json::Value::as_i64).unwrap_or(-1);
+            *tally.entry((type_id, custom)).or_default() += 1;
+            if type_id == 4 {
+                *attr_counts.entry(attr).or_default() += 1;
+                if let Some(go) = hash_to_go.get(&(path as u32)) {
+                    *transform_targets.entry(*go).or_default() += 1;
+                } else {
+                    tr_unresolved += 1;
+                }
+            }
+        }
+        if tr_unresolved > 0 { println!("    transform bindings UNRESOLVED path-hash: {tr_unresolved}"); }
+        let mut tally_v: Vec<_> = tally.into_iter().collect();
+        tally_v.sort();
+        println!("    binding tally (typeID,customType)->count: {tally_v:?}");
+        if !attr_counts.is_empty() {
+            let mut av: Vec<_> = attr_counts.into_iter().collect();
+            av.sort();
+            println!("    transform attribute-hash counts: {av:?}");
+        }
+        if !transform_targets.is_empty() {
+            let mut resolved_mesh = 0;
+            let mut resolved_ps = 0;
+            let mut samples: Vec<String> = Vec::new();
+            for (go, cnt) in &transform_targets {
+                if go_has_mesh.contains_key(go) { resolved_mesh += 1; }
+                if go_has_ps.contains_key(go) { resolved_ps += 1; }
+                if samples.len() < 8 {
+                    let kind = if go_has_mesh.contains_key(go) { "MESH" } else if go_has_ps.contains_key(go) { "PS" } else { "other" };
+                    samples.push(format!("{}[{kind}]x{cnt}", go_name.get(go).cloned().unwrap_or_default()));
+                }
+            }
+            println!("    transform-target GOs: {} (mesh={resolved_mesh} ps={resolved_ps}) samples={samples:?}", transform_targets.len());
         }
     }
 }

@@ -9,7 +9,7 @@ export type OperatorBaseSkill = {
     targets: Array<string>;
     /**
      * Sprite stem under `textures/spritepack/building_ui_buff_skills_h1_0/`
-     * (e.g. `bskill_ctrl_p_spd`). Empty if the source data omits an icon.
+     * (e.g. `bskill_ctrl_p_spd`), empty if absent
      */
     skillIcon: string;
     /**
@@ -18,10 +18,7 @@ export type OperatorBaseSkill = {
     unlockElite: number;
     unlockLevel: number;
     /**
-     * Slot index in the operator's kit (`BuffChar` order). Tiers of one slot
-     * replace each other on promotion: only the highest unlocked tier is live,
-     * as `OperatorBaseProfile::build` picks it. Group by this to tell a
-     * superseded tier from a second skill.
+     * Slot index in the operator's kit, tiers of one slot replace each other on promotion
      */
     slot: number;
 };

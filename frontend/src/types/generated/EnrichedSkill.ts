@@ -9,7 +9,7 @@ export type EnrichedSkill = {
     overrideTokenKey: string | null;
     levelUpCostCond: Array<LevelUpCostCond>;
     /**
-     * `Skills[i].UnlockCond`: the promotion and level the skill unlocks at.
+     * Promotion and level the skill unlocks at
      */
     unlockCond: UnlockCondition | null;
     static: SkillStatic | null;

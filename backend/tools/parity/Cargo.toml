@@ -1,0 +1,49 @@
+[package]
+name = "myrtle-parity"
+description = "tools: HTTP parity harness and engine parity dumps against main"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+license.workspace = true
+
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+name = "parity"
+path = "src/main.rs"
+
+[dependencies]
+anyhow.workspace = true
+clap.workspace = true
+futures-util.workspace = true
+hex.workspace = true
+regex.workspace = true
+reqwest.workspace = true
+rustls = { version = "0.23.46", default-features = false, features = ["ring", "std", "tls12"] }
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+tokio.workspace = true
+
+[dev-dependencies]
+myrtle-dps-formulas.workspace = true
+myrtle-engine-archives.workspace = true
+myrtle-engine-base.workspace = true
+myrtle-engine-dps.workspace = true
+myrtle-engine-grade.workspace = true
+myrtle-engine-music.workspace = true
+myrtle-engine-planner.workspace = true
+myrtle-engine-release.workspace = true
+myrtle-engine-squad.workspace = true
+myrtle-engine-story.workspace = true
+myrtle-gamedata.workspace = true
+myrtle-gamedata-raw.workspace = true
+myrtle-testkit.workspace = true
+myrtle-types.workspace = true
+tokio = { workspace = true, features = ["net", "io-util"] }
+uuid.workspace = true
+
+[lints]
+workspace = true

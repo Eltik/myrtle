@@ -1,0 +1,22 @@
+{
+ "Infos": [
+  {
+   "Key": "char_002_amiya",
+   "Value": {
+    "Default": "char_002_amiya",
+    "TmplIds": [
+     "char_002_amiya",
+     "char_1001_amiya2"
+    ]
+   }
+  }
+ ],
+ "PatchChars": [
+  {
+   "Key": "char_1001_amiya2",
+   "Value": {
+    "Name": "Amiya"
+   }
+  }
+ ]
+}

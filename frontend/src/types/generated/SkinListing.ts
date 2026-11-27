@@ -4,9 +4,7 @@ export type SkinListing = {
     startTime: number;
     endTime: number;
     /**
-     * The recommend entry's `TagId` (`tag_1022`). CN and EN number the
-     * same entry with the same id, so a CN tag EN never carries is a
-     * listing EN skipped; see `release::skipped`.
+     * Recommend entry's `TagId`, e.g. `tag_1022`
      */
     tagId: string | null;
 } & ({ kind: "group"; name: string; skin_ids: Array<string>; img_id: string | null } | { kind: "review" });

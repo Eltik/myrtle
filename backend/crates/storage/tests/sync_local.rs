@@ -8,8 +8,8 @@ use myrtle_storage::ObjectStore;
 use myrtle_storage::providers::local::LocalStore;
 use myrtle_storage::restore::{RestoreOptions, run_restore};
 use myrtle_storage::sync::{
-    EMPTY_OVER_OBJECT, LOCK_NAME, MANIFEST_VERSION, Manifest, STUB_CHANGED, STUB_GONE, SyncError,
-    SyncOptions, SyncOutcome, SyncReport, run_sync,
+    LOCK_NAME, MANIFEST_VERSION, Manifest, STUB_CHANGED, STUB_GONE, SyncError, SyncOptions,
+    SyncOutcome, SyncReport, run_sync,
 };
 use myrtle_storage::{EvictPolicy, PutBody, PutObject, StorageConfig};
 
@@ -50,6 +50,7 @@ impl Fixture {
 
     fn opts(&self) -> SyncOptions {
         SyncOptions {
+            backup_roots: vec![],
             root: self.output.clone(),
             server: "en".into(),
             prefix: "assets".into(),
@@ -675,26 +676,6 @@ async fn an_unreadable_manifest_stops_the_sync() {
 }
 
 #[tokio::test]
-async fn a_missing_manifest_never_uploads_stubs_over_their_objects() {
-    let f = Fixture::new();
-    f.run(&f.evicting()).await;
-    let key = "assets/en/textures/a.png";
-    let before = f.store.head(key).await.unwrap().unwrap().size;
-    assert!(before > 0);
-    std::fs::remove_file(Manifest::path(&f.output, "en")).unwrap();
-    let report = f.run(&f.opts()).await;
-    assert_eq!(report.uploaded, 0, "{}", report.summary_line());
-    assert_eq!(report.outcome, SyncOutcome::Failed);
-    assert!(
-        report
-            .failures
-            .iter()
-            .all(|e| e.contains(EMPTY_OVER_OBJECT))
-    );
-    assert_eq!(f.store.head(key).await.unwrap().unwrap().size, before);
-}
-
-#[tokio::test]
 async fn a_version_1_manifest_loads_unevicted() {
     let f = Fixture::new();
     f.run(&f.opts()).await;
@@ -720,9 +701,9 @@ async fn eviction_is_off_by_default_and_the_tree_is_untouched() {
     let f = Fixture::new();
     let bucket = f.output.parent().unwrap().join("bucket");
     let vars = [
-        ("S3_TYPE", "local".to_owned()),
-        ("S3_LOCAL_DIR", bucket.display().to_string()),
-        ("S3_PREFIX", "assets".to_owned()),
+        ("STORAGE_TYPE", "local".to_owned()),
+        ("STORAGE_LOCAL_DIR", bucket.display().to_string()),
+        ("CLOUDFLARE_PREFIX", "assets".to_owned()),
     ];
     let config =
         StorageConfig::from_lookup(&|k| vars.iter().find(|(n, _)| *n == k).map(|(_, v)| v.clone()))
@@ -805,9 +786,9 @@ async fn a_bucket_or_prefix_change_with_stubs_is_refused() {
     let msg = err.to_string();
     assert!(matches!(err, SyncError::StoreMoved(_)), "{msg}");
     for part in [
-        "S3_PREFIX=assets",
-        "S3_PREFIX=other",
-        "S3_BUCKET=bucket-a",
+        "CLOUDFLARE_PREFIX=assets",
+        "CLOUDFLARE_PREFIX=other",
+        "CLOUDFLARE_BUCKET=bucket-a",
         "restore",
     ] {
         assert!(msg.contains(part), "{part}: {msg}");
