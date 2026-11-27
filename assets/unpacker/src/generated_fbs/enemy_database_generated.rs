@@ -1255,17 +1255,18 @@ impl<'a> clz_Torappu_EnemyDatabase_AttributesData<'a> {
     pub const VT_DAMAGEHITRATEPHYSICAL: ::flatbuffers::VOffsetT = 40;
     pub const VT_DAMAGEHITRATEMAGICAL: ::flatbuffers::VOffsetT = 42;
     pub const VT_EPBREAKRECOVERSPEED: ::flatbuffers::VOffsetT = 44;
-    pub const VT_STUNIMMUNE: ::flatbuffers::VOffsetT = 46;
-    pub const VT_SILENCEIMMUNE: ::flatbuffers::VOffsetT = 48;
-    pub const VT_SLEEPIMMUNE: ::flatbuffers::VOffsetT = 50;
-    pub const VT_FROZENIMMUNE: ::flatbuffers::VOffsetT = 52;
-    pub const VT_LEVITATEIMMUNE: ::flatbuffers::VOffsetT = 54;
-    pub const VT_DISARMEDCOMBATIMMUNE: ::flatbuffers::VOffsetT = 56;
-    pub const VT_FEAREDIMMUNE: ::flatbuffers::VOffsetT = 58;
-    pub const VT_PALSYIMMUNE: ::flatbuffers::VOffsetT = 60;
-    pub const VT_ATTRACTIMMUNE: ::flatbuffers::VOffsetT = 62;
-    pub const VT_TELEPORTIMMUNE: ::flatbuffers::VOffsetT = 64;
-    pub const VT_GROUNDBOUNDIMMUNE: ::flatbuffers::VOffsetT = 66;
+    pub const VT_BLOCKVOLUME: ::flatbuffers::VOffsetT = 46;
+    pub const VT_STUNIMMUNE: ::flatbuffers::VOffsetT = 48;
+    pub const VT_SILENCEIMMUNE: ::flatbuffers::VOffsetT = 50;
+    pub const VT_SLEEPIMMUNE: ::flatbuffers::VOffsetT = 52;
+    pub const VT_FROZENIMMUNE: ::flatbuffers::VOffsetT = 54;
+    pub const VT_LEVITATEIMMUNE: ::flatbuffers::VOffsetT = 56;
+    pub const VT_DISARMEDCOMBATIMMUNE: ::flatbuffers::VOffsetT = 58;
+    pub const VT_FEAREDIMMUNE: ::flatbuffers::VOffsetT = 60;
+    pub const VT_PALSYIMMUNE: ::flatbuffers::VOffsetT = 62;
+    pub const VT_ATTRACTIMMUNE: ::flatbuffers::VOffsetT = 64;
+    pub const VT_TELEPORTIMMUNE: ::flatbuffers::VOffsetT = 66;
+    pub const VT_GROUNDBOUNDIMMUNE: ::flatbuffers::VOffsetT = 68;
 
     #[inline]
     pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
@@ -1314,6 +1315,9 @@ impl<'a> clz_Torappu_EnemyDatabase_AttributesData<'a> {
         }
         if let Some(x) = args.stunImmune {
             builder.add_stunImmune(x);
+        }
+        if let Some(x) = args.blockVolume {
+            builder.add_blockVolume(x);
         }
         if let Some(x) = args.epBreakRecoverSpeed {
             builder.add_epBreakRecoverSpeed(x);
@@ -1431,6 +1435,9 @@ impl<'a> clz_Torappu_EnemyDatabase_AttributesData<'a> {
         let epBreakRecoverSpeed = self
             .epBreakRecoverSpeed()
             .map(|x| alloc::boxed::Box::new(x.unpack()));
+        let blockVolume = self
+            .blockVolume()
+            .map(|x| alloc::boxed::Box::new(x.unpack()));
         let stunImmune = self
             .stunImmune()
             .map(|x| alloc::boxed::Box::new(x.unpack()));
@@ -1486,6 +1493,7 @@ impl<'a> clz_Torappu_EnemyDatabase_AttributesData<'a> {
             damageHitratePhysical,
             damageHitrateMagical,
             epBreakRecoverSpeed,
+            blockVolume,
             stunImmune,
             silenceImmune,
             sleepImmune,
@@ -1774,6 +1782,19 @@ impl<'a> clz_Torappu_EnemyDatabase_AttributesData<'a> {
         }
     }
     #[inline]
+    pub fn blockVolume(&self) -> Option<clz_Torappu_Undefinable_1_System_Int32_<'a>> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<::flatbuffers::ForwardsUOffset<clz_Torappu_Undefinable_1_System_Int32_>>(
+                    clz_Torappu_EnemyDatabase_AttributesData::VT_BLOCKVOLUME,
+                    None,
+                )
+        }
+    }
+    #[inline]
     pub fn stunImmune(&self) -> Option<clz_Torappu_Undefinable_1_System_Boolean_<'a>> {
         // Safety:
         // Created from valid Table for this object
@@ -1946,6 +1967,7 @@ impl ::flatbuffers::Verifiable for clz_Torappu_EnemyDatabase_AttributesData<'_> 
      .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_Undefinable_1_System_Single_>>("damageHitratePhysical", Self::VT_DAMAGEHITRATEPHYSICAL, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_Undefinable_1_System_Single_>>("damageHitrateMagical", Self::VT_DAMAGEHITRATEMAGICAL, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_Undefinable_1_System_Single_>>("epBreakRecoverSpeed", Self::VT_EPBREAKRECOVERSPEED, false)?
+     .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_Undefinable_1_System_Int32_>>("blockVolume", Self::VT_BLOCKVOLUME, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_Undefinable_1_System_Boolean_>>("stunImmune", Self::VT_STUNIMMUNE, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_Undefinable_1_System_Boolean_>>("silenceImmune", Self::VT_SILENCEIMMUNE, false)?
      .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_Undefinable_1_System_Boolean_>>("sleepImmune", Self::VT_SLEEPIMMUNE, false)?
@@ -1994,6 +2016,7 @@ pub struct clz_Torappu_EnemyDatabase_AttributesDataArgs<'a> {
         Option<::flatbuffers::WIPOffset<clz_Torappu_Undefinable_1_System_Single_<'a>>>,
     pub epBreakRecoverSpeed:
         Option<::flatbuffers::WIPOffset<clz_Torappu_Undefinable_1_System_Single_<'a>>>,
+    pub blockVolume: Option<::flatbuffers::WIPOffset<clz_Torappu_Undefinable_1_System_Int32_<'a>>>,
     pub stunImmune: Option<::flatbuffers::WIPOffset<clz_Torappu_Undefinable_1_System_Boolean_<'a>>>,
     pub silenceImmune:
         Option<::flatbuffers::WIPOffset<clz_Torappu_Undefinable_1_System_Boolean_<'a>>>,
@@ -2041,6 +2064,7 @@ impl<'a> Default for clz_Torappu_EnemyDatabase_AttributesDataArgs<'a> {
             damageHitratePhysical: None,
             damageHitrateMagical: None,
             epBreakRecoverSpeed: None,
+            blockVolume: None,
             stunImmune: None,
             silenceImmune: None,
             sleepImmune: None,
@@ -2303,6 +2327,17 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
             );
     }
     #[inline]
+    pub fn add_blockVolume(
+        &mut self,
+        blockVolume: ::flatbuffers::WIPOffset<clz_Torappu_Undefinable_1_System_Int32_<'b>>,
+    ) {
+        self.fbb_
+            .push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_Undefinable_1_System_Int32_>>(
+                clz_Torappu_EnemyDatabase_AttributesData::VT_BLOCKVOLUME,
+                blockVolume,
+            );
+    }
+    #[inline]
     pub fn add_stunImmune(
         &mut self,
         stunImmune: ::flatbuffers::WIPOffset<clz_Torappu_Undefinable_1_System_Boolean_<'b>>,
@@ -2422,6 +2457,7 @@ impl ::core::fmt::Debug for clz_Torappu_EnemyDatabase_AttributesData<'_> {
         ds.field("damageHitratePhysical", &self.damageHitratePhysical());
         ds.field("damageHitrateMagical", &self.damageHitrateMagical());
         ds.field("epBreakRecoverSpeed", &self.epBreakRecoverSpeed());
+        ds.field("blockVolume", &self.blockVolume());
         ds.field("stunImmune", &self.stunImmune());
         ds.field("silenceImmune", &self.silenceImmune());
         ds.field("sleepImmune", &self.sleepImmune());
@@ -2460,6 +2496,7 @@ pub struct clz_Torappu_EnemyDatabase_AttributesDataT {
     pub damageHitratePhysical: Option<alloc::boxed::Box<clz_Torappu_Undefinable_1_System_Single_T>>,
     pub damageHitrateMagical: Option<alloc::boxed::Box<clz_Torappu_Undefinable_1_System_Single_T>>,
     pub epBreakRecoverSpeed: Option<alloc::boxed::Box<clz_Torappu_Undefinable_1_System_Single_T>>,
+    pub blockVolume: Option<alloc::boxed::Box<clz_Torappu_Undefinable_1_System_Int32_T>>,
     pub stunImmune: Option<alloc::boxed::Box<clz_Torappu_Undefinable_1_System_Boolean_T>>,
     pub silenceImmune: Option<alloc::boxed::Box<clz_Torappu_Undefinable_1_System_Boolean_T>>,
     pub sleepImmune: Option<alloc::boxed::Box<clz_Torappu_Undefinable_1_System_Boolean_T>>,
@@ -2496,6 +2533,7 @@ impl Default for clz_Torappu_EnemyDatabase_AttributesDataT {
             damageHitratePhysical: None,
             damageHitrateMagical: None,
             epBreakRecoverSpeed: None,
+            blockVolume: None,
             stunImmune: None,
             silenceImmune: None,
             sleepImmune: None,
@@ -2536,6 +2574,7 @@ impl clz_Torappu_EnemyDatabase_AttributesDataT {
         let damageHitratePhysical = self.damageHitratePhysical.as_ref().map(|x| x.pack(_fbb));
         let damageHitrateMagical = self.damageHitrateMagical.as_ref().map(|x| x.pack(_fbb));
         let epBreakRecoverSpeed = self.epBreakRecoverSpeed.as_ref().map(|x| x.pack(_fbb));
+        let blockVolume = self.blockVolume.as_ref().map(|x| x.pack(_fbb));
         let stunImmune = self.stunImmune.as_ref().map(|x| x.pack(_fbb));
         let silenceImmune = self.silenceImmune.as_ref().map(|x| x.pack(_fbb));
         let sleepImmune = self.sleepImmune.as_ref().map(|x| x.pack(_fbb));
@@ -2571,6 +2610,7 @@ impl clz_Torappu_EnemyDatabase_AttributesDataT {
                 damageHitratePhysical,
                 damageHitrateMagical,
                 epBreakRecoverSpeed,
+                blockVolume,
                 stunImmune,
                 silenceImmune,
                 sleepImmune,

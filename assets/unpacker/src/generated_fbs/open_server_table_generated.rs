@@ -13,13 +13,13 @@ pub const ENUM_MIN_ENUM__TORAPPU_MISSION_TYPE: i32 = 0;
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
-pub const ENUM_MAX_ENUM__TORAPPU_MISSION_TYPE: i32 = 11;
+pub const ENUM_MAX_ENUM__TORAPPU_MISSION_TYPE: i32 = 12;
 #[deprecated(
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_MISSION_TYPE: [enum__Torappu_MissionType; 12] = [
+pub const ENUM_VALUES_ENUM__TORAPPU_MISSION_TYPE: [enum__Torappu_MissionType; 13] = [
     enum__Torappu_MissionType::UNKNOWN,
     enum__Torappu_MissionType::MAIN,
     enum__Torappu_MissionType::DAILY,
@@ -32,6 +32,7 @@ pub const ENUM_VALUES_ENUM__TORAPPU_MISSION_TYPE: [enum__Torappu_MissionType; 12
     enum__Torappu_MissionType::RETRO,
     enum__Torappu_MissionType::SPECIAL_OPERATOR,
     enum__Torappu_MissionType::SPECIAL_OPERATOR_WEEKLY,
+    enum__Torappu_MissionType::GUIDE_V3,
 ];
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
@@ -51,9 +52,10 @@ impl enum__Torappu_MissionType {
     pub const RETRO: Self = Self(9);
     pub const SPECIAL_OPERATOR: Self = Self(10);
     pub const SPECIAL_OPERATOR_WEEKLY: Self = Self(11);
+    pub const GUIDE_V3: Self = Self(12);
 
     pub const ENUM_MIN: i32 = 0;
-    pub const ENUM_MAX: i32 = 11;
+    pub const ENUM_MAX: i32 = 12;
     pub const ENUM_VALUES: &'static [Self] = &[
         Self::UNKNOWN,
         Self::MAIN,
@@ -67,6 +69,7 @@ impl enum__Torappu_MissionType {
         Self::RETRO,
         Self::SPECIAL_OPERATOR,
         Self::SPECIAL_OPERATOR_WEEKLY,
+        Self::GUIDE_V3,
     ];
     /// Returns the variant's name or "" if unknown.
     pub fn variant_name(self) -> Option<&'static str> {
@@ -83,6 +86,7 @@ impl enum__Torappu_MissionType {
             Self::RETRO => Some("RETRO"),
             Self::SPECIAL_OPERATOR => Some("SPECIAL_OPERATOR"),
             Self::SPECIAL_OPERATOR_WEEKLY => Some("SPECIAL_OPERATOR_WEEKLY"),
+            Self::GUIDE_V3 => Some("GUIDE_V3"),
             _ => None,
         }
     }
@@ -167,13 +171,13 @@ pub const ENUM_MIN_ENUM__TORAPPU_ITEM_TYPE: i32 = 0;
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
-pub const ENUM_MAX_ENUM__TORAPPU_ITEM_TYPE: i32 = 94;
+pub const ENUM_MAX_ENUM__TORAPPU_ITEM_TYPE: i32 = 97;
 #[deprecated(
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 95] = [
+pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 98] = [
     enum__Torappu_ItemType::NONE,
     enum__Torappu_ItemType::CHAR,
     enum__Torappu_ItemType::CARD_EXP,
@@ -269,6 +273,9 @@ pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 95] = [
     enum__Torappu_ItemType::STICKER,
     enum__Torappu_ItemType::ARKHUB,
     enum__Torappu_ItemType::LINKAGE_TKT_GACHA,
+    enum__Torappu_ItemType::AUTOCHESS_SKIN,
+    enum__Torappu_ItemType::AUTOCHESS_MISSION_POINT,
+    enum__Torappu_ItemType::OPEN_SERVER_CREDIT,
 ];
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
@@ -371,9 +378,12 @@ impl enum__Torappu_ItemType {
     pub const STICKER: Self = Self(92);
     pub const ARKHUB: Self = Self(93);
     pub const LINKAGE_TKT_GACHA: Self = Self(94);
+    pub const AUTOCHESS_SKIN: Self = Self(95);
+    pub const AUTOCHESS_MISSION_POINT: Self = Self(96);
+    pub const OPEN_SERVER_CREDIT: Self = Self(97);
 
     pub const ENUM_MIN: i32 = 0;
-    pub const ENUM_MAX: i32 = 94;
+    pub const ENUM_MAX: i32 = 97;
     pub const ENUM_VALUES: &'static [Self] = &[
         Self::NONE,
         Self::CHAR,
@@ -470,6 +480,9 @@ impl enum__Torappu_ItemType {
         Self::STICKER,
         Self::ARKHUB,
         Self::LINKAGE_TKT_GACHA,
+        Self::AUTOCHESS_SKIN,
+        Self::AUTOCHESS_MISSION_POINT,
+        Self::OPEN_SERVER_CREDIT,
     ];
     /// Returns the variant's name or "" if unknown.
     pub fn variant_name(self) -> Option<&'static str> {
@@ -569,6 +582,9 @@ impl enum__Torappu_ItemType {
             Self::STICKER => Some("STICKER"),
             Self::ARKHUB => Some("ARKHUB"),
             Self::LINKAGE_TKT_GACHA => Some("LINKAGE_TKT_GACHA"),
+            Self::AUTOCHESS_SKIN => Some("AUTOCHESS_SKIN"),
+            Self::AUTOCHESS_MISSION_POINT => Some("AUTOCHESS_MISSION_POINT"),
+            Self::OPEN_SERVER_CREDIT => Some("OPEN_SERVER_CREDIT"),
             _ => None,
         }
     }
@@ -1248,6 +1264,253 @@ impl<'a> ::flatbuffers::Verifiable for enum__Torappu_ReturnNewsType {
 }
 
 impl ::flatbuffers::SimpleToVerifyInSlice for enum__Torappu_ReturnNewsType {}
+#[deprecated(
+    since = "2.0.0",
+    note = "Use associated constants instead. This will no longer be generated in 2021."
+)]
+pub const ENUM_MIN_ENUM__TORAPPU_OPEN_SERVER_MISSION_TYPE: i32 = 0;
+#[deprecated(
+    since = "2.0.0",
+    note = "Use associated constants instead. This will no longer be generated in 2021."
+)]
+pub const ENUM_MAX_ENUM__TORAPPU_OPEN_SERVER_MISSION_TYPE: i32 = 1;
+#[deprecated(
+    since = "2.0.0",
+    note = "Use associated constants instead. This will no longer be generated in 2021."
+)]
+#[allow(non_camel_case_types)]
+pub const ENUM_VALUES_ENUM__TORAPPU_OPEN_SERVER_MISSION_TYPE:
+    [enum__Torappu_OpenServerMissionType; 2] = [
+    enum__Torappu_OpenServerMissionType::NORMAL,
+    enum__Torappu_OpenServerMissionType::BONUS,
+];
+
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
+#[repr(transparent)]
+pub struct enum__Torappu_OpenServerMissionType(pub i32);
+#[allow(non_upper_case_globals)]
+impl enum__Torappu_OpenServerMissionType {
+    pub const NORMAL: Self = Self(0);
+    pub const BONUS: Self = Self(1);
+
+    pub const ENUM_MIN: i32 = 0;
+    pub const ENUM_MAX: i32 = 1;
+    pub const ENUM_VALUES: &'static [Self] = &[Self::NORMAL, Self::BONUS];
+    /// Returns the variant's name or "" if unknown.
+    pub fn variant_name(self) -> Option<&'static str> {
+        match self {
+            Self::NORMAL => Some("NORMAL"),
+            Self::BONUS => Some("BONUS"),
+            _ => None,
+        }
+    }
+}
+impl ::core::fmt::Debug for enum__Torappu_OpenServerMissionType {
+    fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
+        if let Some(name) = self.variant_name() {
+            f.write_str(name)
+        } else {
+            f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
+        }
+    }
+}
+
+impl<'de> serde::Deserialize<'de> for enum__Torappu_OpenServerMissionType {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        for item in enum__Torappu_OpenServerMissionType::ENUM_VALUES {
+            if let Some(item_name) = item.variant_name() {
+                if item_name == s {
+                    return Ok(item.clone());
+                }
+            }
+        }
+        Err(serde::de::Error::custom(format!(
+            "Unknown enum__Torappu_OpenServerMissionType variant: {s}"
+        )))
+    }
+}
+
+impl<'a> ::flatbuffers::Follow<'a> for enum__Torappu_OpenServerMissionType {
+    type Inner = Self;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        let b = unsafe { ::flatbuffers::read_scalar_at::<i32>(buf, loc) };
+        Self(b)
+    }
+}
+
+impl ::flatbuffers::Push for enum__Torappu_OpenServerMissionType {
+    type Output = enum__Torappu_OpenServerMissionType;
+    #[inline]
+    unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
+        unsafe { ::flatbuffers::emplace_scalar::<i32>(dst, self.0) };
+    }
+}
+
+impl ::flatbuffers::EndianScalar for enum__Torappu_OpenServerMissionType {
+    type Scalar = i32;
+    #[inline]
+    fn to_little_endian(self) -> i32 {
+        self.0.to_le()
+    }
+    #[inline]
+    #[allow(clippy::wrong_self_convention)]
+    fn from_little_endian(v: i32) -> Self {
+        let b = i32::from_le(v);
+        Self(b)
+    }
+}
+
+impl<'a> ::flatbuffers::Verifiable for enum__Torappu_OpenServerMissionType {
+    #[inline]
+    fn run_verifier(
+        v: &mut ::flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+        i32::run_verifier(v, pos)
+    }
+}
+
+impl ::flatbuffers::SimpleToVerifyInSlice for enum__Torappu_OpenServerMissionType {}
+#[deprecated(
+    since = "2.0.0",
+    note = "Use associated constants instead. This will no longer be generated in 2021."
+)]
+pub const ENUM_MIN_ENUM__TORAPPU_OPEN_SERVER_V_3_JUMP_TYPE: i32 = 0;
+#[deprecated(
+    since = "2.0.0",
+    note = "Use associated constants instead. This will no longer be generated in 2021."
+)]
+pub const ENUM_MAX_ENUM__TORAPPU_OPEN_SERVER_V_3_JUMP_TYPE: i32 = 6;
+#[deprecated(
+    since = "2.0.0",
+    note = "Use associated constants instead. This will no longer be generated in 2021."
+)]
+#[allow(non_camel_case_types)]
+pub const ENUM_VALUES_ENUM__TORAPPU_OPEN_SERVER_V_3_JUMP_TYPE:
+    [enum__Torappu_OpenServerV3JumpType; 7] = [
+    enum__Torappu_OpenServerV3JumpType::NONE,
+    enum__Torappu_OpenServerV3JumpType::MAIN_STAGE,
+    enum__Torappu_OpenServerV3JumpType::CHAR_REPO,
+    enum__Torappu_OpenServerV3JumpType::WEEKLY,
+    enum__Torappu_OpenServerV3JumpType::SHOP,
+    enum__Torappu_OpenServerV3JumpType::BUILDING,
+    enum__Torappu_OpenServerV3JumpType::CAMPAIGN_STAGE,
+];
+
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
+#[repr(transparent)]
+pub struct enum__Torappu_OpenServerV3JumpType(pub i32);
+#[allow(non_upper_case_globals)]
+impl enum__Torappu_OpenServerV3JumpType {
+    pub const NONE: Self = Self(0);
+    pub const MAIN_STAGE: Self = Self(1);
+    pub const CHAR_REPO: Self = Self(2);
+    pub const WEEKLY: Self = Self(3);
+    pub const SHOP: Self = Self(4);
+    pub const BUILDING: Self = Self(5);
+    pub const CAMPAIGN_STAGE: Self = Self(6);
+
+    pub const ENUM_MIN: i32 = 0;
+    pub const ENUM_MAX: i32 = 6;
+    pub const ENUM_VALUES: &'static [Self] = &[
+        Self::NONE,
+        Self::MAIN_STAGE,
+        Self::CHAR_REPO,
+        Self::WEEKLY,
+        Self::SHOP,
+        Self::BUILDING,
+        Self::CAMPAIGN_STAGE,
+    ];
+    /// Returns the variant's name or "" if unknown.
+    pub fn variant_name(self) -> Option<&'static str> {
+        match self {
+            Self::NONE => Some("NONE"),
+            Self::MAIN_STAGE => Some("MAIN_STAGE"),
+            Self::CHAR_REPO => Some("CHAR_REPO"),
+            Self::WEEKLY => Some("WEEKLY"),
+            Self::SHOP => Some("SHOP"),
+            Self::BUILDING => Some("BUILDING"),
+            Self::CAMPAIGN_STAGE => Some("CAMPAIGN_STAGE"),
+            _ => None,
+        }
+    }
+}
+impl ::core::fmt::Debug for enum__Torappu_OpenServerV3JumpType {
+    fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
+        if let Some(name) = self.variant_name() {
+            f.write_str(name)
+        } else {
+            f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
+        }
+    }
+}
+
+impl<'de> serde::Deserialize<'de> for enum__Torappu_OpenServerV3JumpType {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        for item in enum__Torappu_OpenServerV3JumpType::ENUM_VALUES {
+            if let Some(item_name) = item.variant_name() {
+                if item_name == s {
+                    return Ok(item.clone());
+                }
+            }
+        }
+        Err(serde::de::Error::custom(format!(
+            "Unknown enum__Torappu_OpenServerV3JumpType variant: {s}"
+        )))
+    }
+}
+
+impl<'a> ::flatbuffers::Follow<'a> for enum__Torappu_OpenServerV3JumpType {
+    type Inner = Self;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        let b = unsafe { ::flatbuffers::read_scalar_at::<i32>(buf, loc) };
+        Self(b)
+    }
+}
+
+impl ::flatbuffers::Push for enum__Torappu_OpenServerV3JumpType {
+    type Output = enum__Torappu_OpenServerV3JumpType;
+    #[inline]
+    unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
+        unsafe { ::flatbuffers::emplace_scalar::<i32>(dst, self.0) };
+    }
+}
+
+impl ::flatbuffers::EndianScalar for enum__Torappu_OpenServerV3JumpType {
+    type Scalar = i32;
+    #[inline]
+    fn to_little_endian(self) -> i32 {
+        self.0.to_le()
+    }
+    #[inline]
+    #[allow(clippy::wrong_self_convention)]
+    fn from_little_endian(v: i32) -> Self {
+        let b = i32::from_le(v);
+        Self(b)
+    }
+}
+
+impl<'a> ::flatbuffers::Verifiable for enum__Torappu_OpenServerV3JumpType {
+    #[inline]
+    fn run_verifier(
+        v: &mut ::flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+        i32::run_verifier(v, pos)
+    }
+}
+
+impl ::flatbuffers::SimpleToVerifyInSlice for enum__Torappu_OpenServerV3JumpType {}
 pub enum clz_Torappu_OpenServerScheduleItemOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -4498,6 +4761,7 @@ impl<'a> clz_Torappu_OpenServerConst<'a> {
     pub const VT_RESFULLOPENDESC: ::flatbuffers::VOffsetT = 14;
     pub const VT_RESFULLOPENGUIDEGROUPTHRESHOLD: ::flatbuffers::VOffsetT = 16;
     pub const VT_RESFULLOPENSTARTTIME: ::flatbuffers::VOffsetT = 18;
+    pub const VT_OPENSERVERV2ENDTIME: ::flatbuffers::VOffsetT = 20;
 
     #[inline]
     pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
@@ -4514,6 +4778,7 @@ impl<'a> clz_Torappu_OpenServerConst<'a> {
         args: &'args clz_Torappu_OpenServerConstArgs<'args>,
     ) -> ::flatbuffers::WIPOffset<clz_Torappu_OpenServerConst<'bldr>> {
         let mut builder = clz_Torappu_OpenServerConstBuilder::new(_fbb);
+        builder.add_openServerV2EndTime(args.openServerV2EndTime);
         builder.add_resFullOpenStartTime(args.resFullOpenStartTime);
         builder.add_initApMailEndTs(args.initApMailEndTs);
         if let Some(x) = args.resFullOpenGuideGroupThreshold {
@@ -4550,6 +4815,7 @@ impl<'a> clz_Torappu_OpenServerConst<'a> {
             .resFullOpenGuideGroupThreshold()
             .map(|x| alloc::string::ToString::to_string(x));
         let resFullOpenStartTime = self.resFullOpenStartTime();
+        let openServerV2EndTime = self.openServerV2EndTime();
         clz_Torappu_OpenServerConstT {
             firstDiamondShardMailCount,
             initApMailEndTs,
@@ -4559,6 +4825,7 @@ impl<'a> clz_Torappu_OpenServerConst<'a> {
             resFullOpenDesc,
             resFullOpenGuideGroupThreshold,
             resFullOpenStartTime,
+            openServerV2EndTime,
         }
     }
 
@@ -4660,6 +4927,17 @@ impl<'a> clz_Torappu_OpenServerConst<'a> {
                 .unwrap()
         }
     }
+    #[inline]
+    pub fn openServerV2EndTime(&self) -> i64 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i64>(clz_Torappu_OpenServerConst::VT_OPENSERVERV2ENDTIME, Some(0))
+                .unwrap()
+        }
+    }
 }
 
 impl ::flatbuffers::Verifiable for clz_Torappu_OpenServerConst<'_> {
@@ -4697,6 +4975,7 @@ impl ::flatbuffers::Verifiable for clz_Torappu_OpenServerConst<'_> {
                 false,
             )?
             .visit_field::<i64>("resFullOpenStartTime", Self::VT_RESFULLOPENSTARTTIME, false)?
+            .visit_field::<i64>("openServerV2EndTime", Self::VT_OPENSERVERV2ENDTIME, false)?
             .finish();
         Ok(())
     }
@@ -4710,6 +4989,7 @@ pub struct clz_Torappu_OpenServerConstArgs<'a> {
     pub resFullOpenDesc: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub resFullOpenGuideGroupThreshold: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub resFullOpenStartTime: i64,
+    pub openServerV2EndTime: i64,
 }
 impl<'a> Default for clz_Torappu_OpenServerConstArgs<'a> {
     #[inline]
@@ -4723,6 +5003,7 @@ impl<'a> Default for clz_Torappu_OpenServerConstArgs<'a> {
             resFullOpenDesc: None,
             resFullOpenGuideGroupThreshold: None,
             resFullOpenStartTime: 0,
+            openServerV2EndTime: 0,
         }
     }
 }
@@ -4799,6 +5080,14 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_OpenServerConstBu
         );
     }
     #[inline]
+    pub fn add_openServerV2EndTime(&mut self, openServerV2EndTime: i64) {
+        self.fbb_.push_slot::<i64>(
+            clz_Torappu_OpenServerConst::VT_OPENSERVERV2ENDTIME,
+            openServerV2EndTime,
+            0,
+        );
+    }
+    #[inline]
     pub fn new(
         _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
     ) -> clz_Torappu_OpenServerConstBuilder<'a, 'b, A> {
@@ -4832,6 +5121,7 @@ impl ::core::fmt::Debug for clz_Torappu_OpenServerConst<'_> {
             &self.resFullOpenGuideGroupThreshold(),
         );
         ds.field("resFullOpenStartTime", &self.resFullOpenStartTime());
+        ds.field("openServerV2EndTime", &self.openServerV2EndTime());
         ds.finish()
     }
 }
@@ -4846,6 +5136,7 @@ pub struct clz_Torappu_OpenServerConstT {
     pub resFullOpenDesc: Option<alloc::string::String>,
     pub resFullOpenGuideGroupThreshold: Option<alloc::string::String>,
     pub resFullOpenStartTime: i64,
+    pub openServerV2EndTime: i64,
 }
 impl Default for clz_Torappu_OpenServerConstT {
     fn default() -> Self {
@@ -4858,6 +5149,7 @@ impl Default for clz_Torappu_OpenServerConstT {
             resFullOpenDesc: None,
             resFullOpenGuideGroupThreshold: None,
             resFullOpenStartTime: 0,
+            openServerV2EndTime: 0,
         }
     }
 }
@@ -4883,6 +5175,7 @@ impl clz_Torappu_OpenServerConstT {
             .as_ref()
             .map(|x| _fbb.create_string(x));
         let resFullOpenStartTime = self.resFullOpenStartTime;
+        let openServerV2EndTime = self.openServerV2EndTime;
         clz_Torappu_OpenServerConst::create(
             _fbb,
             &clz_Torappu_OpenServerConstArgs {
@@ -4894,6 +5187,7 @@ impl clz_Torappu_OpenServerConstT {
                 resFullOpenDesc,
                 resFullOpenGuideGroupThreshold,
                 resFullOpenStartTime,
+                openServerV2EndTime,
             },
         )
     }
@@ -14660,6 +14954,4986 @@ impl clz_Torappu_LongTermCheckInDataT {
         )
     }
 }
+pub enum clz_Torappu_OpenServerV3CheckInItemDataOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct clz_Torappu_OpenServerV3CheckInItemData<'a> {
+    pub _tab: ::flatbuffers::Table<'a>,
+}
+
+impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_OpenServerV3CheckInItemData<'a> {
+    type Inner = clz_Torappu_OpenServerV3CheckInItemData<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> clz_Torappu_OpenServerV3CheckInItemData<'a> {
+    pub const VT_ORDER: ::flatbuffers::VOffsetT = 4;
+    pub const VT_ISKEYITEM: ::flatbuffers::VOffsetT = 6;
+    pub const VT_REWARDLIST: ::flatbuffers::VOffsetT = 8;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+        clz_Torappu_OpenServerV3CheckInItemData { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<
+        'bldr: 'args,
+        'args: 'mut_bldr,
+        'mut_bldr,
+        A: ::flatbuffers::Allocator + 'bldr,
+    >(
+        _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args clz_Torappu_OpenServerV3CheckInItemDataArgs<'args>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_OpenServerV3CheckInItemData<'bldr>> {
+        let mut builder = clz_Torappu_OpenServerV3CheckInItemDataBuilder::new(_fbb);
+        if let Some(x) = args.rewardList {
+            builder.add_rewardList(x);
+        }
+        builder.add_order(args.order);
+        builder.add_isKeyItem(args.isKeyItem);
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_OpenServerV3CheckInItemDataT {
+        let order = self.order();
+        let isKeyItem = self.isKeyItem();
+        let rewardList = self
+            .rewardList()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_OpenServerV3CheckInItemDataT {
+            order,
+            isKeyItem,
+            rewardList,
+        }
+    }
+
+    #[inline]
+    pub fn order(&self) -> i32 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i32>(clz_Torappu_OpenServerV3CheckInItemData::VT_ORDER, Some(0))
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn isKeyItem(&self) -> bool {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<bool>(
+                    clz_Torappu_OpenServerV3CheckInItemData::VT_ISKEYITEM,
+                    Some(false),
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn rewardList(
+        &self,
+    ) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<clz_Torappu_ItemBundle<'a>>>>
+    {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<clz_Torappu_ItemBundle>>,
+            >>(clz_Torappu_OpenServerV3CheckInItemData::VT_REWARDLIST, None)
+        }
+    }
+}
+
+impl ::flatbuffers::Verifiable for clz_Torappu_OpenServerV3CheckInItemData<'_> {
+    #[inline]
+    fn run_verifier(
+        v: &mut ::flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+        v.visit_table(pos)?
+            .visit_field::<i32>("order", Self::VT_ORDER, false)?
+            .visit_field::<bool>("isKeyItem", Self::VT_ISKEYITEM, false)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<clz_Torappu_ItemBundle>>,
+            >>("rewardList", Self::VT_REWARDLIST, false)?
+            .finish();
+        Ok(())
+    }
+}
+pub struct clz_Torappu_OpenServerV3CheckInItemDataArgs<'a> {
+    pub order: i32,
+    pub isKeyItem: bool,
+    pub rewardList: Option<
+        ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<clz_Torappu_ItemBundle<'a>>>,
+        >,
+    >,
+}
+impl<'a> Default for clz_Torappu_OpenServerV3CheckInItemDataArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        clz_Torappu_OpenServerV3CheckInItemDataArgs {
+            order: 0,
+            isKeyItem: false,
+            rewardList: None,
+        }
+    }
+}
+
+pub struct clz_Torappu_OpenServerV3CheckInItemDataBuilder<
+    'a: 'b,
+    'b,
+    A: ::flatbuffers::Allocator + 'a,
+> {
+    fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
+    clz_Torappu_OpenServerV3CheckInItemDataBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_order(&mut self, order: i32) {
+        self.fbb_
+            .push_slot::<i32>(clz_Torappu_OpenServerV3CheckInItemData::VT_ORDER, order, 0);
+    }
+    #[inline]
+    pub fn add_isKeyItem(&mut self, isKeyItem: bool) {
+        self.fbb_.push_slot::<bool>(
+            clz_Torappu_OpenServerV3CheckInItemData::VT_ISKEYITEM,
+            isKeyItem,
+            false,
+        );
+    }
+    #[inline]
+    pub fn add_rewardList(
+        &mut self,
+        rewardList: ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<'b, ::flatbuffers::ForwardsUOffset<clz_Torappu_ItemBundle<'b>>>,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_OpenServerV3CheckInItemData::VT_REWARDLIST,
+            rewardList,
+        );
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_OpenServerV3CheckInItemDataBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        clz_Torappu_OpenServerV3CheckInItemDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_OpenServerV3CheckInItemData<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        ::flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl ::core::fmt::Debug for clz_Torappu_OpenServerV3CheckInItemData<'_> {
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        let mut ds = f.debug_struct("clz_Torappu_OpenServerV3CheckInItemData");
+        ds.field("order", &self.order());
+        ds.field("isKeyItem", &self.isKeyItem());
+        ds.field("rewardList", &self.rewardList());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_OpenServerV3CheckInItemDataT {
+    pub order: i32,
+    pub isKeyItem: bool,
+    pub rewardList: Option<alloc::vec::Vec<clz_Torappu_ItemBundleT>>,
+}
+impl Default for clz_Torappu_OpenServerV3CheckInItemDataT {
+    fn default() -> Self {
+        Self {
+            order: 0,
+            isKeyItem: false,
+            rewardList: None,
+        }
+    }
+}
+impl clz_Torappu_OpenServerV3CheckInItemDataT {
+    pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_OpenServerV3CheckInItemData<'b>> {
+        let order = self.order;
+        let isKeyItem = self.isKeyItem;
+        let rewardList = self.rewardList.as_ref().map(|x| {
+            let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_OpenServerV3CheckInItemData::create(
+            _fbb,
+            &clz_Torappu_OpenServerV3CheckInItemDataArgs {
+                order,
+                isKeyItem,
+                rewardList,
+            },
+        )
+    }
+}
+pub enum clz_Torappu_OpenServerV3CheckInGroupDataOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct clz_Torappu_OpenServerV3CheckInGroupData<'a> {
+    pub _tab: ::flatbuffers::Table<'a>,
+}
+
+impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_OpenServerV3CheckInGroupData<'a> {
+    type Inner = clz_Torappu_OpenServerV3CheckInGroupData<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> clz_Torappu_OpenServerV3CheckInGroupData<'a> {
+    pub const VT_GROUPID: ::flatbuffers::VOffsetT = 4;
+    pub const VT_SPECIALREWARDITEM: ::flatbuffers::VOffsetT = 6;
+    pub const VT_SPECIALREWARDDAY: ::flatbuffers::VOffsetT = 8;
+    pub const VT_CHARIMGID: ::flatbuffers::VOffsetT = 10;
+    pub const VT_LOGINTITLE: ::flatbuffers::VOffsetT = 12;
+    pub const VT_LOGINDESC: ::flatbuffers::VOffsetT = 14;
+    pub const VT_GUIDEBOOKTRIGGER: ::flatbuffers::VOffsetT = 16;
+    pub const VT_CHARLIST: ::flatbuffers::VOffsetT = 18;
+    pub const VT_CHECKINITEMLIST: ::flatbuffers::VOffsetT = 20;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+        clz_Torappu_OpenServerV3CheckInGroupData { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<
+        'bldr: 'args,
+        'args: 'mut_bldr,
+        'mut_bldr,
+        A: ::flatbuffers::Allocator + 'bldr,
+    >(
+        _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args clz_Torappu_OpenServerV3CheckInGroupDataArgs<'args>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_OpenServerV3CheckInGroupData<'bldr>> {
+        let mut builder = clz_Torappu_OpenServerV3CheckInGroupDataBuilder::new(_fbb);
+        if let Some(x) = args.checkInItemList {
+            builder.add_checkInItemList(x);
+        }
+        if let Some(x) = args.charList {
+            builder.add_charList(x);
+        }
+        if let Some(x) = args.guidebookTrigger {
+            builder.add_guidebookTrigger(x);
+        }
+        if let Some(x) = args.loginDesc {
+            builder.add_loginDesc(x);
+        }
+        if let Some(x) = args.loginTitle {
+            builder.add_loginTitle(x);
+        }
+        if let Some(x) = args.charImgId {
+            builder.add_charImgId(x);
+        }
+        builder.add_specialRewardDay(args.specialRewardDay);
+        if let Some(x) = args.specialRewardItem {
+            builder.add_specialRewardItem(x);
+        }
+        if let Some(x) = args.groupId {
+            builder.add_groupId(x);
+        }
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_OpenServerV3CheckInGroupDataT {
+        let groupId = self
+            .groupId()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let specialRewardItem = self
+            .specialRewardItem()
+            .map(|x| alloc::boxed::Box::new(x.unpack()));
+        let specialRewardDay = self.specialRewardDay();
+        let charImgId = self
+            .charImgId()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let loginTitle = self
+            .loginTitle()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let loginDesc = self
+            .loginDesc()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let guidebookTrigger = self
+            .guidebookTrigger()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let charList = self.charList().map(|x| {
+            x.iter()
+                .map(|s| alloc::string::ToString::to_string(s))
+                .collect()
+        });
+        let checkInItemList = self
+            .checkInItemList()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_OpenServerV3CheckInGroupDataT {
+            groupId,
+            specialRewardItem,
+            specialRewardDay,
+            charImgId,
+            loginTitle,
+            loginDesc,
+            guidebookTrigger,
+            charList,
+            checkInItemList,
+        }
+    }
+
+    #[inline]
+    pub fn groupId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_OpenServerV3CheckInGroupData::VT_GROUPID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn specialRewardItem(&self) -> Option<clz_Torappu_ItemBundle<'a>> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<::flatbuffers::ForwardsUOffset<clz_Torappu_ItemBundle>>(
+                    clz_Torappu_OpenServerV3CheckInGroupData::VT_SPECIALREWARDITEM,
+                    None,
+                )
+        }
+    }
+    #[inline]
+    pub fn specialRewardDay(&self) -> i32 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i32>(
+                    clz_Torappu_OpenServerV3CheckInGroupData::VT_SPECIALREWARDDAY,
+                    Some(0),
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn charImgId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_OpenServerV3CheckInGroupData::VT_CHARIMGID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn loginTitle(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_OpenServerV3CheckInGroupData::VT_LOGINTITLE,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn loginDesc(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_OpenServerV3CheckInGroupData::VT_LOGINDESC,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn guidebookTrigger(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_OpenServerV3CheckInGroupData::VT_GUIDEBOOKTRIGGER,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn charList(
+        &self,
+    ) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>,
+            >>(clz_Torappu_OpenServerV3CheckInGroupData::VT_CHARLIST, None)
+        }
+    }
+    #[inline]
+    pub fn checkInItemList(
+        &self,
+    ) -> Option<
+        ::flatbuffers::Vector<
+            'a,
+            ::flatbuffers::ForwardsUOffset<clz_Torappu_OpenServerV3CheckInItemData<'a>>,
+        >,
+    > {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<
+                    'a,
+                    ::flatbuffers::ForwardsUOffset<clz_Torappu_OpenServerV3CheckInItemData>,
+                >,
+            >>(
+                clz_Torappu_OpenServerV3CheckInGroupData::VT_CHECKINITEMLIST,
+                None,
+            )
+        }
+    }
+}
+
+impl ::flatbuffers::Verifiable for clz_Torappu_OpenServerV3CheckInGroupData<'_> {
+    #[inline]
+    fn run_verifier(
+        v: &mut ::flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+        v.visit_table(pos)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "groupId",
+                Self::VT_GROUPID,
+                false,
+            )?
+            .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_ItemBundle>>(
+                "specialRewardItem",
+                Self::VT_SPECIALREWARDITEM,
+                false,
+            )?
+            .visit_field::<i32>("specialRewardDay", Self::VT_SPECIALREWARDDAY, false)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "charImgId",
+                Self::VT_CHARIMGID,
+                false,
+            )?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "loginTitle",
+                Self::VT_LOGINTITLE,
+                false,
+            )?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "loginDesc",
+                Self::VT_LOGINDESC,
+                false,
+            )?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "guidebookTrigger",
+                Self::VT_GUIDEBOOKTRIGGER,
+                false,
+            )?
+            .visit_field::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<&'_ str>>,
+            >>("charList", Self::VT_CHARLIST, false)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<
+                    '_,
+                    ::flatbuffers::ForwardsUOffset<clz_Torappu_OpenServerV3CheckInItemData>,
+                >,
+            >>("checkInItemList", Self::VT_CHECKINITEMLIST, false)?
+            .finish();
+        Ok(())
+    }
+}
+pub struct clz_Torappu_OpenServerV3CheckInGroupDataArgs<'a> {
+    pub groupId: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub specialRewardItem: Option<::flatbuffers::WIPOffset<clz_Torappu_ItemBundle<'a>>>,
+    pub specialRewardDay: i32,
+    pub charImgId: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub loginTitle: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub loginDesc: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub guidebookTrigger: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub charList: Option<
+        ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>,
+        >,
+    >,
+    pub checkInItemList: Option<
+        ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<
+                'a,
+                ::flatbuffers::ForwardsUOffset<clz_Torappu_OpenServerV3CheckInItemData<'a>>,
+            >,
+        >,
+    >,
+}
+impl<'a> Default for clz_Torappu_OpenServerV3CheckInGroupDataArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        clz_Torappu_OpenServerV3CheckInGroupDataArgs {
+            groupId: None,
+            specialRewardItem: None,
+            specialRewardDay: 0,
+            charImgId: None,
+            loginTitle: None,
+            loginDesc: None,
+            guidebookTrigger: None,
+            charList: None,
+            checkInItemList: None,
+        }
+    }
+}
+
+pub struct clz_Torappu_OpenServerV3CheckInGroupDataBuilder<
+    'a: 'b,
+    'b,
+    A: ::flatbuffers::Allocator + 'a,
+> {
+    fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
+    clz_Torappu_OpenServerV3CheckInGroupDataBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_groupId(&mut self, groupId: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_OpenServerV3CheckInGroupData::VT_GROUPID,
+            groupId,
+        );
+    }
+    #[inline]
+    pub fn add_specialRewardItem(
+        &mut self,
+        specialRewardItem: ::flatbuffers::WIPOffset<clz_Torappu_ItemBundle<'b>>,
+    ) {
+        self.fbb_
+            .push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_ItemBundle>>(
+                clz_Torappu_OpenServerV3CheckInGroupData::VT_SPECIALREWARDITEM,
+                specialRewardItem,
+            );
+    }
+    #[inline]
+    pub fn add_specialRewardDay(&mut self, specialRewardDay: i32) {
+        self.fbb_.push_slot::<i32>(
+            clz_Torappu_OpenServerV3CheckInGroupData::VT_SPECIALREWARDDAY,
+            specialRewardDay,
+            0,
+        );
+    }
+    #[inline]
+    pub fn add_charImgId(&mut self, charImgId: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_OpenServerV3CheckInGroupData::VT_CHARIMGID,
+            charImgId,
+        );
+    }
+    #[inline]
+    pub fn add_loginTitle(&mut self, loginTitle: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_OpenServerV3CheckInGroupData::VT_LOGINTITLE,
+            loginTitle,
+        );
+    }
+    #[inline]
+    pub fn add_loginDesc(&mut self, loginDesc: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_OpenServerV3CheckInGroupData::VT_LOGINDESC,
+            loginDesc,
+        );
+    }
+    #[inline]
+    pub fn add_guidebookTrigger(&mut self, guidebookTrigger: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_OpenServerV3CheckInGroupData::VT_GUIDEBOOKTRIGGER,
+            guidebookTrigger,
+        );
+    }
+    #[inline]
+    pub fn add_charList(
+        &mut self,
+        charList: ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<'b, ::flatbuffers::ForwardsUOffset<&'b str>>,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_OpenServerV3CheckInGroupData::VT_CHARLIST,
+            charList,
+        );
+    }
+    #[inline]
+    pub fn add_checkInItemList(
+        &mut self,
+        checkInItemList: ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<
+                'b,
+                ::flatbuffers::ForwardsUOffset<clz_Torappu_OpenServerV3CheckInItemData<'b>>,
+            >,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_OpenServerV3CheckInGroupData::VT_CHECKINITEMLIST,
+            checkInItemList,
+        );
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_OpenServerV3CheckInGroupDataBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        clz_Torappu_OpenServerV3CheckInGroupDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_OpenServerV3CheckInGroupData<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        ::flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl ::core::fmt::Debug for clz_Torappu_OpenServerV3CheckInGroupData<'_> {
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        let mut ds = f.debug_struct("clz_Torappu_OpenServerV3CheckInGroupData");
+        ds.field("groupId", &self.groupId());
+        ds.field("specialRewardItem", &self.specialRewardItem());
+        ds.field("specialRewardDay", &self.specialRewardDay());
+        ds.field("charImgId", &self.charImgId());
+        ds.field("loginTitle", &self.loginTitle());
+        ds.field("loginDesc", &self.loginDesc());
+        ds.field("guidebookTrigger", &self.guidebookTrigger());
+        ds.field("charList", &self.charList());
+        ds.field("checkInItemList", &self.checkInItemList());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_OpenServerV3CheckInGroupDataT {
+    pub groupId: Option<alloc::string::String>,
+    pub specialRewardItem: Option<alloc::boxed::Box<clz_Torappu_ItemBundleT>>,
+    pub specialRewardDay: i32,
+    pub charImgId: Option<alloc::string::String>,
+    pub loginTitle: Option<alloc::string::String>,
+    pub loginDesc: Option<alloc::string::String>,
+    pub guidebookTrigger: Option<alloc::string::String>,
+    pub charList: Option<alloc::vec::Vec<alloc::string::String>>,
+    pub checkInItemList: Option<alloc::vec::Vec<clz_Torappu_OpenServerV3CheckInItemDataT>>,
+}
+impl Default for clz_Torappu_OpenServerV3CheckInGroupDataT {
+    fn default() -> Self {
+        Self {
+            groupId: None,
+            specialRewardItem: None,
+            specialRewardDay: 0,
+            charImgId: None,
+            loginTitle: None,
+            loginDesc: None,
+            guidebookTrigger: None,
+            charList: None,
+            checkInItemList: None,
+        }
+    }
+}
+impl clz_Torappu_OpenServerV3CheckInGroupDataT {
+    pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_OpenServerV3CheckInGroupData<'b>> {
+        let groupId = self.groupId.as_ref().map(|x| _fbb.create_string(x));
+        let specialRewardItem = self.specialRewardItem.as_ref().map(|x| x.pack(_fbb));
+        let specialRewardDay = self.specialRewardDay;
+        let charImgId = self.charImgId.as_ref().map(|x| _fbb.create_string(x));
+        let loginTitle = self.loginTitle.as_ref().map(|x| _fbb.create_string(x));
+        let loginDesc = self.loginDesc.as_ref().map(|x| _fbb.create_string(x));
+        let guidebookTrigger = self
+            .guidebookTrigger
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let charList = self.charList.as_ref().map(|x| {
+            let w: alloc::vec::Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let checkInItemList = self.checkInItemList.as_ref().map(|x| {
+            let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_OpenServerV3CheckInGroupData::create(
+            _fbb,
+            &clz_Torappu_OpenServerV3CheckInGroupDataArgs {
+                groupId,
+                specialRewardItem,
+                specialRewardDay,
+                charImgId,
+                loginTitle,
+                loginDesc,
+                guidebookTrigger,
+                charList,
+                checkInItemList,
+            },
+        )
+    }
+}
+pub enum dict__string__clz_Torappu_OpenServerV3CheckInGroupDataOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct dict__string__clz_Torappu_OpenServerV3CheckInGroupData<'a> {
+    pub _tab: ::flatbuffers::Table<'a>,
+}
+
+impl<'a> ::flatbuffers::Follow<'a> for dict__string__clz_Torappu_OpenServerV3CheckInGroupData<'a> {
+    type Inner = dict__string__clz_Torappu_OpenServerV3CheckInGroupData<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> dict__string__clz_Torappu_OpenServerV3CheckInGroupData<'a> {
+    pub const VT_KEY: ::flatbuffers::VOffsetT = 4;
+    pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+        dict__string__clz_Torappu_OpenServerV3CheckInGroupData { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<
+        'bldr: 'args,
+        'args: 'mut_bldr,
+        'mut_bldr,
+        A: ::flatbuffers::Allocator + 'bldr,
+    >(
+        _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args dict__string__clz_Torappu_OpenServerV3CheckInGroupDataArgs<'args>,
+    ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_OpenServerV3CheckInGroupData<'bldr>>
+    {
+        let mut builder = dict__string__clz_Torappu_OpenServerV3CheckInGroupDataBuilder::new(_fbb);
+        if let Some(x) = args.value {
+            builder.add_value(x);
+        }
+        if let Some(x) = args.key {
+            builder.add_key(x);
+        }
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_OpenServerV3CheckInGroupDataT {
+        let key = {
+            let x = self.key();
+            alloc::string::ToString::to_string(x)
+        };
+        let value = self.value().map(|x| alloc::boxed::Box::new(x.unpack()));
+        dict__string__clz_Torappu_OpenServerV3CheckInGroupDataT { key, value }
+    }
+
+    #[inline]
+    pub fn key(&self) -> &'a str {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<::flatbuffers::ForwardsUOffset<&str>>(
+                    dict__string__clz_Torappu_OpenServerV3CheckInGroupData::VT_KEY,
+                    None,
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn key_compare_less_than(
+        &self,
+        o: &dict__string__clz_Torappu_OpenServerV3CheckInGroupData,
+    ) -> bool {
+        self.key() < o.key()
+    }
+
+    #[inline]
+    pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
+        let key = self.key();
+        key.cmp(val)
+    }
+    #[inline]
+    pub fn value(&self) -> Option<clz_Torappu_OpenServerV3CheckInGroupData<'a>> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<::flatbuffers::ForwardsUOffset<clz_Torappu_OpenServerV3CheckInGroupData>>(
+                    dict__string__clz_Torappu_OpenServerV3CheckInGroupData::VT_VALUE,
+                    None,
+                )
+        }
+    }
+}
+
+impl ::flatbuffers::Verifiable for dict__string__clz_Torappu_OpenServerV3CheckInGroupData<'_> {
+    #[inline]
+    fn run_verifier(
+        v: &mut ::flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+        v.visit_table(pos)?
+     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("key", Self::VT_KEY, true)?
+     .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_OpenServerV3CheckInGroupData>>("value", Self::VT_VALUE, false)?
+     .finish();
+        Ok(())
+    }
+}
+pub struct dict__string__clz_Torappu_OpenServerV3CheckInGroupDataArgs<'a> {
+    pub key: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub value: Option<::flatbuffers::WIPOffset<clz_Torappu_OpenServerV3CheckInGroupData<'a>>>,
+}
+impl<'a> Default for dict__string__clz_Torappu_OpenServerV3CheckInGroupDataArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        dict__string__clz_Torappu_OpenServerV3CheckInGroupDataArgs {
+            key: None, // required field
+            value: None,
+        }
+    }
+}
+
+pub struct dict__string__clz_Torappu_OpenServerV3CheckInGroupDataBuilder<
+    'a: 'b,
+    'b,
+    A: ::flatbuffers::Allocator + 'a,
+> {
+    fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
+    dict__string__clz_Torappu_OpenServerV3CheckInGroupDataBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_key(&mut self, key: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            dict__string__clz_Torappu_OpenServerV3CheckInGroupData::VT_KEY,
+            key,
+        );
+    }
+    #[inline]
+    pub fn add_value(
+        &mut self,
+        value: ::flatbuffers::WIPOffset<clz_Torappu_OpenServerV3CheckInGroupData<'b>>,
+    ) {
+        self.fbb_
+            .push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_OpenServerV3CheckInGroupData>>(
+                dict__string__clz_Torappu_OpenServerV3CheckInGroupData::VT_VALUE,
+                value,
+            );
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__string__clz_Torappu_OpenServerV3CheckInGroupDataBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        dict__string__clz_Torappu_OpenServerV3CheckInGroupDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(
+        self,
+    ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_OpenServerV3CheckInGroupData<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        self.fbb_.required(
+            o,
+            dict__string__clz_Torappu_OpenServerV3CheckInGroupData::VT_KEY,
+            "key",
+        );
+        ::flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl ::core::fmt::Debug for dict__string__clz_Torappu_OpenServerV3CheckInGroupData<'_> {
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        let mut ds = f.debug_struct("dict__string__clz_Torappu_OpenServerV3CheckInGroupData");
+        ds.field("key", &self.key());
+        ds.field("value", &self.value());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_OpenServerV3CheckInGroupDataT {
+    pub key: alloc::string::String,
+    pub value: Option<alloc::boxed::Box<clz_Torappu_OpenServerV3CheckInGroupDataT>>,
+}
+impl Default for dict__string__clz_Torappu_OpenServerV3CheckInGroupDataT {
+    fn default() -> Self {
+        Self {
+            key: alloc::string::ToString::to_string(""),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_OpenServerV3CheckInGroupDataT {
+    pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_OpenServerV3CheckInGroupData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_OpenServerV3CheckInGroupData::create(
+            _fbb,
+            &dict__string__clz_Torappu_OpenServerV3CheckInGroupDataArgs { key, value },
+        )
+    }
+}
+pub enum clz_Torappu_OpenServerV3MissionDataOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct clz_Torappu_OpenServerV3MissionData<'a> {
+    pub _tab: ::flatbuffers::Table<'a>,
+}
+
+impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_OpenServerV3MissionData<'a> {
+    type Inner = clz_Torappu_OpenServerV3MissionData<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> clz_Torappu_OpenServerV3MissionData<'a> {
+    pub const VT_ID: ::flatbuffers::VOffsetT = 4;
+    pub const VT_SORTID: ::flatbuffers::VOffsetT = 6;
+    pub const VT_DESCRIPTION: ::flatbuffers::VOffsetT = 8;
+    pub const VT_TYPE_: ::flatbuffers::VOffsetT = 10;
+    pub const VT_OPENSERVERMISSIONTYPE: ::flatbuffers::VOffsetT = 12;
+    pub const VT_MISSIONGROUP: ::flatbuffers::VOffsetT = 14;
+    pub const VT_JUMPTYPE: ::flatbuffers::VOffsetT = 16;
+    pub const VT_JUMPPLACE: ::flatbuffers::VOffsetT = 18;
+    pub const VT_REWARDS: ::flatbuffers::VOffsetT = 20;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+        clz_Torappu_OpenServerV3MissionData { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<
+        'bldr: 'args,
+        'args: 'mut_bldr,
+        'mut_bldr,
+        A: ::flatbuffers::Allocator + 'bldr,
+    >(
+        _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args clz_Torappu_OpenServerV3MissionDataArgs<'args>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_OpenServerV3MissionData<'bldr>> {
+        let mut builder = clz_Torappu_OpenServerV3MissionDataBuilder::new(_fbb);
+        if let Some(x) = args.rewards {
+            builder.add_rewards(x);
+        }
+        if let Some(x) = args.jumpPlace {
+            builder.add_jumpPlace(x);
+        }
+        builder.add_jumpType(args.jumpType);
+        if let Some(x) = args.missionGroup {
+            builder.add_missionGroup(x);
+        }
+        builder.add_openServerMissionType(args.openServerMissionType);
+        builder.add_type_(args.type_);
+        if let Some(x) = args.description {
+            builder.add_description(x);
+        }
+        builder.add_sortId(args.sortId);
+        if let Some(x) = args.id {
+            builder.add_id(x);
+        }
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_OpenServerV3MissionDataT {
+        let id = self.id().map(|x| alloc::string::ToString::to_string(x));
+        let sortId = self.sortId();
+        let description = self
+            .description()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let type_ = self.type_();
+        let openServerMissionType = self.openServerMissionType();
+        let missionGroup = self
+            .missionGroup()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let jumpType = self.jumpType();
+        let jumpPlace = self
+            .jumpPlace()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let rewards = self
+            .rewards()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_OpenServerV3MissionDataT {
+            id,
+            sortId,
+            description,
+            type_,
+            openServerMissionType,
+            missionGroup,
+            jumpType,
+            jumpPlace,
+            rewards,
+        }
+    }
+
+    #[inline]
+    pub fn id(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_OpenServerV3MissionData::VT_ID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn sortId(&self) -> i32 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i32>(clz_Torappu_OpenServerV3MissionData::VT_SORTID, Some(0))
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn description(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_OpenServerV3MissionData::VT_DESCRIPTION,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn type_(&self) -> enum__Torappu_MissionType {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<enum__Torappu_MissionType>(
+                    clz_Torappu_OpenServerV3MissionData::VT_TYPE_,
+                    Some(enum__Torappu_MissionType::UNKNOWN),
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn openServerMissionType(&self) -> enum__Torappu_OpenServerMissionType {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<enum__Torappu_OpenServerMissionType>(
+                    clz_Torappu_OpenServerV3MissionData::VT_OPENSERVERMISSIONTYPE,
+                    Some(enum__Torappu_OpenServerMissionType::NORMAL),
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn missionGroup(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_OpenServerV3MissionData::VT_MISSIONGROUP,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn jumpType(&self) -> enum__Torappu_OpenServerV3JumpType {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<enum__Torappu_OpenServerV3JumpType>(
+                    clz_Torappu_OpenServerV3MissionData::VT_JUMPTYPE,
+                    Some(enum__Torappu_OpenServerV3JumpType::NONE),
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn jumpPlace(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_OpenServerV3MissionData::VT_JUMPPLACE,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn rewards(
+        &self,
+    ) -> Option<
+        ::flatbuffers::Vector<
+            'a,
+            ::flatbuffers::ForwardsUOffset<clz_Torappu_MissionDisplayRewards<'a>>,
+        >,
+    > {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<
+                    'a,
+                    ::flatbuffers::ForwardsUOffset<clz_Torappu_MissionDisplayRewards>,
+                >,
+            >>(clz_Torappu_OpenServerV3MissionData::VT_REWARDS, None)
+        }
+    }
+}
+
+impl ::flatbuffers::Verifiable for clz_Torappu_OpenServerV3MissionData<'_> {
+    #[inline]
+    fn run_verifier(
+        v: &mut ::flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+        v.visit_table(pos)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("id", Self::VT_ID, false)?
+            .visit_field::<i32>("sortId", Self::VT_SORTID, false)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "description",
+                Self::VT_DESCRIPTION,
+                false,
+            )?
+            .visit_field::<enum__Torappu_MissionType>("type_", Self::VT_TYPE_, false)?
+            .visit_field::<enum__Torappu_OpenServerMissionType>(
+                "openServerMissionType",
+                Self::VT_OPENSERVERMISSIONTYPE,
+                false,
+            )?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "missionGroup",
+                Self::VT_MISSIONGROUP,
+                false,
+            )?
+            .visit_field::<enum__Torappu_OpenServerV3JumpType>(
+                "jumpType",
+                Self::VT_JUMPTYPE,
+                false,
+            )?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "jumpPlace",
+                Self::VT_JUMPPLACE,
+                false,
+            )?
+            .visit_field::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<
+                    '_,
+                    ::flatbuffers::ForwardsUOffset<clz_Torappu_MissionDisplayRewards>,
+                >,
+            >>("rewards", Self::VT_REWARDS, false)?
+            .finish();
+        Ok(())
+    }
+}
+pub struct clz_Torappu_OpenServerV3MissionDataArgs<'a> {
+    pub id: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub sortId: i32,
+    pub description: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub type_: enum__Torappu_MissionType,
+    pub openServerMissionType: enum__Torappu_OpenServerMissionType,
+    pub missionGroup: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub jumpType: enum__Torappu_OpenServerV3JumpType,
+    pub jumpPlace: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub rewards: Option<
+        ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<
+                'a,
+                ::flatbuffers::ForwardsUOffset<clz_Torappu_MissionDisplayRewards<'a>>,
+            >,
+        >,
+    >,
+}
+impl<'a> Default for clz_Torappu_OpenServerV3MissionDataArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        clz_Torappu_OpenServerV3MissionDataArgs {
+            id: None,
+            sortId: 0,
+            description: None,
+            type_: enum__Torappu_MissionType::UNKNOWN,
+            openServerMissionType: enum__Torappu_OpenServerMissionType::NORMAL,
+            missionGroup: None,
+            jumpType: enum__Torappu_OpenServerV3JumpType::NONE,
+            jumpPlace: None,
+            rewards: None,
+        }
+    }
+}
+
+pub struct clz_Torappu_OpenServerV3MissionDataBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
+{
+    fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
+    clz_Torappu_OpenServerV3MissionDataBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_id(&mut self, id: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_OpenServerV3MissionData::VT_ID,
+            id,
+        );
+    }
+    #[inline]
+    pub fn add_sortId(&mut self, sortId: i32) {
+        self.fbb_
+            .push_slot::<i32>(clz_Torappu_OpenServerV3MissionData::VT_SORTID, sortId, 0);
+    }
+    #[inline]
+    pub fn add_description(&mut self, description: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_OpenServerV3MissionData::VT_DESCRIPTION,
+            description,
+        );
+    }
+    #[inline]
+    pub fn add_type_(&mut self, type_: enum__Torappu_MissionType) {
+        self.fbb_.push_slot::<enum__Torappu_MissionType>(
+            clz_Torappu_OpenServerV3MissionData::VT_TYPE_,
+            type_,
+            enum__Torappu_MissionType::UNKNOWN,
+        );
+    }
+    #[inline]
+    pub fn add_openServerMissionType(
+        &mut self,
+        openServerMissionType: enum__Torappu_OpenServerMissionType,
+    ) {
+        self.fbb_.push_slot::<enum__Torappu_OpenServerMissionType>(
+            clz_Torappu_OpenServerV3MissionData::VT_OPENSERVERMISSIONTYPE,
+            openServerMissionType,
+            enum__Torappu_OpenServerMissionType::NORMAL,
+        );
+    }
+    #[inline]
+    pub fn add_missionGroup(&mut self, missionGroup: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_OpenServerV3MissionData::VT_MISSIONGROUP,
+            missionGroup,
+        );
+    }
+    #[inline]
+    pub fn add_jumpType(&mut self, jumpType: enum__Torappu_OpenServerV3JumpType) {
+        self.fbb_.push_slot::<enum__Torappu_OpenServerV3JumpType>(
+            clz_Torappu_OpenServerV3MissionData::VT_JUMPTYPE,
+            jumpType,
+            enum__Torappu_OpenServerV3JumpType::NONE,
+        );
+    }
+    #[inline]
+    pub fn add_jumpPlace(&mut self, jumpPlace: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_OpenServerV3MissionData::VT_JUMPPLACE,
+            jumpPlace,
+        );
+    }
+    #[inline]
+    pub fn add_rewards(
+        &mut self,
+        rewards: ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<
+                'b,
+                ::flatbuffers::ForwardsUOffset<clz_Torappu_MissionDisplayRewards<'b>>,
+            >,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_OpenServerV3MissionData::VT_REWARDS,
+            rewards,
+        );
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_OpenServerV3MissionDataBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        clz_Torappu_OpenServerV3MissionDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_OpenServerV3MissionData<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        ::flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl ::core::fmt::Debug for clz_Torappu_OpenServerV3MissionData<'_> {
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        let mut ds = f.debug_struct("clz_Torappu_OpenServerV3MissionData");
+        ds.field("id", &self.id());
+        ds.field("sortId", &self.sortId());
+        ds.field("description", &self.description());
+        ds.field("type_", &self.type_());
+        ds.field("openServerMissionType", &self.openServerMissionType());
+        ds.field("missionGroup", &self.missionGroup());
+        ds.field("jumpType", &self.jumpType());
+        ds.field("jumpPlace", &self.jumpPlace());
+        ds.field("rewards", &self.rewards());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_OpenServerV3MissionDataT {
+    pub id: Option<alloc::string::String>,
+    pub sortId: i32,
+    pub description: Option<alloc::string::String>,
+    pub type_: enum__Torappu_MissionType,
+    pub openServerMissionType: enum__Torappu_OpenServerMissionType,
+    pub missionGroup: Option<alloc::string::String>,
+    pub jumpType: enum__Torappu_OpenServerV3JumpType,
+    pub jumpPlace: Option<alloc::string::String>,
+    pub rewards: Option<alloc::vec::Vec<clz_Torappu_MissionDisplayRewardsT>>,
+}
+impl Default for clz_Torappu_OpenServerV3MissionDataT {
+    fn default() -> Self {
+        Self {
+            id: None,
+            sortId: 0,
+            description: None,
+            type_: enum__Torappu_MissionType::UNKNOWN,
+            openServerMissionType: enum__Torappu_OpenServerMissionType::NORMAL,
+            missionGroup: None,
+            jumpType: enum__Torappu_OpenServerV3JumpType::NONE,
+            jumpPlace: None,
+            rewards: None,
+        }
+    }
+}
+impl clz_Torappu_OpenServerV3MissionDataT {
+    pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_OpenServerV3MissionData<'b>> {
+        let id = self.id.as_ref().map(|x| _fbb.create_string(x));
+        let sortId = self.sortId;
+        let description = self.description.as_ref().map(|x| _fbb.create_string(x));
+        let type_ = self.type_;
+        let openServerMissionType = self.openServerMissionType;
+        let missionGroup = self.missionGroup.as_ref().map(|x| _fbb.create_string(x));
+        let jumpType = self.jumpType;
+        let jumpPlace = self.jumpPlace.as_ref().map(|x| _fbb.create_string(x));
+        let rewards = self.rewards.as_ref().map(|x| {
+            let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_OpenServerV3MissionData::create(
+            _fbb,
+            &clz_Torappu_OpenServerV3MissionDataArgs {
+                id,
+                sortId,
+                description,
+                type_,
+                openServerMissionType,
+                missionGroup,
+                jumpType,
+                jumpPlace,
+                rewards,
+            },
+        )
+    }
+}
+pub enum dict__string__clz_Torappu_OpenServerV3MissionDataOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct dict__string__clz_Torappu_OpenServerV3MissionData<'a> {
+    pub _tab: ::flatbuffers::Table<'a>,
+}
+
+impl<'a> ::flatbuffers::Follow<'a> for dict__string__clz_Torappu_OpenServerV3MissionData<'a> {
+    type Inner = dict__string__clz_Torappu_OpenServerV3MissionData<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> dict__string__clz_Torappu_OpenServerV3MissionData<'a> {
+    pub const VT_KEY: ::flatbuffers::VOffsetT = 4;
+    pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+        dict__string__clz_Torappu_OpenServerV3MissionData { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<
+        'bldr: 'args,
+        'args: 'mut_bldr,
+        'mut_bldr,
+        A: ::flatbuffers::Allocator + 'bldr,
+    >(
+        _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args dict__string__clz_Torappu_OpenServerV3MissionDataArgs<'args>,
+    ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_OpenServerV3MissionData<'bldr>> {
+        let mut builder = dict__string__clz_Torappu_OpenServerV3MissionDataBuilder::new(_fbb);
+        if let Some(x) = args.value {
+            builder.add_value(x);
+        }
+        if let Some(x) = args.key {
+            builder.add_key(x);
+        }
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_OpenServerV3MissionDataT {
+        let key = {
+            let x = self.key();
+            alloc::string::ToString::to_string(x)
+        };
+        let value = self.value().map(|x| alloc::boxed::Box::new(x.unpack()));
+        dict__string__clz_Torappu_OpenServerV3MissionDataT { key, value }
+    }
+
+    #[inline]
+    pub fn key(&self) -> &'a str {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<::flatbuffers::ForwardsUOffset<&str>>(
+                    dict__string__clz_Torappu_OpenServerV3MissionData::VT_KEY,
+                    None,
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn key_compare_less_than(
+        &self,
+        o: &dict__string__clz_Torappu_OpenServerV3MissionData,
+    ) -> bool {
+        self.key() < o.key()
+    }
+
+    #[inline]
+    pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
+        let key = self.key();
+        key.cmp(val)
+    }
+    #[inline]
+    pub fn value(&self) -> Option<clz_Torappu_OpenServerV3MissionData<'a>> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<::flatbuffers::ForwardsUOffset<clz_Torappu_OpenServerV3MissionData>>(
+                    dict__string__clz_Torappu_OpenServerV3MissionData::VT_VALUE,
+                    None,
+                )
+        }
+    }
+}
+
+impl ::flatbuffers::Verifiable for dict__string__clz_Torappu_OpenServerV3MissionData<'_> {
+    #[inline]
+    fn run_verifier(
+        v: &mut ::flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+        v.visit_table(pos)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("key", Self::VT_KEY, true)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_OpenServerV3MissionData>>(
+                "value",
+                Self::VT_VALUE,
+                false,
+            )?
+            .finish();
+        Ok(())
+    }
+}
+pub struct dict__string__clz_Torappu_OpenServerV3MissionDataArgs<'a> {
+    pub key: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub value: Option<::flatbuffers::WIPOffset<clz_Torappu_OpenServerV3MissionData<'a>>>,
+}
+impl<'a> Default for dict__string__clz_Torappu_OpenServerV3MissionDataArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        dict__string__clz_Torappu_OpenServerV3MissionDataArgs {
+            key: None, // required field
+            value: None,
+        }
+    }
+}
+
+pub struct dict__string__clz_Torappu_OpenServerV3MissionDataBuilder<
+    'a: 'b,
+    'b,
+    A: ::flatbuffers::Allocator + 'a,
+> {
+    fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
+    dict__string__clz_Torappu_OpenServerV3MissionDataBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_key(&mut self, key: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            dict__string__clz_Torappu_OpenServerV3MissionData::VT_KEY,
+            key,
+        );
+    }
+    #[inline]
+    pub fn add_value(
+        &mut self,
+        value: ::flatbuffers::WIPOffset<clz_Torappu_OpenServerV3MissionData<'b>>,
+    ) {
+        self.fbb_
+            .push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_OpenServerV3MissionData>>(
+                dict__string__clz_Torappu_OpenServerV3MissionData::VT_VALUE,
+                value,
+            );
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__string__clz_Torappu_OpenServerV3MissionDataBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        dict__string__clz_Torappu_OpenServerV3MissionDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(
+        self,
+    ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_OpenServerV3MissionData<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        self.fbb_.required(
+            o,
+            dict__string__clz_Torappu_OpenServerV3MissionData::VT_KEY,
+            "key",
+        );
+        ::flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl ::core::fmt::Debug for dict__string__clz_Torappu_OpenServerV3MissionData<'_> {
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        let mut ds = f.debug_struct("dict__string__clz_Torappu_OpenServerV3MissionData");
+        ds.field("key", &self.key());
+        ds.field("value", &self.value());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_OpenServerV3MissionDataT {
+    pub key: alloc::string::String,
+    pub value: Option<alloc::boxed::Box<clz_Torappu_OpenServerV3MissionDataT>>,
+}
+impl Default for dict__string__clz_Torappu_OpenServerV3MissionDataT {
+    fn default() -> Self {
+        Self {
+            key: alloc::string::ToString::to_string(""),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_OpenServerV3MissionDataT {
+    pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_OpenServerV3MissionData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_OpenServerV3MissionData::create(
+            _fbb,
+            &dict__string__clz_Torappu_OpenServerV3MissionDataArgs { key, value },
+        )
+    }
+}
+pub enum clz_Torappu_OpenServerV3MissionGroupDataOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct clz_Torappu_OpenServerV3MissionGroupData<'a> {
+    pub _tab: ::flatbuffers::Table<'a>,
+}
+
+impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_OpenServerV3MissionGroupData<'a> {
+    type Inner = clz_Torappu_OpenServerV3MissionGroupData<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> clz_Torappu_OpenServerV3MissionGroupData<'a> {
+    pub const VT_ID: ::flatbuffers::VOffsetT = 4;
+    pub const VT_TYPE_: ::flatbuffers::VOffsetT = 6;
+    pub const VT_SORTID: ::flatbuffers::VOffsetT = 8;
+    pub const VT_TITLE: ::flatbuffers::VOffsetT = 10;
+    pub const VT_PERIOD: ::flatbuffers::VOffsetT = 12;
+    pub const VT_REWARDS: ::flatbuffers::VOffsetT = 14;
+    pub const VT_STARTTS: ::flatbuffers::VOffsetT = 16;
+    pub const VT_ENDTS: ::flatbuffers::VOffsetT = 18;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+        clz_Torappu_OpenServerV3MissionGroupData { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<
+        'bldr: 'args,
+        'args: 'mut_bldr,
+        'mut_bldr,
+        A: ::flatbuffers::Allocator + 'bldr,
+    >(
+        _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args clz_Torappu_OpenServerV3MissionGroupDataArgs<'args>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_OpenServerV3MissionGroupData<'bldr>> {
+        let mut builder = clz_Torappu_OpenServerV3MissionGroupDataBuilder::new(_fbb);
+        builder.add_endTs(args.endTs);
+        builder.add_startTs(args.startTs);
+        if let Some(x) = args.rewards {
+            builder.add_rewards(x);
+        }
+        if let Some(x) = args.period {
+            builder.add_period(x);
+        }
+        if let Some(x) = args.title {
+            builder.add_title(x);
+        }
+        builder.add_sortId(args.sortId);
+        builder.add_type_(args.type_);
+        if let Some(x) = args.id {
+            builder.add_id(x);
+        }
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_OpenServerV3MissionGroupDataT {
+        let id = self.id().map(|x| alloc::string::ToString::to_string(x));
+        let type_ = self.type_();
+        let sortId = self.sortId();
+        let title = self.title().map(|x| alloc::string::ToString::to_string(x));
+        let period = self.period().map(|x| x.into_iter().collect());
+        let rewards = self
+            .rewards()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let startTs = self.startTs();
+        let endTs = self.endTs();
+        clz_Torappu_OpenServerV3MissionGroupDataT {
+            id,
+            type_,
+            sortId,
+            title,
+            period,
+            rewards,
+            startTs,
+            endTs,
+        }
+    }
+
+    #[inline]
+    pub fn id(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_OpenServerV3MissionGroupData::VT_ID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn type_(&self) -> enum__Torappu_MissionType {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<enum__Torappu_MissionType>(
+                    clz_Torappu_OpenServerV3MissionGroupData::VT_TYPE_,
+                    Some(enum__Torappu_MissionType::UNKNOWN),
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn sortId(&self) -> i32 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i32>(clz_Torappu_OpenServerV3MissionGroupData::VT_SORTID, Some(0))
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn title(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_OpenServerV3MissionGroupData::VT_TITLE,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn period(&self) -> Option<::flatbuffers::Vector<'a, i32>> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'a, i32>>>(
+                    clz_Torappu_OpenServerV3MissionGroupData::VT_PERIOD,
+                    None,
+                )
+        }
+    }
+    #[inline]
+    pub fn rewards(
+        &self,
+    ) -> Option<
+        ::flatbuffers::Vector<
+            'a,
+            ::flatbuffers::ForwardsUOffset<clz_Torappu_MissionDisplayRewards<'a>>,
+        >,
+    > {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<
+                    'a,
+                    ::flatbuffers::ForwardsUOffset<clz_Torappu_MissionDisplayRewards>,
+                >,
+            >>(clz_Torappu_OpenServerV3MissionGroupData::VT_REWARDS, None)
+        }
+    }
+    #[inline]
+    pub fn startTs(&self) -> i64 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i64>(
+                    clz_Torappu_OpenServerV3MissionGroupData::VT_STARTTS,
+                    Some(0),
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn endTs(&self) -> i64 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i64>(clz_Torappu_OpenServerV3MissionGroupData::VT_ENDTS, Some(0))
+                .unwrap()
+        }
+    }
+}
+
+impl ::flatbuffers::Verifiable for clz_Torappu_OpenServerV3MissionGroupData<'_> {
+    #[inline]
+    fn run_verifier(
+        v: &mut ::flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+        v.visit_table(pos)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("id", Self::VT_ID, false)?
+            .visit_field::<enum__Torappu_MissionType>("type_", Self::VT_TYPE_, false)?
+            .visit_field::<i32>("sortId", Self::VT_SORTID, false)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("title", Self::VT_TITLE, false)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, i32>>>(
+                "period",
+                Self::VT_PERIOD,
+                false,
+            )?
+            .visit_field::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<
+                    '_,
+                    ::flatbuffers::ForwardsUOffset<clz_Torappu_MissionDisplayRewards>,
+                >,
+            >>("rewards", Self::VT_REWARDS, false)?
+            .visit_field::<i64>("startTs", Self::VT_STARTTS, false)?
+            .visit_field::<i64>("endTs", Self::VT_ENDTS, false)?
+            .finish();
+        Ok(())
+    }
+}
+pub struct clz_Torappu_OpenServerV3MissionGroupDataArgs<'a> {
+    pub id: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub type_: enum__Torappu_MissionType,
+    pub sortId: i32,
+    pub title: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub period: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, i32>>>,
+    pub rewards: Option<
+        ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<
+                'a,
+                ::flatbuffers::ForwardsUOffset<clz_Torappu_MissionDisplayRewards<'a>>,
+            >,
+        >,
+    >,
+    pub startTs: i64,
+    pub endTs: i64,
+}
+impl<'a> Default for clz_Torappu_OpenServerV3MissionGroupDataArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        clz_Torappu_OpenServerV3MissionGroupDataArgs {
+            id: None,
+            type_: enum__Torappu_MissionType::UNKNOWN,
+            sortId: 0,
+            title: None,
+            period: None,
+            rewards: None,
+            startTs: 0,
+            endTs: 0,
+        }
+    }
+}
+
+pub struct clz_Torappu_OpenServerV3MissionGroupDataBuilder<
+    'a: 'b,
+    'b,
+    A: ::flatbuffers::Allocator + 'a,
+> {
+    fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
+    clz_Torappu_OpenServerV3MissionGroupDataBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_id(&mut self, id: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_OpenServerV3MissionGroupData::VT_ID,
+            id,
+        );
+    }
+    #[inline]
+    pub fn add_type_(&mut self, type_: enum__Torappu_MissionType) {
+        self.fbb_.push_slot::<enum__Torappu_MissionType>(
+            clz_Torappu_OpenServerV3MissionGroupData::VT_TYPE_,
+            type_,
+            enum__Torappu_MissionType::UNKNOWN,
+        );
+    }
+    #[inline]
+    pub fn add_sortId(&mut self, sortId: i32) {
+        self.fbb_.push_slot::<i32>(
+            clz_Torappu_OpenServerV3MissionGroupData::VT_SORTID,
+            sortId,
+            0,
+        );
+    }
+    #[inline]
+    pub fn add_title(&mut self, title: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_OpenServerV3MissionGroupData::VT_TITLE,
+            title,
+        );
+    }
+    #[inline]
+    pub fn add_period(&mut self, period: ::flatbuffers::WIPOffset<::flatbuffers::Vector<'b, i32>>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_OpenServerV3MissionGroupData::VT_PERIOD,
+            period,
+        );
+    }
+    #[inline]
+    pub fn add_rewards(
+        &mut self,
+        rewards: ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<
+                'b,
+                ::flatbuffers::ForwardsUOffset<clz_Torappu_MissionDisplayRewards<'b>>,
+            >,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_OpenServerV3MissionGroupData::VT_REWARDS,
+            rewards,
+        );
+    }
+    #[inline]
+    pub fn add_startTs(&mut self, startTs: i64) {
+        self.fbb_.push_slot::<i64>(
+            clz_Torappu_OpenServerV3MissionGroupData::VT_STARTTS,
+            startTs,
+            0,
+        );
+    }
+    #[inline]
+    pub fn add_endTs(&mut self, endTs: i64) {
+        self.fbb_
+            .push_slot::<i64>(clz_Torappu_OpenServerV3MissionGroupData::VT_ENDTS, endTs, 0);
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_OpenServerV3MissionGroupDataBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        clz_Torappu_OpenServerV3MissionGroupDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_OpenServerV3MissionGroupData<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        ::flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl ::core::fmt::Debug for clz_Torappu_OpenServerV3MissionGroupData<'_> {
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        let mut ds = f.debug_struct("clz_Torappu_OpenServerV3MissionGroupData");
+        ds.field("id", &self.id());
+        ds.field("type_", &self.type_());
+        ds.field("sortId", &self.sortId());
+        ds.field("title", &self.title());
+        ds.field("period", &self.period());
+        ds.field("rewards", &self.rewards());
+        ds.field("startTs", &self.startTs());
+        ds.field("endTs", &self.endTs());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_OpenServerV3MissionGroupDataT {
+    pub id: Option<alloc::string::String>,
+    pub type_: enum__Torappu_MissionType,
+    pub sortId: i32,
+    pub title: Option<alloc::string::String>,
+    pub period: Option<alloc::vec::Vec<i32>>,
+    pub rewards: Option<alloc::vec::Vec<clz_Torappu_MissionDisplayRewardsT>>,
+    pub startTs: i64,
+    pub endTs: i64,
+}
+impl Default for clz_Torappu_OpenServerV3MissionGroupDataT {
+    fn default() -> Self {
+        Self {
+            id: None,
+            type_: enum__Torappu_MissionType::UNKNOWN,
+            sortId: 0,
+            title: None,
+            period: None,
+            rewards: None,
+            startTs: 0,
+            endTs: 0,
+        }
+    }
+}
+impl clz_Torappu_OpenServerV3MissionGroupDataT {
+    pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_OpenServerV3MissionGroupData<'b>> {
+        let id = self.id.as_ref().map(|x| _fbb.create_string(x));
+        let type_ = self.type_;
+        let sortId = self.sortId;
+        let title = self.title.as_ref().map(|x| _fbb.create_string(x));
+        let period = self.period.as_ref().map(|x| _fbb.create_vector(x));
+        let rewards = self.rewards.as_ref().map(|x| {
+            let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let startTs = self.startTs;
+        let endTs = self.endTs;
+        clz_Torappu_OpenServerV3MissionGroupData::create(
+            _fbb,
+            &clz_Torappu_OpenServerV3MissionGroupDataArgs {
+                id,
+                type_,
+                sortId,
+                title,
+                period,
+                rewards,
+                startTs,
+                endTs,
+            },
+        )
+    }
+}
+pub enum dict__string__clz_Torappu_OpenServerV3MissionGroupDataOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct dict__string__clz_Torappu_OpenServerV3MissionGroupData<'a> {
+    pub _tab: ::flatbuffers::Table<'a>,
+}
+
+impl<'a> ::flatbuffers::Follow<'a> for dict__string__clz_Torappu_OpenServerV3MissionGroupData<'a> {
+    type Inner = dict__string__clz_Torappu_OpenServerV3MissionGroupData<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> dict__string__clz_Torappu_OpenServerV3MissionGroupData<'a> {
+    pub const VT_KEY: ::flatbuffers::VOffsetT = 4;
+    pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+        dict__string__clz_Torappu_OpenServerV3MissionGroupData { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<
+        'bldr: 'args,
+        'args: 'mut_bldr,
+        'mut_bldr,
+        A: ::flatbuffers::Allocator + 'bldr,
+    >(
+        _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args dict__string__clz_Torappu_OpenServerV3MissionGroupDataArgs<'args>,
+    ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_OpenServerV3MissionGroupData<'bldr>>
+    {
+        let mut builder = dict__string__clz_Torappu_OpenServerV3MissionGroupDataBuilder::new(_fbb);
+        if let Some(x) = args.value {
+            builder.add_value(x);
+        }
+        if let Some(x) = args.key {
+            builder.add_key(x);
+        }
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_OpenServerV3MissionGroupDataT {
+        let key = {
+            let x = self.key();
+            alloc::string::ToString::to_string(x)
+        };
+        let value = self.value().map(|x| alloc::boxed::Box::new(x.unpack()));
+        dict__string__clz_Torappu_OpenServerV3MissionGroupDataT { key, value }
+    }
+
+    #[inline]
+    pub fn key(&self) -> &'a str {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<::flatbuffers::ForwardsUOffset<&str>>(
+                    dict__string__clz_Torappu_OpenServerV3MissionGroupData::VT_KEY,
+                    None,
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn key_compare_less_than(
+        &self,
+        o: &dict__string__clz_Torappu_OpenServerV3MissionGroupData,
+    ) -> bool {
+        self.key() < o.key()
+    }
+
+    #[inline]
+    pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
+        let key = self.key();
+        key.cmp(val)
+    }
+    #[inline]
+    pub fn value(&self) -> Option<clz_Torappu_OpenServerV3MissionGroupData<'a>> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<::flatbuffers::ForwardsUOffset<clz_Torappu_OpenServerV3MissionGroupData>>(
+                    dict__string__clz_Torappu_OpenServerV3MissionGroupData::VT_VALUE,
+                    None,
+                )
+        }
+    }
+}
+
+impl ::flatbuffers::Verifiable for dict__string__clz_Torappu_OpenServerV3MissionGroupData<'_> {
+    #[inline]
+    fn run_verifier(
+        v: &mut ::flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+        v.visit_table(pos)?
+     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("key", Self::VT_KEY, true)?
+     .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_OpenServerV3MissionGroupData>>("value", Self::VT_VALUE, false)?
+     .finish();
+        Ok(())
+    }
+}
+pub struct dict__string__clz_Torappu_OpenServerV3MissionGroupDataArgs<'a> {
+    pub key: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub value: Option<::flatbuffers::WIPOffset<clz_Torappu_OpenServerV3MissionGroupData<'a>>>,
+}
+impl<'a> Default for dict__string__clz_Torappu_OpenServerV3MissionGroupDataArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        dict__string__clz_Torappu_OpenServerV3MissionGroupDataArgs {
+            key: None, // required field
+            value: None,
+        }
+    }
+}
+
+pub struct dict__string__clz_Torappu_OpenServerV3MissionGroupDataBuilder<
+    'a: 'b,
+    'b,
+    A: ::flatbuffers::Allocator + 'a,
+> {
+    fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
+    dict__string__clz_Torappu_OpenServerV3MissionGroupDataBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_key(&mut self, key: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            dict__string__clz_Torappu_OpenServerV3MissionGroupData::VT_KEY,
+            key,
+        );
+    }
+    #[inline]
+    pub fn add_value(
+        &mut self,
+        value: ::flatbuffers::WIPOffset<clz_Torappu_OpenServerV3MissionGroupData<'b>>,
+    ) {
+        self.fbb_
+            .push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_OpenServerV3MissionGroupData>>(
+                dict__string__clz_Torappu_OpenServerV3MissionGroupData::VT_VALUE,
+                value,
+            );
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__string__clz_Torappu_OpenServerV3MissionGroupDataBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        dict__string__clz_Torappu_OpenServerV3MissionGroupDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(
+        self,
+    ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_OpenServerV3MissionGroupData<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        self.fbb_.required(
+            o,
+            dict__string__clz_Torappu_OpenServerV3MissionGroupData::VT_KEY,
+            "key",
+        );
+        ::flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl ::core::fmt::Debug for dict__string__clz_Torappu_OpenServerV3MissionGroupData<'_> {
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        let mut ds = f.debug_struct("dict__string__clz_Torappu_OpenServerV3MissionGroupData");
+        ds.field("key", &self.key());
+        ds.field("value", &self.value());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_OpenServerV3MissionGroupDataT {
+    pub key: alloc::string::String,
+    pub value: Option<alloc::boxed::Box<clz_Torappu_OpenServerV3MissionGroupDataT>>,
+}
+impl Default for dict__string__clz_Torappu_OpenServerV3MissionGroupDataT {
+    fn default() -> Self {
+        Self {
+            key: alloc::string::ToString::to_string(""),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_OpenServerV3MissionGroupDataT {
+    pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_OpenServerV3MissionGroupData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_OpenServerV3MissionGroupData::create(
+            _fbb,
+            &dict__string__clz_Torappu_OpenServerV3MissionGroupDataArgs { key, value },
+        )
+    }
+}
+pub enum clz_Torappu_OpenServerV3MissionTypeDescDataOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct clz_Torappu_OpenServerV3MissionTypeDescData<'a> {
+    pub _tab: ::flatbuffers::Table<'a>,
+}
+
+impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_OpenServerV3MissionTypeDescData<'a> {
+    type Inner = clz_Torappu_OpenServerV3MissionTypeDescData<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> clz_Torappu_OpenServerV3MissionTypeDescData<'a> {
+    pub const VT_MISSIONTYPE: ::flatbuffers::VOffsetT = 4;
+    pub const VT_DESC: ::flatbuffers::VOffsetT = 6;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+        clz_Torappu_OpenServerV3MissionTypeDescData { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<
+        'bldr: 'args,
+        'args: 'mut_bldr,
+        'mut_bldr,
+        A: ::flatbuffers::Allocator + 'bldr,
+    >(
+        _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args clz_Torappu_OpenServerV3MissionTypeDescDataArgs<'args>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_OpenServerV3MissionTypeDescData<'bldr>> {
+        let mut builder = clz_Torappu_OpenServerV3MissionTypeDescDataBuilder::new(_fbb);
+        if let Some(x) = args.desc {
+            builder.add_desc(x);
+        }
+        builder.add_missionType(args.missionType);
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_OpenServerV3MissionTypeDescDataT {
+        let missionType = self.missionType();
+        let desc = self.desc().map(|x| alloc::string::ToString::to_string(x));
+        clz_Torappu_OpenServerV3MissionTypeDescDataT { missionType, desc }
+    }
+
+    #[inline]
+    pub fn missionType(&self) -> enum__Torappu_OpenServerMissionType {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<enum__Torappu_OpenServerMissionType>(
+                    clz_Torappu_OpenServerV3MissionTypeDescData::VT_MISSIONTYPE,
+                    Some(enum__Torappu_OpenServerMissionType::NORMAL),
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn desc(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_OpenServerV3MissionTypeDescData::VT_DESC,
+                None,
+            )
+        }
+    }
+}
+
+impl ::flatbuffers::Verifiable for clz_Torappu_OpenServerV3MissionTypeDescData<'_> {
+    #[inline]
+    fn run_verifier(
+        v: &mut ::flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+        v.visit_table(pos)?
+            .visit_field::<enum__Torappu_OpenServerMissionType>(
+                "missionType",
+                Self::VT_MISSIONTYPE,
+                false,
+            )?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("desc", Self::VT_DESC, false)?
+            .finish();
+        Ok(())
+    }
+}
+pub struct clz_Torappu_OpenServerV3MissionTypeDescDataArgs<'a> {
+    pub missionType: enum__Torappu_OpenServerMissionType,
+    pub desc: Option<::flatbuffers::WIPOffset<&'a str>>,
+}
+impl<'a> Default for clz_Torappu_OpenServerV3MissionTypeDescDataArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        clz_Torappu_OpenServerV3MissionTypeDescDataArgs {
+            missionType: enum__Torappu_OpenServerMissionType::NORMAL,
+            desc: None,
+        }
+    }
+}
+
+pub struct clz_Torappu_OpenServerV3MissionTypeDescDataBuilder<
+    'a: 'b,
+    'b,
+    A: ::flatbuffers::Allocator + 'a,
+> {
+    fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
+    clz_Torappu_OpenServerV3MissionTypeDescDataBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_missionType(&mut self, missionType: enum__Torappu_OpenServerMissionType) {
+        self.fbb_.push_slot::<enum__Torappu_OpenServerMissionType>(
+            clz_Torappu_OpenServerV3MissionTypeDescData::VT_MISSIONTYPE,
+            missionType,
+            enum__Torappu_OpenServerMissionType::NORMAL,
+        );
+    }
+    #[inline]
+    pub fn add_desc(&mut self, desc: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_OpenServerV3MissionTypeDescData::VT_DESC,
+            desc,
+        );
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_OpenServerV3MissionTypeDescDataBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        clz_Torappu_OpenServerV3MissionTypeDescDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(
+        self,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_OpenServerV3MissionTypeDescData<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        ::flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl ::core::fmt::Debug for clz_Torappu_OpenServerV3MissionTypeDescData<'_> {
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        let mut ds = f.debug_struct("clz_Torappu_OpenServerV3MissionTypeDescData");
+        ds.field("missionType", &self.missionType());
+        ds.field("desc", &self.desc());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_OpenServerV3MissionTypeDescDataT {
+    pub missionType: enum__Torappu_OpenServerMissionType,
+    pub desc: Option<alloc::string::String>,
+}
+impl Default for clz_Torappu_OpenServerV3MissionTypeDescDataT {
+    fn default() -> Self {
+        Self {
+            missionType: enum__Torappu_OpenServerMissionType::NORMAL,
+            desc: None,
+        }
+    }
+}
+impl clz_Torappu_OpenServerV3MissionTypeDescDataT {
+    pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_OpenServerV3MissionTypeDescData<'b>> {
+        let missionType = self.missionType;
+        let desc = self.desc.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_OpenServerV3MissionTypeDescData::create(
+            _fbb,
+            &clz_Torappu_OpenServerV3MissionTypeDescDataArgs { missionType, desc },
+        )
+    }
+}
+pub enum dict__string__clz_Torappu_OpenServerV3MissionTypeDescDataOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct dict__string__clz_Torappu_OpenServerV3MissionTypeDescData<'a> {
+    pub _tab: ::flatbuffers::Table<'a>,
+}
+
+impl<'a> ::flatbuffers::Follow<'a>
+    for dict__string__clz_Torappu_OpenServerV3MissionTypeDescData<'a>
+{
+    type Inner = dict__string__clz_Torappu_OpenServerV3MissionTypeDescData<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> dict__string__clz_Torappu_OpenServerV3MissionTypeDescData<'a> {
+    pub const VT_KEY: ::flatbuffers::VOffsetT = 4;
+    pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+        dict__string__clz_Torappu_OpenServerV3MissionTypeDescData { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<
+        'bldr: 'args,
+        'args: 'mut_bldr,
+        'mut_bldr,
+        A: ::flatbuffers::Allocator + 'bldr,
+    >(
+        _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args dict__string__clz_Torappu_OpenServerV3MissionTypeDescDataArgs<'args>,
+    ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_OpenServerV3MissionTypeDescData<'bldr>>
+    {
+        let mut builder =
+            dict__string__clz_Torappu_OpenServerV3MissionTypeDescDataBuilder::new(_fbb);
+        if let Some(x) = args.value {
+            builder.add_value(x);
+        }
+        if let Some(x) = args.key {
+            builder.add_key(x);
+        }
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_OpenServerV3MissionTypeDescDataT {
+        let key = {
+            let x = self.key();
+            alloc::string::ToString::to_string(x)
+        };
+        let value = self.value().map(|x| alloc::boxed::Box::new(x.unpack()));
+        dict__string__clz_Torappu_OpenServerV3MissionTypeDescDataT { key, value }
+    }
+
+    #[inline]
+    pub fn key(&self) -> &'a str {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<::flatbuffers::ForwardsUOffset<&str>>(
+                    dict__string__clz_Torappu_OpenServerV3MissionTypeDescData::VT_KEY,
+                    None,
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn key_compare_less_than(
+        &self,
+        o: &dict__string__clz_Torappu_OpenServerV3MissionTypeDescData,
+    ) -> bool {
+        self.key() < o.key()
+    }
+
+    #[inline]
+    pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
+        let key = self.key();
+        key.cmp(val)
+    }
+    #[inline]
+    pub fn value(&self) -> Option<clz_Torappu_OpenServerV3MissionTypeDescData<'a>> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<::flatbuffers::ForwardsUOffset<clz_Torappu_OpenServerV3MissionTypeDescData>>(
+                    dict__string__clz_Torappu_OpenServerV3MissionTypeDescData::VT_VALUE,
+                    None,
+                )
+        }
+    }
+}
+
+impl ::flatbuffers::Verifiable for dict__string__clz_Torappu_OpenServerV3MissionTypeDescData<'_> {
+    #[inline]
+    fn run_verifier(
+        v: &mut ::flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+        v.visit_table(pos)?
+     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("key", Self::VT_KEY, true)?
+     .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_OpenServerV3MissionTypeDescData>>("value", Self::VT_VALUE, false)?
+     .finish();
+        Ok(())
+    }
+}
+pub struct dict__string__clz_Torappu_OpenServerV3MissionTypeDescDataArgs<'a> {
+    pub key: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub value: Option<::flatbuffers::WIPOffset<clz_Torappu_OpenServerV3MissionTypeDescData<'a>>>,
+}
+impl<'a> Default for dict__string__clz_Torappu_OpenServerV3MissionTypeDescDataArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        dict__string__clz_Torappu_OpenServerV3MissionTypeDescDataArgs {
+            key: None, // required field
+            value: None,
+        }
+    }
+}
+
+pub struct dict__string__clz_Torappu_OpenServerV3MissionTypeDescDataBuilder<
+    'a: 'b,
+    'b,
+    A: ::flatbuffers::Allocator + 'a,
+> {
+    fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
+    dict__string__clz_Torappu_OpenServerV3MissionTypeDescDataBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_key(&mut self, key: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            dict__string__clz_Torappu_OpenServerV3MissionTypeDescData::VT_KEY,
+            key,
+        );
+    }
+    #[inline]
+    pub fn add_value(
+        &mut self,
+        value: ::flatbuffers::WIPOffset<clz_Torappu_OpenServerV3MissionTypeDescData<'b>>,
+    ) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_OpenServerV3MissionTypeDescData>>(dict__string__clz_Torappu_OpenServerV3MissionTypeDescData::VT_VALUE, value);
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__string__clz_Torappu_OpenServerV3MissionTypeDescDataBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        dict__string__clz_Torappu_OpenServerV3MissionTypeDescDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(
+        self,
+    ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_OpenServerV3MissionTypeDescData<'a>>
+    {
+        let o = self.fbb_.end_table(self.start_);
+        self.fbb_.required(
+            o,
+            dict__string__clz_Torappu_OpenServerV3MissionTypeDescData::VT_KEY,
+            "key",
+        );
+        ::flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl ::core::fmt::Debug for dict__string__clz_Torappu_OpenServerV3MissionTypeDescData<'_> {
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        let mut ds = f.debug_struct("dict__string__clz_Torappu_OpenServerV3MissionTypeDescData");
+        ds.field("key", &self.key());
+        ds.field("value", &self.value());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_OpenServerV3MissionTypeDescDataT {
+    pub key: alloc::string::String,
+    pub value: Option<alloc::boxed::Box<clz_Torappu_OpenServerV3MissionTypeDescDataT>>,
+}
+impl Default for dict__string__clz_Torappu_OpenServerV3MissionTypeDescDataT {
+    fn default() -> Self {
+        Self {
+            key: alloc::string::ToString::to_string(""),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_OpenServerV3MissionTypeDescDataT {
+    pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_OpenServerV3MissionTypeDescData<'b>>
+    {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_OpenServerV3MissionTypeDescData::create(
+            _fbb,
+            &dict__string__clz_Torappu_OpenServerV3MissionTypeDescDataArgs { key, value },
+        )
+    }
+}
+pub enum clz_Torappu_OpenServerV3MilestoneItemDataOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct clz_Torappu_OpenServerV3MilestoneItemData<'a> {
+    pub _tab: ::flatbuffers::Table<'a>,
+}
+
+impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_OpenServerV3MilestoneItemData<'a> {
+    type Inner = clz_Torappu_OpenServerV3MilestoneItemData<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> clz_Torappu_OpenServerV3MilestoneItemData<'a> {
+    pub const VT_LEVEL: ::flatbuffers::VOffsetT = 4;
+    pub const VT_REWARD: ::flatbuffers::VOffsetT = 6;
+    pub const VT_POINTID: ::flatbuffers::VOffsetT = 8;
+    pub const VT_POINTCNT: ::flatbuffers::VOffsetT = 10;
+    pub const VT_ISBONUS: ::flatbuffers::VOffsetT = 12;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+        clz_Torappu_OpenServerV3MilestoneItemData { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<
+        'bldr: 'args,
+        'args: 'mut_bldr,
+        'mut_bldr,
+        A: ::flatbuffers::Allocator + 'bldr,
+    >(
+        _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args clz_Torappu_OpenServerV3MilestoneItemDataArgs<'args>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_OpenServerV3MilestoneItemData<'bldr>> {
+        let mut builder = clz_Torappu_OpenServerV3MilestoneItemDataBuilder::new(_fbb);
+        builder.add_pointCnt(args.pointCnt);
+        if let Some(x) = args.pointId {
+            builder.add_pointId(x);
+        }
+        if let Some(x) = args.reward {
+            builder.add_reward(x);
+        }
+        builder.add_level(args.level);
+        builder.add_isBonus(args.isBonus);
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_OpenServerV3MilestoneItemDataT {
+        let level = self.level();
+        let reward = self.reward().map(|x| alloc::boxed::Box::new(x.unpack()));
+        let pointId = self
+            .pointId()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let pointCnt = self.pointCnt();
+        let isBonus = self.isBonus();
+        clz_Torappu_OpenServerV3MilestoneItemDataT {
+            level,
+            reward,
+            pointId,
+            pointCnt,
+            isBonus,
+        }
+    }
+
+    #[inline]
+    pub fn level(&self) -> i32 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i32>(clz_Torappu_OpenServerV3MilestoneItemData::VT_LEVEL, Some(0))
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn reward(&self) -> Option<clz_Torappu_ItemBundle<'a>> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<::flatbuffers::ForwardsUOffset<clz_Torappu_ItemBundle>>(
+                    clz_Torappu_OpenServerV3MilestoneItemData::VT_REWARD,
+                    None,
+                )
+        }
+    }
+    #[inline]
+    pub fn pointId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_OpenServerV3MilestoneItemData::VT_POINTID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn pointCnt(&self) -> i32 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i32>(
+                    clz_Torappu_OpenServerV3MilestoneItemData::VT_POINTCNT,
+                    Some(0),
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn isBonus(&self) -> bool {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<bool>(
+                    clz_Torappu_OpenServerV3MilestoneItemData::VT_ISBONUS,
+                    Some(false),
+                )
+                .unwrap()
+        }
+    }
+}
+
+impl ::flatbuffers::Verifiable for clz_Torappu_OpenServerV3MilestoneItemData<'_> {
+    #[inline]
+    fn run_verifier(
+        v: &mut ::flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+        v.visit_table(pos)?
+            .visit_field::<i32>("level", Self::VT_LEVEL, false)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_ItemBundle>>(
+                "reward",
+                Self::VT_REWARD,
+                false,
+            )?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "pointId",
+                Self::VT_POINTID,
+                false,
+            )?
+            .visit_field::<i32>("pointCnt", Self::VT_POINTCNT, false)?
+            .visit_field::<bool>("isBonus", Self::VT_ISBONUS, false)?
+            .finish();
+        Ok(())
+    }
+}
+pub struct clz_Torappu_OpenServerV3MilestoneItemDataArgs<'a> {
+    pub level: i32,
+    pub reward: Option<::flatbuffers::WIPOffset<clz_Torappu_ItemBundle<'a>>>,
+    pub pointId: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub pointCnt: i32,
+    pub isBonus: bool,
+}
+impl<'a> Default for clz_Torappu_OpenServerV3MilestoneItemDataArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        clz_Torappu_OpenServerV3MilestoneItemDataArgs {
+            level: 0,
+            reward: None,
+            pointId: None,
+            pointCnt: 0,
+            isBonus: false,
+        }
+    }
+}
+
+pub struct clz_Torappu_OpenServerV3MilestoneItemDataBuilder<
+    'a: 'b,
+    'b,
+    A: ::flatbuffers::Allocator + 'a,
+> {
+    fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
+    clz_Torappu_OpenServerV3MilestoneItemDataBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_level(&mut self, level: i32) {
+        self.fbb_.push_slot::<i32>(
+            clz_Torappu_OpenServerV3MilestoneItemData::VT_LEVEL,
+            level,
+            0,
+        );
+    }
+    #[inline]
+    pub fn add_reward(&mut self, reward: ::flatbuffers::WIPOffset<clz_Torappu_ItemBundle<'b>>) {
+        self.fbb_
+            .push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_ItemBundle>>(
+                clz_Torappu_OpenServerV3MilestoneItemData::VT_REWARD,
+                reward,
+            );
+    }
+    #[inline]
+    pub fn add_pointId(&mut self, pointId: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_OpenServerV3MilestoneItemData::VT_POINTID,
+            pointId,
+        );
+    }
+    #[inline]
+    pub fn add_pointCnt(&mut self, pointCnt: i32) {
+        self.fbb_.push_slot::<i32>(
+            clz_Torappu_OpenServerV3MilestoneItemData::VT_POINTCNT,
+            pointCnt,
+            0,
+        );
+    }
+    #[inline]
+    pub fn add_isBonus(&mut self, isBonus: bool) {
+        self.fbb_.push_slot::<bool>(
+            clz_Torappu_OpenServerV3MilestoneItemData::VT_ISBONUS,
+            isBonus,
+            false,
+        );
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_OpenServerV3MilestoneItemDataBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        clz_Torappu_OpenServerV3MilestoneItemDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_OpenServerV3MilestoneItemData<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        ::flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl ::core::fmt::Debug for clz_Torappu_OpenServerV3MilestoneItemData<'_> {
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        let mut ds = f.debug_struct("clz_Torappu_OpenServerV3MilestoneItemData");
+        ds.field("level", &self.level());
+        ds.field("reward", &self.reward());
+        ds.field("pointId", &self.pointId());
+        ds.field("pointCnt", &self.pointCnt());
+        ds.field("isBonus", &self.isBonus());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_OpenServerV3MilestoneItemDataT {
+    pub level: i32,
+    pub reward: Option<alloc::boxed::Box<clz_Torappu_ItemBundleT>>,
+    pub pointId: Option<alloc::string::String>,
+    pub pointCnt: i32,
+    pub isBonus: bool,
+}
+impl Default for clz_Torappu_OpenServerV3MilestoneItemDataT {
+    fn default() -> Self {
+        Self {
+            level: 0,
+            reward: None,
+            pointId: None,
+            pointCnt: 0,
+            isBonus: false,
+        }
+    }
+}
+impl clz_Torappu_OpenServerV3MilestoneItemDataT {
+    pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_OpenServerV3MilestoneItemData<'b>> {
+        let level = self.level;
+        let reward = self.reward.as_ref().map(|x| x.pack(_fbb));
+        let pointId = self.pointId.as_ref().map(|x| _fbb.create_string(x));
+        let pointCnt = self.pointCnt;
+        let isBonus = self.isBonus;
+        clz_Torappu_OpenServerV3MilestoneItemData::create(
+            _fbb,
+            &clz_Torappu_OpenServerV3MilestoneItemDataArgs {
+                level,
+                reward,
+                pointId,
+                pointCnt,
+                isBonus,
+            },
+        )
+    }
+}
+pub enum clz_Torappu_OpenServerV3MilestoneGroupDataOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct clz_Torappu_OpenServerV3MilestoneGroupData<'a> {
+    pub _tab: ::flatbuffers::Table<'a>,
+}
+
+impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_OpenServerV3MilestoneGroupData<'a> {
+    type Inner = clz_Torappu_OpenServerV3MilestoneGroupData<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> clz_Torappu_OpenServerV3MilestoneGroupData<'a> {
+    pub const VT_GROUPID: ::flatbuffers::VOffsetT = 4;
+    pub const VT_REWARDIMGID: ::flatbuffers::VOffsetT = 6;
+    pub const VT_REWARDITEMID: ::flatbuffers::VOffsetT = 8;
+    pub const VT_REWARDPOINTID: ::flatbuffers::VOffsetT = 10;
+    pub const VT_ITEMLIST: ::flatbuffers::VOffsetT = 12;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+        clz_Torappu_OpenServerV3MilestoneGroupData { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<
+        'bldr: 'args,
+        'args: 'mut_bldr,
+        'mut_bldr,
+        A: ::flatbuffers::Allocator + 'bldr,
+    >(
+        _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args clz_Torappu_OpenServerV3MilestoneGroupDataArgs<'args>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_OpenServerV3MilestoneGroupData<'bldr>> {
+        let mut builder = clz_Torappu_OpenServerV3MilestoneGroupDataBuilder::new(_fbb);
+        if let Some(x) = args.itemList {
+            builder.add_itemList(x);
+        }
+        if let Some(x) = args.rewardPointId {
+            builder.add_rewardPointId(x);
+        }
+        if let Some(x) = args.rewardItemId {
+            builder.add_rewardItemId(x);
+        }
+        if let Some(x) = args.rewardImgId {
+            builder.add_rewardImgId(x);
+        }
+        if let Some(x) = args.groupId {
+            builder.add_groupId(x);
+        }
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_OpenServerV3MilestoneGroupDataT {
+        let groupId = self
+            .groupId()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let rewardImgId = self
+            .rewardImgId()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let rewardItemId = self
+            .rewardItemId()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let rewardPointId = self
+            .rewardPointId()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let itemList = self
+            .itemList()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_OpenServerV3MilestoneGroupDataT {
+            groupId,
+            rewardImgId,
+            rewardItemId,
+            rewardPointId,
+            itemList,
+        }
+    }
+
+    #[inline]
+    pub fn groupId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_OpenServerV3MilestoneGroupData::VT_GROUPID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn rewardImgId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_OpenServerV3MilestoneGroupData::VT_REWARDIMGID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn rewardItemId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_OpenServerV3MilestoneGroupData::VT_REWARDITEMID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn rewardPointId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_OpenServerV3MilestoneGroupData::VT_REWARDPOINTID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn itemList(
+        &self,
+    ) -> Option<
+        ::flatbuffers::Vector<
+            'a,
+            ::flatbuffers::ForwardsUOffset<clz_Torappu_OpenServerV3MilestoneItemData<'a>>,
+        >,
+    > {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<
+                    'a,
+                    ::flatbuffers::ForwardsUOffset<clz_Torappu_OpenServerV3MilestoneItemData>,
+                >,
+            >>(
+                clz_Torappu_OpenServerV3MilestoneGroupData::VT_ITEMLIST,
+                None,
+            )
+        }
+    }
+}
+
+impl ::flatbuffers::Verifiable for clz_Torappu_OpenServerV3MilestoneGroupData<'_> {
+    #[inline]
+    fn run_verifier(
+        v: &mut ::flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+        v.visit_table(pos)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "groupId",
+                Self::VT_GROUPID,
+                false,
+            )?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "rewardImgId",
+                Self::VT_REWARDIMGID,
+                false,
+            )?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "rewardItemId",
+                Self::VT_REWARDITEMID,
+                false,
+            )?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "rewardPointId",
+                Self::VT_REWARDPOINTID,
+                false,
+            )?
+            .visit_field::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<
+                    '_,
+                    ::flatbuffers::ForwardsUOffset<clz_Torappu_OpenServerV3MilestoneItemData>,
+                >,
+            >>("itemList", Self::VT_ITEMLIST, false)?
+            .finish();
+        Ok(())
+    }
+}
+pub struct clz_Torappu_OpenServerV3MilestoneGroupDataArgs<'a> {
+    pub groupId: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub rewardImgId: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub rewardItemId: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub rewardPointId: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub itemList: Option<
+        ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<
+                'a,
+                ::flatbuffers::ForwardsUOffset<clz_Torappu_OpenServerV3MilestoneItemData<'a>>,
+            >,
+        >,
+    >,
+}
+impl<'a> Default for clz_Torappu_OpenServerV3MilestoneGroupDataArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        clz_Torappu_OpenServerV3MilestoneGroupDataArgs {
+            groupId: None,
+            rewardImgId: None,
+            rewardItemId: None,
+            rewardPointId: None,
+            itemList: None,
+        }
+    }
+}
+
+pub struct clz_Torappu_OpenServerV3MilestoneGroupDataBuilder<
+    'a: 'b,
+    'b,
+    A: ::flatbuffers::Allocator + 'a,
+> {
+    fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
+    clz_Torappu_OpenServerV3MilestoneGroupDataBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_groupId(&mut self, groupId: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_OpenServerV3MilestoneGroupData::VT_GROUPID,
+            groupId,
+        );
+    }
+    #[inline]
+    pub fn add_rewardImgId(&mut self, rewardImgId: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_OpenServerV3MilestoneGroupData::VT_REWARDIMGID,
+            rewardImgId,
+        );
+    }
+    #[inline]
+    pub fn add_rewardItemId(&mut self, rewardItemId: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_OpenServerV3MilestoneGroupData::VT_REWARDITEMID,
+            rewardItemId,
+        );
+    }
+    #[inline]
+    pub fn add_rewardPointId(&mut self, rewardPointId: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_OpenServerV3MilestoneGroupData::VT_REWARDPOINTID,
+            rewardPointId,
+        );
+    }
+    #[inline]
+    pub fn add_itemList(
+        &mut self,
+        itemList: ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<
+                'b,
+                ::flatbuffers::ForwardsUOffset<clz_Torappu_OpenServerV3MilestoneItemData<'b>>,
+            >,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_OpenServerV3MilestoneGroupData::VT_ITEMLIST,
+            itemList,
+        );
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_OpenServerV3MilestoneGroupDataBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        clz_Torappu_OpenServerV3MilestoneGroupDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(
+        self,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_OpenServerV3MilestoneGroupData<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        ::flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl ::core::fmt::Debug for clz_Torappu_OpenServerV3MilestoneGroupData<'_> {
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        let mut ds = f.debug_struct("clz_Torappu_OpenServerV3MilestoneGroupData");
+        ds.field("groupId", &self.groupId());
+        ds.field("rewardImgId", &self.rewardImgId());
+        ds.field("rewardItemId", &self.rewardItemId());
+        ds.field("rewardPointId", &self.rewardPointId());
+        ds.field("itemList", &self.itemList());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_OpenServerV3MilestoneGroupDataT {
+    pub groupId: Option<alloc::string::String>,
+    pub rewardImgId: Option<alloc::string::String>,
+    pub rewardItemId: Option<alloc::string::String>,
+    pub rewardPointId: Option<alloc::string::String>,
+    pub itemList: Option<alloc::vec::Vec<clz_Torappu_OpenServerV3MilestoneItemDataT>>,
+}
+impl Default for clz_Torappu_OpenServerV3MilestoneGroupDataT {
+    fn default() -> Self {
+        Self {
+            groupId: None,
+            rewardImgId: None,
+            rewardItemId: None,
+            rewardPointId: None,
+            itemList: None,
+        }
+    }
+}
+impl clz_Torappu_OpenServerV3MilestoneGroupDataT {
+    pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_OpenServerV3MilestoneGroupData<'b>> {
+        let groupId = self.groupId.as_ref().map(|x| _fbb.create_string(x));
+        let rewardImgId = self.rewardImgId.as_ref().map(|x| _fbb.create_string(x));
+        let rewardItemId = self.rewardItemId.as_ref().map(|x| _fbb.create_string(x));
+        let rewardPointId = self.rewardPointId.as_ref().map(|x| _fbb.create_string(x));
+        let itemList = self.itemList.as_ref().map(|x| {
+            let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_OpenServerV3MilestoneGroupData::create(
+            _fbb,
+            &clz_Torappu_OpenServerV3MilestoneGroupDataArgs {
+                groupId,
+                rewardImgId,
+                rewardItemId,
+                rewardPointId,
+                itemList,
+            },
+        )
+    }
+}
+pub enum dict__string__clz_Torappu_OpenServerV3MilestoneGroupDataOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct dict__string__clz_Torappu_OpenServerV3MilestoneGroupData<'a> {
+    pub _tab: ::flatbuffers::Table<'a>,
+}
+
+impl<'a> ::flatbuffers::Follow<'a>
+    for dict__string__clz_Torappu_OpenServerV3MilestoneGroupData<'a>
+{
+    type Inner = dict__string__clz_Torappu_OpenServerV3MilestoneGroupData<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> dict__string__clz_Torappu_OpenServerV3MilestoneGroupData<'a> {
+    pub const VT_KEY: ::flatbuffers::VOffsetT = 4;
+    pub const VT_VALUE: ::flatbuffers::VOffsetT = 6;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+        dict__string__clz_Torappu_OpenServerV3MilestoneGroupData { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<
+        'bldr: 'args,
+        'args: 'mut_bldr,
+        'mut_bldr,
+        A: ::flatbuffers::Allocator + 'bldr,
+    >(
+        _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args dict__string__clz_Torappu_OpenServerV3MilestoneGroupDataArgs<'args>,
+    ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_OpenServerV3MilestoneGroupData<'bldr>>
+    {
+        let mut builder =
+            dict__string__clz_Torappu_OpenServerV3MilestoneGroupDataBuilder::new(_fbb);
+        if let Some(x) = args.value {
+            builder.add_value(x);
+        }
+        if let Some(x) = args.key {
+            builder.add_key(x);
+        }
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_OpenServerV3MilestoneGroupDataT {
+        let key = {
+            let x = self.key();
+            alloc::string::ToString::to_string(x)
+        };
+        let value = self.value().map(|x| alloc::boxed::Box::new(x.unpack()));
+        dict__string__clz_Torappu_OpenServerV3MilestoneGroupDataT { key, value }
+    }
+
+    #[inline]
+    pub fn key(&self) -> &'a str {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<::flatbuffers::ForwardsUOffset<&str>>(
+                    dict__string__clz_Torappu_OpenServerV3MilestoneGroupData::VT_KEY,
+                    None,
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn key_compare_less_than(
+        &self,
+        o: &dict__string__clz_Torappu_OpenServerV3MilestoneGroupData,
+    ) -> bool {
+        self.key() < o.key()
+    }
+
+    #[inline]
+    pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
+        let key = self.key();
+        key.cmp(val)
+    }
+    #[inline]
+    pub fn value(&self) -> Option<clz_Torappu_OpenServerV3MilestoneGroupData<'a>> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<::flatbuffers::ForwardsUOffset<clz_Torappu_OpenServerV3MilestoneGroupData>>(
+                    dict__string__clz_Torappu_OpenServerV3MilestoneGroupData::VT_VALUE,
+                    None,
+                )
+        }
+    }
+}
+
+impl ::flatbuffers::Verifiable for dict__string__clz_Torappu_OpenServerV3MilestoneGroupData<'_> {
+    #[inline]
+    fn run_verifier(
+        v: &mut ::flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+        v.visit_table(pos)?
+     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("key", Self::VT_KEY, true)?
+     .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_OpenServerV3MilestoneGroupData>>("value", Self::VT_VALUE, false)?
+     .finish();
+        Ok(())
+    }
+}
+pub struct dict__string__clz_Torappu_OpenServerV3MilestoneGroupDataArgs<'a> {
+    pub key: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub value: Option<::flatbuffers::WIPOffset<clz_Torappu_OpenServerV3MilestoneGroupData<'a>>>,
+}
+impl<'a> Default for dict__string__clz_Torappu_OpenServerV3MilestoneGroupDataArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        dict__string__clz_Torappu_OpenServerV3MilestoneGroupDataArgs {
+            key: None, // required field
+            value: None,
+        }
+    }
+}
+
+pub struct dict__string__clz_Torappu_OpenServerV3MilestoneGroupDataBuilder<
+    'a: 'b,
+    'b,
+    A: ::flatbuffers::Allocator + 'a,
+> {
+    fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
+    dict__string__clz_Torappu_OpenServerV3MilestoneGroupDataBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_key(&mut self, key: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            dict__string__clz_Torappu_OpenServerV3MilestoneGroupData::VT_KEY,
+            key,
+        );
+    }
+    #[inline]
+    pub fn add_value(
+        &mut self,
+        value: ::flatbuffers::WIPOffset<clz_Torappu_OpenServerV3MilestoneGroupData<'b>>,
+    ) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_OpenServerV3MilestoneGroupData>>(dict__string__clz_Torappu_OpenServerV3MilestoneGroupData::VT_VALUE, value);
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__string__clz_Torappu_OpenServerV3MilestoneGroupDataBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        dict__string__clz_Torappu_OpenServerV3MilestoneGroupDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(
+        self,
+    ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_OpenServerV3MilestoneGroupData<'a>>
+    {
+        let o = self.fbb_.end_table(self.start_);
+        self.fbb_.required(
+            o,
+            dict__string__clz_Torappu_OpenServerV3MilestoneGroupData::VT_KEY,
+            "key",
+        );
+        ::flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl ::core::fmt::Debug for dict__string__clz_Torappu_OpenServerV3MilestoneGroupData<'_> {
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        let mut ds = f.debug_struct("dict__string__clz_Torappu_OpenServerV3MilestoneGroupData");
+        ds.field("key", &self.key());
+        ds.field("value", &self.value());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_OpenServerV3MilestoneGroupDataT {
+    pub key: alloc::string::String,
+    pub value: Option<alloc::boxed::Box<clz_Torappu_OpenServerV3MilestoneGroupDataT>>,
+}
+impl Default for dict__string__clz_Torappu_OpenServerV3MilestoneGroupDataT {
+    fn default() -> Self {
+        Self {
+            key: alloc::string::ToString::to_string(""),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_OpenServerV3MilestoneGroupDataT {
+    pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> ::flatbuffers::WIPOffset<dict__string__clz_Torappu_OpenServerV3MilestoneGroupData<'b>>
+    {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_OpenServerV3MilestoneGroupData::create(
+            _fbb,
+            &dict__string__clz_Torappu_OpenServerV3MilestoneGroupDataArgs { key, value },
+        )
+    }
+}
+pub enum clz_Torappu_OpenServerV3GiftPackageDataOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct clz_Torappu_OpenServerV3GiftPackageData<'a> {
+    pub _tab: ::flatbuffers::Table<'a>,
+}
+
+impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_OpenServerV3GiftPackageData<'a> {
+    type Inner = clz_Torappu_OpenServerV3GiftPackageData<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> clz_Torappu_OpenServerV3GiftPackageData<'a> {
+    pub const VT_GIFTPACKAGEID: ::flatbuffers::VOffsetT = 4;
+    pub const VT_GOODID: ::flatbuffers::VOffsetT = 6;
+    pub const VT_GIFTPACKAGEPIC: ::flatbuffers::VOffsetT = 8;
+    pub const VT_SORTID: ::flatbuffers::VOffsetT = 10;
+    pub const VT_ISLIMIT: ::flatbuffers::VOffsetT = 12;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+        clz_Torappu_OpenServerV3GiftPackageData { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<
+        'bldr: 'args,
+        'args: 'mut_bldr,
+        'mut_bldr,
+        A: ::flatbuffers::Allocator + 'bldr,
+    >(
+        _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args clz_Torappu_OpenServerV3GiftPackageDataArgs<'args>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_OpenServerV3GiftPackageData<'bldr>> {
+        let mut builder = clz_Torappu_OpenServerV3GiftPackageDataBuilder::new(_fbb);
+        builder.add_sortId(args.sortId);
+        if let Some(x) = args.giftPackagePic {
+            builder.add_giftPackagePic(x);
+        }
+        if let Some(x) = args.goodId {
+            builder.add_goodId(x);
+        }
+        if let Some(x) = args.giftPackageId {
+            builder.add_giftPackageId(x);
+        }
+        builder.add_isLimit(args.isLimit);
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_OpenServerV3GiftPackageDataT {
+        let giftPackageId = self
+            .giftPackageId()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let goodId = self.goodId().map(|x| alloc::string::ToString::to_string(x));
+        let giftPackagePic = self
+            .giftPackagePic()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let sortId = self.sortId();
+        let isLimit = self.isLimit();
+        clz_Torappu_OpenServerV3GiftPackageDataT {
+            giftPackageId,
+            goodId,
+            giftPackagePic,
+            sortId,
+            isLimit,
+        }
+    }
+
+    #[inline]
+    pub fn giftPackageId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_OpenServerV3GiftPackageData::VT_GIFTPACKAGEID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn goodId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_OpenServerV3GiftPackageData::VT_GOODID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn giftPackagePic(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_OpenServerV3GiftPackageData::VT_GIFTPACKAGEPIC,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn sortId(&self) -> i32 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i32>(clz_Torappu_OpenServerV3GiftPackageData::VT_SORTID, Some(0))
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn isLimit(&self) -> bool {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<bool>(
+                    clz_Torappu_OpenServerV3GiftPackageData::VT_ISLIMIT,
+                    Some(false),
+                )
+                .unwrap()
+        }
+    }
+}
+
+impl ::flatbuffers::Verifiable for clz_Torappu_OpenServerV3GiftPackageData<'_> {
+    #[inline]
+    fn run_verifier(
+        v: &mut ::flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+        v.visit_table(pos)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "giftPackageId",
+                Self::VT_GIFTPACKAGEID,
+                false,
+            )?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("goodId", Self::VT_GOODID, false)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "giftPackagePic",
+                Self::VT_GIFTPACKAGEPIC,
+                false,
+            )?
+            .visit_field::<i32>("sortId", Self::VT_SORTID, false)?
+            .visit_field::<bool>("isLimit", Self::VT_ISLIMIT, false)?
+            .finish();
+        Ok(())
+    }
+}
+pub struct clz_Torappu_OpenServerV3GiftPackageDataArgs<'a> {
+    pub giftPackageId: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub goodId: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub giftPackagePic: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub sortId: i32,
+    pub isLimit: bool,
+}
+impl<'a> Default for clz_Torappu_OpenServerV3GiftPackageDataArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        clz_Torappu_OpenServerV3GiftPackageDataArgs {
+            giftPackageId: None,
+            goodId: None,
+            giftPackagePic: None,
+            sortId: 0,
+            isLimit: false,
+        }
+    }
+}
+
+pub struct clz_Torappu_OpenServerV3GiftPackageDataBuilder<
+    'a: 'b,
+    'b,
+    A: ::flatbuffers::Allocator + 'a,
+> {
+    fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
+    clz_Torappu_OpenServerV3GiftPackageDataBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_giftPackageId(&mut self, giftPackageId: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_OpenServerV3GiftPackageData::VT_GIFTPACKAGEID,
+            giftPackageId,
+        );
+    }
+    #[inline]
+    pub fn add_goodId(&mut self, goodId: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_OpenServerV3GiftPackageData::VT_GOODID,
+            goodId,
+        );
+    }
+    #[inline]
+    pub fn add_giftPackagePic(&mut self, giftPackagePic: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_OpenServerV3GiftPackageData::VT_GIFTPACKAGEPIC,
+            giftPackagePic,
+        );
+    }
+    #[inline]
+    pub fn add_sortId(&mut self, sortId: i32) {
+        self.fbb_.push_slot::<i32>(
+            clz_Torappu_OpenServerV3GiftPackageData::VT_SORTID,
+            sortId,
+            0,
+        );
+    }
+    #[inline]
+    pub fn add_isLimit(&mut self, isLimit: bool) {
+        self.fbb_.push_slot::<bool>(
+            clz_Torappu_OpenServerV3GiftPackageData::VT_ISLIMIT,
+            isLimit,
+            false,
+        );
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_OpenServerV3GiftPackageDataBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        clz_Torappu_OpenServerV3GiftPackageDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_OpenServerV3GiftPackageData<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        ::flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl ::core::fmt::Debug for clz_Torappu_OpenServerV3GiftPackageData<'_> {
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        let mut ds = f.debug_struct("clz_Torappu_OpenServerV3GiftPackageData");
+        ds.field("giftPackageId", &self.giftPackageId());
+        ds.field("goodId", &self.goodId());
+        ds.field("giftPackagePic", &self.giftPackagePic());
+        ds.field("sortId", &self.sortId());
+        ds.field("isLimit", &self.isLimit());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_OpenServerV3GiftPackageDataT {
+    pub giftPackageId: Option<alloc::string::String>,
+    pub goodId: Option<alloc::string::String>,
+    pub giftPackagePic: Option<alloc::string::String>,
+    pub sortId: i32,
+    pub isLimit: bool,
+}
+impl Default for clz_Torappu_OpenServerV3GiftPackageDataT {
+    fn default() -> Self {
+        Self {
+            giftPackageId: None,
+            goodId: None,
+            giftPackagePic: None,
+            sortId: 0,
+            isLimit: false,
+        }
+    }
+}
+impl clz_Torappu_OpenServerV3GiftPackageDataT {
+    pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_OpenServerV3GiftPackageData<'b>> {
+        let giftPackageId = self.giftPackageId.as_ref().map(|x| _fbb.create_string(x));
+        let goodId = self.goodId.as_ref().map(|x| _fbb.create_string(x));
+        let giftPackagePic = self.giftPackagePic.as_ref().map(|x| _fbb.create_string(x));
+        let sortId = self.sortId;
+        let isLimit = self.isLimit;
+        clz_Torappu_OpenServerV3GiftPackageData::create(
+            _fbb,
+            &clz_Torappu_OpenServerV3GiftPackageDataArgs {
+                giftPackageId,
+                goodId,
+                giftPackagePic,
+                sortId,
+                isLimit,
+            },
+        )
+    }
+}
+pub enum clz_Torappu_OpenServerV3StageCampaignDataOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct clz_Torappu_OpenServerV3StageCampaignData<'a> {
+    pub _tab: ::flatbuffers::Table<'a>,
+}
+
+impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_OpenServerV3StageCampaignData<'a> {
+    type Inner = clz_Torappu_OpenServerV3StageCampaignData<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> clz_Torappu_OpenServerV3StageCampaignData<'a> {
+    pub const VT_STAGEID: ::flatbuffers::VOffsetT = 4;
+    pub const VT_SORTID: ::flatbuffers::VOffsetT = 6;
+    pub const VT_IMGID: ::flatbuffers::VOffsetT = 8;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+        clz_Torappu_OpenServerV3StageCampaignData { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<
+        'bldr: 'args,
+        'args: 'mut_bldr,
+        'mut_bldr,
+        A: ::flatbuffers::Allocator + 'bldr,
+    >(
+        _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args clz_Torappu_OpenServerV3StageCampaignDataArgs<'args>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_OpenServerV3StageCampaignData<'bldr>> {
+        let mut builder = clz_Torappu_OpenServerV3StageCampaignDataBuilder::new(_fbb);
+        if let Some(x) = args.imgId {
+            builder.add_imgId(x);
+        }
+        builder.add_sortId(args.sortId);
+        if let Some(x) = args.stageId {
+            builder.add_stageId(x);
+        }
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_OpenServerV3StageCampaignDataT {
+        let stageId = self
+            .stageId()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let sortId = self.sortId();
+        let imgId = self.imgId().map(|x| alloc::string::ToString::to_string(x));
+        clz_Torappu_OpenServerV3StageCampaignDataT {
+            stageId,
+            sortId,
+            imgId,
+        }
+    }
+
+    #[inline]
+    pub fn stageId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_OpenServerV3StageCampaignData::VT_STAGEID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn sortId(&self) -> i32 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i32>(
+                    clz_Torappu_OpenServerV3StageCampaignData::VT_SORTID,
+                    Some(0),
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn imgId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_OpenServerV3StageCampaignData::VT_IMGID,
+                None,
+            )
+        }
+    }
+}
+
+impl ::flatbuffers::Verifiable for clz_Torappu_OpenServerV3StageCampaignData<'_> {
+    #[inline]
+    fn run_verifier(
+        v: &mut ::flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+        v.visit_table(pos)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "stageId",
+                Self::VT_STAGEID,
+                false,
+            )?
+            .visit_field::<i32>("sortId", Self::VT_SORTID, false)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("imgId", Self::VT_IMGID, false)?
+            .finish();
+        Ok(())
+    }
+}
+pub struct clz_Torappu_OpenServerV3StageCampaignDataArgs<'a> {
+    pub stageId: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub sortId: i32,
+    pub imgId: Option<::flatbuffers::WIPOffset<&'a str>>,
+}
+impl<'a> Default for clz_Torappu_OpenServerV3StageCampaignDataArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        clz_Torappu_OpenServerV3StageCampaignDataArgs {
+            stageId: None,
+            sortId: 0,
+            imgId: None,
+        }
+    }
+}
+
+pub struct clz_Torappu_OpenServerV3StageCampaignDataBuilder<
+    'a: 'b,
+    'b,
+    A: ::flatbuffers::Allocator + 'a,
+> {
+    fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
+    clz_Torappu_OpenServerV3StageCampaignDataBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_stageId(&mut self, stageId: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_OpenServerV3StageCampaignData::VT_STAGEID,
+            stageId,
+        );
+    }
+    #[inline]
+    pub fn add_sortId(&mut self, sortId: i32) {
+        self.fbb_.push_slot::<i32>(
+            clz_Torappu_OpenServerV3StageCampaignData::VT_SORTID,
+            sortId,
+            0,
+        );
+    }
+    #[inline]
+    pub fn add_imgId(&mut self, imgId: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_OpenServerV3StageCampaignData::VT_IMGID,
+            imgId,
+        );
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_OpenServerV3StageCampaignDataBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        clz_Torappu_OpenServerV3StageCampaignDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_OpenServerV3StageCampaignData<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        ::flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl ::core::fmt::Debug for clz_Torappu_OpenServerV3StageCampaignData<'_> {
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        let mut ds = f.debug_struct("clz_Torappu_OpenServerV3StageCampaignData");
+        ds.field("stageId", &self.stageId());
+        ds.field("sortId", &self.sortId());
+        ds.field("imgId", &self.imgId());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_OpenServerV3StageCampaignDataT {
+    pub stageId: Option<alloc::string::String>,
+    pub sortId: i32,
+    pub imgId: Option<alloc::string::String>,
+}
+impl Default for clz_Torappu_OpenServerV3StageCampaignDataT {
+    fn default() -> Self {
+        Self {
+            stageId: None,
+            sortId: 0,
+            imgId: None,
+        }
+    }
+}
+impl clz_Torappu_OpenServerV3StageCampaignDataT {
+    pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_OpenServerV3StageCampaignData<'b>> {
+        let stageId = self.stageId.as_ref().map(|x| _fbb.create_string(x));
+        let sortId = self.sortId;
+        let imgId = self.imgId.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_OpenServerV3StageCampaignData::create(
+            _fbb,
+            &clz_Torappu_OpenServerV3StageCampaignDataArgs {
+                stageId,
+                sortId,
+                imgId,
+            },
+        )
+    }
+}
+pub enum clz_Torappu_OpenServerV3StoryRecommendDataOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct clz_Torappu_OpenServerV3StoryRecommendData<'a> {
+    pub _tab: ::flatbuffers::Table<'a>,
+}
+
+impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_OpenServerV3StoryRecommendData<'a> {
+    type Inner = clz_Torappu_OpenServerV3StoryRecommendData<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> clz_Torappu_OpenServerV3StoryRecommendData<'a> {
+    pub const VT_STORYSETID: ::flatbuffers::VOffsetT = 4;
+    pub const VT_SORTID: ::flatbuffers::VOffsetT = 6;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+        clz_Torappu_OpenServerV3StoryRecommendData { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<
+        'bldr: 'args,
+        'args: 'mut_bldr,
+        'mut_bldr,
+        A: ::flatbuffers::Allocator + 'bldr,
+    >(
+        _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args clz_Torappu_OpenServerV3StoryRecommendDataArgs<'args>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_OpenServerV3StoryRecommendData<'bldr>> {
+        let mut builder = clz_Torappu_OpenServerV3StoryRecommendDataBuilder::new(_fbb);
+        builder.add_sortId(args.sortId);
+        if let Some(x) = args.storySetId {
+            builder.add_storySetId(x);
+        }
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_OpenServerV3StoryRecommendDataT {
+        let storySetId = self
+            .storySetId()
+            .map(|x| alloc::string::ToString::to_string(x));
+        let sortId = self.sortId();
+        clz_Torappu_OpenServerV3StoryRecommendDataT { storySetId, sortId }
+    }
+
+    #[inline]
+    pub fn storySetId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_OpenServerV3StoryRecommendData::VT_STORYSETID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn sortId(&self) -> i32 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i32>(
+                    clz_Torappu_OpenServerV3StoryRecommendData::VT_SORTID,
+                    Some(0),
+                )
+                .unwrap()
+        }
+    }
+}
+
+impl ::flatbuffers::Verifiable for clz_Torappu_OpenServerV3StoryRecommendData<'_> {
+    #[inline]
+    fn run_verifier(
+        v: &mut ::flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+        v.visit_table(pos)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "storySetId",
+                Self::VT_STORYSETID,
+                false,
+            )?
+            .visit_field::<i32>("sortId", Self::VT_SORTID, false)?
+            .finish();
+        Ok(())
+    }
+}
+pub struct clz_Torappu_OpenServerV3StoryRecommendDataArgs<'a> {
+    pub storySetId: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub sortId: i32,
+}
+impl<'a> Default for clz_Torappu_OpenServerV3StoryRecommendDataArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        clz_Torappu_OpenServerV3StoryRecommendDataArgs {
+            storySetId: None,
+            sortId: 0,
+        }
+    }
+}
+
+pub struct clz_Torappu_OpenServerV3StoryRecommendDataBuilder<
+    'a: 'b,
+    'b,
+    A: ::flatbuffers::Allocator + 'a,
+> {
+    fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
+    clz_Torappu_OpenServerV3StoryRecommendDataBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_storySetId(&mut self, storySetId: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_OpenServerV3StoryRecommendData::VT_STORYSETID,
+            storySetId,
+        );
+    }
+    #[inline]
+    pub fn add_sortId(&mut self, sortId: i32) {
+        self.fbb_.push_slot::<i32>(
+            clz_Torappu_OpenServerV3StoryRecommendData::VT_SORTID,
+            sortId,
+            0,
+        );
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_OpenServerV3StoryRecommendDataBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        clz_Torappu_OpenServerV3StoryRecommendDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(
+        self,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_OpenServerV3StoryRecommendData<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        ::flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl ::core::fmt::Debug for clz_Torappu_OpenServerV3StoryRecommendData<'_> {
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        let mut ds = f.debug_struct("clz_Torappu_OpenServerV3StoryRecommendData");
+        ds.field("storySetId", &self.storySetId());
+        ds.field("sortId", &self.sortId());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_OpenServerV3StoryRecommendDataT {
+    pub storySetId: Option<alloc::string::String>,
+    pub sortId: i32,
+}
+impl Default for clz_Torappu_OpenServerV3StoryRecommendDataT {
+    fn default() -> Self {
+        Self {
+            storySetId: None,
+            sortId: 0,
+        }
+    }
+}
+impl clz_Torappu_OpenServerV3StoryRecommendDataT {
+    pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_OpenServerV3StoryRecommendData<'b>> {
+        let storySetId = self.storySetId.as_ref().map(|x| _fbb.create_string(x));
+        let sortId = self.sortId;
+        clz_Torappu_OpenServerV3StoryRecommendData::create(
+            _fbb,
+            &clz_Torappu_OpenServerV3StoryRecommendDataArgs { storySetId, sortId },
+        )
+    }
+}
+pub enum clz_Torappu_OpenServerV3DataOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct clz_Torappu_OpenServerV3Data<'a> {
+    pub _tab: ::flatbuffers::Table<'a>,
+}
+
+impl<'a> ::flatbuffers::Follow<'a> for clz_Torappu_OpenServerV3Data<'a> {
+    type Inner = clz_Torappu_OpenServerV3Data<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> clz_Torappu_OpenServerV3Data<'a> {
+    pub const VT_CHECKINDATA: ::flatbuffers::VOffsetT = 4;
+    pub const VT_MISSIONDATA: ::flatbuffers::VOffsetT = 6;
+    pub const VT_MISSIONGROUPDATA: ::flatbuffers::VOffsetT = 8;
+    pub const VT_MISSIONTYPEDESCDATA: ::flatbuffers::VOffsetT = 10;
+    pub const VT_MILESTONEGROUPDATA: ::flatbuffers::VOffsetT = 12;
+    pub const VT_GIFTPACKAGELIST: ::flatbuffers::VOffsetT = 14;
+    pub const VT_STAGECAMPAIGNDATA: ::flatbuffers::VOffsetT = 16;
+    pub const VT_STORYRECOMMENDDATA: ::flatbuffers::VOffsetT = 18;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+        clz_Torappu_OpenServerV3Data { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<
+        'bldr: 'args,
+        'args: 'mut_bldr,
+        'mut_bldr,
+        A: ::flatbuffers::Allocator + 'bldr,
+    >(
+        _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args clz_Torappu_OpenServerV3DataArgs<'args>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_OpenServerV3Data<'bldr>> {
+        let mut builder = clz_Torappu_OpenServerV3DataBuilder::new(_fbb);
+        if let Some(x) = args.storyRecommendData {
+            builder.add_storyRecommendData(x);
+        }
+        if let Some(x) = args.stageCampaignData {
+            builder.add_stageCampaignData(x);
+        }
+        if let Some(x) = args.giftPackageList {
+            builder.add_giftPackageList(x);
+        }
+        if let Some(x) = args.milestoneGroupData {
+            builder.add_milestoneGroupData(x);
+        }
+        if let Some(x) = args.missionTypeDescData {
+            builder.add_missionTypeDescData(x);
+        }
+        if let Some(x) = args.missionGroupData {
+            builder.add_missionGroupData(x);
+        }
+        if let Some(x) = args.missionData {
+            builder.add_missionData(x);
+        }
+        if let Some(x) = args.checkInData {
+            builder.add_checkInData(x);
+        }
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_OpenServerV3DataT {
+        let checkInData = self
+            .checkInData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let missionData = self
+            .missionData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let missionGroupData = self
+            .missionGroupData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let missionTypeDescData = self
+            .missionTypeDescData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let milestoneGroupData = self
+            .milestoneGroupData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let giftPackageList = self
+            .giftPackageList()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let stageCampaignData = self
+            .stageCampaignData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let storyRecommendData = self
+            .storyRecommendData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_OpenServerV3DataT {
+            checkInData,
+            missionData,
+            missionGroupData,
+            missionTypeDescData,
+            milestoneGroupData,
+            giftPackageList,
+            stageCampaignData,
+            storyRecommendData,
+        }
+    }
+
+    #[inline]
+    pub fn checkInData(
+        &self,
+    ) -> Option<
+        ::flatbuffers::Vector<
+            'a,
+            ::flatbuffers::ForwardsUOffset<
+                dict__string__clz_Torappu_OpenServerV3CheckInGroupData<'a>,
+            >,
+        >,
+    > {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<
+                    'a,
+                    ::flatbuffers::ForwardsUOffset<
+                        dict__string__clz_Torappu_OpenServerV3CheckInGroupData,
+                    >,
+                >,
+            >>(clz_Torappu_OpenServerV3Data::VT_CHECKINDATA, None)
+        }
+    }
+    #[inline]
+    pub fn missionData(
+        &self,
+    ) -> Option<
+        ::flatbuffers::Vector<
+            'a,
+            ::flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_OpenServerV3MissionData<'a>>,
+        >,
+    > {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<
+                    'a,
+                    ::flatbuffers::ForwardsUOffset<
+                        dict__string__clz_Torappu_OpenServerV3MissionData,
+                    >,
+                >,
+            >>(clz_Torappu_OpenServerV3Data::VT_MISSIONDATA, None)
+        }
+    }
+    #[inline]
+    pub fn missionGroupData(
+        &self,
+    ) -> Option<
+        ::flatbuffers::Vector<
+            'a,
+            ::flatbuffers::ForwardsUOffset<
+                dict__string__clz_Torappu_OpenServerV3MissionGroupData<'a>,
+            >,
+        >,
+    > {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<
+                    'a,
+                    ::flatbuffers::ForwardsUOffset<
+                        dict__string__clz_Torappu_OpenServerV3MissionGroupData,
+                    >,
+                >,
+            >>(clz_Torappu_OpenServerV3Data::VT_MISSIONGROUPDATA, None)
+        }
+    }
+    #[inline]
+    pub fn missionTypeDescData(
+        &self,
+    ) -> Option<
+        ::flatbuffers::Vector<
+            'a,
+            ::flatbuffers::ForwardsUOffset<
+                dict__string__clz_Torappu_OpenServerV3MissionTypeDescData<'a>,
+            >,
+        >,
+    > {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<
+                    'a,
+                    ::flatbuffers::ForwardsUOffset<
+                        dict__string__clz_Torappu_OpenServerV3MissionTypeDescData,
+                    >,
+                >,
+            >>(clz_Torappu_OpenServerV3Data::VT_MISSIONTYPEDESCDATA, None)
+        }
+    }
+    #[inline]
+    pub fn milestoneGroupData(
+        &self,
+    ) -> Option<
+        ::flatbuffers::Vector<
+            'a,
+            ::flatbuffers::ForwardsUOffset<
+                dict__string__clz_Torappu_OpenServerV3MilestoneGroupData<'a>,
+            >,
+        >,
+    > {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<
+                    'a,
+                    ::flatbuffers::ForwardsUOffset<
+                        dict__string__clz_Torappu_OpenServerV3MilestoneGroupData,
+                    >,
+                >,
+            >>(clz_Torappu_OpenServerV3Data::VT_MILESTONEGROUPDATA, None)
+        }
+    }
+    #[inline]
+    pub fn giftPackageList(
+        &self,
+    ) -> Option<
+        ::flatbuffers::Vector<
+            'a,
+            ::flatbuffers::ForwardsUOffset<clz_Torappu_OpenServerV3GiftPackageData<'a>>,
+        >,
+    > {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<
+                    'a,
+                    ::flatbuffers::ForwardsUOffset<clz_Torappu_OpenServerV3GiftPackageData>,
+                >,
+            >>(clz_Torappu_OpenServerV3Data::VT_GIFTPACKAGELIST, None)
+        }
+    }
+    #[inline]
+    pub fn stageCampaignData(
+        &self,
+    ) -> Option<
+        ::flatbuffers::Vector<
+            'a,
+            ::flatbuffers::ForwardsUOffset<clz_Torappu_OpenServerV3StageCampaignData<'a>>,
+        >,
+    > {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<
+                    'a,
+                    ::flatbuffers::ForwardsUOffset<clz_Torappu_OpenServerV3StageCampaignData>,
+                >,
+            >>(clz_Torappu_OpenServerV3Data::VT_STAGECAMPAIGNDATA, None)
+        }
+    }
+    #[inline]
+    pub fn storyRecommendData(
+        &self,
+    ) -> Option<
+        ::flatbuffers::Vector<
+            'a,
+            ::flatbuffers::ForwardsUOffset<clz_Torappu_OpenServerV3StoryRecommendData<'a>>,
+        >,
+    > {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<
+                    'a,
+                    ::flatbuffers::ForwardsUOffset<clz_Torappu_OpenServerV3StoryRecommendData>,
+                >,
+            >>(clz_Torappu_OpenServerV3Data::VT_STORYRECOMMENDDATA, None)
+        }
+    }
+}
+
+impl ::flatbuffers::Verifiable for clz_Torappu_OpenServerV3Data<'_> {
+    #[inline]
+    fn run_verifier(
+        v: &mut ::flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+        v.visit_table(pos)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<
+                    '_,
+                    ::flatbuffers::ForwardsUOffset<
+                        dict__string__clz_Torappu_OpenServerV3CheckInGroupData,
+                    >,
+                >,
+            >>("checkInData", Self::VT_CHECKINDATA, false)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<
+                    '_,
+                    ::flatbuffers::ForwardsUOffset<
+                        dict__string__clz_Torappu_OpenServerV3MissionData,
+                    >,
+                >,
+            >>("missionData", Self::VT_MISSIONDATA, false)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<
+                    '_,
+                    ::flatbuffers::ForwardsUOffset<
+                        dict__string__clz_Torappu_OpenServerV3MissionGroupData,
+                    >,
+                >,
+            >>("missionGroupData", Self::VT_MISSIONGROUPDATA, false)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<
+                    '_,
+                    ::flatbuffers::ForwardsUOffset<
+                        dict__string__clz_Torappu_OpenServerV3MissionTypeDescData,
+                    >,
+                >,
+            >>("missionTypeDescData", Self::VT_MISSIONTYPEDESCDATA, false)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<
+                    '_,
+                    ::flatbuffers::ForwardsUOffset<
+                        dict__string__clz_Torappu_OpenServerV3MilestoneGroupData,
+                    >,
+                >,
+            >>("milestoneGroupData", Self::VT_MILESTONEGROUPDATA, false)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<
+                    '_,
+                    ::flatbuffers::ForwardsUOffset<clz_Torappu_OpenServerV3GiftPackageData>,
+                >,
+            >>("giftPackageList", Self::VT_GIFTPACKAGELIST, false)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<
+                    '_,
+                    ::flatbuffers::ForwardsUOffset<clz_Torappu_OpenServerV3StageCampaignData>,
+                >,
+            >>("stageCampaignData", Self::VT_STAGECAMPAIGNDATA, false)?
+            .visit_field::<::flatbuffers::ForwardsUOffset<
+                ::flatbuffers::Vector<
+                    '_,
+                    ::flatbuffers::ForwardsUOffset<clz_Torappu_OpenServerV3StoryRecommendData>,
+                >,
+            >>("storyRecommendData", Self::VT_STORYRECOMMENDDATA, false)?
+            .finish();
+        Ok(())
+    }
+}
+pub struct clz_Torappu_OpenServerV3DataArgs<'a> {
+    pub checkInData: Option<
+        ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<
+                'a,
+                ::flatbuffers::ForwardsUOffset<
+                    dict__string__clz_Torappu_OpenServerV3CheckInGroupData<'a>,
+                >,
+            >,
+        >,
+    >,
+    pub missionData: Option<
+        ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<
+                'a,
+                ::flatbuffers::ForwardsUOffset<
+                    dict__string__clz_Torappu_OpenServerV3MissionData<'a>,
+                >,
+            >,
+        >,
+    >,
+    pub missionGroupData: Option<
+        ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<
+                'a,
+                ::flatbuffers::ForwardsUOffset<
+                    dict__string__clz_Torappu_OpenServerV3MissionGroupData<'a>,
+                >,
+            >,
+        >,
+    >,
+    pub missionTypeDescData: Option<
+        ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<
+                'a,
+                ::flatbuffers::ForwardsUOffset<
+                    dict__string__clz_Torappu_OpenServerV3MissionTypeDescData<'a>,
+                >,
+            >,
+        >,
+    >,
+    pub milestoneGroupData: Option<
+        ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<
+                'a,
+                ::flatbuffers::ForwardsUOffset<
+                    dict__string__clz_Torappu_OpenServerV3MilestoneGroupData<'a>,
+                >,
+            >,
+        >,
+    >,
+    pub giftPackageList: Option<
+        ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<
+                'a,
+                ::flatbuffers::ForwardsUOffset<clz_Torappu_OpenServerV3GiftPackageData<'a>>,
+            >,
+        >,
+    >,
+    pub stageCampaignData: Option<
+        ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<
+                'a,
+                ::flatbuffers::ForwardsUOffset<clz_Torappu_OpenServerV3StageCampaignData<'a>>,
+            >,
+        >,
+    >,
+    pub storyRecommendData: Option<
+        ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<
+                'a,
+                ::flatbuffers::ForwardsUOffset<clz_Torappu_OpenServerV3StoryRecommendData<'a>>,
+            >,
+        >,
+    >,
+}
+impl<'a> Default for clz_Torappu_OpenServerV3DataArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        clz_Torappu_OpenServerV3DataArgs {
+            checkInData: None,
+            missionData: None,
+            missionGroupData: None,
+            missionTypeDescData: None,
+            milestoneGroupData: None,
+            giftPackageList: None,
+            stageCampaignData: None,
+            storyRecommendData: None,
+        }
+    }
+}
+
+pub struct clz_Torappu_OpenServerV3DataBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
+    fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_OpenServerV3DataBuilder<'a, 'b, A> {
+    #[inline]
+    pub fn add_checkInData(
+        &mut self,
+        checkInData: ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<
+                'b,
+                ::flatbuffers::ForwardsUOffset<
+                    dict__string__clz_Torappu_OpenServerV3CheckInGroupData<'b>,
+                >,
+            >,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_OpenServerV3Data::VT_CHECKINDATA,
+            checkInData,
+        );
+    }
+    #[inline]
+    pub fn add_missionData(
+        &mut self,
+        missionData: ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<
+                'b,
+                ::flatbuffers::ForwardsUOffset<
+                    dict__string__clz_Torappu_OpenServerV3MissionData<'b>,
+                >,
+            >,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_OpenServerV3Data::VT_MISSIONDATA,
+            missionData,
+        );
+    }
+    #[inline]
+    pub fn add_missionGroupData(
+        &mut self,
+        missionGroupData: ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<
+                'b,
+                ::flatbuffers::ForwardsUOffset<
+                    dict__string__clz_Torappu_OpenServerV3MissionGroupData<'b>,
+                >,
+            >,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_OpenServerV3Data::VT_MISSIONGROUPDATA,
+            missionGroupData,
+        );
+    }
+    #[inline]
+    pub fn add_missionTypeDescData(
+        &mut self,
+        missionTypeDescData: ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<
+                'b,
+                ::flatbuffers::ForwardsUOffset<
+                    dict__string__clz_Torappu_OpenServerV3MissionTypeDescData<'b>,
+                >,
+            >,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_OpenServerV3Data::VT_MISSIONTYPEDESCDATA,
+            missionTypeDescData,
+        );
+    }
+    #[inline]
+    pub fn add_milestoneGroupData(
+        &mut self,
+        milestoneGroupData: ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<
+                'b,
+                ::flatbuffers::ForwardsUOffset<
+                    dict__string__clz_Torappu_OpenServerV3MilestoneGroupData<'b>,
+                >,
+            >,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_OpenServerV3Data::VT_MILESTONEGROUPDATA,
+            milestoneGroupData,
+        );
+    }
+    #[inline]
+    pub fn add_giftPackageList(
+        &mut self,
+        giftPackageList: ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<
+                'b,
+                ::flatbuffers::ForwardsUOffset<clz_Torappu_OpenServerV3GiftPackageData<'b>>,
+            >,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_OpenServerV3Data::VT_GIFTPACKAGELIST,
+            giftPackageList,
+        );
+    }
+    #[inline]
+    pub fn add_stageCampaignData(
+        &mut self,
+        stageCampaignData: ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<
+                'b,
+                ::flatbuffers::ForwardsUOffset<clz_Torappu_OpenServerV3StageCampaignData<'b>>,
+            >,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_OpenServerV3Data::VT_STAGECAMPAIGNDATA,
+            stageCampaignData,
+        );
+    }
+    #[inline]
+    pub fn add_storyRecommendData(
+        &mut self,
+        storyRecommendData: ::flatbuffers::WIPOffset<
+            ::flatbuffers::Vector<
+                'b,
+                ::flatbuffers::ForwardsUOffset<clz_Torappu_OpenServerV3StoryRecommendData<'b>>,
+            >,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_OpenServerV3Data::VT_STORYRECOMMENDDATA,
+            storyRecommendData,
+        );
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_OpenServerV3DataBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        clz_Torappu_OpenServerV3DataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(self) -> ::flatbuffers::WIPOffset<clz_Torappu_OpenServerV3Data<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        ::flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl ::core::fmt::Debug for clz_Torappu_OpenServerV3Data<'_> {
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        let mut ds = f.debug_struct("clz_Torappu_OpenServerV3Data");
+        ds.field("checkInData", &self.checkInData());
+        ds.field("missionData", &self.missionData());
+        ds.field("missionGroupData", &self.missionGroupData());
+        ds.field("missionTypeDescData", &self.missionTypeDescData());
+        ds.field("milestoneGroupData", &self.milestoneGroupData());
+        ds.field("giftPackageList", &self.giftPackageList());
+        ds.field("stageCampaignData", &self.stageCampaignData());
+        ds.field("storyRecommendData", &self.storyRecommendData());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_OpenServerV3DataT {
+    pub checkInData:
+        Option<alloc::vec::Vec<dict__string__clz_Torappu_OpenServerV3CheckInGroupDataT>>,
+    pub missionData: Option<alloc::vec::Vec<dict__string__clz_Torappu_OpenServerV3MissionDataT>>,
+    pub missionGroupData:
+        Option<alloc::vec::Vec<dict__string__clz_Torappu_OpenServerV3MissionGroupDataT>>,
+    pub missionTypeDescData:
+        Option<alloc::vec::Vec<dict__string__clz_Torappu_OpenServerV3MissionTypeDescDataT>>,
+    pub milestoneGroupData:
+        Option<alloc::vec::Vec<dict__string__clz_Torappu_OpenServerV3MilestoneGroupDataT>>,
+    pub giftPackageList: Option<alloc::vec::Vec<clz_Torappu_OpenServerV3GiftPackageDataT>>,
+    pub stageCampaignData: Option<alloc::vec::Vec<clz_Torappu_OpenServerV3StageCampaignDataT>>,
+    pub storyRecommendData: Option<alloc::vec::Vec<clz_Torappu_OpenServerV3StoryRecommendDataT>>,
+}
+impl Default for clz_Torappu_OpenServerV3DataT {
+    fn default() -> Self {
+        Self {
+            checkInData: None,
+            missionData: None,
+            missionGroupData: None,
+            missionTypeDescData: None,
+            milestoneGroupData: None,
+            giftPackageList: None,
+            stageCampaignData: None,
+            storyRecommendData: None,
+        }
+    }
+}
+impl clz_Torappu_OpenServerV3DataT {
+    pub fn pack<'b, A: ::flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut ::flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> ::flatbuffers::WIPOffset<clz_Torappu_OpenServerV3Data<'b>> {
+        let checkInData = self.checkInData.as_ref().map(|x| {
+            let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let missionData = self.missionData.as_ref().map(|x| {
+            let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let missionGroupData = self.missionGroupData.as_ref().map(|x| {
+            let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let missionTypeDescData = self.missionTypeDescData.as_ref().map(|x| {
+            let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let milestoneGroupData = self.milestoneGroupData.as_ref().map(|x| {
+            let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let giftPackageList = self.giftPackageList.as_ref().map(|x| {
+            let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let stageCampaignData = self.stageCampaignData.as_ref().map(|x| {
+            let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let storyRecommendData = self.storyRecommendData.as_ref().map(|x| {
+            let w: alloc::vec::Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_OpenServerV3Data::create(
+            _fbb,
+            &clz_Torappu_OpenServerV3DataArgs {
+                checkInData,
+                missionData,
+                missionGroupData,
+                missionTypeDescData,
+                milestoneGroupData,
+                giftPackageList,
+                stageCampaignData,
+                storyRecommendData,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_OpenServerScheduleOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -14684,6 +19958,7 @@ impl<'a> clz_Torappu_OpenServerSchedule<'a> {
     pub const VT_PLAYERRETURN: ::flatbuffers::VOffsetT = 10;
     pub const VT_NEWBIECHECKINPACKAGELIST: ::flatbuffers::VOffsetT = 12;
     pub const VT_LONGTERMCHECKINDATA: ::flatbuffers::VOffsetT = 14;
+    pub const VT_OPENSERVERV3DATA: ::flatbuffers::VOffsetT = 16;
 
     #[inline]
     pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
@@ -14700,6 +19975,9 @@ impl<'a> clz_Torappu_OpenServerSchedule<'a> {
         args: &'args clz_Torappu_OpenServerScheduleArgs<'args>,
     ) -> ::flatbuffers::WIPOffset<clz_Torappu_OpenServerSchedule<'bldr>> {
         let mut builder = clz_Torappu_OpenServerScheduleBuilder::new(_fbb);
+        if let Some(x) = args.openServerV3Data {
+            builder.add_openServerV3Data(x);
+        }
         if let Some(x) = args.longTermCheckInData {
             builder.add_longTermCheckInData(x);
         }
@@ -14738,6 +20016,9 @@ impl<'a> clz_Torappu_OpenServerSchedule<'a> {
         let longTermCheckInData = self
             .longTermCheckInData()
             .map(|x| alloc::boxed::Box::new(x.unpack()));
+        let openServerV3Data = self
+            .openServerV3Data()
+            .map(|x| alloc::boxed::Box::new(x.unpack()));
         clz_Torappu_OpenServerScheduleT {
             schedule,
             dataMap,
@@ -14745,6 +20026,7 @@ impl<'a> clz_Torappu_OpenServerSchedule<'a> {
             playerReturn,
             newbieCheckInPackageList,
             longTermCheckInData,
+            openServerV3Data,
         }
     }
 
@@ -14853,6 +20135,19 @@ impl<'a> clz_Torappu_OpenServerSchedule<'a> {
                 )
         }
     }
+    #[inline]
+    pub fn openServerV3Data(&self) -> Option<clz_Torappu_OpenServerV3Data<'a>> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<::flatbuffers::ForwardsUOffset<clz_Torappu_OpenServerV3Data>>(
+                    clz_Torappu_OpenServerSchedule::VT_OPENSERVERV3DATA,
+                    None,
+                )
+        }
+    }
 }
 
 impl ::flatbuffers::Verifiable for clz_Torappu_OpenServerSchedule<'_> {
@@ -14899,6 +20194,11 @@ impl ::flatbuffers::Verifiable for clz_Torappu_OpenServerSchedule<'_> {
                 Self::VT_LONGTERMCHECKINDATA,
                 false,
             )?
+            .visit_field::<::flatbuffers::ForwardsUOffset<clz_Torappu_OpenServerV3Data>>(
+                "openServerV3Data",
+                Self::VT_OPENSERVERV3DATA,
+                false,
+            )?
             .finish();
         Ok(())
     }
@@ -14931,6 +20231,7 @@ pub struct clz_Torappu_OpenServerScheduleArgs<'a> {
         >,
     >,
     pub longTermCheckInData: Option<::flatbuffers::WIPOffset<clz_Torappu_LongTermCheckInData<'a>>>,
+    pub openServerV3Data: Option<::flatbuffers::WIPOffset<clz_Torappu_OpenServerV3Data<'a>>>,
 }
 impl<'a> Default for clz_Torappu_OpenServerScheduleArgs<'a> {
     #[inline]
@@ -14942,6 +20243,7 @@ impl<'a> Default for clz_Torappu_OpenServerScheduleArgs<'a> {
             playerReturn: None,
             newbieCheckInPackageList: None,
             longTermCheckInData: None,
+            openServerV3Data: None,
         }
     }
 }
@@ -15032,6 +20334,17 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a>
             );
     }
     #[inline]
+    pub fn add_openServerV3Data(
+        &mut self,
+        openServerV3Data: ::flatbuffers::WIPOffset<clz_Torappu_OpenServerV3Data<'b>>,
+    ) {
+        self.fbb_
+            .push_slot_always::<::flatbuffers::WIPOffset<clz_Torappu_OpenServerV3Data>>(
+                clz_Torappu_OpenServerSchedule::VT_OPENSERVERV3DATA,
+                openServerV3Data,
+            );
+    }
+    #[inline]
     pub fn new(
         _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
     ) -> clz_Torappu_OpenServerScheduleBuilder<'a, 'b, A> {
@@ -15057,6 +20370,7 @@ impl ::core::fmt::Debug for clz_Torappu_OpenServerSchedule<'_> {
         ds.field("playerReturn", &self.playerReturn());
         ds.field("newbieCheckInPackageList", &self.newbieCheckInPackageList());
         ds.field("longTermCheckInData", &self.longTermCheckInData());
+        ds.field("openServerV3Data", &self.openServerV3Data());
         ds.finish()
     }
 }
@@ -15069,6 +20383,7 @@ pub struct clz_Torappu_OpenServerScheduleT {
     pub playerReturn: Option<alloc::boxed::Box<clz_Torappu_ReturnDataT>>,
     pub newbieCheckInPackageList: Option<alloc::vec::Vec<clz_Torappu_NewbieCheckInPackageDataT>>,
     pub longTermCheckInData: Option<alloc::boxed::Box<clz_Torappu_LongTermCheckInDataT>>,
+    pub openServerV3Data: Option<alloc::boxed::Box<clz_Torappu_OpenServerV3DataT>>,
 }
 impl Default for clz_Torappu_OpenServerScheduleT {
     fn default() -> Self {
@@ -15079,6 +20394,7 @@ impl Default for clz_Torappu_OpenServerScheduleT {
             playerReturn: None,
             newbieCheckInPackageList: None,
             longTermCheckInData: None,
+            openServerV3Data: None,
         }
     }
 }
@@ -15102,6 +20418,7 @@ impl clz_Torappu_OpenServerScheduleT {
             _fbb.create_vector(&w)
         });
         let longTermCheckInData = self.longTermCheckInData.as_ref().map(|x| x.pack(_fbb));
+        let openServerV3Data = self.openServerV3Data.as_ref().map(|x| x.pack(_fbb));
         clz_Torappu_OpenServerSchedule::create(
             _fbb,
             &clz_Torappu_OpenServerScheduleArgs {
@@ -15111,6 +20428,7 @@ impl clz_Torappu_OpenServerScheduleT {
                 playerReturn,
                 newbieCheckInPackageList,
                 longTermCheckInData,
+                openServerV3Data,
             },
         )
     }

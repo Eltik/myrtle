@@ -2,6 +2,7 @@ use std::time::Duration;
 
 pub mod gamedata;
 pub mod operator_detail;
+pub mod service_accounts;
 pub mod stats;
 pub mod status;
 

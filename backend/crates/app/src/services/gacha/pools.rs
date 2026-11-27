@@ -10,7 +10,7 @@ use myrtle_types::Server;
 use serde_json::json;
 
 use super::sidecar::{self, Fingerprint};
-use crate::{AppContext, AppError};
+use crate::{AppContext, AppError, alerts};
 
 const ENDPOINT: &str = "gacha/getPoolDetail";
 
@@ -104,6 +104,7 @@ async fn refresh_server(ctx: &AppContext, server: Server) -> Result<usize, AppEr
             }
             Err(e) => {
                 tracing::warn!(pool = %pool_id, error = %e, "pool detail fetch failed, aborting run");
+                alerts::service_account_refused(ctx, &e).await;
                 break;
             }
         }

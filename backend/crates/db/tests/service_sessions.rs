@@ -2,7 +2,8 @@
 
 mod common;
 
-use myrtle_db::repos::service_sessions;
+use chrono::DateTime;
+use myrtle_db::repos::service_sessions::{self, HealthRow};
 use myrtle_types::Server;
 use sqlx::PgPool;
 
@@ -135,4 +136,54 @@ async fn insert_new_never_replaces_a_stored_session(pool: PgPool) {
         .unwrap()
         .unwrap();
     assert_eq!(row.ciphertext, b"first");
+}
+
+#[sqlx::test(migrator = "myrtle_db::migrate::MIGRATOR")]
+async fn health_moves_with_use_and_refusal_but_not_with_a_reseed(pool: PgPool) {
+    let db = common::db(pool).await;
+    let mut conn = db.conn().await.unwrap();
+    let at = |secs| DateTime::from_timestamp(secs, 0).unwrap();
+    let en = |refused_since, last_ok_at| HealthRow {
+        server_id: Server::EN.index(),
+        refused_since,
+        last_ok_at,
+    };
+    assert!(
+        !service_sessions::mark_refused(&mut conn, Server::EN, at(50))
+            .await
+            .unwrap(),
+        "no row to mark"
+    );
+    service_sessions::upsert(&mut conn, Server::EN, &[1], &[2])
+        .await
+        .unwrap();
+    assert_eq!(
+        service_sessions::health(&mut conn).await.unwrap(),
+        [en(None, None)]
+    );
+
+    service_sessions::upsert_ok(&mut conn, Server::EN, &[1], &[3], at(100))
+        .await
+        .unwrap();
+    service_sessions::mark_refused(&mut conn, Server::EN, at(200))
+        .await
+        .unwrap();
+    service_sessions::mark_refused(&mut conn, Server::EN, at(300))
+        .await
+        .unwrap();
+    service_sessions::upsert(&mut conn, Server::EN, &[1], &[4])
+        .await
+        .unwrap();
+    assert_eq!(
+        service_sessions::health(&mut conn).await.unwrap(),
+        [en(Some(at(200)), Some(at(100)))]
+    );
+
+    service_sessions::upsert_ok(&mut conn, Server::EN, &[1], &[5], at(400))
+        .await
+        .unwrap();
+    assert_eq!(
+        service_sessions::health(&mut conn).await.unwrap(),
+        [en(None, Some(at(400)))]
+    );
 }

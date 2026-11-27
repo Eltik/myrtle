@@ -4,12 +4,8 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-aes = "0.8.4"
 anyhow = "1.0.102"
-cbc = "0.1.2"
-cipher = "0.4"
 clap = { version = "4.5.60", features = ["derive"] }
-hex-literal = "1.1.0"
 indicatif = "0.18.4"
 reqwest = { version = "0.13.2", features = ["json", "stream"] }
 serde = { version = "1.0.228", features = ["derive"] }

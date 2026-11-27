@@ -95,9 +95,8 @@ pub fn grade_progress(
 
 /// The shape of each `sandboxPerm.template` topic no grader reads (a template
 /// other than V2/V3, or a topic the game data does not list). Keys only: no
-/// values, no array lengths. Main logged these from inside the grade with a
-/// process-wide dedupe; an engine takes no global state, so the caller logs them,
-/// at most `MAX_TEMPLATE_SHAPE_LOGS` per process through [`admit_new_shapes`].
+/// values, no array lengths. An engine takes no global state, so the caller logs
+/// them, at most `MAX_TEMPLATE_SHAPE_LOGS` per process through [`admit_new_shapes`].
 #[must_use]
 pub fn unread_template_shapes(progress: &Value, universe: &SandboxUniverse) -> Vec<String> {
     let Some(template) = progress.get("template") else {

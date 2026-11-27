@@ -21,7 +21,16 @@ import chalk from "chalk";
 import inquirer from "inquirer";
 import ora from "ora";
 import { WebSocketServer } from "ws";
-import { sweepOrphans } from "./orphans.mjs";
+import {
+	EXTRACT_LOCK_NAME,
+	acquireExtractLock,
+	checkDiskBudget,
+	freeBytes,
+	parseMinFreeGb,
+	pendingRewriteBytes,
+	startDiskWatchdog,
+} from "./disk-guard.mjs";
+import { parseSweepMaxFraction, sweepOrphans } from "./orphans.mjs";
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
@@ -841,6 +850,8 @@ function runDownload({
  * @param {string} opts.inputDir - Input directory with bundles
  * @param {string} opts.outputDir - Output directory for extracted assets
  * @param {number} [opts.jobs] - Parallel extraction threads
+ * @param {string} [opts.serverKey] - Server the bundles come from (cn, en, jp, kr). On a
+ *   Yostar server the unpacker decodes a table under its Yostar schema first.
  * @param {(p: {completed: number, total: number, percent: number}) => void} [opts.onProgress]
  * @returns {Promise<{exported: number}>}
  */
@@ -848,12 +859,15 @@ function runUnpackOnce({
 	inputDir,
 	outputDir,
 	jobs = DEFAULT_THREADS,
+	serverKey,
 	onProgress,
 }) {
 	return new Promise((resolve, reject) => {
+		const args = ["extract", "-i", inputDir, "-o", outputDir, "-j", String(jobs)];
+		if (serverKey) args.push("--server", serverKey);
 		const child = spawn(
 			UNPACKER_BIN,
-			["extract", "-i", inputDir, "-o", outputDir, "-j", String(jobs)],
+			args,
 			{
 				cwd: __dirname,
 				stdio: ["ignore", "pipe", "pipe"],
@@ -976,10 +990,24 @@ async function runUnpack(opts) {
 	// produces, still served and referenced by nothing. Remove it and log it, as the local
 	// install does (see orphans.mjs). `--keep-orphans` (WS_KEEP_ORPHANS=1) skips the sweep,
 	// `--dry-orphans` (WS_DRY_ORPHANS=1) logs what it would remove and removes nothing.
+	// The sweep refuses a subtree it would cut by more than WS_SWEEP_MAX_FRACTION (default
+	// 0.1): that many "orphans" is what an extract that failed part-way leaves, and they are
+	// the only good copies. `--allow-sweep-shrink` (WS_ALLOW_SWEEP_SHRINK=1) sweeps regardless;
+	// it is its own switch, not the sync's `--allow-shrink`, which `ws` never passes.
 	const keep = !!(cliArgs["keep-orphans"] ?? process.env.WS_KEEP_ORPHANS);
 	const dry = !!(cliArgs["dry-orphans"] ?? process.env.WS_DRY_ORPHANS);
+	const allowShrink = !!(cliArgs["allow-sweep-shrink"] ?? process.env.WS_ALLOW_SWEEP_SHRINK);
+	const limit = parseSweepMaxFraction(process.env.WS_SWEEP_MAX_FRACTION);
+	if (limit.invalid) {
+		console.log(chalk.yellow(`[${new Date().toLocaleTimeString()}] WS_SWEEP_MAX_FRACTION="${process.env.WS_SWEEP_MAX_FRACTION}" is not a number above 0 and at most 1; using ${limit.fraction}`));
+	}
 	if (!keep) {
-		const swept = sweepOrphans(opts.outputDir, startedAt, { dry });
+		const swept = sweepOrphans(opts.outputDir, startedAt, { dry, allowShrink, maxFraction: limit.fraction });
+		for (const r of swept.refused) {
+			const warning = `Orphan sweep REFUSED for ${r.name}/: it would remove ${r.orphans} of ${r.files} files (${formatBytes(r.bytes)}), more than ${Math.round(limit.fraction * 100)}% of the subtree. That is what a failed extract leaves, so nothing in ${r.name}/ was deleted. If this export really dropped that much, rerun with --allow-sweep-shrink (WS_ALLOW_SWEEP_SHRINK=1).`;
+			console.log(chalk.red(`[${new Date().toLocaleTimeString()}] ${warning}`));
+			opts.onNotice?.(warning);
+		}
 		const verb = dry ? "would remove" : "removed";
 		const msg = `Orphan sweep ${verb} ${swept.files} file(s), ${formatBytes(swept.bytes)}${swept.log ? `, logged at ${swept.log}` : ""}${swept.skipped.length ? ` (untouched subtrees left alone: ${swept.skipped.join(", ")})` : ""}`;
 		console.log(chalk.dim(`[${new Date().toLocaleTimeString()}] ${msg}`));
@@ -1745,6 +1773,7 @@ async function runUpdate() {
 			inputDir: savedir,
 			outputDir,
 			jobs: threads,
+			serverKey,
 			onProgress: ({ completed }) => {
 				upSpinner.text = `Extracting assets… (${completed.toLocaleString()} exported so far)`;
 			},
@@ -1907,6 +1936,25 @@ async function runWebSocketServer({ nonInteractive = false, cliArgs = {} } = {})
 	const backoffMs = (failures) =>
 		Math.min(intervalMs * 2 ** Math.max(0, failures - 1), maxBackoffMs);
 
+	// Storage guards (disk-guard.mjs has the why). The lock file sits in the
+	// output ROOT, above the per-region trees, so every watcher writing to this
+	// disk meets the same one. WS_EXTRACT_LOCK=0 and WS_MIN_FREE_GB=0 each restore
+	// the previous behaviour for their half.
+	const lockEnabled = process.env.WS_EXTRACT_LOCK !== "0";
+	const extractLockPath = join(dirname(config.outputDir), EXTRACT_LOCK_NAME);
+	const minFree = parseMinFreeGb(process.env.WS_MIN_FREE_GB);
+	if (minFree.invalid) {
+		console.log(
+			chalk.yellow(
+				`WS_MIN_FREE_GB="${process.env.WS_MIN_FREE_GB}" is not a usable number of GiB; using ${minFree.gb}`,
+			),
+		);
+	}
+	// How soon to look again when another region holds the lock. Shorter than
+	// the interval so a queued region starts within minutes of the other one
+	// finishing instead of up to a whole interval later.
+	const LOCK_RETRY_MS = Math.min(5 * 60 * 1000, intervalMs);
+
 	// State
 	let currentState = "idle";
 	let updating = false;
@@ -1927,6 +1975,14 @@ async function runWebSocketServer({ nonInteractive = false, cliArgs = {} } = {})
 	// When the scheduler will next call `checkAndUpdate`. Published so a client can
 	// tell a watcher that is between checks from one that has stopped checking.
 	let nextCheckAt = 0;
+	// Set while a "the lock is busy, look again soon" check is queued, so those
+	// never stack up behind each other.
+	let lockRetryTimer = null;
+	// Why the last update was put off, for the reply to a force_update.
+	let lastDeferral = null;
+	// A low disk is reported as an `error` (which the Discord bot posts) once per
+	// episode, not on every check for as long as it lasts.
+	let lowDiskAnnounced = false;
 	if (consecutiveFailures > 0) {
 		console.log(
 			chalk.yellow(
@@ -2205,9 +2261,119 @@ async function runWebSocketServer({ nonInteractive = false, cliArgs = {} } = {})
 		}
 	}
 
-	async function performUpdate(knownVer, { manual = false } = {}) {
-		if (updating) return;
+	/** Put an update off without failing it: say why, and leave the backoff alone. */
+	function deferUpdate(state, message) {
+		lastDeferral = message;
+		currentState = state;
+		console.log(chalk.yellow(`[${new Date().toLocaleTimeString()}] ${message}`));
+		broadcast({ ...statusMessage(), message });
+	}
+
+	/** Why the disk cannot take this region's extract right now, or `null` when it can. */
+	async function diskRefusal() {
+		if (!(minFree.bytes > 0)) return null;
+		const free = freeBytes(config.outputDir);
+		const pending = await pendingRewriteBytes(config.outputDir);
+		const budget = checkDiskBudget({
+			free,
+			rewriteBytes: pending.bytes,
+			minFreeBytes: minFree.bytes,
+		});
+		if (budget.ok) return null;
+		return `Not enough free disk to extract ${config.serverKey}: ${formatBytes(free)} free, the extract puts back up to ${formatBytes(pending.bytes)} (${pending.stubs} evicted file(s)) and ${minFree.gb} GiB has to stay free (WS_MIN_FREE_GB); short by ${formatBytes(budget.shortBy)}. No extract was started, and the next check tries again`;
+	}
+
+	function deferLowDisk(message) {
+		deferUpdate("low_disk", message);
+		if (!lowDiskAnnounced) {
+			lowDiskAnnounced = true;
+			broadcast({ type: "error", message });
+		}
+	}
+
+	/**
+	 * The gate every extract passes first: take the box-wide extract lock, then
+	 * check that the disk can hold what this extract is about to put back.
+	 *
+	 * Returns the slot `performUpdate` runs in and releases, or `null` when the
+	 * update is put off. Neither refusal is a failed extract, so neither touches
+	 * the backoff: a region waiting its turn looks again in LOCK_RETRY_MS, and a
+	 * region short of disk looks again on its next scheduled check.
+	 *
+	 * Called BEFORE `update_available` goes out. The Discord bot posts an embed
+	 * for that event, and a region queued behind another would otherwise post
+	 * one on every retry.
+	 */
+	async function enterExtract() {
+		let release = () => {};
+		if (lockEnabled) {
+			try {
+				const got = await acquireExtractLock(extractLockPath, {
+					server: config.serverKey,
+				});
+				if (!got.ok) {
+					const who = got.holder?.server
+						? `${got.holder.server} (pid ${got.holder.pid})`
+						: "another watcher";
+					deferUpdate(
+						"waiting",
+						`Waiting: ${who} is extracting, and one region extracts at a time; looking again in ${Math.round(LOCK_RETRY_MS / 60000)} minute(s)`,
+					);
+					if (!lockRetryTimer) {
+						lockRetryTimer = setTimeout(() => {
+							lockRetryTimer = null;
+							void checkAndUpdate();
+						}, LOCK_RETRY_MS);
+					}
+					return null;
+				}
+				release = got.release;
+			} catch (err) {
+				console.log(
+					chalk.yellow(
+						`[${new Date().toLocaleTimeString()}] Extract lock unavailable (${err.message}); continuing without it`,
+					),
+				);
+			}
+		}
+		const refusal = await diskRefusal();
+		if (refusal) {
+			release();
+			deferLowDisk(refusal);
+			return null;
+		}
+		lowDiskAnnounced = false;
+		return { release };
+	}
+
+	async function performUpdate(knownVer, { manual = false, slot = null } = {}) {
+		if (updating) {
+			slot?.release();
+			return;
+		}
 		updating = true;
+
+		// Set when the watchdog stopped the downloader or the unpacker, so the
+		// failure below is reported as what it was.
+		let diskAbort = null;
+		const diskFloor = Math.floor(minFree.bytes / 2);
+		const stopWatchdog = startDiskWatchdog({
+			path: config.outputDir,
+			floorBytes: diskFloor,
+			onLow: (free) => {
+				let stopped = 0;
+				for (const child of activeChildren) {
+					try {
+						// SIGTERM, not SIGKILL: runUnpack reads SIGKILL as the OOM
+						// killer and retries, which would refill the disk.
+						if (child.kill("SIGTERM")) stopped += 1;
+					} catch {}
+				}
+				if (stopped > 0) {
+					diskAbort = `stopped to protect the disk: free space fell to ${formatBytes(free)}, under the ${formatBytes(diskFloor)} floor (half of WS_MIN_FREE_GB)`;
+				}
+			},
+		});
 
 		try {
 			// Download phase
@@ -2271,6 +2437,14 @@ async function runWebSocketServer({ nonInteractive = false, cliArgs = {} } = {})
 				);
 			}
 
+			// The budget again, now that the download has taken its share. The gate
+			// passed it against the disk as it was before the new bundles landed.
+			const refusal = await diskRefusal();
+			if (refusal) {
+				deferLowDisk(refusal);
+				return;
+			}
+
 			// Unpack phase
 			currentState = "unpacking";
 			broadcast(statusMessage());
@@ -2280,10 +2454,13 @@ async function runWebSocketServer({ nonInteractive = false, cliArgs = {} } = {})
 				inputDir: config.savedir,
 				outputDir: config.outputDir,
 				jobs: config.threads,
+				serverKey: config.serverKey,
 				onProgress: (p) => broadcast({ type: "unpack_progress", ...p }),
 				onNotice: (message) =>
 					broadcast({ type: "status", state: "unpacking", message }),
 			});
+			// The sync is what gives the space back, so it is never the thing to stop.
+			stopWatchdog();
 
 			// Object storage sync. It runs AFTER the sweep, so the bucket loses
 			// exactly what the local tree lost. A failure here does NOT fail the
@@ -2373,7 +2550,8 @@ async function runWebSocketServer({ nonInteractive = false, cliArgs = {} } = {})
 			broadcast(statusMessage());
 		} catch (err) {
 			currentState = "idle";
-			console.log(chalk.red(`[${new Date().toLocaleTimeString()}] Update failed: ${err.message}`));
+			const reason = diskAbort ? `${diskAbort} (${err.message.split("\n")[0]})` : err.message;
+			console.log(chalk.red(`[${new Date().toLocaleTimeString()}] Update failed: ${reason}`));
 			if (manual) {
 				console.log(
 					chalk.dim(
@@ -2393,12 +2571,14 @@ async function runWebSocketServer({ nonInteractive = false, cliArgs = {} } = {})
 			}
 			broadcast({
 				type: "error",
-				message: `Update failed: ${err.message}`,
+				message: `Update failed: ${reason}`,
 				consecutiveFailures,
 				nextAttemptAt,
 			});
 			broadcast(statusMessage());
 		} finally {
+			stopWatchdog();
+			slot?.release();
 			updating = false;
 		}
 	}
@@ -2450,6 +2630,9 @@ async function runWebSocketServer({ nonInteractive = false, cliArgs = {} } = {})
 				console.log(chalk.yellow(`[${new Date().toLocaleTimeString()}] Update available: ${storedVer ?? "(none)"} → ${serverVer.resVersion}`));
 			}
 
+			const slot = await enterExtract();
+			if (!slot) return;
+
 			// Update available (new assets or unpacker rebuild)
 			broadcast({
 				type: "update_available",
@@ -2458,7 +2641,7 @@ async function runWebSocketServer({ nonInteractive = false, cliArgs = {} } = {})
 				clientVersion: serverVer.clientVersion,
 			});
 
-			await performUpdate(serverVer);
+			await performUpdate(serverVer, { slot });
 		} catch (err) {
 			currentState = "idle";
 			console.log(chalk.red(`[${new Date().toLocaleTimeString()}] Version check failed: ${err.message}`));
@@ -2495,9 +2678,19 @@ async function runWebSocketServer({ nonInteractive = false, cliArgs = {} } = {})
 					} else {
 						// Deliberately not gated on `nextAttemptAt`: this is the hatch
 						// out of a long backoff, and a person is asking for it.
+						// It still takes its turn and still has to fit on the disk:
+						// what those two protect is the box, not the schedule.
 						void (async () => {
 							await retryPendingSync();
-							await performUpdate(undefined, { manual: true });
+							const slot = await enterExtract();
+							if (!slot) {
+								sendTo(ws, {
+									type: "error",
+									message: `Update not started: ${lastDeferral}`,
+								});
+								return;
+							}
+							await performUpdate(undefined, { manual: true, slot });
 						})();
 					}
 					break;
@@ -2534,6 +2727,7 @@ async function runWebSocketServer({ nonInteractive = false, cliArgs = {} } = {})
 				`${chalk.bold("Threads:")}  ${config.threads}`,
 				`${chalk.bold("Interval:")} ${config.intervalMin} minutes`,
 				`${chalk.bold("S3 sync:")}  ${syncEnabled ? (existsSync(ASSET_SYNC_BIN) ? "after every extract" : "binary not installed") : "off (WS_S3_SYNC=0)"}`,
+				`${chalk.bold("Disk:")}     ${lockEnabled ? "one extract at a time" : "no extract lock (WS_EXTRACT_LOCK=0)"}, ${minFree.bytes > 0 ? `keeps ${minFree.gb} GiB free` : "no free-space check (WS_MIN_FREE_GB=0)"}`,
 				"",
 				chalk.dim("Press Ctrl+C to stop"),
 			].join("\n"),
@@ -2650,6 +2844,7 @@ const USAGE = `Usage:
   node run.mjs ws [--server en] [--savedir ./ArkAssets] [--output ./output]
                   [--threads N] [--port 9160] [--interval 30] [--start-delay 0]
                   [--profile full] [--keep-orphans] [--dry-orphans]
+                  [--allow-sweep-shrink]
                                watch the CDN, re-extract and sync on every new version;
                                a failed sync is retried alone on the next tick
   node run.mjs sync --server en [--output ./output] [--savedir ./ArkAssets]

@@ -11,7 +11,7 @@ use myrtle_types::Server;
 use serde_json::json;
 
 use super::sidecar::{self, Fingerprint};
-use crate::{AppContext, AppError};
+use crate::{AppContext, AppError, alerts};
 
 const ENDPOINT: &str = "templateShop/getGoodList";
 
@@ -88,7 +88,10 @@ async fn refresh_server(ctx: &AppContext, server: Server) -> Result<usize, AppEr
     let loaded_shops = Fingerprint::of(&file.shops);
     let on_disk = stored_data(&file);
 
-    account.sync_player(&ctx.upstream).await?;
+    if let Err(e) = account.sync_player(&ctx.upstream).await {
+        alerts::service_account_refused(ctx, &e).await;
+        return Err(e.into());
+    }
 
     let job = &ctx.config.jobs.event_shop;
     let delay = Duration::from_millis(job.call_delay_ms);
@@ -121,6 +124,7 @@ async fn refresh_server(ctx: &AppContext, server: Server) -> Result<usize, AppEr
             }
             Err(e) => {
                 tracing::warn!(shop = %id, error = %e, "event shop fetch failed, aborting run");
+                alerts::service_account_refused(ctx, &e).await;
                 break;
             }
         }

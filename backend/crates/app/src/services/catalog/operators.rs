@@ -3,7 +3,9 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use myrtle_db::repos::stats;
-use myrtle_engine_release::operator_changes::cn_changes as diff_cn;
+use myrtle_engine_release::operator_changes::{
+    cn_changes as diff_cn, data_wide_kinds, shared_operator_count,
+};
 use myrtle_engine_squad::rules::{SkillRules, module_ranks};
 use myrtle_gamedata::model::GameModel;
 use myrtle_gamedata::model::skin::SkinData;
@@ -530,7 +532,18 @@ pub async fn cn_changes(ctx: &AppContext, viewer: Server) -> Result<CachedJson, 
             TTL,
             move || async move {
                 cpu.run("cn_changes", move || {
-                    to_json(&diff_cn(&base.model, &cn.model))
+                    let changes = diff_cn(&base.model, &cn.model);
+                    let shared = shared_operator_count(&base.model, &cn.model);
+                    for (kind, n) in data_wide_kinds(&changes, shared) {
+                        tracing::warn!(
+                            kind,
+                            operators = n,
+                            shared,
+                            "cn changes: one kind flags most shared operators; likely an extract difference, not an update"
+                        );
+                    }
+                    tracing::info!(viewer = ?viewer, operators = changes.len(), "cn changes built");
+                    to_json(&changes)
                 })
                 .await?
             },

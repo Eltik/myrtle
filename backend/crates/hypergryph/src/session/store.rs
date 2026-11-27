@@ -97,4 +97,20 @@ pub trait SessionStore: Send + Sync {
 
     /// Drops the session and the credential
     async fn forget(&self, key: &SessionKey) -> Result<bool, SessionStoreError>;
+
+    /// Saves a service account's session after the game accepted it at `ok_at`
+    async fn save_used(
+        &self,
+        server: Server,
+        session: &AuthSession,
+        _ok_at: i64,
+    ) -> Result<(), SessionStoreError> {
+        self.save(&SessionKey::ServiceAccount { server }, session)
+            .await
+    }
+
+    /// Records the start of a service account's outage
+    async fn save_refused(&self, _server: Server, _since: i64) -> Result<(), SessionStoreError> {
+        Ok(())
+    }
 }

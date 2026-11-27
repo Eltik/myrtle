@@ -4544,6 +4544,7 @@ impl<'a> clz_Torappu_SpDynIllustInfo<'a> {
     pub const VT_SPILLUSTID: ::flatbuffers::VOffsetT = 10;
     pub const VT_SPPORTRAITID: ::flatbuffers::VOffsetT = 12;
     pub const VT_SPAVATARID: ::flatbuffers::VOffsetT = 14;
+    pub const VT_SPDYNENTRANCEID: ::flatbuffers::VOffsetT = 16;
 
     #[inline]
     pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
@@ -4560,6 +4561,9 @@ impl<'a> clz_Torappu_SpDynIllustInfo<'a> {
         args: &'args clz_Torappu_SpDynIllustInfoArgs<'args>,
     ) -> ::flatbuffers::WIPOffset<clz_Torappu_SpDynIllustInfo<'bldr>> {
         let mut builder = clz_Torappu_SpDynIllustInfoBuilder::new(_fbb);
+        if let Some(x) = args.spDynEntranceId {
+            builder.add_spDynEntranceId(x);
+        }
         if let Some(x) = args.spAvatarId {
             builder.add_spAvatarId(x);
         }
@@ -4598,6 +4602,9 @@ impl<'a> clz_Torappu_SpDynIllustInfo<'a> {
         let spAvatarId = self
             .spAvatarId()
             .map(|x| alloc::string::ToString::to_string(x));
+        let spDynEntranceId = self
+            .spDynEntranceId()
+            .map(|x| alloc::string::ToString::to_string(x));
         clz_Torappu_SpDynIllustInfoT {
             skinId,
             spDynIllustId,
@@ -4605,6 +4612,7 @@ impl<'a> clz_Torappu_SpDynIllustInfo<'a> {
             spIllustId,
             spPortraitId,
             spAvatarId,
+            spDynEntranceId,
         }
     }
 
@@ -4680,6 +4688,18 @@ impl<'a> clz_Torappu_SpDynIllustInfo<'a> {
             )
         }
     }
+    #[inline]
+    pub fn spDynEntranceId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_SpDynIllustInfo::VT_SPDYNENTRANCEID,
+                None,
+            )
+        }
+    }
 }
 
 impl ::flatbuffers::Verifiable for clz_Torappu_SpDynIllustInfo<'_> {
@@ -4715,6 +4735,11 @@ impl ::flatbuffers::Verifiable for clz_Torappu_SpDynIllustInfo<'_> {
                 Self::VT_SPAVATARID,
                 false,
             )?
+            .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                "spDynEntranceId",
+                Self::VT_SPDYNENTRANCEID,
+                false,
+            )?
             .finish();
         Ok(())
     }
@@ -4726,6 +4751,7 @@ pub struct clz_Torappu_SpDynIllustInfoArgs<'a> {
     pub spIllustId: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub spPortraitId: Option<::flatbuffers::WIPOffset<&'a str>>,
     pub spAvatarId: Option<::flatbuffers::WIPOffset<&'a str>>,
+    pub spDynEntranceId: Option<::flatbuffers::WIPOffset<&'a str>>,
 }
 impl<'a> Default for clz_Torappu_SpDynIllustInfoArgs<'a> {
     #[inline]
@@ -4737,6 +4763,7 @@ impl<'a> Default for clz_Torappu_SpDynIllustInfoArgs<'a> {
             spIllustId: None,
             spPortraitId: None,
             spAvatarId: None,
+            spDynEntranceId: None,
         }
     }
 }
@@ -4792,6 +4819,13 @@ impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> clz_Torappu_SpDynIllustInfoBu
         );
     }
     #[inline]
+    pub fn add_spDynEntranceId(&mut self, spDynEntranceId: ::flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+            clz_Torappu_SpDynIllustInfo::VT_SPDYNENTRANCEID,
+            spDynEntranceId,
+        );
+    }
+    #[inline]
     pub fn new(
         _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
     ) -> clz_Torappu_SpDynIllustInfoBuilder<'a, 'b, A> {
@@ -4817,6 +4851,7 @@ impl ::core::fmt::Debug for clz_Torappu_SpDynIllustInfo<'_> {
         ds.field("spIllustId", &self.spIllustId());
         ds.field("spPortraitId", &self.spPortraitId());
         ds.field("spAvatarId", &self.spAvatarId());
+        ds.field("spDynEntranceId", &self.spDynEntranceId());
         ds.finish()
     }
 }
@@ -4829,6 +4864,7 @@ pub struct clz_Torappu_SpDynIllustInfoT {
     pub spIllustId: Option<alloc::string::String>,
     pub spPortraitId: Option<alloc::string::String>,
     pub spAvatarId: Option<alloc::string::String>,
+    pub spDynEntranceId: Option<alloc::string::String>,
 }
 impl Default for clz_Torappu_SpDynIllustInfoT {
     fn default() -> Self {
@@ -4839,6 +4875,7 @@ impl Default for clz_Torappu_SpDynIllustInfoT {
             spIllustId: None,
             spPortraitId: None,
             spAvatarId: None,
+            spDynEntranceId: None,
         }
     }
 }
@@ -4856,6 +4893,7 @@ impl clz_Torappu_SpDynIllustInfoT {
         let spIllustId = self.spIllustId.as_ref().map(|x| _fbb.create_string(x));
         let spPortraitId = self.spPortraitId.as_ref().map(|x| _fbb.create_string(x));
         let spAvatarId = self.spAvatarId.as_ref().map(|x| _fbb.create_string(x));
+        let spDynEntranceId = self.spDynEntranceId.as_ref().map(|x| _fbb.create_string(x));
         clz_Torappu_SpDynIllustInfo::create(
             _fbb,
             &clz_Torappu_SpDynIllustInfoArgs {
@@ -4865,6 +4903,7 @@ impl clz_Torappu_SpDynIllustInfoT {
                 spIllustId,
                 spPortraitId,
                 spAvatarId,
+                spDynEntranceId,
             },
         )
     }

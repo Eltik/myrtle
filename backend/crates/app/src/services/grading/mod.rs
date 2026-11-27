@@ -4,20 +4,41 @@ use myrtle_db::repos::scores::ScoreWrite;
 use myrtle_db::repos::{progress, roster, scores, users};
 use myrtle_engine_base::score::grade_base;
 use myrtle_engine_grade::operators::ScoreModel;
-use myrtle_engine_grade::sandbox::grade_sandbox;
-use myrtle_engine_grade::total::{
-    SECTION_WEIGHT_BASE, SECTION_WEIGHT_MEDAL, SECTION_WEIGHT_OPERATOR, SECTION_WEIGHT_ROGUELIKE,
-    SECTION_WEIGHT_SANDBOX, SECTION_WEIGHT_STAGE, SECTION_WEIGHT_TOTAL, score_to_grade,
+use myrtle_engine_grade::sandbox::{
+    MAX_TEMPLATE_SHAPE_LOGS, admit_new_shapes, grade_sandbox, unread_template_shapes,
 };
+use myrtle_engine_grade::total::{score_to_grade, total_from_sections};
 use myrtle_engine_grade::{BaseScore, GradeInputs, StageClears, UserGrade, calculate_user_grade};
 use myrtle_jobs::{JobKind, JobSpec};
 use myrtle_types::UserId;
-use serde_json::json;
-use std::sync::Arc;
+use serde_json::{Value, json};
+use std::collections::HashSet;
+use std::sync::{Arc, LazyLock, Mutex, PoisonError};
 
 use crate::snapshots::Snapshot;
 use crate::{AppContext, AppError};
 pub use pass::*;
+
+fn log_unread_template_shapes(snapshot: &Snapshot, progress: Option<&Value>) {
+    static SEEN: LazyLock<Mutex<HashSet<String>>> = LazyLock::new(Mutex::default);
+    let Some(progress) = progress else {
+        return;
+    };
+    let shapes = unread_template_shapes(progress, &snapshot.grade.sandbox_universe);
+    if shapes.is_empty() {
+        return;
+    }
+    let fresh = {
+        let mut seen = SEEN.lock().unwrap_or_else(PoisonError::into_inner);
+        admit_new_shapes(&mut seen, shapes, MAX_TEMPLATE_SHAPE_LOGS)
+    };
+    for shape in fresh {
+        tracing::warn!(
+            shape = %shape,
+            "sandboxPerm template carries a topic the RA grade does not read yet"
+        );
+    }
+}
 
 fn snapshot_of(ctx: &AppContext) -> Result<Arc<Snapshot>, AppError> {
     ctx.snapshots.or_default(ctx.snapshots.default_server())
@@ -48,6 +69,7 @@ pub async fn load_inputs(
     let clears = progress::stage_clears(conn, user).await?;
     let known_stages = progress::known_stage_ids_for_server(conn, user).await?;
     let sandbox = progress::sandbox(conn, user).await?;
+    log_unread_template_shapes(snapshot, sandbox.as_ref());
 
     let data = Arc::clone(snapshot);
     let (user_roster, base) = ctx
@@ -131,23 +153,16 @@ pub async fn compute_sandbox(
         return Ok(None);
     };
     let progress = progress::sandbox(&mut conn, user).await?;
+    log_unread_template_shapes(&snapshot, progress.as_ref());
     let sandbox = grade_sandbox(&snapshot.grade, progress.as_ref());
-    let total = SECTION_WEIGHT_SANDBOX.mul_add(
+    let total = total_from_sections(
+        stored.operator_score,
+        stored.base_score,
+        stored.roguelike_score,
+        stored.medal_score,
+        stored.stage_score,
         sandbox,
-        SECTION_WEIGHT_STAGE.mul_add(
-            stored.stage_score,
-            SECTION_WEIGHT_MEDAL.mul_add(
-                stored.medal_score,
-                SECTION_WEIGHT_ROGUELIKE.mul_add(
-                    stored.roguelike_score,
-                    SECTION_WEIGHT_BASE.mul_add(
-                        stored.base_score,
-                        SECTION_WEIGHT_OPERATOR * stored.operator_score,
-                    ),
-                ),
-            ),
-        ),
-    ) / SECTION_WEIGHT_TOTAL;
+    );
     Ok(Some(SandboxRescore {
         sandbox,
         total,
@@ -180,6 +195,17 @@ fn regrade_spec(user: UserId) -> JobSpec {
 
 pub async fn enqueue_regrade(ctx: &AppContext, user: UserId) -> Result<(), AppError> {
     ctx.queue.enqueue(regrade_spec(user)).await?;
+    Ok(())
+}
+
+/// Keyed apart from bulk regrades, so a queued one cannot absorb the sync's snapshot
+pub async fn enqueue_sync_regrade(ctx: &AppContext, user: UserId) -> Result<(), AppError> {
+    let spec = JobSpec {
+        payload: json!({ "user_id": user.0, "after_sync": true }),
+        dedupe_key: Some(format!("sync:{}", user.0)),
+        ..JobSpec::new(JobKind::RegradeUser)
+    };
+    ctx.queue.enqueue(spec).await?;
     Ok(())
 }
 

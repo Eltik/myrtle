@@ -142,18 +142,30 @@ pub fn png_compression() -> image::codecs::png::CompressionType {
 /// `image::save_buffer`, byte for byte; otherwise the crate's encoder at that level with
 /// adaptive filters.
 pub fn write_png(path: &Path, rgba: &[u8], w: u32, h: u32) -> Result<(), io::Error> {
+    let result = encode_png(path, rgba, w, h);
+    // Only a failure of the disk is counted against the run (see `export::failures`). An
+    // image the encoder rejects is the same on every run and says nothing about the tree.
+    if let Err(image::ImageError::IoError(e)) = &result {
+        crate::export::failures::write_failed(path, e);
+    }
+    result.map_err(io::Error::other)
+}
+
+fn encode_png(path: &Path, rgba: &[u8], w: u32, h: u32) -> image::ImageResult<()> {
     use image::ImageEncoder;
     use image::codecs::png::{CompressionType, FilterType, PngEncoder};
     let level = png_compression();
     if matches!(level, CompressionType::Fast) {
-        return image::save_buffer(path, rgba, w, h, image::ColorType::Rgba8)
-            .map_err(io::Error::other);
+        return image::save_buffer(path, rgba, w, h, image::ColorType::Rgba8);
     }
     let file = std::fs::File::create(path)?;
     let mut out = std::io::BufWriter::new(file);
-    PngEncoder::new_with_quality(&mut out, level, FilterType::Adaptive)
-        .write_image(rgba, w, h, image::ExtendedColorType::Rgba8)
-        .map_err(io::Error::other)
+    PngEncoder::new_with_quality(&mut out, level, FilterType::Adaptive).write_image(
+        rgba,
+        w,
+        h,
+        image::ExtendedColorType::Rgba8,
+    )
 }
 
 /// Save a decoded texture to disk as PNG.

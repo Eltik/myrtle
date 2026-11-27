@@ -43,6 +43,7 @@ The platform is built from four independent components: a Rust API server, a Tan
 - **Gacha Tracking** - synced pull history with rarity splits and pity counters, plus community-wide pull statistics.
 - **Scoring & Leaderboard** - composite account scores with grades, rankings, biggest movers, and score distribution.
 - **Tools** - recruitment tag calculator, squad randomizer, and an operator birthday calendar.
+- **Sign in with myrtle.moe** - an OAuth 2.0 provider, so other sites can let players connect their myrtle.moe account. Players approve each site and can remove it again in Settings.
 - **Discord Bot** - guild moderation, asset-update announcements, and platform lookups.
 - **Asset Pipeline** - download and extract textures, audio, Spine animations, and game-data tables across six server regions, with content profiles for lightweight partial downloads.
 - **Modern UI** - light / dark / auto theming with a customizable accent color, plus dynamically generated social cards.
@@ -157,6 +158,7 @@ For manual (non-Docker) setup, see [BUILD.md](BUILD.md) and the per-component RE
 | Developer Setup | [CONTRIBUTING.md](CONTRIBUTING.md)                     |
 | Manual Build    | [BUILD.md](BUILD.md)                                   |
 | DPS Calculator  | [backend/DPS_CALCULATOR.md](backend/DPS_CALCULATOR.md) |
+| OAuth Provider  | [backend/OAUTH.md](backend/OAUTH.md)                   |
 | IL2CPP Recovery | [assets/IL2CPP_RECOVERY.md](assets/IL2CPP_RECOVERY.md) |
 
 ## Contributing

@@ -9,7 +9,7 @@ use tokio::sync::Mutex;
 
 use crate::error::{RefreshStep, UpstreamError};
 use crate::fetch::{auth_request_with_timeout, parse_json_tolerating};
-use crate::session::health::HealthTracker;
+use crate::session::health::{HealthTracker, state_of};
 use crate::session::store::{DurableCredential, SessionKey, SessionStore, SessionStoreError};
 use crate::session::{AuthSession, refresh_secret_by_step};
 use crate::upstream::Upstream;
@@ -43,6 +43,18 @@ pub struct AccountHealth {
     pub state: AccountState,
     pub refused_since: Option<i64>,
     pub last_ok_at: Option<i64>,
+}
+
+impl AccountHealth {
+    #[must_use]
+    pub const fn new(server: Server, refused_since: Option<i64>, last_ok_at: Option<i64>) -> Self {
+        Self {
+            server,
+            state: state_of(refused_since, last_ok_at),
+            refused_since,
+            last_ok_at,
+        }
+    }
 }
 
 struct Inner {
@@ -148,12 +160,7 @@ impl GameAccount {
 
     pub fn health(&self) -> AccountHealth {
         let health = self.health.lock().unwrap_or_else(PoisonError::into_inner);
-        AccountHealth {
-            server: self.server,
-            state: health.state(),
-            refused_since: health.refused_since(),
-            last_ok_at: health.last_ok_at(),
-        }
+        AccountHealth::new(self.server, health.refused_since(), health.last_ok_at())
     }
 
     pub async fn uid(&self) -> String {
@@ -252,10 +259,10 @@ impl GameAccount {
                 return Err(UpstreamError::NotLoggedIn);
             }
         }
-        self.mark_ok();
+        let ok_at = self.mark_ok();
 
         let parsed = parse_json_tolerating(response, endpoint, tolerated).await;
-        self.persist(&inner.session).await;
+        self.persist(&inner.session, ok_at).await;
         drop(guard);
         parsed
     }
@@ -296,12 +303,13 @@ impl GameAccount {
             error = ?refused,
             "service account token refused; log it in again"
         );
-        self.mark_refused();
+        self.mark_refused().await;
         let first_of_outage = !inner.alerted;
         inner.alerted = true;
         Err(UpstreamError::ServiceAccountRefused {
             server: self.server,
             first_of_outage,
+            reason: refused.to_string(),
         })
     }
 
@@ -315,27 +323,38 @@ impl GameAccount {
         }
         inner.refreshed_at = Some(Instant::now());
         inner.alerted = false;
-        self.mark_ok();
-        self.persist(&inner.session).await;
+        let ok_at = self.mark_ok();
+        self.persist(&inner.session, ok_at).await;
         Ok(())
     }
 
-    fn mark_ok(&self) {
+    fn mark_ok(&self) -> i64 {
+        let now = now_secs();
         self.health
             .lock()
             .unwrap_or_else(PoisonError::into_inner)
-            .ok(now_secs());
+            .ok(now);
+        now
     }
 
-    fn mark_refused(&self) {
-        self.health
+    async fn mark_refused(&self) {
+        let now = now_secs();
+        let started = self
+            .health
             .lock()
             .unwrap_or_else(PoisonError::into_inner)
-            .refused(now_secs());
+            .refused(now);
+        if started && let Err(e) = self.store.save_refused(self.server, now).await {
+            tracing::warn!(
+                server = self.server.as_str(),
+                error = e.kind(),
+                "failed to record the service account outage"
+            );
+        }
     }
 
-    async fn persist(&self, session: &AuthSession) {
-        if let Err(e) = self.store.save(&self.key, session).await {
+    async fn persist(&self, session: &AuthSession, ok_at: i64) {
+        if let Err(e) = self.store.save_used(self.server, session, ok_at).await {
             tracing::warn!(
                 server = self.server.as_str(),
                 error = e.kind(),

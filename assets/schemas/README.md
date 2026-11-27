@@ -160,6 +160,33 @@ lost, every changed leaf was an `UNKNOWN_n` becoming its enum name, and U+FFFD a
 `\u0000` stayed at 0. Whether a newer schema can verify and still misread a buffer is
 not settled by the verifier; the gate for that is the extraction diff.
 
+It can. An INSERTED field shifts every later field one slot, and the verifier still
+accepts the buffer whenever the shifted slots hold defaults, which FlatBuffers leaves
+out. Measured 2026-11-10 on the EN, JP and KR extracts: `prts___levels` resolved
+`same-as-cn`, and the CN layout has `reachableCheckIgnoreStartTile` at slot 7 of
+`LevelData_Options` (new in 2.7.71) where the Yostar client still has `isTrainingLevel`.
+EN read `ReachableCheckIgnoreStartTile` true on 407 level files (406 of them CN's
+training levels) and `IsTrainingLevel` true on exactly the 2 that are
+`IsHardTrainingLevel` on CN; every later option moved one slot too.
+
+**Slot shifts.** So after a Yostar choice verifies everywhere, the sync looks for an
+older history version that ALSO verifies everywhere and whose field slots the choice
+shifts (`fields::slot_shifts`: an insertion, removal or swap before the end; appends,
+drops from the end and renames in place are not shifts). It probes the newest three such
+versions, none older than the median of the previous lock's Yostar history picks (the
+layouts the Yostar binaries were last seen to need): measured 2026-11-10 on EN, probing
+without that floor reported 13 tables, 10 of them for shapes from 2024 and 2025. Each hit goes into that table's Yostar `note` (`slot shift: ...`) and into a
+`## Yostar slot shifts (N)` report section. The verifier cannot say which of the two the
+Yostar client has, so nothing is decided for you and the exit code stays 0.
+
+**Pinning.** To settle one, put the right file in `yostar/<stem>.fbs` (usually a
+`history/` version) and set `"pinned": true` on that table's Yostar choice in the lock.
+A pinned choice is tried before anything else and kept, unchanged, for as long as it
+verifies on every supplied Yostar server; its `note` reads `pinned`. When it stops
+verifying, the pin is released for that run (`pin released: ...` in the note and the
+report) and the table resolves newest first as usual. `prts___levels` is pinned to
+`2026-08-01_2.7.61.fbs`, the newest version without `reachableCheckIgnoreStartTile`.
+
 "Verifies" means the FlatBuffers verifier accepts the buffer under the candidate schema
 with `verifier_opts()`: `max_alignment: 4` because Hypergryph 4-aligns 8-byte scalars,
 `ignore_missing_null_terminator: false` because that flag is what separates EN
@@ -220,7 +247,9 @@ history version, also used for a stored file whose text a history version holds)
 `same-as-cn` (Yostar only), `store` (a stored file no history version holds) or
 `unresolved`. `sha256` is of the file as stored. An optional `note` explains an empty
 `verified` (table absent from the supplied bundles, no CN bundle supplied, nothing
-verifies) or a CN history fallback. A table with `"yostar": null` was present in no
+verifies) or a CN history fallback, and on the Yostar side `pinned`, `pin released: ...`
+or `slot shift: ...` (see "Slot shifts" and "Pinning" above). `pinned` is written only
+when true. A table with `"yostar": null` was present in no
 Yostar bundle. A table with `"verified": {}` on the Yostar side resolved under no
 candidate anywhere; the previous file (if any) is kept and `extract` keeps skipping it.
 A run that changes nothing writes no file and leaves the lock byte-identical.

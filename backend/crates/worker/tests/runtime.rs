@@ -26,6 +26,22 @@ async fn a_claimed_job_runs_and_records_its_summary() {
 }
 
 #[tokio::test]
+async fn a_service_account_alert_with_no_webhook_succeeds() {
+    let (ctx, db) = common::context(common::config()).await;
+    let kind = JobKind::ServiceAccountAlert;
+    let alert = JobSpec {
+        server: Some(myrtle_types::Server::EN),
+        payload: json!({ "error": "u8 getToken rejected" }),
+        ..JobSpec::new(kind)
+    };
+    ctx.queue.enqueue(alert).await.unwrap();
+
+    let jobs = common::run_until_attempted(&ctx, kind).await;
+    assert_eq!((jobs[0].state, jobs[0].attempts), (JobState::Succeeded, 1));
+    db.close().await;
+}
+
+#[tokio::test]
 async fn a_failed_job_requeues_with_its_error() {
     let (ctx, db) = common::context(common::config()).await;
     let kind = JobKind::RegradeUser;

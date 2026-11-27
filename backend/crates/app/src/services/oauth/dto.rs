@@ -118,7 +118,9 @@ pub enum AuthorizeCheck {
         redirect_host: String,
         already_authorized: bool,
     },
-    Redirect { redirect_to: String },
+    Redirect {
+        redirect_to: String,
+    },
 }
 
 #[derive(Debug, Clone, Deserialize, ts_rs::TS)]

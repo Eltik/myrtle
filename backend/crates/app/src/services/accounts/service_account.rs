@@ -2,9 +2,10 @@ use std::io::Read;
 use std::path::Path;
 use std::sync::Arc;
 
+use myrtle_db::repos::service_sessions;
 use myrtle_hypergryph::login::bilibili::{self, OtpChallenge};
 use myrtle_hypergryph::login::yostar;
-use myrtle_hypergryph::{AuthSession, UpstreamError, session};
+use myrtle_hypergryph::{AccountHealth, AuthSession, UpstreamError, session};
 use myrtle_types::Server;
 
 use super::sessions::Sessions;
@@ -168,13 +169,31 @@ pub async fn service_session_status(
         .ok_or_else(|| AppError::NotFound(Some(format!("no session for {}", server.as_str()))))?;
     session::refresh_secret(&ctx.upstream, &mut stored, server).await?;
     store
-        .persist_service(server, &stored)
+        .persist_service(server, &stored, Some(chrono::Utc::now()))
         .await
         .map_err(|e| store_error(&e))?;
     Ok(ServiceSessionStatus {
         uid: stored.uid.to_string(),
         seqnum: stored.seqnum,
     })
+}
+
+/// Every loaded account's health as the processes using it last stored it
+pub async fn service_health(ctx: &AppContext) -> Result<Vec<AccountHealth>, AppError> {
+    let rows = service_sessions::health(&mut *ctx.db.conn().await?).await?;
+    let mut servers = ctx.accounts.servers();
+    servers.sort_by_key(|s| s.as_str());
+    Ok(servers
+        .into_iter()
+        .map(|server| {
+            let row = rows.iter().find(|r| r.server_id == server.index());
+            AccountHealth::new(
+                server,
+                row.and_then(|r| r.refused_since).map(|t| t.timestamp()),
+                row.and_then(|r| r.last_ok_at).map(|t| t.timestamp()),
+            )
+        })
+        .collect())
 }
 
 pub async fn import_service_sessions(
