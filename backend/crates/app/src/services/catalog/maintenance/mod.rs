@@ -75,7 +75,10 @@ pub struct Signals {
 
 impl Signals {
     const fn still_down(self) -> bool {
-        self.prean_active || matches!(self.game_down, Some(true))
+        match self.game_down {
+            Some(down) => down,
+            None => self.prean_active,
+        }
     }
 }
 
@@ -147,7 +150,7 @@ pub fn resolve(notices: &[Notice], now: i64, signals: Signals) -> Option<Mainten
                 Some(end) => (signals.still_down() && now - end < OVERRUN_LIMIT_SECS)
                     .then_some(MaintenancePhase::Extended)?,
                 None => {
-                    let answered = signals.game_down == Some(false) && !signals.prean_active;
+                    let answered = signals.game_down == Some(false);
                     let expired =
                         now - m.starts_at >= OPEN_ENDED_LIMIT_SECS && !signals.still_down();
                     if answered || expired {

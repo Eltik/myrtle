@@ -95,38 +95,3 @@ pub struct EventShopFile {
     #[serde(default)]
     pub absent: HashMap<String, i64>,
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use serde_json::json;
-
-    #[test]
-    fn response_parses_goods_and_the_buyout_total() {
-        let body = json!({"data": {
-            "shopId": "shop_act44side", "shopName": "Vintage Bazaar",
-            "price": {"id": "act44side_token_ticket", "count": 0, "type": "ACTIVITY_ITEM"},
-            "startTime": 100, "endTime": 200,
-            "allPriceDict": [{"startTime": 100, "maxPrice": 8854}],
-            "shopGroup": {"g1": {"shopGood": {
-                "act44side_2": {"goodId": "act44side_2", "goodType": "NORMAL", "item": {"id": "char_x@y#1", "count": 1, "type": "CHAR_SKIN"}, "price": 500, "availCount": 1},
-                "act44side_35": {"goodId": "act44side_35", "goodType": "NORMAL", "item": {"id": "4001", "count": 100, "type": "GOLD"}, "price": 1, "availCount": -1},
-                "act44side_1": {"goodId": "act44side_1", "goodType": "NORMAL", "item": {"id": "", "count": 0, "type": ""}, "price": 0, "availCount": 0}
-            }}}
-        }});
-        let shop = EventShopData::from_response(&body).unwrap();
-        assert_eq!(shop.max_price, 8854);
-        assert_eq!(shop.goods.len(), 2);
-        assert_eq!(shop.goods[0].item_id, "char_x@y#1");
-        assert_eq!(shop.token_id, "act44side_token_ticket");
-    }
-
-    #[test]
-    fn buyout_falls_back_to_limited_goods_when_the_dict_is_missing() {
-        let body = json!({"data": {"shopId": "shop_a", "shopGroup": {"g": {"shopGood": {
-            "a_1": {"goodId": "a_1", "item": {"id": "i", "count": 1, "type": "MATERIAL"}, "price": 10, "availCount": 3},
-            "a_2": {"goodId": "a_2", "item": {"id": "j", "count": 1, "type": "MATERIAL"}, "price": 5, "availCount": -1}
-        }}}}});
-        assert_eq!(EventShopData::from_response(&body).unwrap().max_price, 30);
-    }
-}

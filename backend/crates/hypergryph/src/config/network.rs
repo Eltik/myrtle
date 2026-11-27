@@ -80,6 +80,13 @@ impl NetworkConfig {
     }
 
     #[must_use]
+    pub fn has_network(&self, server: Server) -> bool {
+        self.domains[server_slot(server)]
+            .iter()
+            .any(Option::is_some)
+    }
+
+    #[must_use]
     pub const fn version(&self, server: Server) -> &VersionInfo {
         &self.versions[server_slot(server)]
     }
@@ -127,21 +134,37 @@ const VERSION: &str = "network_config::version";
 /// The routes under a `network_config` body's current `funcVer`
 pub fn parse_network(body: &[u8]) -> Result<Vec<(Domain, String)>, UpstreamError> {
     let outer: NetworkConfigResponse = serde_json::from_slice(body)
-        .map_err(|e| UpstreamError::parse(NETWORK_CONFIG, e.to_string()))?;
+        .map_err(|e| UpstreamError::parse(NETWORK_CONFIG, format!("unexpected response: {e}")))?;
     let inner: NetworkConfigContent = serde_json::from_str(&outer.content)
-        .map_err(|e| UpstreamError::parse(NETWORK_CONFIG, format!("content: {e}")))?;
+        .map_err(|e| UpstreamError::parse(NETWORK_CONFIG, format!("unexpected content: {e}")))?;
 
+    let func_ver = &inner.func_ver;
     let network = inner
         .configs
-        .get(&inner.func_ver)
-        .and_then(|c| c.get("network"))
+        .get(func_ver)
+        .ok_or_else(|| {
+            UpstreamError::parse(NETWORK_CONFIG, format!("no config for funcVer {func_ver}"))
+        })?
+        .get("network")
         .and_then(Value::as_object)
-        .ok_or_else(|| UpstreamError::parse(NETWORK_CONFIG, "no network for funcVer"))?;
+        .ok_or_else(|| {
+            UpstreamError::parse(
+                NETWORK_CONFIG,
+                format!("no network table under funcVer {func_ver}"),
+            )
+        })?;
 
-    Ok(network
+    let routes: Vec<(Domain, String)> = network
         .iter()
         .filter_map(|(k, v)| Some((Domain::parse(k)?, v.as_str()?.to_owned())))
-        .collect())
+        .collect();
+    if routes.is_empty() {
+        return Err(UpstreamError::parse(
+            NETWORK_CONFIG,
+            "network table names no known domain",
+        ));
+    }
+    Ok(routes)
 }
 
 pub(crate) async fn fetch_network(
@@ -150,6 +173,12 @@ pub(crate) async fn fetch_network(
     timeout: Duration,
 ) -> Result<Vec<(Domain, String)>, UpstreamError> {
     let response = client.get(url).timeout(timeout).send().await?;
+    if !response.status().is_success() {
+        return Err(UpstreamError::HttpStatus {
+            url: url.to_owned(),
+            status: response.status().as_u16(),
+        });
+    }
     parse_network(&read_bytes(response, NETWORK_CONFIG).await?)
 }
 

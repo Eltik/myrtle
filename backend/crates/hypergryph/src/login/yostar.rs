@@ -2,8 +2,10 @@ use myrtle_types::Server;
 use serde::{Deserialize, Serialize};
 
 use crate::constants::ACCOUNT_PORTAL_BASE;
-use crate::error::UpstreamError;
-use crate::fetch::{FetchRequest, REDACTED, auth_request, fetch, parse_json, read_body};
+use crate::error::{UpstreamEnvelope, UpstreamError};
+use crate::fetch::{
+    FetchRequest, REDACTED, auth_request, fetch, parse_json, read_body, redacted_body,
+};
 use crate::session::AuthSession;
 use crate::upstream::Upstream;
 
@@ -12,6 +14,8 @@ const GET_AUTH: &str = "yostar::yostar/get-auth";
 const USER_LOGIN: &str = "yostar::user/login";
 const PORTAL_LOGIN: &str = "yostar::api/user/login";
 const SYNC_DATA: &str = "yostar::account/syncData";
+const CODE_REJECTED: i64 = 100_303;
+const CODE_EMAIL_LIMIT: i64 = 100_302;
 
 #[derive(Serialize)]
 #[serde(rename_all = "PascalCase")]
@@ -33,13 +37,15 @@ struct AuthBody<'a> {
 struct AuthFetchResponse {
     code: i64,
     data: Option<AuthFetchData>,
+    #[serde(default)]
     msg: String,
 }
 
 #[derive(Deserialize)]
 #[serde(rename_all = "PascalCase")]
 struct AuthFetchData {
-    token: String,
+    #[serde(default)]
+    token: Option<String>,
 }
 
 pub struct AuthResponse {
@@ -121,6 +127,42 @@ impl std::fmt::Debug for AccountPortalSession {
     }
 }
 
+fn outcome(reply: &serde_json::Value, context: &'static str) -> Result<(), UpstreamError> {
+    match reply.get("Code").and_then(serde_json::Value::as_i64) {
+        Some(200) => Ok(()),
+        Some(code) => Err(refusal(code, reply_msg(reply), context)),
+        None => {
+            tracing::warn!(context, body = %redacted_body(&reply.to_string()), "yostar reply carries no Code");
+            Err(UpstreamError::parse(context, "invalid upstream response"))
+        }
+    }
+}
+
+fn reply_msg(reply: &serde_json::Value) -> &str {
+    reply
+        .get("Msg")
+        .and_then(serde_json::Value::as_str)
+        .unwrap_or_default()
+}
+
+fn refusal(code: i64, msg: &str, context: &'static str) -> UpstreamError {
+    tracing::warn!(context, code, msg, "yostar refused the request");
+    let shown = match code {
+        CODE_REJECTED => "The code is wrong, has expired, or was already used",
+        CODE_EMAIL_LIMIT => {
+            "Yostar has emailed this address too many codes recently. Wait a while before requesting another"
+        }
+        _ if msg.is_empty() => "Yostar refused the request",
+        _ => msg,
+    };
+    UpstreamError::Envelope(Box::new(UpstreamEnvelope {
+        status_code: 200,
+        code,
+        msg: shown.to_owned(),
+        ..UpstreamEnvelope::default()
+    }))
+}
+
 fn sdk_base(upstream: &Upstream, server: Server) -> Result<String, UpstreamError> {
     upstream
         .config()
@@ -168,7 +210,9 @@ pub async fn send_code(
         ticket: "",
     };
     let response = post_sdk(upstream, server, "yostar/send-code", SEND_CODE, &body).await?;
-    parse_json(response, SEND_CODE).await
+    let reply: serde_json::Value = parse_json(response, SEND_CODE).await?;
+    outcome(&reply, SEND_CODE)?;
+    Ok(reply)
 }
 
 pub async fn submit_auth(
@@ -185,16 +229,14 @@ pub async fn submit_auth(
     let data: AuthFetchResponse = parse_json(response, GET_AUTH).await?;
 
     if data.code != 200 {
-        return Err(UpstreamError::LoginRejected {
-            context: GET_AUTH,
-            code: data.code.to_string(),
-            message: data.msg,
-        });
+        return Err(refusal(data.code, &data.msg, GET_AUTH));
     }
-    let inner = data
+    let token = data
         .data
-        .ok_or_else(|| UpstreamError::parse(GET_AUTH, "missing auth data"))?;
-    Ok(AuthResponse { token: inner.token })
+        .and_then(|d| d.token)
+        .filter(|t| !t.is_empty())
+        .ok_or_else(|| UpstreamError::parse(GET_AUTH, "no token in the reply"))?;
+    Ok(AuthResponse { token })
 }
 
 pub async fn request_token(
@@ -213,7 +255,16 @@ pub async fn request_token(
         user_name: email,
     };
     let response = post_sdk(upstream, server, "user/login", USER_LOGIN, &body).await?;
-    let data: TokenFetchResponse = parse_json(response, USER_LOGIN).await?;
+    let reply: serde_json::Value = parse_json(response, USER_LOGIN).await?;
+    if let Some(code) = reply.get("Code").and_then(serde_json::Value::as_i64)
+        && code != 200
+    {
+        return Err(refusal(code, reply_msg(&reply), USER_LOGIN));
+    }
+    let data: TokenFetchResponse = serde_json::from_value(reply).map_err(|e| {
+        tracing::warn!(context = USER_LOGIN, error = %e, "failed to parse response body");
+        UpstreamError::parse(USER_LOGIN, "invalid upstream response")
+    })?;
     Ok(TokenResponse {
         uid: data.data.user_info.id,
         token: data.data.user_info.token,

@@ -95,20 +95,3 @@ pub struct Action {
     #[serde(default)]
     pub count: i64,
 }
-
-#[cfg(test)]
-mod tests {
-    use super::is_level_file;
-
-    #[test]
-    fn level_files_skip_the_stats_and_replacer_directories() {
-        assert!(is_level_file("obt/main/level_main_01-07.json"));
-        assert!(is_level_file("levels_meta.json.json"));
-        assert!(!is_level_file("enemydata/enemy_database.json"));
-        assert!(!is_level_file(
-            "obt/roguelike/ro4/levelreplacers/level_x.json"
-        ));
-        assert!(!is_level_file("obt/main/level_main_01-07.txt"));
-        assert!(!is_level_file("obt/main/.json"));
-    }
-}

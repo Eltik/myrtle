@@ -5,7 +5,7 @@ mod common;
 use std::collections::HashSet;
 use std::time::Duration;
 
-use chrono::Utc;
+use chrono::{SubsecRound, Utc};
 use common::{claim_one, enqueue, expire_lease, probe, queue, worker};
 use myrtle_db::Db;
 use myrtle_jobs::{JobKind, JobQueue, JobSpec, JobState, QueueError, enqueue_in};
@@ -120,6 +120,84 @@ async fn a_duplicate_key_joins_the_queued_job(pool: PgPool) {
         .unwrap();
     assert_ne!(other_kind, first);
     assert_ne!(enqueue(&queue, KIND).await, first); // no key, no joining
+}
+
+#[sqlx::test(migrator = "myrtle_db::migrate::MIGRATOR")]
+async fn a_batch_enqueues_each_spec_as_if_alone(pool: PgPool) {
+    let queue = queue(&pool);
+    assert!(queue.enqueue_many(&[]).await.unwrap().is_empty());
+    let keyed = |key: &str, priority, delay: Duration| JobSpec {
+        dedupe_key: Some(key.to_owned()),
+        payload: json!({ "key": key, "priority": priority }),
+        priority,
+        run_at: Some(Utc::now() + delay),
+        ..JobSpec::new(KIND)
+    };
+    let held = queue
+        .enqueue(keyed("user:1", 0, Duration::from_mins(10)))
+        .await
+        .unwrap();
+    let later = Utc::now() + Duration::from_mins(5);
+    let specs = [
+        keyed("user:1", 5, Duration::ZERO),
+        keyed("user:2", 1, Duration::from_mins(10)),
+        JobSpec {
+            server: Some(Server::JP),
+            run_at: Some(later),
+            ..JobSpec::new(ONE_SHOT)
+        },
+        keyed("user:2", 3, Duration::from_mins(20)),
+        JobSpec {
+            dedupe_key: Some("user:2".to_owned()),
+            ..JobSpec::new(JobKind::SandboxBackfill)
+        },
+    ];
+    let ids = queue.enqueue_many(&specs).await.unwrap();
+    assert_eq!(ids.len(), specs.len());
+    assert_eq!(ids[0], held, "joins the queued key");
+    assert_eq!(ids[3], ids[1], "a key twice in one batch joins itself");
+    assert_eq!(ids.iter().collect::<HashSet<_>>().len(), 4);
+
+    let row = probe(&pool, held).await;
+    assert_eq!((row.priority, row.state.as_str()), (5, "queued"));
+    assert!(row.run_at <= Utc::now());
+    let row = probe(&pool, ids[1]).await;
+    assert_eq!(row.priority, 3);
+    assert!(row.run_at < Utc::now() + Duration::from_mins(11));
+
+    let (server, payload, run_at, max_attempts, lease_secs): (
+        Option<i16>,
+        serde_json::Value,
+        _,
+        i16,
+        i32,
+    ) = sqlx::query_as(
+        "SELECT server_id, payload, run_at, max_attempts, lease_secs FROM jobs WHERE id = $1",
+    )
+    .bind(ids[2].0)
+    .fetch_one(&pool)
+    .await
+    .unwrap();
+    assert_eq!(server, Some(Server::JP.index()));
+    assert_eq!(payload, json!({}));
+    assert_eq!(
+        (run_at, max_attempts, lease_secs),
+        (
+            later.trunc_subsecs(6),
+            ONE_SHOT.max_attempts() as i16,
+            ONE_SHOT.lease_secs() as i32
+        )
+    );
+    let payload: serde_json::Value = sqlx::query_scalar("SELECT payload FROM jobs WHERE id = $1")
+        .bind(ids[1].0)
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+    assert_eq!(
+        payload,
+        json!({ "key": "user:2", "priority": 1 }),
+        "the first payload stays"
+    );
 }
 
 #[sqlx::test(migrator = "myrtle_db::migrate::MIGRATOR")]

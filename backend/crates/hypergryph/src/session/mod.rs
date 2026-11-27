@@ -309,6 +309,17 @@ async fn get_u8_token(
     Ok(data)
 }
 
+fn mint_ready(upstream: &Upstream, server: Server) -> Result<(), UpstreamError> {
+    let config = upstream.config();
+    match [Domain::U8, Domain::GS]
+        .into_iter()
+        .find(|&domain| config.domain(server, domain).is_none())
+    {
+        Some(domain) => Err(UpstreamError::DomainNotFound { server, domain }),
+        None => Ok(()),
+    }
+}
+
 async fn mint(
     upstream: &Upstream,
     channel_uid: String,
@@ -333,6 +344,7 @@ pub async fn login(
     code: &str,
     server: Server,
 ) -> Result<LoginResult, UpstreamError> {
+    mint_ready(upstream, server)?;
     let yostar_data = submit_auth(upstream, email, code, server).await?;
 
     let portal_session = if upstream.config().yostar_sdk(server).is_some() {

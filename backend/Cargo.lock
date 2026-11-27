@@ -2571,7 +2571,9 @@ name = "myrtle-worker"
 version = "0.1.0"
 dependencies = [
  "chrono",
+ "futures-util",
  "myrtle-app",
+ "myrtle-db",
  "myrtle-hypergryph",
  "myrtle-jobs",
  "myrtle-testkit",
@@ -2584,6 +2586,7 @@ dependencies = [
  "thiserror",
  "tikv-jemallocator",
  "tokio",
+ "tokio-tungstenite",
  "toml",
  "tracing",
  "tracing-subscriber",

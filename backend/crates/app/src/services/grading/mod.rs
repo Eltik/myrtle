@@ -170,14 +170,16 @@ pub async fn rescore_sandbox(ctx: &AppContext, user: UserId) -> Result<Option<St
     Ok(Some(r.grade))
 }
 
+fn regrade_spec(user: UserId) -> JobSpec {
+    JobSpec {
+        payload: json!({ "user_id": user.0 }),
+        dedupe_key: Some(user.0.to_string()),
+        ..JobSpec::new(JobKind::RegradeUser)
+    }
+}
+
 pub async fn enqueue_regrade(ctx: &AppContext, user: UserId) -> Result<(), AppError> {
-    ctx.queue
-        .enqueue(JobSpec {
-            payload: json!({ "user_id": user.0 }),
-            dedupe_key: Some(user.0.to_string()),
-            ..JobSpec::new(JobKind::RegradeUser)
-        })
-        .await?;
+    ctx.queue.enqueue(regrade_spec(user)).await?;
     Ok(())
 }
 
@@ -191,9 +193,10 @@ pub async fn enqueue_regrade_all(ctx: &AppContext) -> Result<u64, AppError> {
             return Ok(queued);
         };
         after = Some(UserId(last.id));
-        for key in &page {
-            enqueue_regrade(ctx, UserId(key.id)).await?;
-            queued += 1;
-        }
+        let specs: Vec<JobSpec> = page
+            .iter()
+            .map(|key| regrade_spec(UserId(key.id)))
+            .collect();
+        queued += ctx.queue.enqueue_many(&specs).await?.len() as u64;
     }
 }

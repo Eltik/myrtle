@@ -5,8 +5,8 @@ use axum::response::IntoResponse;
 use myrtle_api::ApiError;
 use myrtle_api::error::ErrorCode;
 use myrtle_app::AppError;
-use myrtle_hypergryph::UpstreamError;
-use myrtle_types::FieldError;
+use myrtle_hypergryph::{Domain, UpstreamEnvelope, UpstreamError};
+use myrtle_types::{FieldError, Server};
 use serde_json::{Value, json};
 
 async fn rendered(error: AppError) -> (u16, Value) {
@@ -121,4 +121,56 @@ async fn validation_carries_details_and_maintenance_carries_its_end() {
     assert_eq!(status, 503);
     assert_eq!(body["error"]["code"], "GAME_MAINTENANCE");
     assert_eq!(body["error"]["ends_at"], 42);
+}
+
+#[tokio::test]
+async fn an_unloaded_server_is_unavailable_not_unsupported() {
+    let (status, body) = rendered(AppError::Upstream(UpstreamError::DomainNotFound {
+        server: Server::EN,
+        domain: Domain::U8,
+    }))
+    .await;
+    assert_eq!(status, 503);
+    assert_eq!(
+        body,
+        json!({ "error": { "code": "SERVICE_UNAVAILABLE", "message": "service unavailable" } })
+    );
+}
+
+#[tokio::test]
+async fn a_yostar_refusal_reaches_the_client_as_its_message_and_code() {
+    let cases = [
+        (
+            100_303,
+            "The code is wrong, has expired, or was already used",
+            "The code is wrong, has expired, or was already used (100303)",
+        ),
+        (
+            100_302,
+            "Yostar has emailed this address too many codes recently. Wait a while before requesting another",
+            "Yostar has emailed this address too many codes recently. Wait a while before requesting another (100302)",
+        ),
+        (
+            100_555,
+            "Requests are too frequent",
+            "Requests are too frequent (100555)",
+        ),
+    ];
+    for (code, msg, shown) in cases {
+        let refusal = UpstreamEnvelope {
+            status_code: 200,
+            code,
+            msg: msg.into(),
+            ..UpstreamEnvelope::default()
+        };
+        let (status, body) = rendered(AppError::Upstream(UpstreamError::Envelope(Box::new(
+            refusal,
+        ))))
+        .await;
+        assert_eq!(status, 400);
+        assert_eq!(
+            body,
+            json!({ "error": { "code": "BAD_REQUEST", "message": shown } })
+        );
+    }
 }

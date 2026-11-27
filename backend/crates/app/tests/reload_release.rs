@@ -202,6 +202,63 @@ async fn an_announcement_queues_its_jobs_once_however_many_processes_reload() {
 }
 
 #[tokio::test]
+async fn one_update_heard_by_every_process_at_once_is_published_once() {
+    const KINDS: [JobKind; 3] = [
+        JobKind::ReleaseLedgerRecord,
+        JobKind::ReleaseArtMirror,
+        JobKind::RarityReconcile,
+    ];
+    let (base, db) = common::context().await;
+    let assets = tempfile::tempdir().unwrap();
+    extract(&assets.path().join("en"));
+    let processes: Vec<AppContext> = (0..4)
+        .map(|_| over(&base, assets.path(), true, true))
+        .collect();
+    for ctx in &processes {
+        ctx.snapshots
+            .activate_at(Server::EN, &Generation::default())
+            .await
+            .unwrap();
+    }
+    let announces: Vec<_> = processes
+        .iter()
+        .cloned()
+        .map(|ctx| tokio::spawn(async move { ctx.announce_update(Server::EN, Some("v1")).await }))
+        .collect();
+    for announce in announces {
+        assert_eq!(announce.await.unwrap().unwrap(), 1);
+    }
+    let ctx = &processes[0];
+    assert_eq!(generations(ctx).await, [(Server::EN, 1)]);
+    for kind in KINDS {
+        let jobs = claim(ctx, kind).await;
+        assert_eq!(jobs.len(), 1, "{kind:?}");
+        assert_eq!(announced(&jobs[0]), Announced { generation: 1 }, "{kind:?}");
+    }
+
+    assert_eq!(
+        ctx.announce_update(Server::EN, Some("v1")).await.unwrap(),
+        1
+    );
+    for kind in KINDS {
+        assert!(claim(ctx, kind).await.is_empty(), "{kind:?}: a late repeat");
+    }
+    assert_eq!(ctx.announce_update(Server::EN, None).await.unwrap(), 2);
+    assert_eq!(
+        ctx.announce_update(Server::EN, Some("v2")).await.unwrap(),
+        3
+    );
+    for kind in KINDS {
+        assert_eq!(
+            claim(ctx, kind).await.len(),
+            2,
+            "{kind:?}: one per real bump"
+        );
+    }
+    db.close().await;
+}
+
+#[tokio::test]
 async fn a_sidecar_reload_queues_the_ledger_record_at_its_generation() {
     let (base, db) = common::context().await;
     let assets = tempfile::tempdir().unwrap();

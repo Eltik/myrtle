@@ -12,7 +12,11 @@ ON CONFLICT (server_id) DO UPDATE
        res_version = COALESCE($2, data_generations.res_version),
        pipeline_seq = data_generations.pipeline_seq + ($2::text IS NOT NULL)::int,
        updated_at = now()
+ WHERE $2::text IS NULL OR data_generations.res_version IS DISTINCT FROM $2
 RETURNING generation, res_version, pipeline_seq";
+
+const ONE: &str =
+    "SELECT generation, res_version, pipeline_seq FROM data_generations WHERE server_id = $1";
 
 const CREATE: &str =
     "INSERT INTO data_generations (server_id) VALUES ($1) ON CONFLICT (server_id) DO NOTHING";
@@ -22,6 +26,8 @@ const LOCK_RECORDED: &str =
 
 const SET_RECORDED: &str = "UPDATE data_generations SET recorded_seq = $2 WHERE server_id = $1";
 
+type Row = (i64, Option<String>, i64);
+
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct Generation {
     pub generation: i64,
@@ -29,6 +35,22 @@ pub struct Generation {
     pub res_version: Option<String>,
     /// Bumps that carried a pipeline version
     pub pipeline_seq: i64,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Bump {
+    Published(Generation),
+    /// The row already held this pipeline version, so nothing moved
+    AlreadyPublished(Generation),
+}
+
+impl Bump {
+    #[must_use]
+    pub const fn current(&self) -> &Generation {
+        match self {
+            Self::Published(g) | Self::AlreadyPublished(g) => g,
+        }
+    }
 }
 
 /// Every server with a recorded generation
@@ -53,17 +75,28 @@ pub async fn bump(
     conn: &mut Conn,
     server: Server,
     res_version: Option<&str>,
-) -> Result<Generation, DbError> {
-    let (generation, res_version, pipeline_seq): (i64, Option<String>, i64) = sqlx::query_as(BUMP)
+) -> Result<Bump, DbError> {
+    let bumped: Option<Row> = sqlx::query_as(BUMP)
         .bind(server.index())
         .bind(res_version)
-        .fetch_one(conn)
+        .fetch_optional(&mut *conn)
         .await?;
-    Ok(Generation {
+    if let Some(row) = bumped {
+        return Ok(Bump::Published(generation(row)));
+    }
+    let held: Row = sqlx::query_as(ONE)
+        .bind(server.index())
+        .fetch_one(conn)
+        .await?; // a statement of its own, so it sees the commit the upsert waited on
+    Ok(Bump::AlreadyPublished(generation(held)))
+}
+
+fn generation((generation, res_version, pipeline_seq): Row) -> Generation {
+    Generation {
         generation,
         res_version,
         pipeline_seq,
-    })
+    }
 }
 
 pub async fn lock_recorded(conn: &mut Conn, server: Server) -> Result<i64, DbError> {

@@ -192,7 +192,7 @@ fn archive_ids(detail: &Value) -> HashSet<&str> {
 }
 
 /// e.g. `rogue_4_band_22_7`
-fn is_band_variant(id: &str) -> bool {
+pub(crate) fn is_band_variant(id: &str) -> bool {
     let Some((head, tail)) = id.rsplit_once('_') else {
         return false;
     };
@@ -203,7 +203,7 @@ fn is_band_variant(id: &str) -> bool {
 }
 
 /// Cuts a trailing `_x` or `_x_N` variant suffix (`rogue_5_wrath_1_a_3` -> `rogue_5_wrath_1`)
-fn strip_variant(id: &str) -> &str {
+pub(crate) fn strip_variant(id: &str) -> &str {
     let mut rest = id;
     if let Some((head, tail)) = rest.rsplit_once('_')
         && !tail.is_empty()
@@ -221,7 +221,7 @@ fn strip_variant(id: &str) -> &str {
 }
 
 /// Compares ids with digit runs read as numbers (`band_2` before `band_10`)
-fn natural_cmp(a: &str, b: &str) -> Ordering {
+pub(crate) fn natural_cmp(a: &str, b: &str) -> Ordering {
     let (mut a, mut b) = (a.as_bytes(), b.as_bytes());
     loop {
         match (a.first(), b.first()) {
@@ -274,30 +274,5 @@ fn kv_pairs(v: &Value) -> Vec<(&str, &Value)> {
         map.iter().map(|(k, v)| (k.as_str(), v)).collect()
     } else {
         Vec::new()
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn variant_suffixes_are_cut() {
-        assert_eq!(strip_variant("rogue_5_wrath_1_a"), "rogue_5_wrath_1");
-        assert_eq!(strip_variant("rogue_5_wrath_1_a_3"), "rogue_5_wrath_1");
-        assert_eq!(
-            strip_variant("rogue_5_copper_B_01_a"),
-            "rogue_5_copper_B_01"
-        );
-        assert_eq!(strip_variant("rogue_1_band_1"), "rogue_1_band_1");
-        assert!(is_band_variant("rogue_4_band_22_7"));
-        assert!(!is_band_variant("rogue_4_band_22"));
-    }
-
-    #[test]
-    fn ids_sort_by_number() {
-        let mut ids = vec!["band_10", "band_2", "band_1"];
-        ids.sort_by(|a, b| natural_cmp(a, b));
-        assert_eq!(ids, ["band_1", "band_2", "band_10"]);
     }
 }

@@ -1,5 +1,6 @@
 use std::time::Duration;
 
+use myrtle_app::services::catalog::reload;
 use myrtle_app::{AppContext, AppError};
 use myrtle_jobs::{Job, JobKind, JobQueue, PgQueue, QueueError, schedule};
 use myrtle_types::WorkerId;
@@ -63,6 +64,13 @@ impl Runtime {
 
     pub async fn run(mut self, shutdown: impl Future<Output = ()>) -> Result<(), AppError> {
         let mut upkeep = tokio::spawn(upkeep(self.ctx.clone(), self.queue.clone()));
+        let pipeline = self
+            .ctx
+            .config
+            .switches
+            .background_jobs
+            .enabled
+            .then(|| tokio::spawn(pipeline(self.ctx.clone())));
         let mut running: JoinSet<usize> = JoinSet::new();
         let mut poll = tokio::time::interval(POLL);
         poll.set_missed_tick_behavior(MissedTickBehavior::Delay);
@@ -91,6 +99,9 @@ impl Runtime {
         };
 
         upkeep.abort();
+        if let Some(pipeline) = &pipeline {
+            pipeline.abort();
+        }
         if !running.is_empty() {
             tracing::info!(jobs = running.len(), "draining running jobs");
             let drain = async { while running.join_next().await.is_some() {} };
@@ -181,6 +192,24 @@ async fn execute(ctx: AppContext, queue: &PgQueue, worker: WorkerId, job: Job) {
                 tracing::error!(job = id.0, kind, error = %e, "job outcome not recorded");
                 return;
             }
+        }
+    }
+}
+
+async fn pipeline(ctx: AppContext) {
+    let mut panics = 0;
+    loop {
+        let mut listener = JoinSet::new();
+        let listening = ctx.clone();
+        listener.spawn(async move { reload::listen_for_updates(&listening).await });
+        match listener.join_next().await {
+            Some(Err(e)) if e.is_panic() => {
+                panics += 1;
+                let wait = reload::retry_delay(panics);
+                tracing::error!(error = %e, retry_in = ?wait, "asset pipeline listener panicked");
+                tokio::time::sleep(wait).await;
+            }
+            _ => return,
         }
     }
 }

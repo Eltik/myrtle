@@ -97,6 +97,32 @@ fn overrun_stays_up_while_the_game_is_down() {
 }
 
 #[test]
+fn a_login_screen_notice_does_not_outrank_a_login_that_works() {
+    let ten_minutes = [notice(1663, T0, Some(T0 + 600), false)];
+    let notice_up_game_up = Signals {
+        prean_active: true,
+        game_down: Some(false),
+    };
+    assert!(resolve(&ten_minutes, T0 + 7 * H, notice_up_game_up).is_none());
+
+    let open_ended = [notice(1, T0, None, false)];
+    assert!(resolve(&open_ended, T0 + H, notice_up_game_up).is_none());
+
+    for prean_active in [true, false] {
+        let down = Signals {
+            prean_active,
+            game_down: Some(true),
+        };
+        assert!(resolve(&ten_minutes, T0 + 7 * H, down).is_some());
+    }
+    let notice_only = Signals {
+        prean_active: true,
+        game_down: None,
+    };
+    assert!(resolve(&ten_minutes, T0 + 7 * H, notice_only).is_some());
+}
+
+#[test]
 fn newer_notice_extends_the_same_window() {
     let n = [
         notice(1626, T0, Some(T0 + H), false),

@@ -137,9 +137,10 @@ const fn upstream_code(e: &UpstreamError) -> ErrorCode {
     match e {
         UpstreamError::NotLoggedIn => ErrorCode::Unauthorized,
         UpstreamError::Maintenance(_) => ErrorCode::GameMaintenance,
-        UpstreamError::ServiceAccountRefused { .. } => ErrorCode::ServiceUnavailable,
-        UpstreamError::DomainNotFound { .. }
-        | UpstreamError::Unsupported { .. }
+        UpstreamError::ServiceAccountRefused { .. } | UpstreamError::DomainNotFound { .. } => {
+            ErrorCode::ServiceUnavailable
+        }
+        UpstreamError::Unsupported { .. }
         | UpstreamError::Parse { .. }
         | UpstreamError::ApiCode { .. }
         | UpstreamError::Envelope(_)
@@ -167,8 +168,13 @@ impl IntoResponse for ApiError {
             (AppError::Upstream(UpstreamError::ApiCode { code, message, .. }), _) => {
                 format!("{message} ({code})")
             }
-            (AppError::Upstream(UpstreamError::DomainNotFound { .. }), _) => {
-                "unsupported server".to_owned()
+            (AppError::Upstream(UpstreamError::DomainNotFound { server, domain }), _) => {
+                tracing::warn!(
+                    server = server.as_str(),
+                    domain = ?domain,
+                    "request needs a domain that has not loaded"
+                );
+                AppError::Unavailable.to_string()
             }
             (AppError::Upstream(_), ErrorCode::Unauthorized) => AppError::Unauthorized.to_string(),
             (AppError::Upstream(_), ErrorCode::ServiceUnavailable) => {

@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::time::Duration;
 
 use async_trait::async_trait;
@@ -12,6 +13,18 @@ use crate::model::{Job, JobKind, JobSpec, JobState};
 const ENQUEUE: &str = "
 INSERT INTO jobs (kind, server_id, payload, dedupe_key, priority, run_at, max_attempts, lease_secs)
 VALUES ($1, $2, $3, $4, $5, COALESCE($6, now()), $7, $8)
+ON CONFLICT (kind, dedupe_key) WHERE state = 'queued' DO UPDATE
+   SET priority = GREATEST(jobs.priority, EXCLUDED.priority),
+       run_at = LEAST(jobs.run_at, EXCLUDED.run_at)
+RETURNING id";
+
+const ENQUEUE_MANY: &str = "
+INSERT INTO jobs (kind, server_id, payload, dedupe_key, priority, run_at, max_attempts, lease_secs)
+SELECT kind, server_id, payload, dedupe_key, priority, COALESCE(run_at, now()), max_attempts,
+       lease_secs
+  FROM UNNEST($1::text[], $2::smallint[], $3::jsonb[], $4::text[], $5::smallint[],
+              $6::timestamptz[], $7::smallint[], $8::int[])
+    AS t (kind, server_id, payload, dedupe_key, priority, run_at, max_attempts, lease_secs)
 ON CONFLICT (kind, dedupe_key) WHERE state = 'queued' DO UPDATE
    SET priority = GREATEST(jobs.priority, EXCLUDED.priority),
        run_at = LEAST(jobs.run_at, EXCLUDED.run_at)
@@ -112,6 +125,9 @@ impl From<sqlx::Error> for QueueError {
 pub trait JobQueue: Send + Sync {
     async fn enqueue(&self, spec: JobSpec) -> Result<JobId, QueueError>;
 
+    /// One id per spec, in order, as if each were enqueued alone
+    async fn enqueue_many(&self, specs: &[JobSpec]) -> Result<Vec<JobId>, QueueError>;
+
     async fn claim(
         &self,
         worker: WorkerId,
@@ -153,6 +169,57 @@ pub async fn enqueue_in(conn: &mut Conn, spec: &JobSpec) -> Result<JobId, QueueE
         .fetch_one(conn)
         .await?;
     Ok(JobId(id))
+}
+
+pub async fn enqueue_many_in(conn: &mut Conn, specs: &[JobSpec]) -> Result<Vec<JobId>, QueueError> {
+    let mut ids = Vec::with_capacity(specs.len());
+    let mut rest = specs;
+    while !rest.is_empty() {
+        let mut keys = HashSet::new();
+        let len = rest
+            .iter()
+            .position(|s| {
+                s.dedupe_key
+                    .as_deref()
+                    .is_some_and(|k| !keys.insert((s.kind, k)))
+            })
+            .unwrap_or(rest.len()); // a key twice in one INSERT is an error, so a repeat starts the next one
+        let (batch, tail) = rest.split_at(len);
+        let rows: Vec<i64> = sqlx::query_scalar(ENQUEUE_MANY)
+            .bind(batch.iter().map(|s| s.kind.as_str()).collect::<Vec<_>>())
+            .bind(
+                batch
+                    .iter()
+                    .map(|s| s.server.map(Server::index))
+                    .collect::<Vec<_>>(),
+            )
+            .bind(batch.iter().map(|s| &s.payload).collect::<Vec<_>>())
+            .bind(
+                batch
+                    .iter()
+                    .map(|s| s.dedupe_key.as_deref())
+                    .collect::<Vec<_>>(),
+            )
+            .bind(batch.iter().map(|s| s.priority).collect::<Vec<_>>())
+            .bind(batch.iter().map(|s| s.run_at).collect::<Vec<_>>())
+            .bind(
+                batch
+                    .iter()
+                    .map(|s| s.kind.max_attempts() as i16)
+                    .collect::<Vec<_>>(),
+            )
+            .bind(
+                batch
+                    .iter()
+                    .map(|s| s.kind.lease_secs() as i32)
+                    .collect::<Vec<_>>(),
+            )
+            .fetch_all(&mut *conn)
+            .await?;
+        ids.extend(rows.into_iter().map(JobId));
+        rest = tail;
+    }
+    Ok(ids)
 }
 
 #[derive(Debug, Clone)]
@@ -211,6 +278,13 @@ impl PgQueue {
 impl JobQueue for PgQueue {
     async fn enqueue(&self, spec: JobSpec) -> Result<JobId, QueueError> {
         enqueue_in(&mut *self.db.conn().await?, &spec).await
+    }
+
+    async fn enqueue_many(&self, specs: &[JobSpec]) -> Result<Vec<JobId>, QueueError> {
+        if specs.is_empty() {
+            return Ok(Vec::new());
+        }
+        enqueue_many_in(&mut *self.db.conn().await?, specs).await
     }
 
     async fn claim(

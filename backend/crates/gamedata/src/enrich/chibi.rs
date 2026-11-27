@@ -293,7 +293,7 @@ fn get_or_create_skin<'a>(
     &mut character.skins[i]
 }
 
-fn is_start_companion(cleaned: &str) -> bool {
+pub(crate) fn is_start_companion(cleaned: &str) -> bool {
     let lower = cleaned.to_ascii_lowercase();
     if lower.ends_with("_start") {
         return true;
@@ -322,20 +322,5 @@ fn sort_characters(characters: &mut [ChibiCharacter]) {
         character
             .skins
             .sort_by(|a, b| (a.name != "default", &a.name).cmp(&(b.name != "default", &b.name)));
-    }
-}
-
-#[cfg(test)]
-mod start_companion_tests {
-    use super::is_start_companion;
-
-    #[test]
-    fn start_marker_with_and_without_skin_suffix() {
-        assert!(is_start_companion("char_003_kalts_boc#6_Start"));
-        assert!(is_start_companion("char_2023_ling_nian_Start#12"));
-        assert!(is_start_companion("char_2023_ling_nian_start#12"));
-        assert!(!is_start_companion("char_2023_ling_nian#12"));
-        assert!(!is_start_companion("char_2023_ling_nian_Start#"));
-        assert!(!is_start_companion("char_2023_ling_nian_Starter#12"));
     }
 }

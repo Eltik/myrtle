@@ -4,11 +4,11 @@ mod common;
 
 use base64::Engine;
 use base64::engine::general_purpose::STANDARD;
-use common::{Recorded, Reply, serve, upstream};
+use common::{FakeServer, Recorded, Reply, serve, upstream};
 use myrtle_hypergryph::crypto::generate_bilibili_sign;
 use myrtle_hypergryph::login::passport::PassportCredential;
 use myrtle_hypergryph::login::{bilibili, passport, yostar};
-use myrtle_hypergryph::{UpstreamError, session};
+use myrtle_hypergryph::{Domain, NetworkConfig, UpstreamError, session};
 use myrtle_types::Server;
 use rsa::pkcs8::DecodePrivateKey;
 use rsa::{Pkcs1v15Encrypt, RsaPrivateKey};
@@ -179,14 +179,7 @@ async fn a_wrong_email_code_is_rejected_and_cn_has_no_yostar() {
         .await
         .err()
         .unwrap();
-    assert!(
-        matches!(&err, UpstreamError::LoginRejected { context: "yostar::yostar/get-auth", code, message } if code == "100403" && message == "wrong code"),
-        "{err:?}"
-    );
-    assert_eq!(
-        err.to_string(),
-        "yostar::yostar/get-auth rejected (code 100403): wrong code"
-    );
+    assert_eq!(refused(&err), (100_403, "wrong code"));
     let err = yostar::send_code(&up, "a@b", Server::CN).await.unwrap_err();
     assert!(
         matches!(
@@ -199,6 +192,197 @@ async fn a_wrong_email_code_is_rejected_and_cn_has_no_yostar() {
         "{err:?}"
     );
     assert_eq!(server.paths(), ["/sdk/yostar/get-auth"]);
+}
+
+fn refused(err: &UpstreamError) -> (i64, &str) {
+    match err {
+        UpstreamError::Envelope(e) => (e.code, e.msg.as_str()),
+        other => panic!("expected a refusal envelope, got {other:?}"),
+    }
+}
+
+async fn sdk_answering(reply: serde_json::Value) -> FakeServer {
+    serve(move |_: &Recorded| Reply::json(&reply)).await
+}
+
+async fn send_code_answered(reply: serde_json::Value) -> Result<serde_json::Value, UpstreamError> {
+    let server = sdk_answering(reply).await;
+    yostar::send_code(&upstream(&server.base), "a@b", Server::EN).await
+}
+
+async fn submit_auth_answered(reply: serde_json::Value) -> Result<String, UpstreamError> {
+    let server = sdk_answering(reply).await;
+    yostar::submit_auth(&upstream(&server.base), "a@b", "123456", Server::EN)
+        .await
+        .map(|auth| auth.token)
+}
+
+#[tokio::test]
+async fn send_code_200_is_the_only_success() {
+    let sent = json!({ "Code": 200, "Data": {}, "Msg": "OK" });
+    assert_eq!(send_code_answered(sent.clone()).await.unwrap(), sent);
+}
+
+#[tokio::test]
+async fn a_send_code_refusal_carries_yostars_code_and_message() {
+    let err = send_code_answered(
+        json!({ "Code": 100_555, "Data": {}, "Msg": "Requests are too frequent" }),
+    )
+    .await
+    .unwrap_err();
+    assert_eq!(refused(&err), (100_555, "Requests are too frequent"));
+}
+
+#[tokio::test]
+async fn a_send_code_refusal_without_a_message_still_says_something() {
+    for reply in [
+        json!({ "Code": 100_999 }),
+        json!({ "Code": 100_999, "Msg": "" }),
+    ] {
+        let err = send_code_answered(reply).await.unwrap_err();
+        assert_eq!(refused(&err), (100_999, "Yostar refused the request"));
+    }
+}
+
+#[tokio::test]
+async fn a_send_code_reply_without_a_code_is_not_a_confirmed_send() {
+    for reply in [
+        json!({}),
+        json!({ "Msg": "OK" }),
+        json!({ "Code": "200" }),
+        json!([]),
+    ] {
+        let err = send_code_answered(reply.clone()).await.unwrap_err();
+        assert!(
+            matches!(&err, UpstreamError::Parse { context, .. } if context == "yostar::yostar/send-code"),
+            "{reply}: {err:?}"
+        );
+    }
+}
+
+#[tokio::test]
+async fn the_email_limit_is_explained_in_english() {
+    let err = send_code_answered(
+        json!({ "Code": 100_302, "Data": {}, "Msg": "邮件发送频率上限,错误代码:1" }),
+    )
+    .await
+    .unwrap_err();
+    assert_eq!(
+        refused(&err),
+        (
+            100_302,
+            "Yostar has emailed this address too many codes recently. Wait a while before requesting another"
+        )
+    );
+}
+
+#[tokio::test]
+async fn a_rejected_login_code_says_so() {
+    let err = submit_auth_answered(
+        json!({ "Code": 100_303, "Data": {}, "Msg": "获取授权信息失败,错误代码:%!d(string=3)" }),
+    )
+    .await
+    .unwrap_err();
+    assert_eq!(
+        refused(&err),
+        (
+            100_303,
+            "The code is wrong, has expired, or was already used"
+        )
+    );
+}
+
+#[tokio::test]
+async fn an_accepted_login_code_yields_its_token() {
+    let token =
+        submit_auth_answered(json!({ "Code": 200, "Data": { "Token": "abc123" }, "Msg": "OK" }))
+            .await
+            .unwrap();
+    assert_eq!(token, "abc123");
+}
+
+#[tokio::test]
+async fn other_login_refusals_keep_yostars_own_message() {
+    let err =
+        submit_auth_answered(json!({ "Code": 100_123, "Data": null, "Msg": "Account is banned" }))
+            .await
+            .unwrap_err();
+    assert_eq!(refused(&err), (100_123, "Account is banned"));
+}
+
+#[tokio::test]
+async fn a_200_without_a_token_is_not_a_login() {
+    for body in [
+        json!({ "Code": 200, "Data": {}, "Msg": "OK" }),
+        json!({ "Code": 200, "Msg": "OK" }),
+        json!({ "Code": 200, "Data": { "Token": "" } }),
+    ] {
+        let err = submit_auth_answered(body.clone()).await.unwrap_err();
+        assert!(
+            matches!(&err, UpstreamError::Parse { context, .. } if context == "yostar::yostar/get-auth"),
+            "{body}: {err:?}"
+        );
+    }
+}
+
+#[tokio::test]
+async fn a_token_request_refusal_is_read_before_the_success_fields() {
+    let server =
+        sdk_answering(json!({ "Code": 100_123, "Data": {}, "Msg": "Account is banned" })).await;
+    let err = yostar::request_token(&upstream(&server.base), "a@b", "auth-tok", Server::EN)
+        .await
+        .err()
+        .unwrap();
+    assert_eq!(refused(&err), (100_123, "Account is banned"));
+}
+
+#[tokio::test]
+async fn a_login_is_refused_before_the_code_is_spent_while_the_domains_are_missing() {
+    let server = serve(yostar_server(true)).await;
+    let up = upstream(&server.base);
+    let mut cfg = NetworkConfig::new(common::device_ids());
+    cfg.hosts.yostar_sdk = up.config().hosts.yostar_sdk.clone();
+    cfg.hosts
+        .account_portal
+        .clone_from(&up.config().hosts.account_portal);
+    up.update(|c| *c = cfg.clone());
+
+    let err = session::login(&up, "a@b", "123456", Server::EN)
+        .await
+        .err()
+        .unwrap();
+    assert!(
+        matches!(
+            err,
+            UpstreamError::DomainNotFound {
+                server: Server::EN,
+                domain: Domain::U8
+            }
+        ),
+        "{err:?}"
+    );
+    assert!(server.requests().is_empty());
+
+    cfg.set_domain(Server::EN, Domain::U8, format!("{}/u8", server.base));
+    cfg.set_domain(Server::EN, Domain::GS, format!("{}/gs", server.base));
+    up.update(|c| *c = cfg.clone());
+    session::login(&up, "a@b", "123456", Server::EN)
+        .await
+        .unwrap();
+    let err = session::login(&up, "a@b", "123456", Server::JP)
+        .await
+        .err()
+        .unwrap();
+    assert!(
+        matches!(
+            err,
+            UpstreamError::DomainNotFound {
+                server: Server::JP,
+                ..
+            }
+        ),
+        "{err:?}"
+    );
 }
 
 fn form_value<'a>(form: &'a [(String, String)], key: &str) -> &'a str {

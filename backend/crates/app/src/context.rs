@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Duration;
 
-use myrtle_db::repos::data_generations::{self, Generation};
+use myrtle_db::repos::data_generations::{self, Bump, Generation};
 use myrtle_db::{Db, PoolOptions};
 use myrtle_hypergryph::{
     AccountOptions, DeviceIds, GameAccounts, NetworkConfig, SessionStore, Upstream,
@@ -158,6 +158,7 @@ impl AppContext {
             .map_err(AppError::internal)?;
         let upstream = Arc::new(Upstream::new(client, network(&config)));
         upstream.reload().await;
+        upstream.spawn_network_retry(config.server.servers.clone());
 
         let sessions: Arc<dyn SessionStore> = Arc::new(Sessions::new(
             db.clone(),
@@ -225,9 +226,18 @@ impl AppContext {
     ) -> Result<i64, AppError> {
         let server = server.data_server();
         let mut tx = self.db.begin().await?;
-        let generation = data_generations::bump(&mut tx, server, res_version)
-            .await?
-            .generation;
+        let generation = match data_generations::bump(&mut tx, server, res_version).await? {
+            Bump::Published(bumped) => bumped.generation,
+            Bump::AlreadyPublished(held) => {
+                tracing::info!(
+                    server = server.as_str(),
+                    generation = held.generation,
+                    res_version,
+                    "game data version already published, nothing announced"
+                );
+                return Ok(held.generation);
+            }
+        };
         let announced = Announced { generation };
         let mut jobs = release::jobs::follow_ups(self, server, &announced);
         if server == self.snapshots.default_server() {
@@ -254,6 +264,7 @@ impl AppContext {
         let server = server.data_server();
         let generation = data_generations::bump(&mut *self.db.conn().await?, server, None)
             .await?
+            .current()
             .generation;
         tracing::info!(
             server = server.as_str(),
