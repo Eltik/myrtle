@@ -18,3 +18,4 @@ external/
 
 # Local config
 config/myrtle.toml
+DEPLOY.md
