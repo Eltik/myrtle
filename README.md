@@ -67,7 +67,7 @@ Arknights CDN (EN, JP, KR, CN, Bilibili, TW)
 ```
 
 - **assets** downloads raw bundles from the Arknights CDN, then unpacks Unity assets and decodes FlatBuffer game-data tables to JSON. It also runs a WebSocket server that announces completed updates.
-- **backend** loads that game data into memory at startup, serves it over a REST API, handles authentication, and persists user data in PostgreSQL. It also generates the frontend's TypeScript types.
+- **backend** loads that game data into memory at startup, serves it over a REST API, handles authentication, and persists user data in PostgreSQL. A separate worker process runs its background jobs and reloads game data when the pipeline announces an update. It also generates the frontend's TypeScript types.
 - **frontend** renders the operator database, profiles, stages, tier lists, and tools, talking to the backend for all data and calculations.
 - **discord** watches the pipeline's WebSocket, announces updates, and queries the backend.
 
@@ -82,7 +82,7 @@ myrtle.moe/
 │   └── unpacker/       UnityFS bundle extractor and FlatBuffer decoder
 ├── discord/            Rust Discord bot (Poise/Serenity, SQLite)
 ├── .github/workflows/  Backend, frontend, assets, and Discord CI pipelines
-├── docker-compose.yml  Full local stack (db, cache, backend, frontend, asset watchers, tools)
+├── docker-compose.yml  Postgres, Redis, asset tools and watchers (backend service is stale)
 ├── BUILD.md            Manual (non-Docker) build instructions
 └── CONTRIBUTING.md     Full developer setup and workflow
 ```
@@ -100,13 +100,13 @@ Each component has its own README with detailed documentation.
 
 ## Quick Start
 
-The fastest path is Docker Compose, which runs PostgreSQL, Redis, the backend, the frontend, and the per-region asset watchers together.
+Each component runs on its own. The order below gets a full local site up.
 
 ### Prerequisites
 
-- [Docker Engine](https://docs.docker.com/engine/) and [Docker Compose](https://docs.docker.com/compose/)
-- ~100 GB of free disk space for asset download and extraction
-- Game assets extracted via the asset pipeline (see below)
+- [Rust](https://rustup.rs/) 1.94+ and [Bun](https://bun.sh/) 1.4.2
+- PostgreSQL (Redis is optional)
+- ~100 GB of free disk space for a full asset download and extraction, far less for the `gamedata` profile
 
 ### 1. Clone with submodules
 
@@ -116,36 +116,36 @@ cd myrtle
 git submodule update --init --recursive
 ```
 
-### 2. Configure environment
+### 2. Extract the game assets
+
+The backend does not start without game data, so this comes first. With Docker:
 
 ```bash
 cp .env.example .env
-cp backend/.env.example backend/.env
-```
-
-The backend reads `backend/.env`, the same file a manual run uses; compose overrides only the hostnames and paths that differ inside its network. Set `JWT_SECRET` and `GAME_CREDENTIAL_KEY` there (`openssl rand -hex 32`), and `SERVICE_KEY` in the root `.env`, which the frontend shares; the backend refuses to start without them. `COMPOSE_PROFILES` selects which services run - `true` is the always-on app, and `tools` adds the one-off asset and DPS job containers.
-
-### 3. Build the game assets
-
-```bash
-docker compose --profile tools build
+docker compose --profile tools build asset-tools
 docker compose run --rm asset-tools generate_fbs.sh
 docker compose run --rm asset-tools download.sh en 4
 docker compose run --rm asset-tools unpack.sh en 4
 ```
 
-`download.sh` takes `SERVER THREADS [PROFILE]`. Pass a profile such as `gamedata` or `operators` for a much smaller download when you do not need the full art set.
+`download.sh` takes `SERVER THREADS [PROFILE]`. Pass a profile such as `gamedata` or `operators` for a much smaller download when you do not need the full art set. `unpack.sh` takes `SERVER THREADS`. To run the downloader and unpacker without Docker, see [assets/README.md](assets/README.md).
 
-### 4. Start the stack
+### 3. Run the backend
+
+Follow the [backend Quick Start](backend/README.md#quick-start): load the schema into a scratch database, build, copy `config/myrtle.example.toml` to `config/myrtle.toml`, set `DATABASE_URL`, `JWT_SECRET`, and `GAME_CREDENTIAL_KEY` in `backend/.env`, then start `myrtle-api` and `myrtle-worker`. The API listens on `http://localhost:3060`.
+
+### 4. Run the frontend
 
 ```bash
-docker compose build
-docker compose up -d
+cd frontend
+cp .env.example .env    # Point BACKEND_URL and VITE_BACKEND_URL at http://localhost:3060
+bun install
+bun --bun run dev       # http://localhost:3000
 ```
 
-The frontend binds to `http://localhost:3000` and the backend to `http://localhost:3060`.
+> **Docker Compose does not run the whole stack at the moment.** `docker-compose.yml` still describes the previous backend: its `backend` and `dps-tools` services build from a `backend/Dockerfile` that the rewrite removed, and pass environment variables the new binaries ignore. The `postgres`, `redis`, `asset-tools`, and asset-watcher services work; the `frontend` service depends on `backend`. Run the backend and frontend by hand as above.
 
-For manual (non-Docker) setup, see [BUILD.md](BUILD.md) and the per-component READMEs.
+For more detail, see [BUILD.md](BUILD.md) and the per-component READMEs.
 
 ## Documentation
 
@@ -157,7 +157,6 @@ For manual (non-Docker) setup, see [BUILD.md](BUILD.md) and the per-component RE
 | Discord Bot     | [discord/README.md](discord/README.md)                 |
 | Developer Setup | [CONTRIBUTING.md](CONTRIBUTING.md)                     |
 | Manual Build    | [BUILD.md](BUILD.md)                                   |
-| DPS Calculator  | [backend/DPS_CALCULATOR.md](backend/DPS_CALCULATOR.md) |
 | OAuth Provider  | [backend/OAUTH.md](backend/OAUTH.md)                   |
 | IL2CPP Recovery | [assets/IL2CPP_RECOVERY.md](assets/IL2CPP_RECOVERY.md) |
 
@@ -165,12 +164,12 @@ For manual (non-Docker) setup, see [BUILD.md](BUILD.md) and the per-component RE
 
 Contributions are welcome. Clone the repo with submodules, follow the setup in [CONTRIBUTING.md](CONTRIBUTING.md), and run each component's lint, format, and type checks before opening a pull request:
 
-- Backend: `cargo fmt`, `cargo clippy -- -D warnings`, `cargo test`
-- Frontend: `bun --bun run check`, `bunx tsc --noEmit`
+- Backend: `cargo fmt`, `cargo clippy --workspace -- -D warnings`, `cargo test` for the crates you touched, `cargo run -p xtask -- check-layers`
+- Frontend: `bun --bun run check`, `bunx tsc --noEmit`, `bun --bun run test`
 - Assets: `cargo fmt`, `cargo clippy -- -D warnings`, `cargo test`
 - Discord: `cargo fmt`, `cargo clippy --all-targets -- -D warnings`
 
-The frontend has no test suite yet; verify changes with the type-checker, Biome, and the browser. Frontend API types are generated from the Rust backend - if you change a backend type, run `bun run gen:types` in `frontend/` and commit the result rather than editing `frontend/src/types/generated/` by hand.
+Backend cargo commands need `DATABASE_URL` pointing at a migrated scratch database; see [backend/README.md](backend/README.md#1-load-the-schema). Frontend API types are generated from the Rust backend - if you change a backend type, run `bun run gen:types` in `frontend/` and commit the result rather than editing `frontend/src/types/generated/` by hand.
 
 Branch from `main` (or the active development branch) and keep changes scoped to a single component where possible.
 

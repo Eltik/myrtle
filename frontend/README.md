@@ -113,7 +113,7 @@ bun --bun run test     # Vitest
 
 Biome is configured for 4-space indent, 320-character lines, double quotes, organized imports, and sorted Tailwind classes.
 
-> **There are no tests yet.** Vitest, Testing Library, and jsdom are installed and wired into CI, but the suite is empty - CI runs `vitest run --passWithNoTests`. Verify changes with `tsc`, Biome, and the browser.
+Tests are Vitest files next to the code they cover (`*.test.ts` / `*.test.tsx`, 226 of them). Add to the suite beside what you change; CI runs `vitest run --passWithNoTests`.
 
 ### Routing
 
@@ -129,14 +129,14 @@ import { cn } from "#/lib/utils";
 
 ## Generated Types
 
-Every API type is generated from the Rust backend with `ts-rs` and lands in `src/types/generated/` (341 files). Do not edit them, and do not hand-write a duplicate: change the Rust struct instead.
+Every API type is generated from the Rust backend with `ts-rs` and lands in `src/types/generated/` (745 files). Do not edit them, and do not hand-write a duplicate: change the Rust struct instead.
 
 ```bash
 bun run gen:types   # Regenerate the bindings from ../backend
 bun run gen:check   # Fail if the checked-in bindings are stale
 ```
 
-`gen:types` deletes `src/types/generated`, then runs `cargo test export_bindings` and `cargo test --test bindings_shape_test` in `../backend`. The shape test catches two errors `ts-rs` makes silently: `bigint` for `i64`/`u64` (JSON gives plain `number`) and bare `any` where the recursive `JsonValue` type belongs.
+Both scripts run `cargo run -p xtask -- gen-ts` in `../backend`. It exports the bindings from every backend crate that uses `ts-rs`, copies them here, deletes stale files, and formats them with Biome. It rejects two errors `ts-rs` makes silently: `bigint` for `i64`/`u64` (JSON gives plain `number`) and bare `any` where the recursive `JsonValue` type belongs. The backend build needs a database; see the [backend README](../backend/README.md#1-load-the-schema).
 
 The generated types are committed so the frontend builds without a Rust toolchain. The hand-written wrappers in `src/types/*.ts` sit on top and apply a `Camelize<T>` transform, because operator and stage endpoints serve the game's original PascalCase keys.
 

@@ -13,8 +13,9 @@
 
 ## Prerequisites
 
-- [Docker engine](https://docs.docker.com/engine/)
-- [Docker Compose](https://docs.docker.com/compose/)
+- [Rust](https://rustup.rs/) 1.94+ and [Bun](https://bun.sh/) 1.4.2
+- PostgreSQL, plus Redis if you want the shared cache
+- [Docker engine](https://docs.docker.com/engine/) and [Docker Compose](https://docs.docker.com/compose/), for the asset tools (and for Postgres and Redis, if you would rather not install them)
 - ~100GB of free space on disk for assets downloading and extraction.
 
 > Note: Docker engine and compose are included in Docker Desktop.
@@ -33,32 +34,27 @@ git submodule update --init --recursive
 
 ### 1. Environment Setup
 
-First, configure your environment variables.
-Copy `.env.example` into a new `.env` file at the root of the project, and
-`backend/.env.example` into `backend/.env`. Compose loads `backend/.env` for the
-backend, the same file a manual run reads, and overrides only the hostnames and
-paths that differ inside its network.
+Copy `.env.example` into a new `.env` file at the root of the project. Compose reads it.
 
 ```shell
 cp .env.example .env
-cp backend/.env.example backend/.env
 ```
 
-Following docker-specific options are to be configured in the `.env` file.
+The options that still apply:
 
 ```env
-DOCKERFILE=Dockerfile.dev
 ENABLE_CACHE=true
 ENABLE_DB=true
-RUST_LOG=info
+POSTGRES_DB=myrtle
+POSTGRES_USER=myrtle
+POSTGRES_PASSWORD=myrtle
 ```
 
-- `DOCKERFILE`
-  - `Dockerfile` for production (release binary for backend and standalone build for frontend)
-  - `Dockerfile.dev` for development (debug binary for backend and dev server for frontend) (default)
-- `ENABLE_CACHE`: Enable Redis cache (if false, must update the redis cache URI in backend vars)
-- `ENABLE_DB`: Enable Postgres database (if false, must update the postgres db URI in backend vars)
-- `RUST_LOG`: Rust log level for the backend
+- `ENABLE_CACHE`: Run the Redis container
+- `ENABLE_DB`: Run the Postgres container
+- `POSTGRES_*`: Name and credentials of the database the Postgres container creates
+
+The backend does not read this file's `SERVERS`, `ASSET_WS_URLS`, or `GAME_DATA_DIR`. Its configuration is `backend/config/myrtle.toml` plus the secrets in `backend/.env`, described in [backend/README.md](backend/README.md#configuration). There is no `backend/.env.example`.
 
 ### 2. Assets Pipeline
 
@@ -88,52 +84,67 @@ docker compose run --rm asset-tools download.sh [server] [threads]
 #### 4. Unpack and Decode Assets
 
 ```shell
-docker compose run --rm asset-tools unpack.sh [threads]
-# Example: docker compose run --rm asset-tools unpack.sh 4
+docker compose run --rm asset-tools unpack.sh [server] [threads]
+# Example: docker compose run --rm asset-tools unpack.sh en 4
 ```
-
-#### 5. Regenerate DPS Calculations
-```shell
-docker compose run --rm dps-tools
-```
-This parses the Python DPS source, transpiles formulas to Rust, and runs linting/formatting. See [DPS_CALCULATOR.md](backend/DPS_CALCULATOR.md) for details.
 
 > **NOTE**: The asset downloader and extractor can also be run directly without the utility scripts.
 >
 > ```shell
-> docker compose run --rm asset-tools arknights-downloader
+> docker compose run --rm asset-tools downloader
 > #OR
-> docker compose run --rm asset-tools assets-unpacker
+> docker compose run --rm asset-tools unpacker
 > ```
 
-For detailed asset pipeline documentation, see:
+For detailed asset pipeline documentation, see the [assets README](assets/README.md).
 
-- [Downloader README](assets/downloader/README.md)
-- [Unpacker README](assets/unpacker/README.md)
+#### 5. Regenerate DPS Calculations
+
+This runs on the host, from `backend/`. It needs the `external/ArknightsDpsCompare` submodule and Python 3.10+ with upstream's dependencies.
+
+```shell
+cargo run -p myrtle-dps-transpile              # DPS: formulas, transpile, expected values
+cargo run -p myrtle-dps-transpile -- --healing # HPS: the same three steps
+```
+
+It parses the Python DPS source and transpiles the formulas into `backend/crates/dps-formulas`. The compose `dps-tools` service predates the backend rewrite and no longer builds.
 
 ---
 
 ### 3. Running the Application
 
-#### Build the containers
+Docker Compose does not run the whole stack at the moment. `docker-compose.yml` still describes the previous backend: its `backend` service builds from a `backend/Dockerfile` the rewrite removed, and the `frontend` service depends on it. Use compose for the database and cache, and run the two applications on the host.
+
+#### Start Postgres and Redis
+
 ```shell
-# Build the images for backend and frontend
-docker compose build
+docker compose up -d postgres redis
 ```
 
-> **NOTE:** If the `DOCKERFILE` (env variable) is changed (switching from prod to dev or dev to prod) the images must be built with this command again.
+#### Run the backend
 
-#### Start the entire stack
+Follow the [backend Quick Start](backend/README.md#quick-start). In short: load the migrations into a scratch database, build against it, copy `config/myrtle.example.toml` to `config/myrtle.toml`, put `DATABASE_URL`, `JWT_SECRET`, and `GAME_CREDENTIAL_KEY` in `backend/.env`, then:
 
 ```shell
-# Starts backend, and frontend containers
-# If enabled, also starts postgres and redis containers
-docker compose up -d
+cd backend
+cargo run -p myrtle-api -- config/myrtle.toml
+cargo run -p myrtle-worker -- config/myrtle.toml   # In a second terminal. Run exactly one
+```
+
+With the compose Postgres, the URL is `postgres://myrtle:myrtle@localhost:5432/myrtle`.
+
+#### Run the frontend
+
+```shell
+cd frontend
+cp .env.example .env   # Point BACKEND_URL and VITE_BACKEND_URL at http://localhost:3060
+bun install
+bun --bun run dev
 ```
 
 The frontend will bind to `http://localhost:3000` and the backend to `http://localhost:3060`.
 
-#### Stop the stack
+#### Stop the containers
 
 ```shell
 # Stop services
@@ -150,13 +161,13 @@ docker compose down -v
 ```text
 myrtle.moe/
 ├── frontend/           # TanStack Start web application (React 19, TypeScript, Tailwind CSS v4)
-├── backend/            # Rust API server (Axum, PostgreSQL, Redis)
+├── backend/            # Rust API server, job worker and CLI (Axum, PostgreSQL, Redis)
 ├── assets/             # Game asset processing toolkit
 │   ├── downloader/     # Multi-server asset downloader (Rust)
 │   ├── unpacker/       # High-performance asset extractor (Rust)
-│   ├── unity-rs/       # Unity asset parsing library (Rust port of UnityPy)
 │   ├── schemas/        # FlatBuffers schema store (see assets/schemas/README.md)
-│   └── Unpacked/       # Extracted game assets (~90GB)
+│   └── output/         # Extracted game assets, one directory per server (gitignored)
+├── discord/            # Discord bot (Rust, Poise/Serenity, SQLite)
 └── .github/            # CI/CD workflows
 ```
 
@@ -183,14 +194,13 @@ Each component has its own detailed README with specific documentation.
 | [Axum](https://github.com/tokio-rs/axum)    | Async web framework           |
 | [SQLx](https://github.com/launchbadge/sqlx) | Compile-time SQL queries      |
 | [PostgreSQL](https://www.postgresql.org/)   | Primary database              |
-| [Redis](https://redis.io/)                  | Session cache & rate limiting |
-| [JWT](https://jwt.io/)                      | Authentication tokens         |
+| [Redis](https://redis.io/)                  | Shared cache (optional)       |
+| [JWT](https://jwt.io/)                      | Session tokens                |
 
 ### Asset Toolkit
 
 | Component                                                                        | Purpose                                                   |
 | -------------------------------------------------------------------------------- | --------------------------------------------------------- |
-| [unity-rs](assets/unity-rs/)                                                     | Rust port of UnityPy for Unity asset parsing              |
 | [downloader](assets/downloader/)                                                 | Multi-server asset downloader with version tracking       |
 | [unpacker](assets/unpacker/)                                                     | High-performance asset extraction (9x faster than Python) |
 | [schemas](assets/schemas/)                                                       | FlatBuffers schema store, generated from the game client   |
@@ -237,7 +247,7 @@ Each component has its own detailed README with specific documentation.
 ### Data Flow
 
 1. **Asset Pipeline**: Downloads raw game files from Arknights CDN, extracts textures/audio/animations, decodes encrypted game data
-2. **Backend**: Serves game data via REST API, handles authentication with Yostar OAuth, manages tier lists and user data
+2. **Backend**: Serves game data via REST API, signs players in against the game servers (Yostar email code, CN passport, Bilibili), manages tier lists and user data, and runs background jobs in a separate worker
 3. **Frontend**: Renders operator database, player profiles, tier lists, and tools with real-time data from the backend
 
 ## Documentation
@@ -246,57 +256,55 @@ Each component has its own detailed README with specific documentation.
 | ------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
 | Frontend            | [frontend/README.md](frontend/README.md)                                                                                      |
 | Backend             | [backend/README.md](backend/README.md)                                                                                        |
-| Asset Downloader    | [assets/downloader/README.md](assets/downloader/README.md)                                                                    |
-| Asset Unpacker      | [assets/unpacker/README.md](assets/unpacker/README.md)                                                                        |
-| Unity-RS Library    | [assets/unity-rs/README.md](assets/unity-rs/README.md)                                                                        |
+| OAuth Provider      | [backend/OAUTH.md](backend/OAUTH.md)                                                                                          |
+| Asset Pipeline      | [assets/README.md](assets/README.md)                                                                                          |
 | FlatBuffers Schemas | [assets/schemas/README.md](assets/schemas/README.md)                                                                          |
+| Discord Bot         | [discord/README.md](discord/README.md)                                                                                        |
 
 ## API Reference
 
-The backend exposes a comprehensive REST API:
+Every route is served under `/api`. A sample; there is no OpenAPI document, so the route modules in `backend/crates/api/src/routes/` are the full list.
 
 ### Authentication
 
 ```text
-POST /login                    # Login with email + verification code
-POST /refresh                  # Refresh session token
-POST /send-code                # Request verification code
+POST /api/login/send-code      # Request a Yostar verification code
+POST /api/login                # Login with email + verification code
+POST /api/refresh              # Re-sync the account from the game server
+GET  /api/auth/verify          # Check a session token
+POST /api/auth/update-settings # Update user settings
 ```
 
 ### Game Data
 
 ```text
-GET  /static/operators         # List all operators
-GET  /static/operators/{id}    # Get operator details
-GET  /static/skills            # List all skills
-GET  /static/modules           # List all modules
-GET  /static/materials         # List all materials
-GET  /static/skins             # List all skins
-GET  /static/gacha             # Gacha pool data
+GET  /api/operators/index      # List all operators
+GET  /api/operators/{id}       # Get operator details
+GET  /api/skins/{id}           # An operator's skins
+GET  /api/voices/{id}          # An operator's voice lines
+GET  /api/static/{resource}    # Static tables: skills, materials, ranges, enemies, ...
 ```
 
 ### User Data
 
 ```text
-GET  /get-user/{uid}           # Get user profile
-POST /auth/update-settings     # Update user settings
+GET  /api/get-user             # Get a user profile
+GET  /api/get-user-score       # Get a user's account grade
 ```
 
 ### Tier Lists
 
 ```text
-GET  /tier-lists               # List all tier lists
-GET  /tier-lists/{slug}        # Get tier list details
-POST /tier-lists               # Create tier list (admin)
-POST /tier-lists/{slug}/publish # Publish new version
+GET  /api/tier-lists           # List all tier lists
+GET  /api/tier-lists/{slug}    # Get tier list details
 ```
 
 ### Assets
 
 ```text
-GET  /cdn/avatar/{id}          # Operator avatar image
-GET  /cdn/portrait/{id}        # Character portrait
-GET  /cdn/{path}               # Any game asset
+GET  /api/avatar/{id}          # Operator avatar image
+GET  /api/portrait/{id}        # Character portrait
+GET  /api/assets/{path}        # Any game asset
 ```
 
 For complete API documentation, see [backend/README.md](backend/README.md).

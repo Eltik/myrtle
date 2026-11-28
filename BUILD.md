@@ -15,41 +15,53 @@ On Windows, download the EXE installer or `winget`:
 ```bash
 $ winget install PostgreSQL.PostgreSQL.18
 ```
-2a. Optionally, install Redis. Windows hates local Redis installations, so I recommend not trying it, but for MacOS and Linux, it's recommended.
-3. Setup the `.env` variables:
+2a. Optionally, install Redis. Windows hates local Redis installations, so I recommend not trying it, but for MacOS and Linux, it's recommended. Without it the backend uses an in-memory cache.
+3. Load the schema into a scratch database. The backend's SQL is checked against a live database at compile time, so it will not build without one:
+```bash
+$ cd backend
+$ export PGPASSWORD=password
+$ psql -h localhost -U postgres -v ON_ERROR_STOP=1 -qc 'CREATE DATABASE myrtle_sqlx'
+$ for f in crates/db/migrations/*.sql; do psql -h localhost -U postgres -d myrtle_sqlx -v ON_ERROR_STOP=1 -q -1 -f "$f"; done
 ```
-DATABASE_URL="postgresql://postgres:password@localhost:5432" # Required
-GAME_DATA_DIR="../assets/output/gamedata/excel" # Optional
-ASSETS_DIR="../assets/output" # Optional
-REDIS_URL=redis://127.0.0.1:6379 # Optional
-JWT_SECRET="jwt-secret" # Required
-SERVICE_KEY="service-key" # Required
-ASSET_WS_URL="ws://localhost:9160" # Optional
-RATE_LIMIT_RPM=100 # Optional
-DPS_POLL_INTERVAL=1800 # Optional
-DPS_AUTO_RESTART=true # Optional
+4. Build against it:
+```bash
+$ DATABASE_URL=postgres://postgres:password@localhost:5432/myrtle_sqlx cargo build --release
+```
+5. Copy the config and set the secrets it refers to:
+```bash
+$ cp config/myrtle.example.toml config/myrtle.toml
+$ createdb -h localhost -U postgres myrtle
+```
+Then create `backend/.env`:
+```
+DATABASE_URL="postgres://postgres:password@localhost:5432/myrtle" # Required
+JWT_SECRET="<openssl rand -hex 32>" # Required
+GAME_CREDENTIAL_KEY="<openssl rand -hex 32>" # Required
+REDIS_URL="redis://127.0.0.1:6379" # Optional
+SERVICE_KEY="service-key" # Optional
 GITHUB_TOKEN="github-token" # Optional
 ```
-- The `GAME_DATA_DIR` variable should be either a relative or absolute path to the `/excel` directory extracted via the asset unpacker. **Default**: `../assets/output/gamedata/excel`
-- The `ASSETS_DIR` variable should be either a relative or absolute path to the main directory you extracted assets via the asset unpacker. **Default**: `../assets/output`
+- `DATABASE_URL` here is the database the server runs on, not the scratch one from step 3. The API migrates it on first boot.
 - The `JWT_SECRET` variable is used by the backend for signing and verifying user tokens.
-- The `SERVICE_KEY` variable is used by the frontend to bypass rate limits and caching.
-- The `ASSET_WS_URL` variable is the websocket URL hosted by the asset builder for polling and checking for asset updates. If not provided, will ignore.
-- The `RATE_LIMIT_RPM` variable is how many rate limit requests per minute. **Default**: `100`
-- The `DPS_POLL_INTERVAL` variable is how long to poll the [DPS Repository](https://github.com/WhoAteMyCQQkie/ArknightsDpsCompare) in seconds.
-- The `DPS_AUTO_RESTART` variable is whether to auto-restart whenever the DPS repository updates. If set to `true`, the backend will auto-build and regenerate the DPS configs and files before shutting down. It is recommended to use [pm2](https://pm2.keymetrics.io/) or [systemctl](https://www.freedesktop.org/software/systemd/man/latest/systemctl.html) to auto-restart the backend if you have enabled this.
-- The `GITHUB_TOKEN` variable is used for authentication to utilize GitHub's API to poll the DPS repository in case of rate limits. By default, the backend attempts to avoid rate limits, but if you have set the poll interval to be very frequent, it is recommended you provide a token.
-- Object storage (optional): to serve `textures`, `spine`, `audio`, `video` and `portraits` from an S3-compatible bucket (Cloudflare R2, AWS S3, MinIO...) instead of the local disk, fill in the `S3_*` block documented in `backend/.env.example` (in `backend/.env` or the repo-root `.env`; the backend loads `backend/.env` first, and the first file that sets a variable wins). With `S3_TYPE` unset or empty nothing changes. The asset watcher mirrors the bucket after every extract with `assets/binaries/asset-sync` (built by `cargo build --release -p myrtle-storage --bin asset-sync` in `backend/`); seed it once per region with `node run.mjs sync --server en` from `assets/`, see the "Object Storage Sync" section of `assets/README.md`. The frontend can then build asset URLs straight against the bucket by setting `VITE_ASSET_BASE_URL` (`S3_PUBLIC_BASE_URL`, alias `S3_PUBLIC_URL`, joined with `S3_PREFIX`, no trailing slash; see `frontend/.env.example`); unset, it keeps using the backend's URLs.
-3a. If there are updates to the DPS repository that aren't pushed, regenerate the DPS functions and formulas:
+- The `GAME_CREDENTIAL_KEY` variable seals the game credentials stored for synced accounts.
+- The `SERVICE_KEY` variable lets trusted tooling bypass rate limits (sent as the `x-service-key` header).
+- The `GITHUB_TOKEN` variable raises GitHub's API limit for the job that watches the [DPS Repository](https://github.com/WhoAteMyCQQkie/ArknightsDpsCompare).
+- Everything else (port, servers, asset directory, rate limit, job intervals, asset watcher WebSocket URLs) is a key in `config/myrtle.toml`, not an environment variable. `PORT`, `ASSETS_DIR`, `GAME_DATA_DIR`, `ASSET_WS_URL`, `RATE_LIMIT_RPM`, `DPS_POLL_INTERVAL` and `DPS_AUTO_RESTART` are no longer read. Every key is documented in `config/myrtle.example.toml`.
+- Object storage (optional): to serve `textures`, `spine`, `audio`, `video` and `portraits` from Cloudflare R2 instead of the local disk, fill in the `[storage]` section of `config/myrtle.toml` and set `S3_ACCESS_KEY_ID` and `S3_SECRET_ACCESS_KEY` in `backend/.env`. With `storage.type` empty nothing changes. The bucket is mirrored by `asset-sync` (built by `cargo build --release -p myrtle-storage --bin asset-sync` in `backend/`), which reads its own `STORAGE_*` and `CLOUDFLARE_*` environment variables; see the "Object Storage Sync" section of `assets/README.md`. The frontend can then build asset URLs straight against the bucket by setting `VITE_ASSET_BASE_URL` (see `frontend/.env.example`); unset, it keeps using the backend's URLs.
+6. Make sure the game data is extracted (see the asset section below). The backend will not start without `../assets/output/en/gamedata/excel/`.
+7. Run the API, then the worker. Run exactly one worker:
 ```bash
-$ cargo run --bin generate-dps
-$ cargo clippy --fix --allow-dirty --all-targets --all-features -- -D warnings
+$ ./target/release/myrtle-api config/myrtle.toml
+$ ./target/release/myrtle-worker config/myrtle.toml
+```
+7a. If there are updates to the DPS repository that aren't pushed, regenerate the DPS and HPS formulas. This needs the `backend/external/ArknightsDpsCompare` submodule and Python 3.10+:
+```bash
+$ cargo run -p myrtle-dps-transpile
+$ cargo run -p myrtle-dps-transpile -- --healing
 $ cargo fmt --all
 ```
-4. Run the server:
-```bash
-$ cargo run --bin backend --release
-```
+
+See [backend/README.md](backend/README.md) for the full reference.
 
 ## Frontend
 1. Install [NodeJS](https://nodejs.org/en/download). Anything above `v18` will work.
@@ -57,14 +69,15 @@ $ cargo run --bin backend --release
 3. Add the following to your `.env` file:
 ```
 BACKEND_URL="http://localhost:3060"
-INTERNAL_SERVICE_KEY="service-key"
+VITE_BACKEND_URL="http://localhost:3060"
+VITE_SITE_URL="http://localhost:3000"
 ```
 4. Run the following commands:
 ```bash
 $ cd frontend
 $ bun i
-$ bun run build
-$ bun start
+$ bun --bun run build
+$ bun --bun run start
 ```
 
 ## Asset Builder/Extractor
@@ -96,7 +109,7 @@ $ sudo apt install build-essential
 # Windows
 # Install Visual Studio Build Tools (C++ workload). See https://learn.microsoft.com/en-us/cpp/build/vscpp-step-0-installation?view=msvc-170
 ```
-4. Build the downloader and unpacker:
+4. Build the downloader and unpacker, from `assets/`:
 ```bash
 # Build downloader
 $ cd downloader
