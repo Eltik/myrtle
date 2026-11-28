@@ -16,6 +16,8 @@ use crate::{AppContext, AppError};
 
 pub const MAX_AGE: Duration = Duration::from_hours(6);
 
+pub const REFRESH_EVERY: Duration = Duration::from_hours(3);
+
 const BATCH: usize = 128;
 
 #[must_use]

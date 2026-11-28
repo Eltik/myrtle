@@ -65,9 +65,9 @@ pub async fn health(State(ctx): State<AppContext>) -> Json<HealthResponse> {
         game_data
             .generations
             .insert(server.as_str(), snapshot.generation);
-        let warnings = &snapshot.model.meta.table_warnings;
+        let warnings = ctx.table_warnings(&snapshot);
         if !warnings.is_empty() {
-            game_data.tables.insert(server.as_str(), warnings.clone());
+            game_data.tables.insert(server.as_str(), warnings);
         }
     }
     game_data.degraded = !game_data.tables.is_empty();

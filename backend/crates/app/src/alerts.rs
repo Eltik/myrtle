@@ -6,6 +6,20 @@ use crate::AppContext;
 
 const MAX_LISTED: usize = 15;
 
+const ACCOUNT_SIDECARS: [&str; 2] = [
+    "table event-shops: missing",
+    "table gacha_pool_details: missing",
+];
+
+#[must_use]
+pub fn reportable_warnings(warnings: &[String], has_account: bool) -> Vec<String> {
+    warnings
+        .iter()
+        .filter(|w| has_account || !ACCOUNT_SIDECARS.contains(&w.as_str()))
+        .cloned()
+        .collect()
+}
+
 #[must_use]
 pub fn degraded_tables_embed(server: &str, warnings: &[String]) -> Option<Value> {
     if warnings.is_empty() {

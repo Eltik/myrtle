@@ -315,12 +315,24 @@ impl AppContext {
         Ok(reloaded)
     }
 
+    #[must_use]
+    pub fn table_warnings(&self, snapshot: &Snapshot) -> Vec<String> {
+        let meta = &snapshot.model.meta;
+        let has_account = self
+            .accounts
+            .servers()
+            .iter()
+            .any(|account| account.data_server() == meta.server);
+        alerts::reportable_warnings(&meta.table_warnings, has_account)
+    }
+
     fn alert_degraded(&self, snapshot: &Snapshot) {
         let meta = &snapshot.model.meta;
-        if meta.table_warnings.is_empty() {
+        let warnings = self.table_warnings(snapshot);
+        if warnings.is_empty() {
             return;
         }
-        let (ctx, server, warnings) = (self.clone(), meta.server, meta.table_warnings.clone());
+        let (ctx, server) = (self.clone(), meta.server);
         let sent = format!(
             "alert:degraded:{}:{}",
             server.as_str(),

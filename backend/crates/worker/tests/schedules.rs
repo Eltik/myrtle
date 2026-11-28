@@ -4,8 +4,10 @@ mod common;
 
 use std::time::Duration;
 
+use myrtle_app::services::story::community;
 use myrtle_jobs::JobKind;
 use myrtle_jobs::schedule::{DEFAULTS, Schedule};
+use myrtle_types::Server;
 
 fn of(schedules: &[Schedule], kind: JobKind) -> Schedule {
     *schedules.iter().find(|s| s.kind == kind).unwrap()
@@ -39,6 +41,16 @@ async fn config_periods_override_the_defaults_and_zero_disables() {
     );
     assert!(sweep.enabled);
     db.close().await;
+}
+
+#[test]
+fn the_story_community_rebuild_runs_twice_within_its_cache_lifetime() {
+    let schedule = myrtle_worker::story_community_schedule(Server::KR);
+    assert_eq!(
+        (schedule.kind, schedule.server, schedule.enabled),
+        (JobKind::StoryCommunityAggregate, Some(Server::KR), true)
+    );
+    assert!(schedule.every * 2 <= community::MAX_AGE);
 }
 
 #[tokio::test]

@@ -7,10 +7,14 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use myrtle_app::AppContext;
-use myrtle_app::alerts::{degraded_tables_embed, report_degraded_tables};
+use myrtle_app::alerts::{degraded_tables_embed, report_degraded_tables, reportable_warnings};
 use myrtle_app::context::Secrets;
 use myrtle_app::snapshots::SnapshotRegistry;
 use myrtle_db::repos::data_generations::Generation;
+use myrtle_hypergryph::{
+    AccountOptions, AuthSession, DurableCredential, GameAccount, GameAccounts, SessionStore,
+};
+use myrtle_testkit::sessions::MemorySessions;
 use myrtle_types::Server;
 use serde_json::Value;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
@@ -20,6 +24,45 @@ use tokio::sync::mpsc;
 #[test]
 fn nothing_degraded_is_no_alert() {
     assert_eq!(degraded_tables_embed("en", &[]), None);
+}
+
+const SIDECARS: [&str; 2] = [
+    "table event-shops: missing",
+    "table gacha_pool_details: missing",
+];
+
+#[test]
+fn a_server_with_no_account_does_not_report_its_fetched_sidecars() {
+    let warnings: Vec<String> = [
+        SIDECARS[0],
+        SIDECARS[1],
+        "table item_table: missing",
+        "table gacha_pool_details: version 9 != expected 1, ignoring",
+    ]
+    .map(str::to_owned)
+    .to_vec();
+    assert_eq!(reportable_warnings(&warnings, true), warnings);
+    assert_eq!(reportable_warnings(&warnings, false), warnings[2..]);
+    assert!(reportable_warnings(&warnings[..2], false).is_empty());
+}
+
+fn with_account(ctx: &AppContext, server: Server) -> AppContext {
+    let credential = DurableCredential {
+        yostar_uid: "yostar-uid".into(),
+        yostar_token: "tok".into(),
+    };
+    let store: Arc<dyn SessionStore> = Arc::new(MemorySessions::default());
+    let mut accounts = GameAccounts::default();
+    accounts.insert(GameAccount::new(
+        AuthSession::from_durable("", &credential),
+        server,
+        store,
+        AccountOptions::default(),
+    ));
+    AppContext {
+        accounts: Arc::new(accounts),
+        ..ctx.clone()
+    }
 }
 
 #[test]
@@ -151,13 +194,22 @@ async fn a_reload_with_degraded_tables_posts_its_alert() {
     assert_eq!(ctx.reload_if_changed().await.unwrap(), [Server::EN]);
     let body: Value = serde_json::from_str(&posted(&mut bodies).await).unwrap();
     let live = ctx.snapshots.require(Server::EN).unwrap();
-    assert!(
-        !live.model.meta.table_warnings.is_empty(),
-        "a bare tree is degraded"
-    );
+    let raw = &live.model.meta.table_warnings;
+    for sidecar in SIDECARS {
+        assert!(raw.iter().any(|w| w == sidecar), "{sidecar} in {raw:?}");
+    }
+    let reported = ctx.table_warnings(&live);
+    assert!(!reported.is_empty(), "a bare tree is degraded");
+    assert_eq!(reported.len() + SIDECARS.len(), raw.len());
     assert_eq!(
         body["embeds"][0],
-        degraded_tables_embed("en", &live.model.meta.table_warnings).unwrap()
+        degraded_tables_embed("en", &reported).unwrap()
+    );
+    assert_eq!(&with_account(&ctx, Server::EN).table_warnings(&live), raw);
+    assert_eq!(
+        with_account(&ctx, Server::Bilibili).table_warnings(&live),
+        reported,
+        "the Bilibili account serves CN, not EN"
     );
 
     let other = AppContext {

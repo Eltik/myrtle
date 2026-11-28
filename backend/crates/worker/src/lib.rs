@@ -11,6 +11,7 @@ use myrtle_app::services::story::community;
 use myrtle_app::{AppContext, AppError};
 use myrtle_jobs::schedule::{self, Schedule};
 use myrtle_jobs::{JobKind, PgQueue};
+use myrtle_types::Server;
 
 pub use runtime::Runtime;
 
@@ -56,11 +57,20 @@ pub fn schedules(ctx: &AppContext) -> Vec<Schedule> {
             ..*default
         }
     });
-    let per_server = ctx.snapshots.loaded().into_iter().map(|server| Schedule {
-        server: Some(server),
-        ..Schedule::new(JobKind::StoryCommunityAggregate, community::MAX_AGE)
-    });
+    let per_server = ctx
+        .snapshots
+        .loaded()
+        .into_iter()
+        .map(story_community_schedule);
     configured.chain(per_server).collect()
+}
+
+#[must_use]
+pub const fn story_community_schedule(server: Server) -> Schedule {
+    Schedule {
+        server: Some(server),
+        ..Schedule::new(JobKind::StoryCommunityAggregate, community::REFRESH_EVERY)
+    }
 }
 
 async fn shutdown_signal() {
