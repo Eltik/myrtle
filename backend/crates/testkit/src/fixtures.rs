@@ -60,6 +60,12 @@ pub fn assets_dir() -> PathBuf {
     )
 }
 
+/// Whether the EN tree carries `textures/avg`, which CI's artifacts leave out
+#[must_use]
+pub fn has_story_avg() -> bool {
+    assets_dir().join("en/textures/avg").is_dir()
+}
+
 /// The extract root of `server`, present or not
 #[must_use]
 pub fn root(server: Server) -> PathBuf {

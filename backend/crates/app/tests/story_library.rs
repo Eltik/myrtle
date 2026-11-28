@@ -198,10 +198,8 @@ async fn the_en_library_galleries_and_sprites() {
     let started = Instant::now();
     let sprites = story::sprites_shared(&ctx, Server::EN).await.unwrap();
     eprintln!("story sprites: {} ms", started.elapsed().as_millis());
-    if myrtle_testkit::fixtures::assets_dir()
-        .join("en/textures/avg/characters")
-        .is_dir()
-    {
+    let has_avg = myrtle_testkit::fixtures::has_story_avg();
+    if has_avg {
         let first = &sprites.index.sprites[0];
         let detail = story::get_story_sprite(&ctx, Server::EN, &first.base.to_ascii_uppercase())
             .await
@@ -209,11 +207,11 @@ async fn the_en_library_galleries_and_sprites() {
         assert_eq!(detail.sprite.base, first.base);
         assert!(!scene_index(&sprites, &snapshot.story().unwrap().library.index).is_empty());
     } else {
-        eprintln!("skipping the sprite checks: no en/textures/avg/characters");
+        eprintln!("skipping the sprite and scene checks: no en/textures/avg");
     }
 
     let art = story::story_art_shared(&ctx, Server::EN).await.unwrap();
-    assert!(art.census(StoryArtKind::Scene).distinct > 0);
+    assert!(!has_avg || art.census(StoryArtKind::Scene).distinct > 0);
     if let Some(picture) = art
         .gallery(StoryArtKind::Scene)
         .groups

@@ -15,6 +15,7 @@ use myrtle_engine_story::dto::{
 use myrtle_gamedata::model::GameModel;
 use myrtle_gamedata_raw::tables::handbook::{BasicInfo, OperatorProfile, OperatorRace};
 use myrtle_gamedata_raw::tables::operator::Operator;
+use myrtle_testkit::fixtures::has_story_avg;
 use myrtle_types::{EntityKind, Server};
 
 const NONE: &StoryCatalogues = &StoryCatalogues::NONE;
@@ -328,7 +329,8 @@ async fn every_catalogue_entry_resolves_to_itself_on_en() {
     let story = StoryCatalogues::gather(&ctx, Server::EN, &EntityKind::ALL).await;
     for kind in EntityKind::ALL {
         let entries = catalogue(model, &story, kind);
-        if !matches!(kind, EntityKind::StoryCg | EntityKind::StoryScene) {
+        let needs_avg = matches!(kind, EntityKind::StorySprite) && !has_story_avg();
+        if !matches!(kind, EntityKind::StoryCg | EntityKind::StoryScene) && !needs_avg {
             assert!(!entries.is_empty(), "{kind:?} offers nothing");
         }
         for entry in &entries {
@@ -346,6 +348,10 @@ async fn every_catalogue_entry_resolves_to_itself_on_en() {
 
 #[tokio::test]
 async fn story_sprites_and_main_story_resolve_on_en() {
+    if !has_story_avg() {
+        eprintln!("skipping story_sprites_and_main_story_resolve_on_en: no en/textures/avg");
+        return;
+    }
     let Some((_, db, snapshot)) = common::context_with_data().await else {
         return;
     };

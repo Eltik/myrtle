@@ -10,6 +10,7 @@ use myrtle_app::services::tier_lists::{
     TierList, TierRequest,
 };
 use myrtle_db::repos::content_audit::ContentAuditFilter;
+use myrtle_testkit::fixtures::has_story_avg;
 use myrtle_types::{ContentAuditAction, ContentTargetKind, EntityKind, Role, Server, TierListType};
 
 async fn new_list(ctx: &AppContext, owner: &Subject, name: &str) -> TierList {
@@ -393,6 +394,12 @@ async fn placements_resolve_move_and_leave_an_audit_trail() {
 
 #[tokio::test]
 async fn story_kinds_place_and_resolve_against_the_story_catalogues() {
+    if !has_story_avg() {
+        eprintln!(
+            "skipping story_kinds_place_and_resolve_against_the_story_catalogues: no en/textures/avg"
+        );
+        return;
+    }
     let Some((ctx, db, snapshot)) = common::context_with_data().await else {
         return;
     };
